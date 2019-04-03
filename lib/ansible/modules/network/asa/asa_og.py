@@ -83,7 +83,6 @@ EXAMPLES = """
     group_object:
       - awx_lon
       - awx_ams
-    provider: "{{ connection }}"
   register: result
 
 - name: configure port-object object-group
@@ -99,7 +98,6 @@ EXAMPLES = """
     port_range:
       - 1025 5201
       - 0 1024
-    provider: "{{ connection }}"
   register: result
 
 - name: configure service-object object-group
@@ -111,7 +109,6 @@ EXAMPLES = """
     service_cfg:
       - tcp destination eq 8080
       - tcp destination eq www
-    provider: "{{ connection }}"
   register: result
 """
 
