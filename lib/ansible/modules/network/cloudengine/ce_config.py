@@ -224,7 +224,6 @@ from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.cloudengine.ce import get_config, load_config, run_commands
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 from ansible.module_utils.network.cloudengine.ce import check_args as ce_check_args
-import re
 
 
 def check_args(module, warnings):
@@ -241,45 +240,10 @@ def get_running_config(module):
     return NetworkConfig(indent=1, contents=contents)
 
 
-def conversion_src(module):
-    src_list = module.params['src'].split('\n')
-    src_list_organize = []
-    exit_list = [' return', ' system-view']
-    if src_list[0].strip() == '#':
-        src_list.pop(0)
-    for per_config in src_list:
-        if per_config.strip() == '#':
-            if per_config.rstrip() == '#':
-                src_list_organize.extend(exit_list)
-            else:
-                src_list_organize.append('quit')
-        else:
-            src_list_organize.append(per_config)
-    src_str = '\n'.join(src_list_organize)
-    return src_str
-
-
-def conversion_lines(commands):
-    all_config = []
-    exit_list = [' return', ' system-view']
-    for per_command in commands:
-        if re.search(r',', per_command):
-            all_config.extend(exit_list)
-            per_config = per_command.split(',')
-            for config in per_config:
-                if config:
-                    all_config.append(config)
-            all_config.extend(exit_list)
-        else:
-            all_config.append(per_command)
-    return all_config
-
-
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        config = conversion_src(module)
-        candidate.load(config)
+        candidate.load(module.params['src'])
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
@@ -289,6 +253,7 @@ def get_candidate(module):
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
+
     candidate = get_candidate(module)
 
     if match != 'none':
@@ -300,32 +265,30 @@ def run(module, result):
 
     if configobjs:
         commands = dumps(configobjs, 'commands').split('\n')
+
         if module.params['lines']:
-
-            commands = conversion_lines(commands)
-
             if module.params['before']:
                 commands[:0] = module.params['before']
 
             if module.params['after']:
                 commands.extend(module.params['after'])
 
-        command_display = []
-        for per_command in commands:
-            if per_command.strip() not in ['quit', 'return', 'system-view']:
-                command_display.append(per_command)
+        result['commands'] = commands
+        result['updates'] = commands
 
-        result['commands'] = command_display
-        result['updates'] = command_display
         if not module.check_mode:
             load_config(module, commands)
-        if result['commands']:
-            result['changed'] = True
+
+        result['changed'] = True
 
 
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -341,6 +304,7 @@ def main():
         defaults=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
     )
 
