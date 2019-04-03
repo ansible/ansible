@@ -122,7 +122,7 @@ items:
       - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER
         purposes.
       returned: success
-      type: str
+      type: dict
     users:
       description:
       - The URLs of the resources that are using this address.
