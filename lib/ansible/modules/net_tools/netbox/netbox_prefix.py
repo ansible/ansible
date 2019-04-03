@@ -459,4 +459,3 @@ def ensure_prefix_absent(nb, nb_endpoint, data):
 
 if __name__ == "__main__":
     main()
-
