@@ -5,10 +5,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from ansible.module_utils.network.common.config import NetworkConfig, dumps
-import re
-import sys
-__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -65,7 +61,7 @@ options:
     state:
         description:
             - Manage the state of the resource.
-        default: replace
+        default: present
         choices: ['present', 'absent', 'replace']
 """
 
@@ -133,6 +129,10 @@ commands:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
 from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+import re
+import sys
+__metaclass__ = type
 
 
 class Parser():
