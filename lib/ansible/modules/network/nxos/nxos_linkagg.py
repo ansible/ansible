@@ -36,6 +36,7 @@ options:
       - Channel-group number for the port-channel
         Link aggregation group.
     required: true
+    type: str
   mode:
     description:
       - Mode for the link aggregation group.
