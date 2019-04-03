@@ -210,26 +210,26 @@ class CallbackModule(CallbackBase):
         importer. THe data is in a format that Foreman can handle
         without writing another report importer.
         """
-        status = defaultdict(lambda: 0)
-        metrics = {}
-
         for host in stats.processed.keys():
             total = stats.summarize(host)
-            status["applied"] = total['changed']
-            status["failed"] = total['failures'] + total['unreachable']
-            status["skipped"] = total['skipped']
-            log = list(build_log(self.items[host]))
-            metrics["time"] = {"total": int(get_time() - self.start_time)}
-            now = get_now()
             report = {
                 "config_report": {
                     "host": host,
-                    "reported_at": now,
-                    "metrics": metrics,
-                    "status": status,
-                    "logs": log,
+                    "reported_at": get_now(),
+                    "metrics": {
+                        "time": {
+                            "total": int(get_time() - self.start_time),
+                        }
+                    },
+                    "status": {
+                        "applied": total['changed'],
+                        "failed": total['failures'] + total['unreachable'],
+                        "skipped": total['skipped'],
+                    },
+                    "logs": list(build_log(self.items[host])),
                 }
             }
+
             try:
                 r = requests.post(url=self.FOREMAN_URL + '/api/v2/config_reports',
                                   json=report,
@@ -239,6 +239,7 @@ class CallbackModule(CallbackBase):
             except requests.exceptions.RequestException as err:
                 self._display.warning(u'Sending report to Foreman at {url} failed for {host}: {err}'.format(
                     host=host, err=to_text(err), url=self.FOREMAN_URL))
+
             self.items[host] = []
 
     def append_result(self, result):
