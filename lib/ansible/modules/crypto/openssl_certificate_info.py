@@ -94,11 +94,116 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-filename:
-    description: Path to the generated Certificate
-    returned: changed or success
+expired:
+    description: Whether the certificate is expired (i.e. C(notAfter) is in the past)
+    returned: success
+    type: bool
+basic_constraints:
+    description: Entries in the C(basic_constraints) extension, or C(none) if extension is not present.
+    returned: success
+    type: list
+    sample: "[CA:TRUE, pathlen:1]"
+basic_constraints_critical:
+    description: Whether the C(basic_constraints) extension is critical.
+    returned: success
+    type: bool
+extended_key_usage:
+    description: Entries in the C(extended_key_usage) extension, or C(none) if extension is not present.
+    returned: success
+    type: list
+    sample: "[Biometric Info, DVCS, Time Stamping]"
+extended_key_usage_critical:
+    description: Whether the C(extended_key_usage) extension is critical.
+    returned: success
+    type: bool
+extensions_by_oid:
+    description: Returns for every extension OID a dictionary
+    returned: success
+    type: complex
+    contains:
+        critical:
+            description: Whether the extension is critical.
+            returned: success
+            type: bool
+        value:
+            description: The Base64 encoded value (in DER format) of the extension
+            returned: success
+            type: str
+            sample: "MAMCAQU="
+    sample: '{"1.3.6.1.5.5.7.1.24": { "critical": false, "value": "MAMCAQU="}}'
+key_usage:
+    description: Entries in the C(key_usage) extension, or C(none) if extension is not present.
+    returned: success
     type: str
-    sample: /etc/ssl/crt/www.ansible.com.crt
+    sample: "[Key Agreement, Data Encipherment]"
+key_usage_critical:
+    description: Whether the C(key_usage) extension is critical.
+    returned: success
+    type: bool
+subject_alt_name:
+    description: Entries in the C(subject_alt_name) extension, or C(none) if extension is not present.
+    returned: success
+    type: list
+    sample: "[DNS:www.ansible.com, IP:1.2.3.4]"
+subject_alt_name_critical:
+    description: Whether the C(subject_alt_name) extension is critical.
+    returned: success
+    type: bool
+ocsp_must_staple:
+    description: C(yes) if the OCSP Must Staple extension is present, C(none) otherwise.
+    returned: success
+    type: bool
+ocsp_must_staple_critical:
+    description: Whether the C(ocsp_must_staple) extension is critical.
+    returned: success
+    type: bool
+issuer:
+    description: The certificate's issuer.
+    returned: success
+    type: dict
+    sample: '{"organizationName": "Ansible"}'
+subject:
+    description: The certificate's subject.
+    returned: success
+    type: dict
+    sample: '{"commonName": "www.example.com", "emailAddress": "test@example.com"}'
+not_after:
+    description: C(notAfter) date as ASN.1 TIME
+    returned: success
+    type: str
+    sample: 20190413202428Z
+not_before:
+    description: C(notBefore) date as ASN.1 TIME
+    returned: success
+    type: str
+    sample: 20190331202428Z
+public_key:
+    description: Certificate's public key in PEM format
+    returned: success
+    type: str
+    sample: "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8A..."
+public_key_fingerprints:
+    description:
+        - Fingerprints of certificate's public key.
+        - For every hash algorithm available, the fingerprint is computed.
+    returned: success
+    type: dict
+signature_algorithm:
+    description: The signature algorithm used to sign the certificate.
+    returned: success
+    type: str
+    sample: sha256WithRSAEncryption
+version:
+    description: The certificate version.
+    returned: success
+    type: int
+    sample: 1
+valid_at:
+    description: For every time stamp provided in the I(valid_at) option, a
+                 boolean whether the certificate is valid at that point in time
+                 or not.
+    returned: success
+    type: dict
 '''
 
 
