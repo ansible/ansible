@@ -96,11 +96,12 @@ options:
     caching:
         description:
             - "Disk caching policy."
-            - "Allowed values: None, ReadOnly, ReadWrite."
+            - "Allowed values: '', read_only, read_write."
         choices:
-            - None
-            - ReadOnly
-            - ReadWrite
+            - ''
+            - read_only
+            - read_write
+        version_added: 2.8
     tags:
         description:
             - Tags to assign to the managed disk.
@@ -146,7 +147,7 @@ EXAMPLES = '''
         resource_group: myResourceGroup
         disk_size_gb: 4
         managed_by: testvm001
-        caching: ReadOnly
+        caching: read_only
 
     - name: Unmount the managed disk to VM
       azure_rm_manageddisk:
@@ -257,7 +258,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ),
             caching=dict(
                 type='str',
-                choices=['None', 'ReadOnly','ReadWrite']
+                choices=['', 'read_only', 'read_write']
             )
         )
         required_if = [
@@ -344,8 +345,9 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
         # prepare the data disk
         params = self.compute_models.ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
-        caching_options = self.caching if self.caching else None
-        data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params, caching=caching_options)
+        caching_options = self.compute_models.CachingTypes[self.caching] if self.caching and self.caching != '' else None
+        data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach,
+                                                 managed_disk=params, caching=caching_options)
         vm.storage_profile.data_disks.append(data_disk)
         self._update_vm(vm_name, vm)
 
