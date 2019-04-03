@@ -46,7 +46,7 @@ options:
             - Preferred authentication mode.
         type: str
         choices: ['invalid', 'local', 'hwtacacs', 'radius', 'none']
-        default: none
+        default: local
     author_scheme_name:
         description:
             - Name of an authorization scheme.
@@ -57,7 +57,7 @@ options:
             - Preferred authorization mode.
         type: str
         choices: ['invalid', 'local', 'hwtacacs', 'if-authenticated', 'none']
-        default: none
+        default: local
     acct_scheme_name:
         description:
             - Accounting scheme name.
