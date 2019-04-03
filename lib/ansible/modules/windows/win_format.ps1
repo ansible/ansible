@@ -147,7 +147,7 @@ if ($null -ne $file_system -and $file_system -ne $ansible_file_system) {
         }
         $module.Result.changed = $true
     } else {
-        $module.FailJson("Force format must be specified if target file system is different from the current file system of the volume")    
+        $module.FailJson("Force format must be specified if target file system is different from the current file system of the volume")
     }
 }
 if ($ansible_volume_size -ne 0 -or $ansible_partition_size -eq $ansible_volume_size) {
