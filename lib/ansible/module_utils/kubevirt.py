@@ -342,7 +342,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             template_spec['domain']['cpu']['model'] = cpu_model
 
         if labels:
-            template['metadata']['labels'] = labels
+            self.merge_dicts(template['metadata']['labels'], labels)
 
         if machine_type:
             template_spec['domain']['machine']['type'] = machine_type
