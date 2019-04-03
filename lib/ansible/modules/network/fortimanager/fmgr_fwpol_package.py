@@ -33,7 +33,11 @@ notes:
     - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
     - Revision Comments April 2nd 2019
         - Couldn't append to installation target list, only send a complete list. We've added modes for adding and
+<<<<<<< HEAD
           deleting targets for policy packages.
+=======
+          deleting just targets for policy packages.
+>>>>>>> Added notes and documentation
         - Install mode has been added. Scope_members is no longer taken into account when mode = install.
           Only the existing installation targets on the package will be used. Update installation targets before.
         - Nested folders and packages now work properly. Before they were not.
@@ -41,8 +45,11 @@ notes:
           what was supplied under scope_members and scope_groups. Use the add_targets or delete_targets mode first.
         - When using "add_targets" or "delete_targets" for changing installation targets, only scope_members or
           scope_groups is considered for changes to the package. To edit the package settings themselves, use "set".
+<<<<<<< HEAD
     - Revision Comments May 21st 2019
         - Added support to move packages.
+=======
+>>>>>>> Added notes and documentation
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
