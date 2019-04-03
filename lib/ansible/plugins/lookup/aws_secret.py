@@ -37,7 +37,7 @@ options:
     type: boolean
     default: false
   region:
-    description: AWS region in which to do the lookup
+    description: AWS region in which to do the lookup.
     required: false
 """
 
