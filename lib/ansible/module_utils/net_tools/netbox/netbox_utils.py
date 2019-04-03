@@ -42,6 +42,7 @@ QUERY_TYPES = dict(
     site="slug",
     tenant="slug",
     tenant_group="slug",
+    time_zone="timezone",
     vlan="name",
     vlan_group="slug",
     vrf="name",
@@ -61,6 +62,7 @@ CONVERT_TO_ID = dict(
     primary_ip4="ip_addresses",
     primary_ip6="ip_addresses",
     rack="racks",
+    region="regions",
     role="roles",
     site="sites",
     tagged_vlans="vlans",
@@ -86,8 +88,10 @@ NO_DEFAULT_ID = set(
         "vrf",
         "nat_inside",
         "nat_outside",
+        "region",
         "untagged_vlan",
         "tagged_vlans",
+        "tenant",
     ]
 )
 
@@ -102,6 +106,8 @@ IP_ADDRESS_ROLE = dict(
 PREFIX_STATUS = dict(container=0, active=1, reserved=2, deprecated=3)
 
 VLAN_STATUS = dict(active=1, reserved=2, deprecated=3)
+
+SITE_STATUS = dict(active=1, planned=2, retired=4)
 
 INTF_FORM_FACTOR = {
     "virtual": 0,
@@ -342,4 +348,8 @@ def normalize_data(data):
                     data[k] = v.replace(" ", "-").lower()
                 else:
                     data[k] = v.lower()
+            elif data_type == "timezone":
+                if " " in v:
+                    data[k] = v.replace(" ", "_")
+
     return data
