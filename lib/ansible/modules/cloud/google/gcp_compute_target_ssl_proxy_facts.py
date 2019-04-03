@@ -100,7 +100,7 @@ items:
       description:
       - A reference to the BackendService resource.
       returned: success
-      type: str
+      type: dict
     sslCertificates:
       description:
       - A list of SslCertificate resources that are used to authenticate connections
@@ -114,7 +114,7 @@ items:
         resource. If not set, the TargetSslProxy resource will not have any SSL policy
         configured.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################
