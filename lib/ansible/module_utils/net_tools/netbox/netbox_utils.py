@@ -15,6 +15,7 @@ API_APPS_ENDPOINTS = dict(
         "interfaces",
         "platforms",
         "racks",
+        "regions",
         "sites",
     ],
     extras=[],
