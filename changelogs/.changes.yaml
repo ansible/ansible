@@ -559,6 +559,48 @@ releases:
     - yum_bugfux.yml
     - yum_bugfux_conf_file_none_type.yml
     release_date: '2018-10-25'
+  2.7.10:
+    codename: In the Light
+    fragments:
+    - 48306-ansible-connection-json
+    - 51898-remove-non-standard-redfish-manager-attrs-commands.yaml
+    - 52010-handle-empty-output-in-remote_exists.yaml
+    - 53046-azure_rm_inventory_properties_missing.yaml
+    - 53134-yum-fix-disable_excludes-when-repoquery.yaml
+    - 53496-azure_rm_inventory_vmss_nic.yaml
+    - 54028_tower_settings_value_param_required.yml
+    - 54044-fix-include_task-no-file-traceback.yml
+    - 54085-openssl-mode-writing.yaml
+    - 54101-backport-51034-foreman-inventory.yaml
+    - 54192-openssl_publickey-openssh-passphrase.yml
+    - 54296-openssl_dhparam-remove.yaml
+    - 54298-openssl_certificate-remove.yaml
+    - dict_is_dict.yml
+    - get_url-checksum.yaml
+    - grafana_datasource_fix_basic_auth_python3_issue.yaml
+    - linux-arm-cpu-count.yaml
+    - openstack_inventory_constructed.yml
+    - pamd-make-idempotence-fix.yaml
+    - random_mac-random-int-fix.yaml
+    - replace-before-after.yaml
+    - ssh-check-returncode-before-exception.yaml
+    - v2.7.10_summary.yaml
+    - win_acl-paths.yaml
+    - win_acl_inheritance-paths.yaml
+    - win_certificate_store-paths.yaml
+    - win_chocolatey-update.yaml
+    - win_copy-paths.yaml
+    - win_file-paths.yaml
+    - win_find-paths.yaml
+    - win_mod_utils-paths.yaml
+    - win_owner-paths.yaml
+    - win_psexec-paths.yaml
+    - win_reboot-psrp.yaml
+    - win_slurp-paths.yaml
+    - win_tempfile-path.yaml
+    - win_user_right-output.yaml
+    - winrm-all-timeout-exceptions.yaml
+    release_date: '2019-04-03'
   2.7.2:
     codename: In the Light
     fragments:

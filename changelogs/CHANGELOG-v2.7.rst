@@ -5,6 +5,64 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.10
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-04-03
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Catch all connection timeout related exceptions and raise AnsibleConnectionError instead
+- openssl_pkcs12, openssl_privatekey, openssl_publickey - These modules no longer delete the output file before starting to regenerate the output, or when generating the output failed.
+
+Bugfixes
+--------
+
+- Backport of https://github.com/ansible/ansible/pull/54105, pamd - fix idempotence issue when removing rules
+- Use custom JSON encoder in conneciton.py so that ansible objects (AnsibleVaultEncryptedUnicode, for example) can be sent to the persistent connection process
+- allow 'dict()' jinja2 global to function the same even though it has changed in jinja2 versions
+- azure_rm inventory plugin - fix missing hostvars properties (https://github.com/ansible/ansible/pull/53046)
+- azure_rm inventory plugin - fix no nic type in vmss nic. (https://github.com/ansible/ansible/pull/53496)
+- deprecate {Get/Set}ManagerAttributes commands (https://github.com/ansible/ansible/issues/47590)
+- flatpak_remote - Handle empty output in remote_exists, fixes https://github.com/ansible/ansible/issues/51481
+- foreman - fix Foreman returning host parameters
+- get_url - Fix issue with checksum validation when using a file to ensure we skip lines in the file that do not contain exactly 2 parts. Also restrict exception handling to the minimum number of necessary lines (https://github.com/ansible/ansible/issues/48790)
+- grafana_datasource - Fixed an issue when running Python3 and using basic auth (https://github.com/ansible/ansible/issues/49147)
+- include_tasks - Fixed an unexpected exception if no file was given to include.
+- openssl_certificate - fix ``state=absent``.
+- openssl_certificate, openssl_csr, openssl_pkcs12, openssl_privatekey, openssl_publickey - The modules are now able to overwrite write-protected files (https://github.com/ansible/ansible/issues/48656).
+- openssl_dhparam - fix ``state=absent`` idempotency and ``changed`` flag.
+- openssl_pkcs12, openssl_privatekey - These modules now accept the output file mode in symbolic form or as a octal string (https://github.com/ansible/ansible/issues/53476).
+- openssl_publickey - fixed crash on Python 3 when OpenSSH private keys were used with passphrases.
+- openstack inventory plugin: allow "constructed" functionality (``compose``, ``groups``, and ``keyed_groups``) to work as documented.
+- random_mac - generate a proper MAC address when the provided vendor prefix is two or four characters (https://github.com/ansible/ansible/issues/50838)
+- replace - fix behavior when ``before`` and ``after`` are used together (https://github.com/ansible/ansible/issues/31354)
+- report correct CPU information on ARM systems (https://github.com/ansible/ansible/pull/52884)
+- slurp - Fix issues when using paths on Windows with glob like characters, e.g. ``[``, ``]``
+- ssh - Check the return code of the ssh process before raising AnsibleConnectionFailure, as the error message for the ssh process will likely contain more useful information. This will improve the missing interpreter messaging when using modules such as setup which have a larger payload to transfer when combined with pipelining. (https://github.com/ansible/ansible/issues/53487)
+- tower_settings - 'name' and 'value' parameters are always required, module can not be used in order to get a setting
+- win_acl - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_acl_inheritance - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_certificate_store - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_chocolatey - Fix incompatibilities with the latest release of Chocolatey ``v0.10.12+``
+- win_copy - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_file - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_find - Ensure found files are sorted alphabetically by the path instead of it being random
+- win_find - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_owner - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_psexec - Support executables with a space in the path
+- win_reboot - Fix reboot command validation failure when running under the psrp connection plugin
+- win_tempfile - Always return the full NTFS absolute path and not a DOS 8.3 path.
+- win_user_right - Fix output containing non json data - https://github.com/ansible/ansible/issues/54413
+- windows - Fixed various module utils that did not work with path that had glob like chars
+- yum - fix disable_excludes on systems with yum rhn plugin enabled (https://github.com/ansible/ansible/issues/53134)
+
 v2.7.9
 ======
 
