@@ -1,5 +1,5 @@
 ---
-- name: Playbook for asa_test test.
+- name: Playbook for asa_og test.
   hosts: vfw1t-test-tenant1-lon1
   gather_facts: false
   connection: local
@@ -14,7 +14,6 @@
           - no object-group service ansible_test_3 tcp-udp
           - no object-group service ansible_test_4
           - no object-group service ansible_test_5
-        provider: "{{ connection }}"
       ignore_errors: true
 
     - block:
@@ -34,7 +33,7 @@
             - aws_commonservices_eu_ie_pci_elb_prv
 
       - name: STAGE 0
-        asa_test: &config
+        asa_og: &config
           name: "{{ name }}"
           group_type: network-object
           state: present
@@ -42,7 +41,6 @@
           ip_mask: "{{ address }}"
           description: "{{ description }}"
           group_object: "{{ group_object }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: &true
@@ -50,7 +48,7 @@
             - "result.changed == true"
 
       - name: idempotence check
-        asa_test: *config
+        asa_og: *config
         register: result
 
       - assert: &false
@@ -67,30 +65,28 @@
             - test_network_object_1
 
       - name: STAGE 1
-        asa_test: &config1
+        asa_og: &config1
           name: "{{ name }}"
           group_type: network-object
           state: present
           host_ip: "{{ host_ip }}"
           ip_mask: "{{ address }}"
           group_object: "{{ group_object }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config1
+        asa_og: *config1
         register: result
 
       - assert: *false
 
       - name: STAGE 1/B
-        asa_test:
+        asa_og:
           name: "{{ name }}"
           group_type: network-object
           state: present
-          provider: "{{ connection }}"
         register: result
 
       - assert: *false
@@ -105,36 +101,34 @@
             - test_network_object_1
 
       - name: STAGE 2
-        asa_test: &config2
+        asa_og: &config2
           name: "{{ name }}"
           group_type: network-object
           state: present
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config2
+        asa_og: *config2
         register: result
 
       - assert: *false
 
       - name: STAGE 2b
-        asa_test: &config2b
+        asa_og: &config2b
           name: "{{ name }}"
           group_type: network-object
           state: present
           host_ip: "{{ host_ip }}"
           ip_mask: "{{ address }}"
           group_object: "{{ group_object }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config2b
+        asa_og: *config2b
         register: result
 
       - assert: *false
@@ -154,7 +148,7 @@
             - aws_commonservices_eu_ie_pci_elb_prv
 
       - name: STAGE 3
-        asa_test: &config3
+        asa_og: &config3
           name: "{{ name }}"
           group_type: network-object
           state: absent
@@ -162,13 +156,12 @@
           ip_mask: "{{ address }}"
           description: "{{ description }}"
           group_object: "{{ group_object }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config3
+        asa_og: *config3
         register: result
 
       - assert: *false
@@ -188,7 +181,7 @@
             - aws_commonservices_eu_ie_pci_elb_prv
 
       - name: STAGE 4
-        asa_test: &config4
+        asa_og: &config4
           name: "{{ name }}"
           group_type: network-object
           state: replace
@@ -196,13 +189,12 @@
           ip_mask: "{{ address }}"
           description: "{{ description }}"
           group_object: "{{ group_object }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config4
+        asa_og: *config4
         register: result
 
       - assert: *false
@@ -219,7 +211,7 @@
             - aws_commonservices_eu_ie_pci_prv
 
       - name: STAGE 5
-        asa_test: &config5
+        asa_og: &config5
           name: "{{ name }}"
           group_type: network-object
           state: replace
@@ -227,13 +219,12 @@
           ip_mask: "{{ address }}"
           description: "{{ description }}"
           group_object: "{{ group_object }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config5
+        asa_og: *config5
         register: result
 
       - assert: *false
@@ -248,7 +239,7 @@
             - test_network_object_1
 
       - name: STAGE 6
-        asa_test: &config6
+        asa_og: &config6
           name: "{{ name }}"
           group_type: network-object
           state: replace
@@ -256,13 +247,12 @@
           ip_mask: "{{ address }}"
           description: "{{ description }}"
           group_object: "{{ group_object }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config6
+        asa_og: *config6
         register: result
 
       - assert: *false
@@ -277,7 +267,7 @@
             - '1024 10024'
 
       - name: STAGE 7
-        asa_test: &config7
+        asa_og: &config7
           name: "{{ name }}"
           protocol: tcp-udp
           port_eq: "{{ port_eq }}"
@@ -285,13 +275,12 @@
           group_type: port-object
           state: present
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config7
+        asa_og: *config7
         register: result
 
       - assert: *false
@@ -306,7 +295,7 @@
             - '1 100'
 
       - name: STAGE 8
-        asa_test: &config8
+        asa_og: &config8
           name: "{{ name }}"
           protocol: tcp-udp
           port_eq: "{{ port_eq }}"
@@ -314,20 +303,19 @@
           group_type: port-object
           state: present
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config8
+        asa_og: *config8
         register: result
 
       - assert: *false
 
 
       - name: STAGE 9
-        asa_test: &config9
+        asa_og: &config9
           name: "{{ name }}"
           protocol: tcp-udp
           port_eq: "{{ port_eq }}"
@@ -335,13 +323,12 @@
           group_type: port-object
           state: absent
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config9
+        asa_og: *config9
         register: result
 
       - assert: *false
@@ -356,7 +343,7 @@
             - '1 100'
 
       - name: STAGE 10
-        asa_test: &config10
+        asa_og: &config10
           name: "{{ name }}"
           protocol: tcp-udp
           port_eq: "{{ port_eq }}"
@@ -364,13 +351,12 @@
           group_type: port-object
           state: replace
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config10
+        asa_og: *config10
         register: result
 
       - assert: *false
@@ -386,7 +372,7 @@
             - '1024 1234'
 
       - name: STAGE 11
-        asa_test: &config11
+        asa_og: &config11
           name: "{{ name }}"
           protocol: tcp-udp
           port_eq: "{{ port_eq }}"
@@ -394,13 +380,12 @@
           group_type: port-object
           state: replace
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config11
+        asa_og: *config11
         register: result
 
       - assert: *false
@@ -413,19 +398,18 @@
           description: th1s_ISWhatitIS
 
       - name: STAGE 12
-        asa_test: &config12
+        asa_og: &config12
           name: "{{ name }}"
           service_cfg: "{{ service_cfg }}"
           group_type: service-object
           state: present
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config12
+        asa_og: *config12
         register: result
 
       - assert: *false
@@ -438,19 +422,18 @@
           description: th1s_ISWhatitIS
 
       - name: STAGE 13
-        asa_test: &config13
+        asa_og: &config13
           name: "{{ name }}"
           service_cfg: "{{ service_cfg }}"
           group_type: service-object
           state: present
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config13
+        asa_og: *config13
         register: result
 
       - assert: *false
@@ -463,19 +446,18 @@
           description: th1s_ISWhatitIS
 
       - name: STAGE 14
-        asa_test: &config14
+        asa_og: &config14
           name: "{{ name }}"
           service_cfg: "{{ service_cfg }}"
           group_type: service-object
           state: absent
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config14
+        asa_og: *config14
         register: result
 
       - assert: *false
@@ -488,19 +470,18 @@
           description: th1s_ISWhatitIS
 
       - name: STAGE 15
-        asa_test: &config15
+        asa_og: &config15
           name: "{{ name }}"
           service_cfg: "{{ service_cfg }}"
           group_type: service-object
           state: replace
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config15
+        asa_og: *config15
         register: result
 
       - assert: *false
@@ -514,19 +495,18 @@
           description: th1s_ISWhatitIS
 
       - name: STAGE 16
-        asa_test: &config16
+        asa_og: &config16
           name: "{{ name }}"
           service_cfg: "{{ service_cfg }}"
           group_type: service-object
           state: replace
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config16
+        asa_og: *config16
         register: result
 
       - assert: *false
@@ -538,19 +518,18 @@
           description: th1s_ISWhatitIS
 
       - name: STAGE 17
-        asa_test: &config17
+        asa_og: &config17
           name: "{{ name }}"
           service_cfg: "{{ service_cfg }}"
           group_type: service-object
           state: replace
           description: "{{ description }}"
-          provider: "{{ connection }}"
         register: result
 
       - assert: *true
 
       - name: idempotence check
-        asa_test: *config17
+        asa_og: *config17
         register: result
 
       - assert: *false
@@ -565,5 +544,4 @@
               - no object-group service ansible_test_3 tcp-udp
               - no object-group service ansible_test_4
               - no object-group service ansible_test_5
-            provider: "{{ connection }}"
           ignore_errors: true
