@@ -273,12 +273,12 @@ def main():
                     payload = rules
                 else:  # Rules are specified, this is the golden list
                     payload = payload['rules']
-                    payload.append(rules[(len(rules)-2)])  # Append local LAN access rule
-                    payload.append(rules[(len(rules)-1)])  # Append default rule
+                    payload.append(rules[(len(rules) - 2)])  # Append local LAN access rule
+                    payload.append(rules[(len(rules) - 1)])  # Append default rule
                 if meraki.params['allow_lan_access'] is False:
-                    payload[len(payload)-2]['policy'] = 'deny'
+                    payload[len(payload) - 2]['policy'] = 'deny'
                 elif meraki.params['allow_lan_access'] is True:
-                    payload[len(payload)-2]['policy'] = 'allow'
+                    payload[len(payload) - 2]['policy'] = 'allow'
                 meraki.result['data'] = payload
                 meraki.exit_json(**meraki.result)
             payload['allowLanAccess'] = meraki.params['allow_lan_access']
@@ -290,7 +290,6 @@ def main():
             if meraki.module.check_mode is True:
                 meraki.result['data'] = rules
                 meraki.exit_json(**meraki.result)
-
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
