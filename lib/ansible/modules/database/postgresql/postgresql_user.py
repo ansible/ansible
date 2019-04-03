@@ -252,7 +252,7 @@ queries:
   description: List of executed queries.
   returned: always
   type: list
-  sample: ['CREATE USER "alice";']
+  sample: ['CREATE USER "alice"', 'GRANT CONNECT ON DATABASE "acme" TO "alice"']
   version_added: '2.8'
 '''
 
