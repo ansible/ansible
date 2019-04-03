@@ -661,7 +661,7 @@
   azure_rm_devtestlabenvironment:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    user_name: zim
+    user_name: "@me"
     name: myEnvironment
     location: eastus
     deployment_template: "{{ output_lab.labs[0].id }}/artifactSources/public environment repo/armTemplates/WebApp"
@@ -676,7 +676,7 @@
   azure_rm_devtestlabenvironment:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    user_name: zim
+    user_name: "@me"
     name: myEnvironment
     location: eastus
     deployment_template:
@@ -693,7 +693,7 @@
   azure_rm_devtestlabenvironment:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    user_name: zim
+    user_name: "@mes"
     name: myEnvironment
     state: absent
   register: output
