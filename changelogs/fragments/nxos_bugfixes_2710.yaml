@@ -1,0 +1,17 @@
+bugfixes:
+- Fix nxos action plugin for nxos_install_os (https://github.com/ansible/ansible/pull/53768).
+- Removes superfluous commands nxos_vlan (https://github.com/ansible/ansible/pull/51796).
+- Add missing parameters in get_config vyos (https://github.com/ansible/ansible/pull/50855).
+- fix eos_l2_interface insufficient commands (https://github.com/ansible/ansible/pull/50754).
+- fix eos_l2_interface invalid command (https://github.com/ansible/ansible/pull/50644).
+- Match VLAN ID as whole line instead of searching for digits in line (https://github.com/ansible/ansible/pull/51019).
+- Fix defaults option in the nxos_config module (https://github.com/ansible/ansible/pull/51076).
+- nxos_hsrp fix sh_preempt <unknown enum:> (https://github.com/ansible/ansible/pull/52858).
+- nxos_igmp_snooping more group-timeout fixes (https://github.com/ansible/ansible/pull/53553).
+- nxos_linkagg `group` type mismatch causes idempotency failure (https://github.com/ansible/ansible/pull/53653).
+- Fix regular expression for timeout (https://github.com/ansible/ansible/pull/53994).
+- nxos_interfaces_ospf fix passive-interface states & check_mode (https://github.com/ansible/ansible/pull/54260).
+- network.py:ActionModule:run does not honor _handle_src_option failures (https://github.com/ansible/ansible/pull/52745).
+- nxos_user fails to remove usernames with embedded rawstring (https://github.com/ansible/ansible/pull/53149).
+- httpapi/nxos_facts raise ConnectionError is missing `code` (https://github.com/ansible/ansible/pull/53406).
+- nxos_igmp_snooping group-timeout fails when igmp snooping disabled (https://github.com/ansible/ansible/pull/53079).
