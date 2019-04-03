@@ -16,6 +16,19 @@ Each network connection plugin has a set of implementation plugins which provide
 
 Public methods of these plugins may be called on the connection proxy object from the module just as connection methods can.
 
+.. code-block:: python
+
+  from ansible.module_utils.connection import Connection
+
+  ...
+
+  # module is your AnsibleModule instance
+  connection = Connection(module._socket_path)
+
+  # You can now call any method (that doesn't start with '_') of the connection
+  # plugin or its platform-specific plugin
+  connection.get_config()
+
 .. _developing_plugins_httpapi:
 
 Developing HttpApi plugins
