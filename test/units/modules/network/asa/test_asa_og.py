@@ -51,63 +51,67 @@ class TestAsaOgModule(TestAsaModule):
     def test_asa_og_idempotent(self):
         set_module_args(dict(
             name='test_nets',
-            group_type='network-object',
-            lines=['10.255.0.0 255.255.0.0', '192.168.0.0 255.255.0.0'],
-            state='replace'
+            host='network-object',
+            have_host_ip=['8.8.8.8'],
+            ip_mask=['192.168.0.0 255.255.0.0'],
+            group_object=['awx_lon'],
+            description='ansible_test object-group description',
+            state='present'
         ))
         commands = []
         self.execute_module(changed=False, commands=commands)
 
-    def test_asa_og_update(self):
+    def test_asa_og_add(self):
         set_module_args(dict(
             name='test_nets',
-            group_type='network-object',
-            lines=['10.255.0.0 255.255.0.0', '192.168.0.0 255.255.0.0', 'host 8.8.8.8'],
-            state='replace'
+            host='network-object',
+            have_host_ip=['8.8.8.8', '8.8.4.4'],
+            ip_mask=['192.168.0.0 255.255.0.0', '10.0.0.0 255.255.255.0'],
+            group_object=['awx_lon', 'awx_ams'],
+            description='ansible_test object-group description',
+            state='present'
         ))
         commands = [
             'object-group network test_nets',
-            'network-object host 8.8.8.8'
+            'network-object host 8.8.4.4',
+            'network-object 10.0.0.0 255.255.255.0',
+            'group-object awx_ams'
         ]
         self.execute_module(changed=True, commands=commands)
 
     def test_asa_og_replace(self):
         set_module_args(dict(
             name='test_nets',
-            group_type='network-object',
-            lines=['host 8.8.4.4'],
+            host='network-object',
+            have_host_ip=['8.8.4.4'],
+            ip_mask=['10.0.0.0 255.255.255.0'],
+            group_object=['awx_ams'],
+            description='ansible_test custom description',
             state='replace'
         ))
         commands = [
             'object-group network test_nets',
-            'no network-object 10.255.0.0 255.255.0.0',
+            'description ansible_test custom description'
+            'no network-object host 8.8.8.8',
+            'network-object host 8.8.4.4',
             'no network-object 192.168.0.0 255.255.0.0',
-            'network-object host 8.8.4.4'
+            'network-object 10.0.0.0 255.255.255.0',
+            'no group-object awx_lon',
+            'group-object awx_ams'
         ]
         self.execute_module(changed=True, commands=commands)
 
     def test_asa_og_remove(self):
         set_module_args(dict(
             name='test_nets',
-            group_type='network-object',
-            lines=['10.255.0.0 255.255.0.0'],
+            host='network-object',
+            have_host_ip=['8.8.8.8'],
+            group_object=['awx_lon'],
             state='absent'
         ))
         commands = [
             'object-group network test_nets',
-            'no network-object 10.255.0.0 255.255.0.0'
-        ]
-        self.execute_module(changed=True, commands=commands)
-
-    def test_asa_og_add(self):
-        set_module_args(dict(
-            name='test_nets',
-            group_type='network-object',
-            lines=['host 8.8.8.8'],
-            state='present'
-        ))
-        commands = [
-            'object-group network test_nets',
-            'network-object host 8.8.8.8'
+            'no network-object host 8.8.8.8',
+            'no group-object awx_lon'
         ]
         self.execute_module(changed=True, commands=commands)
