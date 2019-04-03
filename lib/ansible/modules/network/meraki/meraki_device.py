@@ -288,15 +288,6 @@ def main():
 
     payload = None
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
-
-    # execute checks for argument completeness
-
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
     org_id = meraki.params['org_id']
@@ -357,7 +348,7 @@ def main():
                 meraki.result['data'] = devices
     elif meraki.params['state'] == 'present':
         device = []
-        if meraki.params['hostname']:
+        if meraki.params['hostname']:  # Modify the settings of a device
             query_path = meraki.construct_path('get_all', net_id=net_id)
             device_list = meraki.request(query_path, method='GET')
             if is_device_valid(meraki, meraki.params['serial'], device_list):
@@ -373,29 +364,42 @@ def main():
                 device_data = meraki.request(query_path, method='GET')
                 ignore_keys = ['lanIp', 'serial', 'mac', 'model', 'networkId', 'moveMapMarker', 'wan1Ip', 'wan2Ip']
                 if meraki.is_update_required(device_data, payload, optional_ignore=ignore_keys):
+                    if meraki.module.check_mode is True:
+                        device_data.update(payload)
+                        meraki.result['data'] = device_data
+                        meraki.exit_json(**meraki.result)
                     path = meraki.construct_path('update', net_id=net_id) + meraki.params['serial']
                     updated_device = []
                     updated_device.append(meraki.request(path, method='PUT', payload=json.dumps(payload)))
                     meraki.result['data'] = updated_device
                     meraki.result['changed'] = True
                 else:
+                    if meraki.module.check_mode is True:
+                        meraki.result['data'] = device_data
+                        meraki.exit_json(**meraki.result)
                     meraki.result['data'] = device_data
         else:
-            if net_id is None:
+            if net_id is None:  # Claim into an organization
                 device_list = get_org_devices(meraki, org_id)
                 if is_device_valid(meraki, meraki.params['serial'], device_list) is False:
                     payload = {'serial': meraki.params['serial']}
+                    if meraki.module.check_mode is True:
+                        meraki.result['data'] = {}
+                        meraki.exit_json(**meraki.result)
                     path = meraki.construct_path('bind_org', org_id=org_id)
                     created_device = []
                     created_device.append(meraki.request(path, method='POST', payload=json.dumps(payload)))
                     meraki.result['data'] = created_device
                     meraki.result['changed'] = True
-            else:
+            else:  # Claim into a network
                 query_path = meraki.construct_path('get_all', net_id=net_id)
                 device_list = meraki.request(query_path, method='GET')
                 if is_device_valid(meraki, meraki.params['serial'], device_list) is False:
                     if net_id:
                         payload = {'serial': meraki.params['serial']}
+                        if meraki.module.check_mode is True:
+                            meraki.result['data'] = {}
+                            meraki.exit_json(**meraki.result)
                         path = meraki.construct_path('create', net_id=net_id)
                         created_device = []
                         created_device.append(meraki.request(path, method='POST', payload=json.dumps(payload)))
@@ -406,6 +410,9 @@ def main():
         query_path = meraki.construct_path('get_all', net_id=net_id)
         device_list = meraki.request(query_path, method='GET')
         if is_device_valid(meraki, meraki.params['serial'], device_list) is True:
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('delete', net_id=net_id)
             path = path + meraki.params['serial'] + '/remove'
             request = meraki.request(path, method='POST')

@@ -1,17 +1,17 @@
 ---
 - block:
-  # - name: Claim a device into an organization
-  #   meraki_device:
-  #     auth_key: '{{auth_key}}'
-  #     org_name: '{{test_org_name}}'
-  #     serial: '{{serial}}'
-  #     state: present
-  #   delegate_to: localhost
-  #   register: claim_device_org
+  - name: Claim a device into an organization
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      serial: '{{serial}}'
+      state: present
+    delegate_to: localhost
+    register: claim_device_org
 
-  # - assert:
-  #     that:
-  #       - claim_device_org.changed == true
+  - assert:
+      that:
+        - claim_device_org.changed == true
 
   - name: Query status of all devices in an organization
     meraki_device:
@@ -23,6 +23,42 @@
 
   - debug:
       msg: '{{query_device_org}}'
+
+  - name: Claim a device into a network with check mode
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      state: present
+    delegate_to: localhost
+    register: claim_device_check
+    check_mode: yes
+
+  - debug:
+      msg: '{{claim_device_check}}'
+
+  - assert:
+      that:
+        - claim_device_check is not changed
+
+  - name: Claim a device into a network with check mode
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      state: present
+    delegate_to: localhost
+    register: claim_device_check
+    check_mode: yes
+
+  - debug:
+      var: claim_device_check
+
+  - assert:
+      that:
+        - claim_device_check is not changed
 
   - name: Claim a device into a network
     meraki_device:
@@ -147,6 +183,30 @@
   - debug:
       msg: '{{query_model}}'
 
+  - name: Update a device with check mode
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      name: mr26
+      address: 1060 W. Addison St., Chicago, IL
+      lat: 41.948038
+      lng: -87.65568
+      tags: recently-added
+      state: present
+      move_map_marker: True
+      note: Test device notes
+    delegate_to: localhost
+    register: update_device_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - update_device_check is not changed
+        - update_device_check.data.0.notes == "Test device notes"
+        - '"1060 W. Addison St., Chicago, IL" in update_device_check.data.0.address'
+
   - name: Update a device
     meraki_device:
       auth_key: '{{auth_key}}'
@@ -169,6 +229,30 @@
         - update_device.changed == true
         - update_device.data.0.notes == "Test device notes"
         - '"1060 W. Addison St., Chicago, IL" in update_device.data.0.address'
+
+  - name: Update a device with idempotency and check mode
+    meraki_device:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      serial: '{{serial}}'
+      name: mr26
+      address: 1060 W. Addison St., Chicago, IL
+      lat: 41.948038
+      lng: -87.65568
+      tags: recently-added
+      state: present
+      move_map_marker: True
+    delegate_to: localhost
+    register: update_device_idempotent_check
+    check_mode: yes
+
+  - debug:
+      msg: '{{update_device_idempotent_check}}'
+
+  - assert:
+      that:
+        - update_device_idempotent_check is not changed
 
   - name: Update a device with idempotency
     meraki_device:
