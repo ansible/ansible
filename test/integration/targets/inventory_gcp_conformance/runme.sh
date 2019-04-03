@@ -3,7 +3,7 @@
 set -eux
 
 # set the output dir
-if [ -z ${OUTPUT_DIR+null} ]; then
+if [ -z "${OUTPUT_DIR+null}" ]; then
     export OUTPUT_DIR=${PWD}
 fi
 

@@ -17,7 +17,7 @@ fi
 
 # set the output dir
 #echo "OUTPUT_DIR: $OUTPUT_DIR"
-if [ -z ${OUTPUT_DIR+null} ]; then
+if [ -z "${OUTPUT_DIR+null}" ]; then
     export OUTPUT_DIR=${PWD}
 fi
 pushd "${OUTPUT_DIR}" &> /dev/null || exit 1

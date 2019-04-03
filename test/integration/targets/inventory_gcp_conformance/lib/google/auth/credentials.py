@@ -72,7 +72,7 @@ class Scoped(ReadOnlyScoped):
 
 
 def with_scopes_if_required(credentials, scopes):
-        return credentials
+    return credentials
 
 
 @six.add_metaclass(abc.ABCMeta)
