@@ -107,30 +107,30 @@ class CallbackModule(CallbackBase):
         if HAS_REQUESTS:
             requests_version = requests.__version__.split('.')
             if int(requests_version[0]) < 2 or int(requests_version[1]) < 14:
-                self._disable_plugin('The `requests` python module is too old.')
+                self._disable_plugin(u'The `requests` python module is too old.')
         else:
-            self._disable_plugin('The `requests` python module is not installed.')
+            self._disable_plugin(u'The `requests` python module is not installed.')
 
         if self.FOREMAN_URL.startswith('https://'):
             if not os.path.exists(self.FOREMAN_SSL_CERT[0]):
-                self._disable_plugin('FOREMAN_SSL_CERT %s not found.' % self.FOREMAN_SSL_CERT[0])
+                self._disable_plugin(u'FOREMAN_SSL_CERT %s not found.' % self.FOREMAN_SSL_CERT[0])
 
             if not os.path.exists(self.FOREMAN_SSL_CERT[1]):
-                self._disable_plugin('FOREMAN_SSL_KEY %s not found.' % self.FOREMAN_SSL_CERT[1])
+                self._disable_plugin(u'FOREMAN_SSL_KEY %s not found.' % self.FOREMAN_SSL_CERT[1])
 
     def _disable_plugin(self, msg):
         self.disabled = True
         if msg:
-            self._display.warning(msg + ' Disabling the Foreman callback plugin.')
+            self._display.warning(msg + u' Disabling the Foreman callback plugin.')
         else:
-            self._display.warning('Disabling the Foreman callback plugin.')
+            self._display.warning(u'Disabling the Foreman callback plugin.')
 
     def _ssl_verify(self):
         if self.FOREMAN_SSL_VERIFY.lower() in ["1", "true", "on"]:
             verify = True
         elif self.FOREMAN_SSL_VERIFY.lower() in ["0", "false", "off"]:
             requests.packages.urllib3.disable_warnings()
-            self._display.warning("SSL verification of %s disabled" %
+            self._display.warning(u"SSL verification of %s disabled" %
                                   self.FOREMAN_URL)
             verify = False
         else:  # Set to a CA bundle:
@@ -160,7 +160,7 @@ class CallbackModule(CallbackBase):
                                   verify=self.ssl_verify)
                 r.raise_for_status()
             except requests.exceptions.RequestException as err:
-                self._display.warning('Sending facts to Foreman at {url} failed for {host}: {err}'.format(
+                self._display.warning(u'Sending facts to Foreman at {url} failed for {host}: {err}'.format(
                     host=host, err=to_text(err), url=self.FOREMAN_URL))
 
     def _build_log(self, data):
@@ -219,7 +219,7 @@ class CallbackModule(CallbackBase):
                                   verify=self.ssl_verify)
                 r.raise_for_status()
             except requests.exceptions.RequestException as err:
-                self._display.warning('Sending report to Foreman at {url} failed for {host}: {err}'.format(
+                self._display.warning(u'Sending report to Foreman at {url} failed for {host}: {err}'.format(
                     host=host, err=to_text(err), url=self.FOREMAN_URL))
             self.items[host] = []
 
