@@ -100,7 +100,7 @@ items:
       description:
       - A reference to the BackendService resource.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################

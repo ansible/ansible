@@ -61,9 +61,10 @@ options:
       pool in the "force" mode, where traffic will be spread to the healthy instances
       with the best effort, or to all instances when no instance is healthy.
     - 'This field represents a link to a TargetPool resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_target_pool
-      task and then set this backup_pool field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_target_pool task and then set this backup_pool field to "{{
+      name-of-resource }}"'
     required: false
   description:
     description:
@@ -90,10 +91,10 @@ options:
       checks pass. If not specified it means all member instances will be considered
       healthy at all times.
     - 'This field represents a link to a HttpHealthCheck resource in GCP. It can be
-      specified in two ways. First, you can place in the selfLink of the resource
-      here as a string Alternatively, you can add `register: name-of-resource` to
-      a gcp_compute_http_health_check task and then set this health_check field to
-      "{{ name-of-resource }}"'
+      specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_http_health_check task and then set this
+      health_check field to "{{ name-of-resource }}"'
     required: false
   instances:
     description:
@@ -158,7 +159,7 @@ backupPool:
     pool in the "force" mode, where traffic will be spread to the healthy instances
     with the best effort, or to all instances when no instance is healthy.
   returned: success
-  type: str
+  type: dict
 creationTimestamp:
   description:
   - Creation timestamp in RFC3339 text format.
@@ -191,7 +192,7 @@ healthCheck:
     checks pass. If not specified it means all member instances will be considered
     healthy at all times.
   returned: success
-  type: str
+  type: dict
 id:
   description:
   - The unique identifier for the resource.
@@ -249,11 +250,11 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            backup_pool=dict(),
+            backup_pool=dict(type='dict'),
             description=dict(type='str'),
             failover_ratio=dict(type='str'),
-            health_check=dict(),
-            instances=dict(type='list'),
+            health_check=dict(type='dict'),
+            instances=dict(type='list', elements='dict'),
             name=dict(required=True, type='str'),
             session_affinity=dict(type='str', choices=['NONE', 'CLIENT_IP', 'CLIENT_IP_PROTO']),
             region=dict(required=True, type='str'),

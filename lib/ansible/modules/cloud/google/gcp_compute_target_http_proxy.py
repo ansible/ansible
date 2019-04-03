@@ -66,9 +66,10 @@ options:
     - A reference to the UrlMap resource that defines the mapping from URL to the
       BackendService.
     - 'This field represents a link to a UrlMap resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_url_map
-      task and then set this url_map field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_url_map task and then set this url_map field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 notes:
@@ -164,7 +165,7 @@ urlMap:
   description:
   - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -188,7 +189,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            url_map=dict(required=True),
+            url_map=dict(required=True, type='dict'),
         )
     )
 
