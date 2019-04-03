@@ -140,10 +140,8 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self.FOREMAN_URL = self.get_option('url')
-        self.FOREMAN_SSL_CERT = (self.get_option('client_cert'), self.get_option('client_key'))
-        self.FOREMAN_SSL_VERIFY = str(self.get_option('verify_certs'))
-
-        self.ssl_verify = self._ssl_verify()
+        ssl_cert = self.get_option('client_cert')
+        ssl_key = self.get_option('client_key')
 
         if HAS_REQUESTS:
             requests_version = requests.__version__.split('.')
@@ -153,11 +151,15 @@ class CallbackModule(CallbackBase):
             self._disable_plugin(u'The `requests` python module is not installed.')
 
         if self.FOREMAN_URL.startswith('https://'):
-            if not os.path.exists(self.FOREMAN_SSL_CERT[0]):
-                self._disable_plugin(u'FOREMAN_SSL_CERT %s not found.' % self.FOREMAN_SSL_CERT[0])
+            if not os.path.exists(ssl_cert):
+                self._disable_plugin(u'FOREMAN_SSL_CERT %s not found.' % ssl_cert)
 
-            if not os.path.exists(self.FOREMAN_SSL_CERT[1]):
-                self._disable_plugin(u'FOREMAN_SSL_KEY %s not found.' % self.FOREMAN_SSL_CERT[1])
+            if not os.path.exists(ssl_key):
+                self._disable_plugin(u'FOREMAN_SSL_KEY %s not found.' % ssl_key)
+
+        self.session = requests.Session()
+        self.session.verify = self._ssl_verify(str(self.get_option('verify_certs')))
+        self.session.cert = (ssl_cert, ssl_key)
 
     def _disable_plugin(self, msg):
         self.disabled = True
@@ -166,16 +168,16 @@ class CallbackModule(CallbackBase):
         else:
             self._display.warning(u'Disabling the Foreman callback plugin.')
 
-    def _ssl_verify(self):
-        if self.FOREMAN_SSL_VERIFY.lower() in ["1", "true", "on"]:
+    def _ssl_verify(self, option):
+        if option.lower() in ["1", "true", "on"]:
             verify = True
-        elif self.FOREMAN_SSL_VERIFY.lower() in ["0", "false", "off"]:
+        elif option.lower() in ["0", "false", "off"]:
             requests.packages.urllib3.disable_warnings()
             self._display.warning(u"SSL verification of %s disabled" %
                                   self.FOREMAN_URL)
             verify = False
         else:  # Set to a CA bundle:
-            verify = self.FOREMAN_SSL_VERIFY
+            verify = option
         return verify
 
     def send_facts(self):
@@ -195,10 +197,7 @@ class CallbackModule(CallbackBase):
             }
 
             try:
-                r = requests.post(url=self.FOREMAN_URL + '/api/v2/hosts/facts',
-                                  json=facts,
-                                  cert=self.FOREMAN_SSL_CERT,
-                                  verify=self.ssl_verify)
+                r = self.session.post(url=self.FOREMAN_URL + '/api/v2/hosts/facts', json=facts)
                 r.raise_for_status()
             except requests.exceptions.RequestException as err:
                 self._display.warning(u'Sending facts to Foreman at {url} failed for {host}: {err}'.format(
@@ -231,10 +230,7 @@ class CallbackModule(CallbackBase):
             }
 
             try:
-                r = requests.post(url=self.FOREMAN_URL + '/api/v2/config_reports',
-                                  json=report,
-                                  cert=self.FOREMAN_SSL_CERT,
-                                  verify=self.ssl_verify)
+                r = self.session.post(url=self.FOREMAN_URL + '/api/v2/config_reports', json=report)
                 r.raise_for_status()
             except requests.exceptions.RequestException as err:
                 self._display.warning(u'Sending report to Foreman at {url} failed for {host}: {err}'.format(
