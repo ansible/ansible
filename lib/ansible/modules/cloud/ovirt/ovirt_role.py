@@ -52,8 +52,8 @@ EXAMPLES = '''
     name: role
     administrative: true
     permits:
-        - manipulate_permissions
-        - create_instance
+      - manipulate_permissions
+      - create_instance
 
 # Remove role
 - ovirt_role:
@@ -65,7 +65,7 @@ EXAMPLES = '''
     name: role
     administrative: ture
     permits:
-        - login
+      - login
 '''
 
 RETURN = '''
