@@ -143,7 +143,7 @@ class HwcSession(object):
 
         if not e or e.url == "":
             self.module.fail_json(
-                msg="Can not find the enpoint for %s" % service_type)
+                msg="Can not find the endpoint for %s" % service_type)
 
         url = e.url
         if url[-1] != "/":
