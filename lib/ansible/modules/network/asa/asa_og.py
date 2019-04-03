@@ -74,9 +74,15 @@ EXAMPLES = """
     group_type: network-object
     state: present
     description: ansible_test object-group description
-    host_ip: ['8.8.8.8', '8.8.4.4']
-    ip_mask: ['10.0.0.0 255.255.255.0', '192.168.0.0 255.255.0.0']
-    group_object: ['awx_lon', 'awx_ams']
+    host_ip:
+      - 8.8.8.8
+      - 8.8.4.4
+    ip_mask:
+      - 10.0.0.0 255.255.255.0
+      - 192.168.0.0 255.255.0.0
+    group_object:
+      - awx_lon
+      - awx_ams
     provider: "{{ connection }}"
   register: result
 
@@ -86,9 +92,13 @@ EXAMPLES = """
     group_type: port-object
     state: replace
     description: ansible_test object-group description
-    protocol: 'tcp-udp'
-    port_eq: ['1025', 'kerberos']
-    port_range: ['1025 5201', '0 1024']
+    protocol: tcp-udp
+    port_eq:
+      - 1025
+      - kerberos
+    port_range:
+      - 1025 5201
+      - 0 1024
     provider: "{{ connection }}"
   register: result
 
@@ -98,7 +108,9 @@ EXAMPLES = """
     group_type: service-object
     state: absent
     description: ansible_test object-group description
-    service_cfg: ['tcp destination eq 8080', 'tcp destination eq www']
+    service_cfg:
+      - tcp destination eq 8080
+      - tcp destination eq www
     provider: "{{ connection }}"
   register: result
 """
@@ -109,10 +121,15 @@ commands:
   returned: always
   type: list
   sample: [
-    "object-group service service_object_test udp",
-    "description this is an 3x4mpl3",
-    " port-object range 56832 56959",
-    " port-object range 61363 65185"
+    "object-group network ansible_test_0",
+    "description ansible_test object-group description",
+    "network-object host 8.8.8.8",
+    "network-object host 8.8.4.4",
+    "network-object 10.0.0.0 255.255.255.0",
+    "network-object 192.168.0.0 255.255.0.0",
+    "network-object 192.168.0.0 255.255.0.0",
+    "group-object awx_lon",
+    "group-object awx_ams",
     ]
 """
 
