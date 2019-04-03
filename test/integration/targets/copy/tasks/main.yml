@@ -58,6 +58,9 @@
     - import_tasks: tests.yml
       remote_user: '{{ remote_unprivileged_user }}'
 
+    - import_tasks: acls.yml
+      when: ansible_system == 'Linux'
+
   always:
     - name: Cleaning
       file:
