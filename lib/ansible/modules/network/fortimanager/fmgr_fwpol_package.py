@@ -34,10 +34,14 @@ notes:
     - Revision Comments April 2nd 2019
         - Couldn't append to installation target list, only send a complete list. We've added modes for adding and
 <<<<<<< HEAD
+<<<<<<< HEAD
           deleting targets for policy packages.
 =======
           deleting just targets for policy packages.
 >>>>>>> Added notes and documentation
+=======
+          deleting targets for policy packages.
+>>>>>>> Odd error with shippable. Test was cancelled. Edited docs to re-run.
         - Install mode has been added. Scope_members is no longer taken into account when mode = install.
           Only the existing installation targets on the package will be used. Update installation targets before.
         - Nested folders and packages now work properly. Before they were not.
