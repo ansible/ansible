@@ -64,9 +64,10 @@ options:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_sql_instance
-      task and then set this instance field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_sql_instance task and then set this instance field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -120,7 +121,7 @@ instance:
   description:
   - The name of the Cloud SQL instance. This does not include the project ID.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -145,7 +146,7 @@ def main():
             charset=dict(type='str'),
             collation=dict(type='str'),
             name=dict(type='str'),
-            instance=dict(required=True),
+            instance=dict(required=True, type='dict'),
         )
     )
 

@@ -62,15 +62,8 @@ def replace_resource_dict(item, value):
     else:
         if not item:
             return item
-        if isinstance(item, dict):
+        else:
             return item.get(value)
-
-        # Item could be a string or a string representing a dictionary.
-        try:
-            new_item = ast.literal_eval(item)
-            return replace_resource_dict(new_item, value)
-        except ValueError:
-            return item
 
 
 # Handles all authentication and HTTP sessions for GCP API calls.
