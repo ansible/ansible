@@ -389,6 +389,7 @@ class TestValueBuilder(unittest.TestCase):
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_identityref_leaf(self, open_url_mock):
         calls = [
+            MockResponse('get_system_setting', {'operation': 'version'}, 200, '{"result": "4.5"}'),
             MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
             get_schema_response('/an:id-name-leaf'),
             MockResponse('get_module_prefix_map', {}, 200, '{{"result": {0}}}'.format(MODULE_PREFIX_MAP))
@@ -402,8 +403,9 @@ class TestValueBuilder(unittest.TestCase):
 
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, 'ansible-nso:id-two', schema)
-        self.assertEquals(1, len(vb.values))
-        value = vb.values[0]
+        values = list(vb.values)
+        self.assertEquals(1, len(values))
+        value = values[0]
         self.assertEquals(parent, value.path)
         self.assertEquals('set', value.state)
         self.assertEquals('an:id-two', value.value)
@@ -413,6 +415,7 @@ class TestValueBuilder(unittest.TestCase):
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_identityref_key(self, open_url_mock):
         calls = [
+            MockResponse('get_system_setting', {'operation': 'version'}, 200, '{"result": "4.5"}'),
             MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
             get_schema_response('/an:id-name-values/id-name-value'),
             MockResponse('get_module_prefix_map', {}, 200, '{{"result": {0}}}'.format(MODULE_PREFIX_MAP)),
@@ -427,8 +430,9 @@ class TestValueBuilder(unittest.TestCase):
 
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, 'id-name-value', [{'name': 'ansible-nso:id-one', 'value': '1'}], schema)
-        self.assertEquals(1, len(vb.values))
-        value = vb.values[0]
+        values = list(vb.values)
+        self.assertEquals(1, len(values))
+        value = values[0]
         self.assertEquals('{0}/id-name-value{{an:id-one}}/value'.format(parent), value.path)
         self.assertEquals('set', value.state)
         self.assertEquals('1', value.value)
@@ -438,6 +442,7 @@ class TestValueBuilder(unittest.TestCase):
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_nested_choice(self, open_url_mock):
         calls = [
+            MockResponse('get_system_setting', {'operation': 'version'}, 200, '{"result": "4.5"}'),
             MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
             get_schema_response('/test:test'),
             MockResponse('exists', {'path': '/test:test{direct}'}, 200, '{"result": {"exists": true}}'),
@@ -453,13 +458,14 @@ class TestValueBuilder(unittest.TestCase):
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, [{'name': 'direct', 'direct-child': 'direct-value'},
                                 {'name': 'nested', 'nested-child': 'nested-value'}], schema)
-        self.assertEquals(2, len(vb.values))
-        value = vb.values[0]
+        values = list(vb.values)
+        self.assertEquals(2, len(values))
+        value = values[0]
         self.assertEquals('{0}{{direct}}/direct-child'.format(parent), value.path)
         self.assertEquals('set', value.state)
         self.assertEquals('direct-value', value.value)
 
-        value = vb.values[1]
+        value = values[1]
         self.assertEquals('{0}{{nested}}/nested-child'.format(parent), value.path)
         self.assertEquals('set', value.state)
         self.assertEquals('nested-value', value.value)
@@ -482,8 +488,9 @@ class TestValueBuilder(unittest.TestCase):
 
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, {'device-list': ['one', 'two']}, schema)
-        self.assertEquals(1, len(vb.values))
-        value = vb.values[0]
+        values = list(vb.values)
+        self.assertEquals(1, len(values))
+        value = values[0]
         self.assertEquals('{0}/device-list'.format(parent), value.path)
         self.assertEquals(['one', 'two'], value.value)
 
@@ -505,14 +512,15 @@ class TestValueBuilder(unittest.TestCase):
 
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, {'device-list': ['one', 'two']}, schema)
-        self.assertEquals(3, len(vb.values))
-        value = vb.values[0]
+        values = list(vb.values)
+        self.assertEquals(3, len(values))
+        value = values[0]
         self.assertEquals('{0}/device-list'.format(parent), value.path)
         self.assertEquals(nso.State.ABSENT, value.state)
-        value = vb.values[1]
+        value = values[1]
         self.assertEquals('{0}/device-list{{one}}'.format(parent), value.path)
         self.assertEquals(nso.State.PRESENT, value.state)
-        value = vb.values[2]
+        value = values[2]
         self.assertEquals('{0}/device-list{{two}}'.format(parent), value.path)
         self.assertEquals(nso.State.PRESENT, value.state)
 
@@ -521,6 +529,7 @@ class TestValueBuilder(unittest.TestCase):
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_sort_by_deps(self, open_url_mock):
         calls = [
+            MockResponse('get_system_setting', {'operation': 'version'}, 200, '{"result": "4.5"}'),
             MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
             get_schema_response('/test:deps')
         ]
@@ -539,14 +548,15 @@ class TestValueBuilder(unittest.TestCase):
 
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, values, schema)
-        self.assertEquals(3, len(vb.values))
-        value = vb.values[0]
+        values = list(vb.values)
+        self.assertEquals(3, len(values))
+        value = values[0]
         self.assertEquals('{0}/c'.format(parent), value.path)
         self.assertEquals('3', value.value)
-        value = vb.values[1]
+        value = values[1]
         self.assertEquals('{0}/a'.format(parent), value.path)
         self.assertEquals('1', value.value)
-        value = vb.values[2]
+        value = values[2]
         self.assertEquals('{0}/b'.format(parent), value.path)
         self.assertEquals('2', value.value)
 
@@ -555,6 +565,7 @@ class TestValueBuilder(unittest.TestCase):
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_sort_by_deps_not_included(self, open_url_mock):
         calls = [
+            MockResponse('get_system_setting', {'operation': 'version'}, 200, '{"result": "4.5"}'),
             MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
             get_schema_response('/test:deps')
         ]
@@ -572,11 +583,12 @@ class TestValueBuilder(unittest.TestCase):
 
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, values, schema)
-        self.assertEquals(2, len(vb.values))
-        value = vb.values[0]
+        values = list(vb.values)
+        self.assertEquals(2, len(values))
+        value = values[0]
         self.assertEquals('{0}/a'.format(parent), value.path)
         self.assertEquals('1', value.value)
-        value = vb.values[1]
+        value = values[1]
         self.assertEquals('{0}/b'.format(parent), value.path)
         self.assertEquals('2', value.value)
 
