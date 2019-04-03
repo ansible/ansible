@@ -222,7 +222,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_platform(self, host):
         try:
-            return self.platforms_lookup[host["platform"]["id"]]
+            return [self.platforms_lookup[host["platform"]["id"]]]
         except Exception:
             return
 
@@ -345,6 +345,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self.refresh_tenants_lookup,
             self.refresh_racks_lookup,
             self.refresh_device_roles_lookup,
+            self.refresh_platforms_lookup,
             self.refresh_device_types_lookup,
             self.refresh_manufacturers_lookup,
         )
