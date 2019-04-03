@@ -170,7 +170,7 @@ items:
         networks/my-network projects/myproject/global/networks/my-network global/networks/default
         .'
       returned: success
-      type: str
+      type: dict
     priority:
       description:
       - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
