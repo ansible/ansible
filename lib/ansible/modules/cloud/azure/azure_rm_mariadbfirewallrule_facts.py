@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mariadbfirewallrule_info
+module: azure_rm_mariadbfirewallrule_facts
 version_added: "2.8"
 short_description: Get Azure MariaDB Firewall Rule facts.
 description:
@@ -46,13 +46,13 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of MariaDB Firewall Rule
-    azure_rm_mariadbfirewallrule_info:
+    azure_rm_mariadbfirewallrule_facts:
       resource_group: myResourceGroup
       server_name: server_name
       name: firewall_rule_name
 
   - name: List instances of MariaDB Firewall Rule
-    azure_rm_mariadbfirewallrule_info:
+    azure_rm_mariadbfirewallrule_facts:
       resource_group: myResourceGroup
       server_name: server_name
 '''

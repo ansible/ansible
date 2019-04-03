@@ -142,7 +142,7 @@
     that: not output.changed
 
 - name: Get subnet facts
-  azure_rm_subnet_info:
+  azure_rm_subnet_facts:
     name: foobar
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"

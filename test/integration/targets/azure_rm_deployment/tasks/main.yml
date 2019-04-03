@@ -29,7 +29,7 @@
   with_items: "{{ output.deployment.instances }}"
 
 - name: Get Deployment Facts
-  azure_rm_deployment_info:
+  azure_rm_deployment_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ dns_label }}"
   register: output

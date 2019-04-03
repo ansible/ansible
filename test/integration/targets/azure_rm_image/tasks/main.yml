@@ -106,7 +106,7 @@
           - output.id
 
 - name: Gather information about image created
-  azure_rm_image_info:
+  azure_rm_image_facts:
     resource_group: "{{ resource_group }}"
     name: testimage001
   register: output
