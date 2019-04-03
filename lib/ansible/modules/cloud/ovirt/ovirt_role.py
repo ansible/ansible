@@ -49,7 +49,6 @@ EXAMPLES = '''
 
 # Create administrative role with two permits
 - ovirt_role:
-    mutable: true
     name: role
     administrative: true
     permits:
@@ -58,9 +57,15 @@ EXAMPLES = '''
 
 # Remove role
 - ovirt_role:
-    mutable: true
     name: role
     state: absent
+
+# Remove all permit
+- ovirt_role:
+    name: role
+    administrative: ture
+    permits:
+        - login
 '''
 
 RETURN = '''
