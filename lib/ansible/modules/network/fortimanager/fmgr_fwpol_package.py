@@ -35,6 +35,7 @@ notes:
         - Couldn't append to installation target list, only send a complete list. We've added modes for adding and
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
           deleting targets for policy packages.
 =======
           deleting just targets for policy packages.
@@ -42,6 +43,9 @@ notes:
 =======
           deleting targets for policy packages.
 >>>>>>> Odd error with shippable. Test was cancelled. Edited docs to re-run.
+=======
+          deleting just targets for policy packages.
+>>>>>>> Added notes and documentation
         - Install mode has been added. Scope_members is no longer taken into account when mode = install.
           Only the existing installation targets on the package will be used. Update installation targets before.
         - Nested folders and packages now work properly. Before they were not.
@@ -49,6 +53,7 @@ notes:
           what was supplied under scope_members and scope_groups. Use the add_targets or delete_targets mode first.
         - When using "add_targets" or "delete_targets" for changing installation targets, only scope_members or
           scope_groups is considered for changes to the package. To edit the package settings themselves, use "set".
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     - Revision Comments May 21st 2019
@@ -59,6 +64,8 @@ notes:
     - Revision Comments May 21st 2019
         - Added support to move packages.
 >>>>>>> Fixes to fmgr_fwpol_package
+=======
+>>>>>>> Added notes and documentation
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
