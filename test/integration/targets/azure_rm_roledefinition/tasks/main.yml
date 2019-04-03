@@ -58,7 +58,8 @@
 
 - name: Assert facts
   assert:
-    - facts['roledefinitions'] | length > 1
+    that:
+      - facts['roledefinitions'] | length > 1
 
 - name: Get facts
   azure_rm_roledefinition_info:
@@ -68,10 +69,11 @@
 
 - name: Assert facts
   assert:
-    - facts['roledefinitions'] | length == 1
-    - facts['roledefinitions']['permissions'] | length == 1
-    - facts['roledefinitions']['permissions'][0]['not_data_actions'] | length == 1
-    - facts['roledefinitions']['permissions'][0]['data_actions'] | length == 1
+    that:
+      - facts['roledefinitions'] | length == 1
+      - facts['roledefinitions']['permissions'] | length == 1
+      - facts['roledefinitions']['permissions'][0]['not_data_actions'] | length == 1
+      - facts['roledefinitions']['permissions'][0]['data_actions'] | length == 1
 
 - name: Update the role definition (idempotent)
   azure_rm_roledefinition:
