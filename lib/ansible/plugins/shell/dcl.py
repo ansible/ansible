@@ -7,7 +7,7 @@ __metaclass__ = type
 import os
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
-import ansible.plugins.action.dcl 
+import ansible.plugins.action.dcl
 from ansible.plugins.shell.sh import ShellModule as ShModule
 from ansible.utils.display import Display
 
@@ -18,7 +18,7 @@ DOCUMENTATION = '''
     version_added: ""
     short_description: DCL shell OpenVMS COmmand line, no separate command...
     description:
-      - This is to support OpenVMS, 
+      - This is to support OpenVMS,
     extends_documentation_fragment:
       - shell_common
 '''
@@ -34,7 +34,6 @@ class ShellModule(ShModule):
     # commonly used
     ECHO = 'WRITE SYS$OUTPUT'
     COMMAND_SEP = '\n'
-
 
     # This is needed for?
     _SHELL_EMBEDDED_PY_EOL = '\n'
@@ -77,47 +76,47 @@ class ShellModule(ShModule):
             display = Display()
 
     	    remote = None
-    	    unparsed = pathname
-            display.vvv( unparsed )
+       	    unparsed = pathname
+            display.vvv(unparsed)
             if '::' in unparsed:
                 (remote, unparsed) = unparsed.split('::')
                 if '"' in remote and remote[-1:] == '"':
                     (node, username) = remote.split('"')
                     if ' ' in username:
-                         (username, password) = username.split(' ')
+                        (username, password) = username.split(' ')
                     else:
-                         password = None
+                        password = None
                 else:
                     node = remote
                     username = None
                     password = None
 
-            display.vvv( unparsed )
+            display.vvv(unparsed)
             if ':' in unparsed:
                 (device, unparsed) = unparsed.split(':')
 
-            display.vvv( unparsed )
+            display.vvv(unparsed)
             if unparsed[0] == '<' and '>' in unparsed:
-               (dirpart, unparsed) = unparsed.split('>')
-               dirpath = dirpart.split('<')[1].split('.')
+                (dirpart, unparsed) = unparsed.split('>')
+                dirpath = dirpart.split('<')[1].split('.')
             elif unparsed[0] == '[' and ']' in unparsed:
-               (dirpart,unparsed) = unparsed.split(']')
-               dirpath = dirpart.split('[')[1].split('.')
+                (dirpart, unparsed) = unparsed.split(']')
+                dirpath = dirpart.split('[')[1].split('.')
             else:
                dirpath =  []
 
-            display.vvv( unparsed )
+            display.vvv(unparsed)
             if ';' in unparsed:
-               (unparsed, version) = unparsed.split(';')
+                (unparsed, version) = unparsed.split(';')
 
-            display.vvv( unparsed )
+            display.vvv(unparsed)
             if '.' in unparsed:
-               (unparsed, filetype) = unparsed.split('.')
+                (unparsed, filetype) = unparsed.split('.')
 
-            display.vvv( unparsed )
+            display.vvv(unparsed)
             filename = unparsed
-            # this may need more validation ... 
-            return filename+'.'+filetype
+            # this may need more validation ...
+            return filename + '.' + filetype
 
     def join_path(self, *args):
         '''
@@ -126,53 +125,53 @@ class ShellModule(ShModule):
         '''
         if type(args) == 'list':
             if args.count == 1:
-                #Assume filename
+                # Assume filename
                 return args.item()
             if args.count == 2:
-                #Assume top of a device... dir = [000000]
+                # Assume top of a device... dir = [000000]
                 return args[0] + ':[000000]' + args[1]
             return args[0] + ':[' + '.'.join(args[1:-2]) + ']' + args[-1]
         else:
             return ' '.join(args)
 
     # rwx -> RWED W implies D.
-    prot_table = ['',':E',':WD',':WED',':R', ':RE',':RWD',':RWED']
-    prot_chars = {'r':':R', 'w':':WD', 'x':':E', 'rw': ':RWD', 'wr': ':RWD',
-                  'rx':':RE', 'xr': ':RE', 'wx': ':WED', 'xw': ':WED',
+    prot_table = ['', ':E', ':WD', ':WED', ':R', ':RE', ':RWD', ':RWED']
+    prot_chars = {'r': ':R', 'w': ':WD', 'x': ':E', 'rw': ':RWD', 'wr': ':RWD',
+                  'rx': ':RE', 'xr': ':RE', 'wx': ':WED', 'xw': ':WED',
                   'rwx': ':RWED', 'rxw': ':RWED', 'wrx': ':RWED', 'wrx': ':RWED',
                   'xwr': ':RWED'}
 
-    def unix2vms_mode(self,mode):
+    def unix2vms_mode(self, mode):
         display = Display()
-        display.vvv('Handling mode'+mode)
+        display.vvv('Handling mode' + mode)
         prot = [ 'S:RWED' ]
         if type(mode) == 'int':
-            world = 'W' + self.prot_table[   imode        & 07 ]
-            group = 'G' + self.prot_table[ ( imode >> 3 ) & 07 ] 
-            user  = 'U' + self.prot_table[ ( imode >> 6 ) & 07 ]
-            prot.append( [user, group, world] )
+            world = 'W' + self.prot_table[  imode        & 07]
+            group = 'G' + self.prot_table[( imode >> 3 ) & 07]
+            user  = 'U' + self.prot_table[( imode >> 6 ) & 07]
+            prot.append([user, group, world])
         else:
             if '+' in mode:
-                ( who, flag ) = mode.split('+')
+                (who, flag) = mode.split('+')
                 if 'u' in who:
-                    prot.append( 'U:'+self.prot_chars[flag] )
+                    prot.append('U:' + self.prot_chars[flag])
                 if 'g' in who:
-                    prot.append( 'G:'+self.prot_chars[flag] )
+                    prot.append('G:' + self.prot_chars[flag])
                 if 'o' in who:
-                    prot.append( 'W:'+self.prot_chars[flag] )
-                   
+                    prot.append('W:' + self.prot_chars[flag])
+
             if '-' in mode:
-                ( who, flag ) = mode.split('-')
+                (who, flag) = mode.split('-')
                 display.vvv('DCL: subtractive mode not supported')
-        return '('+ ','.join(prot) +')'
+        return '(' + ','.join(prot) + ')'
 
     def chmod(self, paths, mode):
-        cmd = ['set','file','/protection='+ self.unix2vms_mode(mode)]
+        cmd = ['set', 'file', '/protection=' + self.unix2vms_mode(mode)]
         cmd.extend(paths)
         return ' '.join(cmd)
 
     def chown(self, paths, user):
-        cmd = ['set','file','/owner=',user]
+        cmd = ['set', 'file', '/owner=', user]
         cmd.extend(paths)
         return ' '.join(cmd)
 
@@ -196,4 +195,7 @@ class ShellModule(ShModule):
         return 'SHOW DEFAULT'
 
     def quote(self, cmd):
+        '''
+        No quoting
+        '''
         return cmd
