@@ -15,7 +15,6 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
 
 import os
@@ -77,6 +76,63 @@ def test_fmgr_fwpol_package(fixture_data, mocker):
     # Test using fixture 4 #
     output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[3]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 5 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[4]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 6 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[5]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 7 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[6]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 8 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[7]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 9 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[8]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 10 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[9]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 11 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[10]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+
+
+def test_fmgr_fwpol_package_edit_targets(fixture_data, mocker):
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
+                 side_effect=fixture_data)
+
+    # Test using fixture 1 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[0]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 2 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[1]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 3 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[2]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 4 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[3]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 5 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[4]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 6 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[5]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 7 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[6]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 8 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[7]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 9 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[8]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 10 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_edit_targets(fmg_instance, fixture_data[9]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
 
 
 def test_fmgr_fwpol_package_folder(fixture_data, mocker):
@@ -95,3 +151,30 @@ def test_fmgr_fwpol_package_folder(fixture_data, mocker):
     # Test using fixture 4 #
     output = fmgr_fwpol_package.fmgr_fwpol_package_folder(fmg_instance, fixture_data[3]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 5 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_folder(fmg_instance, fixture_data[4]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 6 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_folder(fmg_instance, fixture_data[5]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 7 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_folder(fmg_instance, fixture_data[6]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 8 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_folder(fmg_instance, fixture_data[7]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+
+
+def test_fmgr_fwpol_package_install(fixture_data, mocker):
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
+                 side_effect=fixture_data)
+
+    # Test using fixture 1 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_install(fmg_instance, fixture_data[0]['paramgram_used'])
+    assert isinstance(output['raw_response'], dict) is True
+    # Test using fixture 2 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_install(fmg_instance, fixture_data[1]['paramgram_used'])
+    assert isinstance(output['raw_response'], dict) is True
+    # Test using fixture 3 #
+    output = fmgr_fwpol_package.fmgr_fwpol_package_install(fmg_instance, fixture_data[2]['paramgram_used'])
+    assert isinstance(output['raw_response'], dict) is True
