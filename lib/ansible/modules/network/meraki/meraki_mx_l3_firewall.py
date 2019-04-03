@@ -266,15 +266,6 @@ def main():
 
     payload = None
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
-
-    # execute checks for argument completeness
-
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
     org_id = meraki.params['org_id']
@@ -303,7 +294,6 @@ def main():
         update = False
         if meraki.params['syslog_default_rule'] is not None:
             payload['syslogDefaultRule'] = meraki.params['syslog_default_rule']
-            # meraki.fail_json(msg='Payload', payload=payload)
         try:
             if len(rules) - 1 != len(payload['rules']):  # Quick and simple check to avoid more processing
                 update = True
@@ -317,13 +307,27 @@ def main():
                         update = True
         except KeyError:
             pass
-            # if meraki.params['syslog_default_rule']:
-            #     meraki.fail_json(msg='Compare', original=rules, proposed=payload)
         if update is True:
+            if meraki.module.check_mode is True:
+                if 'rules' not in payload:  # No rules are specified, use existing rules
+                    payload = rules
+                else:  # Rules specify, this is golden list
+                    payload = payload['rules']
+                    payload.append(rules[len(rules) - 1])
+                if meraki.params['syslog_default_rule'] is True:
+                    payload[len(payload) - 1]['syslogEnabled'] = True
+                elif meraki.params['syslog_default_rule'] is False:
+                    payload[len(payload) - 1]['syslogEnabled'] = False
+                meraki.result['data'] = payload
+                meraki.exit_json(**meraki.result)
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
+        else:
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = rules
+                meraki.exit_json(**meraki.result)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
