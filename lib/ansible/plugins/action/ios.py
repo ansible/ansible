@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
 import sys
 import copy
 
@@ -85,10 +86,9 @@ class ActionModule(ActionNetworkModule):
         conn = Connection(socket_path)
         try:
             out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                conn.send_command('exit')
-                out = conn.get_prompt()
+            if re.search(r'config.*\)#', to_text(out, errors='surrogate_then_replace').strip()):
+                display.vvvv('wrong context, sending end to device', self._play_context.remote_addr)
+                conn.send_command('end')
         except ConnectionError as exc:
             return {'failed': True, 'msg': to_text(exc)}
 
