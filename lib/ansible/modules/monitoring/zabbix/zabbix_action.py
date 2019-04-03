@@ -1073,7 +1073,7 @@ class Operations(object):
             operation: operation to construct the conditions
 
         Returns:
-            list: constructed operaration conditions
+            list: constructed operation conditions
         """
         _opcond = operation.get('operation_condition')
         if _opcond is not None:

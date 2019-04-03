@@ -84,6 +84,12 @@ options:
     description: |
       Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
       Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+  target_roles:
+    description:
+    - A list of existing role (user/group) names to set as the
+      default permissions for database objects subsequently created by them.
+    - Parameter I(target_roles) is only available with C(type=default_privs).
+    version_added: '2.8'
   grant_option:
     description:
       - Whether C(role) may grant/revoke the specified privileges/group
@@ -302,6 +308,36 @@ EXAMPLES = """
     roles: caller
     objs: ALL_IN_SCHEMA
     schema: common
+
+# Available since version 2.8
+# ALTER DEFAULT PRIVILEGES FOR ROLE librarian IN SCHEMA library GRANT SELECT ON TABLES TO reader
+# GRANT SELECT privileges for new TABLES objects created by librarian as
+# default to the role reader.
+# For specific
+- postgresql_privs:
+    db: library
+    schema: library
+    objs: TABLES
+    privs: SELECT
+    type: default_privs
+    role: reader
+    target_roles: librarian
+
+# Available since version 2.8
+# ALTER DEFAULT PRIVILEGES FOR ROLE librarian IN SCHEMA library REVOKE SELECT ON TABLES FROM reader
+# REVOKE SELECT privileges for new TABLES objects created by librarian as
+# default from the role reader.
+# For specific
+- postgresql_privs:
+    db: library
+    state: absent
+    schema: library
+    objs: TABLES
+    privs: SELECT
+    type: default_privs
+    role: reader
+    target_roles: librarian
+
 """
 
 import traceback
@@ -538,7 +574,7 @@ class Connection(object):
 
     # Manipulating privileges
 
-    def manipulate_privs(self, obj_type, privs, objs, roles,
+    def manipulate_privs(self, obj_type, privs, objs, roles, target_roles,
                          state, grant_option, schema_qualifier=None, fail_on_role=True):
         """Manipulate database object privileges.
 
@@ -550,6 +586,8 @@ class Connection(object):
                      privileges for.
         :param roles: Either a list of role names or "PUBLIC"
                       for the implicitly defined "PUBLIC" group
+        :param target_roles: List of role names to grant/revoke
+                             default privileges as.
         :param state: "present" to grant privileges, "absent" to revoke.
         :param grant_option: Only for state "present": If True, set
                              grant/admin option. If False, revoke it.
@@ -639,12 +677,18 @@ class Connection(object):
 
             for_whom = ','.join(for_whom)
 
+        # as_who:
+        as_who = None
+        if target_roles:
+            as_who = ','.join(pg_quote_identifier(r, 'role') for r in target_roles)
+
         status_before = get_status(objs)
 
         query = QueryBuilder(state) \
             .for_objtype(obj_type) \
             .with_grant_option(grant_option) \
             .for_whom(for_whom) \
+            .as_who(as_who) \
             .for_schema(schema_qualifier) \
             .set_what(set_what) \
             .for_objs(objs) \
@@ -659,6 +703,7 @@ class QueryBuilder(object):
     def __init__(self, state):
         self._grant_option = None
         self._for_whom = None
+        self._as_who = None
         self._set_what = None
         self._obj_type = None
         self._state = state
@@ -682,6 +727,10 @@ class QueryBuilder(object):
         self._for_whom = who
         return self
 
+    def as_who(self, target_roles):
+        self._as_who = target_roles
+        return self
+
     def set_what(self, what):
         self._set_what = what
         return self
@@ -701,9 +750,15 @@ class QueryBuilder(object):
 
     def add_default_revoke(self):
         for obj in self._objs:
-            self.query.append(
-                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
-                                                                                            self._for_whom))
+            if self._as_who:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} REVOKE ALL ON {2} FROM {3};'.format(self._as_who,
+                                                                                                             self._schema, obj,
+                                                                                                             self._for_whom))
+            else:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                                self._for_whom))
 
     def add_grant_option(self):
         if self._grant_option:
@@ -720,13 +775,28 @@ class QueryBuilder(object):
 
     def add_default_priv(self):
         for obj in self._objs:
-            self.query.append(
-                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT {1} ON {2} TO {3}'.format(self._schema, self._set_what,
-                                                                                        obj,
-                                                                                        self._for_whom))
+            if self._as_who:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} GRANT {2} ON {3} TO {4}'.format(self._as_who,
+                                                                                                         self._schema,
+                                                                                                         self._set_what,
+                                                                                                         obj,
+                                                                                                         self._for_whom))
+            else:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT {1} ON {2} TO {3}'.format(self._schema,
+                                                                                            self._set_what,
+                                                                                            obj,
+                                                                                            self._for_whom))
             self.add_grant_option()
-        self.query.append(
-            'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT USAGE ON TYPES TO {1}'.format(self._schema, self._for_whom))
+        if self._as_who:
+            self.query.append(
+                'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} GRANT USAGE ON TYPES TO {2}'.format(self._as_who,
+                                                                                                         self._schema,
+                                                                                                         self._for_whom))
+        else:
+            self.query.append(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT USAGE ON TYPES TO {1}'.format(self._schema, self._for_whom))
         self.add_grant_option()
 
     def build_present(self):
@@ -741,9 +811,15 @@ class QueryBuilder(object):
         if self._obj_type == 'default_privs':
             self.query = []
             for obj in ['TABLES', 'SEQUENCES', 'TYPES']:
-                self.query.append(
-                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
-                                                                                                self._for_whom))
+                if self._as_who:
+                    self.query.append(
+                        'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} REVOKE ALL ON {2} FROM {3};'.format(self._as_who,
+                                                                                                                 self._schema, obj,
+                                                                                                                 self._for_whom))
+                else:
+                    self.query.append(
+                        'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                                    self._for_whom))
         else:
             self.query.append('REVOKE {0} FROM {1};'.format(self._set_what, self._for_whom))
 
@@ -770,6 +846,7 @@ def main():
             schema=dict(required=False),
             roles=dict(required=True, aliases=['role']),
             session_role=dict(required=False),
+            target_roles=dict(required=False),
             grant_option=dict(required=False, type='bool',
                               aliases=['admin_option']),
             host=dict(default='', aliases=['login_host']),
@@ -884,11 +961,23 @@ def main():
                 else:
                     module.warn("Role '%s' does not exist, nothing to do" % roles[0].strip())
 
+        # check if target_roles is set with type: default_privs
+        if p.target_roles and not p.type == 'default_privs':
+            module.warn('"target_roles" will be ignored '
+                        'Argument "type: default_privs" is required for usage of "target_roles".')
+
+        # target roles
+        if p.target_roles:
+            target_roles = p.target_roles.split(',')
+        else:
+            target_roles = None
+
         changed = conn.manipulate_privs(
             obj_type=p.type,
             privs=privs,
             objs=objs,
             roles=roles,
+            target_roles=target_roles,
             state=p.state,
             grant_option=p.grant_option,
             schema_qualifier=p.schema,

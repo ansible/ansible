@@ -585,7 +585,7 @@ class PathMapper(object):
                     'units': 'all',
                 }
 
-        if path.startswith('lib/ansible/plugins/docs_fragments/'):
+        if path.startswith('lib/ansible/plugins/doc_fragments/'):
             return {
                 'sanity': 'all',
             }

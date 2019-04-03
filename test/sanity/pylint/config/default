@@ -11,7 +11,6 @@ disable=
     bad-continuation,
     bad-indentation,
     bad-mcs-classmethod-argument,
-    blacklisted-name,
     broad-except,
     c-extension-no-member,
     cell-var-from-loop,
@@ -112,6 +111,22 @@ disable=
     useless-super-delegation,
     wrong-import-order,
     wrong-import-position,
+
+[BASIC]
+
+bad-names=foo,
+          bar,
+          baz,
+          toto,
+          tutu,
+          tata,
+          _,
+
+good-names=i,
+           j,
+           k,
+           ex,
+           Run,
 
 [TYPECHECK]
 

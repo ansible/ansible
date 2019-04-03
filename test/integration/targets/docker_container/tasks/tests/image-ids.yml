@@ -17,23 +17,23 @@
     loop_var: image
 
 - name: Get image ID of hello-world and alpine images
-  docker_image_facts:
+  docker_image_info:
     name:
     - "hello-world:latest"
     - "alpine:3.8"
-  register: image_facts
+  register: image_info
 
 - assert:
     that:
-      - image_facts.images | length == 2
+      - image_info.images | length == 2
 
 - name: Print image IDs
   debug:
-    msg: "hello-world: {{ image_facts.images[0].Id }}; alpine: {{ image_facts.images[1].Id }}"
+    msg: "hello-world: {{ image_info.images[0].Id }}; alpine: {{ image_info.images[1].Id }}"
 
 - name: Create container with hello-world image via ID
   docker_container:
-    image: "{{ image_facts.images[0].Id }}"
+    image: "{{ image_info.images[0].Id }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
@@ -41,7 +41,7 @@
 
 - name: Create container with hello-world image via ID (idempotent)
   docker_container:
-    image: "{{ image_facts.images[0].Id }}"
+    image: "{{ image_info.images[0].Id }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
@@ -49,7 +49,7 @@
 
 - name: Create container with alpine image via ID
   docker_container:
-    image: "{{ image_facts.images[1].Id }}"
+    image: "{{ image_info.images[1].Id }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes
@@ -57,7 +57,7 @@
 
 - name: Create container with alpine image via ID (idempotent)
   docker_container:
-    image: "{{ image_facts.images[1].Id }}"
+    image: "{{ image_info.images[1].Id }}"
     name: "{{ cname }}"
     state: present
     force_kill: yes

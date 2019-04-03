@@ -23,6 +23,16 @@ except ImportError:
     # user know that OpenSSL couldn't be found.
     pass
 
+try:
+    from cryptography import x509
+    from cryptography.hazmat.backends import default_backend as cryptography_backend
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+    from cryptography.hazmat.primitives import hashes
+except ImportError:
+    # Error handled in the calling module.
+    pass
+
+
 import abc
 import datetime
 import errno
@@ -82,70 +92,87 @@ def get_fingerprint(path, passphrase=None):
         return None
 
 
-def load_privatekey(path, passphrase=None, check_passphrase=True):
+def load_privatekey(path, passphrase=None, check_passphrase=True, backend='pyopenssl'):
     """Load the specified OpenSSL private key."""
 
     try:
         with open(path, 'rb') as b_priv_key_fh:
             priv_key_detail = b_priv_key_fh.read()
 
-        # First try: try to load with real passphrase (resp. empty string)
-        # Will work if this is the correct passphrase, or the key is not
-        # password-protected.
-        try:
-            result = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                            priv_key_detail,
-                                            to_bytes(passphrase or ''))
-        except crypto.Error as e:
-            if len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
-                # This happens in case we have the wrong passphrase.
-                if passphrase is not None:
-                    raise OpenSSLBadPassphraseError('Wrong passphrase provided for private key!')
-                else:
-                    raise OpenSSLBadPassphraseError('No passphrase provided, but private key is password-protected!')
-            raise
-        if check_passphrase:
-            # Next we want to make sure that the key is actually protected by
-            # a passphrase (in case we did try the empty string before, make
-            # sure that the key is not protected by the empty string)
+        if backend == 'pyopenssl':
+
+            # First try: try to load with real passphrase (resp. empty string)
+            # Will work if this is the correct passphrase, or the key is not
+            # password-protected.
             try:
-                crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                       priv_key_detail,
-                                       to_bytes('y' if passphrase == 'x' else 'x'))
-                if passphrase is not None:
-                    # Since we can load the key without an exception, the
-                    # key isn't password-protected
-                    raise OpenSSLBadPassphraseError('Passphrase provided, but private key is not password-protected!')
-            except crypto.Error:
-                if passphrase is None and len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
-                    # The key is obviously protected by the empty string.
-                    # Don't do this at home (if it's possible at all)...
-                    raise OpenSSLBadPassphraseError('No passphrase provided, but private key is password-protected!')
+                result = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                                priv_key_detail,
+                                                to_bytes(passphrase or ''))
+            except crypto.Error as e:
+                if len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
+                    # This happens in case we have the wrong passphrase.
+                    if passphrase is not None:
+                        raise OpenSSLBadPassphraseError('Wrong passphrase provided for private key!')
+                    else:
+                        raise OpenSSLBadPassphraseError('No passphrase provided, but private key is password-protected!')
+                raise
+            if check_passphrase:
+                # Next we want to make sure that the key is actually protected by
+                # a passphrase (in case we did try the empty string before, make
+                # sure that the key is not protected by the empty string)
+                try:
+                    crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                           priv_key_detail,
+                                           to_bytes('y' if passphrase == 'x' else 'x'))
+                    if passphrase is not None:
+                        # Since we can load the key without an exception, the
+                        # key isn't password-protected
+                        raise OpenSSLBadPassphraseError('Passphrase provided, but private key is not password-protected!')
+                except crypto.Error:
+                    if passphrase is None and len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
+                        # The key is obviously protected by the empty string.
+                        # Don't do this at home (if it's possible at all)...
+                        raise OpenSSLBadPassphraseError('No passphrase provided, but private key is password-protected!')
+        elif backend == 'cryptography':
+            try:
+                result = load_pem_private_key(priv_key_detail,
+                                              passphrase,
+                                              cryptography_backend())
+            except TypeError as e:
+                raise OpenSSLBadPassphraseError('Wrong or empty passphrase provided for private key')
+            except ValueError as e:
+                raise OpenSSLBadPassphraseError('Wrong passphrase provided for private key')
+
         return result
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
 
 
-def load_certificate(path):
+def load_certificate(path, backend='pyopenssl'):
     """Load the specified certificate."""
 
     try:
         with open(path, 'rb') as cert_fh:
             cert_content = cert_fh.read()
-        return crypto.load_certificate(crypto.FILETYPE_PEM, cert_content)
+        if backend == 'pyopenssl':
+            return crypto.load_certificate(crypto.FILETYPE_PEM, cert_content)
+        elif backend == 'cryptography':
+            return x509.load_pem_x509_certificate(cert_content, cryptography_backend())
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
 
 
-def load_certificate_request(path):
+def load_certificate_request(path, backend='pyopenssl'):
     """Load the specified certificate signing request."""
-
     try:
         with open(path, 'rb') as csr_fh:
             csr_content = csr_fh.read()
-        return crypto.load_certificate_request(crypto.FILETYPE_PEM, csr_content)
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
+    if backend == 'pyopenssl':
+        return crypto.load_certificate_request(crypto.FILETYPE_PEM, csr_content)
+    elif backend == 'cryptography':
+        return x509.load_pem_x509_csr(csr_content, cryptography_backend())
 
 
 def parse_name_field(input_dict):
@@ -190,6 +217,21 @@ def convert_relative_to_datetime(relative_time_string):
         return datetime.datetime.utcnow() + offset
     else:
         return datetime.datetime.utcnow() - offset
+
+
+def select_message_digest(digest_string):
+    digest = None
+    if digest_string == 'sha256':
+        digest = hashes.SHA256()
+    elif digest_string == 'sha384':
+        digest = hashes.SHA384()
+    elif digest_string == 'sha512':
+        digest = hashes.SHA512()
+    elif digest_string == 'sha1':
+        digest = hashes.SHA1()
+    elif digest_string == 'md5':
+        digest = hashes.MD5()
+    return digest
 
 
 @six.add_metaclass(abc.ABCMeta)

@@ -9,7 +9,7 @@ from re import split
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils._text import to_native

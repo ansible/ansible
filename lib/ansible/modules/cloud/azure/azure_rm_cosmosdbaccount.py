@@ -148,7 +148,7 @@ EXAMPLES = '''
   - name: Create Cosmos DB Account - min
     azure_rm_cosmosdbaccount:
       resource_group: myResourceGroup
-      name: ddb1
+      name: myDatabaseAccount
       location: westus
       geo_rep_locations:
         - name: southcentralus
@@ -158,7 +158,7 @@ EXAMPLES = '''
   - name: Create Cosmos DB Account - max
     azure_rm_cosmosdbaccount:
       resource_group: myResourceGroup
-      name: ddb1
+      name: myDatabaseAccount
       location: westus
       kind: mongo_db
       geo_rep_locations:
@@ -168,7 +168,8 @@ EXAMPLES = '''
       ip_range_filter: 10.10.10.10
       enable_multiple_write_locations: yes
       virtual_network_rules:
-        - subnet: /subscriptions/subId/resourceGroups/rg/providers/Microsoft.Network/virtualNetworks/vnet1/subnets/subnet1
+        - subnet: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVi
+                   rtualNetwork/subnets/mySubnet"
       consistency_policy:
         default_consistency_level: bounded_staleness
         max_staleness_prefix: 10
@@ -181,7 +182,8 @@ id:
         - The unique resource identifier of the database account.
     returned: always
     type: str
-    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/myData
+             baseAccount"
 '''
 
 import time
@@ -322,7 +324,14 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 self.parameters[key] = kwargs[key]
 
-        dict_camelize(self.parameters, ['kind'], True)
+        kind = self.parameters.get('kind')
+        if kind == 'global_document_db':
+            self.parameters['kind'] = 'GlobalDocumentDB'
+        elif kind == 'mongo_db':
+            self.parameters['kind'] = 'MongoDB'
+        elif kind == 'parse':
+            self.parameters['kind'] = 'Parse'
+
         dict_camelize(self.parameters, ['consistency_policy', 'default_consistency_level'], True)
         dict_rename(self.parameters, ['geo_rep_locations', 'name'], 'location_name')
         dict_rename(self.parameters, ['geo_rep_locations'], 'locations')

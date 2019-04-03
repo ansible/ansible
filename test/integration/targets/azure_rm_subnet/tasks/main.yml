@@ -48,6 +48,16 @@
 - assert:
     that: output.changed
 
+- name: Add the subnet back (idempontent)
+  azure_rm_subnet:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: not output.changed
+
 - name: Create network security group
   azure_rm_securitygroup:
     name: secgroupfoo
@@ -77,7 +87,6 @@
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
-    security_group: secgroupfoo
     service_endpoints:
       - service: Microsoft.Sql
         locations:
@@ -123,7 +132,6 @@
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
-    route_table: "{{ route_table.id }}"
     security_group: "{{ nsg.state.id }}"
     tags:
        testing: testing

@@ -89,7 +89,7 @@ options:
     description:
       - List of IPAM config blocks. Consult
         L(Docker docs,https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
-        Note that I(iprange) is spelled differently here (we use the notation from the Docker Python SDK).
+        Note that I(iprange) is spelled differently here (we use the notation from the Docker SDK for Python).
     type: list
     suboptions:
       subnet:
@@ -165,7 +165,7 @@ author:
   - "Dave Bendit (@DBendit)"
 
 requirements:
-  - "docker-py >= 1.10.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.10.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "The docker server >= 1.10.0"
 '''
 
@@ -268,7 +268,7 @@ try:
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 

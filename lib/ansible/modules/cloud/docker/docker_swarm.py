@@ -52,7 +52,7 @@ options:
       - Set to C(join), to join an existing cluster.
       - Set to C(absent), to leave an existing cluster.
       - Set to C(remove), to remove an absent node from the cluster.
-        Note that removing requires docker-py >= 2.4.0.
+        Note that removing requires Docker SDK for Python >= 2.4.0.
       - Set to C(inspect) to display swarm informations.
     type: str
     required: yes
@@ -164,7 +164,7 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
 requirements:
-  - "docker-py >= 1.10.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.10.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - Docker API >= 1.25
 author:
   - Thierry Bouvet (@tbouvet)
@@ -243,7 +243,7 @@ import json
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import (
@@ -412,7 +412,7 @@ class SwarmManager(DockerBaseClass):
 
         if self.state == 'inspect':
             self.client.module.deprecate(
-                "The 'inspect' state is deprecated, please use 'docker_swarm_facts' to inspect swarm cluster",
+                "The 'inspect' state is deprecated, please use 'docker_swarm_info' to inspect swarm cluster",
                 version='2.12')
 
         choice_map.get(self.state)()

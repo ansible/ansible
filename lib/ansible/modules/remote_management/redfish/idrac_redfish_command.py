@@ -77,7 +77,7 @@ class IdracRedfishUtils(RedfishUtils):
         jobs = "Jobs"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
         result['ret'] = True

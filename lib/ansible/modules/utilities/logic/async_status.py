@@ -35,7 +35,6 @@ options:
 notes:
 - This module is also supported for Windows targets.
 seealso:
-- module: async_wrapper
 - ref: playbooks_async
   description: Detailed information on how to use asynchronous actions and polling.
 author:
