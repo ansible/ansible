@@ -23,41 +23,41 @@ description:
 options:
     name:
         description:
-            - object-group name
+            - Name of the object group.
         required: true
     group_type:
         description:
-            - object-group type
+            - The object group type.
         choices: ['network-object', 'service-object', 'port-object']
         required: true
     protocol:
         description:
-            - protocol for object-group service with port-object
+            - The protocol for object-group service with port-object.
         choices: ['udp', 'tcp', 'tcp-udp']
     host_ip:
         description:
-            - host ip address for object-group network i.e. "network-object host 8.8.8.8"
+            - The host IP address for object-group network.
         type: list
     description:
         description:
-            - object-group description
+            - The description for the object-group.
     group_object:
         description:
-            - group-object for network object-group i.e. "network-object object-group ansible_test"
+            - The group-object for network object-group.
         type: list
     ip_mask:
         description:
-            - IP address and mask for network object-group i.e. "network-object 192.168.0.0 255.255.0.0"
+            - The IP address and mask for network object-group.
         type: list
     port_range:
         description:
-            - port range for port-object i.e. "port-object range 0 1024"
+            - The port range for port-object.
     port_eq:
         description:
-            - single port for port-object i.e. "port-object eq www"
+            - The single port for port-object.
     service_cfg:
         description:
-            - service-object configuration protocol/direction/range,port/port
+            - The service-object configuration protocol, direction, range or port.
     state:
         description:
             - Manage the state of the resource.
@@ -125,13 +125,13 @@ commands:
     "group-object awx_ams",
     ]
 """
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
-from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
-from ansible.module_utils.network.common.config import NetworkConfig, dumps
 import re
 import sys
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.asa.asa import check_args
+from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 class Parser():
