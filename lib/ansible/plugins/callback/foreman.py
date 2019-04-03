@@ -106,6 +106,17 @@ def build_log(data):
         }
 
 
+def get_time():
+    """
+    Return the time for measuring duration. Prefers monotonic time but
+    falls back to the regular time on older Python versions.
+    """
+    try:
+        return time.monotonic()
+    except AttributeError:
+        return time.time()
+
+
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
@@ -118,7 +129,7 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
         self.items = defaultdict(list)
         self.facts = defaultdict(dict)
-        self.start_time = int(time.time())
+        self.start_time = get_time()
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
@@ -204,7 +215,7 @@ class CallbackModule(CallbackBase):
             status["failed"] = total['failures'] + total['unreachable']
             status["skipped"] = total['skipped']
             log = list(build_log(self.items[host]))
-            metrics["time"] = {"total": int(time.time()) - self.start_time}
+            metrics["time"] = {"total": int(get_time() - self.start_time)}
             now = datetime.now().strftime(self.TIME_FORMAT)
             report = {
                 "config_report": {
