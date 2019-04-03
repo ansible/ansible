@@ -20,7 +20,6 @@ author:
 short_description: Manage object groups on a Cisco ASA
 description:
     - This module allows you to create and update object-group network/service on Cisco ASA device.
-extends_documentation_fragment: asa
 options:
     name:
         description:
