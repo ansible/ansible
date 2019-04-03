@@ -682,6 +682,10 @@ def main():
                     # of existing attributes. Get rid of them:
 
                     if src_has_acls:
+                        # FIXME If dest has any default ACLs, there are not applied to src now because
+                        # they were overridden by copystat. Should/can we do anything about this?
+                        # 'system.posix_acl_default' in os.listxattr(os.path.dirname(b_dest))
+
                         try:
                             clear_facls(dest)
                         except ValueError as e:
@@ -698,19 +702,6 @@ def main():
                                 pass
                             else:
                                 raise
-
-                        # The default ACLs are not applied because we copied metadata that tells
-                        # what the ACLs are (default ACLs were overridden via copystat).
-                        # However, if the file did not start with any ACLs,
-                        # it will end up with the default ACLs.
-                        try:
-                            dest_dir_has_default_acls = 'system.posix_acl_default' in os.listxattr(os.path.dirname(b_dest))
-                        except OSError as e:
-                            dest_dir_has_default_acls = True
-
-                        if dest_dir_has_default_acls:
-                            # FIXME take care of default ACLs? how?
-                            pass
 
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
