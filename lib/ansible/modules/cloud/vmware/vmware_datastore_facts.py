@@ -214,7 +214,8 @@ class PyVmomiCache(object):
         if confine_to_datacenter:
             if hasattr(objects, 'items'):
                 # resource pools come back as a dictionary
-                for k, v in objects.items():
+                items = list(objects.items())
+                for k, v in items:
                     parent_dc = get_parent_datacenter(k)
                     if parent_dc.name != self.dc_name:
                         objects.pop(k, None)
