@@ -198,9 +198,10 @@ options:
     description:
     - The cluster this node pool belongs to.
     - 'This field represents a link to a Cluster resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_container_cluster
-      task and then set this cluster field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_container_cluster task and then set this cluster field to "{{ name-of-resource
+      }}"'
     required: true
   location:
     description:
@@ -413,7 +414,7 @@ cluster:
   description:
   - The cluster this node pool belongs to.
   returned: success
-  type: str
+  type: dict
 location:
   description:
   - The location where the node pool is deployed.
@@ -462,7 +463,7 @@ def main():
             management=dict(
                 type='dict', options=dict(auto_upgrade=dict(type='bool'), auto_repair=dict(type='bool'), upgrade_options=dict(type='dict', options=dict()))
             ),
-            cluster=dict(required=True),
+            cluster=dict(required=True, type='dict'),
             location=dict(required=True, type='str', aliases=['region', 'zone']),
         )
     )

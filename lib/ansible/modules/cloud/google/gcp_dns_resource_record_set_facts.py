@@ -44,9 +44,10 @@ options:
     description:
     - Identifies the managed zone addressed by this request.
     - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_dns_managed_zone
-      task and then set this managed_zone field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_dns_managed_zone task and then set this managed_zone field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -91,7 +92,7 @@ items:
       description:
       - Identifies the managed zone addressed by this request.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################
@@ -106,7 +107,7 @@ import json
 
 
 def main():
-    module = GcpModule(argument_spec=dict(managed_zone=dict(required=True)))
+    module = GcpModule(argument_spec=dict(managed_zone=dict(required=True, type='dict')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
