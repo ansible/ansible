@@ -168,7 +168,7 @@ Blocks only deal with 'failed' status of a task. A bad task definition or an unr
         - debug:
             msg: 'I caught an error, can do stuff here to fix it, :-)'
 
-This will 'revert' the failed status of the task for the run and the play will continue as if it had succeeded. 
+This will 'revert' the failed status of the outer ``block`` task for the run and the play will continue as if it had succeeded. 
 See :ref:`block_error_handling` for more examples.
 
 .. seealso::
