@@ -33,7 +33,7 @@ notes:
     - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
     - Revision Comments April 2nd 2019
         - Couldn't append to installation target list, only send a complete list. We've added modes for adding and
-          deleting just targets for policy packages.
+          deleting targets for policy packages.
         - Install mode has been added. Scope_members is no longer taken into account when mode = install.
           Only the existing installation targets on the package will be used. Update installation targets before.
         - Nested folders and packages now work properly. Before they were not.
