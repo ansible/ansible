@@ -43,36 +43,6 @@ options:
     type: bool
     default: yes
     version_added: "2.0"
-  headers:
-    description:
-    - Add custom HTTP headers to a request (as a dictionary).
-    type: dict
-    version_added: '2.4'
-  url_username:
-    description:
-    - Basic authentication username.
-    type: str
-    aliases: [ username ]
-  url_password:
-    description:
-    - Basic authentication password.
-    type: str
-    aliases: [ password ]
-  force_basic_auth:
-    description:
-    - If C(yes), will add a Basic authentication header on the initial request.
-    - If C(no), will use Microsoft's WebClient to handle authentication.
-    type: bool
-    default: no
-    version_added: "2.5"
-  validate_certs:
-    description:
-    - If C(no), SSL certificates will not be validated. This should only be used
-      on personally controlled sites using self-signed certificates.
-    - If C(skip_certificate_validation) was set, it overrides this option.
-    type: bool
-    default: yes
-    version_added: '2.4'
   checksum:
     description:
       - If a I(checksum) is passed to this parameter, the digest of the
@@ -103,34 +73,6 @@ options:
       - This option cannot be set with I(checksum).
     type: str
     version_added: "2.8"
-  proxy_url:
-    description:
-    - The full URL of the proxy server to download through.
-    type: str
-    version_added: "2.0"
-  proxy_username:
-    description:
-    - Proxy authentication username.
-    type: str
-    version_added: "2.0"
-  proxy_password:
-    description:
-    - Proxy authentication password.
-    type: str
-    version_added: "2.0"
-  use_proxy:
-    description:
-    - If C(no), it will not use a proxy, even if one is defined in an environment
-      variable on the target hosts.
-    type: bool
-    default: yes
-    version_added: '2.4'
-  timeout:
-    description:
-    - Timeout in seconds for URL request.
-    type: int
-    default: 10
-    version_added : '2.4'
 notes:
 - If your URL includes an escaped slash character (%2F) this module will convert it to a real slash.
   This is a result of the behaviour of the System.Uri class as described in
@@ -138,6 +80,8 @@ notes:
 - Since Ansible 2.8, the module will skip reporting a change if the remote
   checksum is the same as the local local even when C(force=yes). This is to
   better align with M(get_url).
+extends_documentation_fragment:
+- url_windows
 seealso:
 - module: get_url
 - module: uri
