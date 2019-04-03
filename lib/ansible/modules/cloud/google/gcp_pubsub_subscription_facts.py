@@ -67,7 +67,7 @@ items:
       description:
       - A reference to a Topic resource.
       returned: success
-      type: str
+      type: dict
     labels:
       description:
       - A set of key/value label pairs to assign to this Subscription.
