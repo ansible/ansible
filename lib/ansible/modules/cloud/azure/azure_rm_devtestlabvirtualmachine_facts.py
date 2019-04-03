@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabvirtualmachine_info
+module: azure_rm_devtestlabvirtualmachine_facts
 version_added: "2.8"
 short_description: Get Azure DevTest Lab Virtual Machine facts.
 description:
@@ -47,7 +47,7 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of DTL Virtual Machine
-    azure_rm_devtestlabvirtualmachine_info:
+    azure_rm_devtestlabvirtualmachine_facts:
       resource_group: myResourceGroup
       lab_name: myLab
       name: myVm

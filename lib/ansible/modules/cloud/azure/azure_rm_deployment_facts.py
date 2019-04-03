@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_deployment_info
+module: azure_rm_deployment_facts
 version_added: "2.8"
 short_description: Get Azure Deployment facts.
 description:
@@ -40,7 +40,7 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of Deployment
-    azure_rm_deployment_info:
+    azure_rm_deployment_facts:
       resource_group: myResourceGroup
       name: myDeployment
 '''

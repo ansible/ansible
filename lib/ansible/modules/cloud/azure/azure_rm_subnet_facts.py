@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_subnet_info
+module: azure_rm_subnet_facts
 version_added: "2.8"
 short_description: Get Azure Subnet facts.
 description:
@@ -44,13 +44,13 @@ author:
 
 EXAMPLES = '''
   - name: Get facts of specific subnet
-    azure_rm_subnet_info:
+    azure_rm_subnet_facts:
       resource_group: myResourceGroup
       virtual_network_name: myVirtualNetwork
       name: mySubnet
 
   - name: List facts for all subnets in virtual network
-    azure_rm_subnet_info:
+    azure_rm_subnet_facts:
       resource_group: myResourceGroup
       virtual_network_name: myVirtualNetwork
       name: mySubnet

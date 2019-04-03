@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_cosmosdbaccount_info
+module: azure_rm_cosmosdbaccount_facts
 version_added: "2.8"
 short_description: Get Azure Cosmos DB Account facts.
 description:
@@ -53,7 +53,7 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of Database Account
-    azure_rm_cosmosdbaccount_info:
+    azure_rm_cosmosdbaccount_facts:
       resource_group: myResourceGroup
       name: testaccount
 

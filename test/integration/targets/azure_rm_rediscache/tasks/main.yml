@@ -37,7 +37,7 @@
       - output.id
 
 - name: Get facts
-  azure_rm_rediscache_info:
+  azure_rm_rediscache_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ redis_name }}"
   register: facts
@@ -190,7 +190,7 @@
       - output.id
 
 - name: Get facts
-  azure_rm_rediscache_info:
+  azure_rm_rediscache_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ redis_name }}2"
     return_access_keys: True
@@ -204,7 +204,7 @@
       - facts.rediscaches[0].access_keys.primary != None
 
 - name: Wait for Redis provisioning to complete
-  azure_rm_rediscache_info:
+  azure_rm_rediscache_facts:
       resource_group: "{{ resource_group }}"
       name: "{{ redis_name }}2"
   register: facts

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_applicationsecuritygroup_info
+module: azure_rm_applicationsecuritygroup_facts
 version_added: "2.8"
 short_description: Get Azure Application Security Group facts.
 description:
@@ -42,14 +42,14 @@ author:
 
 EXAMPLES = '''
   - name: List application security groups in specific resource group
-    azure_rm_applicationsecuritygroup_info:
+    azure_rm_applicationsecuritygroup_facts:
       resource_group: myResourceGroup
 
   - name: List application security groups in specific subscription
-    azure_rm_applicationsecuritygroup_info:
+    azure_rm_applicationsecuritygroup_facts:
 
   - name: Get application security group by name
-    azure_rm_applicationsecuritygroup_info:
+    azure_rm_applicationsecuritygroup_facts:
         resource_group: myResourceGroup
         name: myApplicationSecurityGroup
         tags:
