@@ -681,7 +681,8 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
-  $module_utils/hwc_utils.py: *huawei
+  $module_utils/hwc_utils.py:
+    maintainers: $team_huawei
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
