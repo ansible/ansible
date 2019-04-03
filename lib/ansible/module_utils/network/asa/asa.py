@@ -131,7 +131,7 @@ def run_commands(module, commands, check_rc=True):
 def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
-    # For new modules that will not have the provider dict
+    # Not all modules include the 'passwords' key.
     passwords = module.params.get('passwords', False)
     if passwords:
         cmd = 'more system:running-config'
