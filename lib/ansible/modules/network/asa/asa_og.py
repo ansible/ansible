@@ -1,9 +1,14 @@
 #!/usr/bin/python
-#
-# Copyright: Ansible Project
+# -*- coding: utf-8 -*-
+
+# (c) 2018, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+import re
+import sys
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -65,8 +70,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
 ---
 - name: configure network object-group
   asa_og:
@@ -83,7 +86,6 @@ EXAMPLES = """
     group_object:
       - awx_lon
       - awx_ams
-  register: result
 
 - name: configure port-object object-group
   asa_og:
@@ -98,7 +100,6 @@ EXAMPLES = """
     port_range:
       - 1025 5201
       - 0 1024
-  register: result
 
 - name: configure service-object object-group
   asa_og:
@@ -109,7 +110,6 @@ EXAMPLES = """
     service_cfg:
       - tcp destination eq 8080
       - tcp destination eq www
-  register: result
 """
 
 RETURN = """
@@ -133,10 +133,6 @@ commands:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
 from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
-from ansible.module_utils.network.common.config import NetworkConfig, dumps
-import re
-import sys
-__metaclass__ = type
 
 
 class Parser():
@@ -299,11 +295,23 @@ def map_config_to_obj(module):
     return obj
 
 
-def replace(want_dict):
+def replace(want_dict, have):
 
     commands = list()
     add_lines = list()
     remove_lines = list()
+
+    have_name = have[0].get('have_name')
+    have_group_type = have[0].get('have_group_type')
+    have_config = have[0].get('have_lines')
+    have_description = have[0].get('have_description')
+    have_host_ip = have[0].get('have_host_ip')
+    have_group_object = have[0].get('have_group_object')
+    have_ip_mask = have[0].get('have_ip_mask')
+    have_protocol = have[0].get('have_protocol')
+    have_port_range = have[0].get('have_port_range')
+    have_port_eq = have[0].get('have_port_eq')
+    have_service_cfg = have[0].get('have_service_cfg')
 
     name = want_dict['name']
     group_type = want_dict['group_type']
@@ -466,9 +474,21 @@ def replace(want_dict):
     return commands
 
 
-def present(want_dict):
+def present(want_dict, have):
 
     commands = list()
+
+    have_name = have[0].get('have_name')
+    have_group_type = have[0].get('have_group_type')
+    have_config = have[0].get('have_lines')
+    have_description = have[0].get('have_description')
+    have_host_ip = have[0].get('have_host_ip')
+    have_group_object = have[0].get('have_group_object')
+    have_ip_mask = have[0].get('have_ip_mask')
+    have_protocol = have[0].get('have_protocol')
+    have_port_range = have[0].get('have_port_range')
+    have_port_eq = have[0].get('have_port_eq')
+    have_service_cfg = have[0].get('have_service_cfg')
 
     name = want_dict['name']
     group_type = want_dict['group_type']
@@ -588,9 +608,21 @@ def present(want_dict):
     return commands
 
 
-def absent(want_dict):
+def absent(want_dict, have):
 
     commands = list()
+
+    have_name = have[0].get('have_name')
+    have_group_type = have[0].get('have_group_type')
+    have_config = have[0].get('have_lines')
+    have_description = have[0].get('have_description')
+    have_host_ip = have[0].get('have_host_ip')
+    have_group_object = have[0].get('have_group_object')
+    have_ip_mask = have[0].get('have_ip_mask')
+    have_protocol = have[0].get('have_protocol')
+    have_port_range = have[0].get('have_port_range')
+    have_port_eq = have[0].get('have_port_eq')
+    have_service_cfg = have[0].get('have_service_cfg')
 
     name = want_dict['name']
     group_type = want_dict['group_type']
@@ -682,39 +714,6 @@ def absent(want_dict):
 
 def map_obj_to_commands(want, have, module):
 
-    global have_name
-    have_name = have[0].get('have_name')
-
-    global have_group_type
-    have_group_type = have[0].get('have_group_type')
-
-    global have_config
-    have_config = have[0].get('have_lines')
-
-    global have_description
-    have_description = have[0].get('have_description')
-
-    global have_host_ip
-    have_host_ip = have[0].get('have_host_ip')
-
-    global have_group_object
-    have_group_object = have[0].get('have_group_object')
-
-    global have_ip_mask
-    have_ip_mask = have[0].get('have_ip_mask')
-
-    global have_protocol
-    have_protocol = have[0].get('have_protocol')
-
-    global have_port_range
-    have_port_range = have[0].get('have_port_range')
-
-    global have_port_eq
-    have_port_eq = have[0].get('have_port_eq')
-
-    global have_service_cfg
-    have_service_cfg = have[0].get('have_service_cfg')
-
     for w in want:
 
         want_dict = dict()
@@ -732,11 +731,11 @@ def map_obj_to_commands(want, have, module):
         state = w['state']
 
         if state == 'replace':
-            return replace(want_dict)
+            return replace(want_dict, have)
         elif state == 'present':
-            return present(want_dict)
+            return present(want_dict, have)
         elif state == 'absent':
-            return absent(want_dict)
+            return absent(want_dict, have)
 
 
 def map_params_to_obj(module):
@@ -773,10 +772,11 @@ def main():
         port_range=dict(type='list'),
         port_eq=dict(type='list'),
         service_cfg=dict(type='list'),
-        state=dict(choices=['present', 'absent', 'replace'], default='replace')
+        state=dict(choices=['present', 'absent', 'replace'], default='present')
     )
 
     argument_spec.update(asa_argument_spec)
+
     required_if = [('group_type', 'port-object', ['protocol']),
                    ('group_type', 'service-object', ['service_cfg'])]
 
