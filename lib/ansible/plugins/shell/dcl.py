@@ -75,8 +75,8 @@ class ShellModule(ShModule):
         else:
             display = Display()
 
-    	    remote = None
-       	    unparsed = pathname
+            remote = None  
+            unparsed = pathname
             display.vvv(unparsed)
             if '::' in unparsed:
                 (remote, unparsed) = unparsed.split('::')
@@ -103,7 +103,7 @@ class ShellModule(ShModule):
                 (dirpart, unparsed) = unparsed.split(']')
                 dirpath = dirpart.split('[')[1].split('.')
             else:
-               dirpath =  []
+                dirpath =  []
 
             display.vvv(unparsed)
             if ';' in unparsed:
@@ -138,17 +138,17 @@ class ShellModule(ShModule):
     prot_table = ['', ':E', ':WD', ':WED', ':R', ':RE', ':RWD', ':RWED']
     prot_chars = {'r': ':R', 'w': ':WD', 'x': ':E', 'rw': ':RWD', 'wr': ':RWD',
                   'rx': ':RE', 'xr': ':RE', 'wx': ':WED', 'xw': ':WED',
-                  'rwx': ':RWED', 'rxw': ':RWED', 'wrx': ':RWED', 'wrx': ':RWED',
+                  'rwx': ':RWED', 'rxw': ':RWED', 'wrx': ':RWED', 'wxr': ':RWED',
                   'xwr': ':RWED'}
 
     def unix2vms_mode(self, mode):
         display = Display()
         display.vvv('Handling mode' + mode)
-        prot = [ 'S:RWED' ]
+        prot = ['S:RWED']
         if type(mode) == 'int':
-            world = 'W' + self.prot_table[  imode        & 07]
-            group = 'G' + self.prot_table[( imode >> 3 ) & 07]
-            user  = 'U' + self.prot_table[( imode >> 6 ) & 07]
+            world = 'W' + self.prot_table[mode & 0o007]
+            group = 'G' + self.prot_table[(mode >> 3) & 0o007]
+            user  = 'U' + self.prot_table[(mode >> 6) & 0o007]
             prot.append([user, group, world])
         else:
             if '+' in mode:
