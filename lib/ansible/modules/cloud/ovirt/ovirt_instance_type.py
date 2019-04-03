@@ -174,45 +174,45 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
+# Create instance type
 - name: Create instence type
   ovirt_instance_type:
     state: present
-    name: myvm
-
-- name: ovirt_instance_type
-  ovirt_instance_type:
-    name: test2
+    name: myit
     rng_device: hwrng
     rng_bytes: 200
     rng_period: 200
     soundcard_enabled: true
     virtio_scsi: true
+    boot_devices:
+      - network
 
-# and attach bootable disk with name rhel7_disk and attach virtio NIC
+# Remove instance type
+- ovirt_instance_type:
+    state: absent
+    name: myit
+
+
+# Create instance type with predefined memory and cpu limits.
 - ovirt_instance_type:
     state: present
-    name: myvm
+    name: myit
     memory: 2GiB
     cpu_cores: 2
     cpu_sockets: 2
     nics:
       - name: nic1
 
-# If present state would be used, VM won't be restarted.
+# Enable usb suppport and serial console
 - ovirt_instance_type:
-    state: next_run
-    name: myvm
-    boot_devices:
-      - network
-
-- ovirt_instance_type:
-    name: myvm
+    name: myit
     usb_support: True
     serial_console: True
 
+# Use graphical console with spice and vnc
 - name: Create a VM that has the console configured for both Spice and VNC
   ovirt_instance_type:
-    name: myvm
+    name: myit
     graphical_console:
       protocol:
         - spice
@@ -459,7 +459,7 @@ class InstanceTypeModule(BaseModule):
 
     def post_present(self, entity_id):
         entity = self._service.service(entity_id).get()
-        #self.__attach_nics(entity)
+        self.__attach_nics(entity)
         self.changed = self.__attach_watchdog(entity)
         self.changed = self.__attach_graphical_console(entity)
 
@@ -483,7 +483,7 @@ class InstanceTypeModule(BaseModule):
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), getattr(entity.console, 'enabled', None)) and
             equal(self.param('usb_support'), entity.usb.enabled) and
-            equal(self.param('virtio_scsi'), entity.virtio_scsi.enabled) and
+            equal(self.param('virtio_scsi'), getattr(entity, 'smartcard_enabled', False)) and
             equal(self.param('high_availability'), entity.high_availability.enabled) and
             equal(self.param('high_availability_priority'), entity.high_availability.priority) and
             equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os.boot, 'devices', [])]) and
@@ -527,7 +527,7 @@ def main():
         virtio_scsi=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
         io_threads=dict(type='int', default=None),
-        nics=dict(type='list', default=None),
+        nics=dict(type='list', default=[]),
         ballooning_enabled=dict(type='bool', default=None),
     )
     module = AnsibleModule(
