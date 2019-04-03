@@ -130,7 +130,7 @@ def run_commands(module, commands, check_rc=True):
 def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
-    passwords = module.params['passwords']
+    passwords = module.params.get('passwords', False)
     if passwords:
         cmd = 'more system:running-config'
     else:
