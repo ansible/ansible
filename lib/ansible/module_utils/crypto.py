@@ -14,6 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+# --------------------------------------------------------------
+# A clearly marked portion of this file is licensed under the BSD
+# Copyright (c) 2015, 2016 Paul Kehrer (@reaperhulk)
+# Copyright (c) 2017 Fraser Tweedale (@frasertweedale)
+# For more details, search for the function _obj2txt().
 
 
 try:
@@ -36,6 +42,7 @@ except ImportError:
 
 
 import abc
+import base64
 import binascii
 import datetime
 import errno
@@ -377,6 +384,103 @@ def pyopenssl_normalize_name(name):
         b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
         name = to_text(OpenSSL._util.ffi.string(b_name))
     return _NORMALIZE_NAMES.get(name, name)
+
+
+# #####################################################################################
+# #####################################################################################
+# # This excerpt is dual licensed under the terms of the Apache License, Version
+# # 2.0, and the BSD License. See the LICENSE file at
+# # https://github.com/pyca/cryptography/blob/master/LICENSE for complete details.
+# #
+# # Adapted from cryptography's hazmat/backends/openssl/decode_asn1.py
+# #
+# # Copyright (c) 2015, 2016 Paul Kehrer (@reaperhulk)
+# # Copyright (c) 2017 Fraser Tweedale (@frasertweedale)
+# #
+# # Relevant commits from cryptography project (https://github.com/pyca/cryptography):
+# #    pyca/cryptography@719d536dd691e84e208534798f2eb4f82aaa2e07
+# #    pyca/cryptography@5ab6d6a5c05572bd1c75f05baf264a2d0001894a
+# #    pyca/cryptography@2e776e20eb60378e0af9b7439000d0e80da7c7e3
+# #    pyca/cryptography@fb309ed24647d1be9e319b61b1f2aa8ebb87b90b
+# #    pyca/cryptography@2917e460993c475c72d7146c50dc3bbc2414280d
+# #    pyca/cryptography@3057f91ea9a05fb593825006d87a391286a4d828
+# #    pyca/cryptography@d607dd7e5bc5c08854ec0c9baff70ba4a35be36f
+def _obj2txt(openssl_lib, openssl_ffi, obj):
+    # Set to 80 on the recommendation of
+    # https://www.openssl.org/docs/crypto/OBJ_nid2ln.html#return_values
+    #
+    # But OIDs longer than this occur in real life (e.g. Active
+    # Directory makes some very long OIDs).  So we need to detect
+    # and properly handle the case where the default buffer is not
+    # big enough.
+    #
+    buf_len = 80
+    buf = openssl_ffi.new("char[]", buf_len)
+
+    # 'res' is the number of bytes that *would* be written if the
+    # buffer is large enough.  If 'res' > buf_len - 1, we need to
+    # alloc a big-enough buffer and go again.
+    res = openssl_lib.OBJ_obj2txt(buf, buf_len, obj, 1)
+    if res > buf_len - 1:  # account for terminating null byte
+        buf_len = res + 1
+        buf = openssl_ffi.new("char[]", buf_len)
+        res = openssl_lib.OBJ_obj2txt(buf, buf_len, obj, 1)
+    return openssl_ffi.buffer(buf, res)[:].decode()
+# #####################################################################################
+# #####################################################################################
+
+
+def cryptography_get_extensions_from_cert(cert):
+    # Since cryptography won't give us the DER value for an extension
+    # (that is only stored for unrecognized extensions), we have to re-do
+    # the extension parsing outselves.
+    result = dict()
+    backend = cert._backend
+    x509_obj = cert._x509
+
+    for i in range(backend._lib.X509_get_ext_count(x509_obj)):
+        ext = backend._lib.X509_get_ext(x509_obj, i)
+        if ext == backend._ffi.NULL:
+            continue
+        crit = backend._lib.X509_EXTENSION_get_critical(ext)
+        data = backend._lib.X509_EXTENSION_get_data(ext)
+        backend.openssl_assert(data != backend._ffi.NULL)
+        der = backend._ffi.buffer(data.data, data.length)[:]
+        entry = dict(
+            critical=(crit == 1),
+            value=base64.b64encode(der),
+        )
+        oid = _obj2txt(backend._lib, backend._ffi, backend._lib.X509_EXTENSION_get_object(ext))
+        result[oid] = entry
+    return result
+
+
+def pyopenssl_get_extensions_from_cert(cert):
+    # While pyOpenSSL allows us to get an extension's DER value, it won't
+    # give us the dotted string for an OID. So we have to do some magic to
+    # get hold of it.
+    result = dict()
+    ext_count = cert.get_extension_count()
+    for i in range(0, ext_count):
+        ext = cert.get_extension(i)
+        entry = dict(
+            critical=bool(ext.get_critical()),
+            value=base64.b64encode(ext.get_data()),
+        )
+        oid = _obj2txt(
+            OpenSSL._util.lib,
+            OpenSSL._util.ffi,
+            OpenSSL._util.lib.X509_EXTENSION_get_object(ext._extension)
+        )
+        # This could also be done a bit simpler:
+        #
+        #   oid = _obj2txt(OpenSSL._util.lib, OpenSSL._util.ffi, OpenSSL._util.lib.OBJ_nid2obj(ext._nid))
+        #
+        # Unfortunately this gives the wrong result in case the linked OpenSSL
+        # doesn't know the OID. That's why we have to get the OID dotted string
+        # similarly to how cryptography does it.
+        result[oid] = entry
+    return result
 
 
 def crpytography_name_to_oid(name):
