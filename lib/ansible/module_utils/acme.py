@@ -119,9 +119,10 @@ def write_file(module, dest, content):
             raise ModuleFailException("Destination %s not readable" % (dest))
         checksum_dest = module.sha1(dest)
     else:
-        if not os.access(os.path.dirname(dest), os.W_OK):
+        dirname = os.path.dirname(dest) or '.'
+        if not os.access(dirname, os.W_OK):
             os.remove(tmpsrc)
-            raise ModuleFailException("Destination dir %s not writable" % (os.path.dirname(dest)))
+            raise ModuleFailException("Destination dir %s not writable" % (dirname))
     if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
