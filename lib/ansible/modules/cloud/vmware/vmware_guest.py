@@ -1328,10 +1328,6 @@ class PyVmomiHelper(PyVmomi):
                         self.module.fail_json(msg="Changing the device type is not possible when interface is already present. "
                                                   "The failing device type is %s" % network_devices[key]['device_type'])
                 if 'mac' in network_devices[key] and nic.device.macAddress != network_devices[key]['mac']:
-                    if not PyVmomiDeviceHelper.is_valid_mac_addr(network_devices[key]['mac']):
-                        self.module.fail_json(msg="Device MAC address '%s' is invalid."
-                                                  " Please provide correct MAC address." % network_devices[key]['mac'])
-
                     nic.device.addressType = 'manual'
                     nic.device.macAddress = network_devices[key]['mac']
                     nic_change_detected = True
