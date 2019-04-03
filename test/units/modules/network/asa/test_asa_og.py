@@ -91,7 +91,7 @@ class TestAsaOgModule(TestAsaModule):
         ))
         commands = [
             'object-group network test_nets',
-            'description ansible_test custom description'
+            'description ansible_test custom description',
             'no network-object host 8.8.8.8',
             'network-object host 8.8.4.4',
             'no network-object 192.168.0.0 255.255.0.0',
