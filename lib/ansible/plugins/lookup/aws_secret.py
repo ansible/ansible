@@ -36,6 +36,9 @@ options:
         - This is useful for overcoming the 4096 character limit imposed by AWS.
     type: boolean
     default: false
+  region:
+    description: AWS region in which to do the lookup
+    required: false
 """
 
 EXAMPLES = r"""
