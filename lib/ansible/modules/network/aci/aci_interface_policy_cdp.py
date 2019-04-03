@@ -15,7 +15,7 @@ module: aci_interface_policy_cdp
 short_description: Manage CDP interface policies (cdp:IfPol)
 description:
 - Manage CDP interface policies on Cisco ACI fabrics.
-version_added: '2.9'
+version_added: '2.8'
 options:
   cdp_policy:
     description:
