@@ -131,9 +131,10 @@ options:
     - The source snapshot used to create this disk. You can provide this as a partial
       or full URL to the resource.
     - 'This field represents a link to a Snapshot resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_snapshot
-      task and then set this source_snapshot field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_snapshot task and then set this source_snapshot field to "{{
+      name-of-resource }}"'
     required: false
   source_snapshot_encryption_key:
     description:
@@ -293,7 +294,7 @@ sourceSnapshot:
   - The source snapshot used to create this disk. You can provide this as a partial
     or full URL to the resource.
   returned: success
-  type: str
+  type: dict
 sourceSnapshotEncryptionKey:
   description:
   - The customer-supplied encryption key of the source snapshot. Required if the source
@@ -354,7 +355,7 @@ def main():
             type=dict(type='str'),
             region=dict(required=True, type='str'),
             disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
-            source_snapshot=dict(),
+            source_snapshot=dict(type='dict'),
             source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
         )
     )
