@@ -1,3 +1,8 @@
+#!/usr/bin/python
+#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -153,7 +158,6 @@ class Parser():
 
             return description
 
-
     def parse_host(self):
         list_return = list()
         match = re.findall(r'(host\s)(\d+\.\d+\.\d+\.\d+)', self.config, re.M)
@@ -164,7 +168,6 @@ class Parser():
                     list_return.append(str(i[1]))
 
         return list_return
-
 
     def parse_group_object(self):
         list_return = list()
@@ -277,7 +280,6 @@ def map_config_to_obj(module):
     elif have_service_cfg is None:
         obj_dict['have_service_cfg'] = have_service_cfg
 
-
     obj.append(obj_dict)
 
     return obj
@@ -379,7 +381,6 @@ def replace(want_dict):
             if description:
                 commands.append('description {0}'.format(description))
 
-
         elif 'port' in have_group_type and have_protocol == protocol:
 
             if port_range:
@@ -466,7 +467,6 @@ def present(want_dict):
     port_eq = want_dict['port_eq']
     service_cfg = want_dict['service_cfg']
 
-
     if 'network-object' in group_type:
 
         if have_group_type is None:
@@ -480,7 +480,7 @@ def present(want_dict):
                     commands.append('description {0}'.format(description))
             if group_object:
                 for i in group_object:
-                        commands.append('group-object ' + i)
+                    commands.append('group-object ' + i)
             if address:
                 for i in address:
                     commands.append('network-object ' + i)
@@ -524,7 +524,6 @@ def present(want_dict):
                     commands.append('port-object eq ' + i)
             if description:
                 commands.append('description {0}'.format(description))
-
 
         elif 'port' in have_group_type and have_protocol == protocol:
 
@@ -625,7 +624,6 @@ def absent(want_dict):
 
         if have_group_type is None and have_protocol is None:
             return commands
-
 
         elif 'port' in have_group_type and have_protocol == protocol:
 
