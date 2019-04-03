@@ -238,10 +238,10 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_unreachable(self, result):
         self.append_result(result)
 
-    def v2_runner_on_async_ok(self, result, jid):
+    def v2_runner_on_async_ok(self, result):
         self.append_result(result)
 
-    def v2_runner_on_async_failed(self, result, jid):
+    def v2_runner_on_async_failed(self, result):
         self.append_result(result)
 
     def v2_playbook_on_stats(self, stats):
