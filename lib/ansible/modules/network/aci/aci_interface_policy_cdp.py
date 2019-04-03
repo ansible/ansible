@@ -22,7 +22,7 @@ options:
     - The CDP interface policy name.
     type: str
     required: yes
-    aliases: [ name ]
+    aliases: [ cdp_interface, name ]
   description:
     description:
     - The description for the CDP interface policy name.
@@ -173,12 +173,11 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-#    run_module()
     argument_spec = aci_argument_spec()
     argument_spec.update(
         cdp_policy=dict(type='str', required=False, aliases=['cdp_interface', 'name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        admin_state=dict(type='bool'),  
+        admin_state=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -197,7 +196,6 @@ def main():
     description = module.params['description']
     admin_state = aci.boolean(module.params['admin_state'], 'enabled', 'disabled')
     state = module.params['state']
-
 
     aci.construct_url(
         root_class=dict(
