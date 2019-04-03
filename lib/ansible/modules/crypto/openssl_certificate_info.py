@@ -193,6 +193,11 @@ signature_algorithm:
     returned: success
     type: str
     sample: sha256WithRSAEncryption
+serial_number:
+    description: The certificate's serial number.
+    returned: success
+    type: int
+    sample: 1234
 version:
     description: The certificate version.
     returned: success
@@ -359,6 +364,10 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
         pass
 
     @abc.abstractmethod
+    def _get_serial_number(self):
+        pass
+
+    @abc.abstractmethod
     def _get_all_extensions(self):
         pass
 
@@ -390,6 +399,7 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
         result['public_key'] = self._get_public_key(binary=False)
         result['public_key_fingerprints'] = crypto_utils.get_fingerprint_of_bytes(self._get_public_key(binary=True))
 
+        result['serial_number'] = self._get_serial_number()
         result['extensions_by_oid'] = self._get_all_extensions()
 
         return result
@@ -515,6 +525,9 @@ class CertificateInfoCryptography(CertificateInfo):
             serialization.PublicFormat.SubjectPublicKeyInfo
         )
 
+    def _get_serial_number(self):
+        return self.cert.serial_number
+
     def _get_all_extensions(self):
         return crypto_utils.cryptography_get_extensions_from_cert(self.cert)
 
@@ -612,6 +625,9 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
         except AttributeError:
             self.module.warn('Your pyOpenSSL version does not support dumping public keys. '
                              'Please upgrade to version 16.0 or newer, or use the cryptography backend.')
+
+    def _get_serial_number(self):
+        return self.cert.get_serial_number()
 
     def _get_all_extensions(self):
         return crypto_utils.pyopenssl_get_extensions_from_cert(self.cert)
