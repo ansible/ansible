@@ -86,7 +86,7 @@ def get_connection(module):
         return _CONNECTION
     _CONNECTION = Connection(module._socket_path)
 
-    # For new modules that will not have the provider dict
+    # Not all modules include the 'context' key.
     context = module.params.get('context')
 
     if context:
