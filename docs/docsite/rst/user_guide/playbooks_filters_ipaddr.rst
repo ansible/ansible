@@ -479,7 +479,7 @@ the first argument, the ``ipsubnet()`` filter will instead return the biggest su
 contains that given IP address::
 
     # {{ address | ipsubnet(20) }}
-    192.168.128.0/20
+    192.168.144.0/20
 
 By specifying an index number as a second argument, you can select smaller and
 smaller subnets::

@@ -188,6 +188,14 @@ options:
       task and then set this target field to "{{ name-of-resource }}"'
     required: false
     version_added: 2.7
+  all_ports:
+    description:
+    - When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit `port`/`port_range`
+      and specify this field as `true` to allow packets addressed to any ports to
+      be forwarded to the backends configured with this forwarding rule.
+    required: false
+    type: bool
+    version_added: 2.8
   network_tier:
     description:
     - 'The networking tier used for configuring this address. This field can take
@@ -198,6 +206,18 @@ options:
     choices:
     - PREMIUM
     - STANDARD
+  service_label:
+    description:
+    - An optional prefix to the service name for this Forwarding Rule.
+    - If specified, will be the first label of the fully qualified service name.
+    - The label must be 1-63 characters long, and comply with RFC1035.
+    - Specifically, the label must be 1-63 characters long and match the regular expression
+      `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
+      letter, and all following characters must be a dash, lowercase letter, or digit,
+      except the last character, which cannot be a dash.
+    - This field is only used for internal load balancing.
+    required: false
+    version_added: 2.8
   region:
     description:
     - A reference to the region where the regional forwarding rule resides.
@@ -374,11 +394,36 @@ target:
   - This field is not used for internal load balancing.
   returned: success
   type: str
+allPorts:
+  description:
+  - When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit `port`/`port_range`
+    and specify this field as `true` to allow packets addressed to any ports to be
+    forwarded to the backends configured with this forwarding rule.
+  returned: success
+  type: bool
 networkTier:
   description:
   - 'The networking tier used for configuring this address. This field can take the
     following values: PREMIUM or STANDARD. If this field is not specified, it is assumed
     to be PREMIUM.'
+  returned: success
+  type: str
+serviceLabel:
+  description:
+  - An optional prefix to the service name for this Forwarding Rule.
+  - If specified, will be the first label of the fully qualified service name.
+  - The label must be 1-63 characters long, and comply with RFC1035.
+  - Specifically, the label must be 1-63 characters long and match the regular expression
+    `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
+    letter, and all following characters must be a dash, lowercase letter, or digit,
+    except the last character, which cannot be a dash.
+  - This field is only used for internal load balancing.
+  returned: success
+  type: str
+serviceName:
+  description:
+  - The internal fully qualified service name for this Forwarding Rule.
+  - This field is only used for internal load balancing.
   returned: success
   type: str
 region:
@@ -420,7 +465,9 @@ def main():
             ports=dict(type='list', elements='str'),
             subnetwork=dict(),
             target=dict(),
+            all_ports=dict(type='bool'),
             network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
+            service_label=dict(type='str'),
             region=dict(required=True, type='str'),
         )
     )
@@ -499,7 +546,9 @@ def resource_to_request(module):
         u'ports': module.params.get('ports'),
         u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
         u'target': replace_resource_dict(module.params.get(u'target', {}), 'selfLink'),
+        u'allPorts': module.params.get('all_ports'),
         u'networkTier': module.params.get('network_tier'),
+        u'serviceLabel': module.params.get('service_label'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -579,7 +628,10 @@ def response_to_hash(module, response):
         u'ports': response.get(u'ports'),
         u'subnetwork': response.get(u'subnetwork'),
         u'target': response.get(u'target'),
+        u'allPorts': response.get(u'allPorts'),
         u'networkTier': module.params.get('network_tier'),
+        u'serviceLabel': response.get(u'serviceLabel'),
+        u'serviceName': response.get(u'serviceName'),
     }
 
 

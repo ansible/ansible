@@ -124,6 +124,9 @@ files:
     labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
+  $modules/cloud/docker/docker_compose.py:
+    <<: *docker
+    maintainers: $team_docker sluther
   $modules/cloud/docker/docker_network.py:
     <<: *docker
     maintainers: $team_docker olsaki
@@ -139,6 +142,10 @@ files:
     keywords: [ hcloud, hetzner cloud ]
     labels: [ cloud, hcloud ]
     maintainers: $team_hcloud
+  $modules/cloud/huawei/: &huawei
+    keywords: [ cloud, huawei, hwc ]
+    labels: [ cloud, huawei ]
+    maintainers: $team_huawei
   $modules/cloud/kubevirt/: machacekondra mmazur pkliczewski
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
@@ -674,6 +681,7 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
+  $module_utils/hwc_utils.py: *huawei
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -1089,6 +1097,7 @@ files:
     support: community
     supershipit: $team_google
     maintainers: $team_google
+  $plugins/doc_fragments/hwc.py: *huawei
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
@@ -1096,6 +1105,8 @@ files:
   $plugins/doc_fragments/proxysql.py: *mysql
   $plugins/doc_fragments/ucs.py: *ucs
   $plugins/doc_fragments/vultr.py: *vultr
+  $plugins/doc_fragments/ovirt.py: *ovirt
+  $plugins/doc_fragments/ovirt_facts.py: *ovirt
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
@@ -1127,6 +1138,9 @@ files:
   $plugins/inventory/__init__.py:
     support: core
   $plugins/inventory/docker: *docker
+  $plugins/inventory/docker_swarm.py:
+    <<: *docker
+    maintainers: $team_docker morph027
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
@@ -1202,6 +1216,8 @@ files:
   $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
+  $plugins/lookup/manifold:
+    maintainers: galanoff
 ###############################
 # plugins/netconf
   $plugins/netconf/:
@@ -1332,6 +1348,7 @@ files:
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
+  test/integration/targets/hwc_: *huawei
   test/integration/targets/inventory_docker: *docker
   test/integration/targets/inventory_docker_swarm:
     <<: *docker
@@ -1369,6 +1386,7 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
+  test/units/module_utils/hwc: *huawei
   test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
@@ -1420,6 +1438,7 @@ macros:
   team_google: rambleraptor erjohnso
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
+  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang
   team_imc: dagwieers
   team_intersight: dsoper2 movinalot
   team_ios: rcarrillocruz

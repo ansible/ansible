@@ -216,11 +216,14 @@ try:
 except ImportError:
     HAS_B64 = False
 
+HAS_PARAMIKO = True
 try:
     import paramiko
-    HAS_PARAMIKO = True
 except ImportError:
-    HAS_PARAMIKO = False
+    try:
+        import ansible_paramiko as paramiko
+    except ImportError:
+        HAS_PARAMIKO = False
 
 
 class PublicKeyManager(object):

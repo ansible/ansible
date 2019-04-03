@@ -62,10 +62,17 @@ options:
                launch flow. Without using a DataVolume, users have to prepare a pvc with a disk image before assigning
                it to a VM or VMI manifest. With a DataVolume, both the pvc creation and import is automated on behalf of the user."
         type: list
+    template:
+        description:
+            - "Template to used to create a virtual machine."
+        type: str
+    template_parameters:
+        description:
+            - "Value of parameters to be replaced in template parameters."
+        type: dict
 
 extends_documentation_fragment:
   - k8s_auth_options
-  - k8s_resource_options
   - kubevirt_vm_options
   - kubevirt_common_options
 
@@ -210,7 +217,7 @@ kubevirt_vm:
 import copy
 import traceback
 
-from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
+from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 
 try:
     from openshift.dynamic.client import ResourceInstance
@@ -235,6 +242,8 @@ VM_ARG_SPEC = {
         'default': 'present'
     },
     'datavolumes': {'type': 'list'},
+    'template': {'type': 'str'},
+    'template_parameters': {'type': 'dict'},
 }
 
 
@@ -243,8 +252,7 @@ class KubeVirtVM(KubeVirtRawModule):
     @property
     def argspec(self):
         """ argspec property builder """
-        argument_spec = copy.deepcopy(COMMON_ARG_SPEC)
-        argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
+        argument_spec = copy.deepcopy(AUTH_ARG_SPEC)
         argument_spec.update(VM_COMMON_ARG_SPEC)
         argument_spec.update(VM_ARG_SPEC)
         return argument_spec
@@ -310,6 +318,7 @@ class KubeVirtVM(KubeVirtRawModule):
 
     def execute_module(self):
         # Parse parameters specific for this module:
+        self.client = self.get_api_client()
         definition = virtdict()
         ephemeral = self.params.get('ephemeral')
         state = self.params.get('state')
@@ -317,10 +326,31 @@ class KubeVirtVM(KubeVirtRawModule):
         if not ephemeral:
             definition['spec']['running'] = state == 'running'
 
-        # Execute the CURD of VM:
-        template = definition['spec']['template']
+        # Construct the API object definition:
+        vm_template = self.params.get('template')
+        processedtemplate = {}
+        if vm_template:
+            # Find the template the VM should be created from:
+            template_resource = self.client.resources.get(api_version='template.openshift.io/v1', kind='Template', name='templates')
+            proccess_template = template_resource.get(name=vm_template, namespace=self.params.get('namespace'))
+
+            # Set proper template values set by Ansible parameter 'parameters':
+            for k, v in self.params.get('template_parameters', {}).items():
+                for parameter in proccess_template.parameters:
+                    if parameter.name == k:
+                        parameter.value = v
+
+            # Proccess the template:
+            processedtemplates_res = self.client.resources.get(api_version='template.openshift.io/v1', kind='Template', name='processedtemplates')
+            processedtemplate = processedtemplates_res.create(proccess_template.to_dict()).to_dict()['objects'][0]
+
+        template = definition if ephemeral else definition['spec']['template']
         kind = 'VirtualMachineInstance' if ephemeral else 'VirtualMachine'
+        template['labels']['vm.cnv.io/name'] = self.params.get('name')
         dummy, definition = self.construct_vm_definition(kind, definition, template)
+        definition = dict(self.merge_dicts(processedtemplate, definition))
+
+        # Create the VM:
         result = self.execute_crud(kind, definition)
         changed = result['changed']
 

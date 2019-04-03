@@ -202,4 +202,69 @@
   ignore_errors: yes
   register: passphrase_error_3
 
+- name: Create broken certificate
+  copy:
+    dest: "{{ output_dir }}/ownca_broken.pem"
+    content: "broken"
+- name: Regenerate broken cert
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_broken.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+  register: ownca_broken
+
+- name: (OwnCA, {{select_crypto_backend}}) Backup test
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_1
+- name: (OwnCA, {{select_crypto_backend}}) Backup test (idempotent)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_2
+- name: (OwnCA, {{select_crypto_backend}}) Backup test (change)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_3
+- name: (OwnCA, {{select_crypto_backend}}) Backup test (remove)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    state: absent
+    provider: ownca
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_4
+- name: (OwnCA, {{select_crypto_backend}}) Backup test (remove, idempotent)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    state: absent
+    provider: ownca
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_5
+
 - import_tasks: ../tests/validate_ownca.yml

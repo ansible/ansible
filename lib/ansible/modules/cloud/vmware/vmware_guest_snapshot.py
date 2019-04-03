@@ -133,7 +133,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: snap1
@@ -146,7 +146,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: absent
       snapshot_name: snap1
@@ -158,7 +158,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: revert
       snapshot_name: snap1
@@ -170,7 +170,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: remove_all
     delegate_to: localhost
@@ -181,7 +181,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: dummy_vm_snap_0001
@@ -195,7 +195,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: absent
       remove_children: yes
@@ -208,7 +208,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: current_snap_name

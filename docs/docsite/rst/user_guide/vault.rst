@@ -1,3 +1,5 @@
+.. _vault:
+
 Ansible Vault
 =============
 
@@ -412,24 +414,29 @@ For example::
 
     $ANSIBLE_VAULT;1.1;AES256
 
+or::
 
-The header contains the vault format id, the vault format version, and a cipher id, separated by semi-colons ';'
+    $ANSIBLE_VAULT;1.2;AES256;vault-id-label
+
+The header contains the vault format id, the vault format version, the vault cipher, and a vault-id label (with format version 1.2), separated by semi-colons ';'
 
 The first field ``$ANSIBLE_VAULT`` is the format id. Currently ``$ANSIBLE_VAULT`` is the only valid file format id. This is used to identify files that are vault encrypted (via vault.is_encrypted_file()).
 
-The second field (`1.1`) is the vault format version. All supported versions of ansible will currently default to '1.1'.
+The second field (``1.X``) is the vault format version. All supported versions of ansible will currently default to '1.1' or '1.2' if a labeled vault-id is supplied. 
 
 The '1.0' format is supported for reading only (and will be converted automatically to the '1.1' format on write). The format version is currently used as an exact string compare only (version numbers are not currently 'compared').
 
 The third field (``AES256``) identifies the cipher algorithm used to encrypt the data. Currently, the only supported cipher is 'AES256'. [vault format 1.0 used 'AES', but current code always uses 'AES256']
+
+The fourth field (``vault-id-label``) identifies the vault-id label used to encrypt the data. For example using a vault-id of ``dev@prompt`` results in a vault-id-label of 'dev' being used.
 
 Note: In the future, the header could change. Anything after the vault id and version can be considered to depend on the vault format version. This includes the cipher id, and any additional fields that could be after that.
 
 The rest of the content of the file is the 'vaulttext'. The vaulttext is a text armored version of the
 encrypted ciphertext. Each line will be 80 characters wide, except for the last line which may be shorter.
 
-Vault Payload Format 1.1
-````````````````````````
+Vault Payload Format 1.1 - 1.2
+``````````````````````````````
 
 The vaulttext is a concatenation of the ciphertext and a SHA256 digest with the result 'hexlifyied'.
 

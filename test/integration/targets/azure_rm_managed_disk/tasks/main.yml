@@ -11,6 +11,7 @@
        state: absent
    with_items:
      - "md{{ rpfx }}os"
+     - "md{{ rpfx }}3"
      - "md{{ rpfx }}2"
      - "md{{ rpfx }}1"
 
@@ -59,8 +60,28 @@
    assert:
      that:
        - output.changed
+       - output.state.disk_size_gb == 1
        - output.state.id is defined
        - output.state.os_type == None
+       - output.state.storage_account_type == "Standard_LRS"
+
+ - name: Create new managed disk with zone
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}3"
+       storage_account_type: "Standard_LRS"
+       disk_size_gb: 1
+       zone: 1
+       tags:
+           testing: testing
+           delete: never
+   register: output
+
+ - name: Assert status succeeded and results include an zone value
+   assert:
+     that:
+       - output.changed
+       - output.state.zone == ["1"] 
 
  - name: Change the operating system type of the managed disk to linux
    azure_rm_managed_disk:
@@ -145,11 +166,11 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
-       disk_size_gb: 30000
+       disk_size_gb: 3000000
    register: output
    ignore_errors: yes
 
- - name: Assert disk size change to incompatible size (>4095)  failure
+ - name: Assert disk size change to incompatible size failure
    assert: { that: "output['failed'] == True" }
 
  - name: Change disk to bigger size
@@ -163,8 +184,33 @@
    assert:
      that:
        - output.changed
+       - output.state.disk_size_gb == 2
 
- - name: Change disk to Premium
+ - name: Change disk to Standard SSD
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}1"
+       storage_account_type: "StandardSSD_LRS"
+       disk_size_gb: 2
+   register: output
+
+ - name: Assert status succeeded
+   assert:
+     that:
+       - output.changed
+       - output.state.storage_account_type == "StandardSSD_LRS"
+
+ - name: Gather facts to one specific disk
+   azure_rm_managed_disk_facts:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}1"
+
+ - assert:
+     that:
+       - "azure_managed_disk | length == 1"
+       - azure_managed_disk[0].storage_account_type == "StandardSSD_LRS"
+
+ - name: Change disk to Premium (SSD)
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
@@ -176,6 +222,7 @@
    assert:
      that:
        - output.changed
+       - output.state.storage_account_type == "Premium_LRS"
 
  - name: Update disk tags
    azure_rm_managed_disk:
@@ -459,6 +506,7 @@
    with_items:
        - 1
        - 2
+       - 3
 
  - name: Delete virtual machine
    azure_rm_virtualmachine:

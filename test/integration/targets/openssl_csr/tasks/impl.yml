@@ -274,3 +274,59 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_3
+
+- name: Create broken CSR
+  copy:
+    dest: "{{ output_dir }}/csrbroken.csr"
+    content: "broken"
+- name: Regenerate broken CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csrbroken.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      commonName: This is for Ansible
+    useCommonNameForSAN: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: output_broken
+
+- name: Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_1
+- name: Generate CSR (idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_2
+- name: Generate CSR (change)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: ansible.com
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_3
+- name: Generate CSR (remove)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    state: absent
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_4
+- name: Generate CSR (remove, idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    state: absent
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_5

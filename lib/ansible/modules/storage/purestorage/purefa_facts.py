@@ -23,7 +23,7 @@ description:
     groups and volume counts. Additional fact information can be collected
     based on the configured set of arguements.
 author:
-  - Simon Dodsley (@sdodsley)
+  - Pure Storage ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   gather_subset:
     description:
@@ -31,6 +31,7 @@ options:
         Possible values for this include all, minimum, config, performance,
         capacity, network, subnet, interfaces, hgroups, pgroups, hosts,
         admins, volumes, snapshots, pods, vgroups, offload and apps.
+    type: list
     required: false
     default: minimum
 extends_documentation_fragment:

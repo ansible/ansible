@@ -1,6 +1,5 @@
 ---
 testcase: "*"
-test_items: []
 nuage_auth:
   api_username: csproot
   api_password: csproot

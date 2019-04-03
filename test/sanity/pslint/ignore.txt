@@ -57,7 +57,6 @@ lib/ansible/modules/windows/win_domain_controller.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_domain_controller.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_domain_group.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_domain_membership.ps1 PSAvoidGlobalVars
-lib/ansible/modules/windows/win_domain_membership.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_domain_membership.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_domain_membership.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_domain_membership.ps1 PSUseApprovedVerbs
@@ -92,9 +91,6 @@ lib/ansible/modules/windows/win_iis_website.ps1 PSUseDeclaredVarsMoreThanAssignm
 lib/ansible/modules/windows/win_lineinfile.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_mapped_drive.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_msg.ps1 PSAvoidTrailingWhitespace
-lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_nssm.ps1 PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_nssm.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_package.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_package.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_package.ps1 PSUseApprovedVerbs
@@ -153,7 +149,6 @@ lib/ansible/modules/windows/win_uri.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_user.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_user.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_user_profile.ps1 PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_user_right.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_wait_for.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_wait_for.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression

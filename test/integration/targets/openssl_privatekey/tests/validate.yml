@@ -115,14 +115,29 @@
       - passphrase_5 is changed
       - passphrase_1.backup_file is undefined
       - passphrase_2.backup_file is undefined
-      - passphrase_3.backup_file is not none
+      - passphrase_3.backup_file is string
       - passphrase_4.backup_file is undefined
-      - passphrase_5.backup_file is not none
+      - passphrase_5.backup_file is string
+
+- name: Verify that broken key will be regenerated
+  assert:
+    that:
+      - output_broken is changed
 
 - name: Validate remove
   assert:
     that:
       - remove_1 is changed
       - remove_2 is not changed
-      - remove_1.backup_file is not none
+      - remove_1.backup_file is string
       - remove_2.backup_file is undefined
+
+- name: Validate mode
+  assert:
+    that:
+      - privatekey_mode_1 is changed
+      - privatekey_mode_1_stat.stat.mode == '0400'
+      - privatekey_mode_2 is not changed
+      - privatekey_mode_3 is changed
+      - privatekey_mode_3_stat.stat.mode == '0400'
+      - privatekey_mode_1_stat.stat.mtime != privatekey_mode_3_stat.stat.mtime

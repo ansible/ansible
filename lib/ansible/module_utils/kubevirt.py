@@ -24,20 +24,20 @@ API_GROUP = 'kubevirt.io'
 
 
 VM_COMMON_ARG_SPEC = {
-    'name': {},
+    'name': {'required': True},
+    'namespace': {'required': True},
+    'state': {
+        'default': 'present',
+        'choices': ['present', 'absent'],
+    },
     'force': {
         'type': 'bool',
         'default': False,
     },
     'resource_definition': {
-        'type': list_dict_str,
+        'type': 'dict',
         'aliases': ['definition', 'inline']
     },
-    'src': {
-        'type': 'path',
-    },
-    'namespace': {},
-    'api_version': {'type': 'str', 'default': '%s/%s' % (API_GROUP, MAX_SUPPORTED_API_VERSION), 'aliases': ['api', 'version']},
     'merge_type': {'type': 'list', 'choices': ['json', 'merge', 'strategic-merge']},
     'wait': {'type': 'bool', 'default': True},
     'wait_timeout': {'type': 'int', 'default': 120},

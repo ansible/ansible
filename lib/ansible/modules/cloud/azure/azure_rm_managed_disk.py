@@ -45,10 +45,18 @@ options:
             - Valid Azure location. Defaults to location of the resource group.
     storage_account_type:
         description:
-            - "Type of storage for the managed disk: C(Standard_LRS)  or C(Premium_LRS). If not specified the disk is created C(Standard_LRS)."
+            - "Type of storage for the managed disk."
+            - "If not specified, the disk is created as C(Standard_LRS)."
+            - "C(Standard_LRS) is for Standard HDD."
+            - "C(StandardSSD_LRS) (added in 2.8) is for Standard SSD."
+            - "C(Premium_LRS) is for Premium SSD."
+            - "C(UltraSSD_LRS) (added in 2.8) is for Ultra SSD, which is in preview mode, and only available on select instance types."
+            - "See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-types for more information about disk types."
         choices:
             - Standard_LRS
+            - StandardSSD_LRS
             - Premium_LRS
+            - UltraSSD_LRS
     create_option:
         description:
             - "Allowed values: empty, import, copy.
@@ -85,6 +93,15 @@ options:
     tags:
         description:
             - Tags to assign to the managed disk.
+    zone:
+        description:
+            - "Allowed values: 1, 2, 3, ''."
+        choices:
+            - 1
+            - 2
+            - 3
+            - ''
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -174,7 +191,8 @@ def managed_disk_to_dict(managed_disk):
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=managed_disk.os_type.lower() if managed_disk.os_type else None,
         storage_account_type=managed_disk.sku.name if managed_disk.sku else None,
-        managed_by=managed_disk.managed_by
+        managed_by=managed_disk.managed_by,
+        zone=managed_disk.zones[0] if managed_disk.zones and len(managed_disk.zones) > 0 else ''
     )
 
 
@@ -201,7 +219,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ),
             storage_account_type=dict(
                 type='str',
-                choices=['Standard_LRS', 'Premium_LRS']
+                choices=['Standard_LRS', 'StandardSSD_LRS', 'Premium_LRS', 'UltraSSD_LRS']
             ),
             create_option=dict(
                 type='str',
@@ -220,6 +238,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ),
             managed_by=dict(
                 type='str'
+            ),
+            zone=dict(
+                type='str',
+                choices=['', '1', '2', '3']
             )
         )
         required_if = [
@@ -240,6 +262,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.os_type = None
         self.disk_size_gb = None
         self.tags = None
+        self.zone = None
         self.managed_by = None
         super(AzureRMManagedDisk, self).__init__(
             derived_arg_spec=self.module_arg_spec,
@@ -330,11 +353,13 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             self.fail("Error getting virtual machine {0} - {1}".format(name, str(exc)))
 
     def generate_managed_disk_property(self):
-        # TODO: Add support for EncryptionSettings, DiskIOPSReadWrite, DiskMBpsReadWrite, Zones
+        # TODO: Add support for EncryptionSettings, DiskIOPSReadWrite, DiskMBpsReadWrite
         disk_params = {}
         creation_data = {}
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
+        if self.zone:
+            disk_params['zones'] = [self.zone]
         if self.storage_account_type:
             storage_account_type = self.compute_models.DiskSku(name=self.storage_account_type)
             disk_params['sku'] = storage_account_type
@@ -384,6 +409,9 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         # Check how to implement tags
         if new_disk.get('tags') is not None:
             if not found_disk['tags'] == new_disk['tags']:
+                resp = True
+        if self.zone is not None:
+            if not found_disk['zone'] == self.zone:
                 resp = True
         return resp
 

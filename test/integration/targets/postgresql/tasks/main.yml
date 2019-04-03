@@ -816,8 +816,8 @@
 # Test postgresql_privs
 - include: postgresql_privs.yml
 
-# Test postgresql_facts module
-- include: postgresql_facts.yml
+# Test postgresql_info module
+- include: postgresql_info.yml
 
 # Test default_privs with target_role
 - include: test_target_role.yml
@@ -832,6 +832,24 @@
 # not specific distributions.
 - include: postgresql_ext.yml
   when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
+
+# Test postgresql_schema module:
+- include: postgresql_schema.yml
+
+# Test postgresql_membership module
+- include: postgresql_membership.yml
+
+# Test postgresql_table module
+- include: postgresql_table.yml
+
+# Test postgresql_lang module.
+# To implement tests, it needs to install some additional packages
+# that may cause problems on different distributions,
+# so I restricted the tests using CentOS because the results
+# depend only on Postgres version
+# (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
+- include: postgresql_lang.yml
+  when: ansible_distribution == 'CentOS'
 
 # dump/restore tests per format
 # ============================================================
@@ -848,6 +866,9 @@
 # ============================================================
 - include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
 
+# postgres_pg_hba module checks
+# ============================================================
+- include: postgresql_pg_hba.yml
 #
 # Cleanup
 #

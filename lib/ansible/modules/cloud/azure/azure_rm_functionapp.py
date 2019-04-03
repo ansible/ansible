@@ -192,7 +192,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 resource_group_name=self.resource_group,
                 name=self.name
             )
-            exists = True
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            exists = function_app is not None
         except CloudError as exc:
             exists = False
 
@@ -280,10 +281,18 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
         function_app_settings = self.necessary_functionapp_settings()
         for app_setting_key in self.app_settings:
-            function_app_settings.append(NameValuePair(
-                name=app_setting_key,
-                value=self.app_settings[app_setting_key]
-            ))
+            found_setting = None
+            for s in function_app_settings:
+                if s.name == app_setting_key:
+                    found_setting = s
+                    break
+            if found_setting:
+                found_setting.value = self.app_settings[app_setting_key]
+            else:
+                function_app_settings.append(NameValuePair(
+                    name=app_setting_key,
+                    value=self.app_settings[app_setting_key]
+                ))
         return function_app_settings
 
     @property
