@@ -70,10 +70,10 @@ options:
       group uses this template to create all new instances in the managed instance
       group.
     - 'This field represents a link to a InstanceTemplate resource in GCP. It can
-      be specified in two ways. First, you can place in the selfLink of the resource
-      here as a string Alternatively, you can add `register: name-of-resource` to
-      a gcp_compute_instance_template task and then set this instance_template field
-      to "{{ name-of-resource }}"'
+      be specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_instance_template task and then set this
+      instance_template field to "{{ name-of-resource }}"'
     required: true
   name:
     description:
@@ -261,13 +261,13 @@ instanceGroup:
   description:
   - The instance group being managed.
   returned: success
-  type: str
+  type: dict
 instanceTemplate:
   description:
   - The instance template that is specified for this managed instance group. The group
     uses this template to create all new instances in the managed instance group.
   returned: success
-  type: str
+  type: dict
 name:
   description:
   - The name of the managed instance group. The name must be 1-63 characters long,
@@ -339,10 +339,10 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             base_instance_name=dict(required=True, type='str'),
             description=dict(type='str'),
-            instance_template=dict(required=True),
+            instance_template=dict(required=True, type='dict'),
             name=dict(required=True, type='str'),
             named_ports=dict(type='list', elements='dict', options=dict(name=dict(type='str'), port=dict(type='int'))),
-            target_pools=dict(type='list'),
+            target_pools=dict(type='list', elements='dict'),
             target_size=dict(type='int'),
             zone=dict(required=True, type='str'),
         )
