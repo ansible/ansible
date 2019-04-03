@@ -17,6 +17,7 @@
 
 
 try:
+    import OpenSSL
     from OpenSSL import crypto
 except ImportError:
     # An error will be raised in the calling class to let the end
@@ -336,10 +337,46 @@ class OpenSSLObject(object):
 _OID_MAP = {
     # First entry is 'canonical' name
     "1.3.6.1.5.5.7.1.3": ('qcStatements', ),
-    "1.3.6.1.5.5.7.3.10": ('DVCS', ),
+    "1.3.6.1.5.5.7.3.10": ('DVCS', 'dvcs'),
     "1.3.6.1.5.5.7.3.7": ('IPSec User', 'ipsecUser'),
     "1.3.6.1.5.5.7.1.2": ('Biometric Info', 'biometricInfo'),
 }
+
+_NORMALIZE_NAMES = {
+    'CN': 'commonName',
+    'C': 'countryName',
+    'L': 'localityName',
+    'ST': 'stateOrProvinceName',
+    'street': 'streetAddress',
+    'O': 'organizationName',
+    'OU': 'organizationalUnitName',
+    'SN': 'surname',
+    'GN': 'givenName',
+    'UID': 'userId',
+    'DC': 'domainComponent',
+    'jurisdictionC': 'jurisdictionCountryName',
+    'jurisdictionL': 'jurisdictionLocalityName',
+    'jurisdictionST': 'jurisdictionStateOrProvinceName',
+    'serverAuth': 'TLS Web Server Authentication',
+    'clientAuth': 'TLS Web Client Authentication',
+    'codeSigning': 'Code Signing',
+    'emailProtection': 'E-mail Protection',
+    'timeStamping': 'Time Stamping',
+    'OCSPSigning': 'OCSP Signing',
+    'anyExtendedKeyUsage': 'Any Extended Key Usage',
+}
+
+for dotted, names in _OID_MAP.items():
+    for name in names[1:]:
+        _NORMALIZE_NAMES[name] = names[0]
+
+
+def pyopenssl_normalize_name(name):
+    nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(name))
+    if nid != 0:
+        b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
+        name = to_text(OpenSSL._util.ffi.string(b_name))
+    return _NORMALIZE_NAMES.get(name, name)
 
 
 def crpytography_name_to_oid(name):
@@ -416,7 +453,8 @@ def crpytography_oid_to_name(oid):
     names = _OID_MAP.get(dotted_string)
     if names:
         return names[0]
-    return oid._name
+    name = oid._name
+    return _NORMALIZE_NAMES.get(name, name)
 
 
 def cryptography_get_name_oid(id):
@@ -597,7 +635,7 @@ def cryptography_get_ext_keyusage(usage):
         return x509.oid.ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE
     if usage in ('qcStatements', ):
         return x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.1.3")
-    if usage in ('DVCS', ):
+    if usage in ('DVCS', 'dvcs'):
         return x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.3.10")
     if usage in ('IPSec User', 'ipsecUser'):
         return x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.3.7")

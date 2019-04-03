@@ -111,7 +111,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils._text import to_native, to_text
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
@@ -120,6 +120,7 @@ PYOPENSSL_IMP_ERR = None
 try:
     import OpenSSL
     from OpenSSL import crypto
+    import ipaddress
     PYOPENSSL_VERSION = LooseVersion(OpenSSL.__version__)
 except ImportError:
     PYOPENSSL_IMP_ERR = traceback.format_exc()
@@ -131,7 +132,6 @@ CRYPTOGRAPHY_IMP_ERR = None
 try:
     import cryptography
     from cryptography import x509
-    from cryptography.x509 import NameAttribute, Name
     from cryptography.hazmat.primitives import serialization
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
@@ -373,10 +373,7 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
     def __get_name(self, name):
         result = dict()
         for sub in name.get_components():
-            nid = OpenSSL._util.lib.OBJ_txt2nid(sub[0])
-            b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
-            name = to_text(OpenSSL._util.ffi.string(b_name))
-            result[name] = to_text(sub[1])
+            result[crypto_utils.pyopenssl_normalize_name(sub[0])] = to_text(sub[1])
         return result
 
     def _get_subject(self):
@@ -394,7 +391,9 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
         for extension_idx in range(0, self.cert.get_extension_count()):
             extension = self.cert.get_extension(extension_idx)
             if extension.get_short_name() == b'keyUsage':
-                result = [usage.strip() for usage in to_text(extension, errors='surrogate_or_strict').split(',')]
+                result = [
+                    crypto_utils.pyopenssl_normalize_name(usage.strip()) for usage in to_text(extension, errors='surrogate_or_strict').split(',')
+                ]
                 return sorted(result), bool(extension.get_critical())
         return None, False
 
@@ -402,15 +401,25 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
         for extension_idx in range(0, self.cert.get_extension_count()):
             extension = self.cert.get_extension(extension_idx)
             if extension.get_short_name() == b'extendedKeyUsage':
-                result = [usage.strip() for usage in to_text(extension, errors='surrogate_or_strict').split(',')]
+                result = [
+                    crypto_utils.pyopenssl_normalize_name(usage.strip()) for usage in to_text(extension, errors='surrogate_or_strict').split(',')
+                ]
                 return sorted(result), bool(extension.get_critical())
         return None, False
+
+    def _normalize_san(self, san):
+        if san.startswith('IP Address:'):
+            san = 'IP:' + san[len('IP Address:'):]
+        if san.startswith('IP:'):
+            ip = ipaddress.ip_address(san[3:])
+            san = 'IP:{0}'.format(ip.compressed)
+        return san
 
     def _get_subject_alt_name(self):
         for extension_idx in range(0, self.cert.get_extension_count()):
             extension = self.cert.get_extension(extension_idx)
             if extension.get_short_name() == b'subjectAltName':
-                result = [altname.replace('IP Address', 'IP').strip() for altname in
+                result = [self._normalize_san(altname.strip()) for altname in
                           to_text(extension, errors='surrogate_or_strict').split(', ')]
                 return result, bool(extension.get_critical())
         return None, False
