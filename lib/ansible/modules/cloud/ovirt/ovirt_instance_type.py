@@ -4,8 +4,6 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.module_utils.basic import AnsibleModule
-import traceback
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -24,14 +22,14 @@ options:
     name:
         description:
             - Name of the Instance Type to manage.
-            - If VM don't exists C(name) is required. Otherwise C(id) or C(name) can be used.
+            - If instance type don't exists C(name) is required. Otherwise C(id) or C(name) can be used.
     id:
         description:
             - ID of the Instance Type to manage.
     state:
         description:
             - Should the Instance Type be present/absent.
-            - I(present) state will create/update VM and don't change its state if it already exists.
+            - I(present) state will create/update instance type and don't change its state if it already exists.
         choices: [ absent, present ]
         default: present
     memory:
@@ -44,6 +42,15 @@ options:
               Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
             - C(memory_guaranteed) parameter can't be lower than C(memory) parameter.
             - Default value is set by engine.
+    nics:
+        description:
+            - List of NICs, which should be attached to Virtual Machine. NIC is described by following dictionary.
+            - C(name) - Name of the NIC.
+            - C(profile_name) - Profile name where NIC should be attached.
+            - C(interface) -  Type of the network interface. One of following I(virtio), I(e1000), I(rtl8139), default is I(virtio).
+            - C(mac_address) - Custom MAC address of the network interface, by default it's obtained from MAC pool.
+            - NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
+              To manage NICs of the instance type in more depth please use M(ovirt_nics) module instead.
     memory_max:
         description:
             - Upper bound of instance type memory up to which memory hot-plug can be performed.
@@ -165,7 +172,7 @@ options:
         description:
             - "If I(true), use memory ballooning."
             - "Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory
-               based on VM needs in a dynamic way. In this way it's possible to create memory over commitment states."
+               based on instance type needs in a dynamic way. In this way it's possible to create memory over commitment states."
         type: bool
 extends_documentation_fragment: ovirt
 '''
@@ -175,7 +182,7 @@ EXAMPLES = '''
 # look at ovirt_auth module to see how to reuse authentication:
 
 # Create instance type
-- name: Create instence type
+- name: Create instance type
   ovirt_instance_type:
     state: present
     name: myit
@@ -210,7 +217,7 @@ EXAMPLES = '''
     serial_console: True
 
 # Use graphical console with spice and vnc
-- name: Create a VM that has the console configured for both Spice and VNC
+- name: Create a instance type that has the console configured for both Spice and VNC
   ovirt_instance_type:
     name: myit
     graphical_console:
@@ -221,7 +228,21 @@ EXAMPLES = '''
 
 
 RETURN = '''
+
+id:
+    description: ID of the instance type which is managed
+    returned: On success if instance type is found.
+    type: str
+    sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
+instancetype:
+    description: "Dictionary of all the instance type attributes. instance type attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/instance_type."
+    returned: On success if instance type is found.
+    type: dict
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 
 from ansible.module_utils.ovirt import (
     BaseModule,
@@ -340,7 +361,7 @@ class InstanceTypeModule(BaseModule):
                 watchdogs_service.watchdog_service(current_watchdog.id).remove()
                 return True
             elif watchdog.get('model') is not None and current_watchdog is None:
-                watchdogs_service.add( 
+                watchdogs_service.add(
                     otypes.Watchdog(
                         model=otypes.WatchdogModel(watchdog.get('model').lower()),
                         action=otypes.WatchdogAction(watchdog.get('action')),
@@ -360,6 +381,7 @@ class InstanceTypeModule(BaseModule):
                     )
                     return True
         return False
+
     def __get_vnic_profile_id(self, nic):
         """
         Return VNIC profile ID looked up by it's name, because there can be
@@ -389,7 +411,7 @@ class InstanceTypeModule(BaseModule):
             )
 
     def __attach_nics(self, entity):
-        # Attach NICs to VM, if specified:
+        # Attach NICs to instance type, if specified:
         nics_service = self._service.service(entity.id).nics_service()
         for nic in self.param('nics'):
             if search_by_name(nics_service, nic.get('name')) is None:
@@ -429,7 +451,7 @@ class InstanceTypeModule(BaseModule):
         protocol = graphical_console.get('protocol')
         if isinstance(protocol, str):
             protocol = [protocol]
-        
+
         current_protocols = [str(gc.protocol) for gc in graphical_consoles]
         if not current_protocols:
             if not self._module.check_mode:
@@ -459,7 +481,7 @@ class InstanceTypeModule(BaseModule):
 
     def post_present(self, entity_id):
         entity = self._service.service(entity_id).get()
-        self.__attach_nics(entity)
+        self.changed = self.__attach_nics(entity)
         self.changed = self.__attach_watchdog(entity)
         self.changed = self.__attach_graphical_console(entity)
 
@@ -501,7 +523,7 @@ def main():
                    choices=['absent', 'present']),
         name=dict(type='str'),
         id=dict(type='str'),
-        memory=dict(type='str', default='256MiB'),
+        memory=dict(type='str'),
         memory_guaranteed=dict(type='str'),
         memory_max=dict(type='str'),
         cpu_sockets=dict(type='int'),
