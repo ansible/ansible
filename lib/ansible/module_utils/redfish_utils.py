@@ -944,13 +944,14 @@ class RedfishUtils(object):
                                             "/" + key)
                 data = response['data']
                 if 'PowerControl' in data:
-                    data = data['PowerControl'][0]
-                    for property in properties:
-                        if property in data:
-                            chassis_power_result[property] = data[property]
-                    chassis_power_results.append(chassis_power_result)
+                    if len(data['PowerControl']) > 0:
+                        data = data['PowerControl'][0]
+                        for property in properties:
+                            if property in data:
+                                chassis_power_result[property] = data[property]
                 else:
                     return {'ret': False, 'msg': 'Key PowerControl not found.'}
+                chassis_power_results.append(chassis_power_result)
             else:
                 return {'ret': False, 'msg': 'Key Power not found.'}
 
