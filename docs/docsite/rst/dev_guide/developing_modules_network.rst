@@ -53,10 +53,10 @@ The ``httpapi`` connection plugin has a ``send()`` method, but an HttpApi plugin
        except HTTPError as exc:
            return exc.code, exc.read()
 
-        # handle_response (defined separately) will take the format returned by the device
-        # and transform it into something more suitable for use by modules.
-        # This may be JSON text to Python dictionaries, for example.
-        return handle_response(response_content)
+       # handle_response (defined separately) will take the format returned by the device
+       # and transform it into something more suitable for use by modules.
+       # This may be JSON text to Python dictionaries, for example.
+       return handle_response(response_content)
 
 Authenticating
 ^^^^^^^^^^^^^^
@@ -70,7 +70,7 @@ By default, all requests will authenticate with HTTP Basic authentication. If a 
        if cookie:
            return {'Cookie': cookie}
 
-        return None
+       return None
 
 If instead an explicit login endpoint needs to be requested to receive an authentication token, the ``login(self, username, password)`` method can be implemented to call that endpoint. If implemented, this method will be called once before requesting any other resources of the server. By default, it will also be attempted once when a HTTP 401 is returned from a request.
 
