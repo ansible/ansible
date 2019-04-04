@@ -104,7 +104,7 @@ options:
     - List of index columns.
     - Mutually exclusive with I(state=absent).
     type: list
-    aliase:
+    aliases:
     - column
   cond:
     description:
