@@ -106,6 +106,7 @@ options:
     version_added: 2.7
 notes:
    - To just run a `terraform plan`, use check mode.
+   - To show terraform plan output use diff mode
 requirements: [ "terraform" ]
 author: "Ryan Scott Brown (@ryansb)"
 '''
@@ -388,7 +389,11 @@ def main():
         select_workspace(command[0], project_path, workspace_ctx["current"])
     if state == 'absent' and workspace != 'default' and purge_workspace is True:
         remove_workspace(command[0], project_path, workspace)
-
+    
+    if module.check_mode:
+        changed = needs_application
+    diff=dict(before= '', after= out)
+    
     module.exit_json(changed=changed, state=state, workspace=workspace, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
 
 
