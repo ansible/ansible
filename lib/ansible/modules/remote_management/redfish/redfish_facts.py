@@ -74,6 +74,14 @@ EXAMPLES = '''
   - debug:
       msg: "{{ redfish_facts.cpu.entries.0.Model }}"
 
+  - name: Get memory inventory
+    redfish_facts:
+      category: Systems
+      command: GetMemoryInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get fan inventory with a timeout of 20 seconds
     redfish_facts:
       category: Chassis
@@ -150,9 +158,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["GetSystemInventory", "GetCpuInventory",
-                "GetNicInventory", "GetStorageControllerInventory",
-                "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
+    "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
+                "GetMemoryInventory", "GetNicInventory",
+                "GetStorageControllerInventory", "GetDiskInventory",
+                "GetBiosAttributes", "GetBootOrder"],
     "Chassis": ["GetFanInventory", "GetPsuInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
@@ -238,6 +247,8 @@ def main():
                     result["system"] = rf_utils.get_multi_system_inventory()
                 elif command == "GetCpuInventory":
                     result["cpu"] = rf_utils.get_multi_cpu_inventory()
+                elif command == "GetMemoryInventory":
+                    result["memory"] = rf_utils.get_multi_memory_inventory()
                 elif command == "GetNicInventory":
                     result["nic"] = rf_utils.get_multi_nic_inventory(category)
                 elif command == "GetStorageControllerInventory":
