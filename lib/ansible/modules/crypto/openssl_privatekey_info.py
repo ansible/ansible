@@ -297,19 +297,68 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
             self.module.warn('Your pyOpenSSL version does not support dumping public keys. '
                              'Please upgrade to version 16.0 or newer, or use the cryptography backend.')
 
+    def bigint_to_int(self, bn):
+        '''Convert OpenSSL BIGINT to Python integer'''
+        if bn == OpenSSL._util.ffi.NULL:
+            return None
+        try:
+            hex = OpenSSL._util.lib.BN_bn2hex(bn)
+            return int(OpenSSL._util.ffi.string(hex), 16)
+        finally:
+            OpenSSL._util.lib.OPENSSL_free(hex)
+
     def _get_key_info(self):
-        if PYOPENSSL_VERSION >= LooseVersion('16.1.0') and CRYPTOGRAPHY_FOUND:
-            return _get_cryptography_key_info(self.key.to_cryptography_key())
         key_public_data = dict()
         key_private_data = dict()
         openssl_key_type = self.key.type()
         if crypto.TYPE_RSA == openssl_key_type:
             key_type = 'RSA'
             key_public_data['size'] = self.key.bits()
+
+            # Use OpenSSL directly to extract key data
+            key = OpenSSL._util.lib.EVP_PKEY_get1_RSA(self.key._pkey)
+            key = OpenSSL._util.ffi.gc(key, OpenSSL._util.lib.RSA_free)
+            # Get modulus and exponents
+            n = OpenSSL._util.ffi.new("BIGNUM **")
+            e = OpenSSL._util.ffi.new("BIGNUM **")
+            d = OpenSSL._util.ffi.new("BIGNUM **")
+            OpenSSL._util.lib.RSA_get0_key(key, n, e, d)
+            key_public_data['modulus'] = self.bigint_to_int(n[0])
+            key_public_data['exponent'] = self.bigint_to_int(e[0])
+            key_private_data['exponent'] = self.bigint_to_int(d[0])
+            # Get factors
+            p = OpenSSL._util.ffi.new("BIGNUM **")
+            q = OpenSSL._util.ffi.new("BIGNUM **")
+            OpenSSL._util.lib.RSA_get0_factors(key, p, q)
+            key_private_data['p'] = self.bigint_to_int(p[0])
+            key_private_data['q'] = self.bigint_to_int(q[0])
         elif crypto.TYPE_DSA == openssl_key_type:
             key_type = 'DSA'
             key_public_data['size'] = self.key.bits()
+
+            # Use OpenSSL directly to extract key data
+            key = OpenSSL._util.lib.EVP_PKEY_get1_DSA(self.key._pkey)
+            key = OpenSSL._util.ffi.gc(key, OpenSSL._util.lib.DSA_free)
+            # Get public parameters (primes and group element)
+            p = OpenSSL._util.ffi.new("BIGNUM **")
+            q = OpenSSL._util.ffi.new("BIGNUM **")
+            g = OpenSSL._util.ffi.new("BIGNUM **")
+            OpenSSL._util.lib.DSA_get0_pqg(key, p, q, g)
+            key_public_data['p'] = self.bigint_to_int(p[0])
+            key_public_data['q'] = self.bigint_to_int(q[0])
+            key_public_data['g'] = self.bigint_to_int(g[0])
+            # Get public and private key exponents
+            y = OpenSSL._util.ffi.new("BIGNUM **")
+            x = OpenSSL._util.ffi.new("BIGNUM **")
+            OpenSSL._util.lib.DSA_get0_key(key, y, x)
+            key_public_data['y'] = self.bigint_to_int(y[0])
+            key_private_data['x'] = self.bigint_to_int(x[0])
         else:
+            # If possible, fall back to cryptography
+            if PYOPENSSL_VERSION >= LooseVersion('16.1.0') and CRYPTOGRAPHY_FOUND:
+                return _get_cryptography_key_info(self.key.to_cryptography_key())
+
+            # Return 'unknown'
             key_type = 'unknown ({0})'.format(self.key.type())
         return key_type, key_public_data, key_private_data
 
