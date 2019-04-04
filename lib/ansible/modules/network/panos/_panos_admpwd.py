@@ -81,19 +81,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
 
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.compat.paramiko import paramiko
 import time
 import sys
-
-HAS_LIB = True
-try:
-    import paramiko
-except ImportError:
-    try:
-        import ansible_paramiko as paramiko
-    except ImportError:
-        HAS_LIB = False
 
 _PROMPTBUFF = 4096
 
@@ -189,7 +180,7 @@ def main():
         newpassword=dict(no_log=True, required=True)
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-    if not HAS_LIB:
+    if paramiko is None:
         module.fail_json(msg='paramiko is required for this module')
 
     ip_address = module.params["ip_address"]
