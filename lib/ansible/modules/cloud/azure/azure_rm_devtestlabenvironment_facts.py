@@ -37,7 +37,6 @@ options:
     name:
         description:
             - The name of the environment.
-        required: True
 
 extends_documentation_fragment:
     - azure
@@ -64,16 +63,54 @@ environments:
     contains:
         id:
             description:
-                - The identifier of the resource.
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: id
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/sc
+                     hedules/xxxxxxxx-xxxx-xxxx-xxxxx-xxxxxxxxxxxxx/environments/myEnvironment"
+        resource_group:
+            description:
+                - Name of the resource group.
+            returned: always
+            type: str
+            sample: myResourceGroup
+        lab_name:
+            description:
+                - Name of the lab.
+            returned: always
+            type: str
+            sample: myLab
+        name:
+            description:
+                - The name of the environment.
+            returned: always
+            type: str
+            sample: myEnvironment
+        deployment_template:
+            description:
+                - The identifier of the artifact source.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/mylab/art
+                     ifactSources/public environment repo/armTemplates/WebApp"
+        resource_group_id:
+            description:
+                - Target resource group id.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myLab-myEnvironment-982571"
+        state:
+            description:
+                - Deployment state.
+            returned: always
+            type: str
+            sample: Succeeded
         tags:
             description:
                 - The tags of the resource.
             returned: always
             type: complex
-            sample: tags
+            sample: "{ 'MyTag': 'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -104,8 +141,7 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
                 required=True
             ),
             name=dict(
-                type='str',
-                required=True
+                type='str'
             )
         )
         # store the results of the module operation
@@ -170,7 +206,14 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
+            'lab_name': self.lab_name,
+            'name': d.get('name'),
+            'user_name': self.user_name,
             'id': d.get('id', None),
+            'deployment_template': d.get('deployment_properties', {}).get('arm_template_id'),
+            'location': d.get('location'),
+            'provisioning_state': d.get('provisioning_state'),
+            'resource_group_id': d.get('resource_group_id'),
             'tags': d.get('tags', None)
         }
         return d

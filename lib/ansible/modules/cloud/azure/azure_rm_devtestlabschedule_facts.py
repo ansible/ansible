@@ -33,7 +33,6 @@ options:
     name:
         description:
             - The name of the schedule.
-        required: True
 
 extends_documentation_fragment:
     - azure
@@ -59,25 +58,51 @@ schedules:
     contains:
         id:
             description:
-                - The identifier of the resource.
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: id
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/sc
+                     hedules/labvmsshutdown"
+        resource_group:
+            description:
+                - Name of the resource group.
+            returned: always
+            type: str
+            sample: myResourceGroup
+        lab_name:
+            description:
+                - Name of the lab.
+            returned: always
+            type: str
+            sample: myLab
+        name:
+            description:
+                - The name of the environment.
+            returned: always
+            type: str
+            sample: lab_vms_shutdown
+        time:
+            description:
+                - Time of the schedule.
+            returned: always
+            type: str
+            sample: lab_vms_shutdown
+        time_zone_id:
+            description:
+                - Time zone id.
+            returned: always
+            type: str
+            sample: UTC+12
         tags:
             description:
                 - The tags of the resource.
             returned: always
             type: complex
-            sample: tags
-        status:
-            description:
-                - "The status of the schedule (i.e. Enabled, Disabled). Possible values include: 'Enabled', 'Disabled'"
-            returned: always
-            type: str
-            sample: status
+            sample: "{ 'MyTag': 'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _camel_to_snake, _snake_to_camel
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -101,8 +126,7 @@ class AzureRMScheduleFacts(AzureRMModuleBase):
                 required=True
             ),
             name=dict(
-                type='str',
-                required=True
+                type='str'
             )
         )
         # store the results of the module operation
@@ -133,7 +157,7 @@ class AzureRMScheduleFacts(AzureRMModuleBase):
         try:
             response = self.mgmt_client.schedules.get(resource_group_name=self.resource_group,
                                                       lab_name=self.lab_name,
-                                                      name=self.name)
+                                                      name=_snake_to_camel(self.name))
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Schedule.')
@@ -163,9 +187,12 @@ class AzureRMScheduleFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
+            'lab_name': self.lab_name,
+            'name': _camel_to_snake(d.get('name')),
             'id': d.get('id', None),
             'tags': d.get('tags', None),
-            'status': d.get('status', None)
+            'time': d.get('daily_recurrence', {}).get('time'),
+            'time_zone_id': d.get('time_zone_id')
         }
         return d
 

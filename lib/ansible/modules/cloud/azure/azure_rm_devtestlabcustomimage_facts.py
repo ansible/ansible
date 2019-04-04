@@ -64,16 +64,55 @@ custom_images:
     contains:
         id:
             description:
-                - The identifier of the resource.
+custom_images:
+    description: A list of dictionaries containing facts for Custom Image.
+    returned: always
+    type: complex
+    contains:
+        id:
+            description:
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: id
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/cu
+                     stomimages/myImage"
+        resource_group:
+            description:
+                - Name of the resource group.
+            returned: always
+            type: str
+            sample: myResourceGroup
+        lab_name:
+            description:
+                - Name of the lab.
+            returned: always
+            type: str
+            sample: myLab
+        name:
+            description:
+                - The name of the image.
+            returned: always
+            type: str
+            sample: myImage
+        managed_shapshot_id:
+            description:
+                - Managed snapshot id.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.compute/snapshots/myImage"
+        source_vm_id:
+            description:
+                - Source VM id.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx//resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/v
+                     irtualmachines/myLabVm"
         tags:
             description:
                 - The tags of the resource.
             returned: always
             type: complex
-            sample: tags
+            sample: "{ 'MyTag': 'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -137,7 +176,7 @@ class AzureRMCustomImageFacts(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get facts for Custom Image.')
 
-        if response and self.has_tags(response.tags, self.tags):
+        if response:
             results.append(self.format_response(response))
 
         return results
@@ -162,8 +201,12 @@ class AzureRMCustomImageFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'id': d.get('id', None),
-            'tags': d.get('tags', None)
+            'lab_name': self.lab_name,
+            'name': d.get('name'),
+            'id': d.get('id'),
+            'managed_snapshot_id': d.get('managed_snapshot_id'),
+            'source_vm_id': d.get('vm', {}).get('source_vm_id'),
+            'tags': d.get('tags')
         }
         return d
 

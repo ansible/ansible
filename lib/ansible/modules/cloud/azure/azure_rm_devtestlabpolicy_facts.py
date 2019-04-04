@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabpolicy_facts
 version_added: "2.8"
-short_description: Get Azure Policy facts.
+short_description: Get Azure DTL Policy facts.
 description:
-    - Get facts of Azure Policy.
+    - Get facts of Azure DTL Policy.
 
 options:
     resource_group:
@@ -37,7 +37,6 @@ options:
     name:
         description:
             - The name of the policy.
-        required: True
 
 extends_documentation_fragment:
     - azure
@@ -64,22 +63,53 @@ policies:
     contains:
         id:
             description:
-                - The identifier of the resource.
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: id
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/po
+                     licysets/myPolicySet/policies/myPolicy"
+        resource_group:
+            description:
+                - Name of the resource group.
+            returned: always
+            type: str
+            sample: myResourceGroup
+        lab_name:
+            description:
+                - Name of the lab.
+            returned: always
+            type: str
+            sample: myLab
+        name:
+            description:
+                - The name of the artifact source.
+            returned: always
+            type: str
+            sample: myArtifactSource
+        fact_name:
+            description:
+                - The name of the policy fact.
+            returned: always
+            type: str
+            sample: UserOwnedLabVmCount
+        evaluator_type:
+            description:
+                - Evaluator type for policy fact.
+            returned: always
+            type: str
+            sample: MaxValuePolicy
+        threshold:
+            description:
+                - Fact's threshold.
+            returned: always
+            type: str
+            sample: 5
         tags:
             description:
                 - The tags of the resource.
             returned: always
             type: complex
-            sample: tags
-        status:
-            description:
-                - "The status of the policy. Possible values include: 'Enabled', 'Disabled'"
-            returned: always
-            type: str
-            sample: status
+            sample: "{ 'MyTag': 'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -110,8 +140,7 @@ class AzureRMPolicyFacts(AzureRMModuleBase):
                 required=True
             ),
             name=dict(
-                type='str',
-                required=True
+                type='str'
             )
         )
         # store the results of the module operation
@@ -178,9 +207,14 @@ class AzureRMPolicyFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'id': d.get('id', None),
-            'tags': d.get('tags', None),
-            'status': d.get('status', None)
+            'policy_set_name': self.policy_set_name,
+            'name': d.get('name'),
+            'id': d.get('id'),
+            'tags': d.get('tags'),
+            'status': d.get('status'),
+            'threshold': d.get('threshold'),
+            'fact_name': d.get('fact_name'),
+            'evaluator_type': d.get('evaluator_type')
         }
         return d
 
