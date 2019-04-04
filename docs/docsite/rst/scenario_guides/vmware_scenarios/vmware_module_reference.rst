@@ -1,3 +1,5 @@
+:orphan:
+
 .. _vmware_ansible_module_index:
 
 ***************************
