@@ -277,15 +277,7 @@ def main():
 
     result['datastores'] = datastores
 
-    # found a datastore
-    if datastores:
-        module.exit_json(**result)
-    else:
-        msg = "Unable to gather datastore facts"
-        if module.params['name']:
-            msg += " for %(name)s" % module.params
-        msg += " in datacenter %(datacenter)s" % module.params
-        module.fail_json(msg=msg)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
