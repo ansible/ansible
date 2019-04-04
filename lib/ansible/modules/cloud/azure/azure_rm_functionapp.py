@@ -36,8 +36,8 @@ options:
             - Valid Azure location. Defaults to location of the resource group.
     plan:
         description:
-            - App service plan. Required for creation.
-            - It can be name of existing app service plan in same resource group as web app.
+            - App service plan.
+            - It can be name of existing app service plan in same resource group as function app.
             - "It can be resource id of existing app service plan. eg.,
               /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
             - It can be a dict which contains C(name), C(resource_group).
