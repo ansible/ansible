@@ -40,20 +40,18 @@ simple_variable_success_response = {
     'VersionStages': ['AWSCURRENT'],
     'CreatedDate': datetime.datetime(2019, 4, 4, 11, 41, 0, 878000, tzinfo=tzlocal.get_localzone()),
     'ResponseMetadata': {
-	'RequestId': '21099462-597c-490a-800f-8b7a41e5151c',
-	'HTTPStatusCode': 200,
-	'HTTPHeaders': {
-		'date': 'Thu, 04 Apr 2019 10:43:12 GMT',
-		'content-type': 'application/x-amz-json-1.1',
-		'content-length': '252',
-		'connection': 'keep-alive',
-		'x-amzn-requestid': '21099462-597c-490a-800f-8b7a41e5151c'
-	},
-	'RetryAttempts': 0
+        'RequestId': '21099462-597c-490a-800f-8b7a41e5151c',
+        'HTTPStatusCode': 200,
+        'HTTPHeaders': {
+            'date': 'Thu, 04 Apr 2019 10:43:12 GMT',
+            'content-type': 'application/x-amz-json-1.1',
+            'content-length': '252',
+            'connection': 'keep-alive',
+            'x-amzn-requestid': '21099462-597c-490a-800f-8b7a41e5151c'
+        },
+        'RetryAttempts': 0
     }
 }
-
-
 
 
 dummy_credentials = {}
@@ -79,8 +77,9 @@ def test_lookup_variable(mocker):
 
 error_response = {'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Fake Testing Error'}}
 operation_name = 'FakeOperation'
-def test_warn_denied_variable(mocker):
 
+
+def test_warn_denied_variable(mocker):
     boto3_double = mocker.MagicMock()
     boto3_double.Session.return_value.client.return_value.get_secret_value.side_effect = ClientError(error_response, operation_name)
 
