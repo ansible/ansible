@@ -663,10 +663,6 @@ def main():
             elif can_use_pyopenssl:
                 backend = 'pyopenssl'
 
-            if module.params['selfsigned_version'] == 2 or module.params['ownca_version'] == 2:
-                module.warn('crypto backend forced to pyopenssl. The cryptography library does not support v2 certificates')
-                backend = 'pyopenssl'
-
             # Fail if no backend has been found
             if backend == 'auto':
                 module.fail_json(msg=("Can't detect none of the required Python libraries "
