@@ -471,6 +471,11 @@ def load_config(module, command_filter, commit=False, replace=False,
             response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
             if module._diff:
                 diff = response.get('diff')
+
+            # Overwrite the default diff by the IOS XR commit diff.
+            # See plugins/cliconf/iosxr.py for this key set: show_commit_config_diff
+            diff = response.get('show_commit_config_diff')
+
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
