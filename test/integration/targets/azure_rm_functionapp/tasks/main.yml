@@ -112,7 +112,7 @@
         name: httpd
     app_settings:
         FUNCTIONS_EXTENSION_VERSION: "~2"
-    register: output
+  register: output
 
 - name: assert the function was changed
   assert:
