@@ -57,7 +57,7 @@ _ansible-playbook()
     ;;
     -*)
       shortopts='-C -D -e -f -h -i -l -M -t -v -vv -vvv'
-      longopts='--ask-playbook-pass --check --diff --help --flush-cache --force-handlers --help --list-hosts --list-tags --list-tasks --step --syntax-check --verbose --version'
+      longopts='--ask-playbook-pass --check --diff --flush-cache --force-handlers --help --list-hosts --list-tags --list-tasks --step --syntax-check --verbose --version'
       longoptsequal='--extra-vars --forks --inventory --limit --module-path --skip-tags --start-at-task --tags --vault-id --vault-password-file'
       COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) $( compgen -S = -W '$longoptsequal' -- "$cur" ) )
     ;;

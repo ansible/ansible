@@ -72,7 +72,7 @@ _ansible()
 	return
     ;;
     -m|--module-name)
-      COMPREPLY=( $( compgen -W "$(/usr/bin/ansible-doc -l | /bin/awk '{print $1}')" -- "$cur") )
+      __ansible_module_name
       return
     ;;
     -M|--module-path)
@@ -118,7 +118,8 @@ _ansible()
       __ansible_limit
     ;;
     --module-name=*)
-      COMPREPLY=( $( compgen -W "$(/usr/bin/ansible-doc -l | /bin/awk '{print $1}')" -- "${cur#*=}") ) 
+      cur=${cur#*=}
+      __ansible_module_name 
     ;;
     --module-path=*|--playbook-dir=*|--key-file=*|--private-key=*|--tree=*|--vault-password-file=*)
       cur=${cur#*=}
@@ -152,47 +153,5 @@ _ansible()
   [[ $COMPREPLY == *= || $COMPREPLY == *, ]] && compopt -o nospace
 } &&
 complete -F _ansible ansible
-
-_ansible-playbook()
-{
-    local cur prev words cword split
-    _init_completion -n = || return
-
-    case "$cur" in
-	    --inventory=*)
-		curold=${cur#*=}
-		cur=${cur#*=}
-		while [[ $cur == *,* ]] ; do
-                  cur=${cur#*,}
-                done
-		_known_hosts_real -P, -- "$cur"
-		if [[ $curold == *,* ]] ; then
-		    for (( i=0; i < ${#COMPREPLY[@]}; i++ )); do
-                        COMPREPLY[i]=${curold%%$cur}${COMPREPLY[i]}
-                    done
-		    compopt -o nospace
-		    return
-		fi
-	    ;;
-            --module-path=*|--vault-password-file=*)
-                cur=${cur#*=}
-                _filedir
-                return
-            ;;
-    esac
-
-    local shortopts longopts longoptsequal
-    shortopts='-C -D -e -f -h -i -l -M -t -v -vv -vvv'
-    longopts='--ask-playbook-pass --check --diff --help --flush-cache --force-handlers --help --list-hosts --list-tags --list-tasks --step --syntax-check --verbose --version'
-    longoptsequal='--extra-vars --forks --inventory --limit --module-path --skip-tags --start-at-task --tags --vault-id --vault-password-file '
-    if [[ "$cur" == -* ]]; then
-        COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) $( compgen -S = -W '$longoptsequal' -- "$cur" ) )
-    else
-        _filedir
-    fi
-    [[ $COMPREPLY == *= ]] && compopt -o nospace
-    $split && return
-}
-complete -F _ansible-playbook ansible-playbook
 
 # ex: filetype=sh
