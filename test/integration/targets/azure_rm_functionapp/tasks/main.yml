@@ -8,7 +8,7 @@
     funcapp_name_container: "fa{{ fixed_resource_prefix }}container"
     funcapp_name_params: "fa{{ fixed_resource_prefix }}params"
     storage_account_name: "sa{{ fixed_resource_prefix }}"
-    plan_name: ap{{ fixed_resource_prefix }}"
+    plan_name: "ap{{ fixed_resource_prefix }}"
 
 - name: Create a linux app service plan
   azure_rm_appserviceplan:
