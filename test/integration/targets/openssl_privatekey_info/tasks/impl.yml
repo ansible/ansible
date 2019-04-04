@@ -108,24 +108,37 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: result
 
+- block:
+  - name: Check that ECC key info is ok
+    assert:
+      that:
+        - "'public_key' in result"
+        - "'public_key_fingerprints' in result"
+        - "'type' in result"
+        - "result.type == 'ECC'"
+        - "'public_data' in result"
+        - "result.public_data.curve is string"
+        - "result.public_data.x != 0"
+        - "result.public_data.y != 0"
+        - "result.public_data.exponent_size == (521 if (ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6') else 256)"
+        - "'private_data' in result"
+        - "result.private_data.multiplier > 1024"
+
+  - name: Update result list
+    set_fact:
+      info_results: "{{ info_results | combine({'key4': result}) }}"
+  when: select_crypto_backend != 'pyopenssl' or (pyopenssl_version.stdout is version('16.1.0', '>=') and cryptography_version.stdout is version('0.0', '>'))
+
 - name: Check that ECC key info is ok
   assert:
     that:
       - "'public_key' in result"
       - "'public_key_fingerprints' in result"
       - "'type' in result"
-      - "result.type == 'ECC'"
+      - "result.type.startswith('unknown ')"
       - "'public_data' in result"
-      - "result.public_data.curve is string"
-      - "result.public_data.x != 0"
-      - "result.public_data.y != 0"
-      - "result.public_data.exponent_size == (521 if (ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6') else 256)"
       - "'private_data' in result"
-      - "result.private_data.multiplier > 1024"
-
-- name: Update result list
-  set_fact:
-    info_results: "{{ info_results | combine({'key4': result}) }}"
+  when: select_crypto_backend == 'pyopenssl' and not (pyopenssl_version.stdout is version('16.1.0', '>=') and cryptography_version.stdout is version('0.0', '>'))
 
 - name: ({{select_crypto_backend}}) Get key 5 info
   openssl_privatekey_info:
