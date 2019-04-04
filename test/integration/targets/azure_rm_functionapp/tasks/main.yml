@@ -7,8 +7,8 @@
     funcapp_name_basic: "fa{{ fixed_resource_prefix }}basic"
     funcapp_name_container: "fa{{ fixed_resource_prefix }}container"
     funcapp_name_params: "fa{{ fixed_resource_prefix }}params"
-    storage_account_name: "sa{{ storage_account_name }}"
-    plan_name: ap{{ storage_account_name }}"
+    storage_account_name: "sa{{ fixed_resource_prefix }}"
+    plan_name: ap{{ fixed_resource_prefix }}"
 
 - name: create storage account for function apps
   azure_rm_storageaccount:
