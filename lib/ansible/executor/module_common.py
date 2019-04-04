@@ -144,18 +144,20 @@ def _ansiballz_main():
         sys.path = [p for p in sys.path if p != scriptdir]
 
     import base64
-    import imp
     import shutil
     import tempfile
     import zipfile
 
     if sys.version_info < (3,):
+        # imp is used on Python<3
+        import imp
         bytes = str
         MOD_DESC = ('.py', 'U', imp.PY_SOURCE)
         PY3 = False
     else:
+        # importlib is only used on Python>=3
+        import importlib.util
         unicode = str
-        MOD_DESC = ('.py', 'r', imp.PY_SOURCE)
         PY3 = True
 
     ZIPDATA = """%(zipdata)s"""
@@ -195,8 +197,13 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        with open(module, 'rb') as mod:
-            imp.load_module('__main__', mod, module, MOD_DESC)
+        if sys.version_info < (3,):
+            with open(module, 'rb') as mod:
+                imp.load_module('__main__', mod, module, MOD_DESC)
+        else:
+            spec = importlib.util.spec_from_file_location('__main__', module)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
 
         # Ansible modules must exit themselves
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
