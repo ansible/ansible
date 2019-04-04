@@ -681,7 +681,7 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
-  $module_utils/hwc_utils.py: *huawei
+  $module_utils/hwc_utils: *huawei
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -1097,7 +1097,7 @@ files:
     support: community
     supershipit: $team_google
     maintainers: $team_google
-  $plugins/doc_fragments/hwc.py: *huawei
+  $plugins/doc_fragments/hwc: *huawei
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
