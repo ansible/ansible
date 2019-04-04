@@ -24,6 +24,8 @@ _ansible-inventory()
       done
       cur="$curold"
       [[ $cur == *,* ]] || _filedir
+      [[ $COMPREPLY == *, ]] && compopt -o nospace
+      return
     ;;
     --playbook-dir|--vault-password-file)
       _filedir
