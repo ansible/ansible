@@ -30,7 +30,7 @@ requirements:
 options:
     state:
         description:
-            - Whether the given object should exist in vpc
+            - Whether the given object should exist in vpc.
         type: str
         choices: ['present', 'absent']
         default: 'present'
