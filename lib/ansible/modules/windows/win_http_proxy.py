@@ -35,8 +35,8 @@ options:
       or C(protocol=hostname:port).
     - If the port is undefined, the default port for the protocol in use is
       used.
-    - If setting a dict, the keys relate are the protocol and the value is the
-      hostname and/or port for the protocol specified.
+    - If setting a dict, the keys should be the protocol and the values should
+      be the hostname and/or port for that protocol.
     - Valid protocols are C(http), C(https), C(ftp), and C(socks).
     - Omit, set to null or an empty string to remove the proxy settings.
   source:

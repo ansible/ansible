@@ -66,13 +66,13 @@ options:
       or C(protocol=hostname:port).
     - If the port is undefined, the default port for the protocol in use is
       used.
-    - If setting a dict, the keys relate are the protocol and the value is the
-      hostname and/or port for the protocol specified.
+    - If setting a dict, the keys should be the protocol and the values should
+      be the hostname and/or port for that protocol.
     - Valid protocols are C(http), C(https), C(ftp), and C(socks).
     - Omit, set to null or an empty string to remove the proxy settings.
 notes:
 - This is not the same as the proxy settings set in WinHTTP through the
-  C(netsh) command. Use the M(win_http_proxy) module ot manage that instead.
+  C(netsh) command. Use the M(win_http_proxy) module to manage that instead.
 - These settings are by default set per user and not system wide. A registry
   property must be set independently from this module if you wish to apply the
   proxy for all users. See examples for more detail.
