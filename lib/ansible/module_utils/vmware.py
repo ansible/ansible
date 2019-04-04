@@ -49,7 +49,7 @@ class TaskError(Exception):
 
 
 def wait_for_task(task, max_backoff=64, timeout=3600):
-    """Wait for given task using exponential back-off algorithm.
+    """Wait for given task using exponential back-off algorithm
 
     Args:
         task: VMware task object
