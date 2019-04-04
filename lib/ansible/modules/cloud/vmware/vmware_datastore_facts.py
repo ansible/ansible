@@ -233,9 +233,9 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
 
-    def lookup_datastore(self):
+    def lookup_datastore(self, confine_to_datacenter):
         """ Get datastore(s) per ESXi host or vCenter server """
-        datastores = self.cache.get_all_objs(self.content, [vim.Datastore], confine_to_datacenter=True)
+        datastores = self.cache.get_all_objs(self.content, [vim.Datastore], confine_to_datacenter)
         return datastores
 
     def lookup_datastore_by_cluster(self):
@@ -258,9 +258,6 @@ def main():
         gather_vmfs_mount_info=dict(type='bool', default=False)
     )
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[
-                               ['cluster', 'datacenter'],
-                           ],
                            supports_check_mode=True
                            )
     result = dict(changed=False)
@@ -269,8 +266,10 @@ def main():
 
     if module.params['cluster']:
         dxs = pyv.lookup_datastore_by_cluster()
+    elif module.params['datacenter']:
+        dxs = pyv.lookup_datastore(confine_to_datacenter=True)
     else:
-        dxs = pyv.lookup_datastore()
+        dxs = pyv.lookup_datastore(confine_to_datacenter=False)
 
     vmware_host_datastore = VMwareHostDatastore(module)
     datastores = vmware_host_datastore.build_datastore_list(dxs)
