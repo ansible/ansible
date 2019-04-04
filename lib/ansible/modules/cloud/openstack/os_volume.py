@@ -58,6 +58,10 @@ options:
      description:
        - Scheduler hints passed to volume API in form of dict
      version_added: "2.4"
+   metadata:
+     description:
+       - Metadata for the volume
+     version_added: "2.8"
 requirements:
      - "python >= 2.7"
      - "openstacksdk"
@@ -125,6 +129,9 @@ def _present_volume(module, cloud):
     if module.params['scheduler_hints']:
         volume_args['scheduler_hints'] = module.params['scheduler_hints']
 
+    if module.params['metadata']:
+        volume_args['metadata'] = module.params['metadata']
+
     volume = cloud.create_volume(
         wait=module.params['wait'], timeout=module.params['timeout'],
         **volume_args)
@@ -154,7 +161,8 @@ def main():
         snapshot_id=dict(default=None),
         volume=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
-        scheduler_hints=dict(default=None, type='dict')
+        scheduler_hints=dict(default=None, type='dict'),
+        metadata=dict(default=None, type='dict')
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
