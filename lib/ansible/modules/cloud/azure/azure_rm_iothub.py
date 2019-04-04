@@ -57,7 +57,7 @@ options:
             - Units in your IoT Hub.
             - Default is 1
         type: long
-    event_hub_endpoint:
+    event_endpoint:
         description:
             - The Event Hub-compatible endpoint property.
         suboptions:
@@ -196,10 +196,203 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Image resource path.
-    type: str
-    returned: success
-    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/images/myImage"
+    description:
+        - Resource ID of the IoT hub.
+    sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.Devices/IotHubs/Testing"
+name:
+    description:
+        - Name of the IoT hub.
+    sample: Testing
+resource_group:
+    description:
+        - Resource group of the IoT hub.
+    sample: myResourceGroup.
+location:
+    description:
+        - Location of the IoT hub.
+    sample: eastus
+unit:
+    description:
+        - Units in the IoT Hub.
+    sample: 1
+sku:
+    description:
+        - Pricing tier for Azure IoT Hub.
+    sample: f1
+cloud_to_device:
+    description:
+        - Cloud to device message properties.
+    contains:
+        max_delivery_count:
+            description:
+                - The number of times the IoT hub attempts to deliver a message on the feedback queue.
+                - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+            sample: 10
+        ttl_as_iso8601:
+            description:
+                - The period of time for which a message is available to consume before it is expired by the IoT hub.
+                - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+            sample: "1:00:00"
+enable_file_upload_notifications:
+    description:
+        - Whether file upload notifications are enabled.
+    sample: True
+event_endpoints:
+    description:
+        - Built-in endpoint where to deliver device message.
+    contains:
+        endpoint:
+            description:
+                - The Event Hub-compatible endpoint.
+            sample: "sb://iothub-ns-testing-1478811-9bbc4a15f0.servicebus.windows.net/"
+        partition_count:
+            description:
+                - The number of partitions for receiving device-to-cloud messages in the Event Hub-compatible endpoint.
+                - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+            sample: 2
+        retention_time_in_days:
+            description:
+                - The retention time for device-to-cloud messages in days.
+                - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+            sample: 1
+        partition_ids:
+            description:
+                - List of the partition id for the event endpoint.
+            sample: ["0", "1"]
+host_name:
+    description:
+        - Host of the IoT hub
+    sample: "testing.azure-devices.net"
+ip_filters:
+    description:
+        - Configure rules for rejecting or accepting traffic from specific IPv4 addresses.
+    contains:
+        name:
+            description:
+                - Name of the filter.
+            sample: filter
+        ip_mask:
+            description:
+                - A string that contains the IP address range in CIDR notation for the rule.
+            sample: 40.54.7.3
+        action:
+            description:
+                - The desired action for requests captured by this rule.
+            sample: Reject
+routing_endpoints:
+    description:
+        - Custom endpoints.
+    contains:
+        event_hubs:
+            description:
+                - List of custom endpoints of event hubs.
+            contains:
+                name:
+                    description:
+                        - Name of the custom endpoint.
+                    sample: foo
+                resource_group:
+                    description:
+                        - Resource group of the endpoint.
+                    sample: bar
+                subscription:
+                    description:
+                        - Subscription id of the endpoint.
+                    sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                connection_string:
+                    description:
+                        - Connection string of the custom endpoint.
+                    sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
+        service_bus_queues:
+            description:
+                - List of custom endpoints of service bus queue.
+            contains:
+                name:
+                    description:
+                        - Name of the custom endpoint.
+                    sample: foo
+                resource_group:
+                    description:
+                        - Resource group of the endpoint.
+                    sample: bar
+                subscription:
+                    description:
+                        - Subscription id of the endpoint.
+                    sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                connection_string:
+                    description:
+                        - Connection string of the custom endpoint.
+                    sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
+        service_bus_topics:
+            description:
+                - List of custom endpoints of service bus topic.
+            contains:
+                name:
+                    description:
+                        - Name of the custom endpoint.
+                    sample: foo
+                resource_group:
+                    description:
+                        - Resource group of the endpoint.
+                    sample: bar
+                subscription:
+                    description:
+                        - Subscription id of the endpoint.
+                    sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                connection_string:
+                    description:
+                        - Connection string of the custom endpoint.
+                    sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
+        storage_containers:
+            description:
+                - List of custom endpoints of storage
+            contains:
+                name:
+                    description:
+                        - Name of the custom endpoint.
+                    sample: foo
+                resource_group:
+                    description:
+                        - Resource group of the endpoint.
+                    sample: bar
+                subscription:
+                    description:
+                        - Subscription id of the endpoint.
+                    sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                connection_string:
+                    description:
+                        - Connection string of the custom endpoint.
+                    sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
+routes:
+    description:
+        - Route device-to-cloud messages to service-facing endpoints.
+    contains:
+        name:
+            description:
+                - Name of the route.
+            sample: route1
+        source:
+            description:
+                - The origin of the data stream to be acted upon.
+            sample: device_messages
+        enabled:
+            description:
+                - Whether to enable the route.
+            sample: true
+        endpoint_name:
+            description:
+                - The name of the endpoint in C(routing_endpoints) where IoT Hub sends messages that match the query.
+            sample: foo
+        condition:
+            description:
+                - "The query expression for the routing query that is run against the message application properties,
+                    system properties, message body, device twin tags, and device twin properties to determine if it is a match for the endpoint."
+                - "For more information about constructing a query,
+                    see I(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax)"
+            sample: "true"
+tags:
+    description:
+        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
@@ -249,6 +442,12 @@ routes_spec = dict(
 )
 
 
+event_endpoint_spec = dict(
+    partition_count=dict(type='int'),
+    retention_time_in_days=dict(type='long')
+)
+
+
 class AzureRMIoTHub(AzureRMModuleBase):
 
     def __init__(self):
@@ -260,7 +459,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
             location=dict(type='str'),
             sku=dict(type='str', choices=['b1', 'b2', 'b3', 'f1', 's1', 's2', 's3']),
             unit=dict(type='long'),
-            event_hub_endpoints=dict(type='dict'),
+            event_endpoint=dict(type='dict', options=event_endpoint_spec),
             enable_file_upload_notifications=dict(type='bool'),
             ip_filters=dict(type='list', elements='dict', options=ip_filter_spec),
             routing_endpoints=dict(type='list', elements='dict', options=routing_endpoints_spec),
@@ -278,7 +477,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
         self.location = None
         self.sku = None
         self.unit = None
-        self.event_hub_endpoints = None
+        self.event_endpoint = None
         self.tags = None
         self.enable_file_upload_notifications = None
         self.ip_filters = None
@@ -305,16 +504,11 @@ class AzureRMIoTHub(AzureRMModuleBase):
                 changed = True
                 self.sku = self.sku or 'B1'
                 self.unit = self.unit or 1
-                default_event_hub_endpoints = {
-                    'events': {'partition_count': 2, 'retention_time_in_days': 1}
-                }
-
-                self.event_hub_endpoints = self.event_hub_endpoints or default_event_hub_endpoints
+                self.event_endpoint = self.event_endpoint or {}
+                self.event_endpoint['partiotion_count'] = self.event_endpoint.get('partition_count') or 2
+                self.event_endpoint['retention_time_in_days'] = self.event_endpoint.get('retention_time_in_days') or 1
                 event_hub_properties = dict()
-                for key in self.event_hub_endpoints.keys():
-                    item = self.event_hub_endpoints[key]
-                    event_hub_properties[key] = self.IoThub_models.EventHubProperties(partition_count=item.get('partition_count') or 2,
-                                                                                      retention_time_in_days=item.get('retention_time_in_days') or 1)
+                event_hub_properties['events'] = self.IoThub_models.EventHubProperties(**self.event_endpoint)
                 iothub_property = self.IoThub_models.IotHubProperties(event_hub_endpoints=event_hub_properties)
                 if self.enable_file_upload_notifications:
                     iothub_property.enable_file_upload_notifications = self.enable_file_upload_notifications
@@ -349,20 +543,19 @@ class AzureRMIoTHub(AzureRMModuleBase):
                     changed = True
                 # compare event hub property
                 event_hub = iothub.properties.event_hub_endpoints or dict()
-                if self.event_hub_endpoints:
-                    for key in self.event_hub_endpoints.keys():
-                        item = self.event_hub_endpoints[key]
-                        original_item = event_hub.get(key)
-                        if not original_item:
-                            changed = True
-                            event_hub[key] = self.IoThub_models.EventHubProperties(partition_count=item.get('partition_count') or 2,
-                                                                                   retention_time_in_days=item.get('retention_time_in_days') or 1)
-                        elif item.get('partition_count') and original_item.partition_count != item['partition_count']:
-                            changed = True
-                            original_item.partition_count = item['partition_count']
-                        elif item.get('retention_time_in_days') and original_item.retention_time_in_days != item['retention_time_in_days']:
-                            changed = True
-                            original_item.retention_time_in_days = item['retention_time_in_days']
+                if self.event_endpoint:
+                    item = self.event_endpoint
+                    original_item = event_hub.get('events')
+                    if not original_item:
+                        changed = True
+                        event_hub['events'] = self.IoThub_models.EventHubProperties(partition_count=item.get('partition_count') or 2,
+                                                                                    retention_time_in_days=item.get('retention_time_in_days') or 1)
+                    elif item.get('partition_count') and original_item.partition_count != item['partition_count']:
+                        changed = True
+                        original_item.partition_count = item['partition_count']
+                    elif item.get('retention_time_in_days') and original_item.retention_time_in_days != item['retention_time_in_days']:
+                        changed = True
+                        original_item.retention_time_in_days = item['retention_time_in_days']
                 # compare endpoint
                 original_endpoints = iothub.properties.routing.endpoints
                 endpoint_changed = False
@@ -557,7 +750,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
         properties = hub.properties
         result['id'] = hub.id
         result['name'] = hub.name
-        result['resource_group'] = parse_resource_id(hub.id).get('resourceGroups')
+        result['resource_group'] = self.resource_group
         result['location'] = hub.location
         result['tags'] = hub.tags
         result['unit'] = hub.sku.capacity
@@ -567,7 +760,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
             ttl_as_iso8601=str(properties.cloud_to_device.feedback.ttl_as_iso8601)
         )
         result['enable_file_upload_notifications'] = properties.enable_file_upload_notifications
-        result['event_hub_endpoints'] = self.instance_dict_to_dict(properties.event_hub_endpoints)
+        result['event_endpoint'] = properties.event_hub_endpoints.get('events').as_dict() if properties.event_hub_endpoints.get('events') else None
         result['host_name'] = properties.host_name
         result['ip_filters'] = [x.as_dict() for x in properties.ip_filter_rules]
         result['routing_endpoints'] = properties.routing.endpoints.as_dict()
