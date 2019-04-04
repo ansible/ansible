@@ -46,6 +46,7 @@ options:
             - C(sku). SKU of app service plan. For allowed sku, please refer to U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/).
             - C(is_linux). Indicates Linux app service plan. type bool. default False.
             - C(number_of_workers). Number of workers.
+        version_added: "2.8"
     container_settings:
         description: Web app container settings.
         suboptions:
@@ -58,6 +59,7 @@ options:
             registry_server_password:
                 description:
                     - The container registry server password.
+        version_added: "2.8"
     storage_account:
         description:
             - Name of the storage account to use.
@@ -273,28 +275,6 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             if not self.plan and function_app:
                 self.plan = function_app['server_farm_id']
 
-            self.plan = self.parse_resource_to_dict(self.plan)
-
-            # get app service plan
-            is_linux = False
-            old_plan = self.get_app_service_plan()
-            if old_plan:
-                is_linux = old_plan['reserved']
-            else:
-                is_linux = self.plan['is_linux'] if 'is_linux' in self.plan else False
-
-            if not old_plan:
-                # no existing service plan, create one
-                if (not self.plan.get('name') or not self.plan.get('sku')):
-                    self.fail('Please specify name, is_linux, sku in plan')
-
-                if 'location' not in self.plan:
-                    plan_resource_group = self.get_resource_group(self.plan['resource_group'])
-                    self.plan['location'] = plan_resource_group.location
-
-                old_plan = self.create_app_service_plan()
-
-            self.site.server_farm_id = old_plan['id']
             if not exists:
                 function_app = Site(
                     location=self.location,
@@ -308,6 +288,28 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 self.results['changed'] = True
             else:
                 self.results['changed'], function_app = self.update(function_app)
+
+            # get app service plan
+            if self.plan:
+                self.plan = self.parse_resource_to_dict(self.plan)
+                plan = self.get_app_service_plan()
+                if plan:
+                    is_linux = plan['reserved']
+                else:
+                    is_linux = self.plan['is_linux'] if 'is_linux' in self.plan else False
+
+                if not plan:
+                    # no existing service plan, create one
+                    if (not self.plan.get('name') or not self.plan.get('sku')):
+                        self.fail('Please specify name, is_linux, sku in plan')
+
+                    if 'location' not in self.plan:
+                        plan_resource_group = self.get_resource_group(self.plan['resource_group'])
+                        self.plan['location'] = plan_resource_group.location
+
+                    plan = self.create_app_service_plan()
+
+                function_app.site.server_farm_id = plan['id']
 
             if self.check_mode:
                 self.results['state'] = function_app.as_dict()
