@@ -315,10 +315,11 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
 
         try:
             response = self.web_client.app_service_plans.get(self.resource_group, self.name)
-            self.log("Response : {0}".format(response))
-            self.log("App Service Plan : {0} found".format(response.name))
+            if response:
+                self.log("Response : {0}".format(response))
+                self.log("App Service Plan : {0} found".format(response.name))
 
-            return appserviceplan_to_dict(response)
+                return appserviceplan_to_dict(response)
         except CloudError as ex:
             self.log("Didn't find app service plan {0} in resource group {1}".format(self.name, self.resource_group))
 
