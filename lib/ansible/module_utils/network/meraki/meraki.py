@@ -29,6 +29,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import time
 import os
 import re
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
@@ -66,6 +67,7 @@ class MerakiModule(object):
         self.net_id = None
         self.check_mode = module.check_mode
         self.key_map = {}
+        self.request_attempts = 0
 
         # normal output
         self.existing = None
@@ -355,6 +357,13 @@ class MerakiModule(object):
 
         if self.status >= 500:
             self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info))
+        elif self.status == 429:
+            if self.request_attempts == 10:
+                self.fail_json(msg="API request attempted 10 times. Failing...")
+            self.module.warn("Meraki API rate limit reached - pausing before retry number {0}".format(self.request_attempts))
+            time.sleep(random.uniform(0.5, 5.0))
+            self.request_attempts += 1
+            resp, info = self.request(path, method=method, payload=payload)
         elif self.status >= 300:
             self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info),
                            body=json.loads(to_native(info['body'])))
