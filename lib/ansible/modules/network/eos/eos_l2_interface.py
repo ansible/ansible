@@ -214,10 +214,9 @@ def map_config_to_obj(module):
         command = {'command': 'show interfaces {0} switchport | include Switchport'.format(item),
                    'output': 'text'}
         command_result = run_commands(module, command)
-        print ("command_result = %s" % (len(command_result)))
-        if command_result[0] != "": 
+        if command_result[0] != "":
             switchport_cfg = command_result[0].split(':')[1].strip()
-        
+
             if switchport_cfg == 'Enabled':
                 state = 'present'
             else:
