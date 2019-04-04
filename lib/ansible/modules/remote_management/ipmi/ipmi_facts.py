@@ -123,7 +123,7 @@ def main():
         )
         module.debug('ipmi instantiated - name: "%s"' % name)
 
-        current_powerstate = ipmi_cmd.get_power() 
+        current_powerstate = ipmi_cmd.get_power()
         current_bootdev = ipmi_cmd.get_bootdev()
         current_bootdev['bootdev_persistent'] = current_bootdev.pop('persistent')
         response = current_powerstate.copy()
@@ -133,7 +133,7 @@ def main():
         if 'error' in response:
             module.fail_json(msg=response['error'])
 
-        module.exit_json(changed=changed, 
+        module.exit_json(changed=changed,
                          ansible_facts=dict(ipmi_facts=response))
     except Exception as e:
         module.fail_json(msg=str(e))
