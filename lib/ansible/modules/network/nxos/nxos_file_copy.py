@@ -160,19 +160,11 @@ import re
 import time
 import traceback
 
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native, to_text, to_bytes
-
-HAS_PARAMIKO = True
-try:
-    import paramiko
-except ImportError:
-    try:
-        import ansible_paramiko as paramiko
-    except ImportError:
-        HAS_PARAMIKO = False
 
 try:
     from scp import SCPClient
@@ -394,7 +386,7 @@ def main():
                     'installed. It can be installed using `pip install pexpect`'
             )
     else:
-        if not HAS_PARAMIKO:
+        if paramiko is None:
             module.fail_json(
                 msg='library paramiko is required when file_pull is False but does not appear to be '
                     'installed. It can be installed using `pip install paramiko`'
