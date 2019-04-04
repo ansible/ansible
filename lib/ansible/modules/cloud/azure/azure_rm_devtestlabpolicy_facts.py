@@ -191,8 +191,8 @@ class AzureRMPolicyFacts(AzureRMModuleBase):
         results = []
         try:
             response = self.mgmt_client.policies.list(resource_group_name=self.resource_group,
-                                                     lab_name=self.lab_name,
-                                                     policy_set_name=self.policy_set_name)
+                                                      lab_name=self.lab_name,
+                                                      policy_set_name=self.policy_set_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Policy.')

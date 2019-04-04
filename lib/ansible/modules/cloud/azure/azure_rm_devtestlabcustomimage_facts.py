@@ -64,13 +64,6 @@ custom_images:
     contains:
         id:
             description:
-custom_images:
-    description: A list of dictionaries containing facts for Custom Image.
-    returned: always
-    type: complex
-    contains:
-        id:
-            description:
                 - The identifier of the artifact source.
             returned: always
             type: str
