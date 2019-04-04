@@ -161,7 +161,7 @@ EXAMPLES = r'''
     owner: bin
     group: wheel
     mode: u=rw,g=r,o=r
-    
+
 - name: Copy a version of named.conf that is dependent on the OS. setype obtained by doing ls -Z /etc/named.conf on original file
   template:
     src: named.conf_{{ ansible_os_family}}.j2
