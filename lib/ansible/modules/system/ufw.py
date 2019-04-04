@@ -472,8 +472,9 @@ def main():
                     current_default_values["outgoing"] = extract.group(2)
                     current_default_values["routed"] = extract.group(3)
                     if params['direction'] is None:
-                        if any(v not in (value, 'disabled') for v in current_default_values.values()):
-                            changed = True
+                        for v in current_default_values.values():
+                            if v not in (value, 'disabled'):
+                                changed = True
                     else:
                         v = current_default_values[params['direction']]
                         if v not in (value, 'disabled'):
