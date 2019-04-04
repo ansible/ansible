@@ -893,6 +893,12 @@ class Nmcli(object):
             'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
 
+        if options['ipv4.address'] is not None:
+            options['ipv4.method'] = 'manual'
+
+        if options['ipv6.address'] is not None:
+            options['ipv6.method'] = 'manual'
+
         for key, value in options.items():
             if value is not None:
                 cmd.extend([key, value])
@@ -1005,6 +1011,12 @@ class Nmcli(object):
             '802-3-ethernet.mtu': self.mtu,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
+
+        if options['ipv4.address'] is not None:
+            options['ipv4.method'] = 'manual'
+
+        if options['ipv6.address'] is not None:
+            options['ipv6.method'] = 'manual'
 
         for key, value in options.items():
             if value is not None:
