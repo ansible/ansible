@@ -40,12 +40,9 @@ options:
             - It can be name of existing app service plan in same resource group as web app.
             - "It can be resource id of existing app service plan. eg.,
               /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
-            - It can be a dict which contains C(name), C(resource_group), C(sku), C(is_linux) and C(number_of_workers).
+            - It can be a dict which contains C(name), C(resource_group).
             - C(name). Name of app service plan.
             - C(resource_group). Resource group name of app service plan.
-            - C(sku). SKU of app service plan. For allowed sku, please refer to U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/).
-            - C(is_linux). Indicates Linux app service plan. type bool. default False.
-            - C(number_of_workers). Number of workers.
         version_added: "2.8"
     container_settings:
         description: Web app container settings.
@@ -292,25 +289,13 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
             # get app service plan
             if self.plan:
-                self.plan = self.parse_resource_to_dict(self.plan)
-                plan = self.get_app_service_plan()
-                if plan:
-                    is_linux = plan['reserved']
-                else:
-                    is_linux = self.plan['is_linux'] if 'is_linux' in self.plan else False
-
-                if not plan:
-                    # no existing service plan, create one
-                    if (not self.plan.get('name') or not self.plan.get('sku')):
-                        self.fail('Please specify name, is_linux, sku in plan')
-
-                    if 'location' not in self.plan:
-                        plan_resource_group = self.get_resource_group(self.plan['resource_group'])
-                        self.plan['location'] = plan_resource_group.location
-
-                    plan = self.create_app_service_plan()
-
-                function_app.server_farm_id = plan['id']
+                if isinstance(self.plan, dict):
+                    self.plan = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Web/serverfarms/{2}".format(
+                        self.subscription_id,
+                        self.plan.get('resource_group', self.resource_group),
+                        self.plan.get('name')
+                    )
+                function_app.server_farm_id = self.plan
 
             # set linux fx version
             if linux_fx_version:
@@ -402,104 +387,6 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             resource_group_name=self.resource_group,
             account_name=self.storage_account
         ).keys[0].value
-
-    def create_app_service_plan(self):
-        '''
-        Creates app service plan
-        :return: deserialized app service plan dictionary
-        '''
-        self.log("Create App Service Plan {0}".format(self.plan['name']))
-
-        try:
-            # normalize sku
-            sku = _normalize_sku(self.plan['sku'])
-
-            sku_def = SkuDescription(tier=get_sku_name(
-                sku), name=sku, capacity=(self.plan.get('number_of_workers', None)))
-            plan_def = AppServicePlan(
-                location=self.plan['location'], app_service_plan_name=self.plan['name'], sku=sku_def, reserved=(self.plan.get('is_linux', None)))
-
-            poller = self.web_client.app_service_plans.create_or_update(
-                self.plan['resource_group'], self.plan['name'], plan_def)
-
-            if isinstance(poller, LROPoller):
-                response = self.get_poller_result(poller)
-
-            self.log("Response : {0}".format(response))
-
-            return appserviceplan_to_dict(response)
-        except CloudError as ex:
-            self.fail("Failed to create app service plan {0} in resource group {1}: {2}".format(
-                self.plan['name'], self.plan['resource_group'], str(ex)))
-
-    def get_app_service_plan(self):
-        '''
-        Gets app service plan
-        :return: deserialized app service plan dictionary
-        '''
-        self.log("Get App Service Plan {0}".format(self.plan['name']))
-
-        try:
-            response = self.web_client.app_service_plans.get(
-                resource_group_name=self.plan['resource_group'],
-                name=self.plan['name'])
-
-            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
-            if response is not None:
-                self.log("Response : {0}".format(response))
-                self.log("App Service Plan : {0} found".format(response.name))
-
-                return appserviceplan_to_dict(response)
-        except CloudError as ex:
-            pass
-
-        self.log("Didn't find app service plan {0} in resource group {1}".format(
-            self.plan['name'], self.plan['resource_group']))
-
-        return False
-
-
-def _normalize_sku(sku):
-    if sku is None:
-        return sku
-
-    sku = sku.upper()
-    if sku == 'FREE':
-        return 'F1'
-    elif sku == 'SHARED':
-        return 'D1'
-    return sku
-
-
-def get_sku_name(tier):
-    tier = tier.upper()
-    if tier == 'F1' or tier == "FREE":
-        return 'FREE'
-    elif tier == 'D1' or tier == "SHARED":
-        return 'SHARED'
-    elif tier in ['B1', 'B2', 'B3', 'BASIC']:
-        return 'BASIC'
-    elif tier in ['S1', 'S2', 'S3']:
-        return 'STANDARD'
-    elif tier in ['P1', 'P2', 'P3']:
-        return 'PREMIUM'
-    elif tier in ['P1V2', 'P2V2', 'P3V2']:
-        return 'PREMIUMV2'
-    else:
-        return None
-
-
-def appserviceplan_to_dict(plan):
-    return dict(
-        id=plan.id,
-        name=plan.name,
-        kind=plan.kind,
-        location=plan.location,
-        reserved=plan.reserved,
-        is_linux=plan.reserved,
-        provisioning_state=plan.provisioning_state,
-        tags=plan.tags if plan.tags else None
-    )
 
 
 def main():
