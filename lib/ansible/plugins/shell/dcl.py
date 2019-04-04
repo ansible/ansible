@@ -32,7 +32,7 @@ class ShellModule(ShModule):
     SHELL_FAMILY = 'dcl'
     IS_OPENVMS = True
     # commonly used
-    ECHO = 'WRITE SYS$OUTPUT'
+    ECHO = 'WRITE SYS$OUTPUT "'
     COMMAND_SEP = '\n'
 
     # This is needed for?
@@ -52,6 +52,14 @@ class ShellModule(ShModule):
     _SHELL_SUB_RIGHT = ''
     _SHELL_GROUP_LEFT = ''
     _SHELL_GROUP_RIGHT = ''
+
+    def __init__(self):
+        super(ShellModule, self).__init__()
+        self.sleep0 = "WAIT 0:0:0.0"
+        self.executable = None
+	self.shell = None
+	self.ECHO = 'WRITE SYS$OUTPUT "'
+        self.COMMAND_SEP = '\n'
 
     # can only be done by adding assignment before the command...
     # NOT AFTER IF ... THEN... Quoting will be an issue....
@@ -154,11 +162,11 @@ class ShellModule(ShModule):
             if '+' in mode:
                 (who, flag) = mode.split('+')
                 if 'u' in who:
-                    prot.append('U:' + self.prot_chars[flag])
+                    prot.append('U' + self.prot_chars[flag])
                 if 'g' in who:
-                    prot.append('G:' + self.prot_chars[flag])
+                    prot.append('G' + self.prot_chars[flag])
                 if 'o' in who:
-                    prot.append('W:' + self.prot_chars[flag])
+                    prot.append('W' + self.prot_chars[flag])
 
             if '-' in mode:
                 (who, flag) = mode.split('-')

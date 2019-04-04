@@ -47,6 +47,7 @@ class ShellBase(AnsiblePlugin):
 
         self.tmpdir = None
         self.executable = None
+	self.sleep0 = 'sleep 0'
 
     def _normalize_system_tmpdirs(self):
         # Normalize the tmp directory strings. We don't use expanduser/expandvars because those
