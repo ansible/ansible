@@ -161,6 +161,7 @@ try:
         AppServicePlan, SkuDescription
     )
     from azure.mgmt.resource.resources import ResourceManagementClient
+    from msrest.polling import LROPoller
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -310,7 +311,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
                     plan = self.create_app_service_plan()
 
-                function_app.site.server_farm_id = plan['id']
+                function_app.server_farm_id = plan['id']
 
             if self.check_mode:
                 self.results['state'] = function_app.as_dict()
@@ -465,6 +466,24 @@ def _normalize_sku(sku):
     elif sku == 'SHARED':
         return 'D1'
     return sku
+
+
+def get_sku_name(tier):
+    tier = tier.upper()
+    if tier == 'F1' or tier == "FREE":
+        return 'FREE'
+    elif tier == 'D1' or tier == "SHARED":
+        return 'SHARED'
+    elif tier in ['B1', 'B2', 'B3', 'BASIC']:
+        return 'BASIC'
+    elif tier in ['S1', 'S2', 'S3']:
+        return 'STANDARD'
+    elif tier in ['P1', 'P2', 'P3']:
+        return 'PREMIUM'
+    elif tier in ['P1V2', 'P2V2', 'P3V2']:
+        return 'PREMIUMV2'
+    else:
+        return None
 
 
 def appserviceplan_to_dict(plan):
