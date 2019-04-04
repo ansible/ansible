@@ -57,7 +57,7 @@ def remove_nones_from_dict(obj):
 
 
 def replace_resource_dict(item, value):
-    """ Handles the replacement of dicts with values -> the needed value for HWC API"""
+    """ Handles the replacement of dicts with values -> the needed value for HWC API."""
     if isinstance(item, list):
         items = []
         for i in item:
