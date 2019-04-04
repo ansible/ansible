@@ -131,7 +131,6 @@ function Format-AnsibleVolume {
     }
 
     Format-Volume @parameters -Confirm:$false | Out-Null
-
 }
 
 $ansible_volume = Get-AnsibleVolume -DriveLetter $drive_letter -Path $path -Label $label
