@@ -323,7 +323,7 @@ Noteworthy module changes
   You should use the ``win_service`` module to control the running state of the service. This will be removed in Ansible 2.12.
 
 * The ``status`` module option for ``win_nssm`` has changed its default value to ``present``. Before, the default was ``start``.
-  Consequently, the service is no longer started by default after creation with ``win_nssm``, and you should use 
+  Consequently, the service is no longer started by default after creation with ``win_nssm``, and you should use
   the ``win_service`` module to start it if needed.
 
 * The ``app_parameters`` module option for ``win_nssm`` has been deprecated; use ``argument`` instead. This will be removed in Ansible 2.12.
@@ -339,6 +339,8 @@ Noteworthy module changes
 
 Plugins
 =======
+
+* Ansible no longer defaults to the ``paramiko`` connection plugin when using macOS as the control node. Ansible will now use the ``ssh`` connection plugin by default on a macOS control node.  Since ``ssh`` supports connection persistence between tasks and playbook runs, it performs better than ``paramiko``. If you are using password authentication, you will need to install ``sshpass`` when using the ``ssh`` connection plugin. Or you can explicitly set the connection type to ``paramiko`` to maintain the pre-2.8 behavior on macOS.
 
 * Connection plugins have been standardized to allow use of ``ansible_<conn-type>_user``
   and ``ansible_<conn-type>_password`` variables.  Variables such as

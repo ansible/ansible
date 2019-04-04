@@ -206,6 +206,7 @@ from copy import deepcopy
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config, is_netconf, is_cliconf
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, build_xml, etree_findall
@@ -215,15 +216,6 @@ try:
     HAS_B64 = True
 except ImportError:
     HAS_B64 = False
-
-HAS_PARAMIKO = True
-try:
-    import paramiko
-except ImportError:
-    try:
-        import ansible_paramiko as paramiko
-    except ImportError:
-        HAS_PARAMIKO = False
 
 
 class PublicKeyManager(object):
@@ -693,7 +685,7 @@ def main():
                 msg='library base64 is required but does not appear to be '
                     'installed. It can be installed using `pip install base64`'
             )
-        if not HAS_PARAMIKO:
+        if paramiko is None:
             module.fail_json(
                 msg='library paramiko is required but does not appear to be '
                     'installed. It can be installed using `pip install paramiko`'
