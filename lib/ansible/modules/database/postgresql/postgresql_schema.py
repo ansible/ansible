@@ -24,6 +24,8 @@ options:
     - Name of the schema to add or remove.
     required: true
     type: str
+    aliases:
+    - schema
   database:
     description:
     - Name of the database to connect to and add or remove the schema.
@@ -36,6 +38,7 @@ options:
     description:
     - The username used to authenticate with.
     type: str
+    default: postgres
   login_password:
     description:
     - The password used to authenticate with.
@@ -44,7 +47,6 @@ options:
     description:
     - Host running the database.
     type: str
-    default: localhost
   login_unix_socket:
     description:
     - Path to a Unix domain socket for local connections.
