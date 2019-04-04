@@ -42,7 +42,7 @@
   systemd:
     name: dbus
     state: started
-  when: ansible_service_mgr == 'systemd'
+  when: ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora'
 
 - name: set timezone to Etc/UTC
   timezone:
