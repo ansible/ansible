@@ -95,7 +95,9 @@ options:
         version_added: 2.5
     attach_caching:
         description:
-            - "Disk caching policy controlled by VM."
+            - "Disk caching policy controlled by VM. Will be used when attached to the VM defined by C(managed_by)"
+            - "If this option is different from the current caching policy,"
+            - "the managed disk will be deattached from the VM and attached with current caching option again"
             - "Allowed values: '', read_only, read_write."
         choices:
             - ''
@@ -457,12 +459,13 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
     def is_attach_caching_option_different(self, vm_name, disk):
         resp = False
-        vm = self._get_vm(vm_name)
-        correspondence = next((d for d in vm.storage_profile.data_disks if d.name.lower() == disk.get('name').lower()), None)
-        if correspondence and correspondence.caching.name != self.attach_caching:
-            resp = True
-            if correspondence.caching.name == 'none' and self.attach_caching == '':
-                resp = False
+        if vm_name:
+            vm = self._get_vm(vm_name)
+            correspondence = next((d for d in vm.storage_profile.data_disks if d.name.lower() == disk.get('name').lower()), None)
+            if correspondence and correspondence.caching.name != self.attach_caching:
+                resp = True
+                if correspondence.caching.name == 'none' and self.attach_caching == '':
+                    resp = False
         return resp
 
 
