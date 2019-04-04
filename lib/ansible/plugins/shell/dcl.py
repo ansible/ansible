@@ -75,7 +75,7 @@ class ShellModule(ShModule):
         else:
             display = Display()
 
-            remote = None  
+            remote = None
             unparsed = pathname
             display.vvv(unparsed)
             if '::' in unparsed:
@@ -103,7 +103,7 @@ class ShellModule(ShModule):
                 (dirpart, unparsed) = unparsed.split(']')
                 dirpath = dirpart.split('[')[1].split('.')
             else:
-                dirpath =  []
+                dirpath = []
 
             display.vvv(unparsed)
             if ';' in unparsed:
@@ -148,7 +148,7 @@ class ShellModule(ShModule):
         if type(mode) == 'int':
             world = 'W' + self.prot_table[mode & 0o007]
             group = 'G' + self.prot_table[(mode >> 3) & 0o007]
-            user  = 'U' + self.prot_table[(mode >> 6) & 0o007]
+            user = 'U' + self.prot_table[(mode >> 6) & 0o007]
             prot.append([user, group, world])
         else:
             if '+' in mode:
