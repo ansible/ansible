@@ -145,10 +145,10 @@ def _get_tag_url(url_prefix, instance, tag):
     return (
         '%(url_prefix)s/%(instance)s/tags/%(tag)s'
         % {
-           'url_prefix': url_prefix,
-           'instance': instance.id,
-           'tag': tag
-         }
+            'url_prefix': url_prefix,
+            'instance': instance.id,
+            'tag': tag
+        }
     )
 
 
