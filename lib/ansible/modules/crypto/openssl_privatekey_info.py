@@ -301,10 +301,10 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
             return _get_cryptography_key_info(self.key.to_cryptography_key())
         key_public_data = dict()
         key_private_data = dict()
-        if self.key.type() == crypto.TYPE_RSA:
+        if crypto.TYPE_RSA == self.key.type():
             key_type = 'RSA'
             key_public_data['size'] = self.key.bits()
-        elif self.key.type() == crypto.TYPE_DSA:
+        elif crypto.TYPE_DSA == self.key.type():
             key_type = 'DSA'
             key_public_data['size'] = self.key.bits()
         else:
