@@ -41,10 +41,11 @@ options:
     return_private_key_data:
         description:
             - Whether to return private key data.
-            - Set this to C(no) if you do not want any private information about this key
+            - Set this to C(yes) if you do want any private information about this key
               leave the remote machine.
+            - WARNING: you have to make sure that private key data isn't accidentally logged!
         type: bool
-        default: yes
+        default: no
 
     select_crypto_backend:
         description:
@@ -298,8 +299,7 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True),
             passphrase=dict(type='str', no_log=True),
-            return_private_key_data=dict(type='bool', default=True),
-            valid_at=dict(type='dict'),
+            return_private_key_data=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
         supports_check_mode=True,
