@@ -18,23 +18,27 @@ from ansible.module_utils.six import (
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
+# if adding boolean attribute, also add to PASS_BOOL
+# some of this dupes defaults from controller config
 PASS_VARS = {
-    'check_mode': 'check_mode',
-    'debug': '_debug',
-    'diff': '_diff',
-    'keep_remote_files': '_keep_remote_files',
-    'module_name': '_name',
-    'no_log': 'no_log',
-    'remote_tmp': '_remote_tmp',
-    'selinux_special_fs': '_selinux_special_fs',
-    'shell_executable': '_shell',
-    'socket': '_socket_path',
-    'string_conversion_action': '_string_conversion_action',
-    'syslog_facility': '_syslog_facility',
-    'tmpdir': '_tmpdir',
-    'verbosity': '_verbosity',
-    'version': 'ansible_version',
+    'check_mode': ('check_mode', False),
+    'debug': ('_debug', False),
+    'diff': ('_diff', False),
+    'keep_remote_files': ('_keep_remote_files', False),
+    'module_name': ('_name', None),
+    'no_log': ('no_log', False),
+    'remote_tmp': ('_remote_tmp', None),
+    'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p']),
+    'shell_executable': ('_shell', '/bin/sh'),
+    'socket': ('_socket_path', None),
+    'string_conversion_action': ('_string_conversion_action', 'warn'),
+    'syslog_facility': ('_syslog_facility', 'INFO'),
+    'tmpdir': ('_tmpdir', None),
+    'verbosity': ('_verbosity', 0),
+    'version': ('ansible_version', '0.0'),
 }
+
+PASS_BOOLS = ('check_mode', 'debug', 'diff', 'keep_remote_files', 'no_log')
 
 
 def _return_datastructure_name(obj):
