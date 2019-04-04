@@ -89,6 +89,8 @@ class ConnectionBase(AnsiblePlugin):
 
         self.become = None
 
+        self._loader = kwargs.get('loader', None)
+
     def set_become_plugin(self, plugin):
         self.become = plugin
 

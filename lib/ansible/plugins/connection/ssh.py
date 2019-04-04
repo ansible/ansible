@@ -290,6 +290,7 @@ from ansible.errors import (
 )
 from ansible.errors import AnsibleOptionsError
 from ansible.compat import selectors
+from ansible.module_utils.common._io_compat import BytesIO
 from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -455,6 +456,11 @@ class Connection(ConnectionBase):
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
 
+        self._ssh_agent = None
+        self._ssh_agent_socket = None
+
+        self._ssh_version = self._get_ssh_version()
+
         # Windows operates differently from a POSIX connection/shell plugin,
         # we need to set various properties to ensure SSH on Windows continues
         # to work
@@ -468,7 +474,70 @@ class Connection(ConnectionBase):
     # put_file, and fetch_file methods, so we don't need to do any connection
     # management here.
 
+    @staticmethod
+    def _get_ssh_version():
+        ssh_version_proc = (
+            subprocess.Popen(
+                ('ssh', '-V'),
+                stderr=subprocess.PIPE,
+            )
+        )
+        ssh_version_string = (
+            to_native(
+                ssh_version_proc.
+                stderr.readline()
+            ).
+            split()[0].split('_')[1]
+        )
+        ssh_version_proc.terminate()
+        return tuple(
+            int(chunk) for chunk in
+            re.split(r'([^\d]|\w)', ssh_version_string)
+            if chunk.isdigit()
+        )[:2]
+
+    def _spawn_ssh_agent(self):
+        ssh_agent_args = 'D' if self._ssh_version >= (6, 9) else ''
+        self._ssh_agent = subprocess.Popen(
+            ('ssh-agent', '-s%s' % ssh_agent_args),
+            stdout=subprocess.PIPE,
+        )
+        self._ssh_agent_socket = (
+            self._ssh_agent.
+            stdout.readline().
+            partition(b'; ')[0].
+            partition(b'=')[-1].
+            decode()
+        )
+
+        if not self._play_context.private_key_file:
+            return
+
+        key_path = os.path.expanduser(self._play_context.private_key_file)
+        decrypted_contents = to_bytes(self._loader.load_from_file(key_path))
+        ssh_add_proc = subprocess.Popen(
+            ('ssh-add', '-'), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=self._get_extra_ssh_proc_env_vars(),
+        )
+        with BytesIO(decrypted_contents) as pk:
+            ssh_add_proc.communicate(input=pk.getvalue())
+        self._terminate_process(ssh_add_proc)
+
+    def _get_extra_ssh_proc_env_vars(self):
+        env_vars = dict(os.environ)
+        if self._ssh_version < (7, 3):
+            env_vars['SSH_AUTH_SOCK'] = self._ssh_agent_socket
+        return env_vars
+
+    def _destroy_ssh_agent(self):
+        if self._ssh_agent is not None:
+            self._terminate_process(self._ssh_agent)
+        self._ssh_agent_socket = None
+
     def _connect(self):
+        self._spawn_ssh_agent()
+        self._connected = True
         return self
 
     @staticmethod
@@ -495,7 +564,11 @@ class Connection(ConnectionBase):
 
         if SSHPASS_AVAILABLE is None:
             try:
-                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(
+                    ("sshpass", ),
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
                 p.communicate()
                 SSHPASS_AVAILABLE = True
             except OSError:
@@ -604,10 +677,16 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b"Port=" + to_bytes(self._play_context.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
-        key = self._play_context.private_key_file
-        if key:
-            b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
-            self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
+        if self._ssh_agent_socket:
+            b_args = b"-o", b'IdentitiesOnly=yes'
+            if self._ssh_version >= (7, 3):
+                b_args += (
+                    b"-o",
+                    b'IdentityAgent="' +
+                    to_bytes(self._ssh_agent_socket) +
+                    b'"',
+                )
+            self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set via ssh-agent")
 
         if not self._play_context.password:
             self._add_args(
@@ -783,9 +862,20 @@ class Connection(ConnectionBase):
                 master, slave = pty.openpty()
                 if PY3 and self._play_context.password:
                     # pylint: disable=unexpected-keyword-arg
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                    p = subprocess.Popen(
+                        cmd,
+                        stdin=slave, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        pass_fds=self.sshpass_pipe,
+                        env=self._get_extra_ssh_proc_env_vars(),
+                    )
                 else:
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p = subprocess.Popen(
+                        cmd,
+                        stdin=slave, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        env=self._get_extra_ssh_proc_env_vars(),
+                    )
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
             except (OSError, IOError):
@@ -794,9 +884,20 @@ class Connection(ConnectionBase):
         if not p:
             if PY3 and self._play_context.password:
                 # pylint: disable=unexpected-keyword-arg
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                p = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    pass_fds=self.sshpass_pipe,
+                    env=self._get_extra_ssh_proc_env_vars(),
+                )
             else:
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env=self._get_extra_ssh_proc_env_vars(),
+                )
             stdin = p.stdin
 
         # If we are using SSH password authentication, write the password into
@@ -1234,7 +1335,12 @@ class Connection(ConnectionBase):
 
         if run_reset:
             display.vvv(u'sending stop: %s' % cmd)
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=self._get_extra_ssh_proc_env_vars(),
+            )
             stdout, stderr = p.communicate()
             status_code = p.wait()
             if status_code != 0:
@@ -1243,4 +1349,5 @@ class Connection(ConnectionBase):
         self.close()
 
     def close(self):
+        self._destroy_ssh_agent()
         self._connected = False

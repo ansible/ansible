@@ -543,7 +543,7 @@ class TestSSHConnectionRetries(object):
         exception_info = pytest.raises(AnsibleAuthenticationFailure, self.conn.exec_command, 'sshpass', 'some data')
         assert exception_info.value.message == ('Invalid/incorrect username/password. Skipping remaining 5 retries to prevent account lockout: '
                                                 'Permission denied, please try again.')
-        assert self.mock_popen.call_count == 1
+        assert self.mock_popen.call_count == 2
 
     def test_retry_then_success(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
@@ -599,7 +599,7 @@ class TestSSHConnectionRetries(object):
         self.conn.get_option.return_value = True
 
         pytest.raises(AnsibleConnectionFailure, self.conn.exec_command, 'ssh', 'some data')
-        assert self.mock_popen.call_count == 10
+        assert self.mock_popen.call_count == 11
 
     def test_abitrary_exceptions(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
@@ -612,9 +612,12 @@ class TestSSHConnectionRetries(object):
         self.conn.get_option = MagicMock()
         self.conn.get_option.return_value = True
 
-        self.mock_popen.side_effect = [Exception('bad')] * 10
+        self.mock_popen.side_effect = (
+            [MagicMock()] +  # First Popen is for spawning ssh-agent
+            [Exception('bad')] * 10  # The rest are cmd retries
+        )
         pytest.raises(Exception, self.conn.exec_command, 'ssh', 'some data')
-        assert self.mock_popen.call_count == 10
+        assert self.mock_popen.call_count == 11
 
     def test_put_file_retries(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
@@ -645,7 +648,7 @@ class TestSSHConnectionRetries(object):
         assert return_code == 0
         assert b_stdout == b"my_stdout\nsecond_line"
         assert b_stderr == b"my_stderr"
-        assert self.mock_popen.call_count == 2
+        assert self.mock_popen.call_count == 3
 
     def test_fetch_file_retries(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
@@ -676,4 +679,4 @@ class TestSSHConnectionRetries(object):
         assert return_code == 0
         assert b_stdout == b"my_stdout\nsecond_line"
         assert b_stderr == b"my_stderr"
-        assert self.mock_popen.call_count == 2
+        assert self.mock_popen.call_count == 3
