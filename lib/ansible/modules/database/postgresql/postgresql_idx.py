@@ -18,9 +18,10 @@ DOCUMENTATION = r'''
 module: postgresql_idx
 short_description: Create or drop indexes from a PostgreSQL database
 description:
-- Creates or drops indexes from a remote PostgreSQL database
+- Create or drop indexes from a PostgreSQL database
   U(https://www.postgresql.org/docs/current/sql-createindex.html).
-version_added: "2.8"
+version_added: '2.8'
+
 options:
   idxname:
     description:
@@ -103,6 +104,8 @@ options:
     - List of index columns.
     - Mutually exclusive with I(state=absent).
     type: list
+    aliases:
+    - column
   cond:
     description:
     - Index conditions.
@@ -118,7 +121,7 @@ options:
   concurrent:
     description:
     - Enable or disable concurrent mode (CREATE / DROP INDEX CONCURRENTLY).
-    - Mutually exclusive with check mode and I(cascade=yes).
+    - Mutually exclusive with I(cascade=yes).
     type: bool
     default: yes
   tablespace:
@@ -140,31 +143,31 @@ options:
     - Mutually exclusive with I(concurrent=yes)
     type: bool
     default: no
+
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
-- I(cuncurrent=yes) cannot be used in check mode because
-  "CREATE INDEX CONCURRENTLY" cannot run inside a transaction block.
 - This module uses psycopg2, a Python PostgreSQL database adapter. You must
   ensure that psycopg2 is installed on the host before using this module.
 - If the remote host is the PostgreSQL server (which is the default case), then
   PostgreSQL must also be installed on the remote host.
 - For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
   on the remote host before using this module.
-requirements: [ psycopg2 ]
+
+requirements:
+- psycopg2
+
 author:
 - Andrew Klychkov (@Andersson007)
 '''
 
 EXAMPLES = r'''
-# For create / drop index in check mode use concurrent=no and --check
-
 - name: Create btree index if not exists test_idx concurrently covering columns id and name of table products
   postgresql_idx:
     db: acme
     table: products
     columns: id,name
-    idxname: test_idx
+    name: test_idx
 
 - name: Create btree index test_idx concurrently with tablespace called ssd and storage parameter
   postgresql_idx:
@@ -258,14 +261,15 @@ valid:
 
 import traceback
 
+PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
+    PSYCOPG2_IMP_ERR = traceback.format_exc()
 
-import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
@@ -441,7 +445,7 @@ def main():
         concurrent=dict(type='bool', default=True),
         table=dict(type='str'),
         idxtype=dict(type='str', aliases=['type']),
-        columns=dict(type='list'),
+        columns=dict(type='list', aliases=['column']),
         cond=dict(type='str'),
         session_role=dict(type='str'),
         tablespace=dict(type='str'),
@@ -453,6 +457,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if not HAS_PSYCOPG2:
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     idxname = module.params["idxname"]
     state = module.params["state"]
@@ -468,8 +475,8 @@ def main():
     cascade = module.params["cascade"]
     schema = module.params["schema"]
 
-    if concurrent and (module.check_mode or cascade):
-        module.fail_json(msg="Cuncurrent mode and check mode/cascade are mutually exclusive")
+    if concurrent and cascade:
+        module.fail_json(msg="Cuncurrent mode and cascade parameters are mutually exclusive")
 
     if state == 'present':
         if not table:
@@ -484,9 +491,6 @@ def main():
 
     if cascade and state != 'absent':
         module.fail_json(msg="cascade parameter used only with state=absent")
-
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg="the python psycopg2 module is required")
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -511,11 +515,6 @@ def main():
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
-    if module.check_mode and concurrent:
-        module.fail_json(msg="Cannot concurrently create or drop index %s "
-                             "inside the transaction block. The check is possible "
-                             "in not concurrent mode only" % idxname)
-
     try:
         db_connection = psycopg2.connect(**kw)
         if concurrent:
@@ -529,9 +528,9 @@ def main():
         if 'sslrootcert' in e.args[0]:
             module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
 
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
     except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
 
     if session_role:
         try:
@@ -546,6 +545,27 @@ def main():
     index = Index(module, cursor, schema, idxname)
     kw = index.get_info()
     kw['query'] = ''
+
+    #
+    # check_mode start
+    if module.check_mode:
+        if state == 'present' and index.exists:
+            kw['changed'] = False
+            module.exit_json(**kw)
+
+        elif state == 'present' and not index.exists:
+            kw['changed'] = True
+            module.exit_json(**kw)
+
+        elif state == 'absent' and not index.exists:
+            kw['changed'] = False
+            module.exit_json(**kw)
+
+        elif state == 'absent' and index.exists:
+            kw['changed'] = True
+            module.exit_json(**kw)
+    # check_mode end
+    #
 
     if state == "present":
         if idxtype and idxtype.upper() not in VALID_IDX_TYPES:
@@ -570,7 +590,7 @@ def main():
             kw['state'] = 'absent'
             kw['query'] = index.executed_query
 
-    if not module.check_mode and not kw['valid'] and concurrent:
+    if not kw['valid']:
         db_connection.rollback()
         module.warn("Index %s is invalid! ROLLBACK" % idxname)
 
