@@ -800,9 +800,7 @@ def main():
         priv=dict(type='str', default=None),
         db=dict(type='str', default='', aliases=['login_db']),
         fail_on_user=dict(type='bool', default='yes', aliases=['fail_on_role']),
-        role_attr_flags=dict(type='str', default='', choices=[
-            '[NO]SUPERUSER', '[NO]CREATEROLE', '[NO]CREATEDB', '[NO]INHERIT',
-            '[NO]LOGIN', '[NO]REPLICATION', '[NO]BYPASSRLS']),
+        role_attr_flags=dict(type='str', default=''),
         encrypted=dict(type='bool', default='yes'),
         no_password_changes=dict(type='bool', default='no'),
         expires=dict(type='str', default=None),
@@ -831,6 +829,7 @@ def main():
     expires = module.params["expires"]
     sslrootcert = module.params["ca_cert"]
     conn_limit = module.params["conn_limit"]
+    role_attr_flags = module.params["role_attr_flags"]
 
     if not HAS_PSYCOPG2:
         module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
@@ -880,7 +879,7 @@ def main():
             module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
-        role_attr_flags = parse_role_attrs(cursor, module.params["role_attr_flags"])
+        role_attr_flags = parse_role_attrs(cursor, role_attr_flags)
     except InvalidFlagsError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 

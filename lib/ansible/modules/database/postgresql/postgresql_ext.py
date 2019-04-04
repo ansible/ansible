@@ -72,7 +72,7 @@ options:
     - Specifies the name of a file containing SSL certificate authority (CA)
       certificate(s). If the file exists, the server's certificate will be
       verified to be signed by one of these authorities.
-    type: path
+    type: str
     version_added: '2.8'
     aliases: [ ssl_rootcert ]
   port:
@@ -80,6 +80,8 @@ options:
     - Database port to connect to.
     default: 5432
     type: int
+    aliases:
+    - login_port
   session_role:
     description:
     - Switch to session_role after connecting.
