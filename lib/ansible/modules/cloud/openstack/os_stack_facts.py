@@ -41,7 +41,7 @@ EXAMPLES = '''
 ---
 - name: get stack facts
   register: stack
-  os_stack:
+  os_stack_facts:
     name: "{{ stack_name }}"
 '''
 
@@ -111,7 +111,11 @@ def main():
         name=dict(required=True),
     )
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(
+        argument_spec,
+        supports_check_mode=True,
+        **module_kwargs
+    )
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
