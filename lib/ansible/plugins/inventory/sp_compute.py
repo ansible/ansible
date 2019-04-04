@@ -8,6 +8,7 @@ __metaclass__ = type
 import json
 
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.inventory import (
     BaseInventoryPlugin,
     Constructable,
@@ -49,9 +50,9 @@ DOCUMENTATION = '''
         client_secret:
             description: client secret generated from API Management in the portal https://control.stackpath.net/api-management
             required: True
-        stack_id:
-            description: stack_id to query instnaces in, https://developer.stackpath.com/docs/en/getting-started/#get-your-stack-id
-            required: True
+        stack_ids:
+            description: list of Stack IDs to query instnaces in, if no entry get instances in all stacks in the account https://developer.stackpath.com/docs/en/getting-started/#get-your-stack-id
+            required: False
         use_internal_ip:
             description: whether to use internal ip addresses, yes do use internal address, no to use external defaults to external
             requiered: False
@@ -84,7 +85,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.client_id = None
         self.client_secret = None
         self.stack_id = None
-        self.api_host = "https://gateway.staging.platform.stackpath.net"
+        self.api_host = "https://gateway.stackpath.com"
+        self.group_keys = ["stackId", "workloadId", "cityCode", "countryCode", "continent"]
 
     def _set_credentials(self):
         '''
@@ -93,9 +95,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         self.client_id = self.get_option('client_id')
         self.client_secret = self.get_option('client_secret')
-        self.stack_id = self.get_option('stack_id')
 
-        if not self.client_id or not self.client_secret or not self.stack_id:
+        if not self.client_id or not self.client_secret:
             raise AnsibleError("Insufficient credentials found."
                                "Please provide them in your inventory"
                                " configuration file.")
@@ -122,23 +123,49 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             "Content-Type": "application/json",
             "Authorization": "Bearer " + self.auth_token
         }
-        workloads = requests.get(self.api_host + '/workload/v1/stacks/' +
-                                 self.stack_id + '/workloads',
-                                 headers=headers).json()["results"]
-        workload_ids = [workload["id"] for workload in workloads]
-        for workload_id in workload_ids:
-            workload_instances = requests.get(
-                self.api_host + '/workload/v1/stacks/' + self.stack_id +
-                '/workloads/' + workload_id + '/instances',
-                headers=headers).json()["results"]
-            for instance in workload_instances:
-                if instance["phase"] == "RUNNING":
-                    results.append(instance)
+        for stack_id in self.stack_ids:
+            try:
+                workloads = requests.get(self.api_host + '/workload/v1/stacks/' +
+                                         stack_id + '/workloads',
+                                         headers=headers).json()["results"]
+            except Exception as e:
+                raise AnsibleError("Failed to get workloads from Stackpath api: %s" % to_native(e))
+            for workload in workloads:
+                try:
+                    workload_instances = requests.get(
+                        self.api_host + '/workload/v1/stacks/' + stack_id +
+                        '/workloads/' + workload["id"] + '/instances',
+                        headers=headers).json()["results"]
+                except Exception as e:
+                    raise AnsibleError("Failed to get workload instances from Stackpath api: %s" % to_native(e))
+                for instance in workload_instances:
+                    if instance["phase"] == "RUNNING":
+                        instance["stackId"] = stack_id
+                        instance["workloadId"] = workload["id"]
+                        instance["cityCode"] = instance["location"]["cityCode"]
+                        instance["countryCode"] = instance["location"]["countryCode"]
+                        instance["continent"] = instance["location"]["continent"]
+                        results.append(instance)
         return results
 
     def _populate(self, instances):
         for instance in instances:
-            self.inventory.add_host(instance[self.hostname_key])
+            for group_key in self.group_keys:
+                group = group_key + "_" + instance[group_key]
+                group = group.lower().replace(" ", "_").replace("-", "_")
+                self.inventory.add_group(group)
+                self.inventory.add_host(instance[self.hostname_key],
+                                        group=group)
+
+    def _get_stack_ids(self):
+        self._authenticate()
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + self.auth_token
+        }
+        stacks = requests.get(self.api_host + '/stack/v1/stacks',
+                              headers=headers).json()["results"]
+        self.stack_ids = [stack["id"] for stack in stacks]
 
     def verify_file(self, path):
         '''
@@ -169,6 +196,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.hostname_key = "ipAddress"
         else:
             self.hostname_key = "externalIpAddress"
+
+        self.stack_ids = self.get_option('stack_ids')
+        if not self.stack_ids:
+            try:
+                self._get_stack_ids()
+            except Exception as e:
+                raise AnsibleError("Failed to get stack ids from Stackpath api: %s" % to_native(e))
 
         cache_key = self.get_cache_key(path)
         # false when refresh_cache or --flush-cache is used
