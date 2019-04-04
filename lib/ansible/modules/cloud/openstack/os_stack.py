@@ -181,6 +181,7 @@ def _update_stack(module, stack, cloud, sdk):
     try:
         stack = cloud.update_stack(
             module.params['name'],
+            tags=module.params['tag'],
             template_file=module.params['template'],
             environment_files=module.params['environment'],
             timeout=module.params['timeout'],
@@ -248,6 +249,14 @@ def main():
             if not stack:
                 stack = _create_stack(module, stack, cloud, sdk)
             else:
+                if module.params['tags']:
+                    from distutils.version import StrictVersion
+                    min_version = '0.28.0'
+                    if StrictVersion(sdk.version.__version__) < StrictVersion(min_version):
+                        module.warn("To update tags using os_stack module, the"
+                                    "installed version of the openstacksdk"
+                                    "library MUST be >={min_version}"
+                                    "".format(min_version=min_version))
                 stack = _update_stack(module, stack, cloud, sdk)
             changed = True
             module.exit_json(changed=changed,
