@@ -392,7 +392,7 @@ def main():
     
     if module.check_mode:
         changed = needs_application
-    diff=dict(before= '', after= out)
+    diff = dict(before='', after=out)
     
     module.exit_json(changed=changed, state=state, workspace=workspace, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
 
