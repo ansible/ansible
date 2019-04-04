@@ -90,7 +90,6 @@ options:
     description:
     - Host running PostgreSQL.
     type: str
-    default: localhost
   login_unix_socket:
     description:
     - Path to a Unix domain socket for local connections.
@@ -801,7 +800,9 @@ def main():
         priv=dict(type='str', default=None),
         db=dict(type='str', default='', aliases=['login_db']),
         fail_on_user=dict(type='bool', default='yes', aliases=['fail_on_role']),
-        role_attr_flags=dict(type='str', default=''),
+        role_attr_flags=dict(type='str', default='', choices=[
+            '[NO]SUPERUSER', '[NO]CREATEROLE', '[NO]CREATEDB', '[NO]INHERIT',
+            '[NO]LOGIN', '[NO]REPLICATION', '[NO]BYPASSRLS']),
         encrypted=dict(type='bool', default='yes'),
         no_password_changes=dict(type='bool', default='no'),
         expires=dict(type='str', default=None),

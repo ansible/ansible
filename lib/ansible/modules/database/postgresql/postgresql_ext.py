@@ -24,6 +24,8 @@ options:
     - Name of the extension to add or remove.
     required: true
     type: str
+    aliases:
+    - ext
   db:
     description:
     - Name of the database to add or remove the extension to/from.
@@ -40,6 +42,7 @@ options:
     description:
     - The username used to authenticate with.
     type: str
+    default: postgres
   login_password:
     description:
     - The password used to authenticate with.
@@ -48,7 +51,6 @@ options:
     description:
     - Host running the database.
     type: str
-    default: localhost
   login_unix_socket:
     description:
     - Path to a Unix domain socket for local connections.
@@ -219,14 +221,10 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         db=dict(type="str", required=True, aliases=["login_db"]),
-        port=dict(type="int", default=5432, aliases=["login_port"]),
-        ext=dict(type="str", required=True, aliases=['name']),
+        ext=dict(type="str", required=True, aliases=["name"]),
         schema=dict(type="str"),
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        cascade=dict(type='bool', default=False),
-        ssl_mode=dict(type='str', default='prefer', choices=[
-                      'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type="path", default=None, aliases=['ssl_rootcert']),
+        cascade=dict(type="bool", default=False),
         session_role=dict(type="str"),
     )
 
