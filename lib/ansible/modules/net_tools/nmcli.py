@@ -64,7 +64,7 @@ options:
             - This is the type of device or network connection that you wish to create or modify.
             - Type C(generic) is added in Ansible 2.5.
         type: str
-        choices: [ bond, bond-slave, bridge, bridge-slave, ethernet, generic, ipip, sit, team, team-slave, vlan, vxlan ]
+        choices: [ bond, bond-slave, bridge, bridge-slave, ethernet, generic, ipip, sit, team, team-slave, vlan, vxlan, dummy ]
     mode:
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
@@ -613,6 +613,7 @@ class Nmcli(object):
         16: "VxLan",
         17: "ipip",
         18: "sit",
+        22: "Dummy"
     }
     STATES = {
         0: "Unknown",
@@ -958,6 +959,8 @@ class Nmcli(object):
             cmd.append('ethernet')
         elif conn_type == 'generic':
             cmd.append('generic')
+        elif conn_type == 'dummy':
+            cmd.append('dummy')
         cmd.append('con-name')
         if self.conn_name is not None:
             cmd.append(self.conn_name)
@@ -1383,6 +1386,8 @@ class Nmcli(object):
             cmd = self.create_connection_sit()
         elif self.type == 'generic':
             cmd = self.create_connection_ethernet(conn_type='generic')
+        elif self.type == 'dummy':
+            cmd = self.create_connection_ethernet(conn_type='dummy')
 
         if cmd:
             return self.execute_command(cmd)
@@ -1421,6 +1426,8 @@ class Nmcli(object):
             cmd = self.modify_connection_sit()
         elif self.type == 'generic':
             cmd = self.modify_connection_ethernet(conn_type='generic')
+        elif self.type == 'dummy':
+            cmd = self.modify_connection_ethernet(conn_type='dummy')
         if cmd:
             return self.execute_command(cmd)
         else:
@@ -1438,7 +1445,8 @@ def main():
             master=dict(type='str'),
             ifname=dict(type='str'),
             type=dict(type='str',
-                      choices=['bond', 'bond-slave', 'bridge', 'bridge-slave', 'ethernet', 'generic', 'ipip', 'sit', 'team', 'team-slave', 'vlan', 'vxlan']),
+                      choices=['bond', 'bond-slave', 'bridge', 'bridge-slave', 'ethernet', 'generic',
+                               'ipip', 'sit', 'team', 'team-slave', 'vlan', 'vxlan', 'dummy']),
             ip4=dict(type='str'),
             gw4=dict(type='str'),
             dns4=dict(type='list'),
