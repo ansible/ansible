@@ -8,6 +8,14 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: result
 
+- assert:
+    that:
+      - "'public_key' in result"
+      - "'public_key_fingerprints' in result"
+      - "'type' in result"
+      - "'public_data' in result"
+      - "'private_data' not in result"
+
 - name: Update result list
   set_fact:
     info_results: "{{ info_results + [result] }}"
@@ -15,8 +23,17 @@
 - name: ({{select_crypto_backend}}) Get key 2 info
   openssl_privatekey_info:
     path: '{{ output_dir }}/privatekey_2.pem'
+    return_private_key_data: yes
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: result
+
+- assert:
+    that:
+      - "'public_key' in result"
+      - "'public_key_fingerprints' in result"
+      - "'type' in result"
+      - "'public_data' in result"
+      - "'private_data' in result"
 
 - name: Update result list
   set_fact:
@@ -25,6 +42,7 @@
 - name: ({{select_crypto_backend}}) Get key 3 info (without passphrase)
   openssl_privatekey_info:
     path: '{{ output_dir }}/privatekey_3.pem'
+    return_private_key_data: yes
     select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: result
@@ -43,6 +61,7 @@
   openssl_privatekey_info:
     path: '{{ output_dir }}/privatekey_3.pem'
     passphrase: hunter2
+    return_private_key_data: yes
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: result
 
@@ -53,6 +72,7 @@
 - name: ({{select_crypto_backend}}) Get key 4 info
   openssl_privatekey_info:
     path: '{{ output_dir }}/privatekey_4.pem'
+    return_private_key_data: yes
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: result
 
@@ -63,6 +83,7 @@
 - name: ({{select_crypto_backend}}) Get key 5 info
   openssl_privatekey_info:
     path: '{{ output_dir }}/privatekey_5.pem'
+    return_private_key_data: yes
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: result
 
