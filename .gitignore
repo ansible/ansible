@@ -65,6 +65,7 @@ coverage.xml
 /test/units/cover-html
 /test/integration/targets/*/backup/
 /test/cache/*
+pytestdebug.log
 # Development
 /test/develop
 venv
