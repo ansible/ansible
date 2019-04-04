@@ -280,6 +280,7 @@ class Interfaces(FactsBase):
                 facts[intf] = list()
             fact = dict()
             fact['host'] = self.parse_lldp_host(entry)
+            fact['remote_description'] = self.parse_lldp_remote_desc(entry)
             fact['port'] = self.parse_lldp_port(entry)
             facts[intf].append(fact)
         return facts
@@ -351,6 +352,11 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
+    def parse_lldp_remote_desc(self, data):
+        match = re.search(r'Port Description: (.+)$', data, re.M)
+        if match:
+            return match.group(1)
+    
     def parse_lldp_host(self, data):
         match = re.search(r'System Name: (.+)$', data, re.M)
         if match:
