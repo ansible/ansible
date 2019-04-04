@@ -341,10 +341,10 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
             plan_def = AppServicePlan(
                 location=self.location, app_service_plan_name=self.name, sku=sku_def, reserved=self.is_linux, tags=self.tags if self.tags else None)
 
-            poller = self.web_client.app_service_plans.create_or_update(self.resource_group, self.name, plan_def)
+            response = self.web_client.app_service_plans.create_or_update(self.resource_group, self.name, plan_def)
 
-            if isinstance(poller, AzureOperationPoller):
-                response = self.get_poller_result(poller)
+            if isinstance(response, AzureOperationPoller):
+                response = self.get_poller_result(response)
 
             self.log("Response : {0}".format(response))
 
