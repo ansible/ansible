@@ -36,7 +36,134 @@ options:
         choices:
             - absent
             - present
-
+    location:
+        description:
+            - Location of the IoT hub.
+    sku:
+        description:
+            - Pricing tier for Azure IoT Hub.
+            - Note that only one free IoT hub instance is allowed in each subscription. Exception will be thrown if free instances exceed one.
+            - Default is b1 when creation.
+        choices:
+            - b1
+            - b2
+            - b3
+            - f1
+            - s1
+            - s2
+            - s3
+    unit:
+        description:
+            - Units in your IoT Hub.
+            - Default is 1
+        type: long
+    event_hub_endpoint:
+        description:
+            - The Event Hub-compatible endpoint property.
+        suboptions:
+            partition_count:
+                description:
+                    - The number of partitions for receiving device-to-cloud messages in the Event Hub-compatible endpoint.
+                    - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                    - Default is 2.
+                type: int
+            retention_time_in_days:
+                description:
+                    - The retention time for device-to-cloud messages in days.
+                    - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                    - Default is 1.
+                type: long
+    enable_file_upload_notifications:
+        description:
+            - File upload notifications are enabled if set to C(True).
+        type: bool
+    ip_filters:
+        description:
+            - Configure rules for rejecting or accepting traffic from specific IPv4 addresses.
+        suboptions:
+            name:
+                description:
+                    - Name of the filter.
+                required: yes
+            ip_mask:
+                description:
+                    - A string that contains the IP address range in CIDR notation for the rule.
+                required: yes
+            action:
+                description:
+                    - The desired action for requests captured by this rule.
+                required: yes
+                choices:
+                    - accept
+                    - reject
+    routing_endpoints:
+        description:
+            - Custom endpoints.
+        suboptions:
+            name:
+                description:
+                    - Name of the custom endpoint.
+                required: yes
+            resource_group:
+                description:
+                    - Resource group of the endpoint.
+                    - Default is the same as C(resource_group).
+            subscription:
+                description:
+                    - Subscription id of the endpoint.
+                    - Default is the same as C(subscription).
+            resource_type:
+                description:
+                    - Resource type of the custom endpoint.
+                choices:
+                    - eventhub
+                    - queue
+                    - storage
+                    - topic
+                required: yes
+            connection_string:
+                description:
+                    - Connection string of the custom endpoint.
+                    - The connection string should have send priviledge.
+                required: yes
+            container:
+                description:
+                    - Container name of the custom endpoint when C(resource_type) is C(storage).
+            encoding:
+                description:
+                    - Encoding of the message when C(resource_type) is C(storage).
+    routes:
+        description:
+            - Route device-to-cloud messages to service-facing endpoints.
+        suboptions:
+            name:
+                description:
+                    - Name of the route.
+                required: yes
+            source:
+                description:
+                    - The origin of the data stream to be acted upon.
+                choices:
+                    - device_messages
+                    - twin_change_events
+                    - device_lifecycle_events
+                    - device_job_lifecycle_events
+                required: yes
+            enabled:
+                description:
+                    - Whether to enable the route.
+                type: bool
+                required: yes
+            endpoint_name:
+                description:
+                    - The name of the endpoint in C(routing_endpoints) where IoT Hub sends messages that match the query.
+                required: yes
+            condition:
+                description:
+                    - "The query expression for the routing query that is run against the message application properties,
+                       system properties, message body, device twin tags, and device twin properties to determine if it is a match for the endpoint."
+                    - "For more information about constructing a query,
+                       see I(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax)"
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -47,6 +174,24 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Create a simplest IoT hub
+  azure_rm_iothub:
+    name: Testing
+    resource_group: myResourceGroup
+- name: Create an IoT hub with route
+  azure_rm_iothub:
+    resource_group: myResourceGroup
+    name: Testing
+    routing_endpoints:
+        - connection_string: "Endpoint=sb://qux.servicebus.windows.net/;SharedAccessKeyName=quux;SharedAccessKey=****;EntityPath=myQueue"
+          name: foo
+          resource_type: queue
+          resource_group: myResourceGroup1
+    routes:
+        - name: bar
+          source: device_messages
+          endpoint_name: foo
+          enabled: yes
 '''
 
 RETURN = '''
@@ -58,7 +203,7 @@ id:
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
-from ansible.module_utils.common.dict_transformations import _snake_to_camel
+from ansible.module_utils.common.dict_transformations import _snake_to_camel, _camel_to_snake
 import re
 
 try:
@@ -174,10 +319,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
                 if self.enable_file_upload_notifications:
                     iothub_property.enable_file_upload_notifications = self.enable_file_upload_notifications
                 if self.ip_filters:
-                    ip_filters = [self.IoThub_models.IpFilterRule(filter_name=x.name,
-                                                                  action=self.IoThub_models.IpFilterActionType(name=str.capitalize(x.action)),
-                                                                  ip_mask=x.ip_mask) for x in self.ip_filters]
-                    iothub_property.ip_filter_rules = ip_filters
+                    iothub_property.ip_filter_rules = self.construct_ip_filters()
                 routing_endpoints = None
                 routes = None
                 if self.routing_endpoints:
@@ -241,7 +383,36 @@ class AzureRMIoTHub(AzureRMModuleBase):
                     if endpoint_changed:
                         iothub.properties.routing.endpoints = self.construct_routing_endpoint(self.routing_endpoints)
                         changed = True
-                # comprea tags
+                # compare routes
+                original_routes = iothub.properties.routing.routes
+                routes_changed = False
+                if self.routes:
+                    if len(self.routes) != len(original_routes or []):
+                        routes_changed = True
+                    else:
+                        for item in self.routes:
+                            if not self.lookup_route(item, original_routes):
+                                routes_changed =  True
+                                break
+                    if routes_changed:
+                        changed = True
+                        iothub.properties.routing.routes = [self.construct_route(x) for x in self.routes]
+                # compare IP filter
+                ip_filter_changed = False
+                original_ip_filter = iothub.properties.ip_filter_rules
+                if self.ip_filters:
+                    if len(self.ip_filters) != len(original_ip_filter or []):
+                        ip_filter_changed = True
+                    else:
+                        for item in self.ip_filters:
+                            if not self.lookup_ip_filter(item, original_ip_filter):
+                                ip_filter_changed = True
+                                break
+                    if ip_filter_changed:
+                        changed = True
+                        iothub.properties.ip_filter_rules = self.construct_ip_filters()
+                            
+                # compare tags
                 tag_changed, updated_tags = self.update_tags(iothub.tags)
                 iothub.tags = updated_tags
                 if changed and not self.check_mode:
@@ -258,6 +429,34 @@ class AzureRMIoTHub(AzureRMModuleBase):
                 self.delete_hub()
         self.results['changed'] = changed
         return self.results
+
+    def lookup_ip_filter(self, target, ip_filters):
+        if not ip_filters or len(ip_filters) == 0:
+            return False
+        for item in ip_filters:
+            if item.filter_name == target['name']:
+                if item.ip_mask != target['ip_mask']:
+                    return False
+                if item.action.lower() != target['action']:
+                    return False
+                return True
+        return False
+
+    def lookup_route(self, target, routes):
+        if not routes or len(routes) == 0:
+            return False
+        for item in routes:
+            if item.name == target['name']:
+                if target['source'] != _camel_to_snake(item.source):
+                    return False
+                if target['enabled'] != item.is_enabled:
+                    return False
+                if target['endpoint_name'] != item.endpoint_names[0]:
+                    return False
+                if target.get('condition') and target['condition'] != item.condition:
+                    return False
+                return True
+        return False
 
     def lookup_endpoint(self, target, routing_endpoints):
         resource_type = target['resource_type']
@@ -282,7 +481,12 @@ class AzureRMIoTHub(AzureRMModuleBase):
                         return False
                 return True
         return False
-                
+
+    def construct_ip_filters(self):
+        return [self.IoThub_models.IpFilterRule(filter_name=x['name'],
+                                                action=self.IoThub_models.IpFilterActionType[x['action']],
+                                                ip_mask=x['ip_mask']) for x in self.ip_filters]
+
     def construct_routing_endpoint(self, routing_endpoints):
         if not routing_endpoints or len(routing_endpoints) == 0:
             return None
@@ -333,8 +537,45 @@ class AzureRMIoTHub(AzureRMModuleBase):
             self.fail('Error deleting IoT Hub {0}: {1}'.format(self.name, exc.message or str(exc)))
             return False
 
+    def route_to_dict(self, route):
+        return dict(
+            name=route.name,
+            source=_camel_to_snake(route.source),
+            endpoint_name=route.endpoint_names[0],
+            enabled=route.is_enabled,
+            condition=route.condition
+        )
+
+    def instance_dict_to_dict(self, instance_dict):
+        result = dict()
+        for key in instance_dict.keys():
+            result[key] = instance_dict[key].as_dict()
+        return result 
+
     def to_dict(self, hub):
-        return hub.as_dict()
+        result = dict()
+        properties = hub.properties
+        result['id'] = hub.id
+        result['name'] = hub.name
+        result['resource_group'] = parse_resource_id(hub.id).get('resourceGroups')
+        result['location'] = hub.location
+        result['tags'] = hub.tags
+        result['unit'] = hub.sku.capacity
+        result['sku'] = hub.sku.name.lower()
+        result['cloud_to_device'] = dict(
+            max_delivery_count=properties.cloud_to_device.feedback.max_delivery_count,
+            ttl_as_iso8601=str(properties.cloud_to_device.feedback.ttl_as_iso8601)
+        )
+        result['enable_file_upload_notifications'] = properties.enable_file_upload_notifications
+        result['event_hub_endpoints'] = self.instance_dict_to_dict(properties.event_hub_endpoints)
+        result['host_name'] = properties.host_name
+        result['ip_filters'] = [x.as_dict() for x in properties.ip_filter_rules]
+        result['routing_endpoints'] = properties.routing.endpoints.as_dict()
+        result['routes'] = [self.route_to_dict(x) for x in properties.routing.routes]
+        result['fallback_route'] = self.route_to_dict(properties.routing.fallback_route)
+        result['status'] = properties.state
+        result['storage_endpoints'] = self.instance_dict_to_dict(properties.storage_endpoints)
+        return result
 
 
 def main():
