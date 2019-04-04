@@ -10,6 +10,7 @@ _ansible-console()
   case "$prev" in
     --become-method)
       __ansible_become_method
+      return
     ;;
     -c|--connection)
       __ansible_module_name connection
@@ -27,14 +28,11 @@ _ansible-console()
       done
       cur="$curold"
       [[ $cur == *,* ]] || _filedir
+      return
     ;;
     -l|--limit)
         __ansible_limit
         return
-    ;;
-    -m|--module-name)
-      COMPREPLY=( $( compgen -W "$(/usr/bin/ansible-doc -l | /bin/awk '{print $1}')" -- "$cur") )
-      return
     ;;
     -M|--module-path)
       _filedir
@@ -50,10 +48,12 @@ _ansible-console()
     --become-method*)
       cur=${cur#*=}
       __ansible_become_method
+      return
     ;;
     --connection=*)
       cur=${cur#*=}
       __ansible_module_name connection
+      return
     ;;
     --inventory=*)
       curold=${cur#*=}
@@ -68,18 +68,22 @@ _ansible-console()
       done
       cur="$curold"
       [[ $cur == *,* ]] || _filedir
+      return
     ;;
     --limit=*)
       cur=${cur#*=}
       __ansible_limit
+      return
     ;;
     --module-path=*|--playbook-dir=*|--key-file=*|--private-key=*|--vault-password-file=*)
       cur=${cur#*=}
       _filedir
+      return
     ;;
     --user=*|--become-user=*)
       cur=${cur#*=}
       _allowed_users
+      return
     ;;
     -*)
       shortopts='-C -D -e -f -h -i -l -M -v -k -u -c -T -b -K'

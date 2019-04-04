@@ -22,6 +22,7 @@ _ansible-doc()
     --module-path=*)
       cur=${cur#*=}
       _filedir
+      return
     ;;
     --type=*)
       cur=${cur#*=}

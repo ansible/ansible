@@ -18,7 +18,6 @@ _ansible-vault()
     --new-vault-password-file=*|--vault-password-file=*)
       cur=${cur#*=}
       _filedir
-      return
     ;;
     -*)
       shortopts='-h -v'

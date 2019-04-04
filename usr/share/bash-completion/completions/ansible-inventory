@@ -10,6 +10,7 @@ _ansible-inventory()
   case "$prev" in
     --host)
       __ansible_inventory
+      return
     ;;
     -i|--inventory)
       curold=${cur}

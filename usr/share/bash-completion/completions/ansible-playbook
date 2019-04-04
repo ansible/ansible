@@ -20,10 +20,12 @@ _ansible-playbook()
       done
       cur="$curold"
       [[ $cur == *,* ]] || _filedir
+      [[ $COMPREPLY == *, ]] && compopt -o nospace
+      return
     ;;
     -l|--limit)
-        __ansible_limit
-        return
+      __ansible_limit
+      return
     ;;
     -M|--module-path|--vault-password-file)
       _filedir

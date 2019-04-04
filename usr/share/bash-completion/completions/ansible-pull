@@ -24,6 +24,8 @@ _ansible-pull()
       done
       cur="$curold"
       [[ $cur == *,* ]] || _filedir
+      [[ $COMPREPLY == *, ]] && compopt -o nospace
+      return
     ;;
     -l|--limit)
         __ansible_limit
