@@ -120,7 +120,7 @@ function Format-AnsibleVolume {
     if ($null -ne $SetIntegrityStreams) {
         $parameters.Add("SetIntegrityStreams", $SetIntegrityStreams)
     }
-    if ($null -ne $compress_volume){
+    if ($null -ne $Compress){
         $parameters.Add("Compress", $Compress)
     }
     if ($null -ne $Label) {
@@ -147,7 +147,7 @@ if ($null -ne $file_system -and $file_system -ne $ansible_file_system) {
         }
         $module.Result.changed = $true
     } else {
-        $module.FailJson("Force format must be specified if target file system is different from the current file system of the volume")
+        $module.FailJson("Force format must be specified since target file system: $($file_system) is different from the current file system of the volume: $($ansible_file_system.ToLower())")
     }
 }
 if ($ansible_volume_size -ne 0 -or $ansible_partition_size -eq $ansible_volume_size) {
@@ -157,6 +157,14 @@ if ($ansible_volume_size -ne 0 -or $ansible_partition_size -eq $ansible_volume_s
             Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
         }
         $module.Result.changed = $true
+    } else {
+        if ($null -ne $ansible_volume.DriveLetter) {
+            # Drive exists. Fail if it has any files since force: False
+            $files_in_volume = (Get-ChildItem -LiteralPath "$($ansible_volume.DriveLetter):\\" | Measure-Object).Count
+            if ($files_in_volume -gt 0) {
+                $module.FailJson("Force format must be specified to format non-pristine volumes")
+            }
+        }
     }
 } else {
     # Seems like it's a pristine partition so force_format is not required

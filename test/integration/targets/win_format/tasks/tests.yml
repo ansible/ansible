@@ -74,7 +74,7 @@
 - assert:
     that:
       - require_force_format is failed
-      - 'require_force_format.msg == "Force format must be specified if target file system is different from the current file system of the volume"'
+      - 'require_force_format.msg == "Force format must be specified since target file system: fat32 is different from the current file system of the volume: ntfs"'
 
 - name: Format volume (forced) (check)
   win_format:
@@ -111,3 +111,28 @@
       - not_pristine_forced is changed
       - not_pristine_forced_idem_fails is changed
       - not_pristine_forced_idem is not changed
+
+- name: Add a file
+  win_file:
+    path: T:\path\to\directory
+    state: directory
+  register: add_file_to_volume
+
+- name: Format volume with file inside without force
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+  register: format_volume_without_force
+  ignore_errors: True
+
+- name: Format volume with file inside with force
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    force: True
+  register: format_volume_with_force
+
+- assert:
+    that:
+      - add_file_to_volume is changed
+      - format_volume_without_force is failed
+      - 'format_volume_without_force.msg == "Force format must be specified to format non-pristine volumes"'
+      - format_volume_with_force is changed
