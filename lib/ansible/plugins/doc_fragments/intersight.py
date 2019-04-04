@@ -10,7 +10,7 @@
 # (c) 2017 Cisco Systems Inc.
 #
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
-#
+
 
 
 class ModuleDocFragment(object):
