@@ -125,7 +125,11 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        self.results['environments'] = self.get()
+        if self.name:
+            self.results['environments'] = self.get()
+        else:
+            self.results['environments'] = self.list()
+
         return self.results
 
     def get(self):
@@ -142,6 +146,23 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
 
         if response:
             results.append(self.format_response(response))
+
+        return results
+
+    def list(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.environments.list(resource_group_name=self.resource_group,
+                                                          lab_name=self.lab_name,
+                                                          user_name=self.user_name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Environment.')
+
+        if response is not None:
+            for item in response:
+                results.append(self.format_response(item))
 
         return results
 

@@ -103,12 +103,6 @@ class AzureRMScheduleFacts(AzureRMModuleBase):
             name=dict(
                 type='str',
                 required=True
-            ),
-            expand=dict(
-                type='str'
-            ),
-            tags=dict(
-                type='list'
             )
         )
         # store the results of the module operation
@@ -119,8 +113,6 @@ class AzureRMScheduleFacts(AzureRMModuleBase):
         self.resource_group = None
         self.lab_name = None
         self.name = None
-        self.expand = None
-        self.tags = None
         super(AzureRMScheduleFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -128,8 +120,11 @@ class AzureRMScheduleFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
+        if self.name:
+            self.results['schedules'] = self.get()
+        else:
+            self.results['schedules'] = self.list()
 
-        self.results['schedules'] = self.get()
         return self.results
 
     def get(self):
@@ -143,8 +138,24 @@ class AzureRMScheduleFacts(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get facts for Schedule.')
 
-        if response and self.has_tags(response.tags, self.tags):
+        if response:
             results.append(self.format_response(response))
+
+        return results
+
+    def list(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.schedules.list(resource_group_name=self.resource_group,
+                                                       lab_name=self.lab_name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Schedule.')
+
+        if response is not None:
+            for item in response:
+                results.append(self.format_response(item))
 
         return results
 

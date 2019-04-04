@@ -112,12 +112,6 @@ class AzureRMPolicyFacts(AzureRMModuleBase):
             name=dict(
                 type='str',
                 required=True
-            ),
-            expand=dict(
-                type='str'
-            ),
-            tags=dict(
-                type='list'
             )
         )
         # store the results of the module operation
@@ -139,7 +133,11 @@ class AzureRMPolicyFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        self.results['policies'] = self.get()
+        if self.name:
+            self.results['policies'] = self.get()
+        else:
+            self.results['policies'] = self.list()
+
         return self.results
 
     def get(self):
@@ -154,8 +152,25 @@ class AzureRMPolicyFacts(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get facts for Policy.')
 
-        if response and self.has_tags(response.tags, self.tags):
+        if response:
             results.append(self.format_response(response))
+
+        return results
+
+    def list(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.policies.list(resource_group_name=self.resource_group,
+                                                     lab_name=self.lab_name,
+                                                     policy_set_name=self.policy_set_name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Policy.')
+
+        if response is not None:
+            for item in response:
+                results.append(self.format_response(item))
 
         return results
 

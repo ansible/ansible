@@ -120,7 +120,10 @@ class AzureRMCustomImageFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        self.results['custom_images'] = self.get()
+        if self.name:
+            self.results['custom_images'] = self.get()
+        else:
+            self.results['custom_images'] = self.list()
         return self.results
 
     def get(self):
@@ -136,6 +139,22 @@ class AzureRMCustomImageFacts(AzureRMModuleBase):
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
+
+        return results
+
+    def list(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.custom_images.list(resource_group_name=self.resource_group,
+                                                           lab_name=self.lab_name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Custom Image.')
+
+        if response is not None:
+            for item in response:
+                results.append(self.format_response(item))
 
         return results
 
