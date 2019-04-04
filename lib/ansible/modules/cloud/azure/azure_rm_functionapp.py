@@ -172,6 +172,7 @@ container_settings_spec = dict(
     registry_server_password=dict(type='str', no_log=True)
 )
 
+
 class AzureRMFunctionApp(AzureRMModuleBase):
 
     def __init__(self):
@@ -273,7 +274,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                     self.app_settings['DOCKER_REGISTRY_SERVER_PASSWORD'] = self.container_settings.get('registry_server_password')
 
             if not self.plan and function_app:
-                self.plan = function_app['server_farm_id']
+                self.plan = function_app.server_farm_id
 
             if not exists:
                 function_app = Site(
