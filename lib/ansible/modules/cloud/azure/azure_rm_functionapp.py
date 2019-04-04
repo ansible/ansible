@@ -154,7 +154,10 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.web.models import Site, SiteConfig, NameValuePair, SiteSourceControl
+    from azure.mgmt.web.models import (
+        site_config, app_service_plan, Site, SiteConfig, NameValuePair, SiteSourceControl,
+        AppServicePlan, SkuDescription
+    )
     from azure.mgmt.resource.resources import ResourceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -421,6 +424,57 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         except CloudError as ex:
             self.fail("Failed to create app service plan {0} in resource group {1}: {2}".format(
                 self.plan['name'], self.plan['resource_group'], str(ex)))
+
+    def get_app_service_plan(self):
+        '''
+        Gets app service plan
+        :return: deserialized app service plan dictionary
+        '''
+        self.log("Get App Service Plan {0}".format(self.plan['name']))
+
+        try:
+            response = self.web_client.app_service_plans.get(
+                resource_group_name=self.plan['resource_group'],
+                name=self.plan['name'])
+
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            if response is not None:
+                self.log("Response : {0}".format(response))
+                self.log("App Service Plan : {0} found".format(response.name))
+
+                return appserviceplan_to_dict(response)
+        except CloudError as ex:
+            pass
+
+        self.log("Didn't find app service plan {0} in resource group {1}".format(
+            self.plan['name'], self.plan['resource_group']))
+
+        return False
+
+
+def _normalize_sku(sku):
+    if sku is None:
+        return sku
+
+    sku = sku.upper()
+    if sku == 'FREE':
+        return 'F1'
+    elif sku == 'SHARED':
+        return 'D1'
+    return sku
+
+
+def appserviceplan_to_dict(plan):
+    return dict(
+        id=plan.id,
+        name=plan.name,
+        kind=plan.kind,
+        location=plan.location,
+        reserved=plan.reserved,
+        is_linux=plan.reserved,
+        provisioning_state=plan.provisioning_state,
+        tags=plan.tags if plan.tags else None
+    )
 
 
 def main():
