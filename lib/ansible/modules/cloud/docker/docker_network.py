@@ -70,20 +70,44 @@ options:
     description:
       - Enable IPv6 networking.
     type: bool
-    version_added: 2.8
+    version_added: "2.8"
 
   ipam_driver:
     description:
       - Specify an IPAM driver.
     type: str
 
+  ipam_driver_options:
+    description:
+      - Dictionary of IPAM driver options.
+    type: dict
+    version_added: "2.8"
+
   ipam_options:
     description:
       - Dictionary of IPAM options.
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(ipam_config) instead. In Docker 1.10.0, IPAM
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
-        the IPAM config not the newly introduced IPAM options.
+        the IPAM config not the newly introduced IPAM options. For the IPAM options, see the I(ipam_driver_options)
+        parameter.
     type: dict
+    suboptions:
+      subnet:
+        description:
+          - IP subset in CIDR notation.
+        type: str
+      iprange:
+        description:
+          - IP address range in CIDR notation.
+        type: str
+      gateway:
+        description:
+          - IP gateway address.
+        type: str
+      aux_addresses:
+        description:
+          - Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
+        type: dict
 
   ipam_config:
     description:
@@ -108,7 +132,7 @@ options:
         description:
           - Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
         type: dict
-    version_added: 2.8
+    version_added: "2.8"
 
   state:
     description:
@@ -131,13 +155,13 @@ options:
     description:
       - Restrict external access to the network.
     type: bool
-    version_added: 2.8
+    version_added: "2.8"
 
   labels:
     description:
       - Dictionary of labels.
     type: dict
-    version_added: 2.8
+    version_added: "2.8"
 
   scope:
     description:
@@ -147,13 +171,13 @@ options:
       - local
       - global
       - swarm
-    version_added: 2.8
+    version_added: "2.8"
 
   attachable:
     description:
       - If enabled, and the network is in the global scope, non-service containers on worker nodes will be able to connect to the network.
     type: bool
-    version_added: 2.8
+    version_added: "2.8"
 
 extends_documentation_fragment:
   - docker
@@ -282,6 +306,7 @@ class TaskParameters(DockerBaseClass):
         self.driver = None
         self.driver_options = None
         self.ipam_driver = None
+        self.ipam_driver_options = None
         self.ipam_options = None
         self.ipam_config = None
         self.appends = None
@@ -392,6 +417,13 @@ class DockerNetworkManager(object):
                                 parameter=self.parameters.ipam_driver,
                                 active=net.get('IPAM'))
 
+        if self.parameters.ipam_driver_options is not None:
+            ipam_driver_options = net['IPAM'].get('Options') or {}
+            if ipam_driver_options != self.parameters.ipam_driver_options:
+                differences.add('ipam_driver_options',
+                                parameter=self.parameters.ipam_driver_options,
+                                active=ipam_driver_options)
+
         if self.parameters.ipam_config is not None and self.parameters.ipam_config:
             if not net.get('IPAM') or not net['IPAM']['Config']:
                 differences.add('ipam_config',
@@ -471,14 +503,15 @@ class DockerNetworkManager(object):
                     else:
                         ipam_pools.append(utils.create_ipam_pool(**ipam_pool))
 
-            if self.parameters.ipam_driver or ipam_pools:
+            if self.parameters.ipam_driver or self.parameters.ipam_driver_options or ipam_pools:
                 # Only add ipam parameter if a driver was specified or if IPAM parameters
                 # were specified. Leaving this parameter away can significantly speed up
                 # creation; on my machine creation with this option needs ~15 seconds,
                 # and without just a few seconds.
                 if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
                     params['ipam'] = IPAMConfig(driver=self.parameters.ipam_driver,
-                                                pool_configs=ipam_pools)
+                                                pool_configs=ipam_pools,
+                                                options=self.parameters.ipam_driver_options)
                 else:
                     params['ipam'] = utils.create_ipam_config(driver=self.parameters.ipam_driver,
                                                               pool_configs=ipam_pools)
@@ -592,6 +625,7 @@ def main():
         force=dict(type='bool', default=False),
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str'),
+        ipam_driver_options=dict(type='dict'),
         ipam_options=dict(type='dict', default={}, options=dict(
             subnet=dict(type='str'),
             iprange=dict(type='str'),
@@ -620,6 +654,7 @@ def main():
         scope=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         attachable=dict(docker_py_version='2.0.0', docker_api_version='1.26'),
         labels=dict(docker_api_version='1.23'),
+        ipam_driver_options=dict(docker_py_version='2.0.0'),
     )
 
     client = AnsibleDockerClient(
