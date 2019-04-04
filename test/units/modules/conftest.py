@@ -20,7 +20,7 @@ def patch_ansible_module(request, mocker):
         if '_ansible_remote_tmp' not in request.param['ANSIBLE_MODULE_ARGS']:
             request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
         if '_ansible_keep_remote_files' not in request.param['ANSIBLE_MODULE_ARGS']:
-            request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = '/tmp'
+            request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
         args = json.dumps(request.param)
     else:
         raise Exception('Malformed data to the patch_ansible_module pytest fixture')
