@@ -79,6 +79,9 @@ class AnsibleCoreCI(object):
             parallels=(
                 'osx',
             ),
+            vmware=(
+                'vmware'
+            ),
         )
 
         if provider:
@@ -131,6 +134,11 @@ class AnsibleCoreCI(object):
 
             self.ssh_key = SshKey(args)
             self.port = None
+        elif self.provider == 'vmware':
+            self.ssh_key = SshKey(args)
+            self.endpoints = self._get_vmware_endpoints()
+            self.max_threshold = 6
+
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
 
@@ -177,6 +185,25 @@ class AnsibleCoreCI(object):
 
         for _ in range(1, 10):
             response = client.get('https://s3.amazonaws.com/ansible-ci-files/ansible-test/parallels-endpoints.txt')
+
+            if response.status_code == 200:
+                endpoints = tuple(response.response.splitlines())
+                display.info('Available endpoints (%d):\n%s' % (len(endpoints), '\n'.join(' - %s' % endpoint for endpoint in endpoints)), verbosity=1)
+                return endpoints
+
+            display.warning('HTTP %d error getting endpoints, trying again in %d seconds.' % (response.status_code, sleep))
+            time.sleep(sleep)
+
+        raise ApplicationError('Unable to get available endpoints.')
+
+    def _get_vmware_endpoints(self):
+
+        client = HttpClient(self.args, always=True)
+        display.info('Getting available endpoints...', verbosity=1)
+        sleep = 3
+
+        for _ in range(1, 10):
+            response = client.get('https://ansible-ci-files.s3.amazonaws.com/ansible-test/vmware-endpoints.txt')
 
             if response.status_code == 200:
                 endpoints = tuple(response.response.splitlines())
