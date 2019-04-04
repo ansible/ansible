@@ -93,7 +93,6 @@ options:
     description:
     - Host running PostgreSQL where you want to execute the actions.
     type: str
-    default: localhost
   session_role:
     version_added: '2.8'
     description:
@@ -267,16 +266,12 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         db=dict(type="str", required=True, aliases=["login_db"]),
-        port=dict(type="int", default=5432, aliases=["login_port"]),
         lang=dict(type="str", required=True, aliases=["name"]),
         state=dict(type="str", default="present", choices=["absent", "present"]),
         trust=dict(type="bool", default="no"),
         force_trust=dict(type="bool", default="no"),
         cascade=dict(type="bool", default="no"),
         fail_on_drop=dict(type="bool", default="yes"),
-        ssl_mode=dict(default='prefer', choices=[
-                      'allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(default=None, aliases=["ssl_rootcert"]),
         session_role=dict(type="str"),
     )
 
