@@ -12,6 +12,7 @@ from lib.cloud import (
 from lib.util import (
     find_executable,
     display,
+    ConfigParser,
 )
 
 from lib.docker_util import (
@@ -125,14 +126,18 @@ class VcenterProvider(CloudProvider):
             )
 
         if self.args.docker:
-            vcenter_host = self.DOCKER_SIMULATOR_NAME
+            vcenter_hostname = self.DOCKER_SIMULATOR_NAME
         elif container_id:
-            vcenter_host = self._get_simulator_address()
-            display.info('Found vCenter simulator container address: %s' % vcenter_host, verbosity=1)
+            vcenter_hostname = self._get_simulator_address()
+            display.info('Found vCenter simulator container address: %s' % vcenter_hostname, verbosity=1)
         else:
-            vcenter_host = 'localhost'
+            vcenter_hostname = 'localhost'
 
-        self._set_cloud_config('vcenter_host', vcenter_host)
+        self._set_cloud_config('vcenter_hostname', vcenter_hostname)
+        self._set_cloud_config('vcenter_username', 'user')
+        self._set_cloud_config('vcenter_password', 'pass')
+
+        self._set_cloud_config('vcsim', vcenter_hostname)
 
     def _get_simulator_address(self):
         results = docker_inspect(self.args, self.container_name)
@@ -140,7 +145,18 @@ class VcenterProvider(CloudProvider):
         return ipaddress
 
     def _setup_static(self):
-        raise NotImplementedError()
+        parser = ConfigParser()
+        parser.read(self.config_static_path)
+
+        keys = (
+            'vcenter_hostname',
+            'vcenter_username',
+            'vcenter_password',
+        )
+
+        for key in keys:
+            value = parser.get('default', key)
+            self._set_cloud_config(key, value)
 
 
 class VcenterEnvironment(CloudEnvironment):
@@ -150,12 +166,19 @@ class VcenterEnvironment(CloudEnvironment):
         :rtype: CloudEnvironmentConfig
         """
         env_vars = dict(
-            VCENTER_HOST=self._get_cloud_config('vcenter_host'),
+            # VCENTER_HOST should be renamed VCENTER_HOSTNAME for consistency
+            VCENTER_HOST=self._get_cloud_config('vcenter_hostname'),
         )
 
         ansible_vars = dict(
-            vcsim=self._get_cloud_config('vcenter_host'),
+            vcenter_hostname=self._get_cloud_config('vcenter_hostname'),
+            vcenter_username=self._get_cloud_config('vcenter_username'),
+            vcenter_password=self._get_cloud_config('vcenter_password'),
         )
+        try:
+            ansible_vars['vcsim'] = self._get_cloud_config('vcsim')
+        except KeyError:
+            pass
 
         return CloudEnvironmentConfig(
             env_vars=env_vars,

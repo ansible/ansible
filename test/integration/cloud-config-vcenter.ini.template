@@ -1,0 +1,4 @@
+[default]
+vcenter_hostname=@HOSTNAME
+vcenter_username=@USERNAME
+vcenter_password=@PASSWORD
