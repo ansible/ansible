@@ -22,7 +22,7 @@
 
 - name: Update result list
   set_fact:
-    info_results: "{{ info_results + [result] }}"
+    info_results: "{{ info_results | combine({'key1': result}) }}"
 
 - name: ({{select_crypto_backend}}) Get key 2 info
   openssl_privatekey_info:
@@ -48,7 +48,7 @@
 
 - name: Update result list
   set_fact:
-    info_results: "{{ info_results + [result] }}"
+    info_results: "{{ info_results | combine({'key2': result}) }}"
 
 - name: ({{select_crypto_backend}}) Get key 3 info (without passphrase)
   openssl_privatekey_info:
@@ -99,7 +99,7 @@
 
 - name: Update result list
   set_fact:
-    info_results: "{{ info_results + [result] }}"
+    info_results: "{{ info_results | combine({'key3': result}) }}"
 
 - name: ({{select_crypto_backend}}) Get key 4 info
   openssl_privatekey_info:
@@ -125,7 +125,7 @@
 
 - name: Update result list
   set_fact:
-    info_results: "{{ info_results + [result] }}"
+    info_results: "{{ info_results | combine({'key4': result}) }}"
 
 - name: ({{select_crypto_backend}}) Get key 5 info
   openssl_privatekey_info:
@@ -151,4 +151,4 @@
 
 - name: Update result list
   set_fact:
-    info_results: "{{ info_results + [result] }}"
+    info_results: "{{ info_results | combine({'key5': result}) }}"
