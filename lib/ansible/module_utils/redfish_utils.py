@@ -5,9 +5,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import json
-import re
 from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import http_client
 from ansible.module_utils.six.moves.urllib.error import URLError, HTTPError
 
 HEADERS = {'content-type': 'application/json'}
@@ -33,13 +33,17 @@ class RedfishUtils(object):
                             use_proxy=False, timeout=self.timeout)
             data = json.loads(resp.read())
         except HTTPError as e:
-            return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
+            msg = self._get_extended_message(e)
+            return {'ret': False,
+                    'msg': "HTTP Error %s on GET request to '%s', extended message: '%s'"
+                           % (e.code, uri, msg)}
         except URLError as e:
-            return {'ret': False, 'msg': "URL Error: %s" % e.reason}
+            return {'ret': False, 'msg': "URL Error on GET request to '%s': '%s'"
+                                         % (uri, e.reason)}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
             return {'ret': False,
-                    'msg': 'Failed GET operation against Redfish API server: %s' % to_text(e)}
+                    'msg': "Failed GET request to '%s': '%s'" % (uri, to_text(e))}
         return {'ret': True, 'data': data}
 
     def post_request(self, uri, pyld, hdrs):
@@ -52,13 +56,17 @@ class RedfishUtils(object):
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
-            return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
+            msg = self._get_extended_message(e)
+            return {'ret': False,
+                    'msg': "HTTP Error %s on POST request to '%s', extended message: '%s'"
+                           % (e.code, uri, msg)}
         except URLError as e:
-            return {'ret': False, 'msg': "URL Error: %s" % e.reason}
+            return {'ret': False, 'msg': "URL Error on POST request to '%s': '%s'"
+                                         % (uri, e.reason)}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
             return {'ret': False,
-                    'msg': 'Failed POST operation against Redfish API server: %s' % to_text(e)}
+                    'msg': "Failed POST request to '%s': '%s'" % (uri, to_text(e))}
         return {'ret': True, 'resp': resp}
 
     def patch_request(self, uri, pyld, hdrs):
@@ -71,13 +79,17 @@ class RedfishUtils(object):
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
-            return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
+            msg = self._get_extended_message(e)
+            return {'ret': False,
+                    'msg': "HTTP Error %s on PATCH request to '%s', extended message: '%s'"
+                           % (e.code, uri, msg)}
         except URLError as e:
-            return {'ret': False, 'msg': "URL Error: %s" % e.reason}
+            return {'ret': False, 'msg': "URL Error on PATCH request to '%s': '%s'"
+                                         % (uri, e.reason)}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
             return {'ret': False,
-                    'msg': 'Failed PATCH operation against Redfish API server: %s' % to_text(e)}
+                    'msg': "Failed PATCH request to '%s': '%s'" % (uri, to_text(e))}
         return {'ret': True, 'resp': resp}
 
     def delete_request(self, uri, pyld, hdrs):
@@ -90,14 +102,37 @@ class RedfishUtils(object):
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
-            return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
+            msg = self._get_extended_message(e)
+            return {'ret': False,
+                    'msg': "HTTP Error %s on DELETE request to '%s', extended message: '%s'"
+                           % (e.code, uri, msg)}
         except URLError as e:
-            return {'ret': False, 'msg': "URL Error: %s" % e.reason}
+            return {'ret': False, 'msg': "URL Error on DELETE request to '%s': '%s'"
+                                         % (uri, e.reason)}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
             return {'ret': False,
-                    'msg': 'Failed DELETE operation against Redfish API server: %s' % to_text(e)}
+                    'msg': "Failed DELETE request to '%s': '%s'" % (uri, to_text(e))}
         return {'ret': True, 'resp': resp}
+
+    @staticmethod
+    def _get_extended_message(error):
+        """
+        Get Redfish ExtendedInfo message from response payload if present
+        :param error: an HTTPError exception
+        :type error: HTTPError
+        :return: the ExtendedInfo message if present, else standard HTTP error
+        """
+        msg = http_client.responses.get(error.code, '')
+        if error.code >= 400:
+            try:
+                body = error.read().decode('utf-8')
+                data = json.loads(body)
+                ext_info = data['error']['@Message.ExtendedInfo']
+                msg = ext_info[0]['Message']
+            except Exception:
+                pass
+        return msg
 
     def _init_session(self):
         pass
