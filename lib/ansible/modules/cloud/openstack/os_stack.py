@@ -251,7 +251,7 @@ def main():
             else:
                 if module.params['tags']:
                     from distutils.version import StrictVersion
-                    min_version = '0.27.0'
+                    min_version = '0.28.0'
                     if StrictVersion(sdk.version.__version__) < StrictVersion(min_version):
                         module.warn("To update tags using os_stack module, the"
                                     "installed version of the openstacksdk"
