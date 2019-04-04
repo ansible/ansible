@@ -70,7 +70,7 @@ options:
    datacenter:
      description:
      - Destination datacenter for the deploy operation
-     required: True
+     required: False
    tags:
      description:
      - Whether to show tags or not.
@@ -223,7 +223,7 @@ def main():
         uuid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
-        datacenter=dict(type='str', required=True),
+        datacenter=dict(type='str', required=False),
         tags=dict(type='bool', default=False),
         schema=dict(type='str', choices=['summary', 'vsphere'], default='summary'),
         properties=dict(type='list')
@@ -235,6 +235,9 @@ def main():
         # FindByInventoryPath() does not require an absolute path
         # so we should leave the input folder path unmodified
         module.params['folder'] = module.params['folder'].rstrip('/')
+
+    if module.params.get('name') and not module.params.get('datacenter'):
+        module.fail_json(msg="The option 'datacenter' is required when the option 'name'")
 
     if module.params['schema'] != 'vsphere' and module.params.get('properties'):
         module.fail_json(msg="The option 'properties' is only valid when the schema is 'vsphere'")
