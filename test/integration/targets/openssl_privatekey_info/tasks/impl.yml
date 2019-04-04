@@ -1,0 +1,71 @@
+---
+- debug:
+    msg: "Executing tests with backend {{ select_crypto_backend }}"
+
+- name: ({{select_crypto_backend}}) Get key 1 info
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_1.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get key 2 info
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_2.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get key 3 info (without passphrase)
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_3.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      # Check that return values are there
+      - result.can_load_key is defined
+      - result.can_parse_key is defined
+      # Check that return values are correct
+      - result.can_load_key
+      - not result.can_parse_key
+
+- name: ({{select_crypto_backend}}) Get key 3 info (with passphrase)
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_3.pem'
+    passphrase: hunter2
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get key 4 info
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_4.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get key 5 info
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_5.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"

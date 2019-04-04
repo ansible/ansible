@@ -103,12 +103,19 @@ def get_fingerprint(path, passphrase=None):
         return None
 
 
-def load_privatekey(path, passphrase=None, check_passphrase=True, backend='pyopenssl'):
-    """Load the specified OpenSSL private key."""
+def load_privatekey(path, passphrase=None, check_passphrase=True, path_content=None, backend='pyopenssl'):
+    """Load the specified OpenSSL private key.
+
+    The content can also be specified via path_content; in that case,
+    this function will not load the key from disk.
+    """
 
     try:
-        with open(path, 'rb') as b_priv_key_fh:
-            priv_key_detail = b_priv_key_fh.read()
+        if path_content is None:
+            with open(path, 'rb') as b_priv_key_fh:
+                priv_key_detail = b_priv_key_fh.read()
+        else:
+            priv_key_detail = path_content
 
         if backend == 'pyopenssl':
 
