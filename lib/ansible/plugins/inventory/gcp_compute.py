@@ -57,6 +57,9 @@ DOCUMENTATION = '''
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
             required: True
             type: path
+            env:
+                - name: GCE_CREDENTIALS_FILE_PATH
+                  version_added: "2.8"
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
