@@ -1,0 +1,123 @@
+# ansible-galaxy(1) completion                                      -*- shell-script -*-
+
+_ansible-galaxy()
+{
+  local cur prev words cword split
+  _init_completion -n = || return
+
+  case "$prev" in
+    --new-vault-password-file|--vault-password-file)
+      _filedir
+      return
+    ;;
+  esac
+
+  case "$cur" in
+    --new-vault-password-file=*|--vault-password-file=*)
+      cur=${cur#*=}
+      _filedir
+      return
+    ;;
+    -*)
+      shortopts='-h -v'
+      longopts='--ask-vault-pass --help --verbose --version'
+      longoptsequal='--new-vault-id --new-vault-password-file --vault-id --vault-password-file'
+      COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) $( compgen -S = -W '$longoptsequal' -- "$cur" ) )
+    ;;
+    *)
+      local args
+      _count_args =
+    ;;
+  esac
+  if [[ $args -eq 1 ]]; then
+    COMPREPLY=( $( compgen -W "delete import info init install list login remove search setup" -- "$cur") )
+  else
+    genopts='-h --help -c --ignore-certs -s -v -vv -vvv --verbose --version'
+    genoptslong='--server'
+    if [[ ${words[1]} == delete ]] ; then
+      COMPREPLY=( $( compgen -W "$genopts" -- "$cur" ) $( compgen -S = -W "$genoptslong" -- "$cur" ) )
+    elif [[ ${words[1]} == import ]] ; then
+      COMPREPLY=( $( compgen -W "$genopts --no-wait --status" -- "$cur" ) $( compgen -S = -W "$genoptslong --branch --role-name" -- "$cur" ) )
+    elif [[ ${words[1]} == info ]] ; then
+      if [[ "$cur" == --roles-path=* ]] ; then
+        cur=${cur#*=}
+        _filedir
+        return
+      fi
+      if [[ "$prev" == --roles-path || "$prev" == "-p" ]] ; then
+        _filedir
+        return
+      fi
+      COMPREPLY=( $( compgen -W "$genopts --offline -p" -- "$cur" ) $( compgen -S = -W "$genoptslong --roles-path" -- "$cur" ) )
+    elif [[ ${words[1]} == init ]] ; then
+      if [[ "$cur" == --init-path=* || "$cur" == --role-skeleton=* ]] ; then
+        cur=${cur#*=}
+        _filedir
+        return
+      elif [[ "$cur" == --type=* ]] ; then
+        cur=${cur#*=}
+        COMPREPLY=( $( compgen -W "container apb network" -- "$cur" ) )
+        return
+      fi
+      if [[ "$prev" == --init-path || "$prev" == --role-skeleton ]] ; then
+        _filedir
+        return
+      elif [[ "$prev" == --type || "$prev" == -t ]] ; then
+        COMPREPLY=( $( compgen -W "container apb network" -- "$cur" ) )
+        return
+      fi
+      COMPREPLY=( $( compgen -W "$genopts -f --force --offline" -- "$cur" ) $( compgen -S = -W "$genoptslong --init-path --role-skeleton --type" -- "$cur" ) )
+    elif [[ ${words[1]} == install ]] ; then
+      if [[ "$cur" == --role-file=* || "$cur" == --roles-path=* ]] ; then
+        cur=${cur#*=}
+        _filedir
+        return
+      fi
+      if [[ "$prev" == --role-file || "$prev" == --roles-path || "$prev" == -r || "$prev" == -p ]] ; then
+        _filedir
+        return
+      fi
+      COMPREPLY=( $( compgen -W "$genopts -f --force -i --ignore-errors -g --keep-scm-meta -n --no-deps -r -p" -- "$cur" ) $( compgen -S = -W "$genoptslong --role-file --roles-path" -- "$cur" ) )
+    elif [[ ${words[1]} == list ]] ; then
+      if [[ "$cur" == --roles-path=* ]] ; then
+        cur=${cur#*=}
+        _filedir
+        return
+      fi
+      if [[ "$prev" == --roles-path || "$prev" == "-p" ]] ; then
+        _filedir
+        return
+      fi
+      COMPREPLY=( $( compgen -W "$genopts -r" -- "$cur" ) $( compgen -S = -W "$genoptslong --roles-path" -- "$cur" ) )
+    elif [[ ${words[1]} == login ]] ; then
+      COMPREPLY=( $( compgen -W "$genopts" -- "$cur" ) $( compgen -S = -W "$genoptslong --github-token" -- "$cur" ) )
+    elif [[ ${words[1]} == remove ]] ; then
+      if [[ "$cur" == --roles-path=* ]] ; then
+        cur=${cur#*=}
+        _filedir
+        return
+      fi
+      if [[ "$prev" == --roles-path || "$prev" == "-p" ]] ; then
+        _filedir
+        return
+      fi
+      COMPREPLY=( $( compgen -W "$genopts -p" -- "$cur" ) $( compgen -S = -W "$genoptslong --roles-path" -- "$cur" ) )
+    elif [[ ${words[1]} == search ]] ; then
+      if [[ "$cur" == --roles-path=* ]] ; then
+        cur=${cur#*=}
+        _filedir
+        return
+      fi
+      if [[ "$prev" == --roles-path || "$prev" == -p ]] ; then
+        _filedir
+        return
+      fi
+      COMPREPLY=( $( compgen -W "$genopts -p" -- "$cur" ) $( compgen -S = -W "$genoptslong --author --galaxy-tags --platforms --roles-path" -- "$cur" ) )
+    elif [[ ${words[1]} == setup ]] ; then
+      COMPREPLY=( $( compgen -W "$genopts --list" -- "$cur" ) $( compgen -S = -W "$genoptslong --remove" -- "$cur" ) )
+    fi
+  fi
+  [[ $COMPREPLY == *= ]] && compopt -o nospace
+}
+complete -F _ansible-galaxy ansible-galaxy
+# ex: filetype=sh
