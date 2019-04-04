@@ -34,6 +34,30 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
+    plan:
+        description:
+            - App service plan. Required for creation.
+            - It can be name of existing app service plan in same resource group as web app.
+            - "It can be resource id of existing app service plan. eg.,
+              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
+            - It can be a dict which contains C(name), C(resource_group), C(sku), C(is_linux) and C(number_of_workers).
+            - C(name). Name of app service plan.
+            - C(resource_group). Resource group name of app service plan.
+            - C(sku). SKU of app service plan. For allowed sku, please refer to U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/).
+            - C(is_linux). Indicates Linux app service plan. type bool. default False.
+            - C(number_of_workers). Number of workers.
+    container_settings:
+        description: Web app container settings.
+        suboptions:
+            name:
+                description: Name of container. eg. "imagename:tag"
+            registry_server_url:
+                description: Container registry server url. eg. mydockerregistry.io
+            registry_server_user:
+                description: The container registry server user name.
+            registry_server_password:
+                description:
+                    - The container registry server password.
     storage_account:
         description:
             - Name of the storage account to use.
@@ -136,6 +160,12 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+container_settings_spec = dict(
+    name=dict(type='str', required=True),
+    registry_server_url=dict(type='str'),
+    registry_server_user=dict(type='str'),
+    registry_server_password=dict(type='str', no_log=True)
+)
 
 class AzureRMFunctionApp(AzureRMModuleBase):
 
@@ -150,7 +180,14 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 type='str',
                 aliases=['storage', 'storage_account_name']
             ),
-            app_settings=dict(type='dict')
+            app_settings=dict(type='dict'),
+            plan=dict(
+                type='raw'
+            ),
+            container_settings=dict(
+                type='dict',
+                options=container_settings_spec
+            )
         )
 
         self.results = dict(
@@ -164,6 +201,10 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         self.location = None
         self.storage_account = None
         self.app_settings = None
+        self.plan = None
+        self.container_settings = None
+
+        self.linux_fx_version = None
 
         required_if = [('state', 'present', ['storage_account'])]
 
@@ -213,13 +254,52 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             else:
                 self.results['changed'] = False
         else:
+
+            if self.container_settings and self.container_settings.get('name'):
+                self.linux_fx_version = 'DOCKER|'
+                if self.container_settings.get('registry_server_url'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_URL'] = 'https://' + self.container_settings['registry_server_url']
+                    self.linux_fx_version += self.container_settings['registry_server_url'] + '/'
+                self.linux_fx_version += self.container_settings['name']
+                if self.container_settings.get('registry_server_user'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_USERNAME'] = self.container_settings.get('registry_server_user')
+
+                if self.container_settings.get('registry_server_password'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_PASSWORD'] = self.container_settings.get('registry_server_password')
+
+            if not self.plan and function_app:
+                self.plan = function_app['server_farm_id']
+
+            self.plan = self.parse_resource_to_dict(self.plan)
+
+            # get app service plan
+            is_linux = False
+            old_plan = self.get_app_service_plan()
+            if old_plan:
+                is_linux = old_plan['reserved']
+            else:
+                is_linux = self.plan['is_linux'] if 'is_linux' in self.plan else False
+
+            if not old_plan:
+                # no existing service plan, create one
+                if (not self.plan.get('name') or not self.plan.get('sku')):
+                    self.fail('Please specify name, is_linux, sku in plan')
+
+                if 'location' not in self.plan:
+                    plan_resource_group = self.get_resource_group(self.plan['resource_group'])
+                    self.plan['location'] = plan_resource_group.location
+
+                old_plan = self.create_app_service_plan()
+
+            self.site.server_farm_id = old_plan['id']
             if not exists:
                 function_app = Site(
                     location=self.location,
                     kind='functionapp',
                     site_config=SiteConfig(
                         app_settings=self.aggregated_app_settings(),
-                        scm_type='LocalGit'
+                        scm_type='LocalGit',
+                        linux_fx_version=self.linux_fx_version
                     )
                 )
                 self.results['changed'] = True
@@ -312,6 +392,35 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             resource_group_name=self.resource_group,
             account_name=self.storage_account
         ).keys[0].value
+
+    def create_app_service_plan(self):
+        '''
+        Creates app service plan
+        :return: deserialized app service plan dictionary
+        '''
+        self.log("Create App Service Plan {0}".format(self.plan['name']))
+
+        try:
+            # normalize sku
+            sku = _normalize_sku(self.plan['sku'])
+
+            sku_def = SkuDescription(tier=get_sku_name(
+                sku), name=sku, capacity=(self.plan.get('number_of_workers', None)))
+            plan_def = AppServicePlan(
+                location=self.plan['location'], app_service_plan_name=self.plan['name'], sku=sku_def, reserved=(self.plan.get('is_linux', None)))
+
+            poller = self.web_client.app_service_plans.create_or_update(
+                self.plan['resource_group'], self.plan['name'], plan_def)
+
+            if isinstance(poller, LROPoller):
+                response = self.get_poller_result(poller)
+
+            self.log("Response : {0}".format(response))
+
+            return appserviceplan_to_dict(response)
+        except CloudError as ex:
+            self.fail("Failed to create app service plan {0} in resource group {1}: {2}".format(
+                self.plan['name'], self.plan['resource_group'], str(ex)))
 
 
 def main():
