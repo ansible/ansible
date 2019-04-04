@@ -43,7 +43,7 @@ options:
             - Whether to return private key data.
             - Set this to C(yes) if you do want any private information about this key
               leave the remote machine.
-            - WARNING: you have to make sure that private key data isn't accidentally logged!
+            - "WARNING: you have to make sure that private key data isn't accidentally logged!"
         type: bool
         default: no
 
@@ -95,6 +95,24 @@ public_key_fingerprints:
         - Fingerprints of private key's public key.
         - For every hash algorithm available, the fingerprint is computed.
     returned: success
+    type: dict
+type:
+    description:
+        - The key's type.
+        - One of C(RSA), C(DSA), C(ECC), C(X25519) or C(X448).
+        - Will start with C(unknown) if the key type cannot be determined.
+    returned: success
+    type: str
+    sample: RSA
+public_data:
+    description:
+        - Public key data. Depends on key type.
+    returned: success
+    type: dict
+private_data:
+    description:
+        - Private key data. Depends on key type.
+    returned: success and when I(return_private_key_data) is set to C(yes)
     type: dict
 '''
 
