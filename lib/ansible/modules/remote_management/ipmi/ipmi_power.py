@@ -47,7 +47,6 @@ options:
         - shutdown -- Have system request OS proper shutdown
         - reset -- Request system reset without waiting for OS
         - boot -- If system is off, then 'on', else 'reset'
-        - query -- Query for current power status
   timeout:
     description:
       - Maximum number of seconds before interrupt request.
@@ -73,17 +72,6 @@ EXAMPLES = '''
     user: admin
     password: password
     state: on
-
-# Query for current power status
-- ipmi_power:
-    name: test.testdomain.com
-    user: admin
-    password: password
-    state: query
-  register: ipmipowerstatus
-- debug:
-    var: ipmipowerstatus.powerstatus
-
 '''
 
 import traceback
@@ -103,7 +91,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True),
             port=dict(default=623, type='int'),
-            state=dict(required=True, choices=['on', 'off', 'shutdown', 'reset', 'boot', 'query']),
+            state=dict(required=True, choices=['on', 'off', 'shutdown', 'reset', 'boot']),
             user=dict(required=True, no_log=True),
             password=dict(required=True, no_log=True),
             timeout=dict(default=300, type='int'),
@@ -129,7 +117,7 @@ def main():
         module.debug('ipmi instantiated - name: "%s"' % name)
 
         current = ipmi_cmd.get_power()
-        if state != 'query' and current['powerstate'] != state:
+        if current['powerstate'] != state:
             response = {'powerstate': state} if module.check_mode else ipmi_cmd.set_power(state, wait=timeout)
             changed = True
         else:
