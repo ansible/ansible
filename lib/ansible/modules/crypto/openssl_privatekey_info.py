@@ -254,7 +254,8 @@ class PrivateKeyInfo(crypto_utils.OpenSSLObject):
             self.module.fail_json(msg=to_native(exc), **result)
 
         result['public_key'] = self._get_public_key(binary=False)
-        result['public_key_fingerprints'] = crypto_utils.get_fingerprint_of_bytes(self._get_public_key(binary=True))
+        pk = self._get_public_key(binary=True)
+        result['public_key_fingerprints'] = crypto_utils.get_fingerprint_of_bytes(pk) if pk is not None else dict()
 
         key_type, key_public_data, key_private_data = self._get_key_info()
         result['type'] = key_type
