@@ -33,6 +33,10 @@ options:
     description:
       - Next hop IP of the static route.
     required: true
+  vrf:
+    description:
+      - VRF for static route.
+    default: default
   admin_distance:
     description:
       - Admin distance of the static route.
@@ -115,13 +119,20 @@ def map_obj_to_commands(updates, module):
         address = w['address']
         next_hop = w['next_hop']
         admin_distance = w['admin_distance']
+        vrf = w['vrf']
         state = w['state']
         del w['state']
 
         if state == 'absent' and w in have:
-            commands.append('no ip route %s %s' % (address, next_hop))
+            if vrf == 'default':
+                commands.append('no ip route %s %s' % (address, next_hop))
+            else:
+                commands.append('no ip route vrf %s %s %s' % (vrf, address, next_hop))
         elif state == 'present' and w not in have:
-            commands.append('ip route %s %s %d' % (address, next_hop, admin_distance))
+            if vrf == 'default':
+                commands.append('ip route %s %s %d' % (address, next_hop, admin_distance))
+            else:
+                commands.append('ip route vrf %s %s %s %d' % (vrf, address, next_hop, admin_distance))
 
     return commands
 
@@ -145,7 +156,8 @@ def map_params_to_obj(module, required_together=None):
             'address': module.params['address'].strip(),
             'next_hop': module.params['next_hop'].strip(),
             'admin_distance': module.params['admin_distance'],
-            'state': module.params['state']
+            'state': module.params['state'],
+            'vrf': module.params['vrf']
         })
 
     return obj
@@ -153,9 +165,15 @@ def map_params_to_obj(module, required_together=None):
 
 def map_config_to_obj(module):
     objs = []
+    vrf = module.params['vrf']
+
+    if vrf == 'default':
+        flags = '| include ip.route'
+    else:
+        flags = '| include ip.route.vrf.{0}'.format(vrf)
 
     try:
-        out = get_config(module, flags=['| include ip.route'])
+        out = get_config(module, flags=[flags])
     except IndexError:
         out = ''
     if out:
@@ -167,14 +185,18 @@ def map_config_to_obj(module):
                 address = add_match.group(1)
                 if is_address(address):
                     obj['address'] = address
-
-                hop_match = re.search(r'ip route {0} ([\d\./]+)'.format(address), line, re.M)
+                if vrf == 'default':
+                    hop_match = re.search(r'ip route {0} ([\d\./]+)'.format(address), line, re.M)
+                else:
+                    hop_match = re.search(r'ip route vrf {0} {1} ([\d\./]+)'.format(vrf, address), line, re.M)
                 if hop_match:
                     hop = hop_match.group(1)
                     if is_hop(hop):
                         obj['next_hop'] = hop
-
-                    dist_match = re.search(r'ip route {0} {1} (\d+)'.format(address, hop), line, re.M)
+                    if vrf == 'default':
+                        dist_match = re.search(r'ip route {0} {1} (\d+)'.format(address, hop), line, re.M)
+                    else:
+                        dist_match = re.search(r'ip route vrf {0} {1} {2} (\d+)'.format(vrf, address, hop), line, re.M)
                     if dist_match:
                         distance = dist_match.group(1)
                         obj['admin_distance'] = int(distance)
@@ -191,6 +213,7 @@ def main():
     element_spec = dict(
         address=dict(type='str', aliases=['prefix']),
         next_hop=dict(type='str'),
+        vrf=dict(type='str', default='default'),
         admin_distance=dict(default=1, type='int'),
         state=dict(default='present', choices=['present', 'absent'])
     )
