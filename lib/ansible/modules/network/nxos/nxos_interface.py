@@ -591,7 +591,7 @@ def check_declarative_intent_params(module, want):
     have_neighbors = None
     for w in want:
         if w['interface_type']:
-            return
+            continue
         want_tx_rate = w.get('tx_rate')
         want_rx_rate = w.get('rx_rate')
         want_neighbors = w.get('neighbors')
