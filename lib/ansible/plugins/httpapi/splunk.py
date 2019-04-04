@@ -35,7 +35,7 @@ class HttpApi(HttpApiBase):
 
         try:
             self._display_request(request_method)
-            response, response_data = self.connection.send(path, payload, method=request_method, headers=BASE_HEADERS, force_basic_auth=True)
+            response, response_data = self.connection.send(path, data, method=request_method, headers=BASE_HEADERS, force_basic_auth=True)
             value = self._get_response_value(response_data)
 
             return response.getcode(), self._response_to_json(value)
