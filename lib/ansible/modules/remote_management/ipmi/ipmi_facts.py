@@ -56,7 +56,7 @@ bootdev:
     returned: success
     type: str
     sample: default
-persistent:
+bootdev_persistent:
     description: If True, system firmware will use this device beyond next boot.
     returned: success
     type: bool
@@ -75,11 +75,12 @@ powerstate:
 
 EXAMPLES = '''
 # Ensure machine is powered on.
-- ipmi_power:
+- ipmi_facts:
     name: test.testdomain.com
     user: admin
     password: password
-    state: on
+- debug:
+    var: ipmi_facts
 '''
 
 import traceback
