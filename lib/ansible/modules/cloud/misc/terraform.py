@@ -394,7 +394,7 @@ def main():
         changed = needs_application
     diff = dict(before='', after=out)
 
-    module.exit_json(changed=changed, state=state, workspace=workspace, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
+    module.exit_json(changed=changed, diff=diff, state=state, workspace=workspace, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
 
 
 if __name__ == '__main__':
