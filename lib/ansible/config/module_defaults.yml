@@ -524,9 +524,9 @@ groupings:
   - azure
   azure_rm_loadbalancer_facts:
   - azure
-  azure_rm_managed_disk:
+  azure_rm_manageddisk:
   - azure
-  azure_rm_managed_disk_facts:
+  azure_rm_manageddisk_facts:
   - azure
   azure_rm_mysqldatabase:
   - azure

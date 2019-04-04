@@ -2,3 +2,4 @@ cloud/azure
 shippable/azure/group3
 destructive
 disabled
+azure_rm_manageddisk_facts
