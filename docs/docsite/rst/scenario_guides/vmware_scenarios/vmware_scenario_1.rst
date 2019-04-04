@@ -1,4 +1,4 @@
-.. _vmware_scenario_1:
+:orphan:
 
 **********************************
 Sample Scenario for Ansible VMware
