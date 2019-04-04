@@ -5,7 +5,7 @@
    run_once: yes
 
  - name: Clearing (if) previous disks were created
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "{{ item }}"
        state: absent
@@ -16,7 +16,7 @@
      - "md{{ rpfx }}1"
 
  - name: Create managed disk (Check Mode)
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        storage_account_type: "Standard_LRS"
@@ -34,7 +34,7 @@
        - output.state
 
  - name: Test invalid account name (should give error)
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "invalid_char$"
        disk_size_gb: 1
@@ -46,7 +46,7 @@
    assert: { that: "output['failed'] == True" }
 
  - name: Create new managed disk succesfully
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        storage_account_type: "Standard_LRS"
@@ -66,7 +66,7 @@
        - output.state.storage_account_type == "Standard_LRS"
 
  - name: Create new managed disk with zone
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}3"
        storage_account_type: "Standard_LRS"
@@ -84,7 +84,7 @@
        - output.state.zone == ["1"] 
 
  - name: Change the operating system type of the managed disk to linux
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 1
@@ -101,7 +101,7 @@
        - output.state.os_type == 'linux'
 
  - name: Create new managed disk with an os_type specified at creation
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}os"
        storage_account_type: "Standard_LRS"
@@ -116,13 +116,13 @@
        - win.state.os_type == 'windows'
 
  - name: Clean up managed disk created with os_type
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}os"
        state: absent
 
  - name: Copy disk to a new managed disk
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}2"
        create_option: "copy"
@@ -137,7 +137,7 @@
        - copy.state.id is defined
 
  - name: Update a new disk without changes
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        storage_account_type: "Standard_LRS"
@@ -151,7 +151,7 @@
        - output.state.id is defined
 
  - name: Change storage account type to an invalid type
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        storage_account_type: "PremiumL"
@@ -163,7 +163,7 @@
    assert: { that: "output['failed'] == True" }
 
  - name: Change disk size to incompatible size
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 3000000
@@ -174,7 +174,7 @@
    assert: { that: "output['failed'] == True" }
 
  - name: Change disk to bigger size
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
@@ -187,7 +187,7 @@
        - output.state.disk_size_gb == 2
 
  - name: Change disk to Standard SSD
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        storage_account_type: "StandardSSD_LRS"
@@ -201,7 +201,7 @@
        - output.state.storage_account_type == "StandardSSD_LRS"
 
  - name: Gather facts to one specific disk
-   azure_rm_managed_disk_facts:
+   azure_rm_manageddisk_facts:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
 
@@ -211,7 +211,7 @@
        - azure_managed_disk[0].storage_account_type == "StandardSSD_LRS"
 
  - name: Change disk to Premium (SSD)
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        storage_account_type: "Premium_LRS"
@@ -225,7 +225,7 @@
        - output.state.storage_account_type == "Premium_LRS"
 
  - name: Update disk tags
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
@@ -242,7 +242,7 @@
            - "output.state.tags.galaxy == 'no'"
 
  - name: Update disk tags
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
@@ -259,7 +259,7 @@
            - "output.state.tags.delete == 'never'"
 
  - name: Gather facts to one specific disk
-   azure_rm_managed_disk_facts:
+   azure_rm_manageddisk_facts:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
 
@@ -271,7 +271,7 @@
            - "azure_managed_disk[0].os_type == 'linux'"
 
  - name: Gather facts
-   azure_rm_managed_disk_facts:
+   azure_rm_manageddisk_facts:
        resource_group: "{{ resource_group }}"
 
  - assert:
@@ -284,7 +284,7 @@
    with_dict: "{{ azure_managed_disk[0] }}"
 
  - name: Create disk with facts return value
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        location: "{{ parameter.location }}"
        name: "{{ parameter.name }}"
@@ -348,7 +348,7 @@
          version: latest
  
  - name: Mount the disk to virtual machine (check mode)
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
@@ -364,7 +364,7 @@
        - not mounted.state.managed_by
 
  - name: Mount the disk to virtual machine
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
@@ -379,7 +379,7 @@
        - "'tr{{ rpfx }}' in mounted.state.managed_by"
 
  - name: Mount the disk to virtual machine (idempotent)
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
@@ -394,7 +394,7 @@
        - "'tr{{ rpfx }}' in mounted.state.managed_by"
  
  - name: Unmount the disk to virtual machine (check mode)
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
@@ -410,7 +410,7 @@
        - mounted.changed
 
  - name: Unmount the disk to virtual machine
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
@@ -426,7 +426,7 @@
        - not mounted.state.managed_by
 
  - name: Unmount the disk to virtual machine (idempotent)
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        managed_by: ''
@@ -442,7 +442,7 @@
        - not mounted.state.managed_by
 
  - name: Update disk size
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 4
@@ -456,7 +456,7 @@
       - output.state.disk_size_gb == 4
 
  - name: Attach the disk to virtual machine again
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 4
@@ -472,7 +472,7 @@
        - "'tr{{ rpfx }}' in mounted.state.managed_by"
 
  - name: Change disk size to incompatible size
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        state: absent
@@ -484,7 +484,7 @@
    assert: { that: "output['failed'] == True" }
 
  - name: Delete managed disk (Check Mode)
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        state: absent
@@ -498,7 +498,7 @@
        - output.state
 
  - name: Delete all managed disk
-   azure_rm_managed_disk:
+   azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}{{ item }}"
        managed_by: ''

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: azure_rm_managed_disk_facts
+module: azure_rm_manageddisk_facts
 
 version_added: "2.4"
 
@@ -22,6 +22,9 @@ short_description: Get managed disk facts
 
 description:
     - Get facts for a specific managed disk or all managed disks.
+
+notes:
+    - This module was called C(azure_rm_managed_disk_facts) before Ansible 2.8. The usage did not change.
 
 options:
     name:
@@ -48,15 +51,15 @@ author:
 
 EXAMPLES = r'''
 - name: Get facts for one managed disk
-  azure_rm_managed_disk_facts:
+  azure_rm_manageddisk_facts:
     name: Testing
     resource_group: myResourceGroup
 
 - name: Get facts for all managed disks
-  azure_rm_managed_disk_facts:
+  azure_rm_manageddisk_facts:
 
 - name: Get facts by tags
-  azure_rm_managed_disk_facts:
+  azure_rm_manageddisk_facts:
     tags:
     - testing
 '''
@@ -122,7 +125,7 @@ except Exception:
     pass
 
 
-# duplicated in azure_rm_managed_disk
+# duplicated in azure_rm_manageddisk
 def managed_disk_to_dict(managed_disk):
     create_data = managed_disk.creation_data
     return dict(
