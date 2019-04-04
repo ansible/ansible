@@ -483,6 +483,8 @@ files:
   $modules/system/solaris: *solaris
   $modules/system/sysctl.py: Akasurde
   $modules/system/systemd.py: $team_ansible
+  $modules/system/ufw.py:
+    notified: felixfontein
   $modules/system/user.py: $team_ansible samdoran
   $modules/utilities/helper/meta.py: $team_ansible
   $modules/utilities/logic/assert.py: $team_ansible
