@@ -10,7 +10,7 @@
 # (c) 2017 Cisco Systems Inc.
 #
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
-
+#
 
 
 class ModuleDocFragment(object):
@@ -34,7 +34,7 @@ options:
     required: yes
   validate_certs:
     description:
-    - Boolean control for verifying the api_uri TLS certificate
+    - Boolean control for verifying the api_uri TLS certificate.
     type: bool
     default: yes
   use_proxy:
