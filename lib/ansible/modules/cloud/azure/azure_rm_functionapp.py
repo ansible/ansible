@@ -211,8 +211,6 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         self.plan = None
         self.container_settings = None
 
-        self.linux_fx_version = None
-
         required_if = [('state', 'present', ['storage_account'])]
 
         super(AzureRMFunctionApp, self).__init__(
@@ -261,13 +259,15 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             else:
                 self.results['changed'] = False
         else:
-
+            kind = 'functionapp'
+            linux_fx_version = None
             if self.container_settings and self.container_settings.get('name'):
-                self.linux_fx_version = 'DOCKER|'
+                kind = 'functionapp,linux,container'
+                linux_fx_version = 'DOCKER|'
                 if self.container_settings.get('registry_server_url'):
                     self.app_settings['DOCKER_REGISTRY_SERVER_URL'] = 'https://' + self.container_settings['registry_server_url']
-                    self.linux_fx_version += self.container_settings['registry_server_url'] + '/'
-                self.linux_fx_version += self.container_settings['name']
+                    linux_fx_version += self.container_settings['registry_server_url'] + '/'
+                linux_fx_version += self.container_settings['name']
                 if self.container_settings.get('registry_server_user'):
                     self.app_settings['DOCKER_REGISTRY_SERVER_USERNAME'] = self.container_settings.get('registry_server_user')
 
@@ -280,11 +280,10 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             if not exists:
                 function_app = Site(
                     location=self.location,
-                    kind='functionapp',
+                    kind=kind,
                     site_config=SiteConfig(
                         app_settings=self.aggregated_app_settings(),
-                        scm_type='LocalGit',
-                        linux_fx_version=self.linux_fx_version
+                        scm_type='LocalGit'
                     )
                 )
                 self.results['changed'] = True
@@ -312,6 +311,10 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                     plan = self.create_app_service_plan()
 
                 function_app.server_farm_id = plan['id']
+
+            # set linux fx version
+            if linux_fx_version:
+                function_app.site_config.linux_fx_version = linux_fx_version
 
             if self.check_mode:
                 self.results['state'] = function_app.as_dict()
