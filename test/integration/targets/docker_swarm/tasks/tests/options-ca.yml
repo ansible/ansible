@@ -150,5 +150,4 @@
       - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.6.0') in output_1.msg"
     when: docker_py_version is version('2.6.0', '<')
 
-  # https://github.com/ansible/ansible/issues/34054: openssl_certificate unusable on RHEL 7
-  when: pyopenssl_version.stdout is version('0.15', '>=')
+  when: pyopenssl_version.stdout is version('0.15', '>=') or cryptography_version.stdout is version('1.6', '>=')
