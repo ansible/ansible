@@ -1,0 +1,2 @@
+- include_tasks: tests.yml
+  when: ansible_distribution == 'FreeBSD'
