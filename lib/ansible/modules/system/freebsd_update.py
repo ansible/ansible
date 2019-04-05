@@ -24,6 +24,13 @@ options:
         description:
             - freebsd-update command to execute — fetch, install, fetch_install, rollback, IDS, cron.
         required: True
+        choices:
+        - fetch
+        - install
+        - fetch_install
+        - rollback
+        - IDS
+        - cron
     server:
         description:
             - Server to download updates from.
