@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -72,7 +72,7 @@ from ansible.module_utils._text import to_native
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(type='str', required=True),
+            action=dict(type='str', required=True, choices=['fetch', 'install', 'fetch_install', 'rollback', 'IDS', 'cron']),
             server=dict(type='str'),
             basedir=dict(type='str'),
             workdir=dict(type='str'),
@@ -80,15 +80,10 @@ def main():
             force=dict(type='bool', default=False),
             key=dict(type='str'),
         ),
-        supports_check_mode=True,
     )
-
-    actions = ['fertch', 'fetch_install', 'install', 'rollback', 'IDS', 'cron']
 
     action = module.params['action']
     msg = "Unexpected failure!"
-    if action not in actions:
-        msg = "Unexpected action"
     server = module.params.get('server')
     basedir = module.params.get('basedir')
     workdir = module.params.get('workdir')
@@ -97,8 +92,7 @@ def main():
     key = module.params.get('key')
 
     freebsd_update_bin = module.get_bin_path('freebsd-update', True)
-    cmd = []
-    cmd.append(freebsd_update_bin)
+    cmd = [freebsd_update_bin]
     if server is not None:
         cmd.extend(('-s', server))
     if basedir is not None:
@@ -121,8 +115,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
-    database = 'freebsd-update'
-    dbtree = '_%s' % database
+    dbtree = 'freebsd-update'
     results = {dbtree: {}}
 
     if rc == 0:
@@ -130,11 +123,11 @@ def main():
         for line in out.splitlines():
             results[dbtree]['output'].append(line)
         results[dbtree]['command'] = cmd
-        changed = True
+        results['changed'] = True
         if 'No updates' in out:
-            changed = False
+            results['changed'] = False
 
-        module.exit_json(ansible_facts=results, changed=changed)
+        module.exit_json(**results)
 
     else:
         msg = ' '.join(cmd) + ' failed'
