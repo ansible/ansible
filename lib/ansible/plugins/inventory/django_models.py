@@ -116,6 +116,7 @@ class InventoryModule(BaseInventoryPlugin):
 
             class Meta:
                 abstract = True
+                
         class AnsibleDeviceGroups(AnsibleGroupBase):
             ansible_become = models.BooleanField(default=False)
 
