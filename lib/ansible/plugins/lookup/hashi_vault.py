@@ -41,6 +41,13 @@ DOCUMENTATION = """
       description: Secret id for a vault AppRole auth.
       env:
         - name: VAULT_SECRET_ID
+    service_account_email:
+      description: GCP Service account email for GCP Auth.
+    service_account_file:
+      description: Path to the GCP service account json file for GCP Auth.
+    expiry_length:
+        description: JWT Expiry length for GCP Auth.
+        default: 900
     auth_method:
       description:
       - Authentication method to be used.
@@ -51,6 +58,7 @@ DOCUMENTATION = """
         - userpass
         - ldap
         - approle
+        - gcp
     mount_point:
       description: vault mount point, only required if you have a custom mount point.
       default: ldap
@@ -93,7 +101,11 @@ EXAMPLES = """
 
 - name: authenticate with a Vault app role
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid secret_id=mysecretid url=http://myvault:8200')}}"
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid service_account_email=serviceacccount@project.iam.gserviceaccount.com service_account_file=/tmp/gcp_service_account.json url=http://myvault:8200')}}"
+
+- name: authenticate with GCP auth
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=gcp role_id=myroleid secret_id=mysecretid url=http://myvault:8200')}}"
 
 - name: Return all secrets from a path in a namespace
   debug:
@@ -107,6 +119,7 @@ _raw:
 """
 
 import os
+import time
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -119,6 +132,13 @@ try:
 except ImportError:
     HAS_HVAC = False
 
+HAS_GCP_API = False
+try:
+    import google.auth.crypt
+    import google.auth.jwt
+    HAS_GCP_API = True
+except ImportError:
+    HAS_GCP_API = False
 
 ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
 
@@ -131,7 +151,7 @@ class HashiVault:
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
         self.namespace = kwargs.get('namespace', None)
-        self.avail_auth_method = ['approle', 'userpass', 'ldap']
+        self.avail_auth_method = ['approle', 'userpass', 'ldap', 'gcp']
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -251,6 +271,32 @@ class HashiVault:
 
         self.client.auth_approle(role_id, secret_id)
 
+
+    def auth_gcp(self, service_account_email, service_account_file, expiry_length=900, **kwargs):
+        if not HAS_GCP_API:
+            raise AnsibleError("Please pip install google-api-python-client to use GCP authentication.")
+
+        role_id = kwargs.get('role_id', os.environ.get('VAULT_ROLE_ID', None))
+
+        if role_id is None:
+            raise AnsibleError("Authentication method app role requires a role_id")
+
+        now = int(time.time())
+        audience = "vault/%s" % role_id
+
+        payload = {
+            'iat': now,
+            "exp": now + expiry_length,
+            'iss': sa_email,
+            'aud':  audience,
+            'sub': service_account_email,
+            'email': sa_email
+        }
+
+        signer = google.auth.crypt.RSASigner.from_service_account_file(service_account_file)
+        jwt = google.auth.jwt.encode(signer, payload)
+
+        self.client.auth.gcp.login(role_id, jwt.decode())
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
