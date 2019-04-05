@@ -8,7 +8,7 @@ IFS='/:' read -ra args <<< "$1"
 version="${args[1]}"
 
 if [[ "${COVERAGE:-}" == "--coverage" ]]; then
-    timeout=90
+    timeout=99
 else
     timeout=11
 fi
