@@ -55,8 +55,7 @@ RETURN = """
         src:
           description:
           - full path to file
-          - not returned when C(state) is set to C(directory)
-          - use C(when: item.state == 'file') or C(when: item.state == 'link') to use this attribute
+          - not returned when C(item.state) is set to C(directory)
         root:
           description: allows filtering by original location
         path:
