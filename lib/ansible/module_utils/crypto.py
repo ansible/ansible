@@ -557,25 +557,6 @@ def pyopenssl_get_extensions_from_csr(csr):
     return result
 
 
-def pyopenssl_get_signature_algorithm_of_csr(csr):
-    if OpenSSL.SSL.OPENSSL_VERSION_NUMBER >= 0x10100000:
-        # Data structure is opaque from OpenSSL 1.1.0 on
-        alg = OpenSSL._util.ffi.new("X509_ALGOR **")
-        OpenSSL._util.lib.X509_REQ_get0_signature(csr._req, OpenSSL._util.ffi.NULL, alg)
-        if alg[0] == OpenSSL._util.ffi.NULL:
-            return None
-        alg = alg[0].algorithm
-    else:
-        # Try to get value directly for OpenSSL < 1.1
-        alg = csr._req.sig_alg.algorithm
-    nid = OpenSSL._util.lib.OBJ_obj2nid(alg)
-    if nid == 0:
-        return None
-    b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
-    name = to_text(OpenSSL._util.ffi.string(b_name))
-    return _NORMALIZE_NAMES.get(name, name)
-
-
 def crpytography_name_to_oid(name):
     if name in ('CN', 'commonName'):
         return x509.oid.NameOID.COMMON_NAME

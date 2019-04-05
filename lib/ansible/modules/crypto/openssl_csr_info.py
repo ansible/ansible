@@ -152,11 +152,6 @@ public_key_fingerprints:
     type: dict
     sample: "{'sha256': 'd4:b3:aa:6d:c8:04:ce:4e:ba:f6:29:4d:92:a3:94:b0:c2:ff:bd:bf:33:63:11:43:34:0f:51:b0:95:09:2f:63',
               'sha512': 'f7:07:4a:f0:b0:f0:e6:8b:95:5f:f9:e6:61:0a:32:68:f1..."
-signature_algorithm:
-    description: The signature algorithm used to sign the CSR.
-    returned: success
-    type: str
-    sample: sha256WithRSAEncryption
 '''
 
 
@@ -230,10 +225,6 @@ class CertificateSigningRequestInfo(crypto_utils.OpenSSLObject):
         pass
 
     @abc.abstractmethod
-    def _get_signature_algorithm(self):
-        pass
-
-    @abc.abstractmethod
     def _get_subject(self):
         pass
 
@@ -273,7 +264,6 @@ class CertificateSigningRequestInfo(crypto_utils.OpenSSLObject):
         result = dict()
         self.csr = crypto_utils.load_certificate_request(self.path, backend=self.backend)
 
-        result['signature_algorithm'] = self._get_signature_algorithm()
         result['subject'] = self._get_subject()
         result['key_usage'], result['key_usage_critical'] = self._get_key_usage()
         result['extended_key_usage'], result['extended_key_usage_critical'] = self._get_extended_key_usage()
@@ -300,9 +290,6 @@ class CertificateSigningRequestInfoCryptography(CertificateSigningRequestInfo):
     """Validate the supplied CSR, using the cryptography backend"""
     def __init__(self, module):
         super(CertificateSigningRequestInfoCryptography, self).__init__(module, 'cryptography')
-
-    def _get_signature_algorithm(self):
-        return crypto_utils.crpytography_oid_to_name(self.csr.signature_algorithm_oid)
 
     def _get_subject(self):
         result = dict()
@@ -409,9 +396,6 @@ class CertificateSigningRequestInfoPyOpenSSL(CertificateSigningRequestInfo):
 
     def __init__(self, module):
         super(CertificateSigningRequestInfoPyOpenSSL, self).__init__(module, 'pyopenssl')
-
-    def _get_signature_algorithm(self):
-        return crypto_utils.pyopenssl_get_signature_algorithm_of_csr(self.csr)
 
     def __get_name(self, name):
         result = dict()
