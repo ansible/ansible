@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# Based on https://github.com/ansible/ansible/pull/19868
+
 DOCUMENTATION = '''
 ---
 module: ssm_send_command
@@ -40,7 +42,7 @@ options:
       - A comment about this particular invocation.
     required: false
     default: NONE
-  instanceIds:
+  instance_ids:
     description:
       - This should contain an array of instance IDs for the instances you
         wish to run this command document against.
@@ -66,7 +68,7 @@ EXAMPLES = '''
 - ssm_send_command:
     name: AWS-RunPowerShellScript
     comment: "Run inventory script"
-    instanceIds:
+    instance_ids:
       - i-123987193812
       - i-289189288278
     parameters:
@@ -93,8 +95,9 @@ status:
     sample: Success
 '''
 
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.basic import BOOLEANS
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, AWSRetry
 import traceback
 from time import sleep
 
@@ -106,43 +109,57 @@ except ImportError:
     HAS_BOTO3 = False
 
 
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def ssm_send_command(conn, **kwargs):
+    return conn.send_command(**kwargs)
+
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def ssm_list_command_invocations(conn, **kwargs):
+    return conn.list_command_invocations(**kwargs)
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        name                 = dict(required=True),
-        wait                 = dict(choices=BOOLEANS, default=True, type='bool'),
-        comment              = dict(),
-        instanceIds          = dict(required=True, type='list'),
-        parameters           = dict(default={}, type='dict')
+        name=dict(required=True),
+        wait=dict(choices=BOOLEANS, default=True, type='bool'),
+        comment=dict(),
+        instance_ids=dict(required=True, type='list'),
+        parameters=dict(default={}, type='dict')
     ))
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=False
     )
 
-    document_name = module.params.get('name')  # Needs to be an existing SSM document name
+    # Needs to be an existing SSM document name
+    document_name = module.params.get('name')
     comment = module.params.get('comment')
     await_return = module.params.get('wait')
-    instance_ids = module.params.get('instanceIds')
+    instance_ids = module.params.get('instance_ids')
     parameters = module.params.get('parameters')
 
     if not HAS_BOTO3:
-        module.fail_json(msg='Python module "boto3" is missing, please install it')
+        module.fail_json(
+            msg='Python module "boto3" is missing, please install it')
 
     if not (document_name and instance_ids):
-        module.fail_json(msg="Must provide SSM document name and at least one instance id.")
+        module.fail_json(
+            msg="Must provide SSM document name and at least one instance id.")
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=HAS_BOTO3)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
+        module, boto3=HAS_BOTO3)
     if not region:
         module.fail_json(msg="The AWS region must be specified as an "
                          "environment variable or in the AWS credentials "
                          "profile.")
 
     try:
-        client = boto3_conn(module, conn_type='client', resource='ssm',
-                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        conn = boto3_conn(module, conn_type='client', resource='ssm',
+                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg="Failure connecting boto3 to AWS", exception=traceback.format_exc(e))
+        module.fail_json_aws(e, msg="Failure connecting boto3 to AWS")
 
     invoke_params = {}
 
@@ -156,18 +173,17 @@ def main():
         invoke_params['Parameters'] = parameters
 
     try:
-        response = client.send_command(**invoke_params)
+        response = ssm_send_command(conn, **invoke_params)
     except botocore.exceptions.ClientError as ce:
         if ce.response['Error']['Code'] == 'ResourceNotFoundException':
-            module.fail_json(msg="Could not find the SSM doc to execute. Make sure "
-                             "the document name is correct and your profile has "
-                             "permissions to execute SSM.",
-                             exception=traceback.format_exc(ce))
-        module.fail_json(msg="Client-side error when invoking SSM, check inputs and specific error",
-                         exception=traceback.format_exc(ce))
+            module.fail_json_aws(ce, msg="Could not find the SSM doc to execute. Make sure "
+                                 "the document name is correct and your profile has "
+                                 "permissions to execute SSM.")
+        module.fail_json_aws(
+            ce, msg="Client-side error when invoking SSM, check inputs and specific error")
     except botocore.exceptions.ParamValidationError as ve:
-        module.fail_json(msg="Parameters to `invoke` failed to validate",
-                         exception=traceback.format_exc(ve))
+        module.fail_json_aws(
+            ve, msg="Parameters to `invoke` failed to validate")
     except Exception as e:
         module.fail_json(msg="Unexpected failure while invoking SSM send command.",
                          exception=traceback.format_exc(e))
@@ -181,7 +197,8 @@ def main():
             checking = True
             while checking:
                 try:
-                    invoke_response = client.list_command_invocations(**list_params)
+                    invoke_response = ssm_list_command_invocations(
+                        conn, **list_params)
                 except Exception as e:
                     module.fail_json(msg="Error in checking on execution status",
                                      exception=traceback.format_exc(e))
@@ -195,17 +212,18 @@ def main():
         else:
             module.fail_json(msg='A valid command invocation ID was not returned.'
                                  'Check the EC2 console command history')
-        results ={
+        results = {
             'status': invoke_response['CommandInvocations'][0]['Status'],
             'output': invoke_response['CommandInvocations'][0]['CommandPlugins'][0]['Output'],
         }
     else:
-        results ={
+        results = {
             'status': response['Command']['Status'],
-            'output': '',
+            'output': ''
         }
 
     module.exit_json(changed=True, result=results)
+
 
 if __name__ == '__main__':
     main()
