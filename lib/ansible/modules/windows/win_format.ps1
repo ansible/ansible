@@ -139,20 +139,17 @@ $ansible_file_system = $ansible_volume.FileSystem
 $ansible_volume_size = $ansible_volume.Size
 
 $ansible_partition = Get-Partition -Volume $ansible_volume
-$ansible_partition_size = (Get-Partition -Volume $ansible_volume).Size
 
 foreach ($access_path in $ansible_partition.AccessPaths) {
     if ($access_path -ne $Path) {
-        $files_in_volume = try {
-            (Get-ChildItem -LiteralPath $access_path | Measure-Object).Count   
-        } catch { }
+        $files_in_volume = (Get-ChildItem -LiteralPath $access_path -ErrorAction SilentlyContinue | Measure-Object).Count
 
         if (-not $force_format -and $files_in_volume -gt 0) {
             $module.FailJson("Force format must be specified to format non-pristine volumes")
         } else {
-            if (-not $force_format -and 
-                -not $null -eq $file_system -and 
-                -not [string]::IsNullOrEmpty($ansible_file_system) -and 
+            if (-not $force_format -and
+                -not $null -eq $file_system -and
+                -not [string]::IsNullOrEmpty($ansible_file_system) -and
                 $file_system -ne $ansible_file_system) {
                 $module.FailJson("Force format must be specified since target file system: $($file_system) is different from the current file system of the volume: $($ansible_file_system.ToLower())")
             } else {
@@ -174,7 +171,7 @@ else {
             $new_label = $ansible_volume.FileSystemLabel
         }
         # Conditions for formatting
-        if ($ansible_volume_size -eq 0 -or 
+        if ($ansible_volume_size -eq 0 -or
             $ansible_volume.FileSystemLabel -ne $new_label) {
             if (-not $module.CheckMode) {
                 Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
