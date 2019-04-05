@@ -196,7 +196,6 @@ class InventoryModule(BaseInventoryPlugin):
                     if value:
                         self.inventory.set_variable(group.name, field_name, value)
                 self._add_group_childes(group)
-
             hosts = self.host_model.objects.all()
             for host in hosts:
                 self.inventory.add_host(host.host, group=host.group.name)
