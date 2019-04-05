@@ -20,7 +20,7 @@ short_description: Retrieve facts about a stack within openstack
 version_added: "2.8"
 author: "Felix Ehrenpfort (@xinau)"
 description:
-    - Retrieve facts about a image image from OpenStack.
+    - Retrieve facts about a heat stack from OpenStack.
 notes:
     - Facts are placed in the C(openstack_stack) variable.
 requirements:
@@ -29,7 +29,7 @@ requirements:
 options:
     name:
       description:
-        - Name of the stack that should be created, name could be char and digit, no space
+        - Name of the stack that facts are retrieved from, name could be char and digit, no space
       required: true
     availability_zone:
       description:
