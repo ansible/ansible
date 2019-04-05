@@ -295,7 +295,7 @@ items:
       description:
       - Indicates whether the backend service will be used with internal or external
         load balancing. A backend service created for one type of load balancing cannot
-        be used with the other.
+        be used with the other. One of `INTERNAL` or `EXTERNAL`. Defaults to `EXTERNAL`.
       returned: success
       type: str
     name:

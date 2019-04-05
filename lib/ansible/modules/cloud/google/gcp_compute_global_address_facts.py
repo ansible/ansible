@@ -78,7 +78,6 @@ items:
     description:
       description:
       - An optional description of this resource.
-      - Provide this property when you create the resource.
       returned: success
       type: str
     id:
@@ -99,8 +98,8 @@ items:
       type: str
     ipVersion:
       description:
-      - The IP Version that will be used by this address. Valid options are IPV4 or
-        IPV6. The default value is IPV4.
+      - The IP Version that will be used by this address. Valid options are `IPV4`
+        or `IPV6`. The default value is `IPV4`.
       returned: success
       type: str
     region:

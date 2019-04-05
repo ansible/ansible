@@ -249,8 +249,9 @@ options:
     description:
     - Indicates whether the backend service will be used with internal or external
       load balancing. A backend service created for one type of load balancing cannot
-      be used with the other.
+      be used with the other. One of `INTERNAL` or `EXTERNAL`. Defaults to `EXTERNAL`.
     required: false
+    default: EXTERNAL
     version_added: 2.7
     choices:
     - INTERNAL
@@ -578,7 +579,7 @@ loadBalancingScheme:
   description:
   - Indicates whether the backend service will be used with internal or external load
     balancing. A backend service created for one type of load balancing cannot be
-    used with the other.
+    used with the other. One of `INTERNAL` or `EXTERNAL`. Defaults to `EXTERNAL`.
   returned: success
   type: str
 name:
@@ -687,7 +688,7 @@ def main():
                 type='dict',
                 options=dict(enabled=dict(type='bool'), oauth2_client_id=dict(required=True, type='str'), oauth2_client_secret=dict(required=True, type='str')),
             ),
-            load_balancing_scheme=dict(type='str', choices=['INTERNAL', 'EXTERNAL']),
+            load_balancing_scheme=dict(default='EXTERNAL', type='str', choices=['INTERNAL', 'EXTERNAL']),
             name=dict(required=True, type='str'),
             port_name=dict(type='str'),
             protocol=dict(type='str', choices=['HTTP', 'HTTPS', 'TCP', 'SSL']),
