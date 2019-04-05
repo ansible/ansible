@@ -1,0 +1,9 @@
+---
+- name: Fail missing params
+  cloudscale_server_group:
+  register: grp
+  ignore_errors: True
+- name: 'VERIFY: Fail name and UUID'
+  assert:
+    that:
+      - grp is failed
