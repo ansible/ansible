@@ -25,4 +25,3 @@ tasks:
           that:
               - fetch_result.changed == false
               - install_result.changed == false
-
