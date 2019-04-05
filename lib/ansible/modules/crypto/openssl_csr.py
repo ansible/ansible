@@ -632,7 +632,7 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
                 return False
 
         try:
-            csr = crypto_utils.load_certificate_request(self.path)
+            csr = crypto_utils.load_certificate_request(self.path, backend='pyopenssl')
         except Exception as dummy:
             return False
 
@@ -819,8 +819,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             return key_a == key_b
 
         try:
-            with open(self.path, 'rb') as f:
-                csr = cryptography.x509.load_pem_x509_csr(f.read(), self.cryptography_backend)
+            csr = crypto_utils.load_certificate_request(self.path, backend='cryptography')
         except Exception as dummy:
             return False
 
