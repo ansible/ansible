@@ -20,41 +20,37 @@ try:
     import requests
 except ImportError:
     raise AnsibleError(
-        'The sp_compute dynamic inventory plugin requires requests.'
+        'The stackpath_compute dynamic inventory plugin requires requests.'
     )
 
 DOCUMENTATION = '''
-    name: sp_compute
+    name: stackpath_compute
     plugin_type: inventory
-    short_description: sp_compute inventory source
+    short_description: StackPath Edge Computing inventory source
     requirements:
         - requests
     extends_documentation_fragment:
         - inventory_cache
         - constructed
     description:
-        - Get inventory hosts from Stackpath compute.
-        - Uses a YAML configuration file that ends with sp_compute.(yml|yaml).
-    notes:
-        - If no credentials are provided and the control
-          node has an associated IAM instance profile then the
-          role will be used for authentication.
+        - Get inventory hosts from StackPath Edge Computing.
+        - Uses a YAML configuration file that ends with stackpath_compute.(yml|yaml).
     options:
         plugin:
-            description: token that ensures this is a source file for the 'aws_ec2' plugin.
+            description: A token that ensures this is a source file for the 'stackpath_compute' plugin.
             required: True
-            choices: ['sp_compute']
+            choices: ['stackpath_compute']
         client_id:
-            description: client id generated from API Management in the portal https://control.stackpath.net/api-management
+            description: An OAuth client ID generated from the API Management section of the StackPath customer portal U(https://control.stackpath.net/api-management)
             requierd: True
         client_secret:
-            description: client secret generated from API Management in the portal https://control.stackpath.net/api-management
+            description: An OAuth client secret generated from the API Management section of the StackPath customer portal U(https://control.stackpath.net/api-management)
             required: True
         stack_ids:
-            description: list of Stack IDs to query instnaces in, if no entry get instances in all stacks in the account https://developer.stackpath.com/docs/en/getting-started/#get-your-stack-id
+            description: A list of Stack IDs to query instnaces in. If no entry then get instances in all stacks on the account U(https://developer.stackpath.com/docs/en/getting-started/#get-your-stack-id)
             required: False
         use_internal_ip:
-            description: whether to use internal ip addresses, yes do use internal address, no to use external defaults to external
+            description: Whether or not to use internal IP addresses, yes to use internal addresses, no to use external addresses. Defaults to external
             requiered: False
             choices: ['yes', 'no']
 '''
@@ -63,7 +59,7 @@ EXAMPLES = '''
 
 # example using credentials to fetch all workload instances in a stack.
 ---
-plugin: sp_compute
+plugin: stackpath_compute
 client_id: my_client_id
 client_secret: my_client_secret
 stack_id: my_stack_id
@@ -76,7 +72,7 @@ display = Display()
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
-    NAME = 'sp_compute'
+    NAME = 'stackpath_compute'
 
     def __init__(self):
         super(InventoryModule, self).__init__()
@@ -129,7 +125,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                                          stack_id + '/workloads',
                                          headers=headers).json()["results"]
             except Exception as e:
-                raise AnsibleError("Failed to get workloads from Stackpath api: %s" % to_native(e))
+                raise AnsibleError("Failed to get workloads from the StackPath API: %s" % to_native(e))
             for workload in workloads:
                 try:
                     workload_instances = requests.get(
@@ -137,7 +133,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         '/workloads/' + workload["id"] + '/instances',
                         headers=headers).json()["results"]
                 except Exception as e:
-                    raise AnsibleError("Failed to get workload instances from Stackpath api: %s" % to_native(e))
+                    raise AnsibleError("Failed to get workload instances from the StackPath API: %s" % to_native(e))
                 for instance in workload_instances:
                     if instance["phase"] == "RUNNING":
                         instance["stackId"] = stack_id
@@ -174,11 +170,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith(('sp_compute.yml', 'sp_compute.yaml')):
+            if path.endswith(('stackpath_compute.yml', 'stackpath_compute.yaml')):
                 return True
         display.debug(
-            "sp_compute inventory filename must end with \
-            'sp_compute.yml' or 'sp_compute.yaml'"
+            "stackpath_compute inventory filename must end with \
+            'stackpath_compute.yml' or 'stackpath_compute.yaml'"
         )
         return False
 
@@ -202,7 +198,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 self._get_stack_ids()
             except Exception as e:
-                raise AnsibleError("Failed to get stack ids from Stackpath api: %s" % to_native(e))
+                raise AnsibleError("Failed to get stack IDs from the Stackpath API: %s" % to_native(e))
 
         cache_key = self.get_cache_key(path)
         # false when refresh_cache or --flush-cache is used
