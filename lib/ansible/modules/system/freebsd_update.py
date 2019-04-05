@@ -22,7 +22,7 @@ version_added: "2.8"
 options:
     action:
         description:
-            - freebsd-update command to execute: fetch, install, fetch_install, rollback, IDS, cron.
+            - freebsd-update command to execute — fetch, install, fetch_install, rollback, IDS, cron.
         required: True
     server:
         description:
