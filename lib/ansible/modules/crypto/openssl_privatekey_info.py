@@ -245,7 +245,7 @@ class PrivateKeyInfo(crypto_utils.OpenSSLObject):
         try:
             self.key = crypto_utils.load_privatekey(
                 path=None,
-                path_content=priv_key_detail,
+                content=priv_key_detail,
                 passphrase=to_bytes(self.passphrase) if self.passphrase is not None else self.passphrase,
                 backend=self.backend
             )
