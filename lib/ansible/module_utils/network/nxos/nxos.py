@@ -542,7 +542,11 @@ class HttpApi:
 
         out = to_list(out)
         if not out[0]:
-            return out
+            if return_timestamps:
+                # workaround until timestamps are implemented
+                return out, list()
+            else:
+                return out
 
         for index, response in enumerate(out):
             if response[0] == '{':
