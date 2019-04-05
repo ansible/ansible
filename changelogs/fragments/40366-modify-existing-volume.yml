@@ -1,0 +1,2 @@
+minor_changes:
+  - "add support for extending volumes in os_volume, also add module support for check_mode and diff"
