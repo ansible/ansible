@@ -128,7 +128,7 @@ extended_key_usage_critical:
     returned: success
     type: bool
 extensions_by_oid:
-    description: Returns for every extension OID a dictionary
+    description: Returns a dictionary for every extension OID
     returned: success
     type: complex
     contains:
@@ -199,6 +199,8 @@ public_key_fingerprints:
         - For every hash algorithm available, the fingerprint is computed.
     returned: success
     type: dict
+    sample: "{'sha256': 'd4:b3:aa:6d:c8:04:ce:4e:ba:f6:29:4d:92:a3:94:b0:c2:ff:bd:bf:33:63:11:43:34:0f:51:b0:95:09:2f:63',
+              'sha512': 'f7:07:4a:f0:b0:f0:e6:8b:95:5f:f9:e6:61:0a:32:68:f1..."
 signature_algorithm:
     description: The signature algorithm used to sign the certificate.
     returned: success
@@ -213,7 +215,7 @@ version:
     description: The certificate version.
     returned: success
     type: int
-    sample: 1
+    sample: 3
 valid_at:
     description: For every time stamp provided in the I(valid_at) option, a
                  boolean whether the certificate is valid at that point in time
