@@ -41,7 +41,7 @@ options:
     return_private_key_data:
         description:
             - Whether to return private key data.
-            - Set this to C(yes) if you do want any private information about this key
+            - Only set this to C(yes) when you want private information about this key to
               leave the remote machine.
             - "WARNING: you have to make sure that private key data isn't accidentally logged!"
         type: bool
