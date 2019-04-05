@@ -59,7 +59,7 @@ options:
   recurse:
     description:
     - Recursively set the specified file attributes on directory contents.
-    - This applies only to C(state=directory).
+    - This applies only when C(state) is set to C(directory).
     type: bool
     default: no
     version_added: '1.1'
@@ -187,6 +187,15 @@ EXAMPLES = r'''
     path: /etc/another_file
     state: file
     access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
+
+- name: Recursively change ownership of a directory
+  file:
+    path: /etc/foo
+    state: directory
+    recurse: yes
+    owner: foo
+    group: foo
+
 '''
 RETURN = r'''
 
