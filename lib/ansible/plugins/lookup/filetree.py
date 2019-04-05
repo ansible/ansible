@@ -56,7 +56,7 @@ RETURN = """
           description:
           - full path to file
           - not returned when C(state) is set to C(directory)
-          - use `when: item.state == 'file'` or `when: item.state == 'link'` to skip directories and use this attribute
+          - use C(when: item.state == 'file') or C(when: item.state == 'link') to use this attribute
         root:
           description: allows filtering by original location
         path:
