@@ -222,7 +222,13 @@ def install_command_requirements(args, python_version=None):
                                    '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
 
     # ask pip to check for conflicts between installed packages
-    run_command(args, pip + ['check', '--disable-pip-version-check'])
+    try:
+        run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
+    except SubprocessError as ex:
+        if ex.stderr.strip() == 'ERROR: unknown command "check"':
+            display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
+        else:
+            raise
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
