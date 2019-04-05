@@ -12,8 +12,8 @@
     - libseccomp
 
 - name: Install epel repo which is missing on rhel-7 and is needed for pigz (needed for docker-ce 18)
-  yum:
-    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+  include_role:
+    name: setup_epel
 
 - name: Enable extras repository for RHEL on AWS
   command: yum-config-manager --enable rhui-REGION-rhel-server-extras

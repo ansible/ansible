@@ -5,3 +5,4 @@ skip/rhel8.0
 skip/docker
 needs/root
 destructive
+needs/target/setup_epel
