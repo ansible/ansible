@@ -405,6 +405,23 @@ Here's an example handlers section::
             name: apache
             state: restarted
 
+Avoid using variables in handler names. Since handler names are templated early on, all variables may not be available, resulting in play failure. It is possible to use variables in handler task parameters. For example, if the name of a service varies slightly by distribution, the service name can be set using ``include_vars`` (or any place where variables can be set).
+
+Here is an example using ``include_vars``:
+
+  .. code-block:: yaml+jinja
+
+    tasks:
+      - name: Set variables based on distribution
+        include_vars: "{{ ansible_facts.distributon }}.yml"
+
+    handlers:
+      - name: restart web service
+        service:
+          name: "{{ web_service_name | default('httpd') }}"
+          state: restarted
+
+
 As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
 
     handlers:
