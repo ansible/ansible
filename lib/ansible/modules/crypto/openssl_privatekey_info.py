@@ -321,8 +321,19 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
                 self.key
             )
         except AttributeError:
-            self.module.warn('Your pyOpenSSL version does not support dumping public keys. '
-                             'Please upgrade to version 16.0 or newer, or use the cryptography backend.')
+            try:
+                # pyOpenSSL < 16.0:
+                bio = crypto._new_mem_buf()
+                if binary:
+                    rc = crypto._lib.i2d_PUBKEY_bio(bio, self.key._pkey)
+                else:
+                    rc = crypto._lib.PEM_write_bio_PUBKEY(bio, self.key._pkey)
+                if rc != 1:
+                    crypto._raise_current_error()
+                return crypto._bio_to_string(bio)
+            except AttributeError:
+                self.module.warn('Your pyOpenSSL version does not support dumping public keys. '
+                                 'Please upgrade to version 16.0 or newer, or use the cryptography backend.')
 
     def bigint_to_int(self, bn):
         '''Convert OpenSSL BIGINT to Python integer'''

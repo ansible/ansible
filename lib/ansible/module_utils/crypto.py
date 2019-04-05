@@ -95,12 +95,19 @@ def get_fingerprint(path, passphrase=None):
     privatekey = load_privatekey(path, passphrase, check_passphrase=False)
     try:
         publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
-        return get_fingerprint_of_bytes(publickey)
     except AttributeError:
         # If PyOpenSSL < 16.0 crypto.dump_publickey() will fail.
-        # By doing this we prevent the code from raising an error
-        # yet we return no value in the fingerprint hash.
-        return None
+        try:
+            bio = crypto._new_mem_buf()
+            rc = crypto._lib.i2d_PUBKEY_bio(bio, privatekey._pkey)
+            if rc != 1:
+                crypto._raise_current_error()
+            publickey = crypto._bio_to_string(bio)
+        except AttributeError:
+            # By doing this we prevent the code from raising an error
+            # yet we return no value in the fingerprint hash.
+            return None
+    return get_fingerprint_of_bytes(publickey)
 
 
 def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, backend='pyopenssl'):
