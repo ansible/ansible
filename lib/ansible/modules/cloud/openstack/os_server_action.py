@@ -44,7 +44,7 @@ options:
        - Perform the given action. The lock and unlock actions always return
          changed as the servers API does not provide lock status.
      choices: [stop, start, pause, unpause, lock, unlock, suspend, resume,
-               rebuild]
+               rebuild, rescue, unrescue]
      default: present
    image:
      description:
@@ -82,7 +82,9 @@ _action_map = {'stop': 'SHUTOFF',
                'unlock': 'ACTIVE',
                'suspend': 'SUSPENDED',
                'resume': 'ACTIVE',
-               'rebuild': 'ACTIVE'}
+               'rebuild': 'ACTIVE',
+               'rescue': 'RESCUE',
+               'unrescue': 'ACTIVE'}
 
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
 
@@ -111,7 +113,9 @@ def _wait(timeout, cloud, server, action, module, sdk):
 
 def _system_state_change(action, status):
     """Check if system state would change."""
-    if status == _action_map[action]:
+    if action in ['lock', 'unlock', 'rebuild']:
+        return True
+    elif status == _action_map[action]:
         return False
     return True
 
@@ -121,7 +125,7 @@ def main():
         server=dict(required=True),
         action=dict(required=True, choices=['stop', 'start', 'pause', 'unpause',
                                             'lock', 'unlock', 'suspend', 'resume',
-                                            'rebuild']),
+                                            'rebuild', 'rescue', 'unrescue']),
         image=dict(required=False),
     )
 
@@ -149,67 +153,54 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'os-stop': None})
+            cloud.compute.stop_server(server)
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
-                module.exit_json(changed=True)
+            module.exit_json(changed=True)
 
         if action == 'start':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'os-start': None})
+            cloud.compute.start_server(server)
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
-                module.exit_json(changed=True)
+            module.exit_json(changed=True)
 
         if action == 'pause':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'pause': None})
+            cloud.compute.pause_server(server)
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
-                module.exit_json(changed=True)
+            module.exit_json(changed=True)
 
         elif action == 'unpause':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'unpause': None})
+            cloud.compute.unpause_server(server)
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
 
         elif action == 'lock':
             # lock doesn't set a state, just do it
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'lock': None})
+            cloud.compute.lock_server(server)
             module.exit_json(changed=True)
 
         elif action == 'unlock':
             # unlock doesn't set a state, just do it
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'unlock': None})
+            cloud.compute.unlock_server(server)
             module.exit_json(changed=True)
 
         elif action == 'suspend':
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'suspend': None})
+            cloud.compute.suspend_server(server)
+
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
@@ -218,9 +209,8 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'resume': None})
+            cloud.compute.resume_server(server)
+
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
@@ -231,10 +221,30 @@ def main():
             if image is None:
                 module.fail_json(msg="Image does not exist")
 
-            # rebuild doesn't set a state, just do it
-            cloud.compute.post(
-                _action_url(server.id),
-                json={'rebuild': None})
+            # unlock doesn't set a state, just do it
+            cloud.rebuild_server(
+                server.id,
+                image.id,
+                wait=wait
+            )
+            module.exit_json(changed=True)
+
+        elif action == 'rescue':
+            if not _system_state_change(action, status):
+                module.exit_json(changed=False)
+
+            cloud.compute.rescue_server(server)
+
+            if wait:
+                _wait(timeout, cloud, server, action, module, sdk)
+            module.exit_json(changed=True)
+
+        elif action == 'unrescue':
+            if not _system_state_change(action, status):
+                module.exit_json(changed=False)
+
+            cloud.compute.unrescue_server(server)
+
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
