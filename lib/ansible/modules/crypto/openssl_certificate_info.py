@@ -71,6 +71,9 @@ EXAMPLES = r'''
     csr_path: /etc/ssl/csr/ansible.com.csr
     provider: selfsigned
 
+
+# Get information on the certificate
+
 - name: Get information on generated certificate
   openssl_certificate_info:
     path: /etc/ssl/crt/ansible.com.crt
@@ -80,14 +83,22 @@ EXAMPLES = r'''
   debug:
     var: result
 
-- name: Check that certificate is valid tomorrow, but not in three weeks
+
+# Check whether the certificate is valid or not valid at certain times, fail
+# if this is not the case. The first task (openssl_certificate_info) collects
+# the information, and the second task (assert) validates the result and
+# makes the playbook fail in case something is not as expected.
+
+- name: Test whether that certificate is valid tomorrow and/or in three weeks
   openssl_certificate_info:
     path: /etc/ssl/crt/ansible.com.crt
     valid_at:
       point_1: "+1d"
       point_2: "+3w"
   register: result
-- assert:
+
+- name: Validate that certificate is valid tomorrow, but not in three weeks
+  assert:
     that:
       - result.valid_at.point_1      # valid in one day
       - not result.valid_at.point_2  # not valid in three weeks
