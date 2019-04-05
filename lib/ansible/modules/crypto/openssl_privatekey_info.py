@@ -19,6 +19,7 @@ version_added: '2.8'
 short_description: Provide information for OpenSSL private keys
 description:
     - This module allows one to query information on OpenSSL private keys.
+    - Note that key consistency checks are currently only available for RSA keys.
     - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the
       cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with
@@ -83,6 +84,13 @@ can_load_key:
     type: bool
 can_parse_key:
     description: Whether the module was able to parse the private key
+    returned: always
+    type: bool
+key_is_consistent:
+    description:
+        - Whether the key is consistent. Can also return C(none) next to C(yes) and
+          C(no), to indicate that consistency couldn't be checked.
+        - In case the check returns C(no), the module will fail.
     returned: always
     type: bool
 public_key:
@@ -229,10 +237,15 @@ class PrivateKeyInfo(crypto_utils.OpenSSLObject):
     def _get_key_info(self):
         pass
 
+    @abc.abstractmethod
+    def _is_key_consistent(self):
+        pass
+
     def get_info(self):
         result = dict(
             can_load_key=False,
             can_parse_key=False,
+            key_is_consistent=None,
         )
         try:
             with open(self.path, 'rb') as b_priv_key_fh:
@@ -261,6 +274,15 @@ class PrivateKeyInfo(crypto_utils.OpenSSLObject):
         if self.return_private_key_data:
             result['private_data'] = key_private_data
 
+        result['key_is_consistent'] = self._is_key_consistent()
+        if result['key_is_consistent'] is False:
+            # Only fail when it is False, to avoid to fail on None (which means "we don't know")
+            result['key_is_consistent'] = False
+            self.module.fail_json(
+                msg="Private key is not consistent! (See "
+                    "https://blog.hboeck.de/archives/888-How-I-tricked-Symantec-with-a-Fake-Private-Key.html)",
+                **result
+            )
         return result
 
 
@@ -277,6 +299,11 @@ class PrivateKeyInfoCryptography(PrivateKeyInfo):
 
     def _get_key_info(self):
         return _get_cryptography_key_info(self.key)
+
+    def _is_key_consistent(self):
+        if isinstance(self.key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
+            return bool(self.key._backend._lib.RSA_check_key(self.key._rsa_cdata))
+        return None
 
 
 class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
@@ -401,6 +428,16 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
         if try_fallback and PYOPENSSL_VERSION >= LooseVersion('16.1.0') and CRYPTOGRAPHY_FOUND:
             return _get_cryptography_key_info(self.key.to_cryptography_key())
         return key_type, key_public_data, key_private_data
+
+    def _is_key_consistent(self):
+        openssl_key_type = self.key.type()
+        if crypto.TYPE_RSA == openssl_key_type:
+            try:
+                return self.key.check()
+            except crypto.Error:
+                # OpenSSL error means that key is not consistent
+                return False
+        return None
 
 
 def main():
