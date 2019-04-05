@@ -558,11 +558,17 @@ def pyopenssl_get_extensions_from_csr(csr):
 
 
 def pyopenssl_get_signature_algorithm_of_csr(csr):
-    alg = OpenSSL._util.ffi.new("X509_ALGOR **")
-    OpenSSL._util.lib.X509_REQ_get0_signature(csr._req, OpenSSL._util.ffi.NULL, alg)
-    if alg[0] == OpenSSL._util.ffi.NULL:
-        return None
-    nid = OpenSSL._util.lib.OBJ_obj2nid(alg[0].algorithm)
+    if OpenSSL.SSL.OPENSSL_VERSION_NUMBER >= 0x10100000:
+        # Data structure is opaque from OpenSSL 1.1.0 on
+        alg = OpenSSL._util.ffi.new("X509_ALGOR **")
+        OpenSSL._util.lib.X509_REQ_get0_signature(csr._req, OpenSSL._util.ffi.NULL, alg)
+        if alg[0] == OpenSSL._util.ffi.NULL:
+            return None
+        alg = alg[0].algorithm
+    else:
+        # Try to get value directly for OpenSSL < 1.1
+        alg = csr._req.sig_alg.algorithm
+    nid = OpenSSL._util.lib.OBJ_obj2nid(alg)
     if nid == 0:
         return None
     b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
