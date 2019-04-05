@@ -1,0 +1,265 @@
+---
+- name: ensure we fail when proxy is not set with bypass
+  win_http_proxy:
+    bypass: abc
+  register: fail_bypass
+  failed_when: 'fail_bypass.msg != "missing parameter(s) required by ''bypass'': proxy"'
+
+- name: ensure we fail when proxy and source is set
+  win_http_proxy:
+    proxy: proxy
+    source: ie
+  register: fail_source
+  failed_when: 'fail_source.msg != "parameters are mutually exclusive: proxy, source"'
+
+- name: ensure we fail if an invalid protocol is specified
+  win_http_proxy:
+    proxy:
+      fail1: fail
+      fail2: fail
+  register: fail_protocol
+  failed_when: 'fail_protocol.msg != "Invalid keys found in proxy: fail1, fail2. Valid keys are http, https, ftp, socks."'
+
+# WinHTTP does not validate on set, this ensures the module checks and revert any failed attempts at setting the proxy
+# FIXME: Only certain hosts seem to have a strict winhttp definition, we can't run this in CI for now
+#- name: ensure we fail if invalid value is set
+#  win_http_proxy:
+#    proxy: fake=proxy
+#  register: fail_invalid
+#  failed_when: fail_invalid.msg != "Unknown error when trying to set proxy 'fake=proxy' or bypass ''"
+#
+#- name: check proxy is still set to Direct access
+#  win_command: netsh winhttp show proxy
+#  register: fail_invalid_actual
+#  failed_when: fail_invalid_actual.stdout_lines[3]|trim != "Direct access (no proxy server)."
+
+- name: set a proxy using a string (check)
+  win_http_proxy:
+    proxy: proxyhost
+  register: proxy_str_check
+  check_mode: True
+
+- name: get result of set a proxy using a string (check)
+  win_command: netsh winhttp show proxy
+  register: proxy_str_actual_check
+
+- name: assert set a proxy using a string (check)
+  assert:
+    that:
+    - proxy_str_check is changed
+    - proxy_str_actual_check.stdout_lines[3]|trim == "Direct access (no proxy server)."
+
+- name: set a proxy using a string
+  win_http_proxy:
+    proxy: proxyhost
+  register: proxy_str
+
+- name: get result of set a proxy using a string
+  win_command: netsh winhttp show proxy
+  register: proxy_str_actual
+
+- name: assert set a proxy using a string
+  assert:
+    that:
+    - proxy_str is changed
+    - 'proxy_str_actual.stdout_lines[3]|trim == "Proxy Server(s) :  proxyhost"'
+    - 'proxy_str_actual.stdout_lines[4]|trim == "Bypass List     :  (none)"'
+
+- name: set a proxy using a string (idempotent)
+  win_http_proxy:
+    proxy: proxyhost
+  register: proxy_str_again
+
+- name: assert set a proxy using a string (idempotent)
+  assert:
+    that:
+    - not proxy_str_again is changed
+
+- name: change a proxy and set bypass (check)
+  win_http_proxy:
+    proxy: proxyhost:8080
+    bypass:
+    - abc
+    - def
+    - <local>
+  register: change_proxy_check
+  check_mode: True
+
+- name: get result of change a proxy and set bypass (check)
+  win_command: netsh winhttp show proxy
+  register: change_proxy_actual_check
+
+- name: assert change a proxy and set bypass (check)
+  assert:
+    that:
+    - change_proxy_check is changed
+    - 'change_proxy_actual_check.stdout_lines[3]|trim == "Proxy Server(s) :  proxyhost"'
+    - 'change_proxy_actual_check.stdout_lines[4]|trim == "Bypass List     :  (none)"'
+
+- name: change a proxy and set bypass
+  win_http_proxy:
+    proxy: proxyhost:8080
+    bypass:
+    - abc
+    - def
+    - <local>
+  register: change_proxy
+
+- name: get result of change a proxy and set bypass
+  win_command: netsh winhttp show proxy
+  register: change_proxy_actual
+
+- name: assert change a proxy and set bypass
+  assert:
+    that:
+    - change_proxy is changed
+    - 'change_proxy_actual.stdout_lines[3]|trim == "Proxy Server(s) :  proxyhost:8080"'
+    - 'change_proxy_actual.stdout_lines[4]|trim == "Bypass List     :  abc;def;<local>"'
+
+- name: change a proxy and set bypass (idempotent)
+  win_http_proxy:
+    proxy: proxyhost:8080
+    bypass: abc,def,<local>
+  register: change_proxy_again
+
+- name: assert change a proxy and set bypass (idempotent)
+  assert:
+    that:
+    - not change_proxy_again is changed
+
+- name: change bypass list
+  win_http_proxy:
+    proxy: proxyhost:8080
+    bypass:
+    - abc
+    - <-loopback>
+  register: change_bypass
+
+- name: get result of change bypass list
+  win_command: netsh winhttp show proxy
+  register: change_bypass_actual
+
+- name: assert change bypass list
+  assert:
+    that:
+    - change_bypass is changed
+    - 'change_bypass_actual.stdout_lines[3]|trim == "Proxy Server(s) :  proxyhost:8080"'
+    - 'change_bypass_actual.stdout_lines[4]|trim == "Bypass List     :  abc;<-loopback>"'
+
+- name: remove proxy without options (check)
+  win_http_proxy:
+  register: remove_proxy_check
+  check_mode: yes
+
+- name: get result of remove proxy without options (check)
+  win_command: netsh winhttp show proxy
+  register: remove_proxy_actual_check
+
+- name: assert remove proxy without options (check)
+  assert:
+    that:
+    - remove_proxy_check is changed
+    - 'remove_proxy_actual_check.stdout_lines[3]|trim == "Proxy Server(s) :  proxyhost:8080"'
+    - 'remove_proxy_actual_check.stdout_lines[4]|trim == "Bypass List     :  abc;<-loopback>"'
+
+- name: remove proxy without options
+  win_http_proxy:
+  register: remove_proxy
+
+- name: get result of remove proxy without options
+  win_command: netsh winhttp show proxy
+  register: remove_proxy_actual
+
+- name: assert remove proxy without options
+  assert:
+    that:
+    - remove_proxy is changed
+    - remove_proxy_actual.stdout_lines[3]|trim == "Direct access (no proxy server)."
+
+- name: remove proxy without options (idempotent)
+  win_http_proxy:
+  register: remove_proxy_again
+
+- name: assert remove proxy without options (idempotent)
+  assert:
+    that:
+    - not remove_proxy_again is changed
+
+- name: set proxy with dictionary
+  win_http_proxy:
+    proxy:
+      http: proxy:8080
+      https: proxy:8443
+      ftp: proxy:821
+      socks: proxy:888
+  register: set_dict
+
+- name: get result of set proxy with dictionary
+  win_command: netsh winhttp show proxy
+  register: set_dict_actual
+
+- name: assert set proxy with dictionary
+  assert:
+    that:
+    - set_dict is changed
+    - 'set_dict_actual.stdout_lines[3]|trim == "Proxy Server(s) :  http=proxy:8080;https=proxy:8443;ftp=proxy:821;socks=proxy:888"'
+    - 'set_dict_actual.stdout_lines[4]|trim == "Bypass List     :  (none)"'
+
+- name: set proxy protocol with str
+  win_http_proxy:
+    proxy: http=proxy:8080;https=proxy:8443;ftp=proxy:821;socks=proxy:888
+  register: set_str_protocol
+
+- name: assert set proxy protocol with str
+  assert:
+    that:
+    - not set_str_protocol is changed
+
+- name: remove proxy with empty string
+  win_http_proxy:
+    proxy: ''
+  register: remove_empty_str
+
+- name: get result of remove proxy with empty string
+  win_command: netsh winhttp show proxy
+  register: remove_empty_str_actual
+
+- name: assert remove proxy with empty string
+  assert:
+    that:
+    - remove_empty_str is changed
+    - remove_empty_str_actual.stdout_lines[3]|trim == "Direct access (no proxy server)."
+
+- name: set explicit proxy for WinINet
+  win_inet_proxy:
+    proxy: proxyhost:8080
+    bypass:
+    - abc
+    - def
+    - <local>
+
+- name: import proxy from IE
+  win_http_proxy:
+    source: ie
+  register: import_ie
+
+- name: get result of import proxy from IE
+  win_command: netsh winhttp show proxy
+  register: import_ie_actual
+
+- name: assert import proxy from IE
+  assert:
+    that:
+    - import_ie is changed
+    - 'import_ie_actual.stdout_lines[3]|trim == "Proxy Server(s) :  proxyhost:8080"'
+    - 'import_ie_actual.stdout_lines[4]|trim == "Bypass List     :  abc;def;<local>"'
+
+- name: import proxy from IE (idempotent)
+  win_http_proxy:
+    source: ie
+  register: import_ie_again
+
+- name: assert import proxy from IE (idempotent)
+  assert:
+    that:
+    - not import_ie_again is changed
