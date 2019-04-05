@@ -22,24 +22,20 @@ version_added: "2.8"
 options:
     action:
         description:
-            - freebsd-update command to execute: fetch, install, rollback, IDS, cron.
+            - freebsd-update command to execute: fetch, install, fetch_install, rollback, IDS, cron.
         required: True
     server:
         description:
             - Server to download updates from.
-        default: None
     basedir:
         description:
             - path to filesystem to update.
-        default: None
     workdir:
         description:
             - directory to store working files in.
-        default: None
     conffile:
         description:
             - file to read configuration options from
-        default: None
     force:
         description:
             - force freebsd-update run
@@ -48,24 +44,21 @@ options:
     key:
         description:
             - trust an RSA key with SHA256 of KEY
-        default: None
 author:
-- Ruslan Gustomiasov (@loqutus)
-- Maxim Filimonov (@part1zano)
+- "Ruslan Gustomiasov (@loqutus)"
+- "Maxim Filimonov (@part1zano)"
 '''
 
 EXAMPLES = '''
 # fetch all available binary updates
 - freebsd_update:
-    action: update
+    action: fetch
 
 # Fetch and install all updates:
 - freebsd_update:
     action: fetch_install
     force: yes
     workdir: /tmp/freebsd_update
-
-
 '''
 import traceback
 
@@ -92,7 +85,7 @@ def main():
     action = module.params['action']
     msg = "Unexpected failure!"
     if action not in actions:
-        msg = "Unexpected action: {action}".format(action=action)
+        msg = "Unexpected action"
     server = module.params.get('server')
     basedir = module.params.get('basedir')
     workdir = module.params.get('workdir')
