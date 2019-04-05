@@ -282,7 +282,7 @@ def get_relative_time_option(input_string, input_name):
     if result.startswith("+") or result.startswith("-"):
         return crypto_utils.convert_relative_to_datetime(result)
     if result is None:
-        raise crypto_utils.CertificateError(
+        raise crypto_utils.OpenSSLObjectError(
             'The timespec "%s" for %s is not valid' %
             input_string, input_name)
     for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
@@ -293,7 +293,7 @@ def get_relative_time_option(input_string, input_name):
             pass
 
     if not isinstance(result, datetime.datetime):
-        raise crypto_utils.CertificateError(
+        raise crypto_utils.OpenSSLObjectError(
             'The time spec "%s" for %s is invalid' %
             (input_string, input_name)
         )
