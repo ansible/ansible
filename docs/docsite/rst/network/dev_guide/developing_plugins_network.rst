@@ -1,20 +1,12 @@
-.. _network_dev_guide:
-
-**************************
-Developing network modules
-**************************
-
-.. contents::
-   :local:
 
 .. _developing_modules_network:
+.. _developing_plugins_network:
 
+**************************
 Network connection plugins
-==========================
+**************************
 
-Each network connection plugin has a set of implementation plugins which provide a specific implementation of that connection for a particular set of devices.
-
-Public methods of these plugins may be called on the connection proxy object from the module just as connection methods can.
+Each network connection plugin has a set of plugins which provide a specification of the connection for a particular set of devices. Public methods of these plugins may be called on the connection proxy object from the module just as connection methods can.
 
 .. code-block:: python
 
@@ -29,19 +21,22 @@ Public methods of these plugins may be called on the connection proxy object fro
   # plugin or its platform-specific plugin
   connection.get_config()
 
+.. contents::
+   :local:
+
 .. _developing_plugins_httpapi:
 
-Developing HttpApi plugins
---------------------------
+Developing httpapi plugins
+==========================
 
-:ref:`HttpApi plugins <httpapi_plugins>` serve as adapters for various HTTP(S) APIs for use with the ``httpapi`` connection plugin. They should implement a minimal set of convenience methods tailored to the API you are attempting to use.
+:ref:`httpapi plugins <httpapi_plugins>` serve as adapters for various HTTP(S) APIs for use with the ``httpapi`` connection plugin. They should implement a minimal set of convenience methods tailored to the API you are attempting to use.
 
 Specifically, there are a few methods that the ``httpapi`` connection plugin expects to exist.
 
 Making requests
-^^^^^^^^^^^^^^^
+---------------
 
-The ``httpapi`` connection plugin has a ``send()`` method, but an HttpApi plugin needs a ``send_request(self, data, **message_kwargs)`` method as a higher-level wrapper to ``send()``. This method should prepare requests by adding fixed values like common headers or URL root paths, and may do more complex work such as turning data into formatted payloads, or determining which path or method to request. It may then also unpack responses to be more easily consumed by the caller.
+The ``httpapi`` connection plugin has a ``send()`` method, but an httpapi plugin needs a ``send_request(self, data, **message_kwargs)`` method as a higher-level wrapper to ``send()``. This method should prepare requests by adding fixed values like common headers or URL root paths. This method may do more complex work such as turning data into formatted payloads, or determining which path or method to request. It may then also unpack responses to be more easily consumed by the caller.
 
 .. code-block:: python
 
@@ -59,7 +54,7 @@ The ``httpapi`` connection plugin has a ``send()`` method, but an HttpApi plugin
        return handle_response(response_content)
 
 Authenticating
-^^^^^^^^^^^^^^
+--------------
 
 By default, all requests will authenticate with HTTP Basic authentication. If a request can return some kind of token to stand in place of HTTP Basic, the ``update_auth(self, response, response_text)`` method should be implemented to inspect responses for such tokens. If the token is meant to be included with the headers of each request, it is sufficient to return a dictionary which will be merged with the computed headers for each request. The default implementation of this method does exactly this for cookies. If the token is used in another way, say in a query string, you should instead save that token to an instance variable, where the ``send_request()`` method (above) can add it to each request
 
@@ -102,7 +97,7 @@ Similarly, ``logout(self)`` can be implemented to call an endpoint to invalidate
        self.connection._auth = None
 
 Error handling
-^^^^^^^^^^^^^^
+--------------
 
 The ``handle_httperror(self, exception)`` method can deal with status codes returned by the server. The return value indicates how the plugin will continue with the request:
 
@@ -110,4 +105,4 @@ The ``handle_httperror(self, exception)`` method can deal with status codes retu
 
 * A value of ``false`` means that the plugin is unable to recover from this response. The status code will be returned to the calling module as an exception. Any other value will be taken as a nonfatal response from the request. This may be useful if the server returns error messages in the body of the response. Returning the original exception is usually sufficient in this case, as HTTPError objects have the same interface as a successful response.
 
-For example HttpApi plugins, see the `source code for the httpapi plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/httpapi>`_ included with Ansible Core.
+For example httpapi plugins, see the `source code for the httpapi plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/httpapi>`_ included with Ansible Core.
