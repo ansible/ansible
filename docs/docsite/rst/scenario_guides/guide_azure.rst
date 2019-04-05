@@ -109,6 +109,8 @@ for credentials in ``$HOME/.azure/credentials``. This file is an ini style file.
     secret=xxxxxxxxxxxxxxxxx
     tenant=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
+.. note:: If your secret values contain non-ASCII characters, you must `URL Encode <https://www.w3schools.com/tags/ref_urlencode.asp>`_ them to avoid login errors.
+
 It is possible to store multiple sets of credentials within the credentials file by creating multiple sections. Each
 section is considered a profile. The modules look for the [default] profile automatically. Define AZURE_PROFILE in the
 environment or pass a profile parameter to specify a specific profile.
