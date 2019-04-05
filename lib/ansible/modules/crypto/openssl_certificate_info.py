@@ -410,7 +410,8 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
                 result['valid_at'][k] = not_before <= v <= not_after
 
         result['public_key'] = self._get_public_key(binary=False)
-        result['public_key_fingerprints'] = crypto_utils.get_fingerprint_of_bytes(self._get_public_key(binary=True))
+        pk = self._get_public_key(binary=True)
+        result['public_key_fingerprints'] = crypto_utils.get_fingerprint_of_bytes(pk) if pk is not None else dict()
 
         result['serial_number'] = self._get_serial_number()
         result['extensions_by_oid'] = self._get_all_extensions()
