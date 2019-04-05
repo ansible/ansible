@@ -379,7 +379,10 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
 
 ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
         try:
-            imp.find_module('coverage')
+            if PY3:
+                importlib.util.find_spec('coverage')
+            else:
+                imp.find_module('coverage')
         except ImportError:
             print('{"msg": "Could not find `coverage` module.", "failed": true}')
             sys.exit(1)
