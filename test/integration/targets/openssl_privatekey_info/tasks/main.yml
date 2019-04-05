@@ -49,7 +49,7 @@
   include_tasks: impl.yml
   vars:
     select_crypto_backend: cryptography
-  when: cryptography_version.stdout is version('1.6', '>=')
+  when: cryptography_version.stdout is version('1.2.3', '>=')
 
 - name: Prepare result list
   set_fact:
@@ -67,4 +67,4 @@
       that:
       - pyopenssl_info_results[item] == cryptography_info_results[item]
     loop: "{{ pyopenssl_info_results.keys() | intersect(cryptography_info_results.keys()) | list }}"
-  when: pyopenssl_version.stdout is version('0.15', '>=') and cryptography_version.stdout is version('1.6', '>=')
+  when: pyopenssl_version.stdout is version('0.15', '>=') and cryptography_version.stdout is version('1.2.3', '>=')
