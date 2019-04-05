@@ -21,6 +21,7 @@ netaddr
 ipaddress
 netapp-lib
 solidfire-sdk-python
+tzlocal
 
 # requirements for F5 specific modules
 f5-sdk ; python_version >= '2.7'
