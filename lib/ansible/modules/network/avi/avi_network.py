@@ -58,6 +58,13 @@ options:
             - When selected, excludes all discovered subnets in this network from consideration for virtual service placement.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
+    ip6_autocfg_enabled:
+        description:
+            - Enable ipv6 auto configuration.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        version_added: "2.8"
+        type: bool
     name:
         description:
             - Name of the object.
@@ -109,11 +116,9 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
-except ImportError:
-    HAS_AVI = False
+HAS_AVI = True
+from ansible.module_utils.network.avi.avi import (
+    avi_common_argument_spec, avi_ansible_api)
 
 
 def main():
@@ -127,6 +132,7 @@ def main():
         configured_subnets=dict(type='list',),
         dhcp_enabled=dict(type='bool',),
         exclude_discovered_subnets=dict(type='bool',),
+        ip6_autocfg_enabled=dict(type='bool',),
         name=dict(type='str', required=True),
         synced_from_se=dict(type='bool',),
         tenant_ref=dict(type='str',),
@@ -139,10 +145,6 @@ def main():
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'network',
                            set([]))
 

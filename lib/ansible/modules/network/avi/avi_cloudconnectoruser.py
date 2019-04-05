@@ -50,10 +50,20 @@ options:
         description:
             - Field introduced in 17.2.1.
         version_added: "2.5"
+    gcp_credentials:
+        description:
+            - Credentials for google cloud platform.
+            - Field introduced in 18.2.1.
+        version_added: "2.8"
     name:
         description:
             - Name of the object.
         required: true
+    oci_credentials:
+        description:
+            - Credentials for oracle cloud infrastructure.
+            - Field introduced in 18.2.1,18.1.3.
+        version_added: "2.8"
     private_key:
         description:
             - Private_key of cloudconnectoruser.
@@ -95,11 +105,9 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
-except ImportError:
-    HAS_AVI = False
+HAS_AVI = True
+from ansible.module_utils.network.avi.avi import (
+    avi_common_argument_spec, avi_ansible_api)
 
 
 def main():
@@ -111,7 +119,9 @@ def main():
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         azure_serviceprincipal=dict(type='dict',),
         azure_userpass=dict(type='dict',),
+        gcp_credentials=dict(type='dict',),
         name=dict(type='str', required=True),
+        oci_credentials=dict(type='dict',),
         private_key=dict(type='str', no_log=True,),
         public_key=dict(type='str',),
         tenant_ref=dict(type='str',),
@@ -121,10 +131,6 @@ def main():
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'cloudconnectoruser',
                            set(['private_key']))
 

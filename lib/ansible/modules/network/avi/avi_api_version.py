@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 # Created on July 24, 2017
 #
@@ -7,11 +6,12 @@
 #
 # module_check: not supported
 #
-# Copyright: (c) 2017, Gaurav Rastogi <grastogi@avinetworks.com>
-# Copyright: (c) 2017, Vilian Atmadzhov <vilian.atmadzhov@paddypowerbetfair.com>
+# Copyright: (c) 2017 Gaurav Rastogi, <grastogi@avinetworks.com>
+#                     Vilian Atmadzhov, <vilian.atmadzhov@paddypowerbetfair.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 """
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_api_version
-author: Vilian Atmadzhov (@grastogi23) <vilian.atmadzhov@paddypowerbetfair.com>
+author: Vilian Atmadzhov (@vivobg) <vilian.atmadzhov@paddypowerbetfair.com>
 
 short_description: Avi API Version Module
 description:
@@ -53,20 +53,16 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 
-try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession, AviCredentials
-except ImportError:
-    HAS_AVI = False
+
+HAS_AVI = True
+from ansible.module_utils.network.avi.avi import (
+    avi_common_argument_spec, ansible_return)
+from ansible.module_utils.network.avi.avi_api import (
+    ApiSession, AviCredentials)
 
 
 def main():
     module = AnsibleModule(argument_spec=avi_common_argument_spec())
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
     try:
         api_creds = AviCredentials()
         api_creds.update_from_ansible_module(module)
@@ -84,7 +80,7 @@ def main():
         api.close()
         module.exit_json(changed=False, obj=remote)
     except Exception as e:
-        module.fail_json(msg="Unable to get an AVI session. {0}".format(e))
+        module.fail_json(msg="Unable to get an AVI session. {}".format(e))
 
 
 if __name__ == '__main__':

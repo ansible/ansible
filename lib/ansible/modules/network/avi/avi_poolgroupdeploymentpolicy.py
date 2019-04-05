@@ -46,9 +46,6 @@ options:
             - It will automatically disable old production pools once there is a new production candidate.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         type: bool
-    cloud_ref:
-        description:
-            - It is a reference to an object of type cloud.
     description:
         description:
             - User defined description for the object.
@@ -57,7 +54,6 @@ options:
             - Duration of evaluation period for automatic deployment.
             - Allowed values are 60-86400.
             - Default value when not specified in API or module is interpreted by Avi Controller as 300.
-            - Units(SEC).
     name:
         description:
             - The name of the pool group deployment policy.
@@ -75,7 +71,6 @@ options:
             - Target traffic ratio before pool is made production.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 100.
-            - Units(RATIO).
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -119,11 +114,9 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
-except ImportError:
-    HAS_AVI = False
+HAS_AVI = True
+from ansible.module_utils.network.avi.avi import (
+    avi_common_argument_spec, avi_ansible_api)
 
 
 def main():
@@ -134,7 +127,6 @@ def main():
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         auto_disable_old_prod_pools=dict(type='bool',),
-        cloud_ref=dict(type='str',),
         description=dict(type='str',),
         evaluation_duration=dict(type='int',),
         name=dict(type='str', required=True),
@@ -150,10 +142,6 @@ def main():
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'poolgroupdeploymentpolicy',
                            set([]))
 

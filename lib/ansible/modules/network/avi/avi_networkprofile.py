@@ -42,6 +42,14 @@ options:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+    connection_mirror:
+        description:
+            - When enabled, avi mirrors all tcp fastpath connections to standby.
+            - Applicable only in legacy ha mode.
+            - Field introduced in 18.1.3,18.2.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.8"
+        type: bool
     description:
         description:
             - User defined description for the object.
@@ -90,11 +98,9 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
-except ImportError:
-    HAS_AVI = False
+HAS_AVI = True
+from ansible.module_utils.network.avi.avi import (
+    avi_common_argument_spec, avi_ansible_api)
 
 
 def main():
@@ -104,6 +110,7 @@ def main():
         avi_api_update_method=dict(default='put',
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
+        connection_mirror=dict(type='bool',),
         description=dict(type='str',),
         name=dict(type='str', required=True),
         profile=dict(type='dict', required=True),
@@ -114,10 +121,6 @@ def main():
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'networkprofile',
                            set([]))
 

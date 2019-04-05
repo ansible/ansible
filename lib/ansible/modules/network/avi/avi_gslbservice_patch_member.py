@@ -111,15 +111,11 @@ from ansible.module_utils.basic import AnsibleModule
 from copy import deepcopy
 
 HAS_AVI = True
-try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession, AviCredentials
-    from avi.sdk.utils.ansible_utils import (
-        avi_obj_cmp, cleanup_absent_fields, ansible_return,
-        AviCheckModeResponse)
-except ImportError:
-    HAS_AVI = False
+from ansible.module_utils.network.avi.avi import (
+    avi_common_argument_spec, avi_obj_cmp, cleanup_absent_fields,
+    ansible_return, AviCheckModeResponse)
+from ansible.module_utils.network.avi.avi_api import (
+    ApiSession, AviCredentials)
 
 
 def delete_member(module, check_mode, api, tenant, tenant_uuid,
@@ -238,11 +234,6 @@ def main():
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(argument_spec=argument_specs)
-
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
     api_creds = AviCredentials()
     api_creds.update_from_ansible_module(module)
     api = ApiSession.get_session(

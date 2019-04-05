@@ -87,6 +87,11 @@ options:
     proxy_configuration:
         description:
             - Proxyconfiguration settings for systemconfiguration.
+    secure_channel_configuration:
+        description:
+            - Configure secure channel properties.
+            - Field introduced in 18.1.4, 18.2.1.
+        version_added: "2.8"
     snmp_configuration:
         description:
             - Snmpconfiguration settings for systemconfiguration.
@@ -94,12 +99,10 @@ options:
         description:
             - Allowed ciphers list for ssh to the management interface on the controller and service engines.
             - If this is not specified, all the default ciphers are allowed.
-            - Ssh -q cipher provides the list of default ciphers supported.
     ssh_hmacs:
         description:
             - Allowed hmac list for ssh to the management interface on the controller and service engines.
             - If this is not specified, all the default hmacs are allowed.
-            - Ssh -q mac provides the list of default hmacs supported.
     url:
         description:
             - Avi controller URL of the object.
@@ -128,11 +131,9 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
-except ImportError:
-    HAS_AVI = False
+HAS_AVI = True
+from ansible.module_utils.network.avi.avi import (
+    avi_common_argument_spec, avi_ansible_api)
 
 
 def main():
@@ -154,6 +155,7 @@ def main():
         ntp_configuration=dict(type='dict',),
         portal_configuration=dict(type='dict',),
         proxy_configuration=dict(type='dict',),
+        secure_channel_configuration=dict(type='dict',),
         snmp_configuration=dict(type='dict',),
         ssh_ciphers=dict(type='list',),
         ssh_hmacs=dict(type='list',),
@@ -163,10 +165,6 @@ def main():
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'systemconfiguration',
                            set([]))
 

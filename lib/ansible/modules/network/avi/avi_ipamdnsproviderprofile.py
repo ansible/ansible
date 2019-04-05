@@ -74,6 +74,11 @@ options:
         description:
             - Name for the ipam/dns provider profile.
         required: true
+    oci_profile:
+        description:
+            - Provider details for oracle cloud.
+            - Field introduced in 18.2.1,18.1.3.
+        version_added: "2.8"
     openstack_profile:
         description:
             - Provider details if type is openstack.
@@ -87,7 +92,8 @@ options:
         description:
             - Provider type for the ipam/dns provider profile.
             - Enum options - IPAMDNS_TYPE_INFOBLOX, IPAMDNS_TYPE_AWS, IPAMDNS_TYPE_OPENSTACK, IPAMDNS_TYPE_GCP, IPAMDNS_TYPE_INFOBLOX_DNS, IPAMDNS_TYPE_CUSTOM,
-            - IPAMDNS_TYPE_CUSTOM_DNS, IPAMDNS_TYPE_AZURE, IPAMDNS_TYPE_INTERNAL, IPAMDNS_TYPE_INTERNAL_DNS, IPAMDNS_TYPE_AWS_DNS, IPAMDNS_TYPE_AZURE_DNS.
+            - IPAMDNS_TYPE_CUSTOM_DNS, IPAMDNS_TYPE_AZURE, IPAMDNS_TYPE_OCI, IPAMDNS_TYPE_INTERNAL, IPAMDNS_TYPE_INTERNAL_DNS, IPAMDNS_TYPE_AWS_DNS,
+            - IPAMDNS_TYPE_AZURE_DNS.
         required: true
     url:
         description:
@@ -129,11 +135,9 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
-except ImportError:
-    HAS_AVI = False
+HAS_AVI = True
+from ansible.module_utils.network.avi.avi import (
+    avi_common_argument_spec, avi_ansible_api)
 
 
 def main():
@@ -151,6 +155,7 @@ def main():
         infoblox_profile=dict(type='dict',),
         internal_profile=dict(type='dict',),
         name=dict(type='str', required=True),
+        oci_profile=dict(type='dict',),
         openstack_profile=dict(type='dict',),
         proxy_configuration=dict(type='dict',),
         tenant_ref=dict(type='str',),
@@ -161,10 +166,6 @@ def main():
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
-    if not HAS_AVI:
-        return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
-            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'ipamdnsproviderprofile',
                            set([]))
 
