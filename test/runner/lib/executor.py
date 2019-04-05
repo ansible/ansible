@@ -213,17 +213,16 @@ def install_command_requirements(args, python_version=None):
     # first pass to install requirements, changes expected unless environment is already set up
     changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
-    if not changes:
-        return  # no changes means we can stop early
+    if changes:
+        # second pass to check for conflicts in requirements, changes are not expected here
+        changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
-    # second pass to check for conflicts in requirements, changes are not expected here
-    changes = run_pip_commands(args, pip, commands, detect_pip_changes)
+        if changes:
+            raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
+                                   '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
 
-    if not changes:
-        return  # no changes means no conflicts
-
-    raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
-                           '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+    # ask pip to check for conflicts between installed packages
+    run_command(args, pip + ['check', '--disable-pip-version-check'])
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
