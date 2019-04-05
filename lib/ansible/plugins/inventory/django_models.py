@@ -17,59 +17,37 @@ DOCUMENTATION = r'''
         - Get inventory hosts and groups from database using django models.
         - Uses Django settings file and project path, example:project_path=/path/to/django_project/my_site,setting_module=my_site.setting
         - the database should have three tables:
-            - AnsibleNetworkGroups (for network devices groups)
-            - AnsibleAWSGroups (for aws  groups)
-            - AnsibleHosts (for  hosts)
+            - ansible_network_groups (for network devices groups)
+            - ansible_aws_groups (for aws  groups)
+            - ansible_inventory_hosts (for  hosts)
             
-        - table's models like follow:
-        
-        class AnsibleGroupBase(models.Model):
-            name = models.CharField(max_length=100)
-            ansible_connection = models.CharField(choices=ANSIBLE_CONNECTION_CHOICES, max_length=100)
-
-            class Meta:
-                abstract = True
-
-        class AnsibleDeviceGroups(AnsibleGroupBase):
-            ansible_become = models.BooleanField(default=False)
-
-            class Meta:
-                abstract = True
-
-        class AnsibleNetworkGroups(AnsibleDeviceGroups):
-            ansible_network_os = models.CharField(choices=ANSIBLE_NETWORK_OS_CHOICES, max_length=100)
-            parent_group = models.ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',
-                                             null=True, blank=True)
-
-            class Meta:
-                db_table = 'ansible_network_groups'
-                app_label = 'myapp_name'
-
-        class AnsibleAWSGroups(AnsibleGroupBase):
-            ami = models.CharField(max_length=100)
-            region = models.CharField(max_length=100)
-            type = models.CharField(max_length=100)
-            sshkey = models.CharField(max_length=100)
-            vpcid = models.CharField(max_length=100)
-            parent_group = models.ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',
-                                             null=True, blank=True)
-
-            class Meta:
-                db_table = 'ansible_aws_groups'
-                app_label = 'myapp_name'
-
-        class AnsibleHosts(models.Model):
-            host = models.CharField(max_length=100)
-            ansible_ssh_host = models.GenericIPAddressField()
-            ansible_user = models.CharField(max_length=100)
-            ansible_ssh_pass = models.CharField(max_length=100)
-            ansible_become_pass = models.CharField(max_length=100)
-            group = models.ForeignKey(AnsibleNetworkGroups, on_delete=models.DO_NOTHING)
-
-            class Meta:
-                db_table = 'ansible_inventory_hosts'
-                app_label = 'myapp_name'
+        - table's fields like follow:        
+            - ansible_network_groups:
+                  - name: CharField(max_length=100)
+                  - ansible_connection: CharField(max_length=100)
+                  - ansible_network_os: CharField(max_length=100)
+                  - parent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)
+                  - ansible_become: BooleanField(default=False)
+                  - arent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)                                                   
     
+    
+            - ansible_aws_groups:
+                  
+                  - ami: CharField(max_length=100)
+                  - region: CharField(max_length=100)
+                  - type: models.CharField(max_length=100)
+                  - sshkey: models.CharField(max_length=100)
+                  - vpcid: models.CharField(max_length=100)
+    
+
+            - ansible_inventory_hosts:
+                  - host: CharField(max_length=100)
+                  - ansible_ssh_host: GenericIPAddressField()
+                  - ansible_user: models.CharField(max_length=100)
+                  - ansible_ssh_pass: models.CharField(max_length=100)
+                  - ansible_become_pass: models.CharField(max_length=100)
+                  - group: ForeignKey(ansible_network_groups, on_delete=models.DO_NOTHING)
+
 '''
 
 EXAMPLES = r'''
