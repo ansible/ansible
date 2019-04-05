@@ -131,50 +131,57 @@ function Format-AnsibleVolume {
     }
 
     Format-Volume @parameters -Confirm:$false | Out-Null
+
 }
 
 $ansible_volume = Get-AnsibleVolume -DriveLetter $drive_letter -Path $path -Label $label
 $ansible_file_system = $ansible_volume.FileSystem
 $ansible_volume_size = $ansible_volume.Size
+
+$ansible_partition = Get-Partition -Volume $ansible_volume
 $ansible_partition_size = (Get-Partition -Volume $ansible_volume).Size
 
-# Force format is required when source and target file system differ
-if ($null -ne $file_system -and $file_system -ne $ansible_file_system) {
-    if ($force_format) {
-        if (-not $module.CheckMode) {
-            Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
-        }
-        $module.Result.changed = $true
-    } else {
-        $module.FailJson("Force format must be specified since target file system: $($file_system) is different from the current file system of the volume: $($ansible_file_system.ToLower())")
-    }
-}
-if ($ansible_volume_size -ne 0 -or $ansible_partition_size -eq $ansible_volume_size) {
-    # Since this is not a pristine partition, force format is required to make changes
-    if ($force_format) {
-        if (-not $module.CheckMode) {
-            Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
-        }
-        $module.Result.changed = $true
-    } else {
-        if ($null -ne $ansible_volume.DriveLetter) {
-            # Drive exists. Fail if it has any files since force: False
-            $files_in_volume = (Get-ChildItem -LiteralPath "$($ansible_volume.DriveLetter):\\" | Measure-Object).Count
-            if ($files_in_volume -gt 0) {
-                $module.FailJson("Force format must be specified to format non-pristine volumes")
+foreach ($access_path in $ansible_partition.AccessPaths) {
+    if ($access_path -ne $Path) {
+        $files_in_volume = try {
+            (Get-ChildItem -LiteralPath $access_path | Measure-Object).Count   
+        } catch { }
+
+        if (-not $force_format -and $files_in_volume -gt 0) {
+            $module.FailJson("Force format must be specified to format non-pristine volumes")
+        } else {
+            if (-not $force_format -and 
+                -not $null -eq $file_system -and 
+                -not [string]::IsNullOrEmpty($ansible_file_system) -and 
+                $file_system -ne $ansible_file_system) {
+                $module.FailJson("Force format must be specified since target file system: $($file_system) is different from the current file system of the volume: $($ansible_file_system.ToLower())")
+            } else {
+                $pristine = $true
             }
         }
     }
-} else {
-    # Seems like it's a pristine partition so force_format is not required
-    # Volume labels can be safely preserved
-    if ($null -eq $new_label -and -not $force_format) {
-        $new_label = $ansible_volume.FileSystemLabel
-    }
+}
+
+if ($force_format) {
     if (-not $module.CheckMode) {
         Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
     }
     $module.Result.changed = $true
+}
+else {
+    if ($pristine) {
+        if ($null -eq $new_label) {
+            $new_label = $ansible_volume.FileSystemLabel
+        }
+        # Conditions for formatting
+        if ($ansible_volume_size -eq 0 -or 
+            $ansible_volume.FileSystemLabel -ne $new_label) {
+            if (-not $module.CheckMode) {
+                Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+            }
+            $module.Result.changed = $true
+        }
+    }
 }
 
 $module.ExitJson()
