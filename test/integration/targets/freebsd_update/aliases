@@ -1,4 +1,6 @@
-shippable/posix/group4
+shippable/posix/group1
+destructive
+needs/root
 skip/osx
 skip/rhel
 skip/docker
