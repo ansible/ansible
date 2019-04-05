@@ -17,16 +17,16 @@ DOCUMENTATION = r'''
         - the database should have three tables:
             - ansible_network_groups (for network devices groups)
             - ansible_aws_groups (for aws  groups)
-            - ansible_inventory_hosts (for  hosts)            
-        - table's fields like follow:        
+            - ansible_inventory_hosts (for  hosts)
+        - table's fields like follow:
             - ansible_network_groups:
                   - name: CharField(max_length=100)
                   - ansible_connection: CharField(max_length=100)
                   - ansible_network_os: CharField(max_length=100)
                   - parent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)
                   - ansible_become: BooleanField(default=False)
-                  - arent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)  
-            - ansible_aws_groups:                  
+                  - arent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)
+            - ansible_aws_groups:
                   - ami: CharField(max_length=100)
                   - region: CharField(max_length=100)
                   - type: models.CharField(max_length=100)
@@ -116,7 +116,6 @@ class InventoryModule(BaseInventoryPlugin):
 
             class Meta:
                 abstract = True
-
         class AnsibleDeviceGroups(AnsibleGroupBase):
             ansible_become = models.BooleanField(default=False)
 
@@ -125,8 +124,7 @@ class InventoryModule(BaseInventoryPlugin):
 
         class AnsibleNetworkGroups(AnsibleDeviceGroups):
             ansible_network_os = models.CharField(choices=ANSIBLE_NETWORK_OS_CHOICES, max_length=100)
-            parent_group = models.ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',
-                                             null=True, blank=True)
+            parent_group = models.ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group', null=True, blank=True)
 
             class Meta:
                 db_table = 'ansible_network_groups'
@@ -138,8 +136,7 @@ class InventoryModule(BaseInventoryPlugin):
             type = models.CharField(max_length=100)
             sshkey = models.CharField(max_length=100)
             vpcid = models.CharField(max_length=100)
-            parent_group = models.ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',
-                                             null=True, blank=True)
+            parent_group = models.ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group', null=True, blank=True)
 
             class Meta:
                 db_table = 'ansible_aws_groups'
