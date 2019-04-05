@@ -477,7 +477,7 @@ def tags_action(client, stream_name, tags, action='create', check_mode=False):
                 client.add_tags_to_stream(**params)
                 success = True
             elif action == 'delete':
-                params['TagKeys'] = tags.keys()
+                params['TagKeys'] = list(tags)
                 client.remove_tags_from_stream(**params)
                 success = True
             else:
