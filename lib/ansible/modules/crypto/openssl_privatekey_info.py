@@ -19,7 +19,9 @@ version_added: '2.8'
 short_description: Provide information for OpenSSL private keys
 description:
     - This module allows one to query information on OpenSSL private keys.
-    - Note that key consistency checks are currently only available for RSA keys.
+    - In case the key consistency checks fail, the module will fail as this indicates a faked
+      private key. In this case, all return variables are still returned. Note that key consistency
+      checks are currently only available for RSA keys.
     - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the
       cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with
