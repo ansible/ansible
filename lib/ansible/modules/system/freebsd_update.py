@@ -60,6 +60,9 @@ EXAMPLES = '''
     force: yes
     workdir: /tmp/freebsd_update
 '''
+
+RETURN = ''' # '''
+
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
