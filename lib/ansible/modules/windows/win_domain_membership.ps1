@@ -119,9 +119,9 @@ Function Join-Domain {
     Write-DebugLog "adding hostname set arg to Add-Computer args"
     If($new_hostname) {
         $add_args["NewName"] = $new_hostname
-        $hostname_in_domain = Get-ADObject -LDAPFilter "(&(CN=$new_hostname)(ObjectClass=Computer))"
+        $hostname_in_domain = Get-ADObject -LDAPFilter "(&(CN=$new_hostname)(ObjectClass=Computer))" -Server $dns_domain_name -Credential $domain_cred
     } else {
-        $hostname_in_domain = Get-ADObject -LDAPFilter "(&(CN=$env:COMPUTERNAME)(ObjectClass=Computer))"
+        $hostname_in_domain = Get-ADObject -LDAPFilter "(&(CN=$env:COMPUTERNAME)(ObjectClass=Computer))" -Server $dns_domain_name -Credential $domain_cred
     }
 
     if($domain_ou_path){
