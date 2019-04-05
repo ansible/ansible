@@ -263,7 +263,7 @@ class Role(Base, Become, Conditional, Taggable):
                     new_data = self._loader.load_from_file(found)
                     if new_data and allow_dir:
                         data = combine_vars(data, new_data)
-                    else:
+                    elif new_data:
                         data = new_data
                 return data
             elif main is not None:
