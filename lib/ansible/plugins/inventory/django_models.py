@@ -1,9 +1,7 @@
 # (c) 2019, Ali Aqrabawi <aaqrabaw@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.plugins.inventory import BaseInventoryPlugin
-from ansible.errors import AnsibleError
-import os
+from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
@@ -64,6 +62,9 @@ EXAMPLES = r'''
 
 plugin: django_models
 '''
+from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.errors import AnsibleError
+import os
 
 try:
     import django
