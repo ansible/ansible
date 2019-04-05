@@ -1,0 +1,16 @@
+---
+- name: make sure we start the tests with the defaults
+  win_inet_proxy:
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: reset proxy back to defaults
+    win_inet_proxy:
+
+  - name: remove phonebook entry
+    win_phonebook_entry:
+      name: Ansible Test Dialup
+      state: absent
