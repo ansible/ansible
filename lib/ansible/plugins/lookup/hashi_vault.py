@@ -101,7 +101,11 @@ EXAMPLES = """
 
 - name: authenticate with a Vault app role
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid service_account_email=serviceacccount@project.iam.gserviceaccount.com service_account_file=/tmp/gcp_service_account.json url=http://myvault:8200')}}"
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value
+                                        auth_method=approle
+                                        role_id=myroleid
+                                        service_account_email=serviceacccount@project.iam.gserviceaccount.com
+                                        service_account_file=/tmp/gcp_service_account.json url=http://myvault:8200')}}"
 
 - name: authenticate with GCP auth
   debug:
@@ -271,7 +275,6 @@ class HashiVault:
 
         self.client.auth_approle(role_id, secret_id)
 
-
     def auth_gcp(self, service_account_email, service_account_file, expiry_length=900, **kwargs):
         if not HAS_GCP_API:
             raise AnsibleError("Please pip install google-api-python-client to use GCP authentication.")
@@ -287,16 +290,17 @@ class HashiVault:
         payload = {
             'iat': now,
             "exp": now + expiry_length,
-            'iss': sa_email,
-            'aud':  audience,
+            'iss': service_account_email,
+            'aud': audience,
             'sub': service_account_email,
-            'email': sa_email
+            'email': service_account_email
         }
 
         signer = google.auth.crypt.RSASigner.from_service_account_file(service_account_file)
         jwt = google.auth.jwt.encode(signer, payload)
 
         self.client.auth.gcp.login(role_id, jwt.decode())
+
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
