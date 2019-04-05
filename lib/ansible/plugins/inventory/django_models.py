@@ -18,27 +18,27 @@ DOCUMENTATION = r'''
             - ansible_network_groups (for network devices groups)
             - ansible_aws_groups (for aws  groups)
             - ansible_inventory_hosts (for  hosts)
-        - table's fields like follow:
-            - ansible_network_groups:
-                  - name: CharField(max_length=100)
-                  - ansible_connection: CharField(max_length=100)
-                  - ansible_network_os: CharField(max_length=100)
-                  - parent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)
-                  - ansible_become: BooleanField(default=False)
-                  - arent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)
-            - ansible_aws_groups:
-                  - ami: CharField(max_length=100)
-                  - region: CharField(max_length=100)
-                  - type: models.CharField(max_length=100)
-                  - sshkey: models.CharField(max_length=100)
-                  - vpcid: models.CharField(max_length=100)
-            - ansible_inventory_hosts:
-                  - host: CharField(max_length=100)
-                  - ansible_ssh_host: GenericIPAddressField()
-                  - ansible_user: models.CharField(max_length=100)
-                  - ansible_ssh_pass: models.CharField(max_length=100)
-                  - ansible_become_pass: models.CharField(max_length=100)
-                  - group: ForeignKey(ansible_network_groups, on_delete=models.DO_NOTHING)
+    tables_description:
+        ansible_network_groups:
+            - name: CharField(max_length=100)
+            - ansible_connection: CharField(max_length=100)
+            - ansible_network_os: CharField(max_length=100)
+            - parent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)
+            - ansible_become: BooleanField(default=False)
+            - arent_group: ForeignKey('self', on_delete=models.DO_NOTHING, related_name='child_group',null=True)
+        ansible_aws_groups:
+            - ami: CharField(max_length=100)
+            - region: CharField(max_length=100)
+            - type: models.CharField(max_length=100)
+            - sshkey: models.CharField(max_length=100)
+            - vpcid: models.CharField(max_length=100)
+        ansible_inventory_hosts:
+            - host: CharField(max_length=100)
+            - ansible_ssh_host: GenericIPAddressField()
+            - ansible_user: models.CharField(max_length=100)
+            - ansible_ssh_pass: models.CharField(max_length=100)
+            - ansible_become_pass: models.CharField(max_length=100)
+            - group: ForeignKey(ansible_network_groups, on_delete=models.DO_NOTHING)
 '''
 
 EXAMPLES = r'''
