@@ -18,7 +18,7 @@ module: freebsd_update
 short_description: A wrapper to the freebsd-update utility
 description:
      - Runs freebsd-update utility and updates freebsd system.
-version_added: "2.7"
+version_added: "2.8"
 options:
     action:
         description:
@@ -27,19 +27,19 @@ options:
     server:
         description:
             - Server to download updates from.
-        default: ''
+        default: None
     basedir:
         description:
             - path to filesystem to update.
-        default: '/'
+        default: None
     workdir:
         description:
             - directory to store working files in.
-        default: ''
+        default: None
     conffile:
         description:
             - file to read configuration options from
-        default: ''
+        default: None
     force:
         description:
             - force freebsd-update run
@@ -48,9 +48,10 @@ options:
     key:
         description:
             - trust an RSA key with SHA256 of KEY
-        default: ''
+        default: None
 author:
 - Ruslan Gustomiasov (@loqutus)
+- Maxim Filimonov (@part1zano)
 '''
 
 EXAMPLES = '''
@@ -91,7 +92,7 @@ def main():
     action = module.params['action']
     msg = "Unexpected failure!"
     if action not in actions:
-        msg = "Unexpected action: {}".format(action)
+        msg = "Unexpected action: {action}".format(action=action)
     server = module.params.get('server')
     basedir = module.params.get('basedir')
     workdir = module.params.get('workdir')
