@@ -600,13 +600,17 @@ class DnfModule(YumDnf):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
-        self._specify_repositories(base, disablerepo, enablerepo)
         try:
             base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
             base.pre_configure_plugins()
+        except AttributeError:
+            pass  # older versions of dnf didn't require this and don't have these methods
+        self._specify_repositories(base, disablerepo, enablerepo)
+        try:
             base.configure_plugins()
         except AttributeError:
             pass  # older versions of dnf didn't require this and don't have these methods
+
         try:
             if self.update_cache:
                 try:
@@ -928,6 +932,7 @@ class DnfModule(YumDnf):
                             if not self._is_module_installed(module):
                                 response['results'].append("Module {0} installed.".format(module))
                             self.module_base.install([module])
+                            self.module_base.enable([module])
                         except dnf.exceptions.MarkingErrors as e:
                             failure_response['failures'].append(
                                 " ".join(
@@ -1066,8 +1071,9 @@ class DnfModule(YumDnf):
                         try:
                             if self._is_module_installed(module):
                                 response['results'].append("Module {0} removed.".format(module))
-                            self.module_base.disable([module])
                             self.module_base.remove([module])
+                            self.module_base.disable([module])
+                            self.module_base.reset([module])
                         except dnf.exceptions.MarkingErrors as e:
                             failure_response['failures'].append(
                                 " ".join(
