@@ -1,9 +1,0 @@
----
-cli:
-  host: "{{ inventory_hostname }}"
-  port: 22
-  username: admin
-  password: admin
-  timeout: 60
-  context: ansible
-  auth_pass:

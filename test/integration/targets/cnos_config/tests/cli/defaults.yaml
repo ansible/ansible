@@ -5,7 +5,6 @@
   cnos_config:
     commands:
       - no vlan 13\n
-    provider: "{{ cli }}"
   ignore_errors: yes
   become: True
   become_method: enable
@@ -13,7 +12,6 @@
 - name: configure device with defaults included
   cnos_config:
     src: roles/cnos_config/templates/defaults/config.j2
-    provider: "{{ cli }}"
   register: result
   become: True
   become_method: enable
@@ -28,7 +26,6 @@
 - name: check device with defaults included Hell
   cnos_config:
     src: roles/cnos_config/templates/defaults/config.j2
-    provider: "{{ cli }}"
   register: result
 
 - debug: var=result
@@ -42,7 +39,6 @@
   cnos_config:
     commands:
       - no vlan 13\n
-    provider: "{{ cli }}"
   become: true
   become_method: enable
   ignore_errors: yes
