@@ -111,7 +111,7 @@ public_key_fingerprints:
 type:
     description:
         - The key's type.
-        - One of C(RSA), C(DSA), C(ECC), C(X25519) or C(X448).
+        - One of C(RSA), C(DSA), C(ECC), C(Ed25519), C(X25519), C(Ed448), or C(X448).
         - Will start with C(unknown) if the key type cannot be determined.
     returned: success
     type: str
@@ -167,6 +167,16 @@ try:
         CRYPTOGRAPHY_HAS_X448 = True
     except ImportError:
         CRYPTOGRAPHY_HAS_X448 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed25519
+        CRYPTOGRAPHY_HAS_ED25519 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED25519 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed448
+        CRYPTOGRAPHY_HAS_ED448 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED448 = False
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     CRYPTOGRAPHY_FOUND = False
@@ -197,6 +207,10 @@ def _get_cryptography_key_info(key):
         key_type = 'X25519'
     elif CRYPTOGRAPHY_HAS_X448 and isinstance(key, cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey):
         key_type = 'X448'
+    elif CRYPTOGRAPHY_HAS_ED25519 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey):
+        key_type = 'Ed25519'
+    elif CRYPTOGRAPHY_HAS_ED448 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey):
+        key_type = 'Ed448'
     elif isinstance(key, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
         key_type = 'ECC'
         key_public_data['curve'] = key.public_key().curve.name
