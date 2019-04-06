@@ -1,2 +1,2 @@
 - include_tasks: tests.yml
-  when: ansible_distribution == 'FreeBSD'
+  when: (ansible_distribution == 'FreeBSD') and (ansible_distribution_version != '11.1')
