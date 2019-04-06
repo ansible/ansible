@@ -80,7 +80,7 @@ class MerakiModule(object):
         self.url = None
 
         self.metrics = dict()
-        self.timestamps = dict()
+        self.timestamps = []
         self.start = datetime.datetime.utcnow()
 
         # If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary

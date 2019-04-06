@@ -347,10 +347,9 @@ def main():
     meraki.metrics['meraki_init'] = str(datetime.datetime.utcnow() - meraki_module_start)
     meraki.metrics['prep_exec'] = str(prep_exec_time)
     meraki.metrics['ansible_module_init'] = str(ansible_module_time)
-    meraki.timestamps = {'main()': prep_exec,
-                         'AnsibleModule instantiation': ansible_module_start,
-                         'MerakiModule instantiation': meraki_module_start,
-                         }
+    meraki.timestamps.append({'main()': prep_exec})
+    meraki.timestamps.append({'AnsibleModule instantiation': ansible_module_start})
+    meraki.timestamps.append({'MerakiModule instantiation': meraki_module_start})
 
     meraki.params['follow_redirects'] = 'all'
 
