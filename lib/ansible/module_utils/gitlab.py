@@ -8,6 +8,7 @@ from __future__ import absolute_import
 import json
 
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.api import basic_auth_argument_spec
 
 try:
     from urllib import quote_plus  # Python 2.X
@@ -37,6 +38,39 @@ def request(module, api_url, project, path, access_token, private_token, rawdata
         return True, json.loads(content)
     else:
         return False, str(status) + ": " + content
+
+
+def gitlab_auth_argument_spec():
+    argument_spec = basic_auth_argument_spec()
+    argument_spec.update(dict(
+        server_url=dict(type='str', no_log=True, removed_in_version=2.10),
+        login_user=dict(type='str', no_log=True, removed_in_version=2.10),
+        login_password=dict(type='str', no_log=True, removed_in_version=2.10),
+        api_token=dict(type='str', no_log=True, aliases=["login_token"]),
+        config_files=dict(type='list', no_log=True, default=['/etc/python-gitlab.cfg', '~/.python-gitlab.cfg']),
+    ))
+    return argument_spec
+
+
+gitlab_module_kwargs = dict(
+    mutually_exclusive=[
+        ['api_url', 'server_url'],
+        ['api_username', 'login_user'],
+        ['api_password', 'login_password'],
+        ['api_username', 'api_token'],
+        ['api_password', 'api_token'],
+        ['login_user', 'login_token'],
+        ['login_password', 'login_token']
+    ],
+    required_together=[
+        ['api_username', 'api_password'],
+        ['login_user', 'login_password'],
+    ],
+    required_one_of=[
+        ['api_username', 'api_token', 'login_user', 'login_token', 'config_files']
+    ],
+    supports_check_mode=True,
+)
 
 
 def findProject(gitlab_instance, identifier):
