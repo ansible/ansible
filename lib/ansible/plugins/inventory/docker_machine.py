@@ -40,8 +40,7 @@ DOCUMENTATION = '''
           description: for keyed_groups when splitting tags this is the separator to split the tag value on.
           required: False
           type: str
-          default: ":"
-        
+          default: ":"        
 '''
 
 EXAMPLES = '''
@@ -72,6 +71,7 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cachea
 import json
 import re
 import subprocess
+
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     ''' Host inventory parser for ansible using Docker machine as source. '''
