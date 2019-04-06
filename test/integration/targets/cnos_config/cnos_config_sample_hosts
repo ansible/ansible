@@ -6,7 +6,7 @@
 #    - You can enter hostnames or ip Addresses
 #    - A hostname/ip can be a member of multiple groups
 #
-# In the /etc/ansible/hosts file u have to enter [cnos_command_sample] tag
+# In the /etc/ansible/hosts file u have to enter [cnos_config_sample] tag
 # Following you should specify IP Addresses details 
 # Please change <username> and <password> with appropriate value for your switch.
 

@@ -4,7 +4,6 @@
 - name: get output for single command
   cnos_command:
     commands: ['display version']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -17,7 +16,6 @@
     commands:
       - display version
       - display interface brief
-    provider: "{{ cli }}"
   register: result
 
 - assert:
