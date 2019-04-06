@@ -164,9 +164,10 @@ except Exception:
     GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+
+from ansible.module_utils.gitlab import gitlab_auth_argument_spec, gitlab_module_kwargs
 
 try:
     cmp
@@ -292,10 +293,9 @@ def deprecation_warning(module):
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = gitlab_auth_argument_spec()
     argument_spec.update(dict(
         url=dict(type='str', required=True, removed_in_version=2.10),
-        api_token=dict(type='str', no_log=True, aliases=["private_token"]),
         description=dict(type='str', required=True, aliases=["name"]),
         active=dict(type='bool', default=True),
         tag_list=dict(type='list', default=[]),
@@ -307,23 +307,7 @@ def main():
         state=dict(type='str', default="present", choices=["absent", "present"]),
     ))
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        mutually_exclusive=[
-            ['api_url', 'url'],
-            ['api_username', 'api_token'],
-            ['api_password', 'api_token'],
-        ],
-        required_together=[
-            ['api_username', 'api_password'],
-            ['login_user', 'login_password'],
-        ],
-        required_one_of=[
-            ['api_username', 'api_token']
-        ],
-        supports_check_mode=True,
-    )
-
+    module = AnsibleModule(argument_spec, **gitlab_module_kwargs)
     deprecation_warning(module)
 
     url = re.sub('/api.*', '', module.params['url'])

@@ -152,11 +152,10 @@ except Exception:
     GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.gitlab import findGroup
+from ansible.module_utils.gitlab import findGroup, gitlab_auth_argument_spec, gitlab_module_kwargs
 
 
 class GitLabGroup(object):
@@ -273,12 +272,8 @@ def deprecation_warning(module):
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = gitlab_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version=2.10),
-        login_user=dict(type='str', no_log=True, removed_in_version=2.10),
-        login_password=dict(type='str', no_log=True, removed_in_version=2.10),
-        api_token=dict(type='str', no_log=True, aliases=["login_token"]),
         name=dict(type='str', required=True),
         path=dict(type='str'),
         description=dict(type='str'),
@@ -287,27 +282,7 @@ def main():
         visibility=dict(type='str', default="private", choices=["internal", "private", "public"]),
     ))
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        mutually_exclusive=[
-            ['api_url', 'server_url'],
-            ['api_username', 'login_user'],
-            ['api_password', 'login_password'],
-            ['api_username', 'api_token'],
-            ['api_password', 'api_token'],
-            ['login_user', 'login_token'],
-            ['login_password', 'login_token']
-        ],
-        required_together=[
-            ['api_username', 'api_password'],
-            ['login_user', 'login_password'],
-        ],
-        required_one_of=[
-            ['api_username', 'api_token', 'login_user', 'login_token']
-        ],
-        supports_check_mode=True,
-    )
-
+    module = AnsibleModule(argument_spec, **gitlab_module_kwargs)
     deprecation_warning(module)
 
     server_url = module.params['server_url']
