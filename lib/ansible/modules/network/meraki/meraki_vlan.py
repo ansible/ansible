@@ -259,6 +259,7 @@ response:
           sample: 192.0.1.2
 '''
 
+import datetime
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils._text import to_native
@@ -272,16 +273,9 @@ def fixed_ip_factory(meraki, data):
     return fixed_ips
 
 
-def temp_get_nets(meraki, org_name):
-    org_id = meraki.get_org_id(org_name)
-    path = meraki.construct_path('get_all', function='network', org_id=org_id)
-    r = meraki.request(path, method='GET')
-    return r
-
-
 def get_vlans(meraki, net_id):
     path = meraki.construct_path('get_all', net_id=net_id)
-    return meraki.request(path, method='GET')
+    return meraki.request(path, method='GET', description='get_vlans')
 
 
 # TODO: Allow method to return actual item if True to reduce number of calls needed
@@ -300,6 +294,8 @@ def format_dns(nameservers):
 def main():
     # define the available arguments/parameters that a user can pass to
     # the module
+
+    prep_exec = datetime.datetime.utcnow()
 
     fixed_ip_arg_spec = dict(mac=dict(type='str'),
                              ip=dict(type='str'),
@@ -337,10 +333,24 @@ def main():
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
     # supports check mode
+
+    prep_exec_time = datetime.datetime.utcnow() - prep_exec
+
+    ansible_module_start = datetime.datetime.utcnow()
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            )
+
+    ansible_module_time = datetime.datetime.utcnow() - ansible_module_start
+    meraki_module_start = datetime.datetime.utcnow()
     meraki = MerakiModule(module, function='vlan')
+    meraki.metrics['meraki_init'] = str(datetime.datetime.utcnow() - meraki_module_start)
+    meraki.metrics['prep_exec'] = str(prep_exec_time)
+    meraki.metrics['ansible_module_init'] = str(ansible_module_time)
+    meraki.timestamps = {'main()': prep_exec,
+                         'AnsibleModule instantiation': ansible_module_start,
+                         'MerakiModule instantiation': meraki_module_start,
+                         }
 
     meraki.params['follow_redirects'] = 'all'
 
@@ -373,7 +383,7 @@ def main():
             meraki.result['data'] = get_vlans(meraki, net_id)
         else:
             path = meraki.construct_path('get_one', net_id=net_id, custom={'vlan_id': meraki.params['vlan_id']})
-            response = meraki.request(path, method='GET')
+            response = meraki.request(path, method='GET', description="get_vlan")
             meraki.result['data'] = response
     elif meraki.params['state'] == 'present':
         payload = {'id': meraki.params['vlan_id'],
@@ -383,12 +393,12 @@ def main():
                    }
         if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']) is False:
             path = meraki.construct_path('create', net_id=net_id)
-            response = meraki.request(path, method='POST', payload=json.dumps(payload))
+            response = meraki.request(path, method='POST', payload=json.dumps(payload), description="create_vlan")
             meraki.result['changed'] = True
             meraki.result['data'] = response
         else:
             path = meraki.construct_path('get_one', net_id=net_id, custom={'vlan_id': meraki.params['vlan_id']})
-            original = meraki.request(path, method='GET')
+            original = meraki.request(path, method='GET', description="get_vlan_idempotent_check")
             if meraki.params['dns_nameservers']:
                 if meraki.params['dns_nameservers'] not in ('opendns', 'google_dns', 'upstream_dns'):
                     payload['dnsNameservers'] = format_dns(meraki.params['dns_nameservers'])
@@ -403,13 +413,13 @@ def main():
             ignored = ['networkId']
             if meraki.is_update_required(original, payload, optional_ignore=ignored):
                 path = meraki.construct_path('update', net_id=net_id) + str(meraki.params['vlan_id'])
-                response = meraki.request(path, method='PUT', payload=json.dumps(payload))
+                response = meraki.request(path, method='PUT', payload=json.dumps(payload), description="update_vlan")
                 meraki.result['changed'] = True
                 meraki.result['data'] = response
     elif meraki.params['state'] == 'absent':
         if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']):
             path = meraki.construct_path('delete', net_id=net_id) + str(meraki.params['vlan_id'])
-            response = meraki.request(path, 'DELETE')
+            response = meraki.request(path, 'DELETE', description="delete_vlan")
             meraki.result['changed'] = True
             meraki.result['data'] = response
 

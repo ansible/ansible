@@ -80,6 +80,7 @@ class MerakiModule(object):
         self.url = None
 
         self.metrics = dict()
+        self.timestamps = dict()
         self.start = datetime.datetime.utcnow()
 
         # If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary
@@ -321,6 +322,7 @@ class MerakiModule(object):
             self.result['performance'] = self.metrics
         if self.params['output_level'] == 'performance':
             self.result['performance'] = self.metrics
+            self.result['timestamps'] = self.timestamps
 
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
@@ -337,6 +339,7 @@ class MerakiModule(object):
             self.result['performance'] = self.metrics
         elif self.params['output_level'] == 'performance':
             self.result['performance'] = self.metrics
+            self.result['timestamps'] = self.timestamps
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
