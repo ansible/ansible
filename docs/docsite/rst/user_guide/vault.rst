@@ -26,7 +26,7 @@ given as the ``src`` argument to the :ref:`copy <copy_module>`, :ref:`template <
 <assemble_module>` modules, the file will be placed at the destination on the target host decrypted
 (assuming a valid vault password is supplied when running the play).
 
-As of version 2.3, Ansible supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details below.
+As of version 2.3, Ansible supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details :ref:`below <encrypt_string_for_use_in_yaml>`.
 
 
 .. _vault_ids:
