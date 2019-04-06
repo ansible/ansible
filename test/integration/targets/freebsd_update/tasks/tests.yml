@@ -2,6 +2,7 @@
   freebsd_update:
       action: fetch_install
   register: update_result
+
 - debug:
     var: update_result
 
@@ -14,6 +15,7 @@
   freebsd_update:
       action: fetch
   register: fetch_result
+
 - debug:
     var: fetch_result
 
@@ -21,6 +23,7 @@
   freebsd_update:
       action: install
   register: install_result
+
 - debug:
     var: install_result
 

@@ -112,6 +112,7 @@ def main():
         cmd.append('-F')
     if key is not None:
         cmd.extend(('-k', key))
+    cmd.append('--not-running-from-cron')
     if action == 'fetch_install':
         cmd.extend(('fetch', 'install'))
     else:
