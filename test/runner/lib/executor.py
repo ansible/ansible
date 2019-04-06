@@ -213,17 +213,22 @@ def install_command_requirements(args, python_version=None):
     # first pass to install requirements, changes expected unless environment is already set up
     changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
-    if not changes:
-        return  # no changes means we can stop early
+    if changes:
+        # second pass to check for conflicts in requirements, changes are not expected here
+        changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
-    # second pass to check for conflicts in requirements, changes are not expected here
-    changes = run_pip_commands(args, pip, commands, detect_pip_changes)
+        if changes:
+            raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
+                                   '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
 
-    if not changes:
-        return  # no changes means no conflicts
-
-    raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
-                           '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+    # ask pip to check for conflicts between installed packages
+    try:
+        run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
+    except SubprocessError as ex:
+        if ex.stderr.strip() == 'ERROR: unknown command "check"':
+            display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
+        else:
+            raise
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
@@ -244,20 +249,7 @@ def run_pip_commands(args, pip, commands, detect_pip_changes=False):
 
         before_list = after_list
 
-        try:
-            run_command(args, cmd)
-        except SubprocessError as ex:
-            if ex.status != 2:
-                raise
-
-            # If pip is too old it won't understand the arguments we passed in, so we'll need to upgrade it.
-
-            # Installing "coverage" on ubuntu 16.04 fails with the error:
-            # AttributeError: 'Requirement' object has no attribute 'project_name'
-            # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
-            # Upgrading pip works around the issue.
-            run_command(args, pip + ['install', '--upgrade', 'pip'])
-            run_command(args, cmd)
+        run_command(args, cmd)
 
         after_list = pip_list(args, pip) if detect_pip_changes else None
 
