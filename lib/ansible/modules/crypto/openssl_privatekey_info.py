@@ -21,7 +21,8 @@ description:
     - This module allows one to query information on OpenSSL private keys.
     - In case the key consistency checks fail, the module will fail as this indicates a faked
       private key. In this case, all return variables are still returned. Note that key consistency
-      checks are currently only available for RSA keys.
+      checks are not available all key types; if none is available, C(none) is returned for
+      C(key_is_consistent).
     - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the
       cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with
@@ -183,6 +184,8 @@ except ImportError:
 else:
     CRYPTOGRAPHY_FOUND = True
 
+SIGNATURE_TEST_DATA = b'1234'
+
 
 def _get_cryptography_key_info(key):
     key_public_data = dict()
@@ -221,6 +224,58 @@ def _get_cryptography_key_info(key):
     else:
         key_type = 'unknown ({0})'.format(type(key))
     return key_type, key_public_data, key_private_data
+
+
+def _is_cryptography_key_consistent(key):
+    if isinstance(key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
+        return bool(key._backend._lib.RSA_check_key(key._rsa_cdata))
+    if isinstance(key, cryptography.hazmat.primitives.asymmetric.dsa.DSAPrivateKey):
+        try:
+            signature = key.sign(SIGNATURE_TEST_DATA, cryptography.hazmat.primitives.hashes.SHA256())
+        except AttributeError:
+            # sign() was added in cryptography 1.5, but we support older versions
+            return None
+        try:
+            key.public_key().verify(
+                signature,
+                SIGNATURE_TEST_DATA,
+                cryptography.hazmat.primitives.hashes.SHA256()
+            )
+            return True
+        except cryptography.exceptions.InvalidSignature:
+            return False
+    if isinstance(key, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
+        try:
+            signature = key.sign(
+                SIGNATURE_TEST_DATA,
+                cryptography.hazmat.primitives.asymmetric.ec.ECDSA(cryptography.hazmat.primitives.hashes.SHA256())
+            )
+        except AttributeError:
+            # sign() was added in cryptography 1.5, but we support older versions
+            return None
+        try:
+            key.public_key().verify(
+                signature,
+                SIGNATURE_TEST_DATA,
+                cryptography.hazmat.primitives.asymmetric.ec.ECDSA(cryptography.hazmat.primitives.hashes.SHA256())
+            )
+            return True
+        except cryptography.exceptions.InvalidSignature:
+            return False
+    has_simple_sign_function = False
+    if CRYPTOGRAPHY_HAS_ED25519 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey):
+        has_simple_sign_function = True
+    if CRYPTOGRAPHY_HAS_ED448 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey):
+        has_simple_sign_function = True
+    if has_simple_sign_function:
+        signature = key.sign(SIGNATURE_TEST_DATA)
+        try:
+            key.public_key().verify(signature, SIGNATURE_TEST_DATA)
+            return True
+        except cryptography.exceptions.InvalidSignature:
+            return False
+    # For X25519 and X448, there's no test yet.
+    return None
 
 
 class PrivateKeyInfo(crypto_utils.OpenSSLObject):
@@ -317,9 +372,7 @@ class PrivateKeyInfoCryptography(PrivateKeyInfo):
         return _get_cryptography_key_info(self.key)
 
     def _is_key_consistent(self):
-        if isinstance(self.key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
-            return bool(self.key._backend._lib.RSA_check_key(self.key._rsa_cdata))
-        return None
+        return _is_cryptography_key_consistent(self.key)
 
 
 class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
@@ -464,6 +517,19 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
             except crypto.Error:
                 # OpenSSL error means that key is not consistent
                 return False
+        if crypto.TYPE_DSA == openssl_key_type:
+            signature = crypto.sign(self.key, SIGNATURE_TEST_DATA, 'sha256')
+            # Verify wants a cert (where it can get the public key from)
+            cert = crypto.X509()
+            cert.set_pubkey(self.key)
+            try:
+                crypto.verify(cert, signature, SIGNATURE_TEST_DATA, 'sha256')
+                return True
+            except crypto.Error:
+                return False
+        # If needed and if possible, fall back to cryptography
+        if PYOPENSSL_VERSION >= LooseVersion('16.1.0') and CRYPTOGRAPHY_FOUND:
+            return _is_cryptography_key_consistent(self.key.to_cryptography_key())
         return None
 
 
