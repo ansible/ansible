@@ -1,0 +1,3 @@
+- name: Install Paramiko for Python 3 on FreeBSD 12
+  pkgng:
+    name: py36-paramiko
