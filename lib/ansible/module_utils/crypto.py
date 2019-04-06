@@ -1471,8 +1471,21 @@ _NORMALIZE_NAMES = dict()
 
 for dotted, names in _OID_MAP.items():
     for name in names:
-        _NORMALIZE_NAMES[name.lower()] = names[0]
-        _OID_LOOKUP[name.lower()] = dotted
+        if name in _NORMALIZE_NAMES and _OID_LOOKUP[name] != dotted:
+            raise AssertionError(
+                'Name collision during setup: "{0}" for OIDs {1} and {2}'
+                .format(name, dotted, _OID_LOOKUP[name])
+            )
+        _NORMALIZE_NAMES[name] = names[0]
+        _OID_LOOKUP[name] = dotted
+for alias, original in [('userID', 'userId')]:
+    if alias in _NORMALIZE_NAMES:
+        raise AssertionError(
+            'Name collision during adding aliases: "{0}" (alias for "{1}") is already mapped to OID {2}'
+            .format(alias, original, _OID_LOOKUP[alias])
+        )
+    _NORMALIZE_NAMES[alias] = original
+    _OID_LOOKUP[alias] = _OID_LOOKUP[original]
 
 
 def pyopenssl_normalize_name(name):
@@ -1480,7 +1493,7 @@ def pyopenssl_normalize_name(name):
     if nid != 0:
         b_name = OpenSSL._util.lib.OBJ_nid2ln(nid)
         name = to_text(OpenSSL._util.ffi.string(b_name))
-    return _NORMALIZE_NAMES.get(name.lower(), name)
+    return _NORMALIZE_NAMES.get(name, name)
 
 
 # #####################################################################################
@@ -1640,7 +1653,7 @@ def pyopenssl_get_extensions_from_csr(csr):
 
 
 def crpytography_name_to_oid(name):
-    dotted = _OID_LOOKUP.get(name.lower())
+    dotted = _OID_LOOKUP.get(name)
     if dotted is None:
         raise OpenSSLObjectError('Cannot find OID for "{0}"'.format(name))
     return x509.oid.ObjectIdentifier(dotted)
@@ -1650,7 +1663,7 @@ def crpytography_oid_to_name(oid):
     dotted_string = oid.dotted_string
     names = _OID_MAP.get(dotted_string)
     name = names[0] if names else oid._name
-    return _NORMALIZE_NAMES.get(name.lower(), name)
+    return _NORMALIZE_NAMES.get(name, name)
 
 
 def cryptography_get_name(name):
