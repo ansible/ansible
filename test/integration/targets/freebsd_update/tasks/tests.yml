@@ -2,6 +2,8 @@
   freebsd_update:
       action: fetch_install
   register: update_result
+- debug:
+    var: update_result
 
 - name: verify it has been updated
   assert:
