@@ -114,8 +114,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 #   # eval $(docker-machine env --shell=bash routinator)
 
                 for env_var_name in ['DOCKER_TLS_VERIFY', 'DOCKER_HOST', 'DOCKER_CERT_PATH', 'DOCKER_MACHINE_NAME']:
-                    env_var_value = re.search('{}="([^"]+)"'.format(env_var_name), env_out).group(1)
-                    self.inventory.set_variable(id, 'dm_{}'.format(env_var_name), env_var_value)
+                    env_var_value = re.search('{0}="([^"]+)"'.format(env_var_name), env_out).group(1)
+                    self.inventory.set_variable(id, 'dm_{0}'.format(env_var_name), env_var_value)
 
                 # Capture any tags
                 split_tags = self.get_option('split_tags')
@@ -124,9 +124,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 for kv_pair in tags.split(','):
                     if split_tags and split_separator in kv_pair:
                         k, v = kv_pair.split(split_separator)
-                        self.inventory.set_variable(id, 'dm_tag_{}'.format(k), v)
+                        self.inventory.set_variable(id, 'dm_tag_{0}'.format(k), v)
                     else:
-                        self.inventory.set_variable(id, 'dm_tag_{}'.format(kv_pair))
+                        self.inventory.set_variable(id, 'dm_tag_{0}'.format(kv_pair))
 
                 if self.get_option('verbose_output'):
                     self.inventory.set_variable(id, 'docker_machine_node_attributes', self.node_attrs)
