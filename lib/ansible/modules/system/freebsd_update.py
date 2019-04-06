@@ -48,7 +48,13 @@ options:
             - force freebsd-update run
         type: bool
         default: False
+    flags:
+        type: str
+        default: ""
+        description:
+            - Some finnicky flags
     key:
+        type: str
         description:
             - trust an RSA key with SHA256 of KEY
 author:
@@ -86,6 +92,7 @@ def main():
             conffile=dict(type='str'),
             force=dict(type='bool', default=False),
             key=dict(type='str'),
+            flags=dict(type='str', default=''),
         ),
     )
 
@@ -97,6 +104,7 @@ def main():
     conffile = module.params.get('conffile')
     force = module.params.get('force')
     key = module.params.get('key')
+    flags = module.params.get('flags')
 
     freebsd_update_bin = module.get_bin_path('freebsd-update', True)
     cmd = [freebsd_update_bin]
@@ -112,7 +120,8 @@ def main():
         cmd.append('-F')
     if key is not None:
         cmd.extend(('-k', key))
-    cmd.append('--not-running-from-cron')
+    if flags:
+        cmd.append(flags)
     if action == 'fetch_install':
         cmd.extend(('fetch', 'install'))
     else:
