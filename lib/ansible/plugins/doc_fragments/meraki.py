@@ -31,6 +31,13 @@ options:
         - Only useful for internal Meraki developers.
         type: bool
         default: yes
+    use_config_templates:
+        description:
+        - Specifies whether configuration templates should be considered when looking for networks.
+        - Only specify C(no) when organization does not use any configuration templates.
+        - Specifying C(no) may improve performance.
+        type: bool
+        default: yes
     output_level:
         description:
         - Set amount of debug output during module execution.

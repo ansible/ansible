@@ -45,6 +45,7 @@ def meraki_argument_spec():
                 timeout=dict(type='int', default=30),
                 org_name=dict(type='str', aliases=['organization']),
                 org_id=dict(type='str'),
+                use_config_templates=dict(type='bool', default=True),
                 )
 
 
@@ -206,9 +207,10 @@ class MerakiModule(object):
         if self.status != 200:
             self.fail_json(msg='Network lookup failed')
         self.nets = r
-        templates = self.get_config_templates(org_id)
-        for t in templates:
-            self.nets.append(t)
+        if self.params['use_config_templates'] is True:
+            templates = self.get_config_templates(org_id)
+            for t in templates:
+                self.nets.append(t)
         return self.nets
 
     # def get_net(self, org_name, net_name, data=None):
