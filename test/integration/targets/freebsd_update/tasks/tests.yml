@@ -1,7 +1,6 @@
 - name: update a newly installed FreeBSD system
   freebsd_update:
       action: fetch_install
-      flags: '--not-running-from-cron'
   register: update_result
 
 - name: verify it has been updated
@@ -12,13 +11,11 @@
 - name: fetch the updates again
   freebsd_update:
       action: fetch
-      flags: '--not-running-from-cron'
   register: fetch_result
 
 - name: try to install the fetched updates
   freebsd_update:
       action: install
-      flags: '--not-running-from-cron'
   register: install_result
 
 - name: verify it hasnt been updated
