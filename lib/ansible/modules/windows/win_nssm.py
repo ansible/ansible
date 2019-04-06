@@ -147,7 +147,7 @@ EXAMPLES = r'''
     arguments: agent -config-dir=C:\consul\config
 
 
-# Install the foo service, an then configure and start it with win_service
+# Install the foo service, and then configure and start it with win_service
 - name: Install the foo service, redirecting stdout and stderr to the same file
   win_nssm:
     name: foo
