@@ -1653,62 +1653,6 @@ def crpytography_oid_to_name(oid):
     return _NORMALIZE_NAMES.get(name.lower(), name)
 
 
-def cryptography_get_name_oid(id):
-    '''
-    Given a symbolic ID, finds the appropriate OID for use with cryptography.
-    Raises an OpenSSLObjectError if the ID is unknown.
-    '''
-    if id in ('CN', 'commonName'):
-        return x509.oid.NameOID.COMMON_NAME
-    if id in ('C', 'countryName'):
-        return x509.oid.NameOID.COUNTRY_NAME
-    if id in ('L', 'localityName'):
-        return x509.oid.NameOID.LOCALITY_NAME
-    if id in ('ST', 'stateOrProvinceName'):
-        return x509.oid.NameOID.STATE_OR_PROVINCE_NAME
-    if id in ('street', 'streetAddress'):
-        return x509.oid.NameOID.STREET_ADDRESS
-    if id in ('O', 'organizationName'):
-        return x509.oid.NameOID.ORGANIZATION_NAME
-    if id in ('OU', 'organizationalUnitName'):
-        return x509.oid.NameOID.ORGANIZATIONAL_UNIT_NAME
-    if id in ('serialNumber', ):
-        return x509.oid.NameOID.SERIAL_NUMBER
-    if id in ('SN', 'surname'):
-        return x509.oid.NameOID.SURNAME
-    if id in ('GN', 'givenName'):
-        return x509.oid.NameOID.GIVEN_NAME
-    if id in ('title', ):
-        return x509.oid.NameOID.TITLE
-    if id in ('generationQualifier', ):
-        return x509.oid.NameOID.GENERATION_QUALIFIER
-    if id in ('x500UniqueIdentifier', ):
-        return x509.oid.NameOID.X500_UNIQUE_IDENTIFIER
-    if id in ('dnQualifier', ):
-        return x509.oid.NameOID.DN_QUALIFIER
-    if id in ('pseudonym', ):
-        return x509.oid.NameOID.PSEUDONYM
-    if id in ('UID', 'userId', 'userID'):
-        return x509.oid.NameOID.USER_ID
-    if id in ('DC', 'domainComponent'):
-        return x509.oid.NameOID.DOMAIN_COMPONENT
-    if id in ('emailAddress', ):
-        return x509.oid.NameOID.EMAIL_ADDRESS
-    if id in ('jurisdictionC', 'jurisdictionCountryName'):
-        return x509.oid.NameOID.JURISDICTION_COUNTRY_NAME
-    if id in ('jurisdictionL', 'jurisdictionLocalityName'):
-        return x509.oid.NameOID.JURISDICTION_LOCALITY_NAME
-    if id in ('jurisdictionST', 'jurisdictionStateOrProvinceName'):
-        return x509.oid.NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME
-    if id in ('businessCategory', ):
-        return x509.oid.NameOID.BUSINESS_CATEGORY
-    if id in ('postalAddress', ):
-        return x509.oid.NameOID.POSTAL_ADDRESS
-    if id in ('postalCode', ):
-        return x509.oid.NameOID.POSTAL_CODE
-    raise OpenSSLObjectError('Unknown subject field identifier "{0}"'.format(id))
-
-
 def cryptography_get_name(name):
     '''
     Given a name string, returns a cryptography x509.Name object.
@@ -1808,37 +1752,6 @@ def cryptography_parse_key_usage_params(usages):
     for usage in usages:
         params[_cryptography_get_keyusage(usage)] = True
     return params
-
-
-def cryptography_get_ext_keyusage(usage):
-    '''
-    Given an extended key usage identifier string, returns the OID used by cryptography.
-    Raises an OpenSSLObjectError if the identifier is unknown.
-    '''
-    if usage in ('serverAuth', 'TLS Web Server Authentication'):
-        return x509.oid.ExtendedKeyUsageOID.SERVER_AUTH
-    if usage in ('clientAuth', 'TLS Web Client Authentication'):
-        return x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH
-    if usage in ('codeSigning', 'Code Signing'):
-        return x509.oid.ExtendedKeyUsageOID.CODE_SIGNING
-    if usage in ('emailProtection', 'E-mail Protection'):
-        return x509.oid.ExtendedKeyUsageOID.EMAIL_PROTECTION
-    if usage in ('timeStamping', 'Time Stamping'):
-        return x509.oid.ExtendedKeyUsageOID.TIME_STAMPING
-    if usage in ('OCSPSigning', 'OCSP Signing'):
-        return x509.oid.ExtendedKeyUsageOID.OCSP_SIGNING
-    if usage in ('anyExtendedKeyUsage', 'Any Extended Key Usage'):
-        return x509.oid.ObjectIdentifier("2.5.29.37.0")
-    if usage in ('qcStatements', ):
-        return x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.1.3")
-    if usage in ('DVCS', 'dvcs'):
-        return x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.3.10")
-    if usage in ('IPSec User', 'ipsecUser'):
-        return x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.3.7")
-    if usage in ('Biometric Info', 'biometricInfo'):
-        return x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.1.2")
-    # FIXME need some more, probably all from https://www.iana.org/assignments/smi-numbers/smi-numbers.xhtml#smi-numbers-1.3.6.1.5.5.7.3
-    raise OpenSSLObjectError('Unknown extended key usage "{0}"'.format(usage))
 
 
 def cryptography_get_basic_constraints(constraints):
