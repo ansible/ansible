@@ -127,6 +127,7 @@ def main():
 
     if rc == 0:
         results[dbtree]['stdout'] = out
+        results[dbtree]['stdout_lines'] = out.split('\n')
         results[dbtree]['command'] = cmd
         results['changed'] = True
         if 'No updates' in out:
