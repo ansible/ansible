@@ -1,0 +1,4 @@
+- name: Install Paramiko for Python 3 on RHEL 8
+  yum:
+    # src https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_paramiko/python-paramiko-2.4.2-4.el8.src.rpm
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_paramiko/python3-ansible_paramiko-2.4.2-4.el8.noarch.rpm

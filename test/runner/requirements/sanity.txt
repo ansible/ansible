@@ -1,7 +1,6 @@
 cryptography
 jinja2
 mock
-paramiko
 pycodestyle
 pylint ; python_version >= '3.5' # pylint 2.0.0 and later require python 3+
 pytest

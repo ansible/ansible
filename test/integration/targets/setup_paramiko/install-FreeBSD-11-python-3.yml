@@ -1,0 +1,9 @@
+- name: Downgrade to pip version 18.1 to work around a PEP 517 virtualenv bug
+  # pip 19.0.0 added support for PEP 517
+  # versions as recent as 19.0.3 fail to install paramiko in a virtualenv due to a BackendUnavailable exception
+  # installation without a virtualenv succeeds
+  pip:
+    name: pip==18.1
+- name: Install Paramiko for Python 3 on FreeBSD 11
+  pip: # no py36-paramiko package exists for FreeBSD 11
+    name: paramiko
