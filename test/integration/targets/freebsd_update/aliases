@@ -4,3 +4,4 @@ needs/root
 skip/osx
 skip/rhel
 skip/docker
+skip/freebsd/11.1
