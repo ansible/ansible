@@ -52,7 +52,7 @@ options:
         type: str
         default: ""
         description:
-            - Some finnicky flags
+            - Some arbitary flags. Try not to set these.
     key:
         type: str
         description:
@@ -134,6 +134,9 @@ def main():
 
     dbtree = 'freebsd-update'
     results = {dbtree: {}}
+
+    if (rc != 0) and ('HAS PASSED ITS END-OF-LIFE' in out):
+        rc = 0  # once FreeBSD reaches EoL, `freebsd-update` exits with status 1 on update.
 
     if rc == 0:
         results[dbtree]['stdout'] = out
