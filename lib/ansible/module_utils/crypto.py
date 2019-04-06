@@ -362,7 +362,7 @@ class OpenSSLObject(object):
 # #####################################################################################
 # #####################################################################################
 # This has been extracted from the OpenSSL project's objects.txt:
-#     https://github.com/openssl/openssl/blob/master/crypto/objects/objects.txt
+#     https://github.com/openssl/openssl/blob/9537fe5757bb07761fa275d779bbd40bcf5530e4/crypto/objects/objects.txt
 # Extracted with https://gist.github.com/felixfontein/376748017ad65ead093d56a45a5bf376
 #
 # Copyright (c) the OpenSSL contributors
