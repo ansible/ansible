@@ -10,21 +10,21 @@ DOCUMENTATION = '''
     plugin_type: inventory
     short_description: Docker machine inventory source
     requirements:
-        - Docker Machine
+        - L(Docker Machine,https://docs.docker.com/machine/)
     extends_documentation_fragment:
         - inventory_cache
         - constructed
     description:
         - Get inventory hosts from Docker Machine.
         - Uses a YAML configuration file that ends with docker_machine.(yml|yaml).
-        - The plugin returns an C(all) group of nodes and one group per driver (e.g. digitalocean).
-        - The plugin sets standard host variables ansible_host, ansible_port, ansible_user and ansible_ssh_private_key.
-        - The plugin also sets standard host variable ansible_ssh_common_args to '-o StrictHostKeyChecking=no'.
-        - The plugin also stores the Docker Machine 'env' variables in dm_ prefixed host variables.
+        - The plugin returns an I(all) group of nodes and one group per driver (e.g. digitalocean).
+        - The plugin sets standard host variables I(ansible_host), I(ansible_port), I(ansible_user) and I(ansible_ssh_private_key).
+        - The plugin also sets standard host variable I(ansible_ssh_common_args) to '-o StrictHostKeyChecking=no'.
+        - The plugin also stores the Docker Machine 'env' variables in I(dm_) prefixed host variables.
 
     options:
         plugin:
-          description: token that ensures this is a source file for the 'docker_machine' plugin.
+          description: token that ensures this is a source file for the C(docker_machine) plugin.
           required: True
           choices: ['docker_machine']
         verbose_output:
