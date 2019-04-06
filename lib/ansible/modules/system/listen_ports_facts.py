@@ -22,41 +22,40 @@ version_added: "2.8"
 
 description:
     - Gather facts on processes listening on TCP and UDP ports.
-    - Optionally provide whitelists to gather facts on violations of the whitelist.
 
 short_description: Gather facts on processes listening on TCP and UDP ports.
-
-options:
-  whitelist_tcp:
-    description:
-      - A list of TCP port numbers that are expected to have processes listening.
-    type: list
-    default: []
-  whitelist_udp:
-    description:
-      - A list of UDP port numbers that are expected to have processes listening.
-    type: list
-    default: []
 '''
 
 EXAMPLES = r'''
-- name: Gather facts on listening ports, and populate the tcp_listen_violations fact with processes listening on TCP ports that are not 22, 80, or 443.
+- name: Gather facts on listening ports
   listen_ports_facts:
-    whitelist_tcp:
-      - 22
-      - 80
-      - 443
 
 - name: TCP whitelist violation
   debug:
     msg: TCP port {{ item.port }} by pid {{ item.pid }} violates the whitelist
-  with_items: "{{ tcp_listen_violations }}"
-  when: tcp_listen_violations
+  vars:
+    tcp_listen_violations: "{{ ansible_facts.tcp_listen | selectattr('port', 'in', tcp_whitelist) | list }}"
+    tcp_whitelist:
+      - 22
+      - 25
+  loop: "{{ tcp_listen_violations }}"
+
+- name: List TCP ports
+  debug:
+    var: ansible_facts.tcp_listen  | map(attribute='port') | sort | list
+
+- name: List UDP ports
+  debug:
+    var: ansible_facts.udp_listen | map(attribute='port') | sort | list
+
+- name: List all ports
+  debug:
+    var: (ansible_facts.tcp_listen + ansible_facts.udp_listen) | map(attribute='port') | unique | sort | list
 '''
 
 RETURN = r'''
 ansible_facts:
-  description: Dictionary containing details of TCP and UDP ports with listening servers and any violations not found in the optional whitelists
+  description: Dictionary containing details of TCP and UDP ports with listening servers
   returned: always
   type: complex
   contains:
@@ -140,86 +139,6 @@ ansible_facts:
           returned: always
           type: str
           sample: "root"
-    tcp_listen_violations:
-      description: A list of processes that are listening on a TCP port that was not in the whitelist_tcp argument.
-      returned: if a TCP whitelist was supplied and violations were found
-      type: list
-      contains:
-        address:
-          description: The address the server is listening on.
-          returned: always
-          type: str
-          sample: "0.0.0.0"
-        name:
-          description: The name of the listening process.
-          returned: if user permissions allow
-          type: str
-          sample: "mysqld"
-        pid:
-          description: The pid of the listening process.
-          returned: always
-          type: int
-          sample: 1223
-        port:
-          description: The port the server is listening on.
-          returned: always
-          type: int
-          sample: 3306
-        protocol:
-          description: The network protocol of the server.
-          returned: always
-          type: str
-          sample: "tcp"
-        stime:
-          description: The start time of the listening process.
-          returned: always
-          type: str
-          sample: "Thu Feb  2 13:29:45 2017"
-        user:
-          description: The user who is running the listening process.
-          returned: always
-          type: str
-          sample: "mysql"
-    udp_listen_violations:
-      description: A list of processes that are listening on a UDP port that was not in the whitelist_udp argument.
-      returned: if a UDP whitelist was supplied and violations were found
-      type: list
-      contains:
-        address:
-          description: The address the server is listening on.
-          returned: always
-          type: str
-          sample: "0.0.0.0"
-        name:
-          description: The name of the listening process.
-          returned: if user permissions allow
-          type: str
-          sample: "rsyslogd"
-        pid:
-          description: The pid of the listening process.
-          returned: always
-          type: int
-          sample: 609
-        port:
-          description: The port the server is listening on.
-          returned: always
-          type: int
-          sample: 514
-        protocol:
-          description: The network protocol of the server.
-          returned: always
-          type: str
-          sample: "udp"
-        stime:
-          description: The start time of the listening process.
-          returned: always
-          type: str
-          sample: "Thu Feb  2 13:29:45 2017"
-        user:
-          description: The user who is running the listening process.
-          returned: always
-          type: str
-          sample: "root"
 '''
 
 import re
@@ -262,25 +181,10 @@ def netStatParse(raw):
     return results
 
 
-def applyWhitelist(portspids, whitelist=None):
-    if whitelist is None:
-        whitelist = list()
-    processes = list()
-    for p in portspids:
-        if int(p['port']) not in whitelist and str(p['port']) not in whitelist:
-            process = dict(pid=p['pid'], address=p['address'], port=p['port'], protocol=p['protocol'], name=p['name'], stime=p['stime'], user=p['user'])
-            if process not in processes:
-                processes.append(process)
-    return processes
-
-
 def main():
 
     module = AnsibleModule(
-        argument_spec=dict(
-            whitelist_tcp=dict(type='list', default=list()),
-            whitelist_udp=dict(type='list', default=list()),
-        ),
+        argument_spec=dict(),
         supports_check_mode=True,
     )
 
@@ -310,8 +214,6 @@ def main():
     result = dict(
         changed=False,
         ansible_facts=dict(
-            tcp_listen_violations=list(),
-            udp_listen_violations=list(),
             tcp_listen=list(),
             udp_listen=list(),
         ),
@@ -333,18 +235,6 @@ def main():
                     result['ansible_facts']['udp_listen'].append(p)
     except KeyError as e:
         module.fail_json(msg=to_native(e))
-
-    # if a TCP whitelist was supplied, determine which if any pids violate it
-    if module.params['whitelist_tcp'] and result['ansible_facts']['tcp_listen']:
-        tcp_violations = applyWhitelist(result['ansible_facts']['tcp_listen'], module.params['whitelist_tcp'])
-        if tcp_violations:
-            result['ansible_facts']['tcp_listen_violations'] = tcp_violations
-
-    # if a UDP whitelist was supplied, determine which if any pids violate it
-    if module.params['whitelist_udp'] and result['ansible_facts']['udp_listen']:
-        udp_violations = applyWhitelist(result['ansible_facts']['udp_listen'], module.params['whitelist_udp'])
-        if udp_violations:
-            result['ansible_facts']['udp_listen_violations'] = udp_violations
 
     module.exit_json(**result)
 
