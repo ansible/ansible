@@ -226,6 +226,31 @@ def _get_cryptography_key_info(key):
     return key_type, key_public_data, key_private_data
 
 
+def _binary_exp_mod(f, e, m):
+    """Computes f^e mod m."""
+    # Compute len_e = floor(log_2(e))
+    len_e = -1
+    x = e
+    while x > 0:
+        x >>= 1
+        len_e += 1
+    # Compute f**e mod m
+    result = 1
+    for k in range(len_e, -1, -1):
+        result = (result * result) % m
+        if ((e >> k) & 1) != 0:
+            result = (result * f) % m
+    return result
+
+
+def _cryptography_validate_dsa(key):
+    p = key.parameters().parameter_numbers().p
+    g = key.parameters().parameter_numbers().g
+    y = key.public_key().public_numbers().y
+    x = key.private_numbers().x
+    return _binary_exp_mod(g, x, p) == y
+
+
 def _is_cryptography_key_consistent(key):
     if isinstance(key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
         return bool(key._backend._lib.RSA_check_key(key._rsa_cdata))
@@ -234,7 +259,7 @@ def _is_cryptography_key_consistent(key):
             signature = key.sign(SIGNATURE_TEST_DATA, cryptography.hazmat.primitives.hashes.SHA256())
         except AttributeError:
             # sign() was added in cryptography 1.5, but we support older versions
-            return None
+            return _cryptography_validate_dsa(key)
         try:
             key.public_key().verify(
                 signature,
