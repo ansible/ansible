@@ -40,7 +40,7 @@ DOCUMENTATION = '''
           description: for keyed_groups when splitting tags this is the separator to split the tag value on.
           required: False
           type: str
-          default: ":"        
+          default: ":"
 '''
 
 EXAMPLES = '''
