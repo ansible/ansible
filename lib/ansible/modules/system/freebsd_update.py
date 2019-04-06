@@ -139,7 +139,7 @@ def main():
     else:
         msg = ' '.join(cmd) + ' failed'
 
-    module.fail_json(msg=msg)
+    module.fail_json(msg=msg, stderr=err, stdout=out)
 
 
 if __name__ == '__main__':

@@ -14,11 +14,15 @@
   freebsd_update:
       action: fetch
   register: fetch_result
+- debug:
+    var: fetch_result
 
 - name: try to install the fetched updates
   freebsd_update:
       action: install
   register: install_result
+- debug:
+    var: install_result
 
 - name: verify it hasnt been updated
   assert:
