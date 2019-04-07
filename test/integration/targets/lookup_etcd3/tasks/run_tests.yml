@@ -89,7 +89,6 @@
   assert:
     that:
       - _etcd3_prst_chktst is changed
-      - _etcd3_lookup is changed
       - keyfoo == 'bar'
 
 - name: kill etcd3
