@@ -166,21 +166,11 @@ project:
   type: dict
 '''
 
-import os
-import traceback
-
-GITLAB_IMP_ERR = None
-try:
-    import gitlab
-    HAS_GITLAB_PACKAGE = True
-except Exception:
-    GITLAB_IMP_ERR = traceback.format_exc()
-    HAS_GITLAB_PACKAGE = False
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.gitlab import findGroup, findProject, gitlab_auth_argument_spec, gitlab_module_kwargs
+from ansible.module_utils.gitlab import (gitlab_auth_argument_spec, gitlab_module_kwargs,
+                                         gitlab, GitlabApiConnection, findGroup, findProject)
 
 
 class GitLabProject(object):
@@ -310,19 +300,8 @@ def main():
     module = AnsibleModule(argument_spec, **gitlab_module_kwargs)
     deprecation_warning(module)
 
-    server_url = module.params['server_url']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-
-    api_url = module.params['api_url']
-    validate_certs = module.params['validate_certs']
-    api_user = module.params['api_username']
-    api_password = module.params['api_password']
-
-    gitlab_url = server_url if api_url is None else api_url
-    gitlab_user = login_user if api_user is None else api_user
-    gitlab_password = login_password if api_password is None else api_password
-    gitlab_token = module.params['api_token']
+    api = GitlabApiConnection(module)
+    gitlab_instance = api.auth()
 
     group_identifier = module.params['group']
     project_name = module.params['name']
@@ -335,19 +314,6 @@ def main():
     visibility = module.params['visibility']
     import_url = module.params['import_url']
     state = module.params['state']
-
-    if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
-
-    try:
-        gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
-                                        private_token=gitlab_token, api_version=4)
-        gitlab_instance.auth()
-    except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
-    except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     # Set project_path to project_name if it is empty.
     if project_path is None:
