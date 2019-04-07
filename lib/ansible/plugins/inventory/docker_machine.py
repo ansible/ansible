@@ -18,14 +18,14 @@ DOCUMENTATION = '''
         - Get inventory hosts from Docker Machine.
         - Uses a YAML configuration file that ends with docker_machine.(yml|yaml).
         - The plugin returns an I(all) group of nodes and one group per driver (e.g. digitalocean).
-        - The plugin sets standard host variables I(ansible_host), I(ansible_port), I(ansible_user) and I(ansible_ssh_private_key).
-        - The plugin also sets standard host variable I(ansible_ssh_common_args) to '-o StrictHostKeyChecking=no'.
+        - The plugin sets standard host variables C(ansible_host), C(ansible_port), C(ansible_user) and C(ansible_ssh_private_key).
+        - The plugin also sets standard host variable I(ansible_ssh_common_args) to C(-o StrictHostKeyChecking=no).
         - The plugin also stores the Docker Machine 'env' variables in I(dm_) prefixed host variables.
 
     options:
         plugin:
           description: token that ensures this is a source file for the C(docker_machine) plugin.
-          required: True
+          required: yes
           choices: ['docker_machine']
         verbose_output:
             description: Toggle to (not) include all available nodes metadata (e.g. Image, Region, Size) as a JSON object.
@@ -33,12 +33,10 @@ DOCUMENTATION = '''
             default: yes
         split_tags:
           description: for keyed_groups add two variables as if the tag were actually a key value pair separated by a colon, instead of just a single value.
-          required: False
           type: bool
           default: no
         split_separator:
           description: for keyed_groups when splitting tags this is the separator to split the tag value on.
-          required: False
           type: str
           default: ":"
 '''
@@ -120,8 +118,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 # Capture any tags
                 split_tags = self.get_option('split_tags')
                 split_separator = self.get_option('split_separator')
-                tags = self.node_attrs['Driver']['Tags']
-                for kv_pair in tags.split(','):
+                tags = self.node_attrs['Driver'].get('Tags') or ''
+                kv_pairs = [kv_pair.strip() for kv_pair in tags.split(',') if kv_pair.strip()]
+                for kv_pair in kv_pairs:
                     if split_tags and split_separator in kv_pair:
                         k, v = kv_pair.split(split_separator)
                         self.inventory.set_variable(id, 'dm_tag_{0}'.format(k), v)
