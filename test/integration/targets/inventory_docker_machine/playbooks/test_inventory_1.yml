@@ -1,0 +1,25 @@
+---
+- hosts: dm-inventory-test
+  gather_facts: no
+  tasks:
+  - name: do something
+    file:
+      path: /tmp/deleteme
+      state: directory
+
+- hosts: localhost
+  environment:
+    DOCKER_CERT_PATH: "{{ hostvars['dm-inventory-test'].dm_DOCKER_CERT_PATH }}"
+    DOCKER_HOST: "{{ hostvars['dm-inventory-test'].dm_DOCKER_HOST }}"
+    DOCKER_MACHINE_NAME: "{{ hostvars['dm-inventory-test'].dm_DOCKER_MACHINE_NAME }}"
+    DOCKER_TLS_VERIFY: "{{ hostvars['dm-inventory-test'].dm_DOCKER_TLS_VERIFY }}"
+  tasks:
+  - name: docker-compose up on target Docker Machine host
+    docker_service:
+      project_name: test
+      definition:
+        version: '2'
+        services:
+          test:
+            container_name: test
+            image: ubuntu/18.04:Latest
