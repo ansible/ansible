@@ -25,5 +25,8 @@ docker-machine create \
         --digitalocean-tags sometag:somevalue,othertag:othervalue \
         ${DM_MACHINE_NAME}
 
+echo "Test docker machine inventory 0"
+ansible-inventory -i inventory_1.docker_machine.yml --list | grep -F ${DM_MACHINE_NAME}
+
 echo "Test docker_machine inventory 1"
 ansible-playbook -i inventory_1.docker_machine.yml playbooks/test_inventory_1.yml
