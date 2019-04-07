@@ -243,23 +243,69 @@ def _binary_exp_mod(f, e, m):
     return result
 
 
-def _cryptography_validate_dsa(key):
-    p = key.parameters().parameter_numbers().p
-    g = key.parameters().parameter_numbers().g
-    y = key.public_key().public_numbers().y
-    x = key.private_numbers().x
-    return _binary_exp_mod(g, x, p) == y
+def _simple_gcd(a, b):
+    '''Compute GCD of its two inputs.'''
+    while b != 0:
+        a, b = b, a % b
+    return a
 
 
-def _is_cryptography_key_consistent(key):
+def _not_prime(n):
+    '''Does some quick checks to see if we can poke a hole into the primality of n.
+
+    A result of `False` does **not** mean that the number is prime; it just means
+    that we couldn't detect quickly whether it is not prime.
+    '''
+    if n <= 2:
+        return True
+    # The constant in the next line is the product of all primes < 200
+    if _simple_gcd(n, 7799922041683461553249199106329813876687996789903550945093032474868511536164700810) > 1:
+        return True
+    # TODO: maybe do some iterations of Miller-Rabin to increase confidence
+    # (https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)
+    return False
+
+
+def _check_dsa_consistency(key_public_data, key_private_data):
+    # Get parameters
+    p = key_public_data.get('p')
+    q = key_public_data.get('q')
+    g = key_public_data.get('g')
+    y = key_public_data.get('y')
+    x = key_private_data.get('x')
+    for v in (p, q, g, y, x):
+        if v is None:
+            return None
+    # Make sure that g is not 0, 1 or -1 in Z/pZ
+    if g < 2 or g >= p - 1:
+        return False
+    # Check whether q divides p-1
+    if (p - 1) % q != 0:
+        return False
+    # Check that g**q mod p == 1
+    if _binary_exp_mod(g, q, p) != 1:
+        return False
+    # Check whether g**x mod p == y
+    if _binary_exp_mod(g, x, p) != y:
+        return False
+    # Check (quickly) whether p or q are not primes
+    if _not_prime(q) or _not_prime(p):
+        return False
+    return True
+
+
+def _is_cryptography_key_consistent(key, key_public_data, key_private_data):
     if isinstance(key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
         return bool(key._backend._lib.RSA_check_key(key._rsa_cdata))
     if isinstance(key, cryptography.hazmat.primitives.asymmetric.dsa.DSAPrivateKey):
+        result = _check_dsa_consistency(key_public_data, key_private_data)
+        if result:
+            return True
         try:
             signature = key.sign(SIGNATURE_TEST_DATA, cryptography.hazmat.primitives.hashes.SHA256())
         except AttributeError:
             # sign() was added in cryptography 1.5, but we support older versions
-            return _cryptography_validate_dsa(key)
+            return result
         try:
             key.public_key().verify(
                 signature,
@@ -334,7 +380,7 @@ class PrivateKeyInfo(crypto_utils.OpenSSLObject):
         pass
 
     @abc.abstractmethod
-    def _is_key_consistent(self):
+    def _is_key_consistent(self, key_public_data, key_private_data):
         pass
 
     def get_info(self):
@@ -370,7 +416,7 @@ class PrivateKeyInfo(crypto_utils.OpenSSLObject):
         if self.return_private_key_data:
             result['private_data'] = key_private_data
 
-        result['key_is_consistent'] = self._is_key_consistent()
+        result['key_is_consistent'] = self._is_key_consistent(key_public_data, key_private_data)
         if result['key_is_consistent'] is False:
             # Only fail when it is False, to avoid to fail on None (which means "we don't know")
             result['key_is_consistent'] = False
@@ -396,8 +442,8 @@ class PrivateKeyInfoCryptography(PrivateKeyInfo):
     def _get_key_info(self):
         return _get_cryptography_key_info(self.key)
 
-    def _is_key_consistent(self):
-        return _is_cryptography_key_consistent(self.key)
+    def _is_key_consistent(self, key_public_data, key_private_data):
+        return _is_cryptography_key_consistent(self.key, key_public_data, key_private_data)
 
 
 class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
@@ -534,7 +580,7 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
             return _get_cryptography_key_info(self.key.to_cryptography_key())
         return key_type, key_public_data, key_private_data
 
-    def _is_key_consistent(self):
+    def _is_key_consistent(self, key_public_data, key_private_data):
         openssl_key_type = self.key.type()
         if crypto.TYPE_RSA == openssl_key_type:
             try:
@@ -543,6 +589,9 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
                 # OpenSSL error means that key is not consistent
                 return False
         if crypto.TYPE_DSA == openssl_key_type:
+            result = _check_dsa_consistency(key_public_data, key_private_data)
+            if result:
+                return True
             signature = crypto.sign(self.key, SIGNATURE_TEST_DATA, 'sha256')
             # Verify wants a cert (where it can get the public key from)
             cert = crypto.X509()
@@ -554,7 +603,7 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
                 return False
         # If needed and if possible, fall back to cryptography
         if PYOPENSSL_VERSION >= LooseVersion('16.1.0') and CRYPTOGRAPHY_FOUND:
-            return _is_cryptography_key_consistent(self.key.to_cryptography_key())
+            return _is_cryptography_key_consistent(self.key.to_cryptography_key(), key_public_data, key_private_data)
         return None
 
 
