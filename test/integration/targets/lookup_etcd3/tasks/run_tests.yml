@@ -46,7 +46,7 @@
       file:
         path: "{{ etcd3_download_location }}"
         state: directory
-        register: _etcddownloadexists
+      register: _etcddownloadexists
     - name: Delete download folder if already exists (to start clean)
       file:
         path: "{{ etcd3_download_location }}"
