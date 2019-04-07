@@ -8,7 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: docker_machine
     plugin_type: inventory
-    short_description: Docker machine inventory source
+    short_description: Docker Machine inventory source
     requirements:
         - L(Docker Machine,https://docs.docker.com/machine/)
     extends_documentation_fragment:
@@ -144,7 +144,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self._add_host_to_keyed_groups(self.get_option('keyed_groups'), self.node_attrs, id, strict=strict)
 
         except Exception as e:
-            raise AnsibleError('Unable to fetch hosts from Docker machine, this was the original exception: %s' %
+            raise AnsibleError('Unable to fetch hosts from Docker Machine, this was the original exception: %s' %
                                to_native(e))
 
     def verify_file(self, path):
