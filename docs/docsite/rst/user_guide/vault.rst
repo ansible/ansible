@@ -16,7 +16,12 @@ For best practices advice, refer to :ref:`best_practices_for_variables_and_vault
 What Can Be Encrypted With Vault
 ````````````````````````````````
 
-Ansible Vault can encrypt any structured data file used by Ansible.  This can include "group_vars/" or "host_vars/" inventory variables, variables loaded by "include_vars" or "vars_files", or variable files passed on the ansible-playbook command line with ``-e @file.yml`` or ``-e @file.json``.  Role variables and defaults are also included.
+File-level encryption
+^^^^^^^^^^^^^^^^^^^^^
+
+Ansible Vault can encrypt any structured data file used by Ansible.
+
+This can include "group_vars/" or "host_vars/" inventory variables, variables loaded by "include_vars" or "vars_files", or variable files passed on the ansible-playbook command line with ``-e @file.yml`` or ``-e @file.json``.  Role variables and defaults are also included.
 
 Ansible tasks, handlers, and so on are also data so these can be encrypted with vault as well. To hide the names of variables that you're using, you can encrypt the task files in their entirety.
 
@@ -26,7 +31,19 @@ given as the ``src`` argument to the :ref:`copy <copy_module>`, :ref:`template <
 <assemble_module>` modules, the file will be placed at the destination on the target host decrypted
 (assuming a valid vault password is supplied when running the play).
 
+.. note::
+    The advantages of file-level encryption are that it is easy to use and that password rotation is straightforward with :ref:`rekeying <rekeying_files>`.
+    The drawback is that the contents of files are no longer easy to access and read. This may be problematic if it is a list of tasks (when encrypting a variables file, :ref:`best practice <best_practices_for_variables_and_vaults>` is to keep references to these variables in a non-encrypted file).
+
+
+Variable-level encryption
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 As of version 2.3, Ansible supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details :ref:`below <encrypt_string_for_use_in_yaml>`.
+
+.. note::
+    The advantage of variable-level encryption is that files are still easily legible even if they mix plaintext and encrypted variables.
+    The drawback is that password rotation is not as simple as with file-level encryption: the :ref:`rekey <ansible_vault_rekey>` command does not work with this method.
 
 
 .. _vault_ids:
