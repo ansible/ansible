@@ -1,0 +1,42 @@
+---
+uquota_default_bsoft: 1m
+uquota_default_bhard: 2m
+uquota_default_isoft: 100
+uquota_default_ihard: 200
+uquota_default_rtbsoft: 1m
+uquota_default_rtbhard: 2m
+
+uquota_user_bsoft: 2m
+uquota_user_bhard: 3m
+uquota_user_isoft: 300
+uquota_user_ihard: 400
+uquota_user_rtbsoft: 3m
+uquota_user_rtbhard: 4m
+
+gquota_default_bsoft: 1m
+gquota_default_bhard: 2m
+gquota_default_isoft: 100
+gquota_default_ihard: 200
+gquota_default_rtbsoft: 1m
+gquota_default_rtbhard: 2m
+
+gquota_group_bsoft: 2m
+gquota_group_bhard: 3m
+gquota_group_isoft: 300
+gquota_group_ihard: 400
+gquota_group_rtbsoft: 3m
+gquota_group_rtbhard: 4m
+
+pquota_default_bsoft: 1m
+pquota_default_bhard: 2m
+pquota_default_isoft: 100
+pquota_default_ihard: 200
+pquota_default_rtbsoft: 1m
+pquota_default_rtbhard: 2m
+
+pquota_project_bsoft: 2m
+pquota_project_bhard: 3m
+pquota_project_isoft: 300
+pquota_project_ihard: 400
+pquota_project_rtbsoft: 3m
+pquota_project_rtbhard: 4m
