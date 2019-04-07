@@ -226,46 +226,6 @@ def _get_cryptography_key_info(key):
     return key_type, key_public_data, key_private_data
 
 
-def _binary_exp_mod(f, e, m):
-    """Computes f^e mod m."""
-    # Compute len_e = floor(log_2(e))
-    len_e = -1
-    x = e
-    while x > 0:
-        x >>= 1
-        len_e += 1
-    # Compute f**e mod m
-    result = 1
-    for k in range(len_e, -1, -1):
-        result = (result * result) % m
-        if ((e >> k) & 1) != 0:
-            result = (result * f) % m
-    return result
-
-
-def _simple_gcd(a, b):
-    '''Compute GCD of its two inputs.'''
-    while b != 0:
-        a, b = b, a % b
-    return a
-
-
-def _not_prime(n):
-    '''Does some quick checks to see if we can poke a hole into the primality of n.
-
-    A result of `False` does **not** mean that the number is prime; it just means
-    that we couldn't detect quickly whether it is not prime.
-    '''
-    if n <= 2:
-        return True
-    # The constant in the next line is the product of all primes < 200
-    if _simple_gcd(n, 7799922041683461553249199106329813876687996789903550945093032474868511536164700810) > 1:
-        return True
-    # TODO: maybe do some iterations of Miller-Rabin to increase confidence
-    # (https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)
-    return False
-
-
 def _check_dsa_consistency(key_public_data, key_private_data):
     # Get parameters
     p = key_public_data.get('p')
@@ -286,13 +246,13 @@ def _check_dsa_consistency(key_public_data, key_private_data):
     if (p - 1) % q != 0:
         return False
     # Check that g**q mod p == 1
-    if _binary_exp_mod(g, q, p) != 1:
+    if crypto_utils.binary_exp_mod(g, q, p) != 1:
         return False
     # Check whether g**x mod p == y
-    if _binary_exp_mod(g, x, p) != y:
+    if crypto_utils.binary_exp_mod(g, x, p) != y:
         return False
     # Check (quickly) whether p or q are not primes
-    if _not_prime(q) or _not_prime(p):
+    if crypto_utils.quick_is_not_prime(q) or crypto_utils.quick_is_not_prime(p):
         return False
     return True
 
