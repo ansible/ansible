@@ -302,13 +302,13 @@ def _is_cryptography_key_consistent(key, key_public_data, key_private_data):
         return bool(key._backend._lib.RSA_check_key(key._rsa_cdata))
     if isinstance(key, cryptography.hazmat.primitives.asymmetric.dsa.DSAPrivateKey):
         result = _check_dsa_consistency(key_public_data, key_private_data)
-        if result:
-            return True
+        if result is not None:
+            return result
         try:
             signature = key.sign(SIGNATURE_TEST_DATA, cryptography.hazmat.primitives.hashes.SHA256())
         except AttributeError:
             # sign() was added in cryptography 1.5, but we support older versions
-            return result
+            return None
         try:
             key.public_key().verify(
                 signature,
@@ -593,8 +593,8 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
                 return False
         if crypto.TYPE_DSA == openssl_key_type:
             result = _check_dsa_consistency(key_public_data, key_private_data)
-            if result:
-                return True
+            if result is not None:
+                return result
             signature = crypto.sign(self.key, SIGNATURE_TEST_DATA, 'sha256')
             # Verify wants a cert (where it can get the public key from)
             cert = crypto.X509()
