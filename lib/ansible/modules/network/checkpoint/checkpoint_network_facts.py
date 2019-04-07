@@ -26,94 +26,83 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_host
-short_description: Manages host objects on Checkpoint over Web Services API
+module: checkpoint_network_facts
+short_description: Get network objects facts on Checkpoint over Web Services API
 description:
-  - Manages host objects on Checkpoint devices including creating, updating, removing access rules objects.
+  - Get network objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
 version_added: "2.8"
-author: "Ansible by Red Hat (@rcarrillocruz)"
+author: Or Soffer (@Or Soffer)
 options:
   name:
     description:
-      - Name of the access rule.
+      - Object name. Should be unique in the domain.
     type: str
-    required: True
-  ip_address:
+  uid:
     description:
-      - IP address of the host object.
+      - Object unique identifier.
     type: str
-  state:
+  details_level	:
     description:
-      - State of the access rule (present or absent). Defaults to present.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed representation of the object.
     type: str
-    default: present
-  auto_publish_session:
-    description:
-      - Publish the current session if changes have been performed
-        after task completes.
-    type: bool
-    default: 'yes'
-  auto_install_policy:
-    description:
-      - Install the package policy if changes have been performed
-        after the task completes.
-    type: bool
-    default: 'yes'
-  policy_package:
-    description:
-      - Package policy name to be installed.
-    type: bool
+    choices: ['uid', 'standard', 'full']
     default: 'standard'
-  targets:
+  limit:
     description:
-      - Targets to install the package policy on.
+      - No more than that many results will be returned (1-500).
+    type: int
+    default: 50
+  offset:
+    description:
+      - Skip that many results before beginning to return them.
+    type: int
+    default: 0
+  order:
+    description:
+      - Sorts results by the given field. By default the results are sorted in the ascending order by name.
     type: list
+  show_membership:
+    description:
+      - Indicates whether to calculate and show "groups" field for every object in reply.
+    type: bool
+    default: 'yes'
 """
 
 EXAMPLES = """
-- name: Create host object
-  checkpoint_host:
+- name: Get host object facts
+  checkpoint_host_facts:
     name: attacker
-    ip_address: 192.168.0.15
-
-- name: Delete host object
-  checkpoint_host:
-    name: attacker
-    state: absent
 """
 
 RETURN = """
-checkpoint_hosts:
-  description: The checkpoint host object created or updated.
-  returned: always, except when deleting the host.
+ansible_hosts:
+  description: The checkpoint host object facts.
+  returned: always.
   type: list
 """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, api_call_facts
-import ntpath
 
 
 def main():
     argument_spec = dict(
         name=dict(type='str'),
         uid=dict(type='str'),
-        details_level=dict(type='str')
+        details_level=dict(type='str', choises=['uid', 'standard', 'full']),
+        limit=dict(type=int),
+        offset=dict(type=int),
+        order=dict(type=list),
+        show_membership=dict(type=bool)
     )
+
+    user_parameters = list(argument_spec.keys())
     argument_spec.update(checkpoint_argument_spec)
-    required_one_of = [['name', 'uid']]
-    mutually_exclusive = [['name', 'uid']]
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=required_one_of,
-                           mutually_exclusive=mutually_exclusive)
-    #file_name = ntpath.basename(__file__).split(".")[0]
-    #api_call_object = file_name.split("_", 1)[-1].replace("_", "-")
+    module = AnsibleModule(argument_spec=argument_spec)
     api_call_object = "network"
 
-    payload = {'name': module.params['name'],
-               'uid': module.params['uid']}
-
-    api_call_facts(module, api_call_object, payload)
+    api_call_facts(module, api_call_object, user_parameters)
 
 
 if __name__ == '__main__':

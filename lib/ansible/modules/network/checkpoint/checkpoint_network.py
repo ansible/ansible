@@ -26,23 +26,97 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_host
-short_description: Manages host objects on Checkpoint over Web Services API
+module: checkpoint_network
+short_description: Manages network objects on Checkpoint over Web Services API
 description:
-  - Manages host objects on Checkpoint devices including creating, updating, removing access rules objects.
+  - Manages network objects on Checkpoint devices including creating, updating, removing network objects.
     All operations are performed over Web Services API.
 version_added: "2.8"
-author: "Ansible by Red Hat (@rcarrillocruz)"
+author: Or Soffer (@Or Soffer)
 options:
   name:
     description:
-      - Name of the access rule.
+      - Object name. Should be unique in the domain.
     type: str
-    required: True
-  ip_address:
+  uid:
     description:
-      - IP address of the host object.
+      Object unique identifier.
     type: str
+  subnet:
+    description:
+      - IPv4 or IPv6 network address. If both addresses are required use subnet4 and subnet6 fields explicitly.
+    type: str
+  subnet4:
+    description:
+      - IPv4 network address.
+    type: str
+  subnet6:
+    description:
+      - IPv6 network address.
+    type: str
+  mask_length:
+    description:
+      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
+    type: int
+  mask_length4:
+    description:
+      - IPv4 network mask length.
+    type: int
+  mask_length6:
+    description:
+      - IPv6 network mask length.
+    type: int
+  subnet_mask:
+    description:
+      - IPv4 network mask.
+    type: str
+  nat_settings:
+    description:
+      - NAT settings.
+    type: dict
+  tags:
+    description:
+      - Collection of tag identifiers.
+    type: list
+  broadcast:
+    description:
+      - Allow broadcast address inclusion.
+    type: str
+    choices: ['disallow', 'allow']
+  set_if_exists:
+    description:
+      - If another object with the same identifier already exists, it will be updated. The command behaviour will be the same as if originally a set command was called. Pay attention that original object's fields will be overwritten by the fields provided in the request payload!
+    type: bool
+  color:
+    description:
+      - Color of the object. Should be one of existing colors.
+    type: str
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
+    default: 'black'
+  comments:
+    description:
+      - Comments string.
+    type: str
+  details_level	:
+    description:
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed representation of the object.
+    type: str
+    choices: ['uid', 'standard', 'full']
+    default: 'standard'
+  groups:
+    description:
+      - Collection of group identifiers.
+    type: list
+  ignore_warnings:
+    description:
+      - Apply changes ignoring warnings.
+    type: bool
+    default: 'no'
+  ignore-errors	:
+    description:
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
+    type: bool
+    default: 'no'
   state:
     description:
       - State of the access rule (present or absent). Defaults to present.
@@ -72,83 +146,64 @@ options:
 """
 
 EXAMPLES = """
-- name: Create host object
+- name: Add network object
   checkpoint_host:
-    name: attacker
-    ip_address: 192.168.0.15
+    name: "New Network 1"
+    subnet: "192.0.2.0"
+    subnet_mask : "255.255.255.0"
+    
 
-- name: Delete host object
+- name: Delete network object
   checkpoint_host:
-    name: attacker
+    name: "New Network 1"
     state: absent
 """
 
 RETURN = """
-checkpoint_hosts:
-  description: The checkpoint host object created or updated.
-  returned: always, except when deleting the host.
+checkpoint_networks:
+  description: The checkpoint network object created or updated.
+  returned: always, except when deleting the network.
   type: list
 """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, api_call
-import ntpath
 
 
+argument_spec = dict(
+    name=dict(type='str'),
+    uid=dict(type='str'),
+    subnet=dict(type='str'),
+    subnet4=dict(type='str'),
+    subnet6=dict(type='str'),
+    mask_length=dict(type=int),
+    mask_length4=dict(type=int),
+    mask_length6=dict(type=int),
+    subnet_mask=dict(type='str'),
+    nat_settings=dict(type=dict),
+    tags=dict(type=list),
+    broadcast=dict(type='str', choises=['disallow', 'allow']),
+    set_if_exists=dict(type=bool),
+    color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']),
+    comments=dict(type='str'),
+    details_level=dict(type='str', choises=['uid', 'standard', 'full']),
+    groups=dict(type=list),
+    ignore_warnings=dict(type=bool),
+    ignore_errors=dict(type=bool),
+    state=dict(type='str', required=True)
+)
 def main():
-    argument_spec = dict(
-        name=dict(type='str'),
-        uid=dict(type='str'),
-        subnet=dict(type='str'),
-        subnet4=dict(type='str'),
-        subnet6=dict(type='str'),
-        mask_length=dict(type=int),
-        mask_length4=dict(type=int),
-        mask_length6=dict(type=int),
-        subnet_mask=dict(type='str'),
-        nat_settings=dict(type=dict),
-        tags=dict(type='str'),
-        broadcast=dict(type='str'),
-        set_if_exists=dict(type=bool),
-        color=dict(type='str'),
-        comments=dict(type='str'),
-        groups=dict(type='str'),
-        ignore_warnings=dict(type=bool),
-        ignore_errors=dict(type=bool),
-        state=dict(type='str', default='present')
-    )
+
+    user_parameters = list(argument_spec.keys())
+    user_parameters.remove('state')
     argument_spec.update(checkpoint_argument_spec)
-    required_one_of = [['name', 'uid']]
-    mutually_exclusive = [['name', 'uid']]
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=required_one_of,
-                           mutually_exclusive=mutually_exclusive)
-    #file_name = ntpath.basename(__file__).split(".")[0]
-    #api_call_object = file_name.split("_", 1)[-1].replace("_", "-")
+    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
+                           mutually_exclusive=[['name', 'uid']])
     api_call_object = "network"
 
-    payload = {'name': module.params['name'],
-               'uid': module.params['uid'],
-               'subnet': module.params['subnet'],
-               'subnet4': module.params['subnet4'],
-               'subnet6': module.params['subnet6'],
-               'mask-length': module.params['mask_length'],
-               'mask-length4': module.params['mask_length4'],
-               'mask-length6': module.params['mask_length6'],
-               'subnet-mask': module.params['subnet_mask'],
-               'nat-settings': module.params['nat_settings'],
-               'tags': module.params['tags'],
-               'broadcast': module.params['broadcast'],
-               'set-if-exists': module.params['set_if_exists'],
-               'color': module.params['color'],
-               'comments': module.params['comments'],
-               'groups': module.params['groups'],
-               'ignore-warnings': module.params['ignore_warnings'],
-               'ignore-errors': module.params['ignore_errors']}
+    unique_payload_for_get = {'name': module.params['name']} if module.params['name'] else {'uid': module.params['uid']}
 
-    unique_payload_for_get = {'name': module.params['name'],
-                              'uid': module.params['uid']}
-
-    api_call(module, api_call_object, payload, unique_payload_for_get)
+    api_call(module, api_call_object, user_parameters, unique_payload_for_get)
 
 
 if __name__ == '__main__':

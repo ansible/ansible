@@ -27,7 +27,6 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 
 
@@ -89,33 +88,54 @@ def delete_api_call_object(connection, api_call_object, payload):
 
 def needs_update(payload, api_call_object):
     for key, value in payload.items():
-        if value and isinstance(api_call_object[key], str) and value != api_call_object[key]:
+        if value and isinstance(api_call_object.get(key), str) and value != api_call_object.get(key):
             return True
     return False
 
-    # if module.params['source'] and module.params['source'] != api_call_object['source'][0]['name']:
-    #     res = True
-    # if module.params['destination'] and module.params['destination'] != api_call_object['destination'][0]['name']:
-    #     res = True
-    # if module.params['action'] != api_call_object['action']['name']:
-    #     res = True
-    # if module.params['enabled'] != api_call_object['enabled']:
-    #     res = True
+
+def run_api_command(connection, command, payload):
+    code, response = connection.send_request('/web_api/' + command, payload)
+
+    return code, response
 
 
-def api_call_facts(module, api_call_object, payload):
+def get_payload_from_user_parameters(module, user_parameters):
+    payload = {}
+    for parameter in user_parameters:
+        if module.params[parameter]:
+            payload[parameter.replace("_", "-")] = module.params[parameter]
+    return payload
+
+
+def api_command(module, command, user_parameters):
+    payload = get_payload_from_user_parameters(module, user_parameters)
+    connection = Connection(module._socket_path)
+    code, response = run_api_command(connection, command, payload)
+    result = {'changed': True}
+
+    if code == 200:
+        result['checkpoint_' + command.replace("-", "_")] = response
+    else:
+        module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
+
+    module.exit_json(**result)
+
+
+def api_call_facts(module, api_call_object, user_parameters):
+    payload = get_payload_from_user_parameters(module, user_parameters)
     file_name_plural = "checkpoint_" + api_call_object.replace("_", "-") + "s"
+    if payload.get("name") is None and payload.get("uid") is None:
+        api_call_object += "s"
     connection = Connection(module._socket_path)
     code, response = get_api_call_object(connection, api_call_object, payload)
     if code == 200:
-        ansible_facts = {}
-        ansible_facts.update({file_name_plural: response})
-        module.exit_json(ansible_facts=ansible_facts)
+        module.exit_json(ansible_facts={file_name_plural: response})
     else:
         module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
 
 
-def api_call(module, api_call_object, payload, unique_payload_for_get):
+def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
+    payload = get_payload_from_user_parameters(module, user_parameters)
     file_name_plural = "checkpoint_" + api_call_object.replace("_", "-") + "s"
     connection = Connection(module._socket_path)
     code, response = get_api_call_object(connection, api_call_object, unique_payload_for_get)
