@@ -83,6 +83,44 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _run_command(self, *args):
         return subprocess.check_output(["docker-machine"] + list(args)).decode('utf-8').strip()
 
+    def _set_docker_daemon_variables(self, id):
+        '''
+        Capture settings from Docker Machine that would be needed to connect to the remote Docker daemon installed on
+        the Docker Machine remote host. Note: passing '--shell=sh' is a workaround for 'Error: Unknown shell'.
+        '''
+        env_out = self._run_command('env', '--shell=sh', id)
+
+        # example output of docker-machine env --shell=sh:
+        #   export DOCKER_TLS_VERIFY="1"
+        #   export DOCKER_HOST="tcp://134.209.204.160:2376"
+        #   export DOCKER_CERT_PATH="/root/.docker/machine/machines/routinator"
+        #   export DOCKER_MACHINE_NAME="routinator"
+        #   # Run this command to configure your shell:
+        #   # eval $(docker-machine env --shell=bash routinator)
+
+        # capture any of the DOCKER_xxx variables that were output and create Ansible host vars
+        # with the asme name and value but with a dm_ name prefix.
+        for line in env_out.splitlines():
+            match = re.search('(DOCKER_[^=]+)="([^"]+)"', line)
+            if match:
+                env_var_name = match.group(1)
+                env_var_value = match.group(2)
+                self.inventory.set_variable(id, 'dm_{0}'.format(env_var_name), env_var_value)
+
+    def _set_tag_variables(self, id):
+        tags = self.node_attrs['Driver'].get('Tags') or ''
+        if tags:
+            split_tags = self.get_option('split_tags')
+            split_separator = self.get_option('split_separator')
+
+            kv_pairs = [kv_pair.strip() for kv_pair in tags.split(',') if kv_pair.strip()]
+            for kv_pair in kv_pairs:
+                if split_tags and split_separator in kv_pair:
+                    k, v = kv_pair.split(split_separator)
+                    self.inventory.set_variable(id, 'dm_tag_{0}'.format(k), v)
+                else:
+                    self.inventory.set_variable(id, 'dm_tag_{0}'.format(kv_pair))
+
     def _populate(self):
         self.inventory.add_group('all')
 
@@ -103,32 +141,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self.inventory.set_variable(id, 'ansible_user', self.node_attrs['Driver']['SSHUser'])
                 self.inventory.set_variable(id, 'ansible_ssh_private_key_file', self.node_attrs['Driver']['SSHKeyPath'])
 
-                # pass '--shell=bash' to workaround 'Error: Unknown shell
-                env_out = self._run_command('env', '--shell=bash', id)
+                self._set_docker_daemon_variables(id)
 
-                # example output of docker-machine env
-                #   export DOCKER_TLS_VERIFY="1"
-                #   export DOCKER_HOST="tcp://134.209.204.160:2376"
-                #   export DOCKER_CERT_PATH="/root/.docker/machine/machines/routinator"
-                #   export DOCKER_MACHINE_NAME="routinator"
-                #   # Run this command to configure your shell:
-                #   # eval $(docker-machine env --shell=bash routinator)
-
-                for env_var_name in ['DOCKER_TLS_VERIFY', 'DOCKER_HOST', 'DOCKER_CERT_PATH', 'DOCKER_MACHINE_NAME']:
-                    env_var_value = re.search('{0}="([^"]+)"'.format(env_var_name), env_out).group(1)
-                    self.inventory.set_variable(id, 'dm_{0}'.format(env_var_name), env_var_value)
-
-                # Capture any tags
-                split_tags = self.get_option('split_tags')
-                split_separator = self.get_option('split_separator')
-                tags = self.node_attrs['Driver'].get('Tags') or ''
-                kv_pairs = [kv_pair.strip() for kv_pair in tags.split(',') if kv_pair.strip()]
-                for kv_pair in kv_pairs:
-                    if split_tags and split_separator in kv_pair:
-                        k, v = kv_pair.split(split_separator)
-                        self.inventory.set_variable(id, 'dm_tag_{0}'.format(k), v)
-                    else:
-                        self.inventory.set_variable(id, 'dm_tag_{0}'.format(kv_pair))
+                self._set_tag_variables(id)
 
                 if self.get_option('verbose_output'):
                     self.inventory.set_variable(id, 'docker_machine_node_attributes', self.node_attrs)
@@ -159,3 +174,4 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
         config = self._read_config_data(path)
         self._populate()
+
