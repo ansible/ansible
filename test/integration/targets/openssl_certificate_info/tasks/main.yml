@@ -27,7 +27,7 @@
       GN: First Name
       title: Chief
       pseudonym: test
-      x500UniqueIdentifier: asdf
+      UID: asdf
       emailAddress: test@example.com
       postalAddress: 1234 Somewhere
       postalCode: "1234"
