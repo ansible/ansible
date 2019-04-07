@@ -37,19 +37,32 @@ class GitlabApiConnection(object):
         if not HAS_GITLAB_PACKAGE:
             self.module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
-        server_url = self.module.params['server_url']
-        login_user = self.module.params['login_user']
-        login_password = self.module.params['login_password']
-
+        # handle deprecated module params; server_url, api_url, url are virtually
+        # same thing. this can be removed with 2.10 release
+        server_url = self.module.params.get('server_url')
+        url = re.sub('/api.*', '', self.module.params.get('url', '') or '')
         api_url = re.sub('/api.*', '', self.module.params['api_url'])
-        api_user = self.module.params['api_username']
-        api_password = self.module.params['api_password']
 
-        self.token = self.module.params['api_token']
-        self.validate_certs = self.module.params['validate_certs']
-        self.url = server_url if api_url is None else api_url
+        if api_url is not None:
+            self.url = api_url
+        elif url is not None:
+            self.url = url
+        elif server_url is not None:
+            self.url = server_url
+
+        api_user = self.module.params['api_username']
+        login_user = self.module.params.get('login_user')  # deprecated in 2.10
         self.user = login_user if api_user is None else api_user
+
+        api_password = self.module.params['api_password']
+        login_password = self.module.params.get('login_password')  # deprecated in 2.10
         self.password = login_password if api_password is None else api_password
+
+        api_token = self.module.params['api_token']
+        login_token = self.module.params.get('login_token')  # deprecated in 2.10
+        self.token = login_token if api_token is None else api_token
+
+        self.validate_certs = self.module.params['validate_certs']
         self.config_files = map(os.path.expanduser, self.module.params['config_files'])
 
     def auth(self):
@@ -108,7 +121,7 @@ def gitlab_auth_argument_spec():
 
 gitlab_module_kwargs = dict(
     mutually_exclusive=[
-        ['api_url', 'server_url'],
+        ['api_url', 'server_url', 'url'],
         ['api_username', 'login_user'],
         ['api_password', 'login_password'],
         ['api_username', 'api_token'],
