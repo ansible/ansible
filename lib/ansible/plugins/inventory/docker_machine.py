@@ -59,6 +59,10 @@ split_separator: ":"
 keyed_groups:
   - prefix: gantry_component
     key: 'dm_tag_gantry_component'
+
+# Example using compose to override the default SSH behaviour of asking the user to accept the remote host key
+compose:
+  ansible_ssh_common_args: '"-o StrictHostKeyChecking=accept-new"'
 '''
 
 from ansible.errors import AnsibleError
@@ -97,7 +101,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self.inventory.set_variable(id, 'ansible_host', self.node_attrs['Driver']['IPAddress'])
                 self.inventory.set_variable(id, 'ansible_port', self.node_attrs['Driver']['SSHPort'])
                 self.inventory.set_variable(id, 'ansible_user', self.node_attrs['Driver']['SSHUser'])
-                self.inventory.set_variable(id, 'ansible_ssh_common_args', '-o StrictHostKeyChecking=no')
                 self.inventory.set_variable(id, 'ansible_ssh_private_key_file', self.node_attrs['Driver']['SSHKeyPath'])
 
                 # pass '--shell=bash' to workaround 'Error: Unknown shell
