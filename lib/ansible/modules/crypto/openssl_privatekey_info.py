@@ -279,6 +279,9 @@ def _check_dsa_consistency(key_public_data, key_private_data):
     # Make sure that g is not 0, 1 or -1 in Z/pZ
     if g < 2 or g >= p - 1:
         return False
+    # Make sure that x is in range
+    if x < 1 or x >= q:
+        return False
     # Check whether q divides p-1
     if (p - 1) % q != 0:
         return False
