@@ -24,8 +24,8 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- name: display content of all .txt files in dir
-  debug: msg={{lookup('fileglob', '/my/path/*.txt')}}
+- name: Display paths of all .txt files in dir
+  debug: msg={{ lookup('fileglob', '/my/path/*.txt') }}
 
 - name: Copy each file over that matches the given pattern
   copy:
