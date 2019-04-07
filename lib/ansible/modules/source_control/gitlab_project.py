@@ -29,6 +29,7 @@ requirements:
   - python-gitlab python module
 extends_documentation_fragment:
     - auth_basic
+    - gitlab
 options:
   server_url:
     description:
@@ -43,12 +44,6 @@ options:
     description:
       - Gitlab password for login_user
     type: str
-  api_token:
-    description:
-      - Gitlab token for logging in.
-    type: str
-    aliases:
-      - login_token
   group:
     description:
       - Id or The full path of the group of which this projects belongs to.

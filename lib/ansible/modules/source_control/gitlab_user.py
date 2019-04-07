@@ -30,6 +30,7 @@ requirements:
   - administrator rights on the Gitlab server
 extends_documentation_fragment:
     - auth_basic
+    - gitlab
 options:
   server_url:
     description:
@@ -43,18 +44,6 @@ options:
     description:
       - Gitlab password for login_user
     type: str
-  api_token:
-    description:
-      - Gitlab token for logging in.
-    type: str
-    aliases:
-      - login_token
-  config_files:
-    description:
-      - Configuration file with Gitlab API connection details
-      - See python-gitlab documentation for syntax specification
-    type: list
-    default: ["/etc/python-gitlab.cfg", "~/.python-gitlab.cfg"]
   name:
     description:
       - Name of the user you want to create

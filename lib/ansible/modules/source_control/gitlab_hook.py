@@ -29,15 +29,8 @@ requirements:
   - python-gitlab python module
 extends_documentation_fragment:
     - auth_basic
+    - gitlab
 options:
-  api_token:
-    description:
-      - Gitlab token for logging in.
-    version_added: "2.8"
-    type: str
-    aliases:
-      - private_token
-      - access_token
   project:
     description:
       - Id or Full path of the project in the form of group/name

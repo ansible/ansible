@@ -37,19 +37,13 @@ requirements:
   - python-gitlab python module
 extends_documentation_fragment:
     - auth_basic
+    - gitlab
 options:
   url:
     description:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
     type: str
-  api_token:
-    description:
-      - Your private token to interact with the GitLab API.
-    required: True
-    type: str
-    aliases:
-      - private_token
   description:
     description:
       - The unique name of the runner.
