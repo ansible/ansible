@@ -24,7 +24,7 @@ from copy import copy
 
 from ansible.errors import AnsibleError
 
-import ansible.plugins.lookup.aws_ssm as aws_ssm
+from ansible.plugins.lookup import aws_ssm
 
 try:
     import boto3

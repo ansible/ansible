@@ -376,7 +376,7 @@ def absent_strategy(compute_api, wished_server):
         return changed, {"status": "Server %s would be made absent." % target_server["id"]}
 
     # A server MUST be stopped to be deleted.
-    while not fetch_state(compute_api=compute_api, server=target_server) == "stopped":
+    while fetch_state(compute_api=compute_api, server=target_server) != "stopped":
         wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
         response = stop_server(compute_api=compute_api, server=target_server)
 
@@ -608,7 +608,6 @@ def core(module):
         "name": module.params["name"],
         "commercial_type": module.params["commercial_type"],
         "enable_ipv6": module.params["enable_ipv6"],
-        "dynamic_ip_required": module.params["dynamic_ip_required"],
         "tags": module.params["tags"],
         "organization": module.params["organization"]
     }

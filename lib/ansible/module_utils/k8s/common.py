@@ -17,11 +17,13 @@
 
 from __future__ import absolute_import, division, print_function
 
-import os
 import copy
+import json
+import os
 
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.six import iteritems, string_types
 
 try:
@@ -38,12 +40,6 @@ try:
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
-
-try:
-    import dictdiffer
-    HAS_DICTDIFFER = True
-except ImportError:
-    HAS_DICTDIFFER = False
 
 try:
     import urllib3
@@ -152,7 +148,7 @@ class K8sAnsibleMixin(object):
         if auth_set('username', 'password', 'host') or auth_set('api_key', 'host'):
             # We have enough in the parameters to authenticate, no need to load incluster or kubeconfig
             pass
-        elif auth_set('kubeconfig', 'context'):
+        elif auth_set('kubeconfig') or auth_set('context'):
             kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
         else:
             # First try to do incluster config, then kubeconfig
@@ -193,7 +189,7 @@ class K8sAnsibleMixin(object):
                                   label_selector=','.join(label_selectors),
                                   field_selector=','.join(field_selectors)).to_dict()
         except openshift.dynamic.exceptions.NotFoundError:
-            return dict(items=[])
+            return dict(resources=[])
 
         if 'items' in result:
             return dict(resources=result['items'])
@@ -225,12 +221,12 @@ class K8sAnsibleMixin(object):
 
     @staticmethod
     def diff_objects(existing, new):
-        if not HAS_DICTDIFFER:
-            return False, []
-
-        diffs = list(dictdiffer.diff(new, existing))
-        match = len(diffs) == 0
-        return match, diffs
+        result = dict()
+        diff = recursive_diff(existing, new)
+        if diff:
+            result['before'] = diff[0]
+            result['after'] = diff[1]
+        return not diff, result
 
 
 class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):

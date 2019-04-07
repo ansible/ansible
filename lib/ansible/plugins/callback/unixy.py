@@ -71,6 +71,7 @@ class CallbackModule(CallbackBase):
 
         if self._run_is_verbose(result):
             task_result = "%s %s: %s" % (task_host, msg, self._dump_results(result._result, indent=4))
+            return task_result
 
         if self.delegated_vars:
             task_delegate_host = self.delegated_vars['ansible_host']
@@ -108,6 +109,14 @@ class CallbackModule(CallbackBase):
 
         self._display.display(msg)
 
+    def v2_runner_on_skipped(self, result, ignore_errors=False):
+        self._preprocess_result(result)
+        display_color = C.COLOR_SKIP
+        msg = "skipped"
+
+        task_result = self._process_result_output(result, msg)
+        self._display.display("  " + task_result, display_color)
+
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self._preprocess_result(result)
         display_color = C.COLOR_ERROR
@@ -127,8 +136,14 @@ class CallbackModule(CallbackBase):
         task_result = self._process_result_output(result, msg)
         self._display.display("  " + task_result, display_color)
 
+    def v2_runner_item_on_skipped(self, result):
+        self.v2_runner_on_skipped(result)
+
     def v2_runner_item_on_failed(self, result):
         self.v2_runner_on_failed(result)
+
+    def v2_runner_item_on_ok(self, result):
+        self.v2_runner_on_ok(result)
 
     def v2_runner_on_unreachable(self, result):
         msg = "unreachable"

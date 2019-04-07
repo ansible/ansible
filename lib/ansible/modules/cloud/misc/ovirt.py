@@ -17,7 +17,7 @@ author:
 - Vincent Van der Kussen (@vincentvdk)
 short_description: oVirt/RHEV platform management
 description:
-    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vms) supports oVirt/RHV version 4.
+    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vm) supports oVirt/RHV version 4.
     - Allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform.
 version_added: "1.4"
 options:

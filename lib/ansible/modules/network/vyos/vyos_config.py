@@ -105,6 +105,10 @@ EXAMPLES = """
     src: vyos.cfg
     backup: yes
 
+- name: render a Jinja2 template onto the VyOS router
+  vyos_config:
+    src: vyos_template.j2
+
 - name: for idempotency, use full-form commands
   vyos_config:
     lines:

@@ -50,7 +50,7 @@ EXAMPLES = '''
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 # Gather facts about a particular ELB
 - action:
@@ -73,7 +73,7 @@ EXAMPLES = '''
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 '''
 

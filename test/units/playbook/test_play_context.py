@@ -13,7 +13,7 @@ import pytest
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.playbook.play_context import PlayContext

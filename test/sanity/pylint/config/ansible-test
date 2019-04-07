@@ -11,6 +11,9 @@ disable=
     too-many-return-statements,
     too-many-statements,
     unused-import,
+    useless-object-inheritance,
+    consider-using-dict-comprehension,
+    consider-using-set-comprehension,
 
 [BASIC]
 

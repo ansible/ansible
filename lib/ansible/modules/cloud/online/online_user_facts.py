@@ -54,7 +54,7 @@ class OnlineUserFacts(Online):
 
     def __init__(self, module):
         super(OnlineUserFacts, self).__init__(module)
-        self.name = 'user'
+        self.name = 'api/v1/user'
 
 
 def main():

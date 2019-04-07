@@ -12,7 +12,7 @@ import os
 
 import pytest
 
-from ansible.compat.tests.mock import MagicMock, patch
+from units.compat.mock import MagicMock, patch
 from ansible.module_utils import basic
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import builtins

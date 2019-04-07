@@ -18,7 +18,6 @@ DOCUMENTATION = '''
         required: True
         description:
           - Path in which the cache plugin will save the files
-        type: list
         env:
           - name: ANSIBLE_CACHE_PLUGIN_CONNECTION
         ini:

@@ -19,9 +19,6 @@ Ansible has a graduated support structure that extends to three major releases.
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
 see the chart in :ref:`release_schedule` for the degrees to which current releases are supported.
 
-.. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
-    are only supported for two releases.
-
 If you are using a release of Ansible that is no longer supported, we strongly
 encourage you to upgrade as soon as possible in order to benefit from the
 latest features and security fixes.
@@ -40,10 +37,11 @@ Release status
 ===============   ==========================   =================================================
 Ansible Release   Latest Version               Status
 ===============   ==========================   =================================================
-devel             2.7 (unreleased, trunk)      In development
-`2.6`_            2.6.1 (2018-07-05)           Supported (security **and** general bug fixes)
-`2.5`_            2.5.6 (2018-07-05)           Supported (security **and** critical bug fixes)
-`2.4`_            2.4.6 (2018-07-05)           Supported (security fixes)
+devel             2.8 (unreleased, trunk)      In development
+`2.7`_            2.7.0 (2018-10-04)           Supported (security **and** general bug fixes)
+`2.6`_            2.6.5 (2018-09-28)           Supported (security **and** critical bug fixes)
+`2.5`_            2.5.9 (2018-09-10)           Supported (security fixes)
+`2.4`_            2.4.6 (2018-07-05)           Unsupported (end of life)
 `2.3`_            2.3.3 (2017-12-20)           Unsupported (end of life)
 `2.2`_            2.2.3 (2017-05-09)           Unsupported (end of life)
 `2.1`_            2.1.6 (2017-06-01)           Unsupported (end of life)
@@ -58,6 +56,7 @@ devel             2.7 (unreleased, trunk)      In development
 
 .. Comment: devel used to point here but we're currently revamping our changelog process and have no
    link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+.. _2.7: https://github.com/ansible/ansible/blob/stable-2.7/changelogs/CHANGELOG-v2.7.rst
 .. _2.6: https://github.com/ansible/ansible/blob/stable-2.6/changelogs/CHANGELOG-v2.6.rst
 .. _2.5: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
 .. _2.4: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md

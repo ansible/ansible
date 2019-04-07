@@ -1,0 +1,2 @@
+bugfixes:
+  - user - add documentation on what underlying tools are used on each platform (https://github.com/ansible/ansible/issues/44266)

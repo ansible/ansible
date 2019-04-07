@@ -776,9 +776,8 @@ def main():
         # First, create a backup if desired.
         if module.params['backup']:
             backupdest = module.backup_local(fname)
-            print("BACKUP DEST", backupdest)
         try:
-            temp_file = NamedTemporaryFile(mode='w')
+            temp_file = NamedTemporaryFile(mode='w', dir=module.tmpdir, delete=False)
             with open(temp_file.name, 'w') as fd:
                 fd.write(str(service))
 

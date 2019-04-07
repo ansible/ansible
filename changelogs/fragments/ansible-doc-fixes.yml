@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-doc, removed local hardcoded listing, now uses the 'central' list from constants and other minor issues

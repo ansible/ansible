@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -209,7 +209,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
     ret['new_policy'] = policy
     if dry_run:
         # true if changes > 0
-        ret['changed'] = (not len(changes_needed) == 0)
+        ret['changed'] = len(changes_needed) > 0
 
     return ret
 

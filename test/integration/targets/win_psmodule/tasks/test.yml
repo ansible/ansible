@@ -145,7 +145,6 @@
 
 - name: Copy some module to custom repo
   win_shell: |
-
     # Need PSGet 1.6.0 for publishing and named repo usage
     $psg = [PSCustomObject]@{ n="PowerShellGet"; v="1.6.0"};
     Remove-Module -Name $psg.n -Force -EA SilentlyContinue;

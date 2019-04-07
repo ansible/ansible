@@ -204,7 +204,7 @@ def get_existing(module, args):
             elif 'auto' in line:
                 cost = re.search(r'auto-cost reference-bandwidth (\d+) (\S+)', line).group(1)
                 if 'Gbps' in line:
-                    cost *= 1000
+                    cost = int(cost) * 1000
                 existing['auto_cost'] = str(cost)
             elif 'timers throttle lsa' in line:
                 tmp = re.search(r'timers throttle lsa (\S+) (\S+) (\S+)', line)
@@ -377,7 +377,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-    result = dict(changed=False, warnings=warnings)
+    result = dict(changed=False, commands=[], warnings=warnings)
 
     state = module.params['state']
     args = PARAM_TO_COMMAND_KEYMAP.keys()
@@ -407,12 +407,10 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
-        result['changed'] = True
         result['commands'] = candidate
-
-    else:
-        result['commands'] = []
+        if not module.check_mode:
+            load_config(module, candidate)
+            result['changed'] = True
     module.exit_json(**result)
 
 

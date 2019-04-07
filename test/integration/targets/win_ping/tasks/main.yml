@@ -51,6 +51,7 @@
       - win_ping_ps1_result is not changed
       - win_ping_ps1_result.ping == 'bleep'
 
+# TODO: this will have to be removed once PS basic is implemented
 - name: test win_ping with extra args to verify that v2 module replacer escaping works as expected
   win_ping:
     data: bloop
@@ -92,71 +93,5 @@
     that:
       - win_ping_crash_result is failed
       - win_ping_crash_result is not changed
-      - "'FullyQualifiedErrorId : boom' in win_ping_crash_result.module_stderr"
-
-# TODO: fix code or tests? discrete error returns from PS are strange...
-
-#- name: test modified win_ping that throws an exception
-#  action: win_ping_throw
-#  register: win_ping_throw_result
-#  ignore_errors: true
-#
-#- name: check win_ping_throw result
-#  assert:
-#    that:
-#      - win_ping_throw_result is failed
-#      - win_ping_throw_result is not changed
-#      - win_ping_throw_result.msg == 'MODULE FAILURE'
-#      - win_ping_throw_result.exception
-#      - win_ping_throw_result.error_record
-#
-#- name: test modified win_ping that throws a string exception
-#  action: win_ping_throw_string
-#  register: win_ping_throw_string_result
-#  ignore_errors: true
-#
-#- name: check win_ping_throw_string result
-#  assert:
-#    that:
-#      - win_ping_throw_string_result is failed
-#      - win_ping_throw_string_result is not changed
-#      - win_ping_throw_string_result.msg == 'no ping for you'
-#      - win_ping_throw_string_result.exception
-#      - win_ping_throw_string_result.error_record
-#
-#- name: test modified win_ping that has a syntax error
-#  action: win_ping_syntax_error
-#  register: win_ping_syntax_error_result
-#  ignore_errors: true
-#
-#- name: check win_ping_syntax_error result
-#  assert:
-#    that:
-#      - win_ping_syntax_error_result is failed
-#      - win_ping_syntax_error_result is not changed
-#      - win_ping_syntax_error_result.msg
-#      - win_ping_syntax_error_result.exception
-#
-#- name: test modified win_ping that has an error that only surfaces when strict mode is on
-#  action: win_ping_strict_mode_error
-#  register: win_ping_strict_mode_error_result
-#  ignore_errors: true
-#
-#- name: check win_ping_strict_mode_error result
-#  assert:
-#    that:
-#      - win_ping_strict_mode_error_result is failed
-#      - win_ping_strict_mode_error_result is not changed
-#      - win_ping_strict_mode_error_result.msg
-#      - win_ping_strict_mode_error_result.exception
-#
-#- name: test modified win_ping to verify a Set-Attr fix
-#  action: win_ping_set_attr data="fixed"
-#  register: win_ping_set_attr_result
-#
-#- name: check win_ping_set_attr_result result
-#  assert:
-#    that:
-#      - win_ping_set_attr_result is not failed
-#      - win_ping_set_attr_result is not changed
-#      - win_ping_set_attr_result.ping == 'fixed'
+      - 'win_ping_crash_result.msg == "Unhandled exception while executing module: boom"'
+      - '"throw \"boom\"" in win_ping_crash_result.exception'

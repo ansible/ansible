@@ -63,22 +63,22 @@ class Play(Base, Taggable, Become):
     _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
 
     # Variable Attributes
-    _vars_files = FieldAttribute(isa='list', default=[], priority=99)
-    _vars_prompt = FieldAttribute(isa='list', default=[], always_post_validate=False)
+    _vars_files = FieldAttribute(isa='list', default=list, priority=99)
+    _vars_prompt = FieldAttribute(isa='list', default=list, always_post_validate=False)
 
     # Role Attributes
-    _roles = FieldAttribute(isa='list', default=[], priority=90)
+    _roles = FieldAttribute(isa='list', default=list, priority=90)
 
     # Block (Task) Lists Attributes
-    _handlers = FieldAttribute(isa='list', default=[])
-    _pre_tasks = FieldAttribute(isa='list', default=[])
-    _post_tasks = FieldAttribute(isa='list', default=[])
-    _tasks = FieldAttribute(isa='list', default=[])
+    _handlers = FieldAttribute(isa='list', default=list)
+    _pre_tasks = FieldAttribute(isa='list', default=list)
+    _post_tasks = FieldAttribute(isa='list', default=list)
+    _tasks = FieldAttribute(isa='list', default=list)
 
     # Flag/Setting Attributes
     _force_handlers = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
-    _serial = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _serial = FieldAttribute(isa='list', default=list, always_post_validate=True)
     _strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
     _order = FieldAttribute(isa='string', always_post_validate=True)
 
@@ -195,7 +195,12 @@ class Play(Base, Taggable, Become):
         roles = []
         for ri in role_includes:
             roles.append(Role.load(ri, play=self))
-        return roles
+
+        return self._extend_value(
+            self.roles,
+            roles,
+            prepend=True
+        )
 
     def _load_vars_prompt(self, attr, ds):
         new_ds = preprocess_vars(ds)

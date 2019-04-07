@@ -14,7 +14,7 @@ options:
   api_url:
     description:
       - Online API URL
-    default: 'https://api.online.net/api/v1'
+    default: 'https://api.online.net'
     aliases: ['base_url']
   api_timeout:
     description:

@@ -16,3 +16,4 @@
       pip:
         state: present
         name: 'docker{{ extra_packages }}'
+        extra_args: "-c {{ role_path }}/../../../runner/requirements/constraints.txt"

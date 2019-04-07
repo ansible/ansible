@@ -147,7 +147,6 @@ lib/ansible/modules/cloud/cloudscale/cloudscale_server.py E325
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_domain.py E325
 lib/ansible/modules/cloud/cloudstack/cs_host.py E326
-lib/ansible/modules/cloud/cloudstack/cs_instance.py E326
 lib/ansible/modules/cloud/cloudstack/cs_instance_nic_secondaryip.py E325
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E323
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E325
@@ -168,7 +167,6 @@ lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E322
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E323
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E325
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E326
-lib/ansible/modules/cloud/cloudstack/cs_staticnat.py E324
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E322
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E325
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E326
@@ -583,7 +581,6 @@ lib/ansible/modules/messaging/rabbitmq_exchange.py E326
 lib/ansible/modules/messaging/rabbitmq_policy.py E324
 lib/ansible/modules/messaging/rabbitmq_queue.py E324
 lib/ansible/modules/messaging/rabbitmq_queue.py E327
-lib/ansible/modules/messaging/rabbitmq_user.py E324
 lib/ansible/modules/monitoring/airbrake_deployment.py E324
 lib/ansible/modules/monitoring/bigpanda.py E322
 lib/ansible/modules/monitoring/bigpanda.py E324
@@ -612,7 +609,6 @@ lib/ansible/modules/monitoring/sensu_client.py E324
 lib/ansible/modules/monitoring/sensu_handler.py E326
 lib/ansible/modules/monitoring/zabbix/zabbix_maintenance.py E317
 lib/ansible/modules/net_tools/basics/get_url.py E322
-lib/ansible/modules/net_tools/basics/get_url.py E323
 lib/ansible/modules/net_tools/basics/get_url.py E324
 lib/ansible/modules/net_tools/basics/slurp.py E322
 lib/ansible/modules/net_tools/basics/uri.py E322
@@ -911,7 +907,6 @@ lib/ansible/modules/network/panos/panos_security_rule.py E324
 lib/ansible/modules/network/panos/panos_security_rule.py E325
 lib/ansible/modules/network/panos/panos_security_rule.py E326
 lib/ansible/modules/network/sros/sros_config.py E323
-lib/ansible/modules/network/sros/sros_config.py E326
 lib/ansible/modules/network/vyos/vyos_interface.py E324
 lib/ansible/modules/network/vyos/vyos_interface.py E325
 lib/ansible/modules/network/vyos/vyos_linkagg.py E324
@@ -1135,6 +1130,7 @@ lib/ansible/modules/system/svc.py E322
 lib/ansible/modules/system/svc.py E324
 lib/ansible/modules/system/ufw.py E322
 lib/ansible/modules/system/ufw.py E326
+lib/ansible/modules/system/user.py E210
 lib/ansible/modules/system/user.py E324
 lib/ansible/modules/system/user.py E327
 lib/ansible/modules/system/vdo.py E324

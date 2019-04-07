@@ -18,9 +18,6 @@
 
 import os
 import re
-import json
-import sys
-import copy
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -35,22 +32,18 @@ HAS_DOCKER_ERROR = None
 try:
     from requests.exceptions import SSLError
     from docker import __version__ as docker_version
-    from docker.errors import APIError, TLSParameterError, NotFound
+    from docker.errors import APIError, TLSParameterError
     from docker.tls import TLSConfig
-    from docker.constants import DEFAULT_DOCKER_API_VERSION
     from docker import auth
 
     if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
         HAS_DOCKER_PY_3 = True
         from docker import APIClient as Client
-        from docker.types import Ulimit, LogConfig
     elif LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         HAS_DOCKER_PY_2 = True
         from docker import APIClient as Client
-        from docker.types import Ulimit, LogConfig
     else:
         from docker import Client
-        from docker.utils.types import Ulimit, LogConfig
 
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
@@ -62,14 +55,14 @@ except ImportError as exc:
 # installed, as they utilize the same namespace are are incompatible
 try:
     # docker
-    import docker.models
+    import docker.models  # noqa: F401
     HAS_DOCKER_MODELS = True
 except ImportError:
     HAS_DOCKER_MODELS = False
 
 try:
     # docker-py
-    import docker.ssladapter
+    import docker.ssladapter  # noqa: F401
     HAS_DOCKER_SSLADAPTER = True
 except ImportError:
     HAS_DOCKER_SSLADAPTER = False
@@ -79,7 +72,7 @@ DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
 DEFAULT_TLS_HOSTNAME = 'localhost'
-MIN_DOCKER_VERSION = "1.7.0"
+MIN_DOCKER_VERSION = "1.8.0"
 DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
@@ -112,12 +105,19 @@ BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 if not HAS_DOCKER_PY:
     # No docker-py. Create a place holder client to allow
     # instantiation of AnsibleModule and proper error handing
-    class Client(object):
+    class Client(object):  # noqa: F811
         def __init__(self, **kwargs):
             pass
 
-    class APIError(Exception):
+    class APIError(Exception):  # noqa: F811
         pass
+
+
+def is_image_name_id(name):
+    """Checks whether the given image name is in fact an image ID (hash)."""
+    if re.match('^sha256:[0-9a-fA-F]{64}$', name):
+        return True
+    return False
 
 
 def sanitize_result(data):
@@ -157,7 +157,8 @@ class DockerBaseClass(object):
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
-                 required_together=None, required_if=None):
+                 required_together=None, required_if=None, min_docker_version=MIN_DOCKER_VERSION,
+                 min_docker_api_version=None):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -182,6 +183,8 @@ class AnsibleDockerClient(Client):
             required_together=required_together_params,
             required_if=required_if)
 
+        NEEDS_DOCKER_PY2 = (LooseVersion(min_docker_version) >= LooseVersion('2.0.0'))
+
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
             self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
                       "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
@@ -189,11 +192,24 @@ class AnsibleDockerClient(Client):
                       "Please note that simply uninstalling one of the modules can leave the other module in a broken state.")
 
         if not HAS_DOCKER_PY:
-            self.fail("Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)" % HAS_DOCKER_ERROR)
+            if NEEDS_DOCKER_PY2:
+                msg = "Failed to import docker - %s. Try `pip install docker`"
+            else:
+                msg = "Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)"
+            self.fail(msg % HAS_DOCKER_ERROR)
 
-        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
-            self.fail("Error: docker / docker-py version is %s. Minimum version required is %s." % (docker_version,
-                                                                                                    MIN_DOCKER_VERSION))
+        if LooseVersion(docker_version) < LooseVersion(min_docker_version):
+            if NEEDS_DOCKER_PY2:
+                if docker_version < LooseVersion('2.0'):
+                    msg = "Error: docker-py version is %s, while this module requires docker %s. Try `pip uninstall docker-py` and then `pip install docker`"
+                else:
+                    msg = "Error: docker version is %s. Minimum version required is %s. Use `pip install --upgrade docker` to upgrade."
+            else:
+                # The minimal required version is < 2.0 (and the current version as well).
+                # Advertise docker (instead of docker-py) for non-Python-2.6 users.
+                msg = ("Error: docker / docker-py version is %s. Minimum version required is %s. "
+                       "Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` followed by `pip install docker`")
+            self.fail(msg % (docker_version, min_docker_version))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
@@ -205,6 +221,11 @@ class AnsibleDockerClient(Client):
             self.fail("Docker API error: %s" % exc)
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
+
+        if min_docker_api_version is not None:
+            docker_api_version = self.version()['ApiVersion']
+            if LooseVersion(docker_api_version) < LooseVersion(min_docker_api_version):
+                self.fail('docker API version is %s. Minimum version required is %s.' % (docker_api_version, min_docker_api_version))
 
     def log(self, msg, pretty_print=False):
         pass
@@ -428,7 +449,7 @@ class AnsibleDockerClient(Client):
 
     def find_image(self, name, tag):
         '''
-        Lookup an image and return the inspection results.
+        Lookup an image (by name and tag) and return the inspection results.
         '''
         if not name:
             return None
@@ -456,6 +477,20 @@ class AnsibleDockerClient(Client):
 
         self.log("Image %s:%s not found." % (name, tag))
         return None
+
+    def find_image_by_id(self, id):
+        '''
+        Lookup an image (by ID) and return the inspection results.
+        '''
+        if not id:
+            return None
+
+        self.log("Find image %s (by ID)" % id)
+        try:
+            inspection = self.inspect_image(id)
+        except Exception as exc:
+            self.fail("Error inspecting image ID %s - %s" % (id, str(exc)))
+        return inspection
 
     def _image_lookup(self, name, tag):
         '''

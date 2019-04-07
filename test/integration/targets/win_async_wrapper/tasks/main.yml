@@ -148,8 +148,7 @@
     - asyncresult is finished
     - asyncresult is not changed
     - asyncresult is failed
-# TODO: re-enable after catastrophic failure behavior is cleaned up
-#    - asyncresult.msg is search('failing via exception')
+    - 'asyncresult.msg == "Unhandled exception while executing module: failing via exception"'
 
 - name: echo some non ascii characters
   win_command: cmd.exe /c echo über den Fußgängerübergang gehen

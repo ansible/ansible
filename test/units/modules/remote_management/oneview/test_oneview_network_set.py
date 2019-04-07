@@ -1,7 +1,7 @@
 # Copyright (c) 2016-2017 Hewlett Packard Enterprise Development LP
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.compat.tests import unittest, mock
+from units.compat import unittest, mock
 from hpe_test_utils import OneViewBaseTestCase
 from oneview_module_loader import NetworkSetModule
 

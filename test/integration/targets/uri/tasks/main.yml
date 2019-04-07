@@ -285,7 +285,7 @@
   pip:
     name: "{{ item }}"
     state: latest
-    extra_args: "-c {{ role_path }}/files/constraints.txt"
+    extra_args: "-c {{ role_path }}/../../../runner/requirements/constraints.txt"
   with_items:
     - urllib3
     - PyOpenSSL

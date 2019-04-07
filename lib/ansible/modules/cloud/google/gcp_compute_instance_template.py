@@ -200,6 +200,11 @@ options:
                             - If desired, you can also attach existing non-root persistent disks using this property.
                               This field is only applicable for persistent disks.
                             - Note that for InstanceTemplate, specify the disk name, not the URL for the disk.
+                            - 'This field represents a link to a Disk resource in GCP. It can be specified in
+                              two ways. You can add `register: name-of-resource` to a gcp_compute_disk task and
+                              then set this source field to "{{ name-of-resource }}" Alternatively, you can set
+                              this source to a dictionary with the name key where the value is the name of your
+                              Disk.'
                         required: false
                     type:
                         description:
@@ -257,6 +262,11 @@ options:
                                       field undefined to use an IP from a shared ephemeral IP address pool. If you specify
                                       a static external IP address, it must live in the same region as the zone of the
                                       instance.
+                                    - 'This field represents a link to a Address resource in GCP. It can be specified
+                                      in two ways. You can add `register: name-of-resource` to a gcp_compute_address task
+                                      and then set this nat_ip field to "{{ name-of-resource }}" Alternatively, you can
+                                      set this nat_ip to a dictionary with the address key where the value is the address
+                                      of your Address.'
                                 required: false
                             type:
                                 description:
@@ -294,6 +304,11 @@ options:
                               if neither the network nor the subnetwork is specified, the default network global/networks/default
                               is used; if the network is not specified but the subnetwork is specified, the network
                               is inferred.
+                            - 'This field represents a link to a Network resource in GCP. It can be specified
+                              in two ways. You can add `register: name-of-resource` to a gcp_compute_network task
+                              and then set this network field to "{{ name-of-resource }}" Alternatively, you can
+                              set this network to a dictionary with the selfLink key where the value is the selfLink
+                              of your Network.'
                         required: false
                     network_ip:
                         description:
@@ -306,6 +321,11 @@ options:
                             - If the network resource is in legacy mode, do not provide this property.  If the
                               network is in auto subnet mode, providing the subnetwork is optional. If the network
                               is in custom subnet mode, then this field should be specified.
+                            - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
+                              in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
+                              task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
+                              you can set this subnetwork to a dictionary with the selfLink key where the value
+                              is the selfLink of your Subnetwork.'
                         required: false
             scheduling:
                 description:
@@ -407,13 +427,13 @@ EXAMPLES = '''
             type: ONE_TO_ONE_NAT
             nat_ip: "{{ address }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -440,7 +460,7 @@ RETURN = '''
         returned: success
         type: complex
         contains:
-            can_ip_forward:
+            canIpForward:
                 description:
                     - Enables instances created based on this template to send packets with source IP
                       addresses other than their own and receive packets with destination IP addresses
@@ -462,7 +482,7 @@ RETURN = '''
                 returned: success
                 type: complex
                 contains:
-                    auto_delete:
+                    autoDelete:
                         description:
                             - Specifies whether the disk will be auto-deleted when the instance is deleted (but
                               not when the disk is detached from the instance).
@@ -476,26 +496,26 @@ RETURN = '''
                               of the disk for its root filesystem.
                         returned: success
                         type: bool
-                    device_name:
+                    deviceName:
                         description:
                             - Specifies a unique device name of your choice that is reflected into the /dev/disk/by-id/google-*
                               tree of a Linux operating system running within the instance. This name can be used
                               to reference the device for mounting, resizing, and so on, from within the instance.
                         returned: success
                         type: str
-                    disk_encryption_key:
+                    diskEncryptionKey:
                         description:
                             - Encrypts or decrypts a disk using a customer-supplied encryption key.
                         returned: success
                         type: complex
                         contains:
-                            raw_key:
+                            rawKey:
                                 description:
                                     - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                                       to either encrypt or decrypt this resource.
                                 returned: success
                                 type: str
-                            rsa_encrypted_key:
+                            rsaEncryptedKey:
                                 description:
                                     - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
                                       key to either encrypt or decrypt this resource.
@@ -514,7 +534,7 @@ RETURN = '''
                               a unique index number. If not specified, the server will choose an appropriate value.
                         returned: success
                         type: int
-                    initialize_params:
+                    initializeParams:
                         description:
                             - Specifies the parameters for a new disk that will be created alongside the new instance.
                               Use initialization parameters to create boot disks or local SSDs attached to the
@@ -522,32 +542,32 @@ RETURN = '''
                         returned: success
                         type: complex
                         contains:
-                            disk_name:
+                            diskName:
                                 description:
                                     - Specifies the disk name. If not specified, the default is to use the name of the
                                       instance.
                                 returned: success
                                 type: str
-                            disk_size_gb:
+                            diskSizeGb:
                                 description:
                                     - Specifies the size of the disk in base-2 GB.
                                 returned: success
                                 type: int
-                            disk_type:
+                            diskType:
                                 description:
                                     - Reference to a gcompute_disk_type resource.
                                     - Specifies the disk type to use to create the instance.
                                     - If not specified, the default is pd-standard.
                                 returned: success
                                 type: str
-                            source_image:
+                            sourceImage:
                                 description:
                                     - The source image to create this disk. When creating a new instance, one of initializeParams.sourceImage
                                       or disks.source is required.  To create a disk with one of the public operating
                                       system images, specify the image by its family name.
                                 returned: success
                                 type: str
-                            source_image_encryption_key:
+                            sourceImageEncryptionKey:
                                 description:
                                     - The customer-supplied encryption key of the source image. Required if the source
                                       image is protected by a customer-supplied encryption key.
@@ -557,7 +577,7 @@ RETURN = '''
                                 returned: success
                                 type: complex
                                 contains:
-                                    raw_key:
+                                    rawKey:
                                         description:
                                             - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64
                                               to either encrypt or decrypt this resource.
@@ -598,7 +618,7 @@ RETURN = '''
                               the default is PERSISTENT.
                         returned: success
                         type: str
-            machine_type:
+            machineType:
                 description:
                     - Reference to a gcompute_machine_type resource.
                 returned: success
@@ -609,23 +629,23 @@ RETURN = '''
                       These pairs can consist of custom metadata or predefined keys.
                 returned: success
                 type: dict
-            guest_accelerators:
+            guestAccelerators:
                 description:
                     - List of the type and count of accelerator cards attached to the instance .
                 returned: success
                 type: complex
                 contains:
-                    accelerator_count:
+                    acceleratorCount:
                         description:
                             - The number of the guest accelerator cards exposed to this instance.
                         returned: success
                         type: int
-                    accelerator_type:
+                    acceleratorType:
                         description:
                             - Full or partial URL of the accelerator type resource to expose to this instance.
                         returned: success
                         type: str
-            network_interfaces:
+            networkInterfaces:
                 description:
                     - An array of configurations for this interface. This specifies how this interface
                       is configured to interact with other network services, such as connecting to the
@@ -633,7 +653,7 @@ RETURN = '''
                 returned: success
                 type: complex
                 contains:
-                    access_configs:
+                    accessConfigs:
                         description:
                             - An array of configurations for this interface. Currently, only one access config,
                               ONE_TO_ONE_NAT, is supported. If there are no accessConfigs specified, then this
@@ -648,7 +668,7 @@ RETURN = '''
                                       IP or Network Access.
                                 returned: success
                                 type: str
-                            nat_ip:
+                            natIP:
                                 description:
                                     - Specifies the title of a gcompute_address.
                                     - An external IP address associated with this instance.
@@ -663,14 +683,14 @@ RETURN = '''
                                     - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
                                 returned: success
                                 type: str
-                    alias_ip_ranges:
+                    aliasIpRanges:
                         description:
                             - An array of alias IP ranges for this network interface. Can only be specified for
                               network interfaces on subnet-mode networks.
                         returned: success
                         type: complex
                         contains:
-                            ip_cidr_range:
+                            ipCidrRange:
                                 description:
                                     - The IP CIDR range represented by this alias IP range.
                                     - This IP CIDR range must belong to the specified subnetwork and cannot contain IP
@@ -679,7 +699,7 @@ RETURN = '''
                                       (e.g. 10.1.2.0/24).
                                 returned: success
                                 type: str
-                            subnetwork_range_name:
+                            subnetworkRangeName:
                                 description:
                                     - Optional subnetwork secondary range name specifying the secondary range from which
                                       to allocate the IP CIDR range for this alias IP range. If left unspecified, the
@@ -700,7 +720,7 @@ RETURN = '''
                               is inferred.
                         returned: success
                         type: dict
-                    network_ip:
+                    networkIP:
                         description:
                             - An IPv4 internal network address to assign to the instance for this network interface.
                               If not specified by the user, an unused internal IP is assigned by the system.
@@ -720,7 +740,7 @@ RETURN = '''
                 returned: success
                 type: complex
                 contains:
-                    automatic_restart:
+                    automaticRestart:
                         description:
                             - Specifies whether the instance should be automatically restarted if it is terminated
                               by Compute Engine (not terminated by a user).
@@ -728,7 +748,7 @@ RETURN = '''
                               instances cannot be automatically restarted.
                         returned: success
                         type: bool
-                    on_host_maintenance:
+                    onHostMaintenance:
                         description:
                             - Defines the maintenance behavior for this instance. For standard instances, the
                               default behavior is MIGRATE. For preemptible instances, the default and only possible
@@ -742,7 +762,7 @@ RETURN = '''
                               creation, it cannot be set or changed after the instance has been created.
                         returned: success
                         type: bool
-            service_accounts:
+            serviceAccounts:
                 description:
                     - A list of service accounts, with their specified scopes, authorized for this instance.
                       Only one service account per VM instance is supported.
@@ -884,7 +904,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -908,8 +929,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="InstanceTemplate cannot be edited")
 
 
 def delete(module, link, kind):
@@ -933,9 +953,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -946,9 +966,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/global/instanceTemplates".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -965,8 +985,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -1005,7 +1023,7 @@ def response_to_hash(module, response):
 def disk_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/{zone}/diskTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*/diskTypes/[a-z1-9\-]*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/diskTypes/%s".format(**params) % name
     return name
@@ -1049,13 +1067,13 @@ def raise_if_errors(response, err_path, module):
 
 
 def encode_request(request, module):
-    if 'metadata' in request:
+    if 'metadata' in request and request['metadata'] is not None:
         request['metadata'] = metadata_encoder(request['metadata'])
     return request
 
 
 def decode_response(response, module):
-    if 'metadata' in response:
+    if 'metadata' in response and response['metadata'] is not None:
         response['metadata'] = metadata_decoder(response['metadata'])
     return response
 

@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
       - azure
     description:
         - Query VM details from Azure Resource Manager
-        - Requires a YAML configuration file whose name ends with '.azure_rm.yaml'
+        - Requires a YAML configuration file whose name ends with 'azure_rm.(yml|yaml)'
         - By default, sets C(ansible_host) to the first public IP address found (preferring the primary NIC). If no
           public IPs are found, the first private IP (also preferring the primary NIC). The default may be overridden
           via C(hostvar_expressions); see examples.
@@ -216,9 +216,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if re.match(r'.+\.azure_rm\.y(a)?ml$', path):
+            if re.match(r'.{0,}azure_rm\.y(a)?ml$', path):
                 return True
-        # display.debug("azure_rm inventory filename must match '*.azure_rm.yml' or '*.azure_rm.yaml'")
+        # display.debug("azure_rm inventory filename must end with 'azure_rm.yml' or 'azure_rm.yaml'")
         return False
 
     def parse(self, inventory, loader, path, cache=True):

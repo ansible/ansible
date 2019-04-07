@@ -1,0 +1,82 @@
+# The tests for this module are incomplete.
+# The tests below were migrated from unit tests.
+# They take advantage of hard-coded results within the module to trigger both changed and unchanged responses.
+# They were migrated to maintain test coverage while removing unit tests that depended on use of TaskQueueManager.
+
+- name: Create new nat gateway with eip allocation-id
+  ec2_vpc_nat_gateway:
+    subnet_id: subnet-12345678
+    allocation_id: eipalloc-12345678
+    wait: yes
+    region: us-west-2
+  register: nat_gateway
+  check_mode: yes
+
+- assert:
+    that:
+      - nat_gateway.changed
+
+- name: Create new nat gateway with eip allocation-id
+  ec2_vpc_nat_gateway:
+    subnet_id: subnet-123456789
+    allocation_id: eipalloc-1234567
+    wait: yes
+    region: us-west-2
+  register: nat_gateway
+  check_mode: yes
+
+- assert:
+    that:
+      - not nat_gateway.changed
+
+- name: Create new nat gateway with eip address
+  ec2_vpc_nat_gateway:
+    subnet_id: subnet-12345678
+    eip_address: 55.55.55.55
+    wait: yes
+    region: us-west-2
+  register: nat_gateway
+  check_mode: yes
+
+- assert:
+    that:
+      - nat_gateway.changed
+
+- name: Create new nat gateway with eip address
+  ec2_vpc_nat_gateway:
+    subnet_id: subnet-123456789
+    eip_address: 55.55.55.55
+    wait: yes
+    region: us-west-2
+  register: nat_gateway
+  check_mode: yes
+
+- assert:
+    that:
+      - not nat_gateway.changed
+
+- name: Create new nat gateway only if one does not exist already
+  ec2_vpc_nat_gateway:
+    if_exist_do_not_create: yes
+    subnet_id: subnet-123456789
+    wait: yes
+    region: us-west-2
+  register: nat_gateway
+  check_mode: yes
+
+- assert:
+    that:
+      - not nat_gateway.changed
+
+- name: Delete Nat Gateway
+  ec2_vpc_nat_gateway:
+    nat_gateway_id: nat-123456789
+    state: absent
+    wait: yes
+    region: us-west-2
+  register: nat_gateway
+  check_mode: yes
+
+- assert:
+    that:
+      - nat_gateway.changed

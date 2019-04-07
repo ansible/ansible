@@ -1,0 +1,6 @@
+- import_role:
+    name: regular
+
+- assert:
+    that:
+      - regular_defaults_var is defined

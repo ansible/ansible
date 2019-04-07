@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.playbook.attribute import Attribute
 
 

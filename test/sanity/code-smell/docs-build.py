@@ -21,6 +21,8 @@ def main():
         sys.stderr.write("Command '%s' failed with status code: %d\n" % (' '.join(cmd), sphinx.returncode))
 
         if stdout.strip():
+            stdout = simplify_stdout(stdout)
+
             sys.stderr.write("--> Standard Output\n")
             sys.stderr.write("%s\n" % stdout.strip())
 
@@ -49,12 +51,6 @@ def main():
         'toc-tree-glob-pattern-no-match': r"^toctree glob pattern '[^']*' didn't match any documents$",
         'unknown-interpreted-text-role': '^Unknown interpreted text role "[^"]*".$',
     }
-
-    ignore_codes = [
-        'reference-target-not-found',
-    ]
-
-    used_ignore_codes = set()
 
     for line in lines:
         match = re.search('^(?P<path>[^:]+):((?P<line>[0-9]+):)?((?P<column>[0-9]+):)? (?P<level>WARNING|ERROR): (?P<message>.*)$', line)
@@ -94,19 +90,42 @@ def main():
         else:
             code = 'error'
 
-        if code == 'not-in-toc-tree' and path.startswith('docs/docsite/rst/modules/'):
-            continue  # modules are not expected to be in the toc tree
-
-        if code in ignore_codes:
-            used_ignore_codes.add(code)
-            continue  # ignore these codes
-
         print('%s:%d:%d: %s: %s' % (path, lineno, column, code, message))
 
-    unused_ignore_codes = set(ignore_codes) - used_ignore_codes
 
-    for code in unused_ignore_codes:
-        print('test/sanity/code-smell/docs-build.py:0:0: remove `%s` from the `ignore_codes` list as it is no longer needed' % code)
+def simplify_stdout(value):
+    """Simplify output by omitting earlier 'rendering: ...' messages."""
+    lines = value.strip().splitlines()
+
+    rendering = []
+    keep = []
+
+    def truncate_rendering():
+        """Keep last rendering line (if any) with a message about omitted lines as needed."""
+        if not rendering:
+            return
+
+        notice = rendering[-1]
+
+        if len(rendering) > 1:
+            notice += ' (%d previous rendering line(s) omitted)' % (len(rendering) - 1)
+
+        keep.append(notice)
+        rendering[:] = []
+
+    for line in lines:
+        if line.startswith('rendering: '):
+            rendering.append(line)
+            continue
+
+        truncate_rendering()
+        keep.append(line)
+
+    truncate_rendering()
+
+    result = '\n'.join(keep)
+
+    return result
 
 
 if __name__ == '__main__':

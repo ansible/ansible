@@ -60,7 +60,7 @@ EXAMPLES = '''
   cloud_guest:            # this is fake module
     name: newhost
     state: present
-- name: Refresh inventory to ensure new instaces exist in inventory
+- name: Refresh inventory to ensure new instances exist in inventory
   meta: refresh_inventory
 
 - name: Clear gathered facts from all currently targeted hosts

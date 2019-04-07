@@ -1,0 +1,96 @@
+- name: test yum proxy settings
+  block:
+    - yum:
+        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/tinyproxy-1.10.0-3.el7.x86_64.rpm'
+        state: installed
+
+    - lineinfile:
+        path: /etc/tinyproxy/tinyproxy.conf
+        line: "BasicAuth testuser testpassword"
+        state: present
+
+    # systemd doesn't play nice with this in a container for some reason
+    - shell: tinyproxy
+      changed_when: false
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://testuser:testpassword@127.0.0.1:8888"
+        state: present
+
+    - yum:
+        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
+        state: installed
+      register: yum_proxy_result
+
+    - assert:
+        that:
+          - "yum_proxy_result.changed"
+          - "'msg' in yum_proxy_result"
+          - "'rc' in yum_proxy_result"
+
+    - yum:
+        name: ninvaders
+        state: absent
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://testuser:testpassword@127.0.0.1:8888"
+        state: absent
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://127.0.0.1:8888"
+        state: present
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy_username=testuser"
+        state: present
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy_password=testpassword"
+        state: present
+
+    - yum:
+        name: 'https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/ninvaders-0.1.1-18.el7.x86_64.rpm'
+        state: installed
+      register: yum_proxy_result
+
+    - assert:
+        that:
+          - "yum_proxy_result.changed"
+          - "'msg' in yum_proxy_result"
+          - "'rc' in yum_proxy_result"
+
+  always:
+    - yum:
+        name: tinyproxy
+        state: absent
+
+    - yum:
+        name: ninvaders
+        state: absent
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://testuser:testpassword@127.0.0.1:8888"
+        state: absent
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy=http://127.0.0.1:8888"
+        state: absent
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy_username=testuser"
+        state: absent
+
+    - lineinfile:
+        path: /etc/yum.conf
+        line: "proxy_password=testpassword"
+        state: absent
+  when:
+    - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int == 7)

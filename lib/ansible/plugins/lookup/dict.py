@@ -52,10 +52,10 @@ RETURN = """
       - list of composed dictonaries with key and value
     type: list
 """
-import collections
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.common._collections_compat import Mapping
 
 
 class LookupModule(LookupBase):
@@ -69,7 +69,7 @@ class LookupModule(LookupBase):
         results = []
         for term in terms:
             # Expect any type of Mapping, notably hostvars
-            if not isinstance(term, collections.Mapping):
+            if not isinstance(term, Mapping):
                 raise AnsibleError("with_dict expects a dict")
 
             results.extend(self._flatten_hash_to_list(term))

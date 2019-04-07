@@ -59,7 +59,7 @@
   gcp_sql_user_facts:
       filters:
          - name = test-user
-      instance: {{ instance }}
+      instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -108,7 +108,7 @@
   gcp_sql_user_facts:
       filters:
          - name = test-user
-      instance: {{ instance }}
+      instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

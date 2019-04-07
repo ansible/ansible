@@ -162,6 +162,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # need a unique object here (all members contained within are
         # unique already).
         self._attributes = self._attributes.copy()
+        for key, value in self._attributes.items():
+            if callable(value):
+                self._attributes[key] = value()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()

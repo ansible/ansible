@@ -72,6 +72,6 @@ options:
     type: bool
     default: True
 notes:
-  - For information on using netconf see the :ref:`Platform Options guide using Netconf<netconf_platform_enabled_options>`
+  - For information on using netconf see the :ref:`Platform Options guide using Netconf<netconf_enabled_platform_options>`
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
 """

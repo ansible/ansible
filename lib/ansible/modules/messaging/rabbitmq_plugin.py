@@ -1,16 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# (c) 2013, Chatham Financial <oss@chathamfinancial.com>
+# Copyright: (c) 2013, Chatham Financial <oss@chathamfinancial.com>
+# Copyright: (c) 2018, Ansible Project
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -18,14 +21,14 @@ DOCUMENTATION = '''
 module: rabbitmq_plugin
 short_description: Manage RabbitMQ plugins
 description:
-  - Manage RabbitMQ plugins.
+  - This module can be used to enable or disable RabbitMQ plugins.
 version_added: "1.1"
 author:
   - Chris Hoffman (@chrishoffman)
 options:
   names:
     description:
-      - Comma-separated list of plugin names.
+      - Comma-separated list of plugin names. Also, accepts plugin name.
     required: true
     aliases: [name]
   new_only:
@@ -50,6 +53,22 @@ EXAMPLES = '''
   rabbitmq_plugin:
     names: rabbitmq_management
     state: enabled
+
+- name: Enable multiple rabbitmq plugins
+  rabbitmq_plugin:
+    names: rabbitmq_management,rabbitmq_management_visualiser
+    state: enabled
+
+- name: Disable plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: disabled
+
+- name: Enable every plugin in list with existing plugins
+  rabbitmq_plugin:
+    names: rabbitmq_management,rabbitmq_management_visualiser,rabbitmq_shovel,rabbitmq_shovel_management
+    state: enabled
+    new_only: 'yes'
 '''
 
 RETURN = '''
@@ -69,14 +88,11 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 
 
-from ansible.module_utils.basic import AnsibleModule
-
-
 class RabbitMqPlugins(object):
 
     def __init__(self, module):
         self.module = module
-
+        bin_path = ''
         if module.params['prefix']:
             if os.path.isdir(os.path.join(module.params['prefix'], 'bin')):
                 bin_path = os.path.join(module.params['prefix'], 'bin')
@@ -84,11 +100,9 @@ class RabbitMqPlugins(object):
                 bin_path = os.path.join(module.params['prefix'], 'sbin')
             else:
                 # No such path exists.
-                raise Exception("No binary folder in prefix %s" %
-                                module.params['prefix'])
+                module.fail_json(msg="No binary folder in prefix %s" % module.params['prefix'])
 
-            self._rabbitmq_plugins = bin_path + "/rabbitmq-plugins"
-
+            self._rabbitmq_plugins = os.path.join(bin_path, "rabbitmq-plugins")
         else:
             self._rabbitmq_plugins = module.get_bin_path('rabbitmq-plugins', True)
 

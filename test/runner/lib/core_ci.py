@@ -117,7 +117,7 @@ class AnsibleCoreCI(object):
                 region = 'us-east-1'
 
             self.path = "%s-%s" % (self.path, region)
-            self.endpoints = AWS_ENDPOINTS[region],
+            self.endpoints = (AWS_ENDPOINTS[region],)
             self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
@@ -192,7 +192,7 @@ class AnsibleCoreCI(object):
         if self.started:
             display.info('Skipping started %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
                          verbosity=1)
-            return
+            return None
 
         if is_shippable():
             return self.start_shippable()
@@ -542,7 +542,7 @@ class SshKey(object):
                 make_dirs(base_dir)
 
             if not os.path.isfile(key) or not os.path.isfile(pub):
-                run_command(args, ['ssh-keygen', '-q', '-t', 'rsa', '-N', '', '-f', key])
+                run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
 
             if not args.explain:
                 shutil.copy2(key, self.key)

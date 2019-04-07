@@ -33,7 +33,7 @@ options:
      description:
         - Password for the user
    update_password:
-     default: always
+     required: false
      choices: ['always', 'on_create']
      version_added: "2.3"
      description:
@@ -94,6 +94,15 @@ EXAMPLES = '''
     name: demouser
     password: secret
     update_password: on_create
+    email: demo@example.com
+    domain: default
+    default_project: demo
+
+# Create a user without password
+- os_user:
+    cloud: mycloud
+    state: present
+    name: demouser
     email: demo@example.com
     domain: default
     default_project: demo
@@ -181,7 +190,7 @@ def main():
         domain=dict(required=False, default=None),
         enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
-        update_password=dict(default='always', choices=['always', 'on_create']),
+        update_password=dict(default=None, choices=['always', 'on_create']),
     )
 
     module_kwargs = openstack_module_kwargs()

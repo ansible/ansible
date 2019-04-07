@@ -74,7 +74,7 @@ options:
   aggregate:
     description:
       - List of Interface definitions. Include multiple interface configurations together,
-        one each on a seperate line
+        one each on a separate line
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote

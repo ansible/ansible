@@ -89,7 +89,7 @@ You will run into errors because Ansible reads name in this context as a keyword
         - { role: myrole, vars: {name: Justin, othervar: othervalue}, become: True}
 
 
-For a full list of keywords see ::ref::`Playbook Keywords`.
+For a full list of keywords see :ref:`playbook_keywords`.
 
 Migrating from with_X to loop
 -----------------------------

@@ -6,7 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.onyx import onyx_ospf
 from units.modules.utils import set_module_args
 from .onyx_module import TestOnyxModule, load_fixture

@@ -71,8 +71,6 @@ Function Get-CommonChocolateyArguments {
 }
 
 Function Get-InstallChocolateyArguments {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the cmdline, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param(
         [bool]$allow_downgrade,
         [bool]$allow_empty_checksums,
@@ -165,9 +163,6 @@ Function Get-InstallChocolateyArguments {
 }
 
 Function Install-Chocolatey {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the env vars, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "", Justification="See above")]
     param(
         [String]$proxy_url,
         [String]$proxy_username,
@@ -317,8 +312,6 @@ Function Get-ChocolateyPackageVersion {
 }
 
 Function Update-ChocolateyPackage {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the cmdline, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param(
         [Parameter(Mandatory=$true)][String]$choco_path,
         [Parameter(Mandatory=$true)][String[]]$packages,
@@ -378,8 +371,6 @@ Function Update-ChocolateyPackage {
 }
 
 Function Install-ChocolateyPackage {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the cmdline, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param(
         [Parameter(Mandatory=$true)][String]$choco_path,
         [Parameter(Mandatory=$true)][String[]]$packages,

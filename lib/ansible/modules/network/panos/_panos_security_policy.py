@@ -414,7 +414,7 @@ def main():
                            required_one_of=[['api_key', 'password']])
 
     if module._name == 'panos_security_policy':
-        module.deprecate("The 'panos_security_policy' module is being renamed 'panos_security_rule'", version=2.8)
+        module.deprecate("The 'panos_security_policy' module is being renamed 'panos_security_rule'", version=2.9)
 
     if not HAS_LIB:
         module.fail_json(msg='Missing required pan-python and pandevice modules.')

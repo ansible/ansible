@@ -61,10 +61,20 @@ options:
     target_vpn_gateway:
         description:
             - URL of the Target VPN gateway with which this VPN tunnel is associated.
+            - 'This field represents a link to a TargetVpnGateway resource in GCP. It can be specified
+              in two ways. You can add `register: name-of-resource` to a gcp_compute_target_vpn_gateway
+              task and then set this target_vpn_gateway field to "{{ name-of-resource }}" Alternatively,
+              you can set this target_vpn_gateway to a dictionary with the selfLink key where
+              the value is the selfLink of your TargetVpnGateway.'
         required: true
     router:
         description:
             - URL of router resource to be used for dynamic routing.
+            - 'This field represents a link to a Router resource in GCP. It can be specified in
+              two ways. You can add `register: name-of-resource` to a gcp_compute_router task
+              and then set this router field to "{{ name-of-resource }}" Alternatively, you can
+              set this router to a dictionary with the selfLink key where the value is the selfLink
+              of your Router.'
         required: false
     peer_ip:
         description:
@@ -158,13 +168,13 @@ EXAMPLES = '''
       router: "{{ router }}"
       shared_secret: super secret
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
+    creationTimestamp:
         description:
             - Creation timestamp in RFC3339 text format.
         returned: success
@@ -183,7 +193,7 @@ RETURN = '''
             - An optional description of this resource.
         returned: success
         type: str
-    target_vpn_gateway:
+    targetVpnGateway:
         description:
             - URL of the Target VPN gateway with which this VPN tunnel is associated.
         returned: success
@@ -192,30 +202,30 @@ RETURN = '''
         description:
             - URL of router resource to be used for dynamic routing.
         returned: success
-        type: str
-    peer_ip:
+        type: dict
+    peerIp:
         description:
             - IP address of the peer VPN gateway. Only IPv4 is supported.
         returned: success
         type: str
-    shared_secret:
+    sharedSecret:
         description:
             - Shared secret used to set the secure session between the Cloud VPN gateway and the
               peer VPN gateway.
         returned: success
         type: str
-    shared_secret_hash:
+    sharedSecretHash:
         description:
             - Hash of the shared secret.
         returned: success
         type: str
-    ike_version:
+    ikeVersion:
         description:
             - IKE protocol version to use when establishing the VPN tunnel with peer VPN gateway.
             - Acceptable IKE versions are 1 or 2. Default version is 2.
         returned: success
         type: int
-    local_traffic_selector:
+    localTrafficSelector:
         description:
             - Local traffic selector to use when establishing the VPN tunnel with peer VPN gateway.
               The value should be a CIDR formatted string, for example `192.168.0.0/16`. The ranges
@@ -223,7 +233,7 @@ RETURN = '''
             - Only IPv4 is supported.
         returned: success
         type: list
-    remote_traffic_selector:
+    remoteTrafficSelector:
         description:
             - Remote traffic selector to use when establishing the VPN tunnel with peer VPN gateway.
               The value should be a CIDR formatted string, for example `192.168.0.0/16`. The ranges
@@ -236,6 +246,12 @@ RETURN = '''
             - Labels to apply to this VpnTunnel.
         returned: success
         type: dict
+    labelFingerprint:
+        description:
+            - The fingerprint used for optimistic locking of this resource.  Used internally during
+              updates.
+        returned: success
+        type: str
     region:
         description:
             - The region where the tunnel is located.
@@ -265,7 +281,7 @@ def main():
             name=dict(required=True, type='str'),
             description=dict(type='str'),
             target_vpn_gateway=dict(required=True, type='dict'),
-            router=dict(type='str'),
+            router=dict(type='dict'),
             peer_ip=dict(required=True, type='str'),
             shared_secret=dict(required=True, type='str'),
             ike_version=dict(default=2, type='int'),
@@ -288,7 +304,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -297,6 +314,7 @@ def main():
     else:
         if state == 'present':
             fetch = create(module, collection(module), kind)
+            labels_update(module, module.params, fetch)
             changed = True
         else:
             fetch = {}
@@ -311,9 +329,29 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module),
+                  response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('labels') != request.get('labels'):
+        labels_update(module, request, response)
+
+
+def labels_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/regions/{region}/vpnTunnels/{name}/setLabels"
+        ]).format(**module.params),
+        {
+            u'labels': module.params.get('labels'),
+            u'labelFingerprint': response.get('labelFingerprint')
+        }
+    )
 
 
 def delete(module, link, kind):
@@ -327,7 +365,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'description': module.params.get('description'),
         u'targetVpnGateway': replace_resource_dict(module.params.get(u'target_vpn_gateway', {}), 'selfLink'),
-        u'router': module.params.get('router'),
+        u'router': replace_resource_dict(module.params.get(u'router', {}), 'selfLink'),
         u'peerIp': module.params.get('peer_ip'),
         u'sharedSecret': module.params.get('shared_secret'),
         u'ikeVersion': module.params.get('ike_version'),
@@ -343,9 +381,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -356,9 +394,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/vpnTunnels".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -373,8 +411,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -405,14 +441,15 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'description': module.params.get('description'),
         u'targetVpnGateway': replace_resource_dict(module.params.get(u'target_vpn_gateway', {}), 'selfLink'),
-        u'router': module.params.get('router'),
+        u'router': replace_resource_dict(module.params.get(u'router', {}), 'selfLink'),
         u'peerIp': response.get(u'peerIp'),
         u'sharedSecret': response.get(u'sharedSecret'),
         u'sharedSecretHash': response.get(u'sharedSecretHash'),
         u'ikeVersion': response.get(u'ikeVersion'),
         u'localTrafficSelector': response.get(u'localTrafficSelector'),
         u'remoteTrafficSelector': response.get(u'remoteTrafficSelector'),
-        u'labels': response.get(u'labels')
+        u'labels': response.get(u'labels'),
+        u'labelFingerprint': response.get(u'labelFingerprint')
     }
 
 

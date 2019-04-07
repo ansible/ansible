@@ -1,0 +1,7 @@
+       routerboard: yes
+             model: RouterBOARD 3011UiAS
+     serial-number: 1234567890
+     firmware-type: ipq8060
+  factory-firmware: 3.41
+  current-firmware: 3.41
+  upgrade-firmware: 6.42.2

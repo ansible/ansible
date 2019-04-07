@@ -32,7 +32,7 @@ def find_target_completion(target_func, prefix):
         matches = walk_completion_targets(targets, prefix, short)
         return matches
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        return [str(ex)]
+        return [u'%s' % ex]
 
 
 def walk_completion_targets(targets, prefix, short=False):
@@ -448,7 +448,7 @@ class TestTarget(CompletionTarget):
 
         if module_path and path.startswith(module_path) and name != '__init__' and ext in MODULE_EXTENSIONS:
             self.module = name[len(module_prefix or ''):].lstrip('_')
-            self.modules = self.module,
+            self.modules = (self.module,)
         else:
             self.module = None
             self.modules = tuple()

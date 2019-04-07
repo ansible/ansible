@@ -10,7 +10,7 @@ import pytest
 
 from io import StringIO
 
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat.mock import patch, MagicMock
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext

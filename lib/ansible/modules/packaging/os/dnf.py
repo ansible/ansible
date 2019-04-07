@@ -26,9 +26,10 @@ description:
 options:
   name:
     description:
-      - "A list of package names, or package specifier with version, like C(name-1.0)
+      - "A package name or package specifier with version, like C(name-1.0).
         When using state=latest, this can be '*' which means run: dnf -y update.
-        You can also pass a url or a local path to a rpm file."
+        You can also pass a url or a local path to a rpm file.
+        To operate on several packages this can accept a comma separated string of packages or a list of packages."
     required: true
     aliases:
         - pkg
@@ -176,20 +177,11 @@ options:
     default: "no"
     type: bool
     version_added: "2.7"
-  lock_poll:
-    description:
-      - Poll interval to wait for the dnf lockfile to be freed.
-      - "By default this is set to -1, if you set it to a positive integer it will enable to polling"
-    required: false
-    default: -1
-    type: int
-    version_added: "2.8"
   lock_timeout:
     description:
-      - Amount of time to wait for the dnf lockfile to be freed
-      - This should be set along with C(lock_poll) to enable the lockfile polling.
+      - Amount of time to wait for the dnf lockfile to be freed.
     required: false
-    default: 10
+    default: 0
     type: int
     version_added: "2.8"
 notes:
@@ -505,13 +497,26 @@ class DnfModule(YumDnf):
         # Set installroot
         conf.installroot = installroot
 
+        # Handle different DNF versions immutable mutable datatypes and
+        # dnf v1/v2/v3
+        #
+        # In DNF < 3.0 are lists, and modifying them works
+        # In DNF >= 3.0 < 3.6 are lists, but modifying them doesn't work
+        # In DNF >= 3.6 have been turned into tuples, to communicate that modifying them doesn't work
+        #
+        # https://www.happyassassin.net/2018/06/27/adams-debugging-adventures-the-immutable-mutable-object/
+        #
         # Set excludes
         if self.exclude:
-            conf.exclude(self.exclude)
-
+            _excludes = list(conf.exclude)
+            _excludes.extend(self.exclude)
+            conf.exclude = _excludes
         # Set disable_excludes
         if self.disable_excludes:
-            conf.disable_excludes.append(self.disable_excludes)
+            _disable_excludes = list(conf.disable_excludes)
+            if self.disable_excludes not in _disable_excludes:
+                _disable_excludes.append(self.disable_excludes)
+                conf.disable_excludes = _disable_excludes
 
         # Set releasever
         if self.releasever is not None:
@@ -563,7 +568,14 @@ class DnfModule(YumDnf):
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
         self._specify_repositories(base, disablerepo, enablerepo)
-        base.fill_sack(load_system_repo='auto')
+        try:
+            base.fill_sack(load_system_repo='auto')
+        except dnf.exceptions.RepoError as e:
+            self.module.fail_json(
+                msg="{0}".format(to_text(e)),
+                results=[],
+                rc=1
+            )
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
             base._update_security_filters = [base.sack.query().filter(**key)]
@@ -571,7 +583,14 @@ class DnfModule(YumDnf):
             key = {'advisory_type__eq': 'security'}
             base._update_security_filters = [base.sack.query().filter(**key)]
         if self.update_cache:
-            base.update_cache()
+            try:
+                base.update_cache()
+            except dnf.exceptions.RepoError as e:
+                self.module.fail_json(
+                    msg="{0}".format(to_text(e)),
+                    results=[],
+                    rc=1
+                )
         return base
 
     def list_items(self, command):
@@ -1027,6 +1046,18 @@ class DnfModule(YumDnf):
                     msg="Autoremove should be used alone or with state=absent",
                     results=[],
                 )
+
+        if self.update_cache and not self.names and not self.list:
+            self.base = self._base(
+                self.conf_file, self.disable_gpg_check, self.disablerepo,
+                self.enablerepo, self.installroot
+            )
+            self.module.exit_json(
+                msg="Cache updated",
+                changed=False,
+                results=[],
+                rc=0
+            )
 
         # Set state as installed by default
         # This is not set in AnsibleModule() because the following shouldn't happend

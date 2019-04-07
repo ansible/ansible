@@ -69,7 +69,7 @@ def check_aos_version(module, min=False):
         import apstra.aosom
         AOS_PYEZ_VERSION = apstra.aosom.__version__
 
-        if not LooseVersion(AOS_PYEZ_VERSION) >= LooseVersion(min):
+        if LooseVersion(AOS_PYEZ_VERSION) < LooseVersion(min):
             module.fail_json(msg='aos-pyez >= %s is required for this module' % min)
 
     return True

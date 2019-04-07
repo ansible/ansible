@@ -33,11 +33,3 @@
 
 - name: Start RabbitMQ service
   service: name=rabbitmq-server state=started
-  when: ansible_distribution_release == 'trusty'
-
-# This is an ugly workaround!
-# There is a problem to run services via systemd inside docker containers (https://github.com/moby/moby/issues/2296):
-# systemctl command fails with the error 'Failed to connect to bus: No such file or directory'
-- name: Start RabbitMQ service
-  command: /etc/init.d/rabbitmq-server start
-  when: ansible_distribution_release == 'xenial'

@@ -363,7 +363,7 @@
 
 - name: validate status codes as list of strings
   win_uri:
-    url: https://httpbin.org/status/202
+    url: https://{{httpbin_host}}/status/202
     status_code:
     - '202'
     - '418'
@@ -380,7 +380,7 @@
 
 - name: validate status codes as comma separated list
   win_uri:
-    url: https://httpbin.org/status/202
+    url: https://{{httpbin_host}}/status/202
     status_code: 202, 418
     method: POST
     body: foo

@@ -718,6 +718,37 @@
     that:
       - result.stat.checksum == 'eca8d8ea089d4ea57a3b87d4091599ca8b60dfd2'
 
+- name: Copy empty file to test with insertbefore
+  copy:
+    src: testempty.txt
+    dest: "{{ output_dir }}/testempty.txt"
+
+- name: Add a line to empty file with insertbefore
+  lineinfile:
+    path: "{{ output_dir }}/testempty.txt"
+    line: top
+    insertbefore: '^not in the file$'
+  register: oneline_insbefore_test1
+
+- name: Add a line to file with only one line using insertbefore
+  lineinfile:
+    path: "{{ output_dir }}/testempty.txt"
+    line: top
+    insertbefore: '^not in the file$'
+  register: oneline_insbefore_test2
+
+- name: Stat the file
+  stat:
+    path:  "{{ output_dir }}/testempty.txt"
+  register: oneline_insbefore_file
+
+- name: Assert that insertebefore worked properly with a one line file
+  assert:
+    that:
+      - oneline_insbefore_test1 is changed
+      - oneline_insbefore_test2 is not changed
+      - oneline_insbefore_file.stat.checksum == '4dca56d05a21f0d018cd311f43e134e4501cf6d9'
+
 ###################################################################
 # Issue 29443
 # When using an empty regexp, replace the last line (since it matches every line)

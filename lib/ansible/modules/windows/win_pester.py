@@ -29,7 +29,7 @@ options:
     description:
       - Minimum version of the pester module that has to be available on the remote host.
 author:
-    - Erwan Quelin (@erwanquelin)
+    - Erwan Quelin (@equelin)
 '''
 
 RETURN = r'''

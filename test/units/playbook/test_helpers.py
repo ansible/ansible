@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock
+from units.compat import unittest
+from units.compat.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
 from ansible import errors

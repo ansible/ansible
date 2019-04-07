@@ -343,11 +343,11 @@ def main():
                                       module.params["minor_release"],
                                       module.params["patch_release"],
                                       module.params["adom"])
-        if not results[0] == 0:
+        if results[0] != 0:
             module.fail_json(msg="Create model failed", **results)
 
         results = update_flags(fmg, module.params["name"])
-        if not results[0] == 0:
+        if results[0] != 0:
             module.fail_json(msg="Update device flags failed", **results)
 
         # results = assign_dev_grp(fmg, 'Ansible', 'FGVM000000117992', 'root', 'root')
@@ -355,11 +355,11 @@ def main():
         #     module.fail_json(msg="Setting device group failed", **results)
 
         results = update_install_target(fmg, module.params["name"], module.params["policy_package"])
-        if not results[0] == 0:
+        if results[0] != 0:
             module.fail_json(msg="Adding device target to package failed", **results)
 
         results = install_pp(fmg, module.params["name"], module.params["policy_package"])
-        if not results[0] == 0:
+        if results[0] != 0:
             module.fail_json(msg="Installing policy package failed", **results)
 
         fmg.logout()

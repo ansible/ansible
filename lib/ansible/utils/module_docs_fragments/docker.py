@@ -24,8 +24,8 @@ options:
     docker_host:
         description:
             - "The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the
-              TCP connection string. For example, 'tcp://192.0.2.23:2376'. If TLS is used to encrypt the connection,
-              the module will automatically replace 'tcp' in the connection URL with 'https'."
+              TCP connection string. For example, C(tcp://192.0.2.23:2376). If TLS is used to encrypt the connection,
+              the module will automatically replace C(tcp) in the connection URL with C(https)."
             - If the value is not specified in the task, the value of environment variable C(DOCKER_HOST) will be used
               instead. If the environment variable is not set, the default value will be used.
         default: "unix://var/run/docker.sock"
@@ -101,8 +101,8 @@ options:
 
 notes:
     - Connect to the Docker daemon by providing parameters with each task or by defining environment variables.
-      You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION, DOCKER_CERT_PATH, DOCKER_SSL_VERSION,
-      DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped
+      You can define C(DOCKER_HOST), C(DOCKER_TLS_HOSTNAME), C(DOCKER_API_VERSION), C(DOCKER_CERT_PATH), C(DOCKER_SSL_VERSION),
+      C(DOCKER_TLS), C(DOCKER_TLS_VERIFY) and C(DOCKER_TIMEOUT). If you are using docker machine, run the script shipped
       with the product that sets up the environment. It will set these variables for you. See
-      https://docker-py.readthedocs.io/en/stable/machine/ for more details.
+      U(https://docker-py.readthedocs.io/en/stable/machine/) for more details.
 '''

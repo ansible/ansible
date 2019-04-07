@@ -24,8 +24,8 @@ import passlib
 from passlib.handlers import pbkdf2
 from units.mock.loader import DictDataLoader
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import mock_open, patch
+from units.compat import unittest
+from units.compat.mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import builtins

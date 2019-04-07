@@ -16,7 +16,7 @@ DOCUMENTATION = '''
         - inventory_cache
     description:
         - Get inventory hosts from Google Cloud Platform GCE.
-        - Uses a <name>.gcp.yaml (or <name>.gcp.yml) YAML configuration file.
+        - Uses a YAML configuration file that ends with gcp_compute.(yml|yaml) or gcp.(yml|yaml).
     options:
         plugin:
             description: token that ensures this is a source file for the 'gcp_compute' plugin.
@@ -120,9 +120,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.gcp.yml') or path.endswith('.gcp.yaml'):
+            if path.endswith(('gcp.yml', 'gcp.yaml')):
                 return True
-            elif path.endswith('.gcp_compute.yml') or path.endswith('.gcp_compute.yaml'):
+            elif path.endswith(('gcp_compute.yml', 'gcp_compute.yaml')):
                 return True
         return False
 
@@ -317,8 +317,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = {}
-        if self.verify_file(path):
-            config_data = self._read_config_data(path)
+        config_data = self._read_config_data(path)
 
         # get user specifications
         if 'zones' in config_data:

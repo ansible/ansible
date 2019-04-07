@@ -83,6 +83,16 @@
     that:
         - "not yum_result is changed"
 
+- name: install sos again with empty string enablerepo
+  yum: name=sos state=present enablerepo=""
+  register: yum_result
+- name: verify no change on third install with empty string enablerepo
+  assert:
+    that:
+        - "yum_result is success"
+        - "not yum_result is changed"
+
+
 # INSTALL AGAIN WITH LATEST
 - name: install sos again with state latest in check mode
   yum: name=sos state=latest
@@ -110,6 +120,15 @@
     that:
         - "yum_result is successful"
 
+- name: install sos with state latest in check mode with config file param
+  yum: name=sos state=latest conf_file=/etc/yum.conf
+  check_mode: true
+  register: yum_result
+- name: verify install sos with state latest in check mode with config file param
+  assert:
+    that:
+        - "yum_result is changed"
+
 - name: install sos with state latest in check mode
   yum: name=sos state=latest
   check_mode: true
@@ -134,6 +153,15 @@
   assert:
     that:
         - "not yum_result is changed"
+
+- name: install sos with state latest idempotence with config file param
+  yum: name=sos state=latest
+  register: yum_result
+- name: verify install sos with state latest idempotence with config file param
+  assert:
+    that:
+        - "not yum_result is changed"
+
 
 # Multiple packages
 - name: uninstall sos and bc

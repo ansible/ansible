@@ -50,7 +50,7 @@ options:
   subscription:
     description:
       - Specifies the subscription which the silence entry applies to.
-      - To create a silence entry for a client append C(client:) to client name.
+      - To create a silence entry for a client prepend C(client:) to client name.
         Example - C(client:server1.example.dev)
     required: true
     default: []

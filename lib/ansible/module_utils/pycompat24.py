@@ -81,7 +81,7 @@ except ImportError:
                 if node.name in _safe_names:
                     return _safe_names[node.name]
             elif isinstance(node, ast.UnarySub):
-                return -_convert(node.expr)
+                return -_convert(node.expr)  # pylint: disable=invalid-unary-operand-type
             raise ValueError('malformed string')
         return _convert(node_or_string)
 

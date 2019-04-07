@@ -1,4 +1,4 @@
-# (c) 2018, Matt Davis <mdavis@ansible.com>
+# Copyright: (c) 2018, Matt Davis <mdavis@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -7,8 +7,8 @@ __metaclass__ = type
 from datetime import datetime
 
 from ansible.errors import AnsibleError
-from ansible.plugins.action import ActionBase
 from ansible.module_utils._text import to_native
+from ansible.plugins.action import ActionBase
 from ansible.plugins.action.reboot import ActionModule as RebootActionModule
 
 try:
@@ -29,9 +29,9 @@ class ActionModule(RebootActionModule, ActionBase):
         'reboot_timeout', 'reboot_timeout_sec', 'shutdown_timeout', 'shutdown_timeout_sec', 'test_command',
     ))
 
+    DEFAULT_BOOT_TIME_COMMAND = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_PRE_REBOOT_DELAY = 2
-    DEFAULT_BOOT_TIME_COMMAND = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '/r /t %d /c "%s"'
     DEFAULT_SUDOABLE = False
 

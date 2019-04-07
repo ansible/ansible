@@ -2,7 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.config.data import ConfigData
 from ansible.config.manager import Setting

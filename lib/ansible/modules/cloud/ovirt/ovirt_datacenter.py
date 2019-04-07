@@ -208,7 +208,7 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         data_centers_service = connection.system_service().data_centers_service()
-        clusters_module = DatacentersModule(
+        data_centers_module = DatacentersModule(
             connection=connection,
             module=module,
             service=data_centers_service,
@@ -216,9 +216,9 @@ def main():
 
         state = module.params['state']
         if state == 'present':
-            ret = clusters_module.create()
+            ret = data_centers_module.create()
         elif state == 'absent':
-            ret = clusters_module.remove(force=module.params['force'])
+            ret = data_centers_module.remove(force=module.params['force'])
 
         module.exit_json(**ret)
     except Exception as e:

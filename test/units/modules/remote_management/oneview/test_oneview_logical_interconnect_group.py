@@ -3,7 +3,7 @@
 
 from copy import deepcopy
 
-from ansible.compat.tests import unittest, mock
+from units.compat import unittest, mock
 from oneview_module_loader import OneViewModuleBase
 from ansible.modules.remote_management.oneview.oneview_logical_interconnect_group import LogicalInterconnectGroupModule
 from hpe_test_utils import OneViewBaseTestCase
