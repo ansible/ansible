@@ -47,14 +47,14 @@ plugin: docker_machine
 
 # Example using constructed features to create groups
 # keyed_groups may be used to create custom groups
-strict: False
+strict: no
 keyed_groups:
   - prefix: tag
     key: 'dm_tags'
 
 # Example using tag splitting where the tag is like 'dm_tag_gantry_component:routinator'
-strict: False
-split_tags: True
+strict: no
+split_tags: yes
 split_separator: ":"
 keyed_groups:
   - prefix: gantry_component
