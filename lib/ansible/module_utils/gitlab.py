@@ -5,15 +5,69 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import
+import traceback
 import json
+import os
+import re
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.api import basic_auth_argument_spec
 
 try:
     from urllib import quote_plus  # Python 2.X
 except ImportError:
     from urllib.parse import quote_plus  # Python 3+
+
+GITLAB_IMP_ERR = None
+try:
+    import gitlab
+    HAS_GITLAB_PACKAGE = True
+except ImportError:
+    GITLAB_IMP_ERR = traceback.format_exc()
+    HAS_GITLAB_PACKAGE = False
+    gitlab = None
+
+
+class GitlabApiConnection(object):
+    def __init__(self, ansible_module):
+        self.module = ansible_module
+
+        if not HAS_GITLAB_PACKAGE:
+            self.module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
+
+        server_url = self.module.params['server_url']
+        login_user = self.module.params['login_user']
+        login_password = self.module.params['login_password']
+
+        api_url = re.sub('/api.*', '', self.module.params['api_url'])
+        api_user = self.module.params['api_username']
+        api_password = self.module.params['api_password']
+
+        self.token = self.module.params['api_token']
+        self.validate_certs = self.module.params['validate_certs']
+        self.url = server_url if api_url is None else api_url
+        self.user = login_user if api_user is None else api_user
+        self.password = login_password if api_password is None else api_password
+        self.config_files = map(os.path.expanduser, self.module.params['config_files'])
+
+    def auth(self):
+        try:
+            # if none of the connection details were provided, try using
+            # configuration file on the host
+            if {self.user, self.password, self.token} == {None}:
+                self.instance = gitlab.Gitlab.from_config(self.url, self.config_files)
+            else:
+                self.instance = gitlab.Gitlab(url=self.url, ssl_verify=self.validate_certs, email=self.user,
+                                              password=self.password, private_token=self.token, api_version=4)
+            self.instance.auth()
+            return self.instance
+        except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
+            self.module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        except (gitlab.exceptions.GitlabHttpError) as e:
+            self.module.fail_json(msg="Failed to connect to Gitlab server: %s. \
+                Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
 
 def request(module, api_url, project, path, access_token, private_token, rawdata='', method='GET'):

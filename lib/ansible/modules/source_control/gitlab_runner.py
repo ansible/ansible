@@ -152,22 +152,12 @@ runner:
   type: dict
 '''
 
-import os
-import re
-import traceback
-
-GITLAB_IMP_ERR = None
-try:
-    import gitlab
-    HAS_GITLAB_PACKAGE = True
-except Exception:
-    GITLAB_IMP_ERR = traceback.format_exc()
-    HAS_GITLAB_PACKAGE = False
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.gitlab import gitlab_auth_argument_spec, gitlab_module_kwargs
+from ansible.module_utils.gitlab import (gitlab_auth_argument_spec, gitlab_module_kwargs,
+                                         gitlab, GitlabApiConnection)
+
 
 try:
     cmp
@@ -310,15 +300,8 @@ def main():
     module = AnsibleModule(argument_spec, **gitlab_module_kwargs)
     deprecation_warning(module)
 
-    url = re.sub('/api.*', '', module.params['url'])
-
-    api_url = module.params['api_url']
-    validate_certs = module.params['validate_certs']
-
-    gitlab_url = url if api_url is None else api_url
-    gitlab_user = module.params['api_username']
-    gitlab_password = module.params['api_password']
-    gitlab_token = module.params['api_token']
+    api = GitlabApiConnection(module)
+    gitlab_instance = api.auth()
 
     state = module.params['state']
     runner_description = module.params['description']
@@ -329,19 +312,6 @@ def main():
     access_level = module.params['access_level']
     maximum_timeout = module.params['maximum_timeout']
     registration_token = module.params['registration_token']
-
-    if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
-
-    try:
-        gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
-                                        private_token=gitlab_token, api_version=4)
-        gitlab_instance.auth()
-    except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
-    except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
 
     gitlab_runner = GitLabRunner(module, gitlab_instance)
     runner_exists = gitlab_runner.existsRunner(runner_description)
