@@ -41,6 +41,7 @@ extends_documentation_fragment:
 options:
   url:
     description:
+      - B(Deprecated)
       - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
     type: str

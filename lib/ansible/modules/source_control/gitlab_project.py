@@ -33,15 +33,18 @@ extends_documentation_fragment:
 options:
   server_url:
     description:
+      - B(Deprecated)
       - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
     type: str
   login_user:
     description:
+      - B(Deprecated)
       - Gitlab user name.
     type: str
   login_password:
     description:
+      - B(Deprecated)
       - Gitlab password for login_user
     type: str
   group:
