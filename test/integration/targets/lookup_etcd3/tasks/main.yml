@@ -1,0 +1,9 @@
+---
+# test code for the etcd3 plugin lookup
+# (c) 2017,  Jean-Philippe Evrard <jean-philippe@evrard.me>, Christophe FERREIRA <christophe.ferreira@cnaf.fr>
+# ============================================================
+
+- name: run_tests for supported distros
+  include_tasks: run_tests.yml
+  when:
+    - ansible_distribution | lower ~ "-" ~ ansible_distribution_major_version | lower != 'centos-6'
