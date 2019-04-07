@@ -237,7 +237,7 @@ def update_netbox_object(nb_obj, data, check_mode):
 
         if not check_mode:
             nb_obj.update(data)
-            udpated_obj = nb_obj.serialize()
+            updated_obj = nb_obj.serialize()
 
         diff = _build_diff(before=data_before, after=data_after)
         return updated_obj, diff
@@ -312,7 +312,7 @@ def find_ids(nb, data):
                 try:
                     query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
                 except ValueError:
-                    return ValueError(
+                    raise ValueError(
                         "Multiple results found while searching for key: %s" % (k)
                     )
 
@@ -320,6 +320,8 @@ def find_ids(nb, data):
                 data[k] = id_list
             elif query_id:
                 data[k] = query_id.id
+            elif k in NO_DEFAULT_ID:
+                pass
             else:
                 raise ValueError("Could not resolve id of %s: %s" % (k, v))
 
