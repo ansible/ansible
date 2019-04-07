@@ -1,0 +1,18 @@
+---
+- block: 
+    - name: Create test user
+      user:
+        name: xfsquotauser
+        state: present
+      become: yes
+
+    - include_tasks: uquota.yml
+    - include_tasks: gquota.yml
+    - include_tasks: pquota.yml
+
+  always:
+    - name: cleanup test user
+      user:
+        name: xfsquotauser
+        state: absent
+      become: yes
