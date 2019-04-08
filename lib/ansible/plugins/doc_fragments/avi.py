@@ -51,6 +51,11 @@ options:
             - This allows user to perform single login and re-use the session.
         type: dict
         version_added: "2.5"
+    avi_disable_session_cache_as_fact:
+        description:
+            - It disables avi session information to be cached as a fact.
+        type: bool
+        version_added: "2.6"
 notes:
   - For more information on using Ansible to manage Avi Network devices see U(https://www.ansible.com/ansible-avi-networks).
 '''
