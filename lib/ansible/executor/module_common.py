@@ -23,7 +23,6 @@ __metaclass__ = type
 import ast
 import base64
 import datetime
-import imp
 import json
 import os
 import shlex
@@ -45,6 +44,15 @@ from ansible.plugins.loader import module_utils_loader
 from ansible.executor import action_write_locks
 
 from ansible.utils.display import Display
+
+
+try:
+    import importlib.util
+    import importlib.machinery
+    imp = None
+except ImportError:
+    import imp
+
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -496,9 +504,8 @@ class ModuleDepFinder(ast.NodeVisitor):
 def _slurp(path):
     if not os.path.exists(path):
         raise AnsibleError("imported module support code does not exist at %s" % os.path.abspath(path))
-    fd = open(path, 'rb')
-    data = fd.read()
-    fd.close()
+    with open(path, 'rb') as fd:
+        data = fd.read()
     return data
 
 
@@ -552,6 +559,40 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
     return shebang, interpreter_out
 
 
+class ModuleInfo:
+    def __init__(self, name, paths):
+        self.py_src = False
+        self.pkg_dir = False
+        path = None
+
+        if imp:
+            self._info = info = imp.find_module(name, paths)
+            self.py_src = info[2][2] == imp.PY_SOURCE
+            self.pkg_dir = info[2][2] == imp.PKG_DIRECTORY
+            if self.pkg_dir:
+                path = os.path.join(info[1], '__init__.py')
+            else:
+                path = info[1]
+        else:
+            self._info = info = importlib.machinery.PathFinder.find_spec(name, paths)
+            if info is not None:
+                self.py_src = os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES
+                self.pkg_dir = info.origin.endswith('/__init__.py')
+                path = info.origin
+            else:
+                raise ImportError("No module named '%s'" % name)
+
+        self.path = path
+
+    def get_source(self):
+        if imp and self.py_src:
+            try:
+                return self._info[0].read
+            finally:
+                self._info[0].close()
+        return _slurp(self.path)
+
+
 def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
@@ -583,13 +624,13 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         if py_module_name[0] == 'six':
             # Special case the python six library because it messes up the
             # import process in an incompatible way
-            module_info = imp.find_module('six', module_utils_paths)
+            module_info = ModuleInfo('six', module_utils_paths)
             py_module_name = ('six',)
             idx = 0
         elif py_module_name[0] == '_six':
             # Special case the python six library because it messes up the
             # import process in an incompatible way
-            module_info = imp.find_module('_six', [os.path.join(p, 'six') for p in module_utils_paths])
+            module_info = ModuleInfo('_six', [os.path.join(p, 'six') for p in module_utils_paths])
             py_module_name = ('six', '_six')
             idx = 0
         elif py_module_name[0] == 'ansible_collections':
@@ -613,8 +654,8 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 if len(py_module_name) < idx:
                     break
                 try:
-                    module_info = imp.find_module(py_module_name[-idx],
-                                                  [os.path.join(p, *py_module_name[:-idx]) for p in module_utils_paths])
+                    module_info = ModuleInfo(py_module_name[-idx],
+                                             [os.path.join(p, *py_module_name[:-idx]) for p in module_utils_paths])
                     break
                 except ImportError:
                     continue
@@ -655,7 +696,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             # imp.find_module seems to prefer to return source packages so we just
             # error out if imp.find_module returns byte compiled files (This is
             # fragile as it depends on undocumented imp.find_module behaviour)
-            if module_info[2][2] not in (imp.PY_SOURCE, imp.PKG_DIRECTORY):
+            if not module_info.pkg_dir and not module_info.py_src:
                 msg = ['Could not find python source for imported module support code for %s.  Looked for' % name]
                 if idx == 2:
                     msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
@@ -673,22 +714,19 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             # We already have a file handle for the module open so it makes
             # sense to read it now
             if py_module_name not in py_module_cache:
-                if module_info[2][2] == imp.PKG_DIRECTORY:
+                if module_info.pkg_dir:
                     # Read the __init__.py instead of the module file as this is
                     # a python package
                     normalized_name = py_module_name + ('__init__',)
                     if normalized_name not in py_module_names:
-                        normalized_path = os.path.join(module_info[1], '__init__.py')
-                        normalized_data = _slurp(normalized_path)
-                        py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                        normalized_data = module_info.get_source()
+                        py_module_cache[normalized_name] = (normalized_data, module_info.path)
                         normalized_modules.add(normalized_name)
                 else:
                     normalized_name = py_module_name
                     if normalized_name not in py_module_names:
-                        normalized_path = module_info[1]
-                        normalized_data = module_info[0].read()
-                        module_info[0].close()
-                        py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                        normalized_data = module_info.get_source()
+                        py_module_cache[normalized_name] = (normalized_data, module_info.path)
                         normalized_modules.add(normalized_name)
 
                 # Make sure that all the packages that this module is a part of
@@ -696,10 +734,10 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 for i in range(1, len(py_module_name)):
                     py_pkg_name = py_module_name[:-i] + ('__init__',)
                     if py_pkg_name not in py_module_names:
-                        pkg_dir_info = imp.find_module(py_pkg_name[-1],
-                                                       [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
+                        pkg_dir_info = ModuleInfo(py_pkg_name[-1],
+                                                  [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
                         normalized_modules.add(py_pkg_name)
-                        py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+                        py_module_cache[py_pkg_name] = (pkg_dir_info.get_source(), pkg_dir_info.path)
 
     # FIXME: Currently the AnsiBallZ wrapper monkeypatches module args into a global
     # variable in basic.py.  If a module doesn't import basic.py, then the AnsiBallZ wrapper will
@@ -712,9 +750,9 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     # from the separate python module and mirror the args into its global variable for backwards
     # compatibility.
     if ('basic',) not in py_module_names:
-        pkg_dir_info = imp.find_module('basic', module_utils_paths)
+        pkg_dir_info = ModuleInfo('basic', module_utils_paths)
         normalized_modules.add(('basic',))
-        py_module_cache[('basic',)] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+        py_module_cache[('basic',)] = (pkg_dir_info.get_source(), pkg_dir_info.path)
     # End of AnsiballZ hack
 
     #
