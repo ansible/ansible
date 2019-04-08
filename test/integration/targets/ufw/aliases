@@ -6,3 +6,4 @@ skip/docker
 needs/root
 destructive
 needs/target/setup_epel
+unstable  # the test fails when run in the group, but not by itself
