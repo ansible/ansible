@@ -45,14 +45,42 @@ EXAMPLES = '''
 # Minimal example
 plugin: docker_machine
 
-# Example using constructed features to create groups
-# keyed_groups may be used to create custom groups
+# Example using constructed features to create a group per Docker Machine L(driver,https://docs.docker.com/machine/drivers/), e.g.:
+#   $ docker-machine create --driver digitalocean ... mymachine
+#   $ ansible-inventory -i ./path/to/docker-machine.yml --host=mymachine
+#   {
+#     ...
+#     "digitalocean": {
+#       "hosts": [
+#           "mymachine"
+#       ]
+#     ...
+#   }
+strict: no
+keyed_groups:
+  - separator: ''
+    key: docker_machine_node_attributes.DriverName
+
+# Example grouping hosts by Digital Machine tag
 strict: no
 keyed_groups:
   - prefix: tag
     key: 'dm_tags'
 
-# Example using tag splitting where the tag is like 'dm_tag_gantry_component:routinator'
+# Example using tag splitting where the Docker Machine was created with a tag containing a ':' in the value.
+# When using multiple tags this is perhaps more useful than 'dm_tags' as it will create a separate variable
+# per key:value pair encoded in the tag value, e.g.
+#   $ docker-machine create --driver digitalocean ... --digitalocean-tags 'mycolon:separatedtagvalue,myother:tagvalue' mymachine
+#   $ docker-machine inspect mymachine --format '{{ .Driver.Tags }}'
+#   mycolon:separatedtagvalue,myother:tagvalue
+#   $ ansible-inventory -i ./path/to/docker-machine.yml --host=mymachine
+#   {
+#     ...
+#     "dm_tags": "mycolon:separatedtagvalue,myother:Tag",
+#     "dm_tag_mycolon": "separatedtagvalue",
+#     "dm_tag_myother": "tagvalue",
+#     ...
+#   }
 strict: no
 split_tags: yes
 split_separator: ":"
@@ -133,8 +161,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
                 id = self.node_attrs['Driver']['MachineName']
                 self.inventory.add_host(id)
-                self.inventory.add_group(self.node_attrs['DriverName'])
-                self.inventory.add_host(id, group=self.node_attrs['DriverName'])
                 self.inventory.add_host(id, group='all')
 
                 # Find out more about the following variables at: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
