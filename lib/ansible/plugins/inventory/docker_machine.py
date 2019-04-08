@@ -99,7 +99,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         #   # eval $(docker-machine env --shell=bash routinator)
 
         # capture any of the DOCKER_xxx variables that were output and create Ansible host vars
-        # with the asme name and value but with a dm_ name prefix.
+        # with the same name and value but with a dm_ name prefix.
         for line in env_out.splitlines():
             match = re.search('(DOCKER_[^=]+)="([^"]+)"', line)
             if match:
