@@ -587,7 +587,7 @@ class ModuleInfo:
     def get_source(self):
         if imp and self.py_src:
             try:
-                return self._info[0].read
+                return self._info[0].read()
             finally:
                 self._info[0].close()
         return _slurp(self.path)
