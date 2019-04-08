@@ -1442,7 +1442,7 @@ class YumModule(YumDnf):
                             try:
                                 my.repos.enableRepo(rid)
                             except yum.Errors.YumBaseError as e:
-                                if u'repository not found' in to_text(e):
+                                if to_text(u'repository not found') in to_text(e):
                                     self.module.warn("Repository %s not found." % rid)
                                 continue
                         new_repos = my.repos.repos.keys()
