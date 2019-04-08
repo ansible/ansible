@@ -2,7 +2,7 @@
 - hosts: dm-inventory-test
   gather_facts: no
   tasks:
-  - name: do something
+  - name: do something to verify that accept-new ssh setting was applied by the docker-machine inventory plugin
     file:
       path: /tmp/deleteme
       state: directory
@@ -14,7 +14,7 @@
     DOCKER_MACHINE_NAME: "{{ hostvars['dm-inventory-test'].dm_DOCKER_MACHINE_NAME }}"
     DOCKER_TLS_VERIFY: "{{ hostvars['dm-inventory-test'].dm_DOCKER_TLS_VERIFY }}"
   tasks:
-  - name: docker-compose up on target Docker Machine host
+  - name: docker-compose up on target Docker Machine host to verify that Docker daemon connection settings from the docker-machine inventory plugin work as expected
     docker_service:
       project_name: test
       definition:

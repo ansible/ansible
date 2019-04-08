@@ -172,5 +172,5 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
-        config = self._read_config_data(path)
+        self._read_config_data(path)
         self._populate()
