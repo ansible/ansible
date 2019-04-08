@@ -837,10 +837,14 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.overprovision = self.overprovision
 
                     if support_lb_change:
+                        if self.load_balancer:
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
+                    elif self.app_gateway:
                         vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
-                            .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
-                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
-                            .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
+                            .ip_configurations[0].application_gateway_backend_address_pools = app_gateway_backend_address_pools
 
                     if self.data_disks is not None:
                         data_disks = []
