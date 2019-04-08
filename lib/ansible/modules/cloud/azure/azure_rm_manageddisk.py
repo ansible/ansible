@@ -93,6 +93,17 @@ options:
             - To detach a disk from a vm, explicitly set to ''.
             - If this option is unset, the value will not be changed.
         version_added: 2.5
+    attach_caching:
+        description:
+            - "Disk caching policy controlled by VM. Will be used when attached to the VM defined by C(managed_by)."
+            - "If this option is different from the current caching policy,
+               the managed disk will be deattached from the VM and attached with current caching option again."
+            - "Allowed values: '', read_only, read_write."
+        choices:
+            - ''
+            - read_only
+            - read_write
+        version_added: 2.8
     tags:
         description:
             - Tags to assign to the managed disk.
@@ -138,6 +149,7 @@ EXAMPLES = '''
         resource_group: myResourceGroup
         disk_size_gb: 4
         managed_by: testvm001
+        attach_caching: read_only
 
     - name: Unmount the managed disk to VM
       azure_rm_manageddisk:
@@ -245,6 +257,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             zone=dict(
                 type='str',
                 choices=['', '1', '2', '3']
+            ),
+            attach_caching=dict(
+                type='str',
+                choices=['', 'read_only', 'read_write']
             )
         )
         required_if = [
@@ -267,6 +283,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.tags = None
         self.zone = None
         self.managed_by = None
+        self.attach_caching = None
         super(AzureRMManagedDisk, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             required_if=required_if,
@@ -302,7 +319,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         if self.managed_by or self.managed_by == '':
             vm_name = parse_resource_id(disk_instance.get('managed_by', '')).get('name') if disk_instance else None
             vm_name = vm_name or ''
-            if self.managed_by != vm_name:
+            if self.managed_by != vm_name or self.is_attach_caching_option_different(vm_name, result):
                 changed = True
                 if not self.check_mode:
                     if vm_name:
@@ -330,7 +347,11 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
         # prepare the data disk
         params = self.compute_models.ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
-        data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
+        caching_options = self.compute_models.CachingTypes[self.attach_caching] if self.attach_caching and self.attach_caching != '' else None
+        data_disk = self.compute_models.DataDisk(lun=lun,
+                                                 create_option=self.compute_models.DiskCreateOptionTypes.attach,
+                                                 managed_disk=params,
+                                                 caching=caching_options)
         vm.storage_profile.data_disks.append(data_disk)
         self._update_vm(vm_name, vm)
 
@@ -435,6 +456,17 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             return managed_disk_to_dict(resp)
         except CloudError as e:
             self.log('Did not find managed disk')
+
+    def is_attach_caching_option_different(self, vm_name, disk):
+        resp = False
+        if vm_name:
+            vm = self._get_vm(vm_name)
+            correspondence = next((d for d in vm.storage_profile.data_disks if d.name.lower() == disk.get('name').lower()), None)
+            if correspondence and correspondence.caching.name != self.attach_caching:
+                resp = True
+                if correspondence.caching.name == 'none' and self.attach_caching == '':
+                    resp = False
+        return resp
 
 
 def main():
