@@ -131,6 +131,12 @@ options:
                 choices:
                     - primary
                     - secondary
+    wait_for_running:
+        description:
+            - Wait till the Azure Cache for Redis instance provisioning_status is running.
+            - It takes several minutes for Azure Cache for Redis to be ready for use or in running status after creation or update or reboot.
+            - Set this option to true to wait for provisioning_status. Set to false if you don't care about provisioning_status.
+        type: bool
     state:
       description:
         - Assert the state of the Azure Cache for Redis.
@@ -366,6 +372,9 @@ class AzureRMRedisCaches(AzureRMModuleBase):
             regenerate_key=dict(
                 type='dict',
                 options=regenerate_key_spec
+            ),
+            wait_for_running=dict(
+                type='bool'
             )
         )
 
@@ -385,6 +394,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
         self.tenant_settings = None
         self.reboot = None
         self.regenerate_key = None
+        self.wait_for_running = None
 
         self.tags = None
 
@@ -564,6 +574,8 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                                                  parameters=params)
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
+            
+            if self.wait_for_running:
 
         except CloudError as exc:
             self.log('Error attempting to create the Azure Cache for Redis instance.')
