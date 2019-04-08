@@ -1,5 +1,34 @@
----
-- hosts: dm-inventory-test
+- hosts: 127.0.0.1
+  gather_facts: no
+  vars:
+    dm_machine_name: "{{ lookup('env', 'DM_MACHINE_NAME') }}"
+  tasks:
+  - name: sanity check Docker Machine output
+    vars:
+      dm_ls_format: !unsafe '{{.Name}} | {{.DriverName}} | {{.State}} | {{.URL}} | {{.Error}}'
+      success_regex: "^{{ dm_machine_name }} | digitalocean | Running | tcp://.+ |$"
+    shell: docker-machine ls --format '{{ dm_ls_format }}'
+    register: result
+    failed_when: result.rc != 0 or result.stdout is not match(success_regex)
+
+  - name: verify Docker Machine ip
+    shell: docker-machine ip {{ dm_machine_name }}
+    register: result
+    failed_when: result.rc != 0 or result.stdout != hostvars[dm_machine_name].ansible_host
+
+  - name: verify Docker Machine env
+    shell: docker-machine env --shell=sh {{ dm_machine_name }}
+    register: result
+
+  - assert:
+      that:
+        - "'DOCKER_TLS_VERIFY=\"{{ hostvars[dm_machine_name].dm_DOCKER_TLS_VERIFY }}\"' in result.stdout"
+        - "'DOCKER_HOST=\"{{ hostvars[dm_machine_name].dm_DOCKER_HOST }}\"' in result.stdout"
+        - "'DOCKER_CERT_PATH=\"{{ hostvars[dm_machine_name].dm_DOCKER_CERT_PATH }}\"' in result.stdout"
+        - "'DOCKER_MACHINE_NAME=\"{{ hostvars[dm_machine_name].dm_DOCKER_MACHINE_NAME }}\"' in result.stdout"
+      fail_msg: "Got: {{ result.stdout }}"
+
+- hosts: dm-test-machine
   gather_facts: no
   tasks:
   - name: do something to verify that accept-new ssh setting was applied by the docker-machine inventory plugin
@@ -7,7 +36,7 @@
       path: /tmp/deleteme
       state: directory
 
-- hosts: localhost
+- hosts: 127.0.0.1
   environment:
     DOCKER_CERT_PATH: "{{ hostvars['dm-inventory-test'].dm_DOCKER_CERT_PATH }}"
     DOCKER_HOST: "{{ hostvars['dm-inventory-test'].dm_DOCKER_HOST }}"

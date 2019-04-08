@@ -1,0 +1,17 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  vars:
+    do_api_token: "{{ lookup('env', 'DIGITALOCEAN_TOKEN') }}"
+    do_region: "{{ lookup('env', 'DIGITALOCEAN_REGION) }}"
+    dm_machine_name: "{{ lookup('env', 'DM_MACHINE_NAME') }}"
+  tasks:
+    - name: Request Docker Machine to create a provisioned Digital Ocean droplet
+      shell: "docker-machine create \
+        --driver digitalocean \
+        --digitalocean-access-token {{ do_api_token }} \
+        --digitalocean-region {{ do_region }} \
+        --digitalocean-image ubuntu-18-04-x64 \
+        --digitalocean-size s-1vcpu-1gb \
+        --digitalocean-tags sometag:somevalue,othertag:othervalue \
+        {{ dm_machine_name }}"
