@@ -101,12 +101,13 @@ class YumDnf(with_metaclass(ABCMeta, object)):
 
         # Fail if someone passed a space separated string
         # https://github.com/ansible/ansible/issues/46301
-        if any((' ' in name and '@' not in name and '==' not in name for name in self.names)):
-            module.fail_json(
-                msg='It appears that a space separated string of packages was passed in '
-                    'as an argument. To operate on several packages, pass a comma separated '
-                    'string of packages or a list of packages.'
-            )
+        for name in self.names:
+            if ' ' in name and not any(spec in name for spec in ['@', '>', '<', '=']):
+                module.fail_json(
+                    msg='It appears that a space separated string of packages was passed in '
+                        'as an argument. To operate on several packages, pass a comma separated '
+                        'string of packages or a list of packages.'
+                )
 
         # Sanity checking for autoremove
         if self.state is None:
