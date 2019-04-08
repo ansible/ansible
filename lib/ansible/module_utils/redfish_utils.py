@@ -514,23 +514,27 @@ class RedfishUtils(object):
     def get_firmware_update_capabilities(self):
         result = {}
         response = self.get_request(self.root_uri + "/redfish/v1")
-
         if response['ret'] is False:
             return response
 
         result['ret'] = True
 
-        result['entries'] = []
+        result['entries'] = {}
+        
         data = response['data']
         if "UpdateService" in data:
-            response = self.get_request(self.root_uri + "/redfish/v1/UpdateService")
+            updateservce_uri = data['UpdateService']["@odata.id"]
+            response = self.get_request(self.root_uri + updateservce_uri)
 
             data = response['data']
 
             if "Actions" in data:
-                if "#UpdateService.SimpleUpdate" in data["Actions"]:
-                    if "TransferProtocol@Redfish.AllowableValues" in data["Actions"]["#UpdateService.SimpleUpdate"]:
-                        result['entries'] = data["Actions"]["#UpdateService.SimpleUpdate"]["TransferProtocol@Redfish.AllowableValues"]
+                actions = data['Actions']                
+                if len(actions) > 0:
+                    for action in actions.values():
+                        result['entries'][action['title']] = action['TransferProtocol@Redfish.AllowableValues']
+                else:
+                    return {'ret': "False", 'msg': "Actions list is empty."}
             else:
                 return {'ret': "False", 'msg': "Key Actions not found."}
         else:
