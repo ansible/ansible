@@ -622,7 +622,9 @@ options:
         type: int
   state:
     description:
-      - Service state.
+      - I(absent) - A service matching the specified name will be removed and have its tasks stopped.
+      - I(present) - Asserts the existence of a service matching the name and provided configuration parameters.
+        Unspecified configuration parameters will be set to docker defaults.
     type: str
     required: yes
     default: present
