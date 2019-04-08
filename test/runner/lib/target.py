@@ -210,6 +210,14 @@ def walk_units_targets():
     return walk_test_targets(path='test/units', module_path='test/units/modules/', extensions=('.py',), prefix='test_')
 
 
+def walk_windows_units_targets():
+    """
+    rtype: collections.Iterable[TestTarget[
+    :return:
+    """
+    return walk_test_targets(path='test/units', module_path='test/units/modules/', extensions=('.ps1',), prefix='test_')
+
+
 def walk_compile_targets():
     """
     :rtype: collections.Iterable[TestTarget]

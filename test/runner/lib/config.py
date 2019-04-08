@@ -258,6 +258,22 @@ class UnitsConfig(TestConfig):
             self.requirements = False
 
 
+class WindowsUnitsConfig(TestConfig):
+    """Configuration for the windows-units command."""
+    def __init__(self, args):
+        """
+        :type args: any
+        """
+        super(WindowsUnitsConfig, self).__init__(args, 'windows-units')
+
+        self.requirements_mode = args.requirements_mode if 'requirements_mode' in args else ''
+
+        if self.requirements_mode == 'only':
+            self.requirements = True
+        elif self.requirements_mode == 'skip':
+            self.requirements = False
+
+
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
     def __init__(self, args):

@@ -180,13 +180,14 @@ def cleanup_python_paths():
         shutil.rmtree(path)
 
 
-def get_coverage_environment(args, target_name, version, temp_path, module_coverage):
+def get_coverage_environment(args, target_name, version, temp_path, module_coverage, language='python'):
     """
     :type args: TestConfig
     :type target_name: str
     :type version: str
     :type temp_path: str
     :type module_coverage: bool
+    :type language: str | python
     :rtype: dict[str, str]
     """
     if temp_path:
@@ -202,7 +203,7 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
 
     config_file = os.path.join(coverage_config_base_path, COVERAGE_CONFIG_PATH)
     coverage_file = os.path.join(coverage_output_base_path, COVERAGE_OUTPUT_PATH, '%s=%s=%s=%s=coverage' % (
-        args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version))
+        args.command, target_name, args.coverage_label or 'local-%s' % version, '%s-%s' % (language, version)))
 
     if args.coverage_check:
         # cause the 'coverage' module to be found, but not imported or enabled

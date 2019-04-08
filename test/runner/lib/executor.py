@@ -57,6 +57,7 @@ from lib.util import (
     get_available_port,
     generate_pip_command,
     find_python,
+    get_coverage_environment,
     get_docker_completion,
     get_remote_completion,
     named_temporary_file,
@@ -84,6 +85,7 @@ from lib.target import (
     walk_network_integration_targets,
     walk_windows_integration_targets,
     walk_units_targets,
+    walk_windows_units_targets,
 )
 
 from lib.changes import (
@@ -1362,6 +1364,61 @@ def command_units(args):
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:
                 raise
+
+
+def command_windows_units(args):
+    """
+    :type args: WindowsUnitsConfig
+    """
+    changes = get_changes_filter(args)
+    require = args.require + changes
+    include, exclude = walk_external_targets(walk_windows_units_targets(), args.include, args.exclude, require)
+
+    if not include:
+        raise AllTargetsSkipped()
+
+    if args.delegate:
+        raise Delegate(require=changes, exclude=args.exclude)
+
+    find_executable('pwsh', required=True)
+
+    if args.requirements_mode != 'skip':
+        cmd = ['test/runner/requirements/windows-units.ps1']
+
+        try:
+            stdout, stderr = run_command(args, cmd, capture=True)
+            status = 0
+        except SubprocessError as ex:
+            stdout = ex.stdout
+            stderr = ex.stderr
+            status = ex.status
+
+        if stderr:
+            raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+
+    if args.requirements_mode == 'only':
+        sys.exit()
+
+    # Use a json string to easily encode/escape path arguments sent to the pwsh process
+    test_info = dict(
+        include=[target.__dict__ for target in include],
+        exclude=[target.__dict__ for target in exclude],
+    )
+    cmd = [
+        'test/runner/setup/windows-units.ps1',
+        '-OutputFile', 'test/results/junit/powershell-units.xml',
+        '-Tests', json.dumps(test_info)
+    ]
+
+    if args.verbosity:
+        cmd.append('-Verbose')
+
+    if args.coverage:
+        env = get_coverage_environment(args, 'windows-units', '6.0', None, False, language='powershell')
+        cmd += ['-Coverage', env['COVERAGE_FILE']]
+
+    display.info('Windows unit test with PowerShell')
+    run_command(args, cmd, capture=False)
 
 
 def get_changes_filter(args):

@@ -33,6 +33,7 @@ from lib.executor import (
     command_network_integration,
     command_windows_integration,
     command_units,
+    command_windows_units,
     command_shell,
     SUPPORTED_PYTHON_VERSIONS,
     ApplicationWarning,
@@ -48,6 +49,7 @@ from lib.config import (
     NetworkIntegrationConfig,
     SanityConfig,
     UnitsConfig,
+    WindowsUnitsConfig,
     ShellConfig,
 )
 
@@ -69,6 +71,7 @@ from lib.target import (
     walk_network_integration_targets,
     walk_windows_integration_targets,
     walk_units_targets,
+    walk_windows_units_targets,
     walk_sanity_targets,
 )
 
@@ -380,6 +383,18 @@ def parse_args():
     units.add_argument('--requirements-mode',
                        choices=('only', 'skip'),
                        help=argparse.SUPPRESS)
+
+    windows_units = subparsers.add_parser('windows-units',
+                                          parents=[test],
+                                          help='windows unit tests')
+
+    windows_units.set_defaults(func=command_windows_units,
+                               targets=walk_windows_units_targets,
+                               config=WindowsUnitsConfig)
+
+    windows_units.add_argument('--requirements-mode',
+                               choices=('only', 'skip'),
+                               help=argparse.SUPPRESS)
 
     add_extra_docker_options(units, integration=False)
 
