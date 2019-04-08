@@ -37,7 +37,7 @@ import sys
 import termios
 
 from ansible import constants as C
-from ansible.plugins.loader import cliconf_loader, connection_loader, httpapi_loader
+from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection as SocketConnection, write_to_file_descriptor
@@ -101,9 +101,12 @@ class Connection(ConnectionBase):
 
         env = os.environ.copy()
         env.update({
+                   'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
                    'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
                    'ANSIBLE_CONNECTION_PATH': connection_loader.print_paths(),
                    'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
+                   'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
+                   'ANSIBLE_TERMINAL_PLUGINS': terminal_loader.print_paths(),
                    })
         python = sys.executable
         master, slave = pty.openpty()
