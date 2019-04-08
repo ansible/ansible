@@ -44,7 +44,7 @@ import argparse
 import re
 from time import time
 
-import ansible.module_utils.six
+from ansible.module_utils import six
 from ansible.module_utils.six.moves import configparser
 
 try:
