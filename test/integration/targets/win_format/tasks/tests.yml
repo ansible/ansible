@@ -1,0 +1,138 @@
+---
+- win_shell: $AnsiPart = Get-Partition -DriveLetter T; $AnsiVol = Get-Volume -DriveLetter T; "$($AnsiPart.Size),$($AnsiVol.Size)"
+  register: shell_result
+
+- name: Assert volume size is 0 for pristine volume
+  assert:
+    that:
+      - shell_result.stdout | trim == "2096037888,0"
+
+- name: Get partition access path
+  win_shell: (Get-Partition -DriveLetter T).AccessPaths[1]
+  register: shell_partition_result
+
+- name: Try to format using mutually exclusive parameters
+  win_format:
+    drive_letter: T
+    path: "{{ shell_partition_result.stdout | trim }}"
+  register: format_mutex_result
+  ignore_errors: True
+
+- assert:
+    that:
+      - format_mutex_result is failed
+      - 'format_mutex_result.msg == "parameters are mutually exclusive: drive_letter, path, label"'
+
+- name: Fully format volume and assign label (check)
+  win_format:
+    drive_letter: T
+    new_label: Formatted
+    full: True
+  register: format_result_check
+  check_mode: True
+
+- win_shell: $AnsiPart = Get-Partition -DriveLetter T; $AnsiVol = Get-Volume -DriveLetter T; "$($AnsiPart.Size),$($AnsiVol.Size),$($AnsiVol.FileSystemLabel)"
+  register: formatted_value_result_check
+
+- name: Fully format volume and assign label
+  win_format:
+    drive_letter: T
+    new_label: Formatted
+    full: True
+  register: format_result
+
+- win_shell: $AnsiPart = Get-Partition -DriveLetter T; $AnsiVol = Get-Volume -DriveLetter T; "$($AnsiPart.Size),$($AnsiVol.Size),$($AnsiVol.FileSystemLabel)"
+  register: formatted_value_result
+
+- assert:
+    that:
+      - format_result_check is changed
+      - format_result is changed
+      - formatted_value_result_check.stdout | trim == "2096037888,0,"
+      - formatted_value_result.stdout | trim == "2096037888,2096033792,Formatted"
+
+- name: Format NTFS volume with integrity streams enabled
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: ntfs
+    integrity_streams: True
+  ignore_errors: True
+  register: ntfs_integrity_streams
+
+- assert:
+    that:
+      - ntfs_integrity_streams is failed
+      - 'ntfs_integrity_streams.msg == "Integrity streams can be enabled only on ReFS volumes. You specified: ntfs"'
+
+- name: Format volume (require force_format for specifying different file system)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: fat32
+  ignore_errors: True
+  register: require_force_format
+
+- assert:
+    that:
+      - require_force_format is failed
+      - 'require_force_format.msg == "Force format must be specified since target file system: fat32 is different from the current file system of the volume: ntfs"'
+
+- name: Format volume (forced) (check)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
+    force: True
+  check_mode: True
+  ignore_errors: True
+  register: not_pristine_forced_check
+
+- name: Format volume (forced)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
+    force: True
+  register: not_pristine_forced
+
+- name: Format volume (forced) (idempotence will not work)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
+    force: True
+  register: not_pristine_forced_idem_fails
+
+- name: Format volume (idempotence)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
+  register: not_pristine_forced_idem
+
+- assert:
+    that:
+      - not_pristine_forced_check is changed
+      - not_pristine_forced is changed
+      - not_pristine_forced_idem_fails is changed
+      - not_pristine_forced_idem is not changed
+
+- name: Add a file
+  win_file:
+    path: T:\path\to\directory
+    state: directory
+  register: add_file_to_volume
+
+- name: Format volume with file inside without force
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+  register: format_volume_without_force
+  ignore_errors: True
+
+- name: Format volume with file inside with force
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    force: True
+  register: format_volume_with_force
+
+- assert:
+    that:
+      - add_file_to_volume is changed
+      - format_volume_without_force is failed
+      - 'format_volume_without_force.msg == "Force format must be specified to format non-pristine volumes"'
+      - format_volume_with_force is changed
