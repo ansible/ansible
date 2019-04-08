@@ -34,6 +34,29 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
+    plan:
+        description:
+            - App service plan.
+            - It can be name of existing app service plan in same resource group as function app.
+            - "It can be resource id of existing app service plan. eg.,
+              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
+            - It can be a dict which contains C(name), C(resource_group).
+            - C(name). Name of app service plan.
+            - C(resource_group). Resource group name of app service plan.
+        version_added: "2.8"
+    container_settings:
+        description: Web app container settings.
+        suboptions:
+            name:
+                description: Name of container. eg. "imagename:tag"
+            registry_server_url:
+                description: Container registry server url. eg. mydockerregistry.io
+            registry_server_user:
+                description: The container registry server user name.
+            registry_server_password:
+                description:
+                    - The container registry server password.
+        version_added: "2.8"
     storage_account:
         description:
             - Name of the storage account to use.
@@ -130,11 +153,22 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.web.models import Site, SiteConfig, NameValuePair, SiteSourceControl
+    from azure.mgmt.web.models import (
+        site_config, app_service_plan, Site, SiteConfig, NameValuePair, SiteSourceControl,
+        AppServicePlan, SkuDescription
+    )
     from azure.mgmt.resource.resources import ResourceManagementClient
+    from msrest.polling import LROPoller
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+container_settings_spec = dict(
+    name=dict(type='str', required=True),
+    registry_server_url=dict(type='str'),
+    registry_server_user=dict(type='str'),
+    registry_server_password=dict(type='str', no_log=True)
+)
 
 
 class AzureRMFunctionApp(AzureRMModuleBase):
@@ -150,7 +184,14 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 type='str',
                 aliases=['storage', 'storage_account_name']
             ),
-            app_settings=dict(type='dict')
+            app_settings=dict(type='dict'),
+            plan=dict(
+                type='raw'
+            ),
+            container_settings=dict(
+                type='dict',
+                options=container_settings_spec
+            )
         )
 
         self.results = dict(
@@ -164,6 +205,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         self.location = None
         self.storage_account = None
         self.app_settings = None
+        self.plan = None
+        self.container_settings = None
 
         required_if = [('state', 'present', ['storage_account'])]
 
@@ -213,10 +256,28 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             else:
                 self.results['changed'] = False
         else:
+            kind = 'functionapp'
+            linux_fx_version = None
+            if self.container_settings and self.container_settings.get('name'):
+                kind = 'functionapp,linux,container'
+                linux_fx_version = 'DOCKER|'
+                if self.container_settings.get('registry_server_url'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_URL'] = 'https://' + self.container_settings['registry_server_url']
+                    linux_fx_version += self.container_settings['registry_server_url'] + '/'
+                linux_fx_version += self.container_settings['name']
+                if self.container_settings.get('registry_server_user'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_USERNAME'] = self.container_settings.get('registry_server_user')
+
+                if self.container_settings.get('registry_server_password'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_PASSWORD'] = self.container_settings.get('registry_server_password')
+
+            if not self.plan and function_app:
+                self.plan = function_app.server_farm_id
+
             if not exists:
                 function_app = Site(
                     location=self.location,
-                    kind='functionapp',
+                    kind=kind,
                     site_config=SiteConfig(
                         app_settings=self.aggregated_app_settings(),
                         scm_type='LocalGit'
@@ -225,6 +286,20 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 self.results['changed'] = True
             else:
                 self.results['changed'], function_app = self.update(function_app)
+
+            # get app service plan
+            if self.plan:
+                if isinstance(self.plan, dict):
+                    self.plan = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Web/serverfarms/{2}".format(
+                        self.subscription_id,
+                        self.plan.get('resource_group', self.resource_group),
+                        self.plan.get('name')
+                    )
+                function_app.server_farm_id = self.plan
+
+            # set linux fx version
+            if linux_fx_version:
+                function_app.site_config.linux_fx_version = linux_fx_version
 
             if self.check_mode:
                 self.results['state'] = function_app.as_dict()
