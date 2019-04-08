@@ -33,7 +33,7 @@
     state: present
 
 - name: Check if etcd3ctl exists for re-use.
-  shell: "ETCDCTL_API=3 {{ etcd3_path }}/etcdctl --endpoints=localhost:2379 get foo"
+  shell: "ETCDCTL_API=3 {{ etcd3_path }}/etcdctl --endpoints=0.0.0.0:2379 get foo"
   args:
     executable: /bin/bash
   changed_when: false
@@ -79,6 +79,10 @@
     state: "present"
   register: _etcd3_prst_chktst
   check_mode: true
+
+- name: debug
+  debug:
+    msg: "{{inventory_hostname}}"
 
 - name: check read key
   set_fact:
