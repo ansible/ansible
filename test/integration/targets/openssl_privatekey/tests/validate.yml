@@ -105,6 +105,25 @@
   loop_control:
     label: "{{ item.item.curve }}"
 
+- name: Validate other type generation (just check changed)
+  assert:
+    that:
+    - item is changed
+  loop: "{{ privatekey_t1_generate.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.type }}"
+
+
+- name: Validate other type generation idempotency
+  assert:
+    that:
+    - item is not changed
+  loop: "{{ privatekey_t1_idempotency.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.type }}"
+
 - name: Validate passphrase changing
   assert:
     that:
