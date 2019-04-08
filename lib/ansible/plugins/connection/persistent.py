@@ -103,7 +103,7 @@ class Connection(ConnectionBase):
         env.update({
                    'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
                    'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
-                   'ANSIBLE_CONNECTION_PATH': connection_loader.print_paths(),
+                   'ANSIBLE_CONNECTION_PLUGINS': connection_loader.print_paths(),
                    'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
                    'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
                    'ANSIBLE_TERMINAL_PLUGINS': terminal_loader.print_paths(),
