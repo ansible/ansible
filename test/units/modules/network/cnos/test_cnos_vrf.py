@@ -38,15 +38,22 @@ class TestCnosVrfModule(TestCnosModule):
         self.mock_run_commands = patch('ansible.modules.network.cnos.cnos_vrf.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self._patch_is_switchport = patch(
+            'ansible.modules.network.cnos.cnos_vrf.is_switchport'
+        )
+        self._is_switchport = self._patch_is_switchport.start()
+
     def tearDown(self):
         super(TestCnosVrfModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
+        self._patch_is_switchport.stop()
 
     def load_fixtures(self, commands=None):
         config_file = 'cnos_vrf_config.cfg'
         self.load_config.return_value = load_fixture(config_file)
         self.run_commands.return_value = load_fixture(config_file)
+        self._is_switchport.return_value = False
 
     def test_cnos_vrf_present(self):
         set_module_args(dict(name='test1', state='present'))
