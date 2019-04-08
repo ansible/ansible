@@ -54,6 +54,7 @@ from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 
 display = Display()
 
@@ -94,7 +95,7 @@ def to_bool(a):
         return a
     if isinstance(a, string_types):
         a = a.lower()
-    if a in ('yes', 'on', '1', 'true', 1):
+    if a in BOOLEANS_TRUE:
         return True
     return False
 

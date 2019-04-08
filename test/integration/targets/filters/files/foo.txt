@@ -36,7 +36,24 @@ a = 1
 There are various casts available
 
 int = 1
-bool = True
+
+y_bool = True
+yes_bool = True
+on_bool = True
+str_1_bool = True
+int_1_bool = True
+float_1_bool = True
+full_true_bool = True
+t_bool = True
+
+n_bool = False
+no_bool = False
+off_bool = False
+str_0_bool = False
+int_0_bool = False
+float_0_bool = False
+full_false_bool = False
+f_bool = False
 
 String quoting
 
