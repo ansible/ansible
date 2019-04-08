@@ -472,6 +472,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
              'vm_size'])
         ]
 
+        mutually_exclusive = [('load_balancer', 'app_gateway')]
         self.results = dict(
             changed=False,
             actions=[],
@@ -481,7 +482,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         super(AzureRMVirtualMachineScaleSet, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             supports_check_mode=True,
-            required_if=required_if)
+            required_if=required_if,
+            mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
 
@@ -585,10 +587,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                    if load_balancer.inbound_nat_pools else None)
 
             if self.app_gateway:
+                self.results['XX-AG-1'] = "OK"
                 app_gateway = self.get_app_gateway(self.app_gateway)
                 app_gateway_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
                                                       for resource in app_gateway.backend_address_pools]
                                                      if app_gateway.backend_address_pools else None)
+                self.results['XX-AG-2'] = app_gateway_backend_address_pools
 
         try:
             self.log("Fetching virtual machine scale set {0}".format(self.name))
@@ -651,14 +655,22 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_dict['zones'] = self.zones
 
                 nicConfigs = vmss_dict['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations']
+
                 backend_address_pool = nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('loadBalancerBackendAddressPools', [])
+                backend_address_pool += nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('applicationGatewayBackendAddressPools', [])
+                lb_or_ag_id = None
                 if (len(nicConfigs) != 1 or len(backend_address_pool) != 1):
                     support_lb_change = False  # Currently not support for the vmss contains more than one loadbalancer
                     self.module.warn('Updating more than one load balancer on VMSS is currently not supported')
                 else:
-                    load_balancer_id = "{0}/".format(load_balancer.id) if load_balancer else None
+                    load_balancer
+                    if load_balancer:
+                        lb_or_ag_id = "{0}/".format(load_balancer.id)
+                    elif app_gateway:
+                        lb_or_ag_id = "{0}/".format(app_gateway.id)
+
                     backend_address_pool_id = backend_address_pool[0].get('id')
-                    if bool(load_balancer_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(load_balancer_id):
+                    if bool(lb_or_ag_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(lb_or_ag_id):
                         differences.append('load_balancer')
                         changed = True
 
