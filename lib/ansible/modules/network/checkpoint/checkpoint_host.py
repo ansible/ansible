@@ -134,7 +134,6 @@ def update_host(module, connection):
 
 def delete_host(module, connection):
     name = module.params['name']
-    ip_address = module.params['ip_address']
 
     payload = {'name': name}
 
@@ -170,7 +169,8 @@ def main():
         if code == 200:
             if needs_update(module, response):
                 code, response = update_host(module, connection)
-
+                if code != 200:
+                    module.fail_json(msg=response)
                 if module.params['auto_publish_session']:
                     publish(connection)
 
@@ -183,7 +183,8 @@ def main():
                 pass
         elif code == 404:
             code, response = create_host(module, connection)
-
+            if code != 200:
+                module.fail_json(msg=response)
             if module.params['auto_publish_session']:
                 publish(connection)
 
@@ -196,7 +197,8 @@ def main():
         if code == 200:
             # Handle deletion
             code, response = delete_host(module, connection)
-
+            if code != 200:
+                module.fail_json(msg=response)
             if module.params['auto_publish_session']:
                 publish(connection)
 
@@ -204,6 +206,7 @@ def main():
                     install_policy(connection, module.params['policy_package'], module.params['targets'])
 
             result['changed'] = True
+            result['checkpoint_hosts'] = response
         elif code == 404:
             pass
 
