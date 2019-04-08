@@ -79,14 +79,10 @@
     state: "present"
   register: _etcd3_prst_chktst
   check_mode: true
-
-- name: debug
-  debug:
-    msg: "{{inventory_hostname}}"
-
+  
 - name: check read key
   set_fact:
-    keyfoo: "{{ lookup('etcd3', 'foo', url=inventory_hostname + ':2379')}}"
+    keyfoo: "{{ lookup('etcd3', 'foo', url=ansible_default_ipv4.address + ':2379')}}"
 
 - name: Checking the status are expected
   assert:
