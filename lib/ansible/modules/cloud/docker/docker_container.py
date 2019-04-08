@@ -1629,8 +1629,8 @@ class TaskParameters(DockerBaseClass):
         if self.env:
             for name, value in self.env.items():
                 if not isinstance(value, string_types):
-                    self.fail("Non-string value found for env option. "
-                              "Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s" % (name, ))
+                    self.fail("Non-string value found for env option. Ambiguous env options must be "
+                              "wrapped in quotes to avoid them being interpreted. Key: %s" % (name, ))
                 final_env[name] = str(value)
         return final_env
 
@@ -2768,8 +2768,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 key_main = comp_aliases.get(key)
                 if key_main is None:
                     if key_main in all_options:
-                        self.fail(("The module option '%s' cannot be specified in the comparisons dict," +
-                                   " since it does not correspond to container's state!") % key)
+                        self.fail("The module option '%s' cannot be specified in the comparisons dict, "
+                                  "since it does not correspond to container's state!" % key)
                     self.fail("Unknown module option '%s' in comparisons dict!" % key)
                 if key_main in comp_aliases_used:
                     self.fail("Both '%s' and '%s' (aliases of %s) are specified in comparisons dict!" % (key, comp_aliases_used[key_main], key_main))
