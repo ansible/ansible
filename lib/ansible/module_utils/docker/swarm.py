@@ -4,7 +4,6 @@
 
 import json
 from time import sleep
-from re import split
 
 try:
     from docker.errors import APIError
