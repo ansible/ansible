@@ -1588,8 +1588,8 @@ class TaskParameters(DockerBaseClass):
             for k, v in self.log_options.items():
                 if not isinstance(v, string_types):
                     self.client.module.warn(
-                        "Non-string value found for log_options option. "
-                        "Ambiguous log_options values should be wrapped in quotes to avoid YAML parsing. Key: %s" % (k, )
+                        "Non-string value found for log_options option '%s'. The value is automatically converted to '%s'. "
+                        "If this is not correct, or you want to avoid such warnings, please quote the value." % (k, str(v))
                     )
                 v = str(v)
                 self.log_options[k] = v
