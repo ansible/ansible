@@ -413,7 +413,7 @@ Here is an example using ``include_vars``:
 
     tasks:
       - name: Set variables based on distribution
-        include_vars: "{{ ansible_facts.distributon }}.yml"
+        include_vars: "{{ ansible_facts.distribution }}.yml"
 
     handlers:
       - name: restart web service
