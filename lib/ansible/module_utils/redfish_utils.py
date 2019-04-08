@@ -954,7 +954,7 @@ class RedfishUtils(object):
                 chassis_power_results.append(chassis_power_result)
             else:
                 return {'ret': False, 'msg': 'Key Power not found.'}
-                
+
         result['chassis_power'] = chassis_power_results
         return result
 
