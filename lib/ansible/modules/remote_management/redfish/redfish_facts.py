@@ -134,7 +134,7 @@ CATEGORY_COMMANDS_ALL = {
                 "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
     "Chassis": ["GetFanInventory"],
     "Accounts": ["ListUsers"],
-    "Update": ["GetFirmwareInventory", "GetSupportedFirmwareUpdateMethods"],
+    "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
 }
 
@@ -255,7 +255,7 @@ def main():
             for command in command_list:
                 if command == "GetFirmwareInventory":
                     result["firmware"] = rf_utils.get_firmware_inventory()
-                elif command == "GetSupportedFirmwareUpdateMethods":
+                elif command == "GetFirmwareUpdateCapabilities":
                     result["firmware_update_methods"] = rf_utils.get_supported_firmware_update_methods()
 
         elif category == "Manager":
