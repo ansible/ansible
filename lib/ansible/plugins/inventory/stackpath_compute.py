@@ -37,20 +37,29 @@ DOCUMENTATION = '''
         - Uses a YAML configuration file that ends with stackpath_compute.(yml|yaml).
     options:
         plugin:
-            description: A token that ensures this is a source file for the 'stackpath_compute' plugin.
+            description: >
+                A token that ensures this is a source file for the 'stackpath_compute' plugin.
             required: True
             choices: ['stackpath_compute']
         client_id:
-            description: An OAuth client ID generated from the API Management section of the StackPath customer portal U(https://control.stackpath.net/api-management)
+            description: >
+                An OAuth client ID generated from the API Management section of the StackPath customer portal
+                U(https://control.stackpath.net/api-management)
             requierd: True
         client_secret:
-            description: An OAuth client secret generated from the API Management section of the StackPath customer portal U(https://control.stackpath.net/api-management)
+            description: >
+                An OAuth client secret generated from the API Management section of the StackPath customer portal
+                U(https://control.stackpath.net/api-management)
             required: True
         stack_ids:
-            description: A list of Stack IDs to query instnaces in. If no entry then get instances in all stacks on the account U(https://developer.stackpath.com/docs/en/getting-started/#get-your-stack-id)
+            description: >
+                A list of Stack IDs to query instnaces in. If no entry then get instances in all stacks on the account
+                U(https://developer.stackpath.com/docs/en/getting-started/#get-your-stack-id)
             required: False
         use_internal_ip:
-            description: Whether or not to use internal IP addresses, yes to use internal addresses, no to use external addresses. Defaults to external
+            description: >
+                Whether or not to use internal IP addresses, yes to use internal addresses, no to use external addresses.
+                Defaults to external
             requiered: False
             choices: ['yes', 'no']
 '''
@@ -62,7 +71,9 @@ EXAMPLES = '''
 plugin: stackpath_compute
 client_id: my_client_id
 client_secret: my_client_secret
-stack_id: my_stack_id
+stack_ids:
+- my_first_stack_id
+- my_other_stack_id
 use_internal_ip: no
 
 '''
