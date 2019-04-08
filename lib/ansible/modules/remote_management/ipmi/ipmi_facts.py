@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ipmi_facts
-short_description: Power management for machine
+short_description: Facts collection for ipmi BMC devices
 description:
   - Use this module for querying ipmi informations
 version_added: "2.8"
