@@ -17,10 +17,8 @@ DOCUMENTATION = '''
     description:
         - Get inventory hosts from Docker Machine.
         - Uses a YAML configuration file that ends with docker_machine.(yml|yaml).
-        - The plugin returns an I(all) group of nodes and one group per driver (e.g. digitalocean).
         - The plugin sets standard host variables C(ansible_host), C(ansible_port), C(ansible_user) and C(ansible_ssh_private_key).
-        - The plugin also sets standard host variable I(ansible_ssh_common_args) to C(-o StrictHostKeyChecking=no).
-        - The plugin also stores the Docker Machine 'env' variables in I(dm_) prefixed host variables.
+        - The plugin stores the Docker Machine 'env' output variables in I(dm_) prefixed host variables.
 
     options:
         plugin:
@@ -152,8 +150,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     self.inventory.set_variable(id, 'dm_tag_{0}'.format(kv_pair))
 
     def _populate(self):
-        self.inventory.add_group('all')
-
         try:
             self.nodes = self._run_command('ls', '-q').splitlines()
             for self.node in self.nodes:
@@ -161,7 +157,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
                 id = self.node_attrs['Driver']['MachineName']
                 self.inventory.add_host(id)
-                self.inventory.add_host(id, group='all')
 
                 # Find out more about the following variables at: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
                 self.inventory.set_variable(id, 'ansible_host', self.node_attrs['Driver']['IPAddress'])
