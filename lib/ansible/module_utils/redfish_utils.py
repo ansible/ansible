@@ -511,7 +511,7 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
-    def get_supported_firmware_update_methods(self):
+    def get_firmware_update_capabilities(self):
         result = {}
         response = self.get_request(self.root_uri + "/redfish/v1")
 
