@@ -1652,14 +1652,14 @@ def pyopenssl_get_extensions_from_csr(csr):
     return result
 
 
-def crpytography_name_to_oid(name):
+def cryptography_name_to_oid(name):
     dotted = _OID_LOOKUP.get(name)
     if dotted is None:
         raise OpenSSLObjectError('Cannot find OID for "{0}"'.format(name))
     return x509.oid.ObjectIdentifier(dotted)
 
 
-def crpytography_oid_to_name(oid):
+def cryptography_oid_to_name(oid):
     dotted_string = oid.dotted_string
     names = _OID_MAP.get(dotted_string)
     name = names[0] if names else oid._name

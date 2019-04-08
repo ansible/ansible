@@ -425,18 +425,18 @@ class CertificateInfoCryptography(CertificateInfo):
         super(CertificateInfoCryptography, self).__init__(module, 'cryptography')
 
     def _get_signature_algorithm(self):
-        return crypto_utils.crpytography_oid_to_name(self.cert.signature_algorithm_oid)
+        return crypto_utils.cryptography_oid_to_name(self.cert.signature_algorithm_oid)
 
     def _get_subject(self):
         result = dict()
         for attribute in self.cert.subject:
-            result[crypto_utils.crpytography_oid_to_name(attribute.oid)] = attribute.value
+            result[crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
         return result
 
     def _get_issuer(self):
         result = dict()
         for attribute in self.cert.issuer:
-            result[crypto_utils.crpytography_oid_to_name(attribute.oid)] = attribute.value
+            result[crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
         return result
 
     def _get_version(self):
@@ -488,7 +488,7 @@ class CertificateInfoCryptography(CertificateInfo):
         try:
             ext_keyusage_ext = self.cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
             return sorted([
-                crypto_utils.crpytography_oid_to_name(eku) for eku in ext_keyusage_ext.value
+                crypto_utils.cryptography_oid_to_name(eku) for eku in ext_keyusage_ext.value
             ]), ext_keyusage_ext.critical
         except cryptography.x509.ExtensionNotFound:
             return None, False

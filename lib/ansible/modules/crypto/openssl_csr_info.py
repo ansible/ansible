@@ -294,7 +294,7 @@ class CertificateSigningRequestInfoCryptography(CertificateSigningRequestInfo):
     def _get_subject(self):
         result = dict()
         for attribute in self.csr.subject:
-            result[crypto_utils.crpytography_oid_to_name(attribute.oid)] = attribute.value
+            result[crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
         return result
 
     def _get_key_usage(self):
@@ -339,7 +339,7 @@ class CertificateSigningRequestInfoCryptography(CertificateSigningRequestInfo):
         try:
             ext_keyusage_ext = self.csr.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
             return sorted([
-                crypto_utils.crpytography_oid_to_name(eku) for eku in ext_keyusage_ext.value
+                crypto_utils.cryptography_oid_to_name(eku) for eku in ext_keyusage_ext.value
             ]), ext_keyusage_ext.critical
         except cryptography.x509.ExtensionNotFound:
             return None, False
