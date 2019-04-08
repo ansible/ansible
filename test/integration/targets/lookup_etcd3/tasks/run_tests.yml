@@ -82,7 +82,7 @@
   
 - name: debug
   debug:
-    msg: "{{ hostvars[inventory_hostname] }}
+    msg: "{{ hostvars[inventory_hostname] }}"
   
 - name: check read key
   set_fact:
