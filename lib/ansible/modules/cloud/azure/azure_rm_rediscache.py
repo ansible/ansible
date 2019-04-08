@@ -578,7 +578,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                                                  parameters=params)
             if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
-            
+
             if self.wait_for_running:
                 self.wait_for_redis_running()
 
@@ -760,6 +760,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
             self.fail("Azure Cache for Redis is not running after 60 mins.")
         except CloudError as e:
             self.fail("Failed to get Azure Cache for Redis: {0}".format(str(e)))
+
 
 def main():
     """Main execution"""
