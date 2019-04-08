@@ -298,9 +298,15 @@ def _ansiballz_main():
             basic._ANSIBLE_ARGS = json_params
 
             # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-            import imp
-            with open(script_path, 'r') as f:
-                importer = imp.load_module('__main__', f, script_path, ('.py', 'r', imp.PY_SOURCE))
+            if PY3:
+                import importlib.util
+                spec = importlib.util.spec_from_file_location('__main__', script_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+            else:
+                import imp
+                with open(script_path, 'r') as f:
+                    imp.load_module('__main__', f, script_path, ('.py', 'r', imp.PY_SOURCE))
 
             # Ansible modules must exit themselves
             print('{"msg": "New-style module did not handle its own exit", "failed": true}')
