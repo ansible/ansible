@@ -256,7 +256,7 @@ def main():
                 if command == "GetFirmwareInventory":
                     result["firmware"] = rf_utils.get_firmware_inventory()
                 elif command == "GetFirmwareUpdateCapabilities":
-                    result["firmware_update_methods"] = rf_utils.get_supported_firmware_update_methods()
+                    result["firmware_update_methods"] = rf_utils.get_firmware_update_capabilities()
 
         elif category == "Manager":
             # execute only if we find a Manager service resource
