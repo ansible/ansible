@@ -1,0 +1,167 @@
+---
+- debug:
+    msg: "Executing tests with backend {{ select_crypto_backend }}"
+
+- name: ({{select_crypto_backend}}) Get key 1 info
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_1.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Check that RSA key info is ok
+  assert:
+    that:
+      - "'public_key' in result"
+      - "'public_key_fingerprints' in result"
+      - "'type' in result"
+      - "result.type == 'RSA'"
+      - "'public_data' in result"
+      - "2 ** (result.public_data.size - 1) < result.public_data.modulus < 2 ** result.public_data.size"
+      - "result.public_data.exponent > 5"
+      - "'private_data' not in result"
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results | combine({'key1': result}) }}"
+
+- name: ({{select_crypto_backend}}) Get key 2 info
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_2.pem'
+    return_private_key_data: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Check that RSA key info is ok
+  assert:
+    that:
+      - "'public_key' in result"
+      - "'public_key_fingerprints' in result"
+      - "'type' in result"
+      - "result.type == 'RSA'"
+      - "'public_data' in result"
+      - "result.public_data.size == 2048"
+      - "2 ** (result.public_data.size - 1) < result.public_data.modulus < 2 ** result.public_data.size"
+      - "result.public_data.exponent > 5"
+      - "'private_data' in result"
+      - "result.public_data.modulus == result.private_data.p * result.private_data.q"
+      - "result.private_data.exponent > 5"
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results | combine({'key2': result}) }}"
+
+- name: ({{select_crypto_backend}}) Get key 3 info (without passphrase)
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_3.pem'
+    return_private_key_data: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: result
+
+- name: Check that loading passphrase protected key without passphrase failed
+  assert:
+    that:
+      - result is failed
+      # Check that return values are there
+      - result.can_load_key is defined
+      - result.can_parse_key is defined
+      # Check that return values are correct
+      - result.can_load_key
+      - not result.can_parse_key
+      # Check that additional data isn't there
+      - "'pulic_key' not in result"
+      - "'pulic_key_fingerprints' not in result"
+      - "'type' not in result"
+      - "'public_data' not in result"
+      - "'private_data' not in result"
+
+- name: ({{select_crypto_backend}}) Get key 3 info (with passphrase)
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_3.pem'
+    passphrase: hunter2
+    return_private_key_data: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Check that RSA key info is ok
+  assert:
+    that:
+      - "'public_key' in result"
+      - "'public_key_fingerprints' in result"
+      - "'type' in result"
+      - "result.type == 'RSA'"
+      - "'public_data' in result"
+      - "2 ** (result.public_data.size - 1) < result.public_data.modulus < 2 ** result.public_data.size"
+      - "result.public_data.exponent > 5"
+      - "'private_data' in result"
+      - "result.public_data.modulus == result.private_data.p * result.private_data.q"
+      - "result.private_data.exponent > 5"
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results | combine({'key3': result}) }}"
+
+- name: ({{select_crypto_backend}}) Get key 4 info
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_4.pem'
+    return_private_key_data: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- block:
+  - name: Check that ECC key info is ok
+    assert:
+      that:
+        - "'public_key' in result"
+        - "'public_key_fingerprints' in result"
+        - "'type' in result"
+        - "result.type == 'ECC'"
+        - "'public_data' in result"
+        - "result.public_data.curve is string"
+        - "result.public_data.x != 0"
+        - "result.public_data.y != 0"
+        - "result.public_data.exponent_size == (521 if (ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6') else 256)"
+        - "'private_data' in result"
+        - "result.private_data.multiplier > 1024"
+
+  - name: Update result list
+    set_fact:
+      info_results: "{{ info_results | combine({'key4': result}) }}"
+  when: select_crypto_backend != 'pyopenssl' or (pyopenssl_version.stdout is version('16.1.0', '>=') and cryptography_version.stdout is version('0.0', '>'))
+
+- name: Check that ECC key info is ok
+  assert:
+    that:
+      - "'public_key' in result"
+      - "'public_key_fingerprints' in result"
+      - "'type' in result"
+      - "result.type.startswith('unknown ')"
+      - "'public_data' in result"
+      - "'private_data' in result"
+  when: select_crypto_backend == 'pyopenssl' and not (pyopenssl_version.stdout is version('16.1.0', '>=') and cryptography_version.stdout is version('0.0', '>'))
+
+- name: ({{select_crypto_backend}}) Get key 5 info
+  openssl_privatekey_info:
+    path: '{{ output_dir }}/privatekey_5.pem'
+    return_private_key_data: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Check that DSA key info is ok
+  assert:
+    that:
+      - "'public_key' in result"
+      - "'public_key_fingerprints' in result"
+      - "'type' in result"
+      - "result.type == 'DSA'"
+      - "'public_data' in result"
+      - "result.public_data.p > 2"
+      - "result.public_data.q > 2"
+      - "result.public_data.g >= 2"
+      - "result.public_data.y > 2"
+      - "'private_data' in result"
+      - "result.private_data.x > 2"
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results | combine({'key5': result}) }}"
