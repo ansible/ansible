@@ -33,7 +33,7 @@
     state: present
 
 - name: Check if etcd3ctl exists for re-use.
-  shell: "ETCDCTL_API=3 {{ etcd3_path }}/etcdctl --endpoints=0.0.0.0:2379 get foo"
+  shell: "ETCDCTL_API=3 {{ etcd3_path }}/etcdctl --endpoints=127.0.0.1:2379 get foo"
   args:
     executable: /bin/bash
   changed_when: false
@@ -80,13 +80,16 @@
   register: _etcd3_prst_chktst
   check_mode: true
   
-- name: debug
-  debug:
-    msg: "{{ hostvars[inventory_hostname] }}"
+- name: Check mode, show need not change
+  etcd3:
+    key: "foo"
+    value: "bar"
+    state: "present"
+  check_mode: true
   
 - name: check read key
   set_fact:
-    keyfoo: "{{ lookup('etcd3', 'foo', url=ansible_default_ipv4.address + ':2379')}}"
+    keyfoo: "{{ lookup('etcd3', 'foo', url='127.0.0.1:2379')}}"
 
 - name: Checking the status are expected
   assert:
