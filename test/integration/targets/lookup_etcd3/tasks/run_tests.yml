@@ -80,6 +80,10 @@
   register: _etcd3_prst_chktst
   check_mode: true
   
+- name: debug
+  debug:
+    msg: "{{ hostvars[inventory_hostname] }}
+  
 - name: check read key
   set_fact:
     keyfoo: "{{ lookup('etcd3', 'foo', url=ansible_default_ipv4.address + ':2379')}}"
