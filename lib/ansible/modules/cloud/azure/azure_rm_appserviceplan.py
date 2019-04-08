@@ -110,6 +110,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from msrestazure.azure_operation import AzureOperationPoller
     from msrest.serialization import Model
     from azure.mgmt.web.models import (
@@ -315,10 +316,11 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
 
         try:
             response = self.web_client.app_service_plans.get(self.resource_group, self.name)
-            self.log("Response : {0}".format(response))
-            self.log("App Service Plan : {0} found".format(response.name))
+            if response:
+                self.log("Response : {0}".format(response))
+                self.log("App Service Plan : {0} found".format(response.name))
 
-            return appserviceplan_to_dict(response)
+                return appserviceplan_to_dict(response)
         except CloudError as ex:
             self.log("Didn't find app service plan {0} in resource group {1}".format(self.name, self.resource_group))
 
@@ -340,10 +342,10 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
             plan_def = AppServicePlan(
                 location=self.location, app_service_plan_name=self.name, sku=sku_def, reserved=self.is_linux, tags=self.tags if self.tags else None)
 
-            poller = self.web_client.app_service_plans.create_or_update(self.resource_group, self.name, plan_def)
+            response = self.web_client.app_service_plans.create_or_update(self.resource_group, self.name, plan_def)
 
-            if isinstance(poller, AzureOperationPoller):
-                response = self.get_poller_result(poller)
+            if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
+                response = self.get_poller_result(response)
 
             self.log("Response : {0}".format(response))
 
