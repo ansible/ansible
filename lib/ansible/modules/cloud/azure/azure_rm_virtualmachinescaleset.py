@@ -592,7 +592,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 app_gateway_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
                                                       for resource in app_gateway.backend_address_pools]
                                                      if app_gateway.backend_address_pools else None)
-                self.results['XX-AG-2'] = app_gateway_backend_address_pools
+                self.results['XX-AG-2'] = app_gateway_backend_address_pools[0].id
 
         try:
             self.log("Fetching virtual machine scale set {0}".format(self.name))
