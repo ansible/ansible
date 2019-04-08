@@ -82,7 +82,7 @@
 
 - name: check read key
   set_fact:
-    keyfoo: "{{ lookup('etcd3', 'foo', url='localhost:2379')}}"
+    keyfoo: "{{ lookup('etcd3', 'foo', url=inventory_hostname + ':2379')}}"
 
 - name: Checking the status are expected
   assert:
