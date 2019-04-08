@@ -12,13 +12,8 @@
 # Note that nir0s/distro has many more tests in it's test suite. The tests here are
 # primarily for testing the vendoring.
 
-import platform
-import pytest
-import sys
-
 from ansible.module_utils import distro
-from ansible.module_utils.common.sys_info import (get_distribution, get_distribution_version,
-                                                  get_distribution_codename)
+from ansible.module_utils.six import string_types
 
 
 # Generic test case with minimal assertions about specific returned values.
@@ -35,31 +30,6 @@ class TestDistro():
         assert isinstance(linux_dist, tuple), \
             'linux_distrution() returned %s (%s) which is not a tuple' % (linux_dist, type(linux_dist))
 
-
-# compare distro.py results with platform.linux_distribution() if we have it
-# Depending on the platform, it is okay if these don't match exactly as long as the
-# distro result is what we expect and special cased.
-class TestDistroCompat():
-    '''Verify that distro.linux_distribution matches plain platform.linux_distribution'''
-    @pytest.mark.skipif(sys.version_info >= (3, 8), reason="Python 3.8 and later do not have platform.linux_distribution().")
-    def test_linux_distribution(self):
-        distro_linux_dist = (get_distribution(), get_distribution_version(), get_distribution_codename())
-
-        platform_linux_dist = platform.linux_distribution()
-
-        assert isinstance(distro_linux_dist, type(platform_linux_dist)), \
-            'linux_distribution() returned type (%s) which is different from platform.linux_distribution type (%s)' % \
-            (type(distro_linux_dist), type(platform_linux_dist))
-
-        # TODO: add the cases where we expect them to differ
-
-        # The third item in the tuple is different.
-        assert distro_linux_dist[0] == platform_linux_dist[0]
-        assert distro_linux_dist[1] == platform_linux_dist[1]
-
-        if platform_linux_dist[0] == 'Fedora' and 20 < int(platform_linux_dist[1]) < 28:
-            pytest.skip("Fedora versions between 20 and 28 return the variant instead of the code name making this test unreliable")
-            # Fedora considers the platform_linux behaviour to have been a bug as it's finding the
-            # variant, not the code name.  Fedora wants this to be the empty string.
-            platform_linux_dist = platform_linux_dist[:2] + ('',)
-        assert distro_linux_dist[2] == platform_linux_dist[2]
+    def test_id(self):
+        id = distro.id()
+        assert isinstance(id, string_types), 'distro.id() returned %s (%s) which is not a string' % (id, type(id))
