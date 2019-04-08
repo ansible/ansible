@@ -520,7 +520,7 @@ class RedfishUtils(object):
         result['ret'] = True
 
         result['entries'] = {}
-        
+
         data = response['data']
         if "UpdateService" in data:
             updateservce_uri = data['UpdateService']["@odata.id"]
@@ -529,7 +529,7 @@ class RedfishUtils(object):
             data = response['data']
 
             if "Actions" in data:
-                actions = data['Actions']                
+                actions = data['Actions']
                 if len(actions) > 0:
                     for action in actions.values():
                         result['entries'][action['title']] = action['TransferProtocol@Redfish.AllowableValues']
@@ -635,16 +635,14 @@ class RedfishUtils(object):
         boot_options_dict = {}
         for member in members:
             if '@odata.id' not in member:
-                return {'ret': False,
-                        'msg': "@odata.id not found in BootOptions"}
+                return {'ret': False, 'msg': "@odata.id not found in BootOptions"}
             boot_option_uri = member['@odata.id']
             response = self.get_request(self.root_uri + boot_option_uri)
             if response['ret'] is False:
                 return response
             data = response['data']
             if 'BootOptionReference' not in data:
-                return {'ret': False,
-                        'msg': "BootOptionReference not found in BootOption"}
+                return {'ret': False, 'msg': "BootOptionReference not found in BootOption"}
             boot_option_ref = data['BootOptionReference']
 
             # fetch the props to display for this boot device
