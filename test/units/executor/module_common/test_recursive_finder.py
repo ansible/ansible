@@ -145,11 +145,15 @@ class TestRecursiveFinder(object):
 
     def test_from_import_toplevel_package(self, finder_containers, mocker):
         if PY2:
-            module_utils_data = BytesIO(b'# License\ndef do_something():\n    pass\n')
+            module_utils_data = b'# License\ndef do_something():\n    pass\n'
         else:
-            module_utils_data = StringIO(u'# License\ndef do_something():\n    pass\n')
-        mocker.patch('imp.find_module', side_effect=partial(find_package_foo, module_utils_data))
-        mocker.patch('ansible.executor.module_common._slurp', side_effect=lambda x: b'# License\ndef do_something():\n    pass\n')
+            module_utils_data = u'# License\ndef do_something():\n    pass\n'
+        mi_mock = mocker.patch('ansible.executor.module_common.ModuleInfo')
+        mi_inst = mi_mock()
+        mi_inst.pkg_dir = True
+        mi_inst.py_src = False
+        mi_inst.path = '/path/to/ansible/module_utils/foo/__init__.py'
+        mi_inst.get_source.return_value = module_utils_data
 
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils import foo'
@@ -161,20 +165,22 @@ class TestRecursiveFinder(object):
         assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/foo/__init__.py',)).union(ONLY_BASIC_FILE)
 
     def test_from_import_toplevel_module(self, finder_containers, mocker):
-        if PY2:
-            module_utils_data = BytesIO(b'# License\ndef do_something():\n    pass\n')
-        else:
-            module_utils_data = StringIO(u'# License\ndef do_something():\n    pass\n')
-        mocker.patch('imp.find_module', side_effect=partial(find_module_foo, module_utils_data))
+        module_utils_data = b'# License\ndef do_something():\n    pass\n'
+        mi_mock = mocker.patch('ansible.executor.module_common.ModuleInfo')
+        mi_inst = mi_mock()
+        mi_inst.pkg_dir = False
+        mi_inst.py_src = True
+        mi_inst.path = '/path/to/ansible/module_utils/foo.py'
+        mi_inst.get_source.return_value = module_utils_data
 
         name = 'ping'
         data = b'#!/usr/bin/python\nfrom ansible.module_utils import foo'
         recursive_finder(name, data, *finder_containers)
         mocker.stopall()
 
-        assert finder_containers.py_module_names == set((('foo',),)).union(MODULE_UTILS_BASIC_IMPORTS)
+        assert finder_containers.py_module_names == set((('foo',),)).union(ONLY_BASIC_IMPORT)
         assert finder_containers.py_module_cache == {}
-        assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/foo.py',)).union(MODULE_UTILS_BASIC_FILES)
+        assert frozenset(finder_containers.zf.namelist()) == frozenset(('ansible/module_utils/foo.py',)).union(ONLY_BASIC_FILE)
 
     #
     # Test importing six with many permutations because it is not a normal module
