@@ -43,9 +43,9 @@ import os
 import argparse
 import re
 from time import time
-import six
 
-from six.moves import configparser
+import ansible.module_utils.six
+from ansible.module_utils.six.moves import configparser
 
 try:
     import packet

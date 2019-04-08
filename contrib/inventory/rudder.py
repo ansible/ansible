@@ -53,7 +53,7 @@ import sys
 import os
 import re
 import argparse
-import six
+import ansible.module_utils.six
 import httplib2 as http
 from time import time
 from ansible.module_utils.six.moves import configparser
