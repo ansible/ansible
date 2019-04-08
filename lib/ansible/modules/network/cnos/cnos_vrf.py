@@ -137,6 +137,35 @@ def search_obj_in_list(name, lst):
             return o
 
 
+def get_interface_type(interface):
+    intf_type = 'unknown'
+    if interface.upper()[:2] in ('ET', 'GI', 'FA', 'TE', 'FO', 'HU', 'TWE'):
+        intf_type = 'ethernet'
+    elif interface.upper().startswith('VL'):
+        intf_type = 'svi'
+    elif interface.upper().startswith('LO'):
+        intf_type = 'loopback'
+    elif interface.upper()[:2] in ('MG', 'MA'):
+        intf_type = 'management'
+    elif interface.upper().startswith('PO'):
+        intf_type = 'portchannel'
+    elif interface.upper().startswith('NV'):
+        intf_type = 'nve'
+
+    return intf_type
+
+
+def is_switchport(name, module):
+    intf_type = get_interface_type(name)
+
+    if intf_type in ('ethernet', 'portchannel'):
+        config = run_commands(module,
+                              ['show interface {0} switchport'.format(name)])[0]
+        match = re.search(r'Switchport              : enabled', config)
+        return bool(match)
+    return False
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
@@ -317,6 +346,13 @@ def main():
         result['warnings'] = warnings
 
     want = map_params_to_obj(module)
+    for w in want:
+        name = w['name']
+        name = name.lower()
+        if is_switchport(name, module):
+            module.fail_json(msg='Ensure interface is configured to be a L3'
+                             '\nport first before using this module. You can use'
+                             '\nthe cnos_interface module for this.')
     have = map_config_to_obj(module)
 
     commands = map_obj_to_commands((want, have), module)

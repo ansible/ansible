@@ -12,6 +12,15 @@
   - test4
   - test5
 
+- name: Setup - Ensure interfaces are not switchport
+  cnos_config:
+    lines:
+      - no shutdown
+      - no switchport
+      - no logging monitor
+    parents:
+      - "interface ethernet1/33"
+
 - name: Create vrf
   cnos_vrf:
     name: test
