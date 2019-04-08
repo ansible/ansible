@@ -530,6 +530,11 @@ def execute_touch(path, follow, timestamps):
 
         result['changed'] = changed
         result['diff'] = diff
+    else:
+        diff = initial_diff(path, 'touch', prev_state)
+        # Even if check_mode = True, touch always changes the file because it updates its timestamp
+        result['changed'] = True
+        result['diff'] = diff
     return result
 
 
