@@ -103,7 +103,8 @@ def check_cli(module, cli):
     cli += ' dscp-map-show format name no-show-headers'
     out = run_commands(module, cli)[1]
 
-    out = out.split()
+    if out:
+        out = out.split()
 
     return True if name in out else False
 
