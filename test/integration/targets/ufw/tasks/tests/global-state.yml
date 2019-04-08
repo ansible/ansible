@@ -103,6 +103,35 @@
   register: ufw_defaults_change
   environment:
     LC_ALL: C
+- name: Default (change again)
+  ufw:
+    default: deny
+    direction: incoming
+  register: default_change_2
+- name: Default (change all, check mode)
+  ufw:
+    default: allow
+  check_mode: yes
+  register: default_change_all_check
+- name: Default (change all)
+  ufw:
+    default: allow
+  register: default_change_all
+- name: Get defaults
+  shell: |
+    ufw status verbose | grep "^Default:"
+  register: ufw_defaults_change_all
+  environment:
+    LC_ALL: C
+- name: Default (change all, idempotent, check mode)
+  ufw:
+    default: allow
+  check_mode: yes
+  register: default_change_all_idem_check
+- name: Default (change all, idempotent)
+  ufw:
+    default: allow
+  register: default_change_all_idem
 - assert:
     that:
     - default_check is changed
@@ -113,3 +142,10 @@
     - default_change_check is changed
     - default_change is changed
     - "'allow (incoming)' in ufw_defaults_change.stdout"
+    - default_change_2 is changed
+    - default_change_all_check is changed
+    - default_change_all is changed
+    - default_change_all_idem_check is not changed
+    - default_change_all_idem is not changed
+    - "'allow (incoming)' in ufw_defaults_change_all.stdout"
+    - "'allow (outgoing)' in ufw_defaults_change_all.stdout"
