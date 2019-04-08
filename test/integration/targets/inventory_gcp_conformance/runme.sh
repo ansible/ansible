@@ -7,6 +7,9 @@ if [ -z "${OUTPUT_DIR+null}" ]; then
     export OUTPUT_DIR=${PWD}
 fi
 
+echo "PWD: $PWD"
+export PYTHONPATH="${PWD}/lib:$PYTHONPATH"
+
 # Create fake credentials
 cat << EOF > "$OUTPUT_DIR/gcp_credentials.json"
 {
@@ -38,14 +41,11 @@ gce_zone = us-east1-d
 
 EOF
 
-rm -f script.out
-./gce.sh --list | tee "$OUTPUT_DIR/script.out"
+ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i ./gce.sh --list --output="${OUTPUT_DIR}/script.out"
 RC=$?
 if [[ $RC != 0 ]]; then
     exit $RC
 fi
-rm -f "$OUTPUT_DIR/gce.py"
-rm -f "$OUTPUT_DIR/gce.ini"
 
 #################################################
 #   RUN THE PLUGIN
@@ -59,18 +59,18 @@ projects:
 auth_kind: serviceaccount
 service_account_file: $OUTPUT_DIR/gcp_credentials.json
 compose:
-  ansible_ssh_host: networkInterfaces[0].accessConfigs[0].natIP
+  ansible_ssh_host: networkInterfaces[0]['accessConfigs'][0].natIP
   gce_description: description if description else None
   gce_id: id
   gce_image: image
   gce_machine_type: machineType
   gce_metadata: metadata.get("items", []) | items2dict(key_name="key", value_name="value")
   gce_name: name
-  gce_network: networkInterfaces[0].network.name
-  gce_private_ip: networkInterfaces[0].networkIP
-  gce_public_ip: networkInterfaces[0].accessConfigs[0].natIP
+  gce_network: networkInterfaces[0]['network']['name']
+  gce_private_ip: networkInterfaces[0]['networkIP']
+  gce_public_ip: networkInterfaces[0]['accessConfigs'][0]['natIP']
   gce_status: status
-  gce_subnetwork: networkInterfaces[0].subnetwork.name
+  gce_subnetwork: networkInterfaces[0]['subnetwork']['name']
   gce_tags: tags.get("items", [])
   gce_zone: zone
 hostnames:
@@ -105,19 +105,10 @@ use_contrib_script_compatible_sanitization: true
 retrieve_image_info: true
 EOF
 
-# override boto's import path(s)
-echo "PWD: $PWD"
-export PYTHONPATH="$PWD/lib:$PYTHONPATH"
-
-rm -f "${OUTPUT_DIR}/plugin.out"
 ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i "${OUTPUT_DIR}/test.gcp.yml" --list --output="${OUTPUT_DIR}/plugin.out"
-rm -f "${OUTPUT_DIR}/test.gcp.yml"
-rm -f "$OUTPUT_DIR/gcp_credentials.json"
 
 #################################################
 #   DIFF THE RESULTS
 #################################################
 
 ./inventory_diff.py "${OUTPUT_DIR}/script.out" "${OUTPUT_DIR}/plugin.out"
-rm -f "${OUTPUT_DIR}/plugin.out"
-rm -f "${OUTPUT_DIR}/script.out"
