@@ -178,6 +178,10 @@ options:
         description:
             - Load balancer name.
         version_added: "2.5"
+    app_gateway:
+        description:
+            - Application gateway name.
+        version_added: "2.8"
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources.
@@ -421,6 +425,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             data_disks=dict(type='list'),
             subnet_name=dict(type='str', aliases=['subnet']),
             load_balancer=dict(type='str'),
+            app_gateway=dict(type='str'),
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
@@ -455,6 +460,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.tags = None
         self.differences = None
         self.load_balancer = None
+        self.app_gateway = None
         self.enable_accelerated_networking = None
         self.security_group = None
         self.overprovision = None
@@ -509,6 +515,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         load_balancer_backend_address_pools = None
         load_balancer_inbound_nat_pools = None
         load_balancer = None
+        app_gateway = None
+        app_gateway_backend_address_pools = None
         support_lb_change = True
 
         resource_group = self.get_resource_group(self.resource_group)
@@ -575,6 +583,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(id=resource.id)
                                                     for resource in load_balancer.inbound_nat_pools]
                                                    if load_balancer.inbound_nat_pools else None)
+
+            if self.app_gateway:
+                app_gateway = self.get_app_gateway(self.app_gateway)
+                app_gateway_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
+                                                      for resource in app_gateway.backend_address_pools]
+                                                     if app_gateway.backend_address_pools else None)
 
         try:
             self.log("Fetching virtual machine scale set {0}".format(self.name))
@@ -748,7 +762,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                 ),
                                                 primary=True,
                                                 load_balancer_backend_address_pools=load_balancer_backend_address_pools,
-                                                load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools
+                                                load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools,
+                                                application_gateway_backend_address_pools=app_gateway_backend_address_pools
                                             )
                                         ],
                                         enable_accelerated_networking=self.enable_accelerated_networking,
@@ -883,6 +898,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             return self.network_client.load_balancers.get(id_dict.get('resource_group', self.resource_group), id_dict.get('name'))
         except CloudError as exc:
             self.fail("Error fetching load balancer {0} - {1}".format(id, str(exc)))
+
+    def get_app_gateway(self, id):
+        id_dict = parse_resource_id(id)
+        try:
+            return self.network_client.application_gateways.get(id_dict.get('resource_group', self.resource_group), id_dict.get('name'))
+        except CloudError as exc:
+            self.fail("Error fetching application_gateway {0} - {1}".format(id, str(exc)))
 
     def serialize_vmss(self, vmss):
         '''
