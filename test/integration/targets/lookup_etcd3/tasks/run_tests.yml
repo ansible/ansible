@@ -74,6 +74,7 @@
 
 - name: Check mode, show need change
   etcd3:
+    host: 127.0.0.1
     key: "foo"
     value: "bar"
     state: "present"
@@ -82,6 +83,7 @@
   
 - name: Check mode, show need not change
   etcd3:
+    host: 127.0.0.1
     key: "foo"
     value: "bar"
     state: "present"
