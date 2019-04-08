@@ -95,20 +95,34 @@ def get_fingerprint(path, passphrase=None):
     privatekey = load_privatekey(path, passphrase, check_passphrase=False)
     try:
         publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
-        return get_fingerprint_of_bytes(publickey)
     except AttributeError:
         # If PyOpenSSL < 16.0 crypto.dump_publickey() will fail.
-        # By doing this we prevent the code from raising an error
-        # yet we return no value in the fingerprint hash.
-        return None
+        try:
+            bio = crypto._new_mem_buf()
+            rc = crypto._lib.i2d_PUBKEY_bio(bio, privatekey._pkey)
+            if rc != 1:
+                crypto._raise_current_error()
+            publickey = crypto._bio_to_string(bio)
+        except AttributeError:
+            # By doing this we prevent the code from raising an error
+            # yet we return no value in the fingerprint hash.
+            return None
+    return get_fingerprint_of_bytes(publickey)
 
 
-def load_privatekey(path, passphrase=None, check_passphrase=True, backend='pyopenssl'):
-    """Load the specified OpenSSL private key."""
+def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, backend='pyopenssl'):
+    """Load the specified OpenSSL private key.
+
+    The content can also be specified via content; in that case,
+    this function will not load the key from disk.
+    """
 
     try:
-        with open(path, 'rb') as b_priv_key_fh:
-            priv_key_detail = b_priv_key_fh.read()
+        if content is None:
+            with open(path, 'rb') as b_priv_key_fh:
+                priv_key_detail = b_priv_key_fh.read()
+        else:
+            priv_key_detail = content
 
         if backend == 'pyopenssl':
 
@@ -773,3 +787,43 @@ def cryptography_get_basic_constraints(constraints):
             else:
                 raise OpenSSLObjectError('Unknown basic constraint "{0}"'.format(constraint))
     return ca, path_length
+
+
+def binary_exp_mod(f, e, m):
+    '''Computes f^e mod m in O(log e) multiplications modulo m.'''
+    # Compute len_e = floor(log_2(e))
+    len_e = -1
+    x = e
+    while x > 0:
+        x >>= 1
+        len_e += 1
+    # Compute f**e mod m
+    result = 1
+    for k in range(len_e, -1, -1):
+        result = (result * result) % m
+        if ((e >> k) & 1) != 0:
+            result = (result * f) % m
+    return result
+
+
+def simple_gcd(a, b):
+    '''Compute GCD of its two inputs.'''
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+
+def quick_is_not_prime(n):
+    '''Does some quick checks to see if we can poke a hole into the primality of n.
+
+    A result of `False` does **not** mean that the number is prime; it just means
+    that we couldn't detect quickly whether it is not prime.
+    '''
+    if n <= 2:
+        return True
+    # The constant in the next line is the product of all primes < 200
+    if simple_gcd(n, 7799922041683461553249199106329813876687996789903550945093032474868511536164700810) > 1:
+        return True
+    # TODO: maybe do some iterations of Miller-Rabin to increase confidence
+    # (https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)
+    return False

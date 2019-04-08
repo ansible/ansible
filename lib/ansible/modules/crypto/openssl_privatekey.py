@@ -56,7 +56,7 @@ options:
             - Depending on the curve, you need a newer version of the cryptography backend.
         type: str
         default: RSA
-        #choices: [ DSA, ECC, RSA, X448, X25519 ]
+        #choices: [ DSA, ECC, RSA, X448, X25519, Ed448, Ed25519 ]
         choices: [ DSA, ECC, RSA ]
     curve:
         description:
@@ -246,6 +246,16 @@ else:
         CRYPTOGRAPHY_HAS_X448 = True
     except ImportError:
         CRYPTOGRAPHY_HAS_X448 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed25519
+        CRYPTOGRAPHY_HAS_ED25519 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED25519 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed448
+        CRYPTOGRAPHY_HAS_ED448 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED448 = False
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
@@ -459,6 +469,10 @@ class PrivateKeyCryptography(PrivateKeyBase):
             self.module.fail_json(msg='Your cryptography version does not support X25519')
         if not CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
             self.module.fail_json(msg='Your cryptography version does not support X448')
+        if not CRYPTOGRAPHY_HAS_ED25519 and self.type == 'Ed25519':
+            self.module.fail_json(msg='Your cryptography version does not support Ed25519')
+        if not CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
+            self.module.fail_json(msg='Your cryptography version does not support Ed448')
 
     def _generate_private_key_data(self):
         try:
@@ -477,6 +491,10 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
             if CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.generate()
+            if CRYPTOGRAPHY_HAS_ED25519 and self.type == 'Ed25519':
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.generate()
+            if CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey.generate()
             if self.type == 'ECC' and self.curve in self.curves:
                 if self.curves[self.curve]['deprecated']:
                     self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.curve))
@@ -573,9 +591,9 @@ def main():
             size=dict(type='int', default=4096),
             type=dict(type='str', default='RSA', choices=[
                 'RSA', 'DSA', 'ECC',
-                # x25519 is missing serialization functions: https://github.com/pyca/cryptography/issues/4386
-                # x448 is also missing it: https://github.com/pyca/cryptography/pull/4580#issuecomment-437913340
-                # 'X448', 'X25519',
+                # FIXME: NO LONGER TRUE: x25519 is missing serialization functions: https://github.com/pyca/cryptography/issues/4386
+                # FIXME: NO LONGER TRUE: x448 is also missing it: https://github.com/pyca/cryptography/pull/4580#issuecomment-437913340
+                # 'X448', 'X25519', 'Ed448', 'Ed25519'
             ]),
             curve=dict(type='str', choices=[
                 'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256k1',
@@ -629,8 +647,8 @@ def main():
 
         # Success?
         if backend == 'auto':
-            module.fail_json(msg=('Can detect none of the Python libraries '
-                                  'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
+            module.fail_json(msg=("Can't detect any of the required Python libraries "
+                                  "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
                                       MINIMAL_PYOPENSSL_VERSION))
     try:

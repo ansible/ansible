@@ -1777,7 +1777,7 @@ def main():
 
                 # Fail if no backend has been found
                 if backend == 'auto':
-                    module.fail_json(msg=("Can't detect none of the required Python libraries "
+                    module.fail_json(msg=("Can't detect any of the required Python libraries "
                                           "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
                                               MINIMAL_CRYPTOGRAPHY_VERSION,
                                               MINIMAL_PYOPENSSL_VERSION))
