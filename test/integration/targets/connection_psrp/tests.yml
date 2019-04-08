@@ -37,7 +37,7 @@
 
   - name: test out become with psrp
     win_whoami:
-    when: os_version|bool
+    when: os_version.stdout_lines[0] | bool
     register: whoami_out
     become: yes
     become_method: runas
@@ -47,7 +47,7 @@
     assert:
       that:
       - whoami_out.account.sid == "S-1-5-18"
-    when: os_version|bool
+    when: os_version.stdout_lines[0] | bool
 
   - name: test out async with psrp
     win_shell: Start-Sleep -Seconds 2; Write-Output abc
