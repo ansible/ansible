@@ -1030,11 +1030,6 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
             )
         )
 
-    if stream_found and not check_mode:
-        if current_stream['ShardsCount'] != number_of_shards:
-            err_msg = 'Can not change the number of shards in a Kinesis Stream'
-            return success, changed, err_msg, results
-
     if stream_found and current_stream.get('StreamStatus') != 'DELETING':
         success, changed, err_msg = update(
             client, current_stream, stream_name, number_of_shards,
