@@ -95,9 +95,9 @@ options:
         version_added: 2.5
     attach_caching:
         description:
-            - "Disk caching policy controlled by VM. Will be used when attached to the VM defined by C(managed_by)"
-            - "If this option is different from the current caching policy,"
-            - "the managed disk will be deattached from the VM and attached with current caching option again"
+            - "Disk caching policy controlled by VM. Will be used when attached to the VM defined by C(managed_by)."
+            - "If this option is different from the current caching policy,
+               the managed disk will be deattached from the VM and attached with current caching option again."
             - "Allowed values: '', read_only, read_write."
         choices:
             - ''
