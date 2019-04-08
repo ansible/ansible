@@ -18,7 +18,7 @@ short_description: Retrieve facts about a libvirt domain.
 description: Retrieve facts about a libvirt domain. Facts from the file config and live config
   are both retrieved when applicable.
 version_added: "2.8"
-author: Chris Redit
+author: Chris Redit (@chrisred)
 options:
   name:
     description: Defines the name of the domain(s) to retrieve facts for. If no I(name) parameter
@@ -32,7 +32,8 @@ notes:
   - Facts are generated from the XML configuration of the domain. The keys returned for each of
     the items listed in the return values can vary based on the domain configuration.
 requirements:
-  - python >= 2.7
+  - python >= 2.6
+  - python-lxml
   - libvirt-python
 '''
 
@@ -116,15 +117,30 @@ virt_domains_live:
     contains an identical set of return values as the C(virt_domains) key.
   returned: always
   type: complex
+  contains: dict
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-import xml.etree.ElementTree as etree
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from collections import defaultdict
 import ansible.module_utils.six as six
-import collections
 import sys
 import traceback
-import libvirt
+
+LXML_IMPORT_ERROR = None
+try:
+    from lxml import etree
+    HAS_LXML = True
+except ImportError:
+    LXML_IMPORT_ERROR = traceback.format_exc()
+    HAS_LXML = False
+
+LIBVIRT_IMPORT_ERROR = None
+try:
+    import libvirt
+    HAS_LIBVIRT = True
+except ImportError:
+    LIBVIRT_IMPORT_ERROR = traceback.format_exc()
+    HAS_LIBVIRT = False
 
 
 class Config():
@@ -196,7 +212,7 @@ def etree_to_dict(element):
     children = list(element)
     if children:
         # create default dict using a list to deal with duplicate tags
-        dd = collections.defaultdict(list)
+        dd = defaultdict(list)
         for child in map(etree_to_dict, children):
             for k, v in child.items():
                 # Append each child item to the list in the defaultdict, duplicate tags also get
@@ -204,7 +220,7 @@ def etree_to_dict(element):
                 dd[k].append(v)
         # Add the child dicts to the parent, the one item lists have the only value added,
         # otherwise the whole list is added representing multiple elements with the same tag.
-        parent = {element.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
+        parent = {element.tag: dict([(k, v[0] if len(v) == 1 else v) for k, v in dd.items()])}
     if element.attrib:
         parent[element.tag].update(('@' + k, v) for k, v in element.attrib.items())
     if element.text:
@@ -228,7 +244,7 @@ def flatten_dict(d, parent_key='', seperator='_'):
         else:
             new_key = parent_key + seperator + k if parent_key else k
 
-        if isinstance(v, collections.MutableMapping):
+        if isinstance(v, dict):
             items.extend(flatten_dict(v, new_key, seperator=seperator).items())
         else:
             items.append((new_key, v))
@@ -250,11 +266,12 @@ def get_facts(config, domain_stats):
         elif isinstance(config_item, list):
             new_items = list()
             for item in config_item:
-                if isinstance(item, etree.Element):
+                if isinstance(item, etree._Element):
                     # The first key in the output from etree_to_dict is the tag name for the
                     # current element. This is not required as we use the propery name from the
                     # Config object. So only get the value here.
-                    item_dict = flatten_dict(list(six.viewvalues(etree_to_dict(item)))[0])
+                    item_dict = flatten_dict(list(
+                        six.itervalues(etree_to_dict(item)))[0])
                     if key == 'disk':
                         # The "domain stats" include information about the size and usage of
                         # qcow2 (and maybe other) disk images. Merge the relevant items here
@@ -299,6 +316,12 @@ def main():
     domains = list()
     module = AnsibleModule(module_args)
     name = module.params['name']
+
+    if not HAS_LXML:
+        module.fail_json(msg=missing_required_lib('lxml'), exception=LXML_IMPORT_ERROR)
+
+    if not HAS_LIBVIRT:
+        module.fail_json(msg=missing_required_lib('libvirt'), exception=LIBVIRT_IMPORT_ERROR)
 
     try:
         host = libvirt.open(module.params['uri'])
