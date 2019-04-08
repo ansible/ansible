@@ -109,6 +109,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _set_tag_variables(self, id):
         tags = self.node_attrs['Driver'].get('Tags') or ''
+        self.inventory.set_variable(id, 'dm_tags', tags)
+
         if tags:
             split_tags = self.get_option('split_tags')
             split_separator = self.get_option('split_separator')
