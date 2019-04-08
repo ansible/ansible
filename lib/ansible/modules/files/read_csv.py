@@ -67,6 +67,11 @@ options:
     - When using this parameter, you change the default value used by C(dialect).
     - The default value depends on the dialect used.
     type: bool
+  append:
+    description:
+    - Whether to append the CSV with the previous (registered) result.
+    - This is useful when reading many files with(_*) the same keys/titles.
+    type: bool
 notes:
 - Ansible also ships with the C(csvfile) lookup plugin, which can be used to do selective lookups in CSV files from Jinja.
 '''
@@ -93,6 +98,20 @@ EXAMPLES = r'''
 - name: Read users from CSV file and return a list
   read_csv:
     path: users.csv
+  register: users
+  delegate_to: localhost
+
+- debug:
+    msg: 'User {{ users.list.1.name }} has UID {{ users.list.1.uid }} and GID {{ users.list.1.gid }}'
+
+# Read many CSV files and access the first item
+- name: Read users from many CSV file and return a list
+  read_csv:
+    path: "{{ item }}"
+    append: yes # Without this, only the data of the last file will be registered!
+  with_items:
+  	- users.csv
+  	- users_2.csv
   register: users
   delegate_to: localhost
 
@@ -145,7 +164,7 @@ import csv
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-
+from ansible.plugins.cache.pickle import CacheModule as CSVCache
 
 # Add Unix dialect from Python 3
 class unix_dialect(csv.Dialect):
@@ -161,7 +180,13 @@ class unix_dialect(csv.Dialect):
 csv.register_dialect("unix", unix_dialect)
 
 
+def set_csv_cache(cache, started_appending=False):
+    cache.set('dict', dict())
+    cache.set('list', list())
+    cache.set('__read_csv_started_appending__', started_appending)
+
 def main():
+    cache = CSVCache()
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(type='path', required=True, aliases=['filename']),
@@ -172,6 +197,7 @@ def main():
             delimiter=dict(type='str'),
             skipinitialspace=dict(type='bool'),
             strict=dict(type='bool'),
+            append=dict(type='bool'),
         ),
         supports_check_mode=True,
     )
@@ -181,6 +207,7 @@ def main():
     key = module.params['key']
     fieldnames = module.params['fieldnames']
     unique = module.params['unique']
+    append = module.params['append']
 
     if dialect not in csv.list_dialects():
         module.fail_json(msg="Dialect '%s' is not supported by your version of python." % dialect)
@@ -210,25 +237,27 @@ def main():
     if key and key not in reader.fieldnames:
         module.fail_json(msg="Key '%s' was not found in the CSV header fields: %s" % (key, ', '.join(reader.fieldnames)))
 
-    data_dict = dict()
-    data_list = list()
+    if not cache.contains('__read_csv_started_appending__') or not append:
+        set_csv_cache(cache)
+    elif append and not cache.get('__read_csv_started_appending__'):
+        set_csv_cache(cache, True)
 
     if key is None:
         try:
             for row in reader:
-                data_list.append(row)
+                cache.get('list').append(row)
         except csv.Error as e:
             module.fail_json(msg="Unable to process file: %s" % to_text(e))
     else:
         try:
             for row in reader:
-                if unique and row[key] in data_dict:
+                if unique and row[key] in cache.get('dict'):
                     module.fail_json(msg="Key '%s' is not unique for value '%s'" % (key, row[key]))
-                data_dict[row[key]] = row
+                cache.get('dict').update({row[key]: row})
         except csv.Error as e:
             module.fail_json(msg="Unable to process file: %s" % to_text(e))
 
-    module.exit_json(dict=data_dict, list=data_list)
+    module.exit_json(dict=cache.get('dict'), list=cache.get('list'))
 
 
 if __name__ == '__main__':
