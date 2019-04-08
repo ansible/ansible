@@ -661,7 +661,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     support_lb_change = False  # Currently not support for the vmss contains more than one loadbalancer
                     self.module.warn('Updating more than one load balancer on VMSS is currently not supported')
                 else:
-                    load_balancer
                     if load_balancer:
                         lb_or_ag_id = "{0}/".format(load_balancer.id)
                     elif app_gateway:
