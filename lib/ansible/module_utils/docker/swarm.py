@@ -249,26 +249,6 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             return None
         return super(AnsibleDockerSwarmClient, self).get_unlock_key()
 
-    def get_all_services_inspect(self):
-        """
-        Returns Swarm service info as in 'docker service inspect' command about all registered services
-
-        :return:
-            Structure with information about all services
-        """
-        try:
-            service_info = self.services()
-        except APIError as exc:
-            if exc.status_code == 503:
-                self.fail("Cannot inspect service: To inspect service execute module on Swarm Manager")
-            self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
-        except Exception as exc:
-            self.fail("Error inspecting swarm service: %s" % exc)
-
-        json_str = json.dumps(service_info, ensure_ascii=False)
-        service_info = json.loads(json_str)
-        return service_info
-
     def get_service_inspect(self, service_id, skip_missing=False):
         """
         Returns Swarm service info as in 'docker service inspect' command about single service

@@ -30,9 +30,7 @@ options:
   name:
     description:
       - The name of the service to inspect.
-      - A list of service names to inspect.
-      - If empty it will return information of all services in the swarm.
-    type: list
+    type: str
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
@@ -46,59 +44,35 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: Get info from all services
-  docker_swarm_service_info:
-  register: result
-
-- name: Get info from a single service
+- name: Get info from a service
   docker_swarm_service_info:
     name: myservice
-  register: result
-
-- name: Get info from a list of services
-  docker_swarm_service_info:
-    name:
-      - myservice1
-      - myservice2
   register: result
 '''
 
 RETURN = '''
-services:
+service:
     description:
-      - Facts representing the current state of the services. Matches the C(docker service inspect) output.
-      - Can contain multiple entries if more than one service provided in I(name), or I(name) is not provided.
+      - A dictionary representing the current state of the service. Matches the C(docker service inspect) output.
+      - Will be C(None) if service does not exist.
     returned: always
-    type: list
+    type: dict
 '''
 
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 
 
 def get_service_info(client):
-    results = []
-
-    if client.module.params['name'] is None:
-        service_info = client.get_all_services_inspect()
-        return service_info
-
-    services = client.module.params['name']
-    if not isinstance(services, list):
-        services = [services]
-
-    for service in services:
-        service_info = client.get_service_inspect(
-            service_id=service,
-            skip_missing=True
-        )
-        if service_info:
-            results.append(service_info)
-    return results
+    service = client.module.params['name']
+    return client.get_service_inspect(
+        service_id=service,
+        skip_missing=True
+    )
 
 
 def main():
     argument_spec = dict(
-        name=dict(type='list', elements='str'),
+        name=dict(type='str'),
     )
 
     client = AnsibleDockerSwarmClient(
@@ -110,11 +84,11 @@ def main():
 
     client.fail_task_if_not_swarm_manager()
 
-    services = get_service_info(client)
+    service = get_service_info(client)
 
     client.module.exit_json(
         changed=False,
-        services=services,
+        service=service,
     )
 
 

@@ -6,9 +6,7 @@
 
 - name: Registering service names
   set_fact:
-    service_name_1: "{{ service_base_name ~ '-1' }}"
-    service_name_2: "{{ service_base_name ~ '-2' }}"
-    service_name_3: "{{ service_base_name ~ '-3' }}"
+    service_name: "{{ service_base_name ~ '-1' }}"
 
 - block:
   - name: Make sure we're not already using Docker swarm
@@ -18,6 +16,7 @@
 
   - name: Try to get docker_swarm_service_info when docker is not running in swarm mode
     docker_swarm_service_info:
+      name: "{{ service_name }}"
     ignore_errors: yes
     register: output
 
@@ -36,49 +35,17 @@
     docker_swarm_service:
       name: "{{ service_name }}"
       image: alpine:3.8
-    loop:
-      - "{{ service_name_1 }}"
-      - "{{ service_name_2 }}"
-      - "{{ service_name_3 }}"
-    loop_control:
-      loop_var: service_name
 
   - name: Try to get docker_swarm_service_info for a single service
     docker_swarm_service_info:
-      name: "{{ service_name_1 }}"
+      name: "{{ service_name }}"
     register: output
 
   - name: assert reading reading service info
     assert:
       that:
-        - 'output.services|length == 1'
-        - 'output.services[0].ID is string'
-
-  - name: Try to get docker_swarm_service_info for all services
-    docker_swarm_service_info:
-    register: output
-
-  - name: assert reading reading service info
-    assert:
-      that:
-        - 'output.services|length == 3'
-        - 'output.services[0].ID is string'
-        - 'output.services[1].ID is string'
-        - 'output.services[2].ID is string'
-
-  - name: Try to get docker_swarm_service_info for multiple services
-    docker_swarm_service_info:
-      name:
-        - "{{ service_name_1 }}"
-        - "{{ service_name_2 }}"
-    register: output
-
-  - name: assert reading reading service info
-    assert:
-      that:
-        - 'output.services|length == 2'
-        - 'output.services[0].ID is string'
-        - 'output.services[1].ID is string'
+        - 'output.service.ID is string'
+        - 'output.service.Spec.Name == service_name'
 
   - name: Create random name
     set_fact:
@@ -92,18 +59,13 @@
   - name: assert reading reading service info
     assert:
       that:
-        - 'output.services|length == 0'
+        - 'output.service is none'
 
   always:
     - name: Remove services
       docker_swarm_service:
         name: "{{ service_name }}"
         state: absent
-      loop:
-        - "{{ service_name_1 }}"
-        - "{{ service_name_2 }}"
-      loop_control:
-        loop_var: service_name
       ignore_errors: yes
 
     - name: Remove swarm
