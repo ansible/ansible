@@ -133,6 +133,7 @@ EXAMPLES = r'''
     profiles: private
     state: present
     enabled: yes
+<<<<<<< HEAD
 
 - name: Firewall rule to be created for application group
   win_firewall_rule:
@@ -155,7 +156,8 @@ EXAMPLES = r'''
     state: present
     enabled: yes
 
- - name: Firewall rule to allow ICMP v4 echo (ping) 
+- name: Firewall rule to allow ICMP v4 echo (ping) 
+>>>>>>> Remove yaml-breaking space
   win_firewall_rule:
     name: ICMP Allow incoming V4 echo request
     enabled: yes
