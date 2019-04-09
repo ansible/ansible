@@ -341,7 +341,9 @@ class VMwareHost(PyVmomi):
 
     def state_exit_unchanged(self):
         """Exit with status message"""
-        if self.reconnect_disconnected and self.host_update.runtime.connectionState == 'disconnected':
+        if not self.host_update:
+            result = "Host already disconnected"
+        elif self.reconnect_disconnected and self.host_update.runtime.connectionState == 'disconnected':
             self.state_reconnect_host()
         else:
             if self.folder_name:
