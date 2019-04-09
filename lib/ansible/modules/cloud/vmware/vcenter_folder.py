@@ -122,9 +122,10 @@ EXAMPLES = r'''
 
 RETURN = r'''
 result:
-    description:
-    - a dictionary
-    fields:
+    description: The detail about the new folder
+    returned: On success
+    type: complex
+    contains:
         path: the full path of the new folder
         msg: string stating about result
 '''
@@ -183,7 +184,7 @@ class VmwareFolderManager(PyVmomi):
                 if child_folder_obj:
                     results['result']['path'] = self.get_folder_path(child_folder_obj)
                     results['result']['msg'] = "Folder %s already exists under" \
-                                     " parent folder %s" % (folder_name, parent_folder)
+                        " parent folder %s" % (folder_name, parent_folder)
                     self.module.exit_json(**results)
             else:
                 folder_obj = self.get_folder(datacenter_name=datacenter_name,
@@ -205,7 +206,7 @@ class VmwareFolderManager(PyVmomi):
                         new_folder = p_folder_obj.CreateFolder(folder_name)
                         results['result']['path'] = self.get_folder_path(new_folder)
                         results['result']['msg'] = "Folder '%s' of type '%s' under '%s' created" \
-                                         " successfully." % (folder_name, folder_type, parent_folder)
+                            " successfully." % (folder_name, folder_type, parent_folder)
                     results['changed'] = True
                 elif not parent_folder and not p_folder_obj:
                     if self.module.check_mode:
