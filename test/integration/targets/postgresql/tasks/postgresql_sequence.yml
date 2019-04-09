@@ -1,4 +1,4 @@
-# Copyright: (c) 2019, Tobias Birkefeld <t@craxs.de>
+# Copyright: (c) 2019, Tobias Birkefeld (@tcraxs) <t@craxs.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Preparation for tests.
@@ -80,10 +80,9 @@
 
 ####################
 # Test: create sequence
-- name: postgresql_sequence - create a new seqeunce with name "foobar" in check_mode
+- name: postgresql_sequence - create a new seqeunce with name "foobar"
   become_user: "{{ pg_user }}"
   become: yes
-  check_mode: yes
   postgresql_sequence:
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
@@ -99,7 +98,7 @@
       - result.queries == ["CREATE SEQUENCE \"foobar\""]
 
 # Real SQL check
-- name: postgresql_sequence - check that the new seqeunce "foobar" not exists
+- name: postgresql_sequence - check that the new seqeunce "foobar" exists
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_query:
@@ -114,7 +113,7 @@
       - result.rowcount == 1
 
 ####################
-# Test: create sequence with options
+# Test: drop sequence
 - name: postgresql_sequence - drop a sequence called foobar
   become_user: "{{ pg_user }}"
   become: yes
@@ -123,6 +122,7 @@
     login_user: "{{ pg_user }}"
     name: foobar
     state: absent
+  register: result
 
 # Checks
 - name: postgresql_sequence - check with assert the output
@@ -224,14 +224,12 @@
     that:
       - result.rowcount == 1
 
-
-
 ####################
 # Test: change schema of a sequence
 - name: postgresql_sequence - change schema of an existing sequence from public to foobar_schema
+  become_user: "{{ pg_user }}"
+  become: yes
   postgresql_sequence:
-    login_host: "{{ login_host }}"
-    login_password: "{{ login_password }}"
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
     name: foobar_with_options
@@ -250,9 +248,9 @@
 
 # Real SQL check
 - name: postgresql_sequence - check that the seqeunce "foobar_with_options" exists in new schema
+  become_user: "{{ pg_user }}"
+  become: yes
   postgresql_query:
-    login_host: "{{ login_host }}"
-    login_password: "{{ login_password }}"
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
     query: "SELECT sequence_name,sequence_schema FROM information_schema.sequences WHERE sequence_name = 'foobar_with_options' AND sequence_schema = 'foobar_schema'"
@@ -265,14 +263,14 @@
 
 
 # Cleanup
-- name: Remove user
+- name: postgresql_sequence - remove user
   postgresql_user:
     name: "{{ db_user2 }}"
     state: absent
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
 
-- name: Destroy DB
+- name: postgresql_sequence - destroy DB
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_db:
@@ -280,7 +278,7 @@
     name: "{{ db_name }}"
     login_user: "{{ pg_user }}"
 
-- name: Remove user
+- name: postgresql_sequence - remove user
   postgresql_user:
     name: "{{ db_user2 }}"
     state: absent
