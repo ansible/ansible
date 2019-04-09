@@ -65,10 +65,10 @@ def ansible_return(module, rsp, changed, req=None, existing_obj=None,
     obj_val = rsp.json() if rsp else existing_obj
 
     if (obj_val and module.params.get("obj_username", None) and
-                "username" in obj_val):
+            "username" in obj_val):
         obj_val["obj_username"] = obj_val["username"]
     if (obj_val and module.params.get("obj_password", None) and
-                "password" in obj_val):
+            "password" in obj_val):
         obj_val["obj_password"] = obj_val["password"]
     old_obj_val = existing_obj if changed and existing_obj else None
     api_context_val = api_context if disable_fact else None
@@ -139,12 +139,10 @@ def cleanup_absent_fields(obj):
     return obj
 
 
-RE_REF_MATCH = re.compile('^/api/[\w/]+\?name\=[\w]+[^#<>]*$')
-
+RE_REF_MATCH = re.compile(r'^/api/[\w/]+\?name\=[\w]+[^#<>]*$')
 # if HTTP ref match then strip out the #name
-# HTTP_REF_MATCH = re.compile('https://[\w.0-9:-]+/api/[\w/\?.#&-]*$')
-HTTP_REF_MATCH = re.compile('https://[\w.0-9:-]+/api/.+')
-HTTP_REF_W_NAME_MATCH = re.compile('https://[\w.0-9:-]+/api/.*#.+')
+HTTP_REF_MATCH = re.compile(r'https://[\w.0-9:-]+/api/.+')
+HTTP_REF_W_NAME_MATCH = re.compile(r'https://[\w.0-9:-]+/api/.*#.+')
 
 
 def ref_n_str_cmp(x, y):

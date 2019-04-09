@@ -40,8 +40,7 @@ def avi_sdk_syslog_logger(logger_name='avi.sdk'):
     #   AVI_SYSLOG_ADDRESS: Destination address for the syslog handler.
     #   Default is /dev/log
     from logging.handlers import SysLogHandler
-    lf = '[%(asctime)s] %(levelname)s [' \
-                        '%(module)s.%(funcName)s:%(lineno)d] %(message)s'
+    lf = '[%(asctime)s] %(levelname)s [%(module)s.%(funcName)s:%(lineno)d] %(message)s'
     log = logging.getLogger(logger_name)
     log_level = os.environ.get('AVI_LOG_LEVEL', 'DEBUG')
     if log_level:
@@ -100,13 +99,13 @@ class ApiResponse(Response):
             return None
         elif self.status_code == 404:
             raise ObjectNotFound('HTTP Error: %d Error Msg %s' % (
-                                    self.status_code, self.text), self)
+                self.status_code, self.text), self)
         elif self.status_code >= 500:
             raise AviServerError('HTTP Error: %d Error Msg %s' % (
-                                    self.status_code, self.text), self)
+                self.status_code, self.text), self)
         else:
             raise APIError('HTTP Error: %d Error Msg %s' % (
-                    self.status_code, self.text), self)
+                self.status_code, self.text), self)
 
     def count(self):
         """
@@ -186,7 +185,7 @@ class ApiSession(Session):
     # At anytime the pid of the process changes then it would create
     # a new cache for that process.
     AVI_SLUG = 'Slug'
-    SESSION_CACHE_EXPIRY = 20*60
+    SESSION_CACHE_EXPIRY = 20 * 60
     SHARED_USER_HDRS = ['X-CSRFToken', 'Session-Id', 'Referer', 'Content-Type']
     MAX_API_RETRIES = 3
 
@@ -264,7 +263,7 @@ class ApiSession(Session):
             sessionDict[self.key] = {
                 'api': self,
                 "csrftoken": self.avi_credentials.csrftoken,
-                "session_id":self.avi_credentials.session_id,
+                "session_id": self.avi_credentials.session_id,
                 "last_used": datetime.utcnow()
             }
         elif lazy_authentication:
@@ -355,7 +354,7 @@ class ApiSession(Session):
 
     def get_context(self):
         return {
-            'session_id':sessionDict[self.key]['session_id'],
+            'session_id': sessionDict[self.key]['session_id'],
             'csrftoken': sessionDict[self.key]['csrftoken']
         }
 
@@ -363,8 +362,6 @@ class ApiSession(Session):
     def clear_cached_sessions():
         global sessionDict
         sessionDict = {}
-
-
 
     @staticmethod
     def get_session(
@@ -448,8 +445,8 @@ class ApiSession(Session):
         self.cookies.clear()
         err = None
         try:
-            rsp = super(ApiSession, self).post(self.prefix+"/login", body,
-                                               timeout=self.timeout, verify=self.verify)
+            rsp = super(ApiSession, self).post(
+                self.prefix + "/login", body, timeout=self.timeout, verify=self.verify)
 
             if rsp.status_code == 200:
                 self.num_session_retries = 0
@@ -511,15 +508,6 @@ class ApiSession(Session):
         api_hdrs['timeout'] = str(timeout)
         if self.key in sessionDict and 'csrftoken' in sessionDict.get(self.key):
             api_hdrs['X-CSRFToken'] = sessionDict.get(self.key)['csrftoken']
-            # Added Cookie to handle single session
-            #api_hdrs['Cookie'] = "[<Cookie csrftoken=%s " \
-            #                     "for %s/>, " \
-            #                     "<Cookie %s=%s " \
-            #                     "for %s/>]" %(sessionDict[self.key]['csrftoken'],
-            #                                   self.avi_credentials.controller,
-            #                                   self.session_cookie_name,
-            #                                   sessionDict[self.key]['session_id'],
-            #                                   self.avi_credentials.controller)
         else:
             self.authenticate_session()
             api_hdrs['X-CSRFToken'] = sessionDict.get(self.key)['csrftoken']
@@ -609,7 +597,7 @@ class ApiSession(Session):
             if connection_error:
                 try:
                     self.close()
-                except:
+                except Exception:
                     # ignoring exception in cleanup path
                     pass
                 logger.warning('Connection failed, retrying.')
@@ -703,8 +691,8 @@ class ApiSession(Session):
         if resp.status_code in (401, 419):
             ApiSession.reset_session(self)
             resp = self.get_object_by_name(
-                    path, name, tenant, tenant_uuid, timeout=timeout,
-                    params=params, **kwargs)
+                path, name, tenant, tenant_uuid, timeout=timeout,
+                params=params, **kwargs)
         if resp.status_code > 499 or 'Invalid version' in resp.text:
             logger.error('Error in get object by name for %s named %s. '
                          'Error: %s' % (path, name, resp.text))
@@ -912,11 +900,11 @@ class ApiSession(Session):
         This function returns the full url from relative path and uuid.
         """
         if path == 'logout':
-            return self.prefix+'/'+path
+            return self.prefix + '/' + path
         elif uuid:
-            return self.prefix+'/api/'+path+'/'+uuid
+            return self.prefix + '/api/' + path + '/' + uuid
         else:
-            return self.prefix+'/api/'+path
+            return self.prefix + '/api/' + path
 
     def _get_uuid_by_name(self, path, name, tenant='admin',
                           tenant_uuid='', api_version=None):
