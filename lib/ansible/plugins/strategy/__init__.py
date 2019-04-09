@@ -762,7 +762,7 @@ class StrategyBase:
         ti_copy._parent = included_file._task._parent
 
         temp_vars = ti_copy.vars.copy()
-        temp_vars.update(included_file._args)
+        temp_vars.update(included_file._vars)
 
         ti_copy.vars = temp_vars
 
