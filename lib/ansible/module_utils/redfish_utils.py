@@ -26,6 +26,7 @@ class RedfishUtils(object):
     def get_request(self, uri):
         try:
             resp = open_url(uri, method="GET",
+                            headers={'accept': 'application/json'},
                             url_username=self.creds['user'],
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
