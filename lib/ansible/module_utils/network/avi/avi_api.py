@@ -10,9 +10,8 @@ try:
     from requests import Response
     from requests.sessions import Session
 except ImportError:
-    RequestsConnectionError = None
-    Response = None
-    Session = None
+    pass
+
 
 from ssl import SSLError
 
