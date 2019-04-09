@@ -71,6 +71,7 @@ class AnsibleCoreCI(object):
                 'ios',
                 'tower',
                 'rhel',
+                'hetzner',
             ),
             azure=(
                 'azure',
