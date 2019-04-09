@@ -470,6 +470,39 @@ def cryptography_get_extensions_from_cert(cert):
     return result
 
 
+def cryptography_get_extensions_from_csr(csr):
+    # Since cryptography won't give us the DER value for an extension
+    # (that is only stored for unrecognized extensions), we have to re-do
+    # the extension parsing outselves.
+    result = dict()
+    backend = csr._backend
+
+    extensions = backend._lib.X509_REQ_get_extensions(csr._x509_req)
+    extensions = backend._ffi.gc(
+        extensions,
+        lambda ext: backend._lib.sk_X509_EXTENSION_pop_free(
+            ext,
+            backend._ffi.addressof(backend._lib._original_lib, "X509_EXTENSION_free")
+        )
+    )
+
+    for i in range(backend._lib.sk_X509_EXTENSION_num(extensions)):
+        ext = backend._lib.sk_X509_EXTENSION_value(extensions, i)
+        if ext == backend._ffi.NULL:
+            continue
+        crit = backend._lib.X509_EXTENSION_get_critical(ext)
+        data = backend._lib.X509_EXTENSION_get_data(ext)
+        backend.openssl_assert(data != backend._ffi.NULL)
+        der = backend._ffi.buffer(data.data, data.length)[:]
+        entry = dict(
+            critical=(crit == 1),
+            value=base64.b64encode(der),
+        )
+        oid = _obj2txt(backend._lib, backend._ffi, backend._lib.X509_EXTENSION_get_object(ext))
+        result[oid] = entry
+    return result
+
+
 def pyopenssl_get_extensions_from_cert(cert):
     # While pyOpenSSL allows us to get an extension's DER value, it won't
     # give us the dotted string for an OID. So we have to do some magic to
@@ -478,6 +511,32 @@ def pyopenssl_get_extensions_from_cert(cert):
     ext_count = cert.get_extension_count()
     for i in range(0, ext_count):
         ext = cert.get_extension(i)
+        entry = dict(
+            critical=bool(ext.get_critical()),
+            value=base64.b64encode(ext.get_data()),
+        )
+        oid = _obj2txt(
+            OpenSSL._util.lib,
+            OpenSSL._util.ffi,
+            OpenSSL._util.lib.X509_EXTENSION_get_object(ext._extension)
+        )
+        # This could also be done a bit simpler:
+        #
+        #   oid = _obj2txt(OpenSSL._util.lib, OpenSSL._util.ffi, OpenSSL._util.lib.OBJ_nid2obj(ext._nid))
+        #
+        # Unfortunately this gives the wrong result in case the linked OpenSSL
+        # doesn't know the OID. That's why we have to get the OID dotted string
+        # similarly to how cryptography does it.
+        result[oid] = entry
+    return result
+
+
+def pyopenssl_get_extensions_from_csr(csr):
+    # While pyOpenSSL allows us to get an extension's DER value, it won't
+    # give us the dotted string for an OID. So we have to do some magic to
+    # get hold of it.
+    result = dict()
+    for ext in csr.get_extensions():
         entry = dict(
             critical=bool(ext.get_critical()),
             value=base64.b64encode(ext.get_data()),
