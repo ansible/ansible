@@ -1070,8 +1070,9 @@ def create_instances(module, ec2, vpc, override_count=None):
                       'placement': zone,
                       'instance_type': instance_type,
                       'kernel_id': kernel,
-                      'ramdisk_id': ramdisk,
-                      'user_data': to_bytes(user_data, errors='surrogate_or_strict')}
+                      'ramdisk_id': ramdisk}
+            if user_data is not None:
+                params['user_data'] = to_bytes(user_data, errors='surrogate_or_strict')
 
             if ebs_optimized:
                 params['ebs_optimized'] = ebs_optimized
