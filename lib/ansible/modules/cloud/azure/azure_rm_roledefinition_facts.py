@@ -277,7 +277,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
             if len(response) > 0:
                 roles = []
                 for r in response:
-                   if r['role_name'] == self.role_name:
+                    if r['role_name'] == self.role_name:
                         roles.append(r)
 
                 if len(roles) == 1:
