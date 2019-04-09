@@ -12,7 +12,7 @@
 
 - name: generate unique value for testing
   set_fact:
-    tgw_description: "{{ 65535 | random | to_uuid }}"
+    tgw_description: "{{ resource_prefix }}-tgw"
 
 - block:
     - name: test create transit gateway without permissions
