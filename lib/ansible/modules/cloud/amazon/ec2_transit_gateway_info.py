@@ -233,7 +233,7 @@ def setup_module_object():
     """
 
     argument_spec = dict(
-        transit_gateway_ids=dict(type='list', default=[], aliases=['transit_gateway_id']),
+        transit_gateway_ids=dict(type='list', default=[], elements='str', aliases=['transit_gateway_id']),
         filters=dict(type='dict', default={})
     )
 
