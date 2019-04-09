@@ -205,13 +205,13 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        if sys.version_info < (3,):
-            with open(module, 'rb') as mod:
-                imp.load_module('__main__', mod, module, MOD_DESC)
-        else:
+        if sys.version_info >= (3,):
             spec = importlib.util.spec_from_file_location('__main__', module)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
+        else:
+            with open(module, 'rb') as mod:
+                imp.load_module('__main__', mod, module, MOD_DESC)
 
         # Ansible modules must exit themselves
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -565,15 +565,7 @@ class ModuleInfo:
         self.pkg_dir = False
         path = None
 
-        if imp:
-            self._info = info = imp.find_module(name, paths)
-            self.py_src = info[2][2] == imp.PY_SOURCE
-            self.pkg_dir = info[2][2] == imp.PKG_DIRECTORY
-            if self.pkg_dir:
-                path = os.path.join(info[1], '__init__.py')
-            else:
-                path = info[1]
-        else:
+        if imp is None:
             self._info = info = importlib.machinery.PathFinder.find_spec(name, paths)
             if info is not None:
                 self.py_src = os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES
@@ -581,6 +573,14 @@ class ModuleInfo:
                 path = info.origin
             else:
                 raise ImportError("No module named '%s'" % name)
+        else:
+            self._info = info = imp.find_module(name, paths)
+            self.py_src = info[2][2] == imp.PY_SOURCE
+            self.pkg_dir = info[2][2] == imp.PKG_DIRECTORY
+            if self.pkg_dir:
+                path = os.path.join(info[1], '__init__.py')
+            else:
+                path = info[1]
 
         self.path = path
 
