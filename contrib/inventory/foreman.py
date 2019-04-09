@@ -22,12 +22,6 @@
 # Stdlib imports
 # __future__ imports must occur at the beginning of file
 from __future__ import print_function
-try:
-    # Python 2 version
-    import ConfigParser
-except ImportError:
-    # Python 3 version
-    import configparser as ConfigParser
 import json
 import argparse
 import copy
@@ -47,6 +41,7 @@ if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
 from requests.auth import HTTPBasicAuth
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import configparser as ConfigParser
 
 
 def json_format_dict(data, pretty=False):

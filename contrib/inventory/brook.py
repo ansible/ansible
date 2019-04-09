@@ -79,10 +79,7 @@ Version: 0.2
 import sys
 import os
 
-try:
-    from ConfigParser import SafeConfigParser as ConfigParser
-except ImportError:
-    from configparser import ConfigParser
+from ansible.module_utils.six.moves.configparser import SafeConfigParser as ConfigParser
 
 import json
 
