@@ -165,7 +165,9 @@ name:
     sample: "luks-c1da9a58-2fde-4256-9d9f-6ab008b4dd1b"
 '''
 
+import os
 import re
+import stat
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -458,6 +460,15 @@ def run_module():
 
     module = AnsibleModule(argument_spec=module_args,
                            supports_check_mode=True)
+
+    if module.params['device'] is not None:
+        try:
+            statinfo = os.stat(module.params['device'])
+            mode = statinfo.st_mode
+            if not stat.S_ISBLK(mode) and not stat.S_ISCHR(mode):
+                raise Exception('{0} is not a device'.format(module.params['device']))
+        except Exception as e:
+            module.fail_json(msg=str(e))
 
     crypt = CryptHandler(module)
     conditions = ConditionsHandler(module, crypt)
