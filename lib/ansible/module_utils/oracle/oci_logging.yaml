@@ -1,0 +1,59 @@
+---
+# Copyright (c) 2017, 2018 Oracle and/or its affiliates.
+# This software is made available to you under the terms of the GPL 3.0 license or the Apache 2.0 license.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Apache License v2.0
+# See LICENSE.TXT for details.
+version: 1
+disable_existing_loggers: False
+formatters:
+    simple:
+        format: "[%(asctime)s - %(name)s - %(lineno)s - %(funcName)s - %(levelname)s] - %(message)s"
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        level: DEBUG
+        formatter: simple
+        stream: ext://sys.stdout
+
+    info_file_handler:
+        class: logging.handlers.RotatingFileHandler
+        level: INFO
+        formatter: simple
+        filename: "{path}/oci_ansible_info_{date}.log"
+        maxBytes: 10485760 # 10MB
+        backupCount: 20
+        encoding: utf8
+        mode: "a"
+
+    error_file_handler:
+        class: logging.handlers.RotatingFileHandler
+        level: ERROR
+        formatter: simple
+        filename: "{path}/oci_ansible_errors_{date}.log"
+        maxBytes: 10485760 # 10MB
+        backupCount: 20
+        encoding: utf8
+        mode: "a"
+
+    debug_file_handler:
+        class: logging.handlers.RotatingFileHandler
+        level: DEBUG
+        formatter: simple
+        filename: "{path}/oci_ansible_debug_{date}.log"
+        maxBytes: 10485760 # 10MB
+        backupCount: 20
+        encoding: utf8
+        mode: "a"
+
+#loggers:
+    #any_specific_module e.g. oci_bucket:
+        #level: INFO
+        #handlers: [info_file_handler]
+        #propagate: no
+
+root:
+    level: DEBUG
+    handlers: [info_file_handler, debug_file_handler, error_file_handler]
+...
