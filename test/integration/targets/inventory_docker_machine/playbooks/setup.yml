@@ -3,9 +3,18 @@
   connection: local
   vars:
     do_api_token: "{{ lookup('env', 'DIGITALOCEAN_TOKEN') }}"
-    do_region: "{{ lookup('env', 'DIGITALOCEAN_REGION) }}"
+    do_region: "{{ lookup('env', 'DIGITALOCEAN_REGION') }}"
     dm_machine_name: "{{ lookup('env', 'DM_MACHINE_NAME') }}"
   tasks:
+    - name: Check that Ansible variable do_api_token is set
+      assert: { that: do_api_token != '' }
+
+    - name: Check that Ansible variable do_region is set
+      assert: { that: do_region != '' }
+
+    - name: Check that Ansible variable dm_machine_name is set
+      assert: { that: dm_machine_name != '' }
+
     - name: Request Docker Machine to create a provisioned Digital Ocean droplet
       shell: "docker-machine create \
         --driver digitalocean \

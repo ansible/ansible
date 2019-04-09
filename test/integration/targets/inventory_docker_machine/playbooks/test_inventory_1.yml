@@ -6,7 +6,7 @@
   - name: sanity check Docker Machine output
     vars:
       dm_ls_format: !unsafe '{{.Name}} | {{.DriverName}} | {{.State}} | {{.URL}} | {{.Error}}'
-      success_regex: "^{{ dm_machine_name }} | digitalocean | Running | tcp://.+ |$"
+      success_regex: "^{{ dm_machine_name }} | [^|]+ | Running | tcp://.+ |$"
     shell: docker-machine ls --format '{{ dm_ls_format }}'
     register: result
     failed_when: result.rc != 0 or result.stdout is not match(success_regex)
@@ -32,16 +32,20 @@
   gather_facts: no
   tasks:
   - name: do something to verify that accept-new ssh setting was applied by the docker-machine inventory plugin
-    file:
-      path: /tmp/deleteme
-      state: directory
+    raw: uname -a
+    register: result
+
+  - debug: var=result.stdout
 
 - hosts: 127.0.0.1
+  gather_facts: no
+  vars:
+    dm_machine_name: "{{ lookup('env', 'DM_MACHINE_NAME') }}"
   environment:
-    DOCKER_CERT_PATH: "{{ hostvars['dm-inventory-test'].dm_DOCKER_CERT_PATH }}"
-    DOCKER_HOST: "{{ hostvars['dm-inventory-test'].dm_DOCKER_HOST }}"
-    DOCKER_MACHINE_NAME: "{{ hostvars['dm-inventory-test'].dm_DOCKER_MACHINE_NAME }}"
-    DOCKER_TLS_VERIFY: "{{ hostvars['dm-inventory-test'].dm_DOCKER_TLS_VERIFY }}"
+    DOCKER_CERT_PATH: "{{ hostvars[dm_machine_name].dm_DOCKER_CERT_PATH }}"
+    DOCKER_HOST: "{{ hostvars[dm_machine_name].dm_DOCKER_HOST }}"
+    DOCKER_MACHINE_NAME: "{{ hostvars[dm_machine_name].dm_DOCKER_MACHINE_NAME }}"
+    DOCKER_TLS_VERIFY: "{{ hostvars[dm_machine_name].dm_DOCKER_TLS_VERIFY }}"
   tasks:
   - name: docker-compose up on target Docker Machine host to verify that Docker daemon connection settings from the docker-machine inventory plugin work as expected
     docker_service:

@@ -1,9 +1,4 @@
----
 plugin: docker_machine
-strict: no
 split_tags: yes
-keyed_groups:
-  - prefix: dm_test_name
-    key: 'dm_DOCKER_MACHINE_NAME'
 compose:
   ansible_ssh_common_args: '"-o StrictHostKeyChecking=accept-new"'
