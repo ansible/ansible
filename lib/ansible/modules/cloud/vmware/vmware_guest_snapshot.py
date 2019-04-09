@@ -361,7 +361,7 @@ class PyVmomiHelper(PyVmomi):
             if task.info.state == 'error':
                 result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
             else:
-                result = {'changed': True, 'failed': False, 'ansible_module_results': list_snapshots(vm)}
+                result = {'changed': True, 'failed': False, 'snapshot_results': list_snapshots(vm)}
 
         return result
 
