@@ -19,22 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import imp
 import pytest
 import zipfile
 
 from collections import namedtuple
-from functools import partial
-from io import BytesIO, StringIO
+from io import BytesIO
 
 import ansible.errors
 
 from ansible.executor.module_common import recursive_finder
 from ansible.module_utils.six import PY2
-from ansible.module_utils.six.moves import builtins
 
-
-original_find_module = imp.find_module
 
 # These are the modules that are brought in by module_utils/basic.py  This may need to be updated
 # when basic.py gains new imports
@@ -106,18 +101,6 @@ def finder_containers():
     # zf.writestr('ansible/__init__.py', b'')
 
     return FinderContainers(py_module_names, py_module_cache, zf)
-
-
-def find_module_foo(module_utils_data, *args, **kwargs):
-    if args[0] == 'foo':
-        return (module_utils_data, '/usr/lib/python2.7/site-packages/ansible/module_utils/foo.py', ('.py', 'r', imp.PY_SOURCE))
-    return original_find_module(*args, **kwargs)
-
-
-def find_package_foo(module_utils_data, *args, **kwargs):
-    if args[0] == 'foo':
-        return (module_utils_data, '/usr/lib/python2.7/site-packages/ansible/module_utils/foo', ('', '', imp.PKG_DIRECTORY))
-    return original_find_module(*args, **kwargs)
 
 
 class TestRecursiveFinder(object):
