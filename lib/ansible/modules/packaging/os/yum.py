@@ -395,7 +395,7 @@ class YumModule(YumDnf):
             try:
                 yumbase.repos.enableRepo(rid)
             except yum.Errors.YumBaseError as e:
-                if to_text(u'repository not found') in to_text(e):
+                if u'repository not found' in to_text(e):
                     self.module.fail_json(msg="Repository %s not found." % rid)
 
     def yum_base(self):
