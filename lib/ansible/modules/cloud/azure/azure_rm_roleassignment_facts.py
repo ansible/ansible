@@ -36,6 +36,9 @@ options:
         description:
             - Object id of a user, group or service principal.
             - Mutually exclusive with I(name).
+    role_definition_id:
+        description:
+            - Resource id of role definition.
 
 extends_documentation_fragment:
     - azure
@@ -135,12 +138,16 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
             ),
             assignee=dict(
                 type='str'
+            ),
+            role_definition_id=dict(
+                type='str'
             )
         )
 
         self.name = None
         self.scope = None
         self.assignee = None
+        self.role_definition_id = None
 
         self.results = dict(
             changed=False
@@ -170,8 +177,6 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
             self.results['roleassignments'] = self.get_by_name()
         elif self.assignee:
             self.results['roleassignments'] = self.get_by_assignee()
-        elif self.resource_group:
-            self.results['roleassignments'] = self.list_by_resource_group()
         elif self.scope:
             self.results['roleassignments'] = self.list_by_scope()
         else:
@@ -187,17 +192,24 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
         '''
         self.log("Gets role assignment {0} by name".format(self.name))
 
-        response = None
+        results = []
 
         try:
             response = self._client.role_assignments.get(scope=self.scope, role_assignment_name=self.name)
 
-            return [roleassignment_to_dict(response)]
+            if response:
+                response = roleassignment_to_dict(response)
+
+                if self.role_definition_id:
+                    if self.role_definition_id == response['role_definition_id']:
+                        results = [response]
+                else:
+                    results = [response]
 
         except CloudError as ex:
             self.log("Didn't find role assignment {0} in scope {1}".format(self.name, self.scope))
 
-        return []
+        return results
 
     def get_by_assignee(self):
         '''
@@ -207,18 +219,25 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
         '''
         self.log("Gets role assignment {0} by name".format(self.name))
 
-        response = None
+        results = []
         filter = "principalId eq '{0}'".format(self.assignee)
         try:
             response = list(self._client.role_assignments.list(filter=filter))
 
             if response and len(response) > 0:
-                return [roleassignment_to_dict(a) for a in response]
+                response = [roleassignment_to_dict(a) for a in response]
+
+                if self.role_definition_id:
+                    for r in response:
+                        if r['role_definition_id'] == self.role_definition_id:
+                            results.append(r)
+                else:
+                    results = response
 
         except CloudError as ex:
             self.log("Didn't find role assignments to assignee {0}".format(self.assignee))
 
-        return []
+        return results
 
     def list_by_scope(self):
         '''
@@ -226,19 +245,26 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
 
         :return: deserialized role assignment dictionary
         '''
-        self.log("Lists role assignment by resource group {0}".format(self.resource_group))
+        self.log("Lists role assignment by scope {0}".format(self.scope))
 
-        response = None
+        results = []
         try:
             response = list(self._client.role_assignments.list_for_scope(scope=self.scope, filter='atScope()'))
 
             if response and len(response) > 0:
-                return [roleassignment_to_dict(a) for a in response]
+                response = [roleassignment_to_dict(a) for a in response]
+
+                if self.role_definition_id:
+                    for r in response:
+                        if r['role_definition_id'] == self.role_definition_id:
+                            results.append(r)
+                else:
+                    results = response
 
         except CloudError as ex:
             self.log("Didn't find role assignments to scope {0}".format(self.scope))
 
-        return []
+        return results
 
 
 def main():
