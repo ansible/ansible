@@ -78,6 +78,17 @@ class PkgMgrFactCollector(BaseFactCollector):
                 # If there's some new magical Fedora version in the future,
                 # just default to dnf
                 pkg_mgr_name = 'dnf'
+        else:
+            # If it's not Fedora and it's Red Hat family of distros, assume RHEL
+            # or a clone. For versions of RHEL < 8 that Ansible supports, the
+            # vendor supported official package manager is 'yum' and in RHEL 8+
+            # (as far as we know at the time of this writing) it is 'dnf'.
+            # If anyone wants to force a non-official package manager then they
+            # can define a provider to either the package or yum action plugins.
+            if int(collected_facts['ansible_distribution_major_version']) < 8:
+                pkg_mgr_name = 'yum'
+            else:
+                pkg_mgr_name = 'dnf'
         return pkg_mgr_name
 
     def _check_apt_flavor(self, pkg_mgr_name):
@@ -107,11 +118,10 @@ class PkgMgrFactCollector(BaseFactCollector):
                 pkg_mgr_name = pkg['name']
 
         # Handle distro family defaults when more than one package manager is
-        # installed, the ansible_fact entry should be the default package
-        # manager provided by the distro.
+        # installed or available to the distro, the ansible_fact entry should be
+        # the default package manager officially supported by the distro.
         if collected_facts['ansible_os_family'] == "RedHat":
-            if pkg_mgr_name not in ('yum', 'dnf'):
-                pkg_mgr_name = self._check_rh_versions(pkg_mgr_name, collected_facts)
+            pkg_mgr_name = self._check_rh_versions(pkg_mgr_name, collected_facts)
         elif collected_facts['ansible_os_family'] == 'Debian' and pkg_mgr_name != 'apt':
             # It's possible to install yum, dnf, zypper, rpm, etc inside of
             # Debian. Doing so does not mean the system wants to use them.
@@ -123,12 +133,6 @@ class PkgMgrFactCollector(BaseFactCollector):
         # Check if /usr/bin/apt-get is ordinary (dpkg-based) APT or APT-RPM
         if pkg_mgr_name == 'apt':
             pkg_mgr_name = self._check_apt_flavor(pkg_mgr_name)
-
-        # pacman has become available by distros other than those that are Arch
-        # based by virtue of a dependency to the systemd mkosi project, this
-        # handles some of those scenarios as they are reported/requested
-        if pkg_mgr_name == 'pacman' and collected_facts['ansible_os_family'] in ["RedHat"]:
-            pkg_mgr_name = self._check_rh_versions(collected_facts)
 
         facts_dict['pkg_mgr'] = pkg_mgr_name
         return facts_dict
