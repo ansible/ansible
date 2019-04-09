@@ -182,6 +182,13 @@ options:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  tls_insecure:
+    description:
+      - Enable insecure TLS/SSL protocols.
+      - This should only be used with personally controlled devices (i.e. to support or upgrade older devices).
+    type: bool
+    default: no
+    version_added: '2.8'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.

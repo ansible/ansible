@@ -67,7 +67,6 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         call(None, '/tmp/client.key'),  # client_key
         call(None, cookies),  # cookies
         call(None, '/foo/bar/baz.sock'),  # unix_socket
-        call(None, False),  # tls_insecure
     ]
     fallback_mock.assert_has_calls(calls)
 

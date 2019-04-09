@@ -102,7 +102,7 @@ options:
     version_added: 2.7
   tls_insecure:
     description:
-      - Enable insecure TLS protocols.
+      - Enable insecure TLS/SSL protocols.
       - This should only be used with personally controlled devices (i.e. to support or upgrade older devices).
     type: bool
     default: no
