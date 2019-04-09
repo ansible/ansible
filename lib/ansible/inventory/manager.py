@@ -133,7 +133,6 @@ class InventoryManager(object):
         # caches
         self._hosts_patterns_cache = {}  # resolved full patterns
         self._pattern_cache = {}  # resolved individual patterns
-        self._inventory_plugins = []  # for generating inventory
 
         # the inventory dirs, files, script paths or lists of hosts
         if sources is None:
@@ -177,25 +176,26 @@ class InventoryManager(object):
     def get_host(self, hostname):
         return self._inventory.get_host(hostname)
 
-    def _setup_inventory_plugins(self):
+    def _fetch_inventory_plugins(self):
         ''' sets up loaded inventory plugins for usage '''
 
         display.vvvv('setting up inventory plugins')
 
+        plugins = []
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
             if plugin:
-                self._inventory_plugins.append(plugin)
+                plugins.append(plugin)
             else:
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
 
-        if not self._inventory_plugins:
+        if not plugins:
             raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
+
+        return plugins
 
     def parse_sources(self, cache=False):
         ''' iterate over inventory sources and parse each one to populate it'''
-
-        self._setup_inventory_plugins()
 
         parsed = False
         # allow for multiple inventory parsing
@@ -216,8 +216,6 @@ class InventoryManager(object):
                 raise AnsibleError("No inventory was parsed, please check your configuration and options.")
             else:
                 display.warning("No inventory was parsed, only implicit localhost is available")
-
-        self._inventory_plugins = []
 
     def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
@@ -250,13 +248,10 @@ class InventoryManager(object):
             # set so new hosts can use for inventory_file/dir vasr
             self._inventory.current_source = source
 
-            # get inventory plugins if needed, there should always be at least one generator
-            if not self._inventory_plugins:
-                self._setup_inventory_plugins()
-
             # try source with each plugin
             failures = []
-            for plugin in self._inventory_plugins:
+            for plugin in self._fetch_inventory_plugins():
+
                 plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
                 display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
 
@@ -270,8 +265,11 @@ class InventoryManager(object):
                     try:
                         # FIXME in case plugin fails 1/2 way we have partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
-                        if getattr(plugin, '_cache', None):
+                        try:
                             plugin.update_cache_if_changed()
+                        except AttributeError:
+                            # some plugins might not implement caching
+                            pass
                         parsed = True
                         display.vvv('Parsed %s inventory source with %s plugin' % (source, plugin_name))
                         break
