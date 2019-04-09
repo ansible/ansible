@@ -1,0 +1,2 @@
+bugfixes:
+  - gcp_compute - improve documentation on the usage of the dynamics gcp_compute inventory
