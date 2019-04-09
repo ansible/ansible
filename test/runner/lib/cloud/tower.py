@@ -69,6 +69,8 @@ class TowerCloudProvider(CloudProvider):
         tower_cli_version_map = {
             '3.1.5': '3.1.8',
             '3.2.3': '3.3.0',
+            '3.3.5': '3.3.3',
+            '3.4.3': '3.3.3',
         }
 
         cli_version = tower_cli_version_map.get(self.version, fallback)
