@@ -540,6 +540,7 @@ class PluginLoader:
                 spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
+                sys.modules[full_name] = module
         return module
 
     def _update_object(self, obj, name, path):
