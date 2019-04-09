@@ -247,7 +247,7 @@ def main():
                          folder=dict(type="str", default="/vm"),
                          name=dict(type="str", required=True),
                          esxi_hostname=dict(type="str"),
-                         path=dict(type="str", required=True),
+                         path=dict(type="str"),
                          template=dict(type="bool", default=False),
                          resource_pool=dict(type="str"),
                          state=dict(type="str", default="present", cohices=["present", "absent"]))
