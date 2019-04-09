@@ -77,7 +77,7 @@
 - name: create key cf11
   etcd3:
     key: "cf11"
-    value: "True"
+    value: "cnaf"
     state: "present"
 
 - name: Check if key foo is set
@@ -89,7 +89,7 @@
 - name: Check if key cf11 is set
   etcd3:
     key: "cf11"
-    value: "True"
+    value: "cnaf"
     state: "present"
   
 - name: check read key
@@ -101,4 +101,4 @@
   assert:
     that:
       - keyfoo == 'bar'
-      - keycf11 == 'True'
+      - keycf11 == 'cnaf'
