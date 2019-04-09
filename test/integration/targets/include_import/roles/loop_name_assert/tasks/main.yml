@@ -1,0 +1,4 @@
+- assert:
+    that:
+      - name == 'name_from_loop_var'
+      - name != 'loop_name_assert'
