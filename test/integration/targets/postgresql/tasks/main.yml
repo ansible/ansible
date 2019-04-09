@@ -833,7 +833,7 @@
 - include: postgresql_ext.yml
   when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
 
-# Test postgresql_schema module:
+# Test postgresql_schema module
 - include: postgresql_schema.yml
 
 # Test postgresql_membership module
@@ -850,6 +850,9 @@
 # (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
 - include: postgresql_lang.yml
   when: ansible_distribution == 'CentOS'
+
+# Test postgresql_owner module
+- include: postgresql_owner.yml
 
 # dump/restore tests per format
 # ============================================================
