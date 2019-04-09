@@ -242,7 +242,7 @@ class CryptHandler(Handler):
         return device
 
     def is_luks(self, device):
-        ''' check if the LUKS device does exist
+        ''' check if the LUKS container does exist
         '''
         result = self._run_command([self._cryptsetup_bin, 'isLuks', device])
         return result[RETURN_CODE] == 0
