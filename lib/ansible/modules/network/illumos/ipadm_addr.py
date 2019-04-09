@@ -268,7 +268,7 @@ def main():
             temporary=dict(default=False, type='bool'),
             state=dict(
                 default='present', choices=['absent', 'present', 'up', 'down', 'enabled', 'disabled', 'refreshed']),
-            wait=dict(default=60),
+            wait=dict(default=60, type='int'),
         ),
         mutually_exclusive=[
             ('address', 'wait'),
