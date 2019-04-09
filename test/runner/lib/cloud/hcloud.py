@@ -1,7 +1,13 @@
 """Hetzner Cloud plugin for integration tests."""
 from __future__ import absolute_import, print_function
 
-from os.path import isfile
+import os
+
+from lib.util import (
+    display,
+    is_shippable,
+    ConfigParser,
+)
 
 from lib.cloud import (
     CloudProvider,
@@ -9,7 +15,9 @@ from lib.cloud import (
     CloudEnvironmentConfig,
 )
 
-from lib.util import ConfigParser, display
+from lib.core_ci import (
+    AnsibleCoreCI,
+)
 
 
 class HcloudCloudProvider(CloudProvider):
@@ -28,7 +36,15 @@ class HcloudCloudProvider(CloudProvider):
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
-        if isfile(self.config_static_path):
+        if os.path.isfile(self.config_static_path):
+            return
+
+        aci = self._create_ansible_core_ci()
+
+        if os.path.isfile(aci.ci_key):
+            return
+
+        if is_shippable():
             return
 
         super(HcloudCloudProvider, self).filter(targets, exclude)
@@ -37,11 +53,38 @@ class HcloudCloudProvider(CloudProvider):
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(HcloudCloudProvider, self).setup()
 
-        if isfile(self.config_static_path):
-            self.config_path = self.config_static_path
-            return True
+        if not self._use_static_config():
+            self._setup_dynamic()
 
-        return False
+    def _setup_dynamic(self):
+        """Request Hetzner credentials through the Ansible Core CI service."""
+        display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
+
+        config = self._read_config_template()
+
+        aci = self._create_ansible_core_ci()
+
+        response = aci.start()
+
+        if not self.args.explain:
+            token = response['hetzner']['token']
+
+            display.sensitive.add(token)
+            display.info('Hetzner Cloud Token: %s' % token, verbosity=1)
+
+            values = dict(
+                TOKEN=token,
+            )
+
+            config = self._populate_config_template(config, values)
+
+        self._write_config(config)
+
+    def _create_ansible_core_ci(self):
+        """
+        :rtype: AnsibleCoreCI
+        """
+        return AnsibleCoreCI(self.args, 'hetzner', 'hetzner', persist=False, stage=self.args.remote_stage, provider=self.args.remote_provider)
 
 
 class HcloudCloudEnvironment(CloudEnvironment):
