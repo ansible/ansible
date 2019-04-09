@@ -474,6 +474,8 @@ def run_module():
             except ValueError as e:
                 module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
+        if module.check_mode:
+            module.exit_json(**result)
 
     # luks open
 
