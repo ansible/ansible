@@ -32,14 +32,6 @@
     name: etcd3
     state: present
 
-- name: Check if etcd3ctl exists for re-use.
-  shell: "ETCDCTL_API=3 {{ etcd3_path }}/etcdctl --endpoints=127.0.0.1:2379 get foo"
-  args:
-    executable: /bin/bash
-  changed_when: false
-  failed_when: false
-  register: _testetcd3ctl
-
 - name: If can't reuse
   block:
     - name: prepare download folder
@@ -68,26 +60,24 @@
       shell: "{{ etcd3_path }}/etcd &"
       register: _etcd3run
       changed_when: true
-  when: _testetcd3ctl.rc != 0
 
 # Integration tests
 
-- name: Check mode, show need change
+- name: create key foo
   etcd3:
     host: 127.0.0.1
     key: "foo"
     value: "bar"
     state: "present"
   register: _etcd3_prst_chktst
-  check_mode: true
+
   
-- name: Check mode, show need not change
+- name: Check if key is set
   etcd3:
     host: 127.0.0.1
     key: "foo"
     value: "bar"
     state: "present"
-  check_mode: true
   
 - name: check read key
   set_fact:
@@ -99,7 +89,3 @@
       - _etcd3_prst_chktst is changed
       - keyfoo == 'bar'
 
-- name: kill etcd3
-  command: "pkill etcd"
-  when:
-    - _testetcd3ctl.rc != 0
