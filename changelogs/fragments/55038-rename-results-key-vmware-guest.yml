@@ -1,0 +1,2 @@
+bugfixes:
+  - The internal key `result` in vmware_guest return renamed to `ansible_module_results`
