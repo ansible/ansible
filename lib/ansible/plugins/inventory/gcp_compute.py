@@ -124,6 +124,12 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
+try:
+    import google.auth
+    import requests
+except ImportError:
+    raise AnsibleError('The gcp dynamic inventory plugin requires the requests and google-auth libraries')
+
 
 # Mocking a module to reuse module_utils
 class GcpMockModule(object):
