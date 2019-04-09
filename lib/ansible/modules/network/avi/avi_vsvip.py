@@ -74,6 +74,7 @@ options:
             - set.
             - This is only used when fip is used for vs on azure cloud.
             - Field introduced in 18.2.3.
+        version_added: "2.8"
         type: bool
     uuid:
         description:
