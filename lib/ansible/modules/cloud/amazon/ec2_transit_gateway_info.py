@@ -28,10 +28,12 @@ options:
       - A list of transit gateway IDs to gather information for.
     version_added: "2.8"
     aliases: [transit_gateway_id]
+    type: list
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTransitGateways.html) for filters.
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2
