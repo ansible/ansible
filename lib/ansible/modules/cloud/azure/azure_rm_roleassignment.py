@@ -69,6 +69,7 @@ EXAMPLES = '''
       azure_rm_roleassignment:
         name: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        state: absent
 
 '''
 
@@ -199,7 +200,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
                 if self.check_mode:
                     return self.results
 
-                self.delete_roleassignment()
+                self.delete_roleassignment(old_response['id'])
 
                 self.log('role assignment deleted')
 
@@ -234,7 +235,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
             self.fail("Error creating role assignment: {0}".format(str(exc)))
         return roleassignment_to_dict(response)
 
-    def delete_roleassignment(self):
+    def delete_roleassignment(self, assignment_id):
         '''
         Deletes specified role assignment.
 
@@ -243,8 +244,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
         self.log("Deleting the role assignment {0}".format(self.name))
         scope = self.build_scope()
         try:
-            response = self._client.role_assignments.delete(name=self.name,
-                                                            scope=self.scope)
+            response = self._client.role_assignments.delete_by_id(role_id=assignment_id)
         except CloudError as e:
             self.log('Error attempting to delete the role assignment.')
             self.fail("Error deleting the role assignment: {0}".format(str(e)))
@@ -262,9 +262,11 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
         response = None
 
         try:
-            response = self._client.role_assignments.get(scope=self.scope, role_assignment_name=self.name)
-
-            return roleassignment_to_dict(response)
+            response = list(self._client.role_assignments.list())
+            if response:
+                for assignment in response:
+                    if assignment.name == self.name and assignment.scope == self.scope:
+                        return roleassignment_to_dict(assignment)
 
         except CloudError as ex:
             self.log("Didn't find role assignment {0} in scope {1}".format(self.name, self.scope))
