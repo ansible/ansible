@@ -92,7 +92,7 @@ transit_gateways:
                         side  of  a  BGP session. The range is 64512 to 65534 for
                         16-bit ASNs and 4200000000 to 4294967294 for 32-bit ASNs.
                     returned: always
-                    type: str
+                    type: int
                     sample: 64512
                  auto_accept_shared_attachments:
                     description:
@@ -153,8 +153,9 @@ transit_gateways:
             description: A dict of tags associated with the transit gateway.
             returned: always
             type: dict
-            sample:
-              Name: "A sample TGW"
+            sample: '{
+              "Name": "A sample TGW"
+              }'
         transit_gateway_arn:
             description: The Amazon Resource Name (ARN) of the transit gateway.
             returned: always
