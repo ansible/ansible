@@ -117,8 +117,11 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 HAS_AVI = True
-from ansible.module_utils.network.avi.avi import (
-    avi_common_argument_spec, avi_ansible_api)
+try:
+    from ansible.module_utils.network.avi.avi import (
+        avi_common_argument_spec, avi_ansible_api)
+except ImportError:
+    HAS_AVI = False
 
 
 def main():
@@ -142,9 +145,14 @@ def main():
         vimgrnw_ref=dict(type='str',),
         vrf_context_ref=dict(type='str',),
     )
-    argument_specs.update(avi_common_argument_spec())
+    if HAS_AVI:
+        argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
+    if not HAS_AVI:
+        return module.fail_json(msg=(
+            'Avi python API SDK (avisdk>=17.1) or ansible>=2.8 is not installed. '
+            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'network',
                            set([]))
 

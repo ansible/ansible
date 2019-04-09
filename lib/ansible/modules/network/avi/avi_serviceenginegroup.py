@@ -99,7 +99,6 @@ options:
             - Allowed values are 0 - 10.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
-        version_added: "2.8"
     archive_shm_limit:
         description:
             - Amount of se memory in gb until which shared memory is collected in core archive.
@@ -194,6 +193,19 @@ options:
         description:
             - Custom tag will be used to create the tags for se instance in aws.
             - Note this is not the same as the prefix for se name.
+    data_network_id:
+        description:
+            - Subnet used to spin up the data nic for service engines, used only for azure cloud.
+            - Overrides the cloud level setting for service engine subnet.
+            - Field introduced in 18.2.3.
+        version_added: "2.8"
+    datascript_timeout:
+        description:
+            - Number of instructions before datascript times out.
+            - Allowed values are 0-100000000.
+            - Field introduced in 18.2.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1000000.
+        version_added: "2.8"
     dedicated_dispatcher_core:
         description:
             - Dedicate the core that handles packet receive/transmit from the network to just the dispatching function.
@@ -586,6 +598,13 @@ options:
     realtime_se_metrics:
         description:
             - Enable or disable real time se metrics.
+    reboot_on_stop:
+        description:
+            - Reboot the system if the se is stopped.
+            - Field introduced in 17.2.16,18.2.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.8"
+        type: bool
     se_bandwidth_type:
         description:
             - Select the se bandwidth for the bandwidth license.
@@ -937,8 +956,11 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 HAS_AVI = True
-from ansible.module_utils.network.avi.avi import (
-    avi_common_argument_spec, avi_ansible_api)
+try:
+    from ansible.module_utils.network.avi.avi import (
+        avi_common_argument_spec, avi_ansible_api)
+except ImportError:
+    HAS_AVI = False
 
 
 def main():
@@ -975,6 +997,8 @@ def main():
         custom_securitygroups_data=dict(type='list',),
         custom_securitygroups_mgmt=dict(type='list',),
         custom_tag=dict(type='list',),
+        data_network_id=dict(type='str',),
+        datascript_timeout=dict(type='int',),
         dedicated_dispatcher_core=dict(type='bool',),
         description=dict(type='str',),
         disable_avi_securitygroups=dict(type='bool',),
@@ -1045,6 +1069,7 @@ def main():
         per_app=dict(type='bool',),
         placement_mode=dict(type='str',),
         realtime_se_metrics=dict(type='dict',),
+        reboot_on_stop=dict(type='bool',),
         se_bandwidth_type=dict(type='str',),
         se_deprovision_delay=dict(type='int',),
         se_dos_profile=dict(type='dict',),
@@ -1101,9 +1126,14 @@ def main():
         waf_mempool=dict(type='bool',),
         waf_mempool_size=dict(type='int',),
     )
-    argument_specs.update(avi_common_argument_spec())
+    if HAS_AVI:
+        argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
+    if not HAS_AVI:
+        return module.fail_json(msg=(
+            'Avi python API SDK (avisdk>=17.1) or ansible>=2.8 is not installed. '
+            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'serviceenginegroup',
                            set([]))
 

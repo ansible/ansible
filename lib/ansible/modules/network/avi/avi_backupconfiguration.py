@@ -41,6 +41,21 @@ options:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+    aws_access_key:
+        description:
+            - Aws access key id.
+            - Field introduced in 18.2.3.
+        version_added: "2.8"
+    aws_bucket_id:
+        description:
+            - Aws bucket.
+            - Field introduced in 18.2.3.
+        version_added: "2.8"
+    aws_secret_access:
+        description:
+            - Aws secret access key.
+            - Field introduced in 18.2.3.
+        version_added: "2.8"
     backup_file_prefix:
         description:
             - Prefix of the exported configuration file.
@@ -78,6 +93,12 @@ options:
         description:
             - Remote backup.
         type: bool
+    upload_to_s3:
+        description:
+            - Cloud backup.
+            - Field introduced in 18.2.3.
+        version_added: "2.8"
+        type: bool
     url:
         description:
             - Avi controller URL of the object.
@@ -107,8 +128,11 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 HAS_AVI = True
-from ansible.module_utils.network.avi.avi import (
-    avi_common_argument_spec, avi_ansible_api)
+try:
+    from ansible.module_utils.network.avi.avi import (
+        avi_common_argument_spec, avi_ansible_api)
+except ImportError:
+    HAS_AVI = False
 
 
 def main():
@@ -118,6 +142,9 @@ def main():
         avi_api_update_method=dict(default='put',
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
+        aws_access_key=dict(type='str', no_log=True,),
+        aws_bucket_id=dict(type='str',),
+        aws_secret_access=dict(type='str', no_log=True,),
         backup_file_prefix=dict(type='str',),
         backup_passphrase=dict(type='str', no_log=True,),
         maximum_backups_stored=dict(type='int',),
@@ -128,14 +155,20 @@ def main():
         ssh_user_ref=dict(type='str',),
         tenant_ref=dict(type='str',),
         upload_to_remote_host=dict(type='bool',),
+        upload_to_s3=dict(type='bool',),
         url=dict(type='str',),
         uuid=dict(type='str',),
     )
-    argument_specs.update(avi_common_argument_spec())
+    if HAS_AVI:
+        argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
+    if not HAS_AVI:
+        return module.fail_json(msg=(
+            'Avi python API SDK (avisdk>=17.1) or ansible>=2.8 is not installed. '
+            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'backupconfiguration',
-                           set(['backup_passphrase']))
+                           set(['backup_passphrase', 'aws_access_key', 'aws_secret_access']))
 
 
 if __name__ == '__main__':

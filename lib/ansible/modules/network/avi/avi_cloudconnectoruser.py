@@ -73,6 +73,11 @@ options:
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+    tencent_credentials:
+        description:
+            - Credentials for tencent cloud.
+            - Field introduced in 18.2.3.
+        version_added: "2.8"
     url:
         description:
             - Avi controller URL of the object.
@@ -106,8 +111,11 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 HAS_AVI = True
-from ansible.module_utils.network.avi.avi import (
-    avi_common_argument_spec, avi_ansible_api)
+try:
+    from ansible.module_utils.network.avi.avi import (
+        avi_common_argument_spec, avi_ansible_api)
+except ImportError:
+    HAS_AVI = False
 
 
 def main():
@@ -125,12 +133,18 @@ def main():
         private_key=dict(type='str', no_log=True,),
         public_key=dict(type='str',),
         tenant_ref=dict(type='str',),
+        tencent_credentials=dict(type='dict',),
         url=dict(type='str',),
         uuid=dict(type='str',),
     )
-    argument_specs.update(avi_common_argument_spec())
+    if HAS_AVI:
+        argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
+    if not HAS_AVI:
+        return module.fail_json(msg=(
+            'Avi python API SDK (avisdk>=17.1) or ansible>=2.8 is not installed. '
+            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'cloudconnectoruser',
                            set(['private_key']))
 

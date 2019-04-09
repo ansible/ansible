@@ -5,14 +5,9 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
-try:
-    from requests import ConnectionError as RequestsConnectionError
-    from requests import Response
-    from requests.sessions import Session
-except ImportError:
-    pass
-
-
+from requests import ConnectionError as RequestsConnectionError
+from requests import Response
+from requests.sessions import Session
 from ssl import SSLError
 
 logger = logging.getLogger(__name__)
