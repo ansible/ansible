@@ -22,21 +22,29 @@ DOCUMENTATION = '''
 
     options:
         plugin:
-          description: token that ensures this is a source file for the C(docker_machine) plugin.
-          required: yes
-          choices: ['docker_machine']
+            description: token that ensures this is a source file for the C(docker_machine) plugin.
+            required: yes
+            choices: ['docker_machine']
+        daemon_required:
+            description: when true, hosts for which Docker Machine cannot output Docker daemon connection environment variables will be skipped.
+            type: bool
+            default: yes
+        running_required:
+            description: when true, hosts which Docker Machine indicates are in a state other than C(running) will be skipped.
+            type: bool
+            default: yes
         verbose_output:
-            description: Toggle to (not) include all available nodes metadata (e.g. Image, Region, Size) as a JSON object.
+            description: when true, include all available nodes metadata (e.g. Image, Region, Size) as a JSON object.
             type: bool
             default: yes
         split_tags:
-          description: for keyed_groups add two variables as if the tag were actually a key value pair separated by a colon, instead of just a single value.
-          type: bool
-          default: no
+            description: for keyed_groups add two variables as if the tag were actually a key value pair separated by a colon, instead of just a single value.
+            type: bool
+            default: no
         split_separator:
-          description: for keyed_groups when splitting tags this is the separator to split the tag value on.
-          type: str
-          default: ":"
+            description: for keyed_groups when splitting tags this is the separator to split the tag value on.
+            type: str
+            default: ":"
 '''
 
 EXAMPLES = '''
@@ -95,10 +103,13 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.module_utils._text import to_text
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+from ansible.utils.display import Display
 
 import json
 import re
 import subprocess
+
+display = Display()
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
@@ -106,15 +117,28 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'docker_machine'
 
-    def _run_command(self, *args):
-        return subprocess.check_output(["docker-machine"] + list(args)).decode('utf-8').strip()
+    def _run_command(self, args):
+        command = ['docker-machine']
+        command.extend(args)
+        display.debug('Executing command {}'.format(command))
+        try:
+            result = subprocess.check_output(command)
+        except Exception as e:
+            display.warning('Exception {0} caught while executing command {1}, this was the original exception: {2}'.format(type(e).__name__, command, e))
+            raise e
 
-    def _set_docker_daemon_variables(self, id):
+        return result.decode('utf-8').strip()
+
+    def _get_docker_daemon_variables(self, id):
         '''
         Capture settings from Docker Machine that would be needed to connect to the remote Docker daemon installed on
         the Docker Machine remote host. Note: passing '--shell=sh' is a workaround for 'Error: Unknown shell'.
         '''
-        env_out = self._run_command('env', '--shell=sh', id)
+        try:
+            env_lines = self._run_command(['env', '--shell=sh', id]).splitlines()
+        except Exception:
+            # This can happen when the machine is created but provisioning is incomplete
+            return None
 
         # example output of docker-machine env --shell=sh:
         #   export DOCKER_TLS_VERIFY="1"
@@ -126,12 +150,37 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # capture any of the DOCKER_xxx variables that were output and create Ansible host vars
         # with the same name and value but with a dm_ name prefix.
-        for line in env_out.splitlines():
+        vars = []
+        for line in env_lines:
             match = re.search('(DOCKER_[^=]+)="([^"]+)"', line)
             if match:
                 env_var_name = match.group(1)
                 env_var_value = match.group(2)
-                self.inventory.set_variable(id, 'dm_{0}'.format(env_var_name), env_var_value)
+                vars.append((env_var_name, env_var_value))
+
+        return vars
+
+    def _get_machine_names(self):
+        # Filter out machines that are not in the Running state as we probably can't do anything useful actions
+        # with them.
+        ls_command = ['ls', '-q']
+        if self.get_option('running_required'):
+            ls_command.extend(['--filter', 'state=Running'])
+
+        try:
+            ls_lines = self._run_command(ls_command)
+        except Exception:
+            return None
+
+        return ls_lines.splitlines()
+
+    def _inspect_docker_machine_host(self, node):
+        try:
+            inspect_lines = self._run_command(['inspect', self.node])
+        except Exception:
+            return None
+
+        return json.loads(inspect_lines)
 
     def _set_tag_variables(self, id):
         tags = self.node_attrs['Driver'].get('Tags') or ''
@@ -146,27 +195,47 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 if split_tags and split_separator in kv_pair:
                     k, v = kv_pair.split(split_separator)
                     self.inventory.set_variable(id, 'dm_tag_{0}'.format(k), v)
-                else:
-                    self.inventory.set_variable(id, 'dm_tag_{0}'.format(kv_pair))
+
+    def _should_skip_host(self, id, env_var_tuples):
+        if not env_var_tuples:
+            if self.get_option('daemon_required'):
+                display.warning('Unable to fetch Docker daemon env vars from Docker Machine for host {0}: host will be skipped'.format(id))
+                return True
+            else:
+                display.warning('Unable to fetch Docker daemon env vars from Docker Machine for host {0}: host will lack dm_DOCKER_xxx variables'.format(id))
+        return False
 
     def _populate(self):
         try:
-            self.nodes = self._run_command('ls', '-q').splitlines()
-            for self.node in self.nodes:
-                self.node_attrs = json.loads(self._run_command('inspect', self.node))
+            for self.node in self._get_machine_names():
+                self.node_attrs = self._inspect_docker_machine_host(self.node)
+                if not self.node_attrs:
+                    continue
 
                 id = self.node_attrs['Driver']['MachineName']
+
+                # query `docker-machine env` to obtain remote Docker daemon connection settings in the form of commands
+                # that could be used to set environment variables to influence a local Docker client:
+                env_var_tuples = self._get_docker_daemon_variables(id)
+                if self._should_skip_host(id, env_var_tuples):
+                    continue
+
+                # add an entry in the inventory for this host
                 self.inventory.add_host(id)
 
-                # Find out more about the following variables at: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
+                # set standard Ansible remote host connection settings to details captured from `docker-machine`
+                # see: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
                 self.inventory.set_variable(id, 'ansible_host', self.node_attrs['Driver']['IPAddress'])
                 self.inventory.set_variable(id, 'ansible_port', self.node_attrs['Driver']['SSHPort'])
                 self.inventory.set_variable(id, 'ansible_user', self.node_attrs['Driver']['SSHUser'])
                 self.inventory.set_variable(id, 'ansible_ssh_private_key_file', self.node_attrs['Driver']['SSHKeyPath'])
 
-                self._set_docker_daemon_variables(id)
-
+                # set variables based on Docker Machine tags
                 self._set_tag_variables(id)
+
+                # set variables based on Docker Machine env variables
+                for kv in env_var_tuples:
+                    self.inventory.set_variable(id, 'dm_{0}'.format(kv[0]), kv[1])
 
                 if self.get_option('verbose_output'):
                     self.inventory.set_variable(id, 'docker_machine_node_attributes', self.node_attrs)
@@ -189,9 +258,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def verify_file(self, path):
         """Return the possibility of a file being consumable by this plugin."""
-        return (
-            super(InventoryModule, self).verify_file(path) and
-            path.endswith((self.NAME + '.yaml', self.NAME + '.yml')))
+        if super(InventoryModule, self).verify_file(path):
+            if path.endswith(('docker_machine.yml', 'docker_machine.yaml')):
+                return True
+        display.debug("docker_machine inventory filename must end with 'docker_machine.yml' or 'docker_machine.yaml'")
+        return False
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
