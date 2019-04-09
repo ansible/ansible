@@ -408,7 +408,7 @@ def jinja2_environment(template_dir, typ, plugin_type):
         env.filters['documented_type'] = documented_type
         env.tests['list'] = test_list
         templates['plugin'] = env.get_template('plugin.rst.j2')
-        templates['plugin_alias'] = env.get_template('plugin_alias.rst.j2')
+        templates['plugin_deprecation_stub'] = env.get_template('plugin_deprecation_stub.rst.j2')
 
         if plugin_type == 'module':
             name = 'modules'
@@ -575,25 +575,25 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         write_data(text, output_dir, outputname, module)
 
-        # Create stub pages for aliases
+        # Create deprecation stub pages for deprecated aliases
         if module_map[module]['aliases']:
             for alias in module_map[module]['aliases']:
-                doc['alias'] = alias
-                doc['alias_deprecated'] = alias in module_map[module]['aliases_deprecated']
+                if alias in module_map[module]['aliases_deprecated']:
+                    doc['alias'] = alias
 
-                display.v('about to template %s (alias %s)' % (module, alias))
-                display.vvvvv(pp.pformat(doc))
-                try:
-                    text = templates['plugin_alias'].render(doc)
-                except Exception as e:
-                    display.warning(msg="Could not parse %s (alias %s) due to %s" % (module, alias, e))
-                    continue
+                    display.v('about to template %s (deprecation alias %s)' % (module, alias))
+                    display.vvvvv(pp.pformat(doc))
+                    try:
+                        text = templates['plugin_deprecation_stub'].render(doc)
+                    except Exception as e:
+                        display.warning(msg="Could not parse %s (deprecation alias %s) due to %s" % (module, alias, e))
+                        continue
 
-                if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
-                    # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
-                    text = re.sub(' +\n', '\n', text)
+                    if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
+                        # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
+                        text = re.sub(' +\n', '\n', text)
 
-                write_data(text, output_dir, outputname, alias)
+                    write_data(text, output_dir, outputname, alias)
 
 
 def process_categories(plugin_info, categories, templates, output_dir, output_name, plugin_type):
