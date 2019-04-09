@@ -234,7 +234,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
         except CloudError as ex:
             self.log("Didn't find role definition in scope {0}".format(self.scope))
 
-        return []
+        return response
 
     def get_by_id(self):
         '''
@@ -252,9 +252,9 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
                 response = roledefinition_to_dict(response)
                 if self.type:
                     if response.role_type == self.type:
-                        return response
+                        return [response]
                 else:
-                    return response
+                    return [response]
 
         except CloudError as ex:
             self.log("Didn't find role definition by id {0}".format(self.id))
@@ -269,7 +269,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
         '''
         self.log("Get Role Definition by name {0}".format(self.role_name))
 
-        response = None
+        response = []
 
         try:
             response = self.list()
@@ -282,7 +282,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
 
                 if len(roles) == 1:
                     self.log("Role Definition : {0} found".format(self.role_name))
-                    return roles[0]
+                    return roles
                 if len(roles) > 1:
                     self.fail("Found multiple Role Definitions with name: {0}".format(self.role_name))
 
