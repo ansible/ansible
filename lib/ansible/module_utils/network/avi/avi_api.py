@@ -5,9 +5,15 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
-from requests import ConnectionError
-from requests import Response
-from requests.sessions import Session
+try:
+    from requests import ConnectionError as RequestsConnectionError
+    from requests import Response
+    from requests.sessions import Session
+except ImportError:
+    RequestsConnectionError = None
+    Response = None
+    Session = None
+
 from ssl import SSLError
 
 logger = logging.getLogger(__name__)
@@ -477,7 +483,7 @@ class ApiSession(Session):
                              rsp.text)
                 err = APIError('Status Code %s msg %s' % (
                     rsp.status_code, rsp.text), rsp)
-        except (ConnectionError, SSLError) as e:
+        except (RequestsConnectionError, SSLError) as e:
             if not self.retry_conxn_errors:
                 raise
             logger.warning('Connection error retrying %s', e)
@@ -579,7 +585,7 @@ class ApiSession(Session):
             else:
                 resp = fn(fullpath, data=data, headers=api_hdrs,
                           timeout=timeout, cookies=cookies, **kwargs)
-        except (ConnectionError, SSLError) as e:
+        except (RequestsConnectionError, SSLError) as e:
             logger.warning('Connection error retrying %s', e)
             if not self.retry_conxn_errors:
                 raise
