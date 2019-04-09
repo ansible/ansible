@@ -123,10 +123,10 @@ EXAMPLES = r'''
 RETURN = r'''
 result:
     description:
-    - string stating about result
-    returned: success
-    type: str
-    sample: "Folder 'sub_network_folder' of type 'vm' created under vm_folder successfully."
+    - a dictionary
+    fields:
+        path: the full path of the new folder
+        msg: string stating about result
 '''
 
 try:
@@ -163,7 +163,7 @@ class VmwareFolderManager(PyVmomi):
         folder_type = self.module.params.get('folder_type')
         folder_name = self.module.params.get('folder_name')
         parent_folder = self.module.params.get('parent_folder', None)
-        results = dict(changed=False, result=dict())
+        results = {'changed': False, 'result': {}}
         if state == 'present':
             # Check if the folder already exists
             p_folder_obj = None
@@ -181,8 +181,9 @@ class VmwareFolderManager(PyVmomi):
                                                    folder_type=folder_type,
                                                    parent_folder=p_folder_obj)
                 if child_folder_obj:
-                    results['result'] = "Folder %s already exists under" \
-                                        " parent folder %s" % (folder_name, parent_folder)
+                    results['result']['path'] = self.get_folder_path(child_folder_obj)
+                    results['result']['msg'] = "Folder %s already exists under" \
+                                     " parent folder %s" % (folder_name, parent_folder)
                     self.module.exit_json(**results)
             else:
                 folder_obj = self.get_folder(datacenter_name=datacenter_name,
@@ -190,26 +191,29 @@ class VmwareFolderManager(PyVmomi):
                                              folder_type=folder_type)
 
                 if folder_obj:
-                    results['result'] = "Folder %s already exists" % folder_name
+                    results['result']['path'] = self.get_folder_path(folder_obj)
+                    results['result']['msg'] = "Folder %s already exists" % folder_name
                     self.module.exit_json(**results)
 
             # Create a new folder
             try:
                 if parent_folder and p_folder_obj:
                     if self.module.check_mode:
-                        results['result'] = "Folder '%s' of type '%s' under '%s' will be created." % \
-                                            (folder_name, folder_type, parent_folder)
+                        results['msg'] = "Folder '%s' of type '%s' under '%s' will be created." % \
+                                         (folder_name, folder_type, parent_folder)
                     else:
-                        p_folder_obj.CreateFolder(folder_name)
-                        results['result'] = "Folder '%s' of type '%s' under '%s' created" \
-                                            " successfully." % (folder_name, folder_type, parent_folder)
+                        new_folder = p_folder_obj.CreateFolder(folder_name)
+                        results['result']['path'] = self.get_folder_path(new_folder)
+                        results['result']['msg'] = "Folder '%s' of type '%s' under '%s' created" \
+                                         " successfully." % (folder_name, folder_type, parent_folder)
                     results['changed'] = True
                 elif not parent_folder and not p_folder_obj:
                     if self.module.check_mode:
-                        results['result'] = "Folder '%s' of type '%s' will be created." % (folder_name, folder_type)
+                        results['msg'] = "Folder '%s' of type '%s' will be created." % (folder_name, folder_type)
                     else:
-                        self.datacenter_folder_type[folder_type].CreateFolder(folder_name)
-                        results['result'] = "Folder '%s' of type '%s' created successfully." % (folder_name, folder_type)
+                        new_folder = self.datacenter_folder_type[folder_type].CreateFolder(folder_name)
+                        results['result']['msg'] = "Folder '%s' of type '%s' created successfully." % (folder_name, folder_type)
+                        results['result']['path'] = self.get_folder_path(new_folder)
                     results['changed'] = True
             except vim.fault.DuplicateName as duplicate_name:
                 # To be consistent with the other vmware modules, We decided to accept this error
@@ -217,8 +221,8 @@ class VmwareFolderManager(PyVmomi):
                 # User will have to take care of this exception
                 # https://github.com/ansible/ansible/issues/35388#issuecomment-362283078
                 results['changed'] = False
-                results['result'] = "Failed to create folder as another object has same name" \
-                                    " in the same target folder : %s" % to_native(duplicate_name.msg)
+                results['msg'] = "Failed to create folder as another object has same name" \
+                                 " in the same target folder : %s" % to_native(duplicate_name.msg)
             except vim.fault.InvalidName as invalid_name:
                 self.module.fail_json(msg="Failed to create folder as folder name is not a valid "
                                           "entity name : %s" % to_native(invalid_name.msg))
@@ -251,24 +255,24 @@ class VmwareFolderManager(PyVmomi):
                     if parent_folder:
                         if self.module.check_mode:
                             results['changed'] = True
-                            results['result'] = "Folder '%s' of type '%s' under '%s' will be removed." % \
-                                                (folder_name, folder_type, parent_folder)
+                            results['msg'] = "Folder '%s' of type '%s' under '%s' will be removed." % \
+                                             (folder_name, folder_type, parent_folder)
                         else:
                             if folder_type == 'vm':
                                 task = folder_obj.UnregisterAndDestroy()
                             else:
                                 task = folder_obj.Destroy()
-                            results['changed'], results['result'] = wait_for_task(task=task)
+                            results['changed'], results['msg'] = wait_for_task(task=task)
                     else:
                         if self.module.check_mode:
                             results['changed'] = True
-                            results['result'] = "Folder '%s' of type '%s' will be removed." % (folder_name, folder_type)
+                            results['msg'] = "Folder '%s' of type '%s' will be removed." % (folder_name, folder_type)
                         else:
                             if folder_type == 'vm':
                                 task = folder_obj.UnregisterAndDestroy()
                             else:
                                 task = folder_obj.Destroy()
-                            results['changed'], results['result'] = wait_for_task(task=task)
+                            results['changed'], results['msg'] = wait_for_task(task=task)
                 except vim.fault.ConcurrentAccess as concurrent_access:
                     self.module.fail_json(msg="Failed to remove folder as another client"
                                               " modified folder before this operation : %s" % to_native(concurrent_access.msg))
