@@ -94,3 +94,6 @@ test "$(egrep -c 'include handler task|ERROR! The requested handler '"'"'do_impo
 # https://github.com/ansible/ansible/issues/49969
 ansible-playbook -v parent_templating/playbook.yml 2>&1 | tee test_parent_templating.out
 test "$(egrep -c 'Templating the path of the parent include_tasks failed.' test_parent_templating.out)" = 0
+
+# https://github.com/ansible/ansible/issues/54618
+ansible-playbook test_loop_var_bleed.yaml "$@"

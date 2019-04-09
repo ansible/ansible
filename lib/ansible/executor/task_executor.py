@@ -559,18 +559,18 @@ class TaskExecutor:
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
         if self._task.action in ('include', 'include_tasks'):
-            include_variables = self._task.args.copy()
-            include_file = include_variables.pop('_raw_params', None)
+            include_args = self._task.args.copy()
+            include_file = include_args.pop('_raw_params', None)
             if not include_file:
                 return dict(failed=True, msg="No include file was specified to the include")
 
             include_file = templar.template(include_file)
-            return dict(include=include_file, include_variables=include_variables)
+            return dict(include=include_file, include_args=include_args)
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
-            include_variables = self._task.args.copy()
-            return dict(include_variables=include_variables)
+            include_args = self._task.args.copy()
+            return dict(include_args=include_args)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)
