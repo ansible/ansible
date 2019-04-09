@@ -202,8 +202,8 @@ class AnsibleEc2TgwInfo(object):
         connection  : boto3 client connection object
         """
         # collect parameters
-        filters = ansible_dict_to_boto3_filter_list(self._module.params.get('filters'))
-        transit_gateway_ids = self._module.params.get('transit_gateway_ids')
+        filters = ansible_dict_to_boto3_filter_list(self._module.params['filters'])
+        transit_gateway_ids = self._module.params['transit_gateway_ids']
 
         # init empty list for return vars
         transit_gateway_info = list()
