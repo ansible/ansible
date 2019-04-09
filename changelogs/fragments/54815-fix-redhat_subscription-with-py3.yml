@@ -1,0 +1,2 @@
+bugfixes:
+    - redhat_subscription - fixed an issue that was preventing the use of the module with Python3  
