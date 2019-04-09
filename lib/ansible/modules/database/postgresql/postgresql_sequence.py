@@ -39,11 +39,11 @@ options:
     type: str
   data_type:
     description:
-    - Specifies the data type of the sequence. Valid types are smallint, integer, and bigint. bigint is the default.
+    - Specifies the data type of the sequence. Valid types are bigint, integer, and smallint. bigint is the default.
       The data type determines the default minimum and maximum values of the sequence.
     - Supported from PostgreSQL 10.
     required: false
-    choices: [ smallint, integer, bigint ]
+    choices: [ bigint, integer, smallint ]
     type: str
   increment:
     description:
@@ -90,13 +90,13 @@ options:
     description:
     - Automatically drop objects that depend on the sequence, and in turn all
       objects that depend on those objects.
-    - Only used when C(state=absent).
+    - Only used when I(state=absent).
     required: false
     type: bool
   restrict:
     description:
     - Refuse to drop the sequence if any objects depend on it. This is the default.
-    - Only used when C(state=absent).
+    - Only used when I(state=absent).
     required: false
     type: bool
   rename_to:
@@ -523,7 +523,7 @@ def main():
     argument_spec.update(
         sequence=dict(type='str', required=True, aliases=['name']),
         state=dict(type='str', default="present", choices=["absent", "present"]),
-        data_type=dict(type='str', choices=['smallint', 'integer', 'bigint']),
+        data_type=dict(type='str', choices=['bigint', 'integer', 'smallint']),
         increment=dict(type='int'),
         minvalue=dict(type='int'),
         maxvalue=dict(type='int'),
