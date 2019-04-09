@@ -61,20 +61,22 @@
       register: _etcd3run
       changed_when: true
 
+- name: wait api up
+  wait_for:
+    port: 2379
+    delay: 10
+
 # Integration tests
 
 - name: create key foo
   etcd3:
-    host: 127.0.0.1
     key: "foo"
     value: "bar"
     state: "present"
   register: _etcd3_prst_chktst
 
-  
 - name: Check if key is set
   etcd3:
-    host: 127.0.0.1
     key: "foo"
     value: "bar"
     state: "present"
