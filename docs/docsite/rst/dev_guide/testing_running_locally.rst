@@ -71,10 +71,10 @@ Add the ``--coverage`` option to any test command to collect code coverage data.
 aren't using the ``--tox`` or ``--docker`` options which create an isolated python
 environment then you may have to use the ``--requirements`` option to ensure that the
 correct version of the coverage module is installed::
+
    ansible-test units --coverage apt
    ansible-test integration --coverage aws_lambda --tox --requirements
    ansible-test coverage html
-
 
 Reports can be generated in several different formats:
 
