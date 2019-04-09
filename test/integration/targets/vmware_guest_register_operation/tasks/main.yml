@@ -1,0 +1,146 @@
+# Test code for the vmware_guest_register_operation module
+# Copyright: (c) 2019, sky-joker <sky.jokerxx@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?vm=1&cluster=1&pool=2
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Datacenters from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- name: get a datacenter
+  set_fact: dc1="{{ datacenters['json'][0] | basename }}"
+
+- name: get a list of Clusters from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=CR
+  register: clusters
+
+- name: get a cluster
+  set_fact: cluster_name="{{ clusters['json'].1.split('/').5 }}"
+
+- name: get a list of Resource pools from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=RP
+  register: resource_pools
+
+- name: get a resource pool
+  set_fact: resource_pool="{{ resource_pools['json'].3.split('/').7 }}"
+
+- name: get a dict of Hosts from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_host_info
+  register: hosts
+
+- name: get a host
+  set_fact: esxi_hostname="{{ hosts['json'].keys().0 }}"
+
+- name: get a dict of VMs from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_vm_info
+  register: vms
+
+- name: get a vm
+  set_fact: vm_name="{{ vms['json'].keys().0 }}"
+
+- name: Powered off the vm
+  vmware_guest_powerstate:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: False
+    folder: /vm
+    name: "{{ vm_name }}"
+    state: powered-off
+
+- name: Unregister VM from inventory
+  vmware_guest_register_operation:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder: "/vm"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: Register VM to inventory
+  vmware_guest_register_operation:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder: "/vm"
+    esxi_hostname: "{{ esxi_hostname }}"
+    name: "{{ vm_name }}"
+    path: "[LocalDS_0] {{ vm_name }}/{{ vm_name }}.vmx"
+    state: present
+
+- name: Unregister VM from inventory
+  vmware_guest_register_operation:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder: "/vm"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: Register VM in Cluster
+  vmware_guest_register_operation:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder: "/vm"
+    cluster_name: "{{ cluster_name }}"
+    name: "{{ vm_name }}"
+    path: "[LocalDS_0] {{ vm_name }}/{{ vm_name }}.vmx"
+    state: present
+
+- name: Unregister VM from inventory
+  vmware_guest_register_operation:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder: "/vm"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: Register VM in Resource pool
+  vmware_guest_register_operation:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder: "/vm"
+    resource_pool: "{{ resource_pool }}"
+    name: "{{ vm_name }}"
+    path: "[LocalDS_0] {{ vm_name }}/{{ vm_name }}.vmx"
+    state: present
