@@ -143,7 +143,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils.gitlab import (gitlab_auth_argument_spec, gitlab_module_kwargs,
-                                         gitlab, GitlabApiConnection, findGroup)
+                                         gitlab, deprecation_warning, GitlabApiConnection, findGroup)
 
 
 class GitLabGroup(object):
@@ -251,12 +251,6 @@ class GitLabGroup(object):
             self.groupObject = group
             return True
         return False
-
-
-def deprecation_warning(module):
-    deprecated_aliases = ['login_token']
-
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
 
 
 def main():

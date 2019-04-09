@@ -160,7 +160,7 @@ hook:
 from ansible.module_utils.basic import AnsibleModule
 
 from ansible.module_utils.gitlab import (gitlab_auth_argument_spec, gitlab_module_kwargs,
-                                         GitlabApiConnection, findProject)
+                                         GitlabApiConnection, deprecation_warning, findProject)
 
 
 class GitLabHook(object):
@@ -273,12 +273,6 @@ class GitLabHook(object):
             return True
 
         return self.hookObject.delete()
-
-
-def deprecation_warning(module):
-    deprecated_aliases = ['private_token', 'access_token']
-
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
 
 
 def main():

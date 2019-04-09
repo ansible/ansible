@@ -117,7 +117,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils.gitlab import (findProject, gitlab_auth_argument_spec,
-                                         gitlab_module_kwargs, gitlab, GitlabApiConnection)
+                                         gitlab_module_kwargs, deprecation_warning, gitlab,
+                                         GitlabApiConnection)
 
 
 class GitLabDeployKey(object):
@@ -217,12 +218,6 @@ class GitLabDeployKey(object):
             return True
 
         return self.deployKeyObject.delete()
-
-
-def deprecation_warning(module):
-    deprecated_aliases = ['private_token', 'access_token']
-
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
 
 
 def main():

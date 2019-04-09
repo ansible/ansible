@@ -69,7 +69,7 @@ class GitlabApiConnection(object):
         try:
             # if none of the connection details were provided, try using
             # configuration file on the host
-            if {self.user, self.password, self.token} == {None}:
+            if set([self.user, self.password, self.token]) == set([None]):
                 self.instance = gitlab.Gitlab.from_config(self.url, self.config_files)
             else:
                 self.instance = gitlab.Gitlab(url=self.url, ssl_verify=self.validate_certs, email=self.user,
@@ -107,13 +107,19 @@ def request(module, api_url, project, path, access_token, private_token, rawdata
         return False, str(status) + ": " + content
 
 
+def deprecation_warning(module):
+    deprecated_aliases = ['login_token', 'private_token', 'access_token']
+
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+
+
 def gitlab_auth_argument_spec():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
         server_url=dict(type='str', no_log=True, removed_in_version=2.10),
         login_user=dict(type='str', no_log=True, removed_in_version=2.10),
         login_password=dict(type='str', no_log=True, removed_in_version=2.10),
-        api_token=dict(type='str', no_log=True, aliases=["login_token"]),
+        api_token=dict(type='str', no_log=True, aliases=["login_token", 'access_token', 'private_token']),
         config_files=dict(type='list', no_log=True, default=['/etc/python-gitlab.cfg', '~/.python-gitlab.cfg']),
     ))
     return argument_spec

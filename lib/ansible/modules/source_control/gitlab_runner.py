@@ -151,7 +151,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils.gitlab import (gitlab_auth_argument_spec, gitlab_module_kwargs,
-                                         gitlab, GitlabApiConnection)
+                                         gitlab, deprecation_warning, GitlabApiConnection)
 
 
 try:
@@ -271,16 +271,10 @@ class GitLabRunner(object):
         return runner.delete()
 
 
-def deprecation_warning(module):
-    deprecated_aliases = ['login_token']
-
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
-
-
 def main():
     argument_spec = gitlab_auth_argument_spec()
     argument_spec.update(dict(
-        url=dict(type='str', required=True, removed_in_version=2.10),
+        url=dict(type='str', removed_in_version=2.10),
         description=dict(type='str', required=True, aliases=["name"]),
         active=dict(type='bool', default=True),
         tag_list=dict(type='list', default=[]),
