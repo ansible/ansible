@@ -2,17 +2,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Preparation for tests.
-- name: postgresql_sequence - create a user to be owner of a database
-  become_user: "{{ pg_user }}"
-  become: yes
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    state: present
-    encrypted: yes
-    password: password
-    role_attr_flags: LOGIN
-    login_user: "{{ pg_user }}"
-
 - name: postgresql_sequence - create DB
   become_user: "{{ pg_user }}"
   become: yes
@@ -22,11 +11,11 @@
     owner: "{{ db_user1 }}"
     login_user: "{{ pg_user }}"
 
-- name: postgresql_sequence - create a second user to be owner of a seqeunce
+- name: postgresql_sequence - create a user to be owner of a database
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_user:
-    name: "{{ db_user2 }}"
+    name: "{{ db_user1 }}"
     state: present
     encrypted: yes
     password: password
@@ -263,23 +252,10 @@
 
 
 # Cleanup
-- name: postgresql_sequence - remove user
-  postgresql_user:
-    name: "{{ db_user2 }}"
-    state: absent
-    db: "{{ db_name }}"
-    login_user: "{{ pg_user }}"
-
 - name: postgresql_sequence - destroy DB
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_db:
     state: absent
     name: "{{ db_name }}"
-    login_user: "{{ pg_user }}"
-
-- name: postgresql_sequence - remove user
-  postgresql_user:
-    name: "{{ db_user2 }}"
-    state: absent
     login_user: "{{ pg_user }}"

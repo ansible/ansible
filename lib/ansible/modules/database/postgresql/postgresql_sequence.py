@@ -317,6 +317,7 @@ from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
+
 def connect_to_db(module, kw, autocommit=False):
     try:
         db_connection = psycopg2.connect(**kw)
@@ -368,8 +369,8 @@ class Sequence(object):
     def get_info(self):
         """Getter to refresh and get sequence info"""
         query = ("SELECT * FROM information_schema.sequences "
-                    "WHERE sequence_name = '%s' "
-                    "AND sequence_schema = '%s'" % (self.name, self.sequence_schema))
+                 "WHERE sequence_name = '%s' "
+                 "AND sequence_schema = '%s'" % (self.name, self.sequence_schema))
 
         res = self.__exec_sql(query, add_to_executed=False)
 
@@ -409,16 +410,15 @@ class Sequence(object):
         if res[0][0]:
             self.owner = res[0][1]
 
-
     def create(self, data_type=None, increment=None, minimum_value=None,
-                maximum_value=None, start=None, cache=None, cycle_option=False,
-                schema=None):
+               maximum_value=None, start=None, cache=None, cycle_option=False,
+               schema=None):
         """Create function for sequence"""
         query = "CREATE SEQUENCE"
 
         if schema:
             query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                pg_quote_identifier(self.name, 'sequence'))
+                                 pg_quote_identifier(self.name, 'sequence'))
         else:
             query += " %s" % pg_quote_identifier(self.name, 'sequence')
 
@@ -445,12 +445,11 @@ class Sequence(object):
 
         return self.__exec_sql(query, ddl=True)
 
-
     def drop(self, cascade=False, restrict=True, schema=None):
         query = "DROP SEQUENCE"
         if schema:
             query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                pg_quote_identifier(self.name, 'sequence'))
+                                 pg_quote_identifier(self.name, 'sequence'))
         else:
             query += " %s" % pg_quote_identifier(self.name, 'sequence')
 
@@ -461,12 +460,11 @@ class Sequence(object):
 
         return self.__exec_sql(query, ddl=True)
 
-
     def rename(self, rename_to, schema=None):
         query = "ALTER SEQUENCE"
         if schema:
             query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                pg_quote_identifier(self.name, 'sequence'))
+                                 pg_quote_identifier(self.name, 'sequence'))
         else:
             query += " %s" % pg_quote_identifier(self.name, 'sequence')
 
@@ -474,12 +472,11 @@ class Sequence(object):
 
         return self.__exec_sql(query, ddl=True)
 
-
     def set_owner(self, new_owner, schema=None):
         query = "ALTER SEQUENCE"
         if schema:
             query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                pg_quote_identifier(self.name, 'sequence'))
+                                 pg_quote_identifier(self.name, 'sequence'))
         else:
             query += " %s" % pg_quote_identifier(self.name, 'sequence')
 
@@ -487,19 +484,17 @@ class Sequence(object):
 
         return self.__exec_sql(query, ddl=True)
 
-
     def set_schema(self, newschema, schema=None):
         query = "ALTER SEQUENCE"
         if schema:
             query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                pg_quote_identifier(self.name, 'sequence'))
+                                 pg_quote_identifier(self.name, 'sequence'))
         else:
             query += " %s" % pg_quote_identifier(self.name, 'sequence')
 
         query += " SET SCHEMA %s" % pg_quote_identifier(newschema, 'schema')
 
         return self.__exec_sql(query, ddl=True)
-
 
     def __exec_sql(self, query, ddl=False, add_to_executed=True):
         try:
@@ -528,7 +523,7 @@ def main():
     argument_spec.update(
         sequence=dict(type='str', required=True, aliases=['name']),
         state=dict(type='str', default="present", choices=["absent", "present"]),
-        data_type=dict(type='str', choices=['smallint', 'integer', 'bigint']), # available since PG10
+        data_type=dict(type='str', choices=['smallint', 'integer', 'bigint']),
         increment=dict(type='int'),
         minvalue=dict(type='int'),
         maxvalue=dict(type='int'),
@@ -557,7 +552,7 @@ def main():
 
     sequence = module.params["sequence"]
     state = module.params["state"]
-    data_type = module.params["data_type"] # available since PG10
+    data_type = module.params["data_type"]
     increment = module.params["increment"]
     minvalue = module.params["minvalue"]
     maxvalue = module.params["maxvalue"]
@@ -579,8 +574,8 @@ def main():
                               rename_to or newschema or owner):
         module.fail_json(msg="'%s': state=absent is mutually exclusive with: "
                              "data_type, increment, minvalue, maxvalue, "
-                              "start, cache, cycle, "
-                              "rename_to, newschema or owner" % sequence)
+                             "start, cache, cycle, "
+                             "rename_to, newschema or owner" % sequence)
 
     if rename_to and (data_type or increment or minvalue or maxvalue or start or
                       cache or cycle or cascade or restrict or
@@ -667,8 +662,8 @@ def main():
             module.fail_json(msg="Sequence '%s' does not exist, owner can't be set during creation" % sequence)
 
         changed = sequence_obj.create(data_type=data_type, increment=increment, minimum_value=minvalue,
-                                        maximum_value=maxvalue, start=start, cache=cache, cycle_option=cycle,
-                                        schema=schema)
+                                      maximum_value=maxvalue, start=start, cache=cache, cycle_option=cycle,
+                                      schema=schema)
 
     # Drop non-existing sequence
     elif not sequence_obj.exists and state == 'absent':
@@ -743,6 +738,7 @@ def main():
         kw['state'] = 'absent'
 
     module.exit_json(**kw)
+
 
 if __name__ == '__main__':
     main()
