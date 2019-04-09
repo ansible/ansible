@@ -166,9 +166,10 @@ from boto import rds
 from boto import elasticache
 from boto import route53
 from boto import sts
-import six
 
+from ansible.module_utils import six
 from ansible.module_utils import ec2 as ec2_utils
+from ansible.module_utils.six.moves import configparser
 
 HAS_BOTO3 = False
 try:
@@ -177,7 +178,6 @@ try:
 except ImportError:
     pass
 
-from six.moves import configparser
 from collections import defaultdict
 
 import json

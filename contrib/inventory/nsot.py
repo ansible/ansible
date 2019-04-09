@@ -148,7 +148,7 @@ from pynsot.client import get_api_client
 from pynsot.app import HttpServerError
 from click.exceptions import UsageError
 
-from six import string_types
+from ansible.module_utils.six import string_types
 
 
 def warning(*objs):
