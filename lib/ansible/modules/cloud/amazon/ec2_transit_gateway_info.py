@@ -214,7 +214,8 @@ class AnsibleEc2TgwInfo(object):
                 TransitGatewayIds=transit_gateway_ids, Filters=filters)
         except (BotoCoreError, ClientError) as e:
             if e.response['Error']['Code'] == 'InvalidTransitGatewayID.NotFound':
-                self._module.exit_json(transit_gateways=[])
+                self._results['transit_gateways'] = []
+                return
             else:
                 self._module.fail_json_aws(e)
 
@@ -223,7 +224,8 @@ class AnsibleEc2TgwInfo(object):
             # convert tag list to ansible dict
             transit_gateway_info[-1]['tags'] = boto3_tag_list_to_ansible_dict(transit_gateway.get('Tags', []))
 
-        self._module.exit_json(transit_gateways=transit_gateway_info)
+        self._results['transit_gateways'] = transit_gateway_info
+        return
 
 
 def setup_module_object():
