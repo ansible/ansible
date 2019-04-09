@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # set DIGITALOCEAN_TOKEN to your Digital Ocean API token before running this test
 
-SCRIPT_DIR=$(dirname $0)
-export DM_MACHINE_NAME=dm-test-machine
+SCRIPT_DIR=$(dirname "$0")
+export DM_MACHINE_NAME=dm-test-machine-${RANDOM}
 
 # restrict Ansible just to our inventory plugin, to prevent inventory data being matched by the test but being provided
 # by some other dynamic inventory provider
@@ -42,13 +42,17 @@ echo "Test docker_machine inventory 2: daemon_required=yes daemon env success=ye
 ansible-inventory -i inventory_2.docker_machine.yml --list
 
 echo "Test docker_machine inventory 2: daemon_required=yes daemon env success=no"
-MOCK_ERROR_IN=env ansible-inventory -i inventory_2.docker_machine.yml --list
+export MOCK_ERROR_IN=env
+ansible-inventory -i inventory_2.docker_machine.yml --list
+unset MOCK_ERROR_IN
 
 echo "Test docker_machine inventory 3: daemon_required=no daemon env success=yes"
 ansible-inventory -i inventory_3.docker_machine.yml --list
 
 echo "Test docker_machine inventory 3: daemon_required=no daemon env success=no"
-MOCK_ERROR_IN=env ansible-inventory -i inventory_2.docker_machine.yml --list
+export MOCK_ERROR_IN=env
+ansible-inventory -i inventory_2.docker_machine.yml --list
+unset MOCK_ERROR_IN
 
 echo "Deactivate Docker Machine mock"
 PATH=${SAVED_PATH}

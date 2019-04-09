@@ -7,18 +7,20 @@
     vars:
       dm_ls_format: !unsafe '{{.Name}} | {{.DriverName}} | {{.State}} | {{.URL}} | {{.Error}}'
       success_regex: "^{{ dm_machine_name }} | [^|]+ | Running | tcp://.+ |$"
-    shell: docker-machine ls --format '{{ dm_ls_format }}'
+    command: docker-machine ls --format '{{ dm_ls_format }}'
     register: result
     failed_when: result.rc != 0 or result.stdout is not match(success_regex)
 
   - name: verify Docker Machine ip
-    shell: docker-machine ip {{ dm_machine_name }}
+    command: docker-machine ip {{ dm_machine_name }}
     register: result
     failed_when: result.rc != 0 or result.stdout != hostvars[dm_machine_name].ansible_host
 
   - name: verify Docker Machine env
-    shell: docker-machine env --shell=sh {{ dm_machine_name }}
+    command: docker-machine env --shell=sh {{ dm_machine_name }}
     register: result
+
+  - debug: var=result.stdout
 
   - assert:
       that:
@@ -26,7 +28,6 @@
         - "'DOCKER_HOST=\"{{ hostvars[dm_machine_name].dm_DOCKER_HOST }}\"' in result.stdout"
         - "'DOCKER_CERT_PATH=\"{{ hostvars[dm_machine_name].dm_DOCKER_CERT_PATH }}\"' in result.stdout"
         - "'DOCKER_MACHINE_NAME=\"{{ hostvars[dm_machine_name].dm_DOCKER_MACHINE_NAME }}\"' in result.stdout"
-      fail_msg: "Got: {{ result.stdout }}"
 
 - hosts: dm-test-machine
   gather_facts: no
@@ -47,12 +48,7 @@
     DOCKER_MACHINE_NAME: "{{ hostvars[dm_machine_name].dm_DOCKER_MACHINE_NAME }}"
     DOCKER_TLS_VERIFY: "{{ hostvars[dm_machine_name].dm_DOCKER_TLS_VERIFY }}"
   tasks:
-  - name: docker-compose up on target Docker Machine host to verify that Docker daemon connection settings from the docker-machine inventory plugin work as expected
-    docker_service:
-      project_name: test
-      definition:
-        version: '2'
-        services:
-          test:
-            container_name: test
-            image: hello-world:latest
+  - name: run a Docker container on the target Docker Machine host to verify that Docker daemon connection settings from the docker-machine inventory plugin work as expected
+    docker_container:
+      name: test
+      image: hello-world:latest

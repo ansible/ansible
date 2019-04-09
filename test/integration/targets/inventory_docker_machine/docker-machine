@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Mock Docker Machine wrapper for testing purposes
 
 [ "$MOCK_ERROR_IN" == "$1" ] && echo >&2 "Mock Docker Machine error" && exit 1
@@ -15,6 +15,7 @@ EOF
         ;;
 
     *)
+        # Hmm, this is quite possibly wrong on the Ansible shippable infra... :-(
         /usr/local/bin/docker-machine $*
         ;;
 esac

@@ -51,7 +51,8 @@ EXAMPLES = '''
 # Minimal example
 plugin: docker_machine
 
-# Example using constructed features to create a group per Docker Machine L(driver,https://docs.docker.com/machine/drivers/), e.g.:
+# Example using constructed features to create a group per Docker Machine driver
+# (https://docs.docker.com/machine/drivers/), e.g.:
 #   $ docker-machine create --driver digitalocean ... mymachine
 #   $ ansible-inventory -i ./path/to/docker-machine.yml --host=mymachine
 #   {
@@ -120,7 +121,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _run_command(self, args):
         command = ['docker-machine']
         command.extend(args)
-        display.debug('Executing command {}'.format(command))
+        display.debug('Executing command {0}'.format(command))
         try:
             result = subprocess.check_output(command)
         except Exception as e:

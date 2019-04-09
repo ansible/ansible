@@ -7,7 +7,9 @@
     dm_machine_name: "{{ lookup('env', 'DM_MACHINE_NAME') }}"
   tasks:
     - name: Check that Ansible variable do_api_token is set
-      assert: { that: do_api_token != '' }
+      assert:
+        that:
+          - do_api_token != ''
 
     - name: Check that Ansible variable do_region is set
       assert: { that: do_region != '' }
@@ -16,7 +18,7 @@
       assert: { that: dm_machine_name != '' }
 
     - name: Request Docker Machine to create a provisioned Digital Ocean droplet
-      shell: "docker-machine create \
+      command: "docker-machine create \
         --driver digitalocean \
         --digitalocean-access-token {{ do_api_token }} \
         --digitalocean-region {{ do_region }} \
