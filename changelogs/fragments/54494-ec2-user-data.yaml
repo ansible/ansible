@@ -1,0 +1,3 @@
+bugfixes:
+  - ec2 - Only use user_data if the user has specified a value.
+    This prevents setting the instance's user data to b'None'.
