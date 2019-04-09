@@ -80,10 +80,7 @@ import argparse
 
 from time import time
 
-if sys.version_info >= (3, 0):
-    import configparser
-else:
-    import ConfigParser as configparser
+from ansible.module_utils.six.moves import configparser
 
 import logging
 logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
