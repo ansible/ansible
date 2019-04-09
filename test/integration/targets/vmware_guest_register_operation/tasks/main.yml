@@ -52,16 +52,23 @@
     url: http://{{ vcsim }}:5000/govc_host_info
   register: hosts
 
+- name: convert hosts dict to list
+  set_fact:
+    hosts_list: "{{ hosts['json'].keys() | list }}"
+
 - name: get a host
-  set_fact: esxi_hostname="{{ hosts['json'].keys().0 }}"
+  set_fact: esxi_hostname="{{ hosts_list[0] }}"
 
 - name: get a dict of VMs from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_vm_info
   register: vms
 
+- name: convert vms dict to list
+  set_fact: vms_list="{{ vms['json'].keys() | list }}"
+
 - name: get a vm
-  set_fact: vm_name="{{ vms['json'].keys().0 }}"
+  set_fact: vm_name="{{ vms_list[0] }}"
 
 - name: Powered off the vm
   vmware_guest_powerstate:
