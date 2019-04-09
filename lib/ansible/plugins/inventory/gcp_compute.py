@@ -131,7 +131,7 @@ class GcpMockModule(object):
         self.params = params
 
     def fail_json(self, *args, **kwargs):
-        raise AnsibleError(kwargs['msg'])
+        raise ValueError(kwargs['msg'])
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
