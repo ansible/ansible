@@ -94,6 +94,7 @@
 
 - name: install sos again with missing repo enablerepo
   yum: name=sos state=present enablerepo="thisrepodoesnotexist"
+  ignore_errors: True
   register: yum_result
 - name: verify no change on fourth install with missing repo enablerepo
   assert:
