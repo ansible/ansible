@@ -13,7 +13,7 @@ from time import sleep
 import requests
 import urllib3
 
-from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
@@ -37,74 +37,87 @@ DOCUMENTATION = """
     description:
       - Execute modules via VMware Tools.
       - "Note: Windows VMs will need to have C(ansible_shell_type: powershell) set."
+      - Does not work with 'become'
     version_added: "2.8"
     requirements:
       - pyvmomi (python library)
     options:
-      connection_address:
+      vmware_host:
         description:
           - Address for the connection (vCenter or ESXi Host).
+        env:
+          - name: VI_SERVER
         vars:
-          - name: ansible_vmware_tools_connection_address
+          - name: ansible_host
+          - name: ansible_vmware_host
         required: True
-      connection_username:
+      vmware_user:
         description:
           - Username for the connection.
           - "Requires the following permissions on the VM:
                - VirtualMachine.GuestOperations.Execute
                - VirtualMachine.GuestOperations.Modify
                - VirtualMachine.GuestOperations.Query"
+        env:
+          - name: VI_USERNAME
         vars:
-          - name: ansible_vmware_tools_connection_username
+          - name: ansible_user
+          - name: ansible_vmware_user
         required: True
-      connection_password:
+      vmware_password:
         description:
           - Password for the connection.
+        env:
+          - name: VI_PASSWORD
         vars:
-          - name: ansible_vmware_tools_connection_password
+          - name: ansible_password
+          - name: ansible_vmware_password
         required: True
-      connection_verify_ssl:
+      validate_certs:
         description:
           - Verify SSL for the connection.
-          - "Note: This will verify SSL for both C(connection_address) and the ESXi host running the VM."
+          - "Note: This will validate certs for both C(vmware_host) and the ESXi host running the VM."
         vars:
-          - name: ansible_vmware_tools_connection_verify_ssl
+          - name: ansible_vmware_validate_certs
         default: True
         type: bool
-      connection_ignore_ssl_warnings:
+      silence_tls_warnings:
         description:
-          - Ignore SSL warnings for the connection.
+          - Don't output warnings about insecure connections.
         vars:
-          - name: ansible_vmware_tools_connection_ignore_ssl_warnings
-        default: False
+          - name: ansible_vmware_silence_tls_warnings
+        default: True
         type: bool
       vm_path:
         description:
           - VM path relative to the connection.
           - "vCenter Example: C(Datacenter/vm/Discovered virtual machine/testVM) (Needs to include C(vm) between the Datacenter and the rest of the VM path.)"
           - "ESXi Host Example: C(ha-datacenter/vm/testVM) (Needs to include C(vm) between the Datacenter (C(ha-datacenter)) and the rest of the VM path.)"
+          - Must include VM name, appended to 'folder' as would be passed to vmware_guest.
         vars:
-          - name: ansible_vmware_tools_vm_path
+          - name: ansible_vmware_guest_path
         required: True
-      vm_username:
+      vm_user:
         description:
           - VM username.
         vars:
-          - name: ansible_vmware_tools_vm_username
+          - name: ansible_user
+          - name: ansible_vmware_tools_user
         required: True
       vm_password:
         description:
           - VM password.
         vars:
-          - name: ansible_vmware_tools_vm_password
+          - name: ansible_password
+          - name: ansible_vmware_tools_password
         required: True
       exec_command_sleep_interval:
         description:
           - exec command sleep interval in seconds.
         vars:
           - name: ansible_vmware_tools_exec_command_sleep_interval
-        default: 5
-        type: integer
+        default: 0.5
+        type: float
       file_chunk_size:
         description:
           - File chunk size.
@@ -113,7 +126,83 @@ DOCUMENTATION = """
           - name: ansible_vmware_tools_file_chunk_size
         default: 128
         type: integer
+      executable:
+        description:
+            - shell to use for execution inside container
+        default: /bin/sh
+        vars:
+            - name: ansible_executable
+            - name: ansible_vmware_tools_executable
 """
+
+EXAMPLES = r'''
+# example vars.yml
+---
+ansible_connection: vmware_tools
+
+ansible_vmware_host: vcenter.example.com
+ansible_vmware_user: administrator@vsphere.local
+ansible_vmware_password: Secr3tP4ssw0rd!12
+ansible_vmware_validate_certs: no  # default is yes
+ansible_vmware_silence_tls_warnings: yes # default is no
+
+# vCenter Connection VM Path Example
+ansible_vmware_guest_path: DATACENTER/vm/FOLDER/{{ inventory_hostname }}
+# ESXi Connection VM Path Example
+ansible_vmware_guest_path: ha-datacenter/vm/{{ inventory_hostname }}
+
+ansible_vmware_tools_user: root
+ansible_vmware_tools_password: MyR00tPassw0rD
+
+# if the target VM guest is Windows set the 'ansible_shell_type' to 'powershell'
+ansible_shell_type: powershell
+
+
+# example playbook_linux.yml
+---
+- name: Test VMware Tools Connection Plugin
+  hosts: linux
+  tasks:
+    - command: whoami
+
+    - ping:
+
+    - copy:
+        src: foo
+        dest: /home/user/foo
+
+    - fetch:
+        src: /home/user/foo
+        dest: linux-foo
+        flat: yes
+
+    - file:
+        path: /home/user/foo
+        state: absent
+
+
+# example playbook_windows.yml
+---
+- name: Test VMware Tools Connection Plugin
+  hosts: windows
+  tasks:
+    - win_command: whoami
+
+    - win_ping:
+
+    - win_copy:
+        src: foo
+        dest: C:\Users\user\foo
+
+    - fetch:
+        src: C:\Users\user\foo
+        dest: windows-foo
+        flat: yes
+
+    - win_file:
+        path: C:\Users\user\foo
+        state: absent
+'''
 
 
 class Connection(ConnectionBase):
@@ -122,14 +211,14 @@ class Connection(ConnectionBase):
     transport = "vmware_tools"
 
     @property
-    def connection_address(self):
+    def vmware_host(self):
         """Read-only property holding the connection address."""
-        return self.get_option("connection_address")
+        return self.get_option("vmware_host")
 
     @property
-    def connection_verify_ssl(self):
-        """Read-only property holding whether the connection should verify ssl."""
-        return self.get_option("connection_verify_ssl")
+    def validate_certs(self):
+        """Read-only property holding whether the connection should validate certs."""
+        return self.get_option("validate_certs")
 
     @property
     def authManager(self):
@@ -162,12 +251,12 @@ class Connection(ConnectionBase):
             self.allow_extras = True
 
     def _establish_connection(self):
-        connection_kwargs = {"host": self.connection_address, "user": self.get_option("connection_username"), "pwd": self.get_option("connection_password")}
+        connection_kwargs = {"host": self.vmware_host, "user": self.get_option("vmware_user"), "pwd": self.get_option("vmware_password")}
 
-        if self.connection_verify_ssl:
+        if self.validate_certs:
             connect = SmartConnect
         else:
-            if self.get_option("connection_ignore_ssl_warnings"):
+            if self.get_option("silence_tls_warnings"):
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             connect = SmartConnectNoSSL
 
@@ -188,7 +277,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("Unable to find VM by path '%s'" % to_native(self.get_option("vm_path")))
 
         self.vm_auth = vim.NamePasswordAuthentication(
-            username=self.get_option("vm_username"), password=self.get_option("vm_password"), interactiveSession=False
+            username=self.get_option("vm_user"), password=self.get_option("vm_password"), interactiveSession=False
         )
 
         try:
@@ -202,7 +291,7 @@ class Connection(ConnectionBase):
         except vim.fault.InvalidGuestLogin as e:
             raise AnsibleError("VM Login Error: %s" % to_native(e.msg))
         except vim.fault.NoPermission as e:
-            raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
+            raise AnsibleConnectionFailure("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
 
     def _connect(self):
         if not HAS_PYVMOMI:
@@ -246,7 +335,7 @@ class Connection(ConnectionBase):
             program_path = "cmd.exe"
             arguments = "/c %s" % cmd_parts
         else:
-            program_path = self._play_context.executable
+            program_path = self.get_option("executable")
             arguments = re.sub(r"^%s\s*" % program_path, "", cmd)
 
         return program_path, arguments
@@ -280,7 +369,7 @@ class Connection(ConnectionBase):
 
         https://code.vmware.com/apis/358/vsphere#/doc/vim.vm.guest.FileManager.FileTransferInformation.html
         """
-        return url.replace("*", self.connection_address)
+        return url.replace("*", self.vmware_host)
 
     def _fetch_file_from_vm(self, guestFilePath):
         try:
@@ -289,7 +378,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
 
         url = self._fix_url_for_hosts(fileTransferInformation.url)
-        response = requests.get(url, verify=self.connection_verify_ssl, stream=True)
+        response = requests.get(url, verify=self.validate_certs, stream=True)
 
         if response.status_code != 200:
             raise AnsibleError("Failed to fetch file")
@@ -337,8 +426,6 @@ class Connection(ConnectionBase):
         """Fetch file."""
         super(Connection, self).fetch_file(in_path, out_path)
 
-        makedirs_safe(dirname(out_path))
-
         in_path_response = self._fetch_file_from_vm(in_path)
 
         with open(out_path, "wb") as fd:
@@ -363,7 +450,7 @@ class Connection(ConnectionBase):
 
         # file size of 'in_path' must be greater than 0
         with open(in_path, "rb") as fd:
-            response = requests.put(url, verify=self.connection_verify_ssl, data=fd)
+            response = requests.put(url, verify=self.validate_certs, data=fd)
 
         if response.status_code != 200:
             raise AnsibleError("File transfer failed")
