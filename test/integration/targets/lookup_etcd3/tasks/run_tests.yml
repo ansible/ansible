@@ -57,7 +57,7 @@
         dest: "{{ etcd3_download_location }}"
         remote_src: yes
     - name: Run etcd3
-      shell: "{{ etcd3_path }}/etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' &"
+      shell: "{{ etcd3_path }}/etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' >/dev/null 2>&1 &"
       register: _etcd3run
       changed_when: true
 
@@ -90,4 +90,3 @@
     that:
       - _etcd3_prst_chktst is changed
       - keyfoo == 'bar'
-
