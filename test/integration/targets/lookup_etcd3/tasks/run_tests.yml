@@ -32,6 +32,12 @@
     name: etcd3
     state: present
 
+- name: Install etcd3 module python for lookup in localhost
+  pip:
+    name: etcd3
+    state: present
+  delegate_to: localhost
+
 - name: If can't reuse
   block:
     - name: prepare download folder
