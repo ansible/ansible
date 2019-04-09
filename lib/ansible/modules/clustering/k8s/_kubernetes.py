@@ -226,6 +226,7 @@ KIND_URL = {
     "horizontalpodautoscaler": "/apis/extensions/v1beta1/namespaces/{namespace}/horizontalpodautoscalers",  # NOQA
     "ingress": "/apis/extensions/v1beta1/namespaces/{namespace}/ingresses",
     "job": "/apis/extensions/v1beta1/namespaces/{namespace}/jobs",
+    "networkpolicy": "/apis/extensions/v1beta1/namespaces/{namespace}/networkpolicies",
 }
 USER_AGENT = "ansible-k8s-module/0.0.1"
 
