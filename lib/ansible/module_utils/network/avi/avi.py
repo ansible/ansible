@@ -32,10 +32,7 @@
 # avi.sdk.
 
 from __future__ import absolute_import
-import os
-from distutils.version import LooseVersion
 
-HAS_AVI = True
 from ansible.module_utils.network.avi.ansible_utils import (
     avi_ansible_api, avi_common_argument_spec, ansible_return,
-    avi_obj_cmp, cleanup_absent_fields, AviCheckModeResponse)
+    avi_obj_cmp, cleanup_absent_fields, AviCheckModeResponse, HAS_AVI)

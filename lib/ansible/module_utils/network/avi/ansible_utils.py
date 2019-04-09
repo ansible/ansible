@@ -7,7 +7,13 @@ import os
 import re
 import logging
 from copy import deepcopy
-from ansible.module_utils.network.avi.avi_api import ApiSession, ObjectNotFound, avi_sdk_syslog_logger, AviCredentials
+
+HAS_AVI = True
+try:
+    from ansible.module_utils.network.avi.avi_api import ApiSession, ObjectNotFound, avi_sdk_syslog_logger, AviCredentials
+except ImportError:
+    HAS_AVI = False
+
 
 if os.environ.get('AVI_LOG_HANDLER', '') != 'syslog':
     log = logging.getLogger(__name__)

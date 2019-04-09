@@ -5,9 +5,16 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
-from requests import ConnectionError as RequestsConnectionError
-from requests import Response
-from requests.sessions import Session
+
+
+HAS_AVI = True
+try:
+    from requests import ConnectionError as RequestsConnectionError
+    from requests import Response
+    from requests.sessions import Session
+except ImportError:
+    HAS_AVI = False
+
 from ssl import SSLError
 
 logger = logging.getLogger(__name__)
