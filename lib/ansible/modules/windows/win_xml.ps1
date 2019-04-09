@@ -146,7 +146,7 @@ if ($count) {
 if ($nodeListCount -eq 0) {
     $result.msg = "The supplied xpath did not match any nodes.  If this is unexpected, check your xpath is valid for the xml file at supplied path."
     Exit-Json $result
-} 
+}
 
 $changed = $false
 $result.msg = "not changed"
@@ -182,7 +182,7 @@ if ($type -eq "element") {
             [bool]$present = $false
             [bool]$changed = $false
             $element_count = $elements.get_Count()
-            $nstatus = "node: " + $node.get_Value() + " element: " + $elements.get_OuterXml() + " Element count is $element_count" 
+            $nstatus = "node: " + $node.get_Value() + " element: " + $elements.get_OuterXml() + " Element count is $element_count"
             Add-Warning $result $nstatus
             if ($elements.get_Count()) {
                 if ($debug) {
