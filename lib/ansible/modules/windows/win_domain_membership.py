@@ -48,13 +48,6 @@ options:
     description:
       - When C(state) is C(workgroup), the name of the workgroup that the Windows host should be in.
     type: str
-  allow_existing_computer_account:
-    description:
-      - If a host with the same hostname is already in the AD, replace it.
-    type: bool
-    choices: [ true, false ]
-    default: false
-    version_added: "2.8"
 seealso:
 - module: win_domain
 - module: win_domain_controller
