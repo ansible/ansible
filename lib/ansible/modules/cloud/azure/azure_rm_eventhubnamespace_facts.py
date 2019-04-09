@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_eventhubnamespace_facts
-version_added: "2.9"
+version_added: "2.8"
 short_description: Get Azure eventhub namespace facts.
 description:
     - Get facts for an a specific eventhub namespace or all eventhub namespaces.
@@ -25,7 +25,7 @@ options:
             - The resource group to search for the desired eventhub namespace.
     name:
         description:
-            - Limit results to a specific resource group
+            - Name of the eventhub namespace
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -44,12 +44,12 @@ EXAMPLES = '''
 
     - name: list all azure_rm_eventhubnamespace_facts in RG
       azure_rm_eventhubnamespace_facts:
-        resource_group: fanqiu-org
+        resource_group: myResourceGroup
 
     - name: list all azure_rm_eventhubnamespace_facts by name
       azure_rm_eventhubnamespace_facts:
-        name: fanqiutestnamespace040401
-        resource_group: fanqiu-org
+        name: Testing
+        resource_group: myResourceGroup
 
     - name: Get facts by tags
       azure_rm_eventhubnamespace_facts:
@@ -147,15 +147,15 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
 
     def to_dict(self, eventhubnamespace):
         result = dict(
-            id = eventhubnamespace.id,
-            name = eventhubnamespace.name,
-            resource_group = parse_resource_id(eventhubnamespace.id).get('resourceGroups'),
-            location = eventhubnamespace.location,
-            tags = eventhubnamespace.tags,
-            sku = eventhubnamespace.sku.name.lower(),
-            is_auto_inflate_enabled = eventhubnamespace.is_auto_inflate_enabled,
-            maximum_throughput_units = eventhubnamespace.maximum_throughput_units,
-            kafka_enabled = eventhubnamespace.kafka_enabled
+            id=eventhubnamespace.id,
+            name=eventhubnamespace.name,
+            resource_group=parse_resource_id(eventhubnamespace.id).get('resourceGroups'),
+            location=eventhubnamespace.location,
+            tags=eventhubnamespace.tags,
+            sku=eventhubnamespace.sku.name.lower(),
+            is_auto_inflate_enabled=eventhubnamespace.is_auto_inflate_enabled,
+            maximum_throughput_units=eventhubnamespace.maximum_throughput_units,
+            kafka_enabled=eventhubnamespace.kafka_enabled
         )
         return result
 
