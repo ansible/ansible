@@ -390,6 +390,14 @@ class YumModule(YumDnf):
         self.pkg_mgr_name = "yum"
         self.lockfile = '/var/run/yum.pid'
 
+    def _enablerepos_with_error_checking(self, yumbase):
+        for rid in self.enablerepo:
+            try:
+                yumbase.repos.enableRepo(rid)
+            except yum.Errors.YumBaseError as e:
+                if to_text(u'repository not found') in to_text(e):
+                    self.module.fail_json(msg="Repository %s not found." % rid)
+
     def yum_base(self):
         my = yum.YumBase()
         my.preconf.debuglevel = 0
@@ -459,8 +467,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 e, m, _ = my.rpmdb.matchPackageNames([pkgspec])
                 pkgs = e + m
@@ -514,8 +521,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 e, m, _ = my.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
@@ -554,8 +560,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 pkgs = my.returnPackagesByDep(pkgspec) + my.returnInstalledPackagesByDep(pkgspec)
                 if not pkgs:
@@ -595,8 +600,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 try:
                     pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
@@ -1438,13 +1442,7 @@ class YumModule(YumDnf):
                 current_repos = my.repos.repos.keys()
                 if self.enablerepo:
                     try:
-                        for rid in self.enablerepo:
-                            try:
-                                my.repos.enableRepo(rid)
-                            except yum.Errors.YumBaseError as e:
-                                if to_text(u'repository not found') in to_text(e):
-                                    self.module.warn("Repository %s not found." % rid)
-                                continue
+                        self._enablerepos_with_error_checking(my)
                         new_repos = my.repos.repos.keys()
                         for i in new_repos:
                             if i not in current_repos:

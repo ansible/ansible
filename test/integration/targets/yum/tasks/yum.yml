@@ -98,8 +98,7 @@
 - name: verify no change on fourth install with missing repo enablerepo
   assert:
     that:
-        - "yum_result is success"
-        - "not yum_result is changed"
+        - "yum_result is not success"
 
 # INSTALL AGAIN WITH LATEST
 - name: install sos again with state latest in check mode
