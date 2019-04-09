@@ -99,9 +99,15 @@ options:
     - Only used when C(state=absent).
     required: false
     type: bool
-  rename:
+  rename_to:
     description:
     - The new name for the I(sequence).
+    - Works only for existing sequences.
+    required: false
+    type: str
+  owner:
+    description:
+    - Set the owner for the I(sequence).
     - Works only for existing sequences.
     required: false
     type: str
@@ -135,6 +141,8 @@ options:
     - Database port to connect.
     default: 5432
     type: int
+    aliases:
+    - login_port
   login_user:
     description:
     - User (role) used to authenticate with PostgreSQL.
@@ -249,42 +257,51 @@ schema:
     type: str
     sample: 'foo'
 data_type:
-    description:
+    description: Shows the current data type of the sequence.
     returned: always
-    samlpe: 'bigint'
+    type: str
+    sample: 'bigint'
 increment:
     description: The value of increment of the sequence. A positive value will make
                  an ascending sequence, a negative one a descending sequence.
     returned: always
-    samlpe: '-1'
+    type: int
+    sample: '-1'
 minvalue:
     description: The value of minvalue of the sequence.
     returned: always
-    samlpe: '1'
+    type: int
+    sample: '1'
 maxvalue:
     description: The value of maxvalue of the sequence.
     returned: always
-    samlpe: '9223372036854775807'
+    type: int
+    sample: '9223372036854775807'
 start:
     description: The value of start of the sequence.
     returned: always
-    samlpe: '12'
+    type: int
+    sample: '12'
 cycle:
     description: Shows if the sequence cycle or not.
     returned: always
-    samlpe: 'NO'
+    type: str
+    sample: 'NO'
 owner:
     description: Shows the current owner of the sequence.
     returned: always
-    samlpe: 'postgres'
+    type: str
+    sample: 'postgres'
 newname:
     description: Shows the new sequence name after rename.
     returned: on success
-    samlpe: 'barfoo'
+    type: str
+    sample: 'barfoo'
 newschema:
     description: Shows the new schema of the sequence after schema change.
     returned: on success
-    samlpe: 'foobar'
+    type: str
+    sample: 'foobar'
 '''
 
 
@@ -506,7 +523,6 @@ class Sequence(object):
 # Module execution.
 #
 
-
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
@@ -527,7 +543,7 @@ def main():
         owner=dict(type='str'),
         newschema=dict(type='str'),
 
-        db=dict(type='str', default='', aliases=['login_db','database']),
+        db=dict(type='str', default='', aliases=['login_db', 'database']),
         session_role=dict(type='str'),
     )
     module = AnsibleModule(
@@ -654,7 +670,6 @@ def main():
                                         maximum_value=maxvalue, start=start, cache=cache, cycle_option=cycle,
                                         schema=schema)
 
-
     # Drop non-existing sequence
     elif not sequence_obj.exists and state == 'absent':
         # Nothing to do
@@ -688,7 +703,6 @@ def main():
                 changed = sequence_obj.set_schema(newschema, schema=schema)
                 if changed:
                     sequence_obj.new_schema = newschema
-
 
     # Rollback if it's possible and check_mode:
     if not autocommit:
@@ -729,7 +743,6 @@ def main():
         kw['state'] = 'absent'
 
     module.exit_json(**kw)
-
 
 if __name__ == '__main__':
     main()
