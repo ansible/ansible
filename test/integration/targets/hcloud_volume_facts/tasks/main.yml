@@ -7,13 +7,6 @@
     state: absent
   register: result
 
-- name: test gather hcloud volume facts - empty resources
-  hcloud_volume_facts:
-- name: verify test gather hcloud volume facts - empty resources
-  assert:
-    that:
-      - ansible_facts.hcloud_volume_facts | count == 0
-
 - name: setup volume
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
@@ -34,7 +27,7 @@
 - name: verify test gather hcloud volume facts in check mode
   assert:
     that:
-      - ansible_facts.hcloud_volume_facts|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count == 1
+      - ansible_facts.hcloud_volume_facts|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count >= 1
 
 - name: test gather hcloud volume facts with correct label selector
   hcloud_volume_facts:
@@ -42,7 +35,7 @@
 - name: verify test gather hcloud volume with correct label selector
   assert:
     that:
-      - ansible_facts.hcloud_volume_facts|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count == 1
+      - ansible_facts.hcloud_volume_facts|selectattr('name','equalto','{{ hcloud_volume_name }}') | list | count >= 1
 
 - name: test gather hcloud volume facts with wrong label selector
   hcloud_volume_facts:

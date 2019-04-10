@@ -24,7 +24,7 @@
 - name: test create ssh key with check mode
   hcloud_ssh_key:
     name: "{{ hcloud_ssh_key_name }}"
-    public_key: "{{ hcloud_ssh_key_public_key }}"
+    public_key: "{{ key_material }}"
   register: result
   check_mode: yes
 - name: test create ssh key with check mode
@@ -35,7 +35,7 @@
 - name: test create ssh key
   hcloud_ssh_key:
     name: "{{ hcloud_ssh_key_name }}"
-    public_key: "{{ hcloud_ssh_key_public_key }}"
+    public_key: "{{ key_material }}"
     labels:
       key: value
       my-label: label
@@ -45,14 +45,13 @@
     that:
       - sshKey is changed
       - sshKey.hcloud_ssh_key.name == "{{ hcloud_ssh_key_name }}"
-      - sshKey.hcloud_ssh_key.public_key ==  "{{ hcloud_ssh_key_public_key }}"
-      - sshKey.hcloud_ssh_key.fingerprint == "{{ hcloud_ssh_key_fingerprint }}"
+      - sshKey.hcloud_ssh_key.public_key ==  "{{ key_material }}"
       - sshKey.hcloud_ssh_key.labels.key == "value"
 
 - name: test create ssh key idempotence
   hcloud_ssh_key:
     name: "{{ hcloud_ssh_key_name }}"
-    public_key: "{{ hcloud_ssh_key_public_key }}"
+    public_key: "{{ key_material }}"
   register: result
 - name: verify create ssh key idempotence
   assert:
@@ -62,7 +61,7 @@
 - name: test update ssh key with check mode
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
-    name: "changed-ssh-key-name"
+    name: "changed-{{ hcloud_ssh_key_name }}"
   register: result
   check_mode: yes
 - name: test create ssh key with check mode
@@ -73,7 +72,7 @@
 - name: test update ssh key
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
-    name: "changed-ssh-key-name"
+    name: "changed-{{ hcloud_ssh_key_name }}"
     labels:
       key: value
   register: result
@@ -81,7 +80,7 @@
   assert:
     that:
       - result is changed
-      - result.hcloud_ssh_key.name == "changed-ssh-key-name"
+      - result.hcloud_ssh_key.name == "changed-{{ hcloud_ssh_key_name }}"
 
 - name: test update ssh key with same labels
   hcloud_ssh_key:
@@ -98,7 +97,7 @@
 - name: test update ssh key with other labels
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
-    name: "changed-ssh-key-name"
+    name: "changed-{{ hcloud_ssh_key_name }}"
     labels:
       key: value
       test: 123
