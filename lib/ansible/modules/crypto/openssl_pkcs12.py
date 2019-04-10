@@ -201,7 +201,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
             module.check_mode
         )
         self.action = module.params['action']
-        self.ca_certificates = module.params['ca_certificates']
+        self.ca_certificates = module.params['other_certificates']
         self.certificate_path = module.params['certificate_path']
         self.friendly_name = module.params['friendly_name']
         self.iter_size = module.params['iter_size']
@@ -257,28 +257,22 @@ class Pkcs(crypto_utils.OpenSSLObject):
                 expected_cert = crypto.dump_certificate(crypto.FILETYPE_PEM,
                                                         self.pkcs12.get_certificate())
                 if pkcs12_certificate != expected_cert:
-                    for pkcs_cert in pkcs12_other_certificates:
-                        if pkcs_cert == expected_cert:
-                            break
-                    else:
-                        return False
+                    return False
             elif bool(pkcs12_certificate) != bool(self.certificate_path):
                 return False
 
             if (pkcs12_other_certificates is not None) and (self.ca_certificates is not None):
                 expected_ca_certs = [crypto.dump_certificate(crypto.FILETYPE_PEM,
                                                              ca_cert) for ca_cert in self.pkcs12.get_ca_certificates()]
-                expected_ca_certs.append(crypto.dump_certificate(crypto.FILETYPE_PEM, self.pkcs12.get_certificate()))
-                pkcs12_other_certificates.append(pkcs12_certificate)
-
                 if set(pkcs12_other_certificates) != set(expected_ca_certs):
                     return False
             elif bool(pkcs12_other_certificates) != bool(self.ca_certificates):
                 return False
 
-            if not pkcs12_other_certificates:
+            if pkcs12_privatekey:
                 if ((self.pkcs12.get_friendlyname() is not None) and (pkcs12_friendly_name is not None)):
-                    return self.pkcs12.get_friendlyname() == pkcs12_friendly_name
+                    if self.pkcs12.get_friendlyname() != pkcs12_friendly_name:
+                        return False
                 elif bool(self.pkcs12.get_friendlyname()) != bool(pkcs12_friendly_name):
                     return False
         else:
@@ -365,7 +359,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
 def main():
     argument_spec = dict(
         action=dict(type='str', default='export', choices=['export', 'parse']),
-        ca_certificates=dict(type='list', elements='path'),
+        other_certificates=dict(type='list', elements='path', aliases=['ca_certificates']),
         certificate_path=dict(type='path'),
         force=dict(type='bool', default=False),
         friendly_name=dict(type='str', aliases=['name']),
@@ -420,7 +414,7 @@ def main():
                     changed = True
                 else:
                     pkey, cert, ca_certs, friendly_name = pkcs12.parse()
-                    dump_content = '%s%s%s' % (to_native(pkey), to_native(cert), b''.join(ca_certs))
+                    dump_content = '%s%s%s' % (to_native(pkey), to_native(cert), to_native(b''.join(ca_certs)))
                     pkcs12.write(module, to_bytes(dump_content))
 
             file_args = module.load_file_common_arguments(module.params)
