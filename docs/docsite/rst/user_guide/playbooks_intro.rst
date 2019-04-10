@@ -405,14 +405,16 @@ Here's an example handlers section::
             name: apache
             state: restarted
 
-Avoid using variables in handler names. Since handler names are templated early on, all variables may not be available, resulting in play failure. It is possible to use variables in handler task parameters. For example, if the name of a service varies slightly by distribution, the service name can be set using ``include_vars`` (or any place where variables can be set).
+Avoid using variables in handler names. Since handler names are templated early on, all variables may not be available, resulting in play failure. If a handler name does contain a variable, changing that variables mid-play **will not** result in newly created handler.
+
+It is possible to use variables in handler *task parameters*. For example, if the name of a service varies slightly by distribution, the service name can be set using ``include_vars``.
 
 Here is an example using ``include_vars``:
 
   .. code-block:: yaml+jinja
 
     tasks:
-      - name: Set variables based on distribution
+      - name: Set host variables based on distribution
         include_vars: "{{ ansible_facts.distribution }}.yml"
 
     handlers:
