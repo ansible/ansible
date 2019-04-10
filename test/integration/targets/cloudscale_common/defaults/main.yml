@@ -2,6 +2,9 @@
 # The image to use for test servers
 cloudscale_test_image: 'debian-9'
 
+# Alternate test image to use if a different image is required
+cloudscale_alt_test_image: 'ubuntu-18.04'
+
 # The flavor to use for test servers
 cloudscale_test_flavor: 'flex-2'
 
