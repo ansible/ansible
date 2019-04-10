@@ -1642,7 +1642,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
             instance_initiated_shutdown_behavior=dict(default='stop', choices=['stop', 'terminate']),
             exact_count=dict(type='int', default=None),
-            count_tag=dict(),
+            count_tag=dict(type='raw'),
             volumes=dict(type='list'),
             ebs_optimized=dict(type='bool', default=False),
             tenancy=dict(default='default', choices=['default', 'dedicated']),
