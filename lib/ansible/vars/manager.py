@@ -184,15 +184,6 @@ class VariableManager:
                 all_vars = combine_vars(all_vars, role.get_default_vars())
 
         if task:
-            # set basedirs
-            if C.PLAYBOOK_VARS_ROOT == 'all':  # should be default
-                basedirs = task.get_search_path()
-            elif C.PLAYBOOK_VARS_ROOT in ('bottom', 'playbook_dir'):  # only option in 2.4.0
-                basedirs = [task.get_search_path()[0]]
-            elif C.PLAYBOOK_VARS_ROOT != 'top':
-                # preserves default basedirs, only option pre 2.3
-                raise AnsibleError('Unknown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
-
             # if we have a task in this context, and that task has a role, make
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
