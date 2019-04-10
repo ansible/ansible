@@ -12,6 +12,10 @@
   set_fact:
     python_suffix: "-py3"
   when: ansible_python_version is version('3', '>=')
+  
+- name: debug
+  debug:
+    msg: "{{ansible_python_version }}"
 
 - include_vars: '{{ item }}'
   with_first_found:
@@ -31,12 +35,6 @@
   pip:
     name: etcd3
     state: present
-
-- name: Install etcd3 module python for lookup in localhost
-  pip:
-    name: etcd3
-    state: present
-  delegate_to: localhost
 
 - name: prepare download folder
   file:
