@@ -82,5 +82,6 @@ Ansible ships with the following list of ``module_utils`` files. The module util
 - urls.py - Utilities for working with http and https requests
 - utm_utils.py - Contains base class for creating new Sophos UTM Modules and helper functions for handling the rest interface of Sophos UTM
 - vca.py - Contains utilities for modules that work with VMware vCloud Air
+- vexata.py - Utilities for modules that work with Vexata storage platforms.
 - vmware.py - Contains utilities for modules that work with VMware vSphere VMs
 - xenserver.py - Contains utilities for modules that work with XenServer.
