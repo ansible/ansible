@@ -27,12 +27,12 @@ Function Find-WebPiCmd
     [CmdletBinding()]
     param()
     $p = Find-Command "webpicmd.exe"
-    if ($p -ne $null)
+    if ($null -ne $p)
     {
         return $p
     }
     $a = Find-Command "c:\programdata\chocolatey\bin\webpicmd.exe"
-    if ($a -ne $null)
+    if ($null -ne $a)
     {
         return $a
     }

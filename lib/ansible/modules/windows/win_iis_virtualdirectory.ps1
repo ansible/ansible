@@ -15,7 +15,7 @@ $physical_path = Get-AnsibleParam -obj $params -name "physical_path" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 
 # Ensure WebAdministration module is loaded
-if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
+if ($null -eq (Get-Module "WebAdministration" -ErrorAction SilentlyContinue)) {
   Import-Module WebAdministration
 }
 

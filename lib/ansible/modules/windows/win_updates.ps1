@@ -40,7 +40,7 @@ $common_functions = {
         $msg = "$date_str $msg"
 
         Write-Debug -Message $msg
-        if ($log_path -ne $null -and (-not $check_mode)) {
+        if ($null -ne $log_path -and (-not $check_mode)) {
             Add-Content -Path $log_path -Value $msg
         }
     }
@@ -448,7 +448,7 @@ Function Start-Natively($common_functions, $script) {
 Function Remove-ScheduledJob($name) {
     $scheduled_job = Get-ScheduledJob -Name $name -ErrorAction SilentlyContinue
 
-    if ($scheduled_job -ne $null) {
+    if ($null -ne $scheduled_job) {
         Write-DebugLog -msg "Scheduled Job $name exists, ensuring it is not running..."
         $scheduler = New-Object -ComObject Schedule.Service
         Write-DebugLog -msg "Connecting to scheduler service..."
@@ -509,7 +509,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
     Write-DebugLog -msg "Waiting for job completion..."
 
     # Wait-Job can fail for a few seconds until the scheduled task starts - poll for it...
-    while ($job -eq $null) {
+    while ($null -eq $job) {
         Start-Sleep -Milliseconds 100
         if ($sw.ElapsedMilliseconds -ge 30000) { # tasks scheduled right after boot on 2008R2 can take awhile to start...
             Fail-Json -msg "Timed out waiting for scheduled task to start"
@@ -523,7 +523,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
     # NB: output from scheduled jobs is delayed after completion (including the sub-objects after the primary Output object is available)
-    while (($job.Output -eq $null -or -not ($job.Output | Get-Member -Name Key -ErrorAction Ignore) -or -not $job.Output.Key.Contains("job_output")) -and $sw.ElapsedMilliseconds -lt 15000) {
+    while (($null -eq $job.Output -or -not ($job.Output | Get-Member -Name Key -ErrorAction Ignore) -or -not $job.Output.Key.Contains("job_output")) -and $sw.ElapsedMilliseconds -lt 15000) {
         Write-DebugLog -msg "Waiting for job output to populate..."
         Start-Sleep -Milliseconds 500
     }
@@ -536,7 +536,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
         DebugOutput = $job.Debug
     }
 
-    if ($job.Output -eq $null -or -not $job.Output.Keys.Contains('job_output')) {
+    if ($null -eq $job.Output -or -not $job.Output.Keys.Contains('job_output')) {
         $ret.Output = @{failed = $true; msg = "job output was lost"}
     } else {
         $ret.Output = $job.Output.job_output # sub-object returned, can only be accessed as a property for some reason

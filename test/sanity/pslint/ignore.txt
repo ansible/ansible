@@ -121,7 +121,6 @@ lib/ansible/modules/windows/win_regmerge.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_robocopy.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_route.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_route.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_scheduled_task.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_scheduled_task_stat.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_scheduled_task_stat.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_scheduled_task_stat.ps1 PSUseDeclaredVarsMoreThanAssignments
@@ -129,7 +128,6 @@ lib/ansible/modules/windows/win_security_policy.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_security_policy.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_security_policy.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_security_policy.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_service.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_share.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_shell.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_shell.ps1 PSAvoidUsingCmdletAliases
