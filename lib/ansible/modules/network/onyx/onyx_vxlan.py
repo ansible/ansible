@@ -192,7 +192,6 @@ class OnyxVxlanModule(BaseOnyxModule):
                 self._commands.append('interface nve {0} nve controller bgp'.format(nve_id))
 
         mlag_tunnel_ip = self._required_config.get("mlag_tunnel_ip")
-
         if mlag_tunnel_ip is not None:
             curr_mlag_tunnel_ip = self._current_config.get("mlag_tunnel_ip")
             if mlag_tunnel_ip != curr_mlag_tunnel_ip:
