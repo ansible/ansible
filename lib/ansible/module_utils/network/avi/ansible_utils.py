@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 """
 Created on Aug 16, 2016
 
@@ -9,9 +11,9 @@ import logging
 import sys
 from copy import deepcopy
 
-HAS_AVI = True
 try:
-    from ansible.module_utils.network.avi.avi_api import ApiSession, ObjectNotFound, avi_sdk_syslog_logger, AviCredentials
+    from ansible.module_utils.network.avi.avi_api import (
+        ApiSession, ObjectNotFound, avi_sdk_syslog_logger, AviCredentials, HAS_AVI)
 except ImportError:
     HAS_AVI = False
 
