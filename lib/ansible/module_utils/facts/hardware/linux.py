@@ -187,13 +187,18 @@ class LinuxHardware(Hardware):
             data = line.split(":", 1)
             key = data[0].strip()
 
+            try:
+                val = data[1].strip()
+            except IndexError:
+                val = ""
+
             if xen:
                 if key == 'flags':
                     # Check for vme cpu flag, Xen paravirt does not expose this.
                     #   Need to detect Xen paravirt because it exposes cpuinfo
                     #   differently than Xen HVM or KVM and causes reporting of
                     #   only a single cpu core.
-                    if 'vme' not in data:
+                    if 'vme' not in val:
                         xen_paravirt = True
 
             # model name is for Intel arch, Processor (mind the uppercase P)
@@ -202,7 +207,7 @@ class LinuxHardware(Hardware):
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
-                cpu_facts['processor'].append(data[1].strip())
+                cpu_facts['processor'].append(val)
                 if key == 'vendor_id':
                     vendor_id_occurrence += 1
                 if key == 'model name':
@@ -211,21 +216,21 @@ class LinuxHardware(Hardware):
                     processor_occurence += 1
                 i += 1
             elif key == 'physical id':
-                physid = data[1].strip()
+                physid = val
                 if physid not in sockets:
                     sockets[physid] = 1
             elif key == 'core id':
-                coreid = data[1].strip()
+                coreid = val
                 if coreid not in sockets:
                     cores[coreid] = 1
             elif key == 'cpu cores':
-                sockets[physid] = int(data[1].strip())
+                sockets[physid] = int(val)
             elif key == 'siblings':
-                cores[coreid] = int(data[1].strip())
+                cores[coreid] = int(val)
             elif key == '# processors':
-                cpu_facts['processor_cores'] = int(data[1].strip())
+                cpu_facts['processor_cores'] = int(val)
             elif key == 'ncpus active':
-                i = int(data[1].strip())
+                i = int(val)
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
         if vendor_id_occurrence > 0:
