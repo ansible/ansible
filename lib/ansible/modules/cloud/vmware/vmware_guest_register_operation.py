@@ -235,7 +235,7 @@ class VMwareGuestRegisterOperation(PyVmomi):
                     vm_obj.UnregisterVM()
                     result.update(changed=True)
                 except Exception as exc:
-                    self.module.fail_json(msg=to_native(exc.msg))
+                    self.module.fail_json(msg=to_native(exc))
 
             self.module.exit_json(**result)
 
