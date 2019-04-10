@@ -33,6 +33,7 @@ options:
     hub_policy_key:
         description:
             - Key of the C(hub_policy_name).
+        required: true
     name:
         description:
             - Name of the IoT hub device identity.
@@ -75,9 +76,89 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-tags:
-    description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+iot_devices:
+    description: IoT Hub device.
+    returned: always
+    type: list
+    contains: {
+        "authentication": {
+            "symmetricKey": {
+                "primaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+                "secondaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            },
+            "type": "sas",
+            "x509Thumbprint": {
+                "primaryThumbprint": null,
+                "secondaryThumbprint": null
+            }
+        },
+        "capabilities": {
+            "iotEdge": false
+        },
+        "changed": true,
+        "cloudToDeviceMessageCount": 0,
+        "connectionState": "Disconnected",
+        "connectionStateUpdatedTime": "0001-01-01T00:00:00",
+        "deviceId": "Testing",
+        "etag": "NzA2NjU2ODc=",
+        "failed": false,
+        "generationId": "636903014505613307",
+        "lastActivityTime": "0001-01-01T00:00:00",
+        "modules": [
+            {
+                "authentication": {
+                    "symmetricKey": {
+                        "primaryKey": "XXXXXXXXXXXXXXXXXXX",
+                        "secondaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                    },
+                    "type": "sas",
+                    "x509Thumbprint": {
+                        "primaryThumbprint": null,
+                        "secondaryThumbprint": null
+                    }
+                },
+                "cloudToDeviceMessageCount": 0,
+                "connectionState": "Disconnected",
+                "connectionStateUpdatedTime": "0001-01-01T00:00:00",
+                "deviceId": "testdevice",
+                "etag": "MjgxOTE5ODE4",
+                "generationId": "636903840872788074",
+                "lastActivityTime": "0001-01-01T00:00:00",
+                "managedBy": null,
+                "moduleId": "test"
+            }
+        ],
+        "properties": {
+            "desired": {
+                "$metadata": {
+                    "$lastUpdated": "2019-04-10T05:00:46.2702079Z",
+                    "$lastUpdatedVersion": 8,
+                    "period": {
+                        "$lastUpdated": "2019-04-10T05:00:46.2702079Z",
+                        "$lastUpdatedVersion": 8
+                    }
+                },
+                "$version": 1,
+                "period": 100
+            },
+            "reported": {
+                "$metadata": {
+                    "$lastUpdated": "2019-04-08T06:24:10.5613307Z"
+                },
+                "$version": 1
+            }
+        },
+        "status": "enabled",
+        "statusReason": null,
+        "statusUpdatedTime": "0001-01-01T00:00:00",
+        "tags": {
+            "location": {
+                "country": "us",
+                "city": "Redmond"
+            },
+            "sensor": "humidity"
+        }
+    }
 '''  # NOQA
 
 import json
@@ -93,7 +174,7 @@ except ImportError:
     pass
 
 
-class AzureRMIoTDevice(AzureRMModuleBase):
+class AzureRMIoTDeviceFacts(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -127,7 +208,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
         self.header_parameters = {
             'Content-Type': 'application/json; charset=utf-8'
         }
-        super(AzureRMIoTDevice, self).__init__(self.module_arg_spec, supports_check_mode=True)
+        super(AzureRMIoTDeviceFacts, self).__init__(self.module_arg_spec, supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
@@ -211,7 +292,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
 
 
 def main():
-    AzureRMIoTDevice()
+    AzureRMIoTDeviceFacts()
 
 
 if __name__ == '__main__':
