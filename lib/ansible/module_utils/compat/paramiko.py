@@ -10,10 +10,5 @@ PARAMIKO_IMPORT_ERR = None
 paramiko = None
 try:
     import paramiko
-except ImportError:
-    try:
-        import ansible_paramiko as paramiko
-    except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
-        PARAMIKO_IMPORT_ERR = err
-except AttributeError as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
     PARAMIKO_IMPORT_ERR = err
