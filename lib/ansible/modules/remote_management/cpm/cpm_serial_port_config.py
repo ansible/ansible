@@ -301,7 +301,7 @@ def run_module():
         fail_json = dict(msg='GET: Error validating the server''s certificate for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
         module.fail_json(**fail_json)
     except ConnectionError as e:
-        fail_json = dict(msg='GET: Error connecting to  for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        fail_json = dict(msg='GET: Error connecting to {0} : {1}'.format(fullurl, to_native(e)), changed=False)
         module.fail_json(**fail_json)
 
     read_data = json.loads(response.read())
@@ -327,7 +327,7 @@ def run_module():
             fail_json = dict(msg='POST: Error validating the server''s certificate for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
             module.fail_json(**fail_json)
         except ConnectionError as e:
-            fail_json = dict(msg='POST: Error connecting to  for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+            fail_json = dict(msg='POST: Error connecting to {0} : {1}'.format(fullurl, to_native(e)), changed=False)
             module.fail_json(**fail_json)
 
         result['changed'] = True
