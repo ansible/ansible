@@ -108,18 +108,11 @@ options:
     type: str
     default: prefer
     choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ssl_rootcert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s).
-    - If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
   ca_cert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA)
-        certificate(s). If the file exists, the server's certificate will be
-        verified to be signed by one of these authorities.
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
     aliases: [ ssl_rootcert ]
 
 notes:
