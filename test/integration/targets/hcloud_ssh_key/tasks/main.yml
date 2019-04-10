@@ -15,7 +15,7 @@
     name: "{{ hcloud_ssh_key_name }}"
   register: result
   ignore_errors: yes
-- name: verify fail test missing required parameters on create server
+- name: verify fail test missing required parameters on create ssh_key
   assert:
     that:
       - result is failed

@@ -43,7 +43,7 @@
 - name: verify test gather hcloud ssh key with correct label selector
   assert:
     that:
-      - ansible_facts.hcloud_ssh_key_facts|selectattr('name','equalto','{{ hcloud_ssh_key_name }}') | list | count >= 1
+      - ansible_facts.hcloud_ssh_key_facts|selectattr('name','equalto','{{ hcloud_ssh_key_name }}') | list | count == 1
 
 - name: test gather hcloud ssh key facts with wrong label selector
   hcloud_ssh_key_facts:
