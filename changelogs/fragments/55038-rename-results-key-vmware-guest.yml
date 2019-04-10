@@ -1,2 +1,2 @@
 bugfixes:
-  - The internal key `result` in vmware_guest return renamed to `snapshot_results`
+  - The internal key `results` in vmware_guest_snapshot module return renamed to `snapshot_results`.
