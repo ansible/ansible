@@ -76,7 +76,7 @@ options:
             - List of IpTag associated with the public IP address.
             - Each element should contain type:value pair.
         suboptions:
-            type: 
+            type:
                 description: Sets the ip_tags type.
             value:
                 description: Sets the ip_tags value.
