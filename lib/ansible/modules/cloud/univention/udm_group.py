@@ -112,6 +112,7 @@ def main():
     subpath = module.params['subpath']
     state = module.params['state']
     changed = False
+    diff = None
 
     groups = list(ldap_search(
         '(&(objectClass=posixGroup)(cn={0}))'.format(name),
