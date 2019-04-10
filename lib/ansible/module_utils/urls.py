@@ -1371,6 +1371,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
                      unix_socket=unix_socket)
 
+        # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+        info.update(dict((k.lower(), v) for k, v in r.info().items()))
+
         info.update(normalize_headers(r.headers))
 
         # parse the cookies into a nice dictionary
@@ -1403,6 +1406,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
         # Try to add exception info to the output but don't fail if we can't
         try:
+            # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+            info.update(dict((k.lower(), v) for k, v in e.info().items()))
+
             info.update(normalize_headers(e.headers))
         except Exception:
             pass
