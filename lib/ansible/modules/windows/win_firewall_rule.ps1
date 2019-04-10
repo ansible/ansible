@@ -224,7 +224,7 @@ try {
     $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
 
     if ($state -eq "absent") {
-        if ($existingRule -eq $null) {
+        if ($null -eq $existingRule) {
             $result.msg = "Firewall rule '$name' does not exist."
         } else {
             if ($diff_support) {
@@ -240,7 +240,7 @@ try {
             $result.msg = "Firewall rule '$name' removed."
         }
     } elseif ($state -eq "present") {
-        if ($existingRule -eq $null) {
+        if ($null -eq $existingRule) {
             if ($diff_support) {
                 foreach ($prop in $fwPropertiesToCompare) {
                     $result.diff.prepared += "+[$($prop)='$($existingRule.$prop)']`n"
