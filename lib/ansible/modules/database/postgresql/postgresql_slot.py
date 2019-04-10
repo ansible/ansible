@@ -49,6 +49,7 @@ options:
     - Optional parameter the when C(yes) specifies that the LSN for this replication slot be reserved
       immediately, otherwise the default, C(no), specifies that the LSN is reserved on the first connection
       from a streaming replication client.
+    - Is available from PostgreSQL version 9.6.
     - Uses only with I(slot_type=physical).
     - Mutually exclusive with I(slot_type=logical).
     type: bool
@@ -214,6 +215,11 @@ def connect_to_db(module, kw, autocommit=False):
     return db_connection
 
 
+def get_pg_version(cursor):
+    cursor.execute("select current_setting('server_version_num')")
+    return int(cursor.fetchone()[0])
+
+
 # ===========================================
 # PostgreSQL module specific support methods.
 #
@@ -242,7 +248,13 @@ class PgSlot(object):
             return None
 
         if kind == 'physical':
-            query = "SELECT pg_create_physical_replication_slot('%s', %s, False)" % (self.name, immediately_reserve)
+            # Check server version (needs for immedately_reserverd needs 9.6+):
+            ver = get_pg_version(self.cursor)
+            if ver < 96000:
+                query = "SELECT pg_create_physical_replication_slot('%s')" % self.name
+
+            else:
+                query = "SELECT pg_create_physical_replication_slot('%s', %s)" % (self.name, immediately_reserve)
 
         elif kind == 'logical':
             query = "SELECT pg_create_logical_replication_slot('%s', '%s')" % (self.name, output_plugin)

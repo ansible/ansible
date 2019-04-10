@@ -1,6 +1,30 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+- name: postgresql_slot - set max_replication_slots
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: max_replication_slots
+    value: 10
+
+- name: postgresql_slot - set wal_level to logical
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: wal_level
+    value: logical
+
+- name: postgresql_slot - restart PostgreSQL
+  become: yes
+  service:
+    name: "{{ postgresql_service }}"
+    state: restarted
+
 #
 # state=present
 #
@@ -49,7 +73,14 @@
 - assert:
     that:
     - result.changed == true
-    - result.queries == ["SELECT pg_create_physical_replication_slot('slot0', False, False)"]
+    - result.queries == ["SELECT pg_create_physical_replication_slot('slot0', False)"]
+  when: postgres_version_resp.stdout is version('9.6', '>=')
+
+- assert:
+    that:
+    - result.changed == true
+    - result.queries == ["SELECT pg_create_physical_replication_slot('slot0')"]
+  when: postgres_version_resp.stdout is version('9.6', '<')
 
 # Check, rowcount must be 1
 - name: postgresql_slot - check that the slot exists after the previous step
@@ -141,11 +172,13 @@
     name: slot1
     immediately_reserve: yes
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 - assert:
     that:
     - result.changed == true
-    - result.queries == ["SELECT pg_create_physical_replication_slot('slot1', True, False)"]
+    - result.queries == ["SELECT pg_create_physical_replication_slot('slot1', True)"]
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # Check, rowcount must be 1
 - name: postgresql_slot - check that the slot exists after the previous step
@@ -157,10 +190,12 @@
     query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1' and slot_type = 'physical' and restart_lsn is not NULL"
   ignore_errors: yes
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
  
 - assert:
     that:
     - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 #
 # slot_type: logical
@@ -172,24 +207,6 @@
 # "Your distrib did not compile the test decoder."
 # So the tests are restricted by Ubuntu because of the module functionality
 # depends on PostgreSQL server version only.
-
-- name: postgresql_slot - set wal_level to logical
-  become_user: "{{ pg_user }}"
-  become: yes
-  postgresql_set:
-    login_user: "{{ pg_user }}"
-    db: postgres
-    name: wal_level
-    value: logical
-  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
-
-- name: postgresql_slot - restart PostgreSQL
-  become: yes
-  service:
-    name: "{{ postgresql_service }}"
-    state: restarted
-  ignore_errors: yes
-  when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
 # check_mode
 - name: postgresql_slot - create slot in check_mode
@@ -538,6 +555,7 @@
     that:
     - result.changed == true
     - result.queries == []
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # Check, rowcount must be 1
 - name: postgresql_slot - check that nothing changed after the previous step
@@ -549,10 +567,12 @@
     query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1'"
   ignore_errors: yes
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
  
 - assert:
     that:
     - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # true mode
 - name: postgresql_slot - drop physical slot
@@ -564,11 +584,13 @@
     name: slot1
     state: absent
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 - assert:
     that:
     - result.changed == true
     - result.queries == ["SELECT pg_drop_replication_slot('slot1')"]
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # Check, rowcount must be 0
 - name: postgresql_slot - check that the slot does not exist after the previous step
@@ -580,10 +602,12 @@
     query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1' and slot_type = 'physical'"
   ignore_errors: yes
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
  
 - assert:
     that:
     - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # check mode
 - name: postgresql_slot - try drop physical slot again in check_mode
@@ -596,11 +620,13 @@
     state: absent
   check_mode: yes
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 - assert:
     that:
     - result.changed == false
     - result.queries == []
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # Check, rowcount must be 0
 - name: postgresql_slot - check that nothing changed after the previous step
@@ -612,10 +638,12 @@
     query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1' and slot_type = 'physical'"
   ignore_errors: yes
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
  
 - assert:
     that:
     - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # true mode
 - name: postgresql_slot - try drop physical slot again
@@ -627,11 +655,13 @@
     name: slot1
     state: absent
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 - assert:
     that:
     - result.changed == false
     - result.queries == []
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # Check, rowcount must be 0
 - name: postgresql_slot - check that nothing changed after the previous step
@@ -643,10 +673,12 @@
     query: "SELECT 1 FROM pg_replication_slots WHERE slot_name = 'slot1' and slot_type = 'physical'"
   ignore_errors: yes
   register: result
+  when: postgres_version_resp.stdout is version('9.6', '>=')
  
 - assert:
     that:
     - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 #
 # clean up
