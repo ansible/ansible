@@ -110,11 +110,10 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from copy import deepcopy
 
-HAS_AVI = True
 try:
     from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, avi_obj_cmp, cleanup_absent_fields,
-        ansible_return, AviCheckModeResponse)
+        ansible_return, AviCheckModeResponse, HAS_AVI)
     from ansible.module_utils.network.avi.avi_api import (
         ApiSession, AviCredentials)
 except ImportError:

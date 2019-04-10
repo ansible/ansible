@@ -10,7 +10,7 @@ from ssl import SSLError
 
 
 class MockResponse(object):
-    def __init__():
+    def __init__(self, *args, **kwargs):
         raise Exception("Requests library Response object not found. Using fake one.")
 
 
@@ -19,7 +19,7 @@ class MockRequestsConnectionError(Exception):
 
 
 class MockSession(object):
-    def __init__():
+    def __init__(self, *args, **kwargs):
         raise Exception("Requests library Session object not found. Using fake one.")
 
 

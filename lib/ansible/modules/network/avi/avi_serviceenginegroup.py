@@ -99,7 +99,6 @@ options:
             - Allowed values are 0 - 10.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
-        version_added: "2.8"
     archive_shm_limit:
         description:
             - Amount of se memory in gb until which shared memory is collected in core archive.
@@ -956,10 +955,9 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-HAS_AVI = True
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, avi_ansible_api)
+        avi_common_argument_spec, avi_ansible_api, HAS_AVI)
 except ImportError:
     HAS_AVI = False
 
@@ -1133,7 +1131,7 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) or ansible>=2.8 is not installed. '
+            'Avi python API SDK (avisdk>=17.1) or requests is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'serviceenginegroup',
                            set([]))
