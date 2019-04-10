@@ -514,7 +514,10 @@ class ApiSession(Session):
             self.num_session_retries = 0
             logger.error("giving up after %d retries connection failure %s",
                          self.max_session_retries, True)
-            raise err
+            ret_err = (
+                err if err else APIError("giving up after %d retries connection failure %s" %
+                                         (self.max_session_retries, True)))
+            raise ret_err
         self.authenticate_session()
         return
 
@@ -642,7 +645,10 @@ class ApiSession(Session):
                 logger.error(
                     "giving up after %d retries conn failure %s err %s",
                     self.max_session_retries, connection_error, err)
-                raise err
+                ret_err = (
+                    err if err else APIError("giving up after %d retries connection failure %s" %
+                                             (self.max_session_retries, True)))
+                raise ret_err
             # should restore the updated_hdrs to one passed down
             resp = self._api(api_name, path, tenant, tenant_uuid, data,
                              headers=headers, api_version=api_version,

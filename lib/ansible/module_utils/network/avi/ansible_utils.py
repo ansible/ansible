@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 """
 Created on Aug 16, 2016
@@ -17,17 +17,26 @@ try:
 except ImportError:
     HAS_AVI = False
 
-if sys.version_info[0] >= 3:
-    str_type = str
-else:
-    str_type = unicode
-
 
 if os.environ.get('AVI_LOG_HANDLER', '') != 'syslog':
     log = logging.getLogger(__name__)
 else:
     # Ansible does not allow logging from the modules.
     log = avi_sdk_syslog_logger()
+
+
+def _check_type_string(x):
+    """
+    :param x:
+    :return: True if it is of type string
+    """
+    if isinstance(x, str):
+        return True
+    if sys.version_info[0] < 3:
+        try:
+            return isinstance(x, unicode)
+        except NameError:
+            return False
 
 
 class AviCheckModeResponse(object):
@@ -183,8 +192,7 @@ def ref_n_str_cmp(x, y):
     if type(y) in (int, float, bool, int, complex):
         y = str(y)
         x = str(x)
-    if not ((isinstance(x, str) or isinstance(x, str_type)) and
-            (isinstance(y, str) or isinstance(y, str_type))):
+    if not (_check_type_string(x) and _check_type_string(y)):
         return False
     y_uuid = y_name = str(y)
     x = str(x)
