@@ -228,6 +228,7 @@ from ansible.module_utils.net_tools.netbox.netbox_utils import (
     normalize_data,
     create_netbox_object,
     delete_netbox_object,
+    update_netbox_object,
     IP_ADDRESS_ROLE,
     IP_ADDRESS_STATUS
 )
@@ -352,16 +353,27 @@ def ensure_ip_address_present(nb_endpoint, data):
         return {"msg": data, "changed": changed}
 
     try:
-        ip_addr = _search_ip(nb_endpoint, data)
+        nb_addr = _search_ip(nb_endpoint, data)
     except ValueError:
         return _error_multiple_ip_results(data)
 
-    if not ip_addr:
+    result = {}
+    if not nb_addr:
         return create_ip_address(nb_endpoint, data)
     else:
-        ip_addr = ip_addr.serialize()
-        changed = False
-        msg = "IP Address %s already exists" % (data["address"])
+        ip_addr, diff = update_netbox_object(nb_addr, data, module.check_mode)
+        if ip_addr is False:
+            module.fail_json(
+                msg="Request failed, couldn't update IP: %s" % (data["address"])
+            )
+        if diff:
+            msg = "IP Address %s updated" % (data["address"])
+            changed = True
+            result["diff"] = diff
+        else:
+            ip_addr = nb_addr.serialize()
+            changed = False
+            msg = "IP Address %s already exists" % (data["address"])
 
         return {"ip_address": ip_addr, "msg": msg, "changed": changed}
 
