@@ -31,7 +31,7 @@ options:
         choices: [ export, parse ]
     other_certificates:
         description:
-            - List of other certificates to include.
+            - List of other certificates to include. Pre 2.8 this parameter was called C(ca_certificates)
         type: list
         aliases: [ ca_certificates ]
     certificate_path:
@@ -112,7 +112,7 @@ EXAMPLES = r'''
     friendly_name: raclette
     privatekey_path: /opt/certs/keys/key.pem
     certificate_path: /opt/certs/cert.pem
-    ca_certificates: /opt/certs/ca.pem
+    other_certificates: /opt/certs/ca.pem
     state: present
 
 - name: Change PKCS#12 file permission
@@ -122,7 +122,7 @@ EXAMPLES = r'''
     friendly_name: raclette
     privatekey_path: /opt/certs/keys/key.pem
     certificate_path: /opt/certs/cert.pem
-    ca_certificates: /opt/certs/ca.pem
+    other_certificates: /opt/certs/ca.pem
     state: present
     mode: '0600'
 
@@ -134,7 +134,7 @@ EXAMPLES = r'''
     friendly_name: raclette
     privatekey_path: /opt/certs/keys/key.pem
     certificate_path: /opt/certs/cert.pem
-    ca_certificates: /opt/certs/ca.pem
+    other_certificates: /opt/certs/ca.pem
     state: present
     mode: '0600'
     force: yes
@@ -202,7 +202,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
             module.check_mode
         )
         self.action = module.params['action']
-        self.ca_certificates = module.params['other_certificates']
+        self.other_certificates = module.params['other_certificates']
         self.certificate_path = module.params['certificate_path']
         self.friendly_name = module.params['friendly_name']
         self.iter_size = module.params['iter_size']
@@ -262,15 +262,17 @@ class Pkcs(crypto_utils.OpenSSLObject):
             elif bool(pkcs12_certificate) != bool(self.certificate_path):
                 return False
 
-            if (pkcs12_other_certificates is not None) and (self.ca_certificates is not None):
-                expected_ca_certs = [crypto.dump_certificate(crypto.FILETYPE_PEM,
-                                                             ca_cert) for ca_cert in self.pkcs12.get_ca_certificates()]
-                if set(pkcs12_other_certificates) != set(expected_ca_certs):
+            if (pkcs12_other_certificates is not None) and (self.other_certificates is not None):
+                expected_other_certs = [crypto.dump_certificate(crypto.FILETYPE_PEM,
+                                                                other_cert) for other_cert in self.pkcs12.get_ca_certificates()]
+                if set(pkcs12_other_certificates) != set(expected_other_certs):
                     return False
-            elif bool(pkcs12_other_certificates) != bool(self.ca_certificates):
+            elif bool(pkcs12_other_certificates) != bool(self.other_certificates):
                 return False
 
             if pkcs12_privatekey:
+                # This check is required because pyOpenSSL will not return a firendly name
+                # if the private key is not set in the file
                 if ((self.pkcs12.get_friendlyname() is not None) and (pkcs12_friendly_name is not None)):
                     if self.pkcs12.get_friendlyname() != pkcs12_friendly_name:
                         return False
@@ -298,10 +300,10 @@ class Pkcs(crypto_utils.OpenSSLObject):
         """Generate PKCS#12 file archive."""
         self.pkcs12 = crypto.PKCS12()
 
-        if self.ca_certificates:
-            ca_certs = [crypto_utils.load_certificate(ca_cert) for ca_cert
-                        in self.ca_certificates]
-            self.pkcs12.set_ca_certificates(ca_certs)
+        if self.other_certificates:
+            other_certs = [crypto_utils.load_certificate(other_cert) for other_cert
+                           in self.other_certificates]
+            self.pkcs12.set_ca_certificates(other_certs)
 
         if self.certificate_path:
             self.pkcs12.set_certificate(crypto_utils.load_certificate(
@@ -338,14 +340,14 @@ class Pkcs(crypto_utils.OpenSSLObject):
                                           p12.get_privatekey())
             crt = crypto.dump_certificate(crypto.FILETYPE_PEM,
                                           p12.get_certificate())
-            ca_certs = []
+            other_certs = []
             if p12.get_ca_certificates() is not None:
-                ca_certs = [crypto.dump_certificate(crypto.FILETYPE_PEM,
-                                                    ca_cert) for ca_cert in p12.get_ca_certificates()]
+                other_certs = [crypto.dump_certificate(crypto.FILETYPE_PEM,
+                                                       other_cert) for other_cert in p12.get_ca_certificates()]
 
             friendly_name = p12.get_friendlyname()
 
-            return (pkey, crt, ca_certs, friendly_name)
+            return (pkey, crt, other_certs, friendly_name)
 
         except IOError as exc:
             raise PkcsError(exc)
@@ -414,8 +416,8 @@ def main():
                     pkcs12.write(module, pkcs12_content, 0o600)
                     changed = True
                 else:
-                    pkey, cert, ca_certs, friendly_name = pkcs12.parse()
-                    dump_content = '%s%s%s' % (to_native(pkey), to_native(cert), to_native(b''.join(ca_certs)))
+                    pkey, cert, other_certs, friendly_name = pkcs12.parse()
+                    dump_content = '%s%s%s' % (to_native(pkey), to_native(cert), to_native(b''.join(other_certs)))
                     pkcs12.write(module, to_bytes(dump_content))
 
             file_args = module.load_file_common_arguments(module.params)
