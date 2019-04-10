@@ -666,6 +666,24 @@
       - list_var.0.foo.bar | default('DEFAULT') == 'DEFAULT'
       - list_var.1.foo is not defined
       - list_var.1.foo | default('DEFAULT') == 'DEFAULT'
+      - dict_var is defined
+      - dict_var['bar'] is defined
+      - dict_var['bar']['baz'] is not defined
+      - dict_var['bar']['baz'] | default('DEFAULT') == 'DEFAULT'
+      - dict_var['bar']['baz']['abc'] is not defined
+      - dict_var['bar']['baz']['abc'] | default('DEFAULT') == 'DEFAULT'
+      - dict_var['baz'] is not defined
+      - dict_var['baz']['abc'] is not defined
+      - dict_var['baz']['abc'] | default('DEFAULT') == 'DEFAULT'
+      - list_var[0] is defined
+      - list_var[1] is not defined
+      - list_var[0]['foo'] is defined
+      - list_var[0]['foo']['bar'] is not defined
+      - list_var[0]['foo']['bar'] | default('DEFAULT') == 'DEFAULT'
+      - list_var[1]['foo'] is not defined
+      - list_var[1]['foo'] | default('DEFAULT') == 'DEFAULT'
+      - dict_var['bar'].baz is not defined
+      - dict_var['bar'].baz | default('DEFAULT') == 'DEFAULT'
 
 - template:
     src: template_destpath_test.j2
