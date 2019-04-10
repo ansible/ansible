@@ -833,6 +833,11 @@
 - include: postgresql_ext.yml
   when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
 
+# Test postgresql_slot module.
+# Physical replication slots are available from PostgreSQL 9.4
+- include: postgresql_slot.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
 # Test postgresql_schema module
 - include: postgresql_schema.yml
 
