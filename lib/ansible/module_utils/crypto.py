@@ -20,8 +20,9 @@
 # Copyright (c) 2015, 2016 Paul Kehrer (@reaperhulk)
 # Copyright (c) 2017 Fraser Tweedale (@frasertweedale)
 # For more details, search for the function _obj2txt().
-# -----------------------------------------------------------------------------
-# A clearly marked portion of this file is licensed under the Apache License 2.0
+# ---------------------------------------------------------------------
+# A clearly marked portion of this file is extracted from a project that
+# is licensed under the Apache License 2.0
 # Copyright (c) the OpenSSL contributors
 # For more details, search for the function _OID_MAP.
 
@@ -365,6 +366,7 @@ class OpenSSLObject(object):
 #     https://github.com/openssl/openssl/blob/9537fe5757bb07761fa275d779bbd40bcf5530e4/crypto/objects/objects.txt
 # Extracted with https://gist.github.com/felixfontein/376748017ad65ead093d56a45a5bf376
 #
+# In case the following data structure has any copyrightable content, note that it is licensed as follows:
 # Copyright (c) the OpenSSL contributors
 # Licensed under the Apache License 2.0
 # https://github.com/openssl/openssl/blob/master/LICENSE
