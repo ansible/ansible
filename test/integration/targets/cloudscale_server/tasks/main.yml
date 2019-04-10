@@ -6,3 +6,6 @@
     - import_role:
         name: cloudscale_common
         tasks_from: cleanup_servers
+    - import_role:
+        name: cloudscale_common
+        tasks_from: cleanup_server_groups

@@ -395,29 +395,34 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
         return server_info
 
-    def _get_server_groups(self):
+    def _get_server_group_ids(self):
         server_group_params = self._module.params['server_groups']
         if not server_group_params:
             return None
 
-        server_group_ids = []
+        matchin_group_names = []
+        results = []
         server_groups = self._get('server-groups')
         for server_group in server_groups:
             if server_group['uuid'] in server_group_params:
-                server_group_ids.append(server_group['uuid'])
+                results.append(server_group['uuid'])
                 server_group_params.remove(server_group['uuid'])
 
             elif server_group['name'] in server_group_params:
-                server_group_ids.append(server_group['uuid'])
+                results.append(server_group['uuid'])
                 server_group_params.remove(server_group['name'])
+                # Remember the names found
+                matchin_group_names.append(server_group['name'])
 
-            # No params left, work is done
-            if not server_group_params:
-                break
-        else:
+            # Names are not unique, verify if name already found in previous iterations
+            elif server_group['name'] in matchin_group_names:
+                self._module.fail_json(msg="More than one server group with name exists: '%s'. "
+                                       "Use the 'uuid' parameter to identify the server group." % server_group['name'])
+
+        if server_group_params:
             self._module.fail_json(msg="Server group name or UUID not found: %s" % ', '.join(server_group_params))
 
-        return server_group_ids
+        return results
 
     def _create_server(self, server_info):
         self._result['changed'] = True
@@ -425,7 +430,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         data = deepcopy(self._module.params)
         for i in ('uuid', 'state', 'force', 'api_timeout', 'api_token'):
             del data[i]
-        data['server_groups'] = self._get_server_groups()
+        data['server_groups'] = self._get_server_group_ids()
 
         self._result['diff']['before'] = self._init_server_container()
         self._result['diff']['after'] = deepcopy(data)
@@ -437,6 +442,14 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
     def _update_server(self, server_info):
 
         previous_state = server_info.get('state')
+
+        # The API doesn't support to update server groups.
+        # Show a warning to the user if the desired state does not match.
+        desired_server_group_ids = self._get_server_group_ids()
+        if desired_server_group_ids is not None:
+            current_server_group_ids = [grp['uuid'] for grp in server_info['server_groups']]
+            if desired_server_group_ids != current_server_group_ids:
+                self._module.warn("Server groups can not be mutated, server needs redeployment to change groups.")
 
         server_info = self._update_param('flavor', server_info, requires_stop=True)
         server_info = self._update_param('name', server_info)
