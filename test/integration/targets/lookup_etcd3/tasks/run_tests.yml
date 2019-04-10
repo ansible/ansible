@@ -32,9 +32,6 @@
     clone: true
     dest: /tmp/etcd3
     repo: https://github.com/kragniz/python-etcd3.git
-  environment:
-    http_proxy: "http://Majlinux:linux3c@proxyintercsn.cnaf:80/"
-    https_proxy: "http://Majlinux:linux3c@proxyintercsn.cnaf:80/"
 
 - name: install etcd3 python
   shell: cd /tmp/etcd3 ; python /tmp/etcd3/setup.py install
