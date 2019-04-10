@@ -6,36 +6,37 @@
   when: ansible_distribution == 'Fedora'
 
 - block:
-  - name: Activate flatpak ppa on Ubuntu
+  - name: Activate flatpak ppa on Ubuntu versions older than 18.04/bionic
     apt_repository:
       repo: "ppa:alexlarsson/flatpak"
       state: present
       mode: 0644
+    when: ansible_lsb.major_release | int < 18
 
   - name: Install flatpak package on Ubuntu
     apt:
       name: flatpak
       state: present
 
-  become: true
   when: ansible_distribution == 'Ubuntu'
 
-- name: Enable flathub for user
+- name: Install dummy remote for user
   flatpak_remote:
-     name: flathub
-     state: present
-     flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
-     method: user
+    name: dummy-remote
+    state: present
+    flatpakrepo_url: /tmp/flatpak/repo/dummy-repo.flatpakrepo
+    method: user
 
-- name: Enable flathub for system
+- name: Install dummy remote for system
   flatpak_remote:
-     name: flathub
-     state: present
-     flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
-     method: system
+    name: dummy-remote
+    state: present
+    flatpakrepo_url: /tmp/flatpak/repo/dummy-repo.flatpakrepo
+    method: system
 
 - name: Add flatpak for testing check mode on present flatpak
   flatpak:
-    name: org.gnome.Calculator
-    remote: flathub
+    name: com.dummy.App8
+    remote: dummy-remote
+    no_dependencies: true
     state: present

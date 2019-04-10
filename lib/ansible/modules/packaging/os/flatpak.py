@@ -63,17 +63,25 @@ options:
   name:
     description:
     - The name of the flatpak to manage.
-    - When used with I(state=present), I(name) can be specified as an C(http(s)) URL to a
+    - When used with I(state=present), I(name) can be specified as a URL to a
       C(flatpakref) file or the unique reverse DNS name that identifies a flatpak.
+    - Both C(http(s)://) and local C(file://) URLs are supported.
     - When suppying a reverse DNS name, you can use the I(remote) option to specify on what remote
       to look for the flatpak. An example for a reverse DNS name is C(org.gnome.gedit).
     - When used with I(state=absent), it is recommended to specify the name in the reverse DNS
       format.
-    - When supplying an C(http(s)) URL with I(state=absent), the module will try to match the
+    - When supplying a URL with I(state=absent), the module will try to match the
       installed flatpak based on the name of the flatpakref to remove it. However, there is no
       guarantee that the names of the flatpakref file and the reverse DNS name of the installed
       flatpak do match.
     required: true
+  no_dependencies:
+    description:
+    - If installing runtime dependencies should be omitted or not
+    - This parameter is primarily implemented for integration testing this module.
+      There might however be some use cases where you would want to have this, like when you are
+      packaging your own flatpaks.
+    default: false
   remote:
     description:
     - The flatpak remote (repository) to install the flatpak from.
@@ -153,13 +161,17 @@ from ansible.module_utils._text import to_native
 OUTDATED_FLATPAK_VERSION_ERROR_MESSAGE = "Unknown option --columns=application"
 
 
-def install_flat(module, binary, remote, name, method):
+def install_flat(module, binary, remote, name, method, no_dependencies):
     """Add a new flatpak."""
     global result
-    if name.startswith('http://') or name.startswith('https://'):
-        command = "{0} install --{1} -y {2}".format(binary, method, name)
+    extra_parameters = ''
+    if no_dependencies:
+        extra_parameters += '--no-deps'
+    if name.startswith('http://') or name.startswith('https://') or name.startswith('file://'):
+        command = "{0} install --{1} {2} -y {3}".format(binary, method, extra_parameters, name)
     else:
-        command = "{0} install --{1} -y {2} {3}".format(binary, method, remote, name)
+        command = "{0} install --{1} {2} -y {3} {4}".format(binary, method,
+                                                            extra_parameters, remote, name)
     _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
@@ -229,7 +241,7 @@ def _match_flat_using_flatpak_column_feature(module, binary, parsed_name, method
 
 
 def _parse_flatpak_name(name):
-    if name.startswith('http://') or name.startswith('https://'):
+    if name.startswith('http://') or name.startswith('https://') or name.startswith('file://'):
         file_name = urlparse(name).path.split('/')[-1]
         file_name_without_extension = file_name.split('.')[0:-1]
         common_name = ".".join(file_name_without_extension)
@@ -267,6 +279,7 @@ def main():
                         choices=['user', 'system']),
             state=dict(type='str', default='present',
                        choices=['absent', 'present']),
+            no_dependencies=dict(type='bool', default='false'),
             executable=dict(type='path', default='flatpak')
         ),
         supports_check_mode=True,
@@ -276,6 +289,7 @@ def main():
     state = module.params['state']
     remote = module.params['remote']
     method = module.params['method']
+    no_dependencies = module.params['no_dependencies']
     executable = module.params['executable']
     binary = module.get_bin_path(executable, None)
 
@@ -289,7 +303,7 @@ def main():
         module.fail_json(msg="Executable '%s' was not found on the system." % executable, **result)
 
     if state == 'present' and not flatpak_exists(module, binary, name, method):
-        install_flat(module, binary, remote, name, method)
+        install_flat(module, binary, remote, name, method, no_dependencies)
     elif state == 'absent' and flatpak_exists(module, binary, name, method):
         uninstall_flat(module, binary, name, method)
 

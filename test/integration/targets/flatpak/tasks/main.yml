@@ -25,8 +25,8 @@
 
   - name: Test executable override
     flatpak:
-      name: org.gnome.Characters
-      remote: flathub
+      name: com.dummy.App1
+      remote: dummy-remote
       state: present
       executable: nothing-that-exists
     ignore_errors: true

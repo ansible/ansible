@@ -4,8 +4,8 @@
 
 - name: Test addition of absent flatpak (check mode)
   flatpak:
-    name: org.gnome.Characters
-    remote: flathub
+    name: com.dummy.App1
+    remote: dummy-remote
     state: present
   register: addition_result
   check_mode: true
@@ -18,8 +18,8 @@
 
 - name: Test non-existent idempotency of addition of absent flatpak (check mode)
   flatpak:
-    name: org.gnome.Characters
-    remote: flathub
+    name: com.dummy.App1
+    remote: dummy-remote
     state: present
   register: double_addition_result
   check_mode: true
@@ -36,7 +36,7 @@
 
 - name: Test removal of absent flatpak check mode
   flatpak:
-    name: org.gnome.Characters
+    name: com.dummy.App1
     state: absent
   register: removal_result
   check_mode: true
@@ -51,8 +51,8 @@
 
 - name: Test addition of absent flatpak with url (check mode)
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
-    remote: flathub
+    name: file:///tmp/flatpak/repo/com.dummy.App1.flatpakref
+    remote: dummy-remote
     state: present
   register: url_addition_result
   check_mode: true
@@ -65,8 +65,8 @@
 
 - name: Test non-existent idempotency of addition of absent flatpak with url (check mode)
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
-    remote: flathub
+    name: file:///tmp/flatpak/repo/com.dummy.App1.flatpakref
+    remote: dummy-remote
     state: present
   register: double_url_addition_result
   check_mode: true
@@ -85,7 +85,7 @@
 
 - name: Test removal of absent flatpak with url not doing anything (check mode)
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Characters.flatpakref
+    name: file:///tmp/flatpak/repo/com.dummy.App1.flatpakref
     state: absent
   register: url_removal_result
   check_mode: true
@@ -103,8 +103,8 @@
 
 - name: Test addition of present flatpak (check mode)
   flatpak:
-    name: org.gnome.Calculator
-    remote: flathub
+    name: com.dummy.App8
+    remote: dummy-remote
     state: present
   register: addition_present_result
   check_mode: true
@@ -119,7 +119,7 @@
 
 - name: Test removal of present flatpak (check mode)
   flatpak:
-    name: org.gnome.Calculator
+    name: com.dummy.App8
     state: absent
   register: removal_present_result
   check_mode: true
@@ -132,7 +132,7 @@
 
 - name: Test non-existent idempotency of removal (check mode)
   flatpak:
-    name: org.gnome.Calculator
+    name: com.dummy.App8
     state: absent
   register: double_removal_present_result
   check_mode: true
@@ -149,8 +149,8 @@
 
 - name: Test addition with url of present flatpak (check mode)
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
-    remote: flathub
+    name: file:///tmp/flatpak/repo/com.dummy.App8.flatpakref
+    remote: dummy-remote
     state: present
   register: url_addition_present_result
   check_mode: true
@@ -165,7 +165,7 @@
 
 - name: Test removal with url of present flatpak (check mode)
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
+    name: file:///tmp/flatpak/repo/com.dummy.App8.flatpakref
     state: absent
   register: url_removal_present_result
   check_mode: true
@@ -178,8 +178,8 @@
 
 - name: Test non-existent idempotency of removal with url of present flatpak (check mode)
   flatpak:
-    name: https://flathub.org/repo/appstream/org.gnome.Calculator.flatpakref
-    remote: flathub
+    name: file:///tmp/flatpak/repo/com.dummy.App8.flatpakref
+    remote: dummy-remote
     state: absent
   register: double_url_removal_present_result
   check_mode: true
