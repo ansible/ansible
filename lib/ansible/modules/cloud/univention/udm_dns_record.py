@@ -123,6 +123,7 @@ def main():
     data = module.params['data']
     state = module.params['state']
     changed = False
+    diff = None
 
     obj = list(ldap_search(
         '(&(objectClass=dNSZone)(zoneName={0})(relativeDomainName={1}))'.format(zone, name),
