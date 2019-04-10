@@ -247,7 +247,7 @@ Try {
                         Write-DebugLog "adding hostname change to domain-join args"
                         $join_args.new_hostname = $hostname
                     }
-                    If($domain_ou_path -ne $null){ # If OU Path is not empty
+                    If($null -ne $domain_ou_path){ # If OU Path is not empty
                         Write-DebugLog "adding domain_ou_path to domain-join args"
                         $join_args.domain_ou_path = $domain_ou_path
                     }

@@ -39,13 +39,13 @@ $result = @{
 
 if ($removeAll) {
     $currentPageFiles = Get-WmiObject Win32_PageFileSetting
-    if ($currentPageFiles -ne $null) {
+    if ($null -ne $currentPageFiles) {
         $currentPageFiles | Remove-WmiObject -WhatIf:$check_mode | Out-Null
         $result.changed = $true
     }
 }
 
-if ($automatic -ne $null) {
+if ($null -ne $automatic) {
     # change autmoatic managed pagefile 
     try {
         $computerSystem = Get-WmiObject -Class win32_computersystem -EnableAllPrivileges
@@ -67,7 +67,7 @@ if ($automatic -ne $null) {
 
 if ($state -eq "absent") {
     # Remove pagefile
-    if ((Get-Pagefile $fullPath) -ne $null)
+    if ($null -ne (Get-Pagefile $fullPath))
     {
         try {
             Remove-Pagefile $fullPath -whatif:$check_mode
@@ -79,7 +79,7 @@ if ($state -eq "absent") {
 } elseif ($state -eq "present") {
     # Remove current pagefile
     if ($override) {
-        if ((Get-Pagefile $fullPath) -ne $null)
+        if ($null -ne (Get-Pagefile $fullPath))
         {
             try {
                 Remove-Pagefile $fullPath -whatif:$check_mode
@@ -96,7 +96,7 @@ if ($state -eq "absent") {
     }
 
     # Set pagefile
-    if ((Get-Pagefile $fullPath) -eq $null) {
+    if ($null -eq (Get-Pagefile $fullPath)) {
         try {
             $pagefile = Set-WmiInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
         } catch {
@@ -133,7 +133,7 @@ if ($state -eq "absent") {
 } elseif ($state -eq "query") {
     $result.pagefiles = @()
 
-    if ($drive -eq $null) {
+    if ($null -eq $drive) {
         try {
             $pagefiles = Get-WmiObject Win32_PageFileSetting
         } catch {

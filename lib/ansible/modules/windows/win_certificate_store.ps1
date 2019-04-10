@@ -67,7 +67,7 @@ Function New-CertFile($module, $cert, $path, $type, $password) {
     }
     if ($type -eq "pkcs12") {
         $missing_key = $false
-        if ($cert.PrivateKey -eq $null) {
+        if ($null -eq $cert.PrivateKey) {
             $missing_key = $true
         } elseif ($cert.PrivateKey.CspKeyContainerInfo.Exportable -eq $false) {
             $missing_key = $true
@@ -97,7 +97,7 @@ Function New-CertFile($module, $cert, $path, $type, $password) {
         $cert_bytes = $file_encoding.GetBytes($cert_content)
     } elseif ($type -eq "pkcs12") {
         $module.Result.key_exported = $false
-        if ($cert.PrivateKey -ne $null) {
+        if ($null -ne $cert.PrivateKey) {
             $module.Result.key_exportable = $cert.PrivateKey.CspKeyContainerInfo.Exportable
         }
     }
