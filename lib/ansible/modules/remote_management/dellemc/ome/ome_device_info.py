@@ -165,47 +165,47 @@ device_info:
   description: Returns the information collected from the Device.
   returned: success
   sample: {
-        [
-            {
-                "Actions": null,
-                "AssetTag": null,
-                "ChassisServiceTag": null,
-                "ConnectionState": true,
-                "DeviceManagement": [
-                    {
-                        "DnsName": "dnsname.host.com",
-                        "InstrumentationName": "MX-12345",
-                        "MacAddress": "11:10:11:10:11:10",
-                        "ManagementId": 12345,
-                        "ManagementProfile": [
-                            {
-                                "HasCreds": 0,
-                                "ManagementId": 12345,
-                                "ManagementProfileId": 12345,
-                                "ManagementURL": "https://192.168.0.1:443",
-                                "Status": 1000,
-                                "StatusDateTime": "2019-01-21 06:30:08.501"
-                            }
-                        ],
-                        "ManagementType": 2,
-                        "NetworkAddress": "192.168.0.1"
-                    }
-                ],
-                "DeviceName": "MX-0003I",
-                "DeviceServiceTag": "MXL1234",
-                "DeviceSubscription": null,
-                "LastInventoryTime": "2019-01-21 06:30:08.501",
-                "LastStatusTime": "2019-01-21 06:30:02.492",
-                "ManagedState": 3000,
-                "Model": "PowerEdge MX7000",
-                "PowerState": 17,
-                "SlotConfiguration": {},
-                "Status": 4000,
-                "SystemId": 2031,
-                "Type": 2000
-            }
-        ]
-    }
+  "value": [
+        {
+            "Actions": null,
+            "AssetTag": null,
+            "ChassisServiceTag": null,
+            "ConnectionState": true,
+            "DeviceManagement": [
+                {
+                    "DnsName": "dnsname.host.com",
+                    "InstrumentationName": "MX-12345",
+                    "MacAddress": "11:10:11:10:11:10",
+                    "ManagementId": 12345,
+                    "ManagementProfile": [
+                        {
+                            "HasCreds": 0,
+                            "ManagementId": 12345,
+                            "ManagementProfileId": 12345,
+                            "ManagementURL": "https://192.168.0.1:443",
+                            "Status": 1000,
+                            "StatusDateTime": "2019-01-21 06:30:08.501"
+                        }
+                    ],
+                    "ManagementType": 2,
+                    "NetworkAddress": "192.168.0.1"
+                }
+            ],
+            "DeviceName": "MX-0003I",
+            "DeviceServiceTag": "MXL1234",
+            "DeviceSubscription": null,
+            "LastInventoryTime": "2019-01-21 06:30:08.501",
+            "LastStatusTime": "2019-01-21 06:30:02.492",
+            "ManagedState": 3000,
+            "Model": "PowerEdge MX7000",
+            "PowerState": 17,
+            "SlotConfiguration": {},
+            "Status": 4000,
+            "SystemId": 2031,
+            "Type": 2000
+        }
+    ]
+  }
 '''
 
 from ansible.module_utils.basic import AnsibleModule
