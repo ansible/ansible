@@ -77,11 +77,9 @@ options:
             - Each element should contain type:value pair.
         suboptions:
             type: 
-                description:
-                    - Sets the ip_tags type.
+                description: Sets the ip_tags type.
             value:
-                 description:
-                     - Sets the ip_tags value.
+                description: Sets the ip_tags value.
         version_added: 2.8
     idle_timeout:
         description:
