@@ -96,10 +96,8 @@ class OnyxBufferPoolModule(BaseOnyxModule):
             return
         traffic_pool_config = traffic_pool_config.get(self._required_config.get('name'))
         self._current_config['pool_type'] = traffic_pool_config[0].get("Type")
-        self._current_config['switch_priority'] = int(traffic_pool_config[0].get(
-                                                            "Switch Priorities"))
-        self._current_config['memory_percent'] = float(traffic_pool_config[0].get(
-                                                                    "Memory [%]"))
+        self._current_config['switch_priority'] = int(traffic_pool_config[0].get("Switch Priorities"))
+        self._current_config['memory_percent'] = float(traffic_pool_config[0].get("Memory [%]"))
 
     def _show_traffic_pool(self):
         cmd = "show traffic pool {0}".format(self._required_config.get("name"))
@@ -125,15 +123,13 @@ class OnyxBufferPoolModule(BaseOnyxModule):
         if memory_percent is not None:
             curr_memory_percent = self._current_config.get("memory_percent")
             if curr_memory_percent is None or memory_percent != curr_memory_percent:
-                self._commands.append('traffic pool {0} memory percent {1}'.format(
-                                                            name, memory_percent))
+                self._commands.append('traffic pool {0} memory percent {1}'.format(name, memory_percent))
 
         switch_priority = self._required_config.get("switch_priority")
         if switch_priority is not None:
             curr_switch_priority = self._current_config.get("switch_priority")
             if curr_switch_priority is None or switch_priority != curr_switch_priority:
-                self._commands.append('traffic pool {0} map switch-priority {1}'.format(
-                                                            name, switch_priority))
+                self._commands.append('traffic pool {0} map switch-priority {1}'.format(name, switch_priority))
 
     def _add_add_traffic_pool_cmds(self, name, pool_type):
         self._commands.append('traffic pool {0} type {1}'.format(name, pool_type))
