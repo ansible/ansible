@@ -26,9 +26,12 @@ def is_chroot(module=None):
 
             if module is not None:
                 # on Btrfs, the first-created subvolume (root) has inode #256
-                rc, out, err = module.run_command('stat -f --format=%T /')
-                if 'btrfs' in out:
-                    fs_root_ino = 256
+                stat_path = module.get_bin_path('stat')
+                if stat_path:
+                    cmd = [stat_path, '-f', '--format=%T', '/']
+                    rc, out, err = module.run_command(cmd)
+                    if 'btrfs' in out:
+                        fs_root_ino = 256
 
             is_chroot = (my_root.st_ino != fs_root_ino)
 
