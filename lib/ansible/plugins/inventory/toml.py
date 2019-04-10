@@ -95,7 +95,7 @@ import os
 from functools import partial
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
@@ -211,8 +211,8 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
         try:
-            with open(b_file_name, 'r') as f:
-                return toml.load(f)
+            (b_data, private) = self.loader._get_file_contents(file_name)
+            return toml.loads(to_text(b_data, errors='surrogate_or_strict'))
         except toml.TomlDecodeError as e:
             raise AnsibleParserError(
                 'TOML file (%s) is invalid: %s' % (file_name, to_native(e)),

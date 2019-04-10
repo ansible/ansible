@@ -1,0 +1,9 @@
+- hosts: vaulted_host_toml
+  gather_facts: no
+  tasks:
+  - name: See if we knew vaulted_host_toml
+    debug: msg="Found vaulted_host from vaulted.inventory.toml"
+
+  - assert:
+      that:
+        - 'hello=="world"'
