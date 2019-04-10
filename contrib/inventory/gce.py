@@ -184,7 +184,7 @@ class GceInventory(object):
         """
         Reads the settings from the gce.ini file.
 
-        Populates a SafeConfigParser object with defaults and
+        Populates a ConfigParser object with defaults and
         attempts to read an .ini-style configuration from the filename
         specified in GCE_INI_PATH. If the environment variable is
         not present, the filename defaults to gce.ini in the current
@@ -198,7 +198,7 @@ class GceInventory(object):
         # This provides empty defaults to each key, so that environment
         # variable configuration (as opposed to INI configuration) is able
         # to work.
-        config = configparser.SafeConfigParser(defaults={
+        config = configparser.ConfigParser(defaults={
             'gce_service_account_email_address': '',
             'gce_service_account_pem_file_path': '',
             'gce_project_id': '',
