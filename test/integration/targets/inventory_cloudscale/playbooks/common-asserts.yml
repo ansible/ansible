@@ -1,0 +1,50 @@
+---
+- name: '{{ inventory }}: Verify basic inventory'
+  assert:
+    that:
+      - server_public[identifier] in hostvars
+      - server_private[identifier] in hostvars
+      - server_public_private[identifier] in hostvars
+      - server_unsafe_chars[identifier] in hostvars
+
+- name: '{{ inventory }}: Verify duplicate host names in inventory'
+  assert:
+    that:
+      - cloudscale_resource_prefix + '-duplicate' not in hostvars
+      - (cloudscale_resource_prefix + '-duplicate') | safe_group_name in groups
+
+- name: '{{ inventory }}: Verify constructed groups in inventory'
+  assert:
+    that:
+      # Test for the "ansible" group
+      - '"ansible" in groups'
+      - server_public[identifier] in groups.ansible
+      - server_private[identifier] in groups.ansible
+      - server_public_private[identifier] in groups.ansible
+      - server_unsafe_chars[identifier] in groups.ansible
+      - server_other_prefix[identifier] not in groups.ansible
+      # Tests for the "private_net" group
+      - '"private_net" in groups'
+      - server_public[identifier] not in groups["private_net"]
+      - server_private[identifier] in groups["private_net"]
+      - server_public_private[identifier] in groups["private_net"]
+      # Tests for "distro" keyed group
+      - '"distro_Debian" in groups'
+      - '"distro_Ubuntu" in groups'
+      - server_public[identifier] in groups.distro_Debian
+      - server_private[identifier] not in groups.distro_Debian
+      - server_public[identifier] not in groups.distro_Ubuntu
+      - server_private[identifier] in groups.distro_Ubuntu
+      # Test for flavor_image composed variable
+      - hostvars[server_public[identifier]].flavor_image == 'flex-2_debian-9'
+      - hostvars[server_private[identifier]].flavor_image == 'flex-2_ubuntu-18.04'
+
+- name: '{{ inventory }}: Verify cloudscale specific host variables'
+  assert:
+    that:
+      - hostvars[item.0[identifier]].cloudscale[item.1] == item.0[item.1]
+  with_nested:
+    - [ '{{ server_public }}', '{{ server_private }}', '{{ server_public_private }}' ]
+    - [ 'anti_affinity_with', 'flavor', 'href', 'image', 'interfaces', 'name', 'uuid', 'volumes' ]
+  loop_control:
+    label: '{{ item.0.name }} ({{ item.0.uuid }}): {{ item.1 }}'
