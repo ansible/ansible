@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cloudscale_server_group
-short_description: Manager server groups on cloudscale.ch IaaS service
+short_description: Manager server groups on the cloudscale.ch IaaS service
 description:
   - Create, update and remove server groups.
 author:
@@ -25,12 +25,12 @@ version_added: '2.8'
 options:
   name:
     description:
-      - Name of the server.
+      - Name of the server group.
       - Either I(name) or I(uuid) is required. These options are mutually exclusive.
     type: str
   uuid:
     description:
-      - UUID of the server.
+      - UUID of the server group.
       - Either I(name) or I(uuid) is required. These options are mutually exclusive.
     type: str
   type:
@@ -114,6 +114,7 @@ class AnsibleCloudscaleServerGroup(AnsibleCloudscaleBase):
         }
 
     def _create_server_group(self, server_group):
+        self._module.fail_on_missing_params(['name'])
         self._result['changed'] = True
         data = {
             'name': self._module.params.get('name'),
@@ -147,14 +148,17 @@ class AnsibleCloudscaleServerGroup(AnsibleCloudscaleBase):
 
         else:
             name = self._info.get('name')
-            if name is not None:
-                server_groups = self._get('server-groups') or []
-                for server_group in server_groups:
-                    if server_group['name'] == name:
-                        self._info.update(server_group)
-                        self._info.update(dict(state='present'))
-                        break
+            matching_server_groups = []
+            for server_group in self._get('server-groups'):
+                if server_group['name'] == name:
+                    matching_server_groups.append(server_group)
 
+            if len(matching_server_groups) > 1:
+                self._module.fail_json(msg="More than one server group with name exists: '%s'. "
+                                       "Use the 'uuid' parameter to identify the server group." % name)
+            elif len(matching_server_groups) == 1:
+                self._info.update(matching_server_groups[0])
+                self._info.update(dict(state='present'))
         return self._info
 
     def present_group(self):
