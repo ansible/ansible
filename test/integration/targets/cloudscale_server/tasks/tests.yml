@@ -1,15 +1,8 @@
 ---
 - name: Setup server groups
-  uri:
-    url: https://api.cloudscale.ch/v1/server-groups
-    method: POST
-    headers:
-      Authorization: 'Bearer {{ cloudscale_api_token }}'
-    body:
-      name: '{{ cloudscale_resource_prefix }}-group-{{ item }}'
-      type: anti-affinity
-    body_format: json
-    status_code: 201
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-group-{{ item }}'
+    type: anti-affinity
   with_sequence: count=2
 
 - name: Test create a running server in check mode
