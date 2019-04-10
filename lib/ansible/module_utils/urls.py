@@ -922,6 +922,8 @@ def normalize_headers(headers):
 
     # Don't be lossy, append header values for duplicate headers
     for name, value in headers.items():
+        # lower case keys to match py2 behavior, and create more consistent results
+        name = name.lower()
         if name in normalized:
             old = normalized[name]
             del normalized[name]
