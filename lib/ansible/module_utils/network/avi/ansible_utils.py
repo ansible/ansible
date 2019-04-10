@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 
 """
 Created on Aug 16, 2016
