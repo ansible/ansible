@@ -21,14 +21,9 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'
 options:
-  role_id:
-    description:
-    - The ID of the role.
-    type: str
   role:
     description:
     - The name of the role.
-    - Alternative to the name, you can use C(role_id).
     type: str
     required: yes
     aliases: [ name ]
@@ -132,7 +127,6 @@ def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
         role=dict(type='str', aliases=['name']),
-        role_id=dict(type='str'),
         display_name=dict(type='str'),
         description=dict(type='str'),
         permissions=dict(type='list', choices=[
@@ -168,33 +162,24 @@ def main():
     )
 
     role = module.params['role']
-    role_id = module.params['role_id']
     description = module.params['description']
     permissions = module.params['permissions']
     state = module.params['state']
 
     mso = MSOModule(module)
 
+    role_id = None
     path = 'roles'
 
     # Query for existing object(s)
-    if role_id is None and role is None:
-        mso.existing = mso.query_objs(path)
-    elif role_id is None:
+    if role:
         mso.existing = mso.get_obj(path, name=role)
         if mso.existing:
             role_id = mso.existing['id']
-    elif role is None:
-        mso.existing = mso.get_obj(path, id=role_id)
+            # If we found an existing object, continue with it
+            path = 'roles/{id}'.format(id=role_id)
     else:
-        mso.existing = mso.get_obj(path, id=role_id)
-        existing_by_name = mso.get_obj(path, name=role)
-        if existing_by_name and role_id != existing_by_name['id']:
-            mso.fail_json(msg="Provided role '{0}' with id '{1}' does not match existing id '{2}'.".format(role, role_id, existing_by_name['id']))
-
-    # If we found an existing object, continue with it
-    if role_id:
-        path = 'roles/{id}'.format(id=role_id)
+        mso.existing = mso.query_objs(path)
 
     if state == 'query':
         pass
