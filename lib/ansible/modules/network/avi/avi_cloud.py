@@ -282,8 +282,7 @@ def main():
         vcenter_configuration=dict(type='dict',),
         vtype=dict(type='str', required=True),
     )
-    if HAS_AVI:
-        argument_specs.update(avi_common_argument_spec())
+    argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:

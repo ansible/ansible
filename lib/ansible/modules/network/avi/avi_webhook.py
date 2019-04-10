@@ -112,8 +112,7 @@ def main():
         uuid=dict(type='str',),
         verification_token=dict(type='str',),
     )
-    if HAS_AVI:
-        argument_specs.update(avi_common_argument_spec())
+    argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:

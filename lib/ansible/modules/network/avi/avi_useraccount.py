@@ -98,8 +98,7 @@ def main():
         # To handle both Saas and conventional (Entire state in playbook) scenario.
         force_change=dict(type='bool', default=False)
     )
-    if HAS_AVI:
-        argument_specs.update(avi_common_argument_spec())
+    argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(argument_spec=argument_specs)
     if not HAS_AVI:
         return module.fail_json(msg=(

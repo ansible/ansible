@@ -234,8 +234,7 @@ def main():
         state=dict(default='present',
                    choices=['absent', 'present'])
     )
-    if HAS_AVI:
-        argument_specs.update(avi_common_argument_spec())
+    argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(argument_spec=argument_specs)
     if not HAS_AVI:
         return module.fail_json(msg=(

@@ -233,8 +233,7 @@ def main():
         uuid=dict(type='str',),
         wildcard_match=dict(type='bool',),
     )
-    if HAS_AVI:
-        argument_specs.update(avi_common_argument_spec())
+    argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:

@@ -414,7 +414,7 @@ options:
         version_added: "2.5"
     instance_flavor:
         description:
-            - Instance/flavor type for se instance.
+            - Instance/flavor name for se instance.
     iptables:
         description:
             - Iptable rules.
@@ -1126,8 +1126,7 @@ def main():
         waf_mempool=dict(type='bool',),
         waf_mempool_size=dict(type='int',),
     )
-    if HAS_AVI:
-        argument_specs.update(avi_common_argument_spec())
+    argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:

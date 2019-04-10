@@ -135,8 +135,7 @@ def main():
         data=dict(type='jsonarg'),
         timeout=dict(type='int', default=60)
     )
-    if HAS_AVI:
-        argument_specs.update(avi_common_argument_spec())
+    argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(argument_spec=argument_specs)
     if not HAS_AVI:
         return module.fail_json(msg=(
