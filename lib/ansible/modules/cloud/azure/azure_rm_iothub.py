@@ -604,7 +604,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
                     if ip_filter_changed:
                         changed = True
                         iothub.properties.ip_filter_rules = self.construct_ip_filters()
-                            
+
                 # compare tags
                 tag_changed, updated_tags = self.update_tags(iothub.tags)
                 iothub.tags = updated_tags
@@ -743,7 +743,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
         result = dict()
         for key in instance_dict.keys():
             result[key] = instance_dict[key].as_dict()
-        return result 
+        return result
 
     def to_dict(self, hub):
         result = dict()

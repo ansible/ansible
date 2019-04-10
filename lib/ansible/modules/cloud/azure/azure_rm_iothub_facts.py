@@ -34,7 +34,29 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-
+    show_stats:
+        description:
+            - Show the statistics for IoT Hub.
+            - Note this will have network overhead for each IoT Hub.
+        type: bool
+    show_quota_metrics:
+        description:
+            - Get the quota metrics for an IoT hub.
+            - Note this will have network overhead for each IoT Hub.
+        type: bool
+    show_endpoint_health:
+        description:
+            - Get the health for routing endpoints.
+            - Note this will have network overhead for each IoT Hub.
+        type: bool
+    test_route_message:
+        description:
+            - Test route message.
+            - Used when C(test_route_names) set.
+    list_keys:
+        description:
+            - List the keys of IoT Hub.
+            - Note this will have network overhead for each IoT Hub.
 extends_documentation_fragment:
     - azure
 
@@ -288,7 +310,12 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
         self.module_args = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            show_stats=dict(type='bool'),
+            show_quota_metrics=dict(type='bool'),
+            show_endpoint_health=dict(type='bool'),
+            list_keys=dict(type='bool'),
+            test_route_message=dict(type='str'),
         )
 
         self.results = dict(
@@ -299,6 +326,11 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
         self.name = None
         self.resource_group = None
         self.tags = None
+        self.show_stats = None
+        self.show_quota_metrics = None
+        self.show_endpoint_health = None
+        self.list_keys = None
+        self.test_route_message = None
 
         super(AzureRMIoTHubFacts, self).__init__(
             derived_arg_spec=self.module_args,
@@ -350,6 +382,54 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
         except Exception as exc:
             self.fail('Failed to list IoT Hub in resource group {0} - {1}'.format(self.resource_group, exc.message or str(exc)))
 
+    def show_hub_stats(self, resource_group, name):
+        try:
+            return self.IoThub_client.iot_hub_resource.get_stats(resource_group, name).as_dict()
+        except Exception as exc:
+            self.fail('Failed to getting statistics for IoT Hub {0}/{1}: {2}'.format(resource_group, name, str(exc)))
+
+    def show_hub_quota_metrics(self, resource_group, name):
+        result = []
+        try:
+            resp = self.IoThub_client.iot_hub_resource.show_hub_quota_metrics(resource_group, name)
+            while True:
+                result.append(resp.next().as_dict())
+        except StopIteration:
+            pass
+        except Exception as exc:
+            self.fail('Failed to getting quota metrics for IoT Hub {0}/{1}: {2}'.format(resource_group, name, str(exc)))
+        return result
+
+    def show_hub_endpoint_health(self, resource_group, name):
+        result = []
+        try:
+            resp = self.IoThub_client.iot_hub_resource.get_endpoint_health(resource_group, name)
+            while True:
+                result.append(resp.next().as_dict())
+        except StopIteration:
+            pass
+        except Exception as exc:
+            self.fail('Failed to getting health for IoT Hub {0}/{1} routing endpoint: {2}'.format(resource_group, name, str(exc)))
+        return result
+
+    def test_all_routes(self, resource_group, name):
+        try:
+            return self.IoThub_client.iot_hub_resource.test_all_routes(self.test_route_message, resource_group, name).routes.as_dict()
+        except Exception as exc:
+            self.fail('Failed to getting statistics for IoT Hub {0}/{1}: {2}'.format(resource_group, name, str(exc)))
+
+    def list_hub_keys(self, resource_group, name):
+        result = []
+        try:
+            resp = self.IoThub_client.iot_hub_resource.list_keys(resource_group, name)
+            while True:
+                result.append(resp.next().as_dict())
+        except StopIteration:
+            pass
+        except Exception as exc:
+            self.fail('Failed to getting health for IoT Hub {0}/{1} routing endpoint: {2}'.format(resource_group, name, str(exc)))
+        return result
+
     def route_to_dict(self, route):
         return dict(
             name=route.name,
@@ -363,7 +443,7 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
         result = dict()
         for key in instance_dict.keys():
             result[key] = instance_dict[key].as_dict()
-        return result 
+        return result
 
     def to_dict(self, hub):
         result = dict()
@@ -388,6 +468,18 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
         result['fallback_route'] = self.route_to_dict(properties.routing.fallback_route)
         result['status'] = properties.state
         result['storage_endpoints'] = self.instance_dict_to_dict(properties.storage_endpoints)
+
+        # network overhead part
+        if self.show_stats:
+            result['statistics'] = self.show_hub_stats(result['resource_group'], hub.name)
+        if self.show_quota_metrics:
+            result['quota_metrics'] = self.show_hub_quota_metrics(result['resource_group'], hub.name)
+        if self.show_endpoint_health:
+            result['endpoint_health'] = self.show_hub_endpoint_health(result['resource_group'], hub.name)
+        if self.list_keys:
+            result['keys'] = self.list_hub_keys(result['resource_group'], hub.name)
+        if self.test_route_message:
+            result['test_route_result'] = self.test_all_routes(result['resource_group'], hub.name)
         return result
 
 

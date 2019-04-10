@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_iothub
+module: azure_rm_iotdevice
 version_added: "2.9"
-short_description: Manage Azure IoT hub.
+short_description: Manage Azure IoT hub device.
 description:
-    - Create, delete an Azure IoT hub.
+    - Create, delete an Azure IoT hub device.
 options:
     hub:
         description:
@@ -393,7 +393,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             if not response.status_code in [204]:
                 raise CloudError(response)
         except Exception as exc:
-            self.fail('Error when deleting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc))) 
+            self.fail('Error when deleting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc)))
 
     def get_device(self):
         try:

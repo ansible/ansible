@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_iothub
+module: azure_rm_iotdevice_facts
 version_added: "2.9"
 short_description: Facts of Azure IoT hub device.
 description:
