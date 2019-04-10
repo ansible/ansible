@@ -133,7 +133,7 @@ options:
 EXAMPLES = """
 # Set Serial Port Parameters
 - name: Set the Port Parameters for port 2 of a WTI device
-  cpm_portconfig:
+  cpm_serial_port_config:
     cpm_url: "nonexist.wti.com"
     cpm_username: "super"
     cpm_password: "super"
@@ -155,7 +155,7 @@ EXAMPLES = """
 
 # Set Serial Port Port Name and Baud Rate Parameters
 - name: Set New port name and baud rate (115k) for port 4 of a WTI device
-  cpm_portconfig:
+  cpm_serial_port_config:
     cpm_url: "nonexist.wti.com"
     cpm_username: "super"
     cpm_password: "super"
