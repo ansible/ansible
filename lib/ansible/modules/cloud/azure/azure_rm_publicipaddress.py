@@ -75,6 +75,11 @@ options:
         description:
             - List of IpTag associated with the public IP address.
             - Each element should contain type:value pair.
+        suboptions:
+            type: 
+                description: Sets the ip_tags type: Example FirstPartyUsage.
+            value:
+                 description: Sets value of the ip_tags associated with the public IP: Example Storage.
         version_added: 2.8
     idle_timeout:
         description:
