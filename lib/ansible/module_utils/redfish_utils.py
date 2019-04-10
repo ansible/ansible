@@ -531,8 +531,13 @@ class RedfishUtils(object):
             if "Actions" in data:
                 actions = data['Actions']
                 if len(actions) > 0:
-                    for action in actions.values():
-                        result['entries'][action['title']] = action['TransferProtocol@Redfish.AllowableValues']
+                    for key in actions.keys():
+                        action = actions.get(key)
+                        if 'title' in action:
+                            title = action['title']
+                        else:
+                            title = key
+                        result['entries'][title] = action.get('TransferProtocol@Redfish.AllowableValues', ["Key TransferProtocol@Redfish.AllowableValues not found"])
                 else:
                     return {'ret': "False", 'msg': "Actions list is empty."}
             else:
