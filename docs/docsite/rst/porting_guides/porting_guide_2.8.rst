@@ -304,6 +304,9 @@ Noteworthy module changes
 * ``vmware_vm_facts`` used to return dict of dict with virtual machine's facts. Ansible 2.8 and onwards will return list of dict with virtual machine's facts.
   Please see module ``vmware_vm_facts`` documentation for example.
 
+* ``vmware_guest_snapshot`` module used to return ``results``. Since Ansible 2.8 and onwards ``results`` is a reserved keyword, it is replaced by ``snapshot_results``.
+  Please see module ``vmware_guest_snapshots`` documentation for example.
+
 * The ``panos`` modules have been deprecated in favor of using the Palo Alto Networks `Ansible Galaxy role
   <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.  Contributions to the role can be made
   `here <https://github.com/PaloAltoNetworks/ansible-pan>`_.
