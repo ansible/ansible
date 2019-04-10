@@ -89,7 +89,7 @@ def main():
         api.close()
         module.exit_json(changed=False, obj=remote)
     except Exception as e:
-        module.fail_json(msg="Unable to get an AVI session. {}".format(e))
+        module.fail_json(msg="Unable to get an AVI session. %s" % e)
 
 
 if __name__ == '__main__':

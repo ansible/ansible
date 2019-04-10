@@ -6,6 +6,7 @@ Created on Aug 16, 2016
 import os
 import re
 import logging
+import sys
 from copy import deepcopy
 
 HAS_AVI = True
@@ -13,6 +14,11 @@ try:
     from ansible.module_utils.network.avi.avi_api import ApiSession, ObjectNotFound, avi_sdk_syslog_logger, AviCredentials
 except ImportError:
     HAS_AVI = False
+
+if sys.version >= 3:
+    str_type = str
+else:
+    str_type = unicode
 
 
 if os.environ.get('AVI_LOG_HANDLER', '') != 'syslog':
@@ -175,8 +181,8 @@ def ref_n_str_cmp(x, y):
     if type(y) in (int, float, bool, int, complex):
         y = str(y)
         x = str(x)
-    if not ((isinstance(x, str) or isinstance(x, unicode)) and
-            (isinstance(y, str) or isinstance(y, unicode))):
+    if not ((isinstance(x, str) or isinstance(x, str_type)) and
+            (isinstance(y, str) or isinstance(y, str_type))):
         return False
     y_uuid = y_name = str(y)
     x = str(x)

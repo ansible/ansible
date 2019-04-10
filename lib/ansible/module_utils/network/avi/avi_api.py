@@ -19,7 +19,6 @@ from ssl import SSLError
 
 logger = logging.getLogger(__name__)
 
-global sessionDict
 sessionDict = {}
 
 
@@ -105,13 +104,13 @@ class ApiResponse(Response):
             # No response needed; e.g., delete operation
             return None
         elif self.status_code == 404:
-            raise ObjectNotFound('HTTP Error: %d Error Msg %s' % (
+            raise ObjectNotFound('HTTP Error: %s Error Msg %s' % (
                 self.status_code, self.text), self)
         elif self.status_code >= 500:
-            raise AviServerError('HTTP Error: %d Error Msg %s' % (
+            raise AviServerError('HTTP Error: %s Error Msg %s' % (
                 self.status_code, self.text), self)
         else:
-            raise APIError('HTTP Error: %d Error Msg %s' % (
+            raise APIError('HTTP Error: %s Error Msg %s' % (
                 self.status_code, self.text), self)
 
     def count(self):
@@ -474,8 +473,8 @@ class ApiSession(Session):
                 return
             # Check for bad request and invalid credentials response code
             elif rsp.status_code in [401, 403]:
-                logger.error('Status Code %s msg %s' % (
-                    rsp.status_code, rsp.text))
+                logger.error('Status Code %s msg %s',
+                    rsp.status_code, rsp.text)
                 err = APIError('Status Code %s msg %s' % (
                     rsp.status_code, rsp.text), rsp)
                 raise err
@@ -496,8 +495,8 @@ class ApiSession(Session):
         self.num_session_retries += 1
         if self.num_session_retries > self.max_session_retries:
             self.num_session_retries = 0
-            logger.error("giving up after %d retries connection failure %s" % (
-                self.max_session_retries, True))
+            logger.error("giving up after %d retries connection failure %s",
+                self.max_session_retries, True)
             raise err
         self.authenticate_session()
         return
@@ -624,8 +623,8 @@ class ApiSession(Session):
                     err = APIError('Status Code %s msg %s' % (
                         resp.status_code, resp.text), resp)
                 logger.error(
-                    "giving up after %d retries conn failure %s err %s" % (
-                        self.max_session_retries, connection_error, err))
+                    "giving up after %d retries conn failure %s err %s",
+                        self.max_session_retries, connection_error, err)
                 raise err
             # should restore the updated_hdrs to one passed down
             resp = self._api(api_name, path, tenant, tenant_uuid, data,
@@ -702,7 +701,7 @@ class ApiSession(Session):
                 params=params, **kwargs)
         if resp.status_code > 499 or 'Invalid version' in resp.text:
             logger.error('Error in get object by name for %s named %s. '
-                         'Error: %s' % (path, name, resp.text))
+                         'Error: %s', path, name, resp.text)
             raise AviServerError(resp.text, rsp=resp)
         elif resp.status_code > 299:
             return obj
@@ -713,8 +712,8 @@ class ApiSession(Session):
                 # For apis returning single object eg. api/cluster
                 obj = resp.json()
         except IndexError:
-            logger.warning('Warning: Object Not found for %s named %s' %
-                           (path, name))
+            logger.warning('Warning: Object Not found for %s named %s',
+                           path, name)
             obj = None
         self._update_session_last_used()
         return obj
