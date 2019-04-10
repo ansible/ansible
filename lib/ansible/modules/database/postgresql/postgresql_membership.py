@@ -108,18 +108,11 @@ options:
     type: str
     default: prefer
     choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ssl_rootcert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s).
-    - If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
   ca_cert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA)
-        certificate(s). If the file exists, the server's certificate will be
-        verified to be signed by one of these authorities.
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
     aliases: [ ssl_rootcert ]
 notes:
 - The default authentication assumes that you are either logging in as or
@@ -353,9 +346,6 @@ def main():
         fail_on_role=dict(type='bool', default=True),
         state=dict(type='str', default='present', choices=['absent', 'present']),
         db=dict(type='str', aliases=['login_db']),
-        port=dict(type='int', default=5432, aliases=['login_port']),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(type='str'),
         session_role=dict(type='str'),
     )
 
@@ -371,7 +361,7 @@ def main():
     target_roles = module.params['target_roles']
     fail_on_role = module.params['fail_on_role']
     state = module.params['state']
-    sslrootcert = module.params['ssl_rootcert']
+    sslrootcert = module.params['ca_cert']
     session_role = module.params['session_role']
 
     # To use defaults values, keyword arguments must be absent, so
@@ -384,7 +374,7 @@ def main():
         "port": "port",
         "db": "database",
         "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
+        "ca_cert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
