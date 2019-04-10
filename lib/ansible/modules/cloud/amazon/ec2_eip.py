@@ -381,7 +381,7 @@ def main():
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
-        wait_timeout=dict(default=300),
+        wait_timeout=dict(default=300, type='int'),
         private_ip_address=dict(required=False, default=None, type='str')
     ))
 

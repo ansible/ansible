@@ -178,7 +178,7 @@ def get_ping_results(command, module):
 def main():
     argument_spec = dict(
         dest=dict(required=True),
-        count=dict(required=False, default=5),
+        count=dict(required=False, default=5, type='int'),
         vrf=dict(required=False),
         source=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'], default='present'),
