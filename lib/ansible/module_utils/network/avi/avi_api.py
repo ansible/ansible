@@ -5,6 +5,21 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
+from ssl import SSLError
+
+
+class MockResponse(object):
+    def __init__():
+        raise Exception("Requests library Response object not found. Using fake one.")
+
+
+class MockRequestsConnectionError(Exception):
+    pass
+
+
+class MockSession(object):
+    def __init__():
+        raise Exception("Requests library Session object not found. Using fake one.")
 
 
 HAS_AVI = True
@@ -14,8 +29,10 @@ try:
     from requests.sessions import Session
 except ImportError:
     HAS_AVI = False
+    Response = MockResponse
+    RequestsConnectionError = MockRequestsConnectionError
+    Session = MockSession
 
-from ssl import SSLError
 
 logger = logging.getLogger(__name__)
 
@@ -473,8 +490,7 @@ class ApiSession(Session):
                 return
             # Check for bad request and invalid credentials response code
             elif rsp.status_code in [401, 403]:
-                logger.error('Status Code %s msg %s',
-                    rsp.status_code, rsp.text)
+                logger.error('Status Code %s msg %s', rsp.status_code, rsp.text)
                 err = APIError('Status Code %s msg %s' % (
                     rsp.status_code, rsp.text), rsp)
                 raise err
@@ -496,7 +512,7 @@ class ApiSession(Session):
         if self.num_session_retries > self.max_session_retries:
             self.num_session_retries = 0
             logger.error("giving up after %d retries connection failure %s",
-                self.max_session_retries, True)
+                         self.max_session_retries, True)
             raise err
         self.authenticate_session()
         return
@@ -624,7 +640,7 @@ class ApiSession(Session):
                         resp.status_code, resp.text), resp)
                 logger.error(
                     "giving up after %d retries conn failure %s err %s",
-                        self.max_session_retries, connection_error, err)
+                    self.max_session_retries, connection_error, err)
                 raise err
             # should restore the updated_hdrs to one passed down
             resp = self._api(api_name, path, tenant, tenant_uuid, data,

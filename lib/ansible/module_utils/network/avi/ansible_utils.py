@@ -15,7 +15,7 @@ try:
 except ImportError:
     HAS_AVI = False
 
-if sys.version >= 3:
+if sys.version_info[0] >= 3:
     str_type = str
 else:
     str_type = unicode

@@ -322,7 +322,7 @@ def main():
                                 site_obj['dns_vses'] = []
                             else:
                                 # Modify existing gslb sites object
-                                for key, val in obj.iteritems():
+                                for key, val in obj.items():
                                     if key == 'dns_vses' and str(patch_op).lower() == 'add':
                                         found = False
                                         # Check dns_vses field already exists on the controller
