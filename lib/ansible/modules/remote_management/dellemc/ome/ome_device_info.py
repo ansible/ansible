@@ -153,7 +153,7 @@ EXAMPLES = """
 
 """
 
-RETURN = """
+RETURN = '''
 ---
 msg:
   type: str
@@ -206,7 +206,7 @@ device_info:
             }
         ]
     }
-"""
+'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.remote_management.dellemc.ome import RestOME
@@ -407,7 +407,7 @@ def main():
                     else:
                         device_facts["device_service_tag"] = device_fact_error_report
         if 200 in resp_status:
-            module.exit_json(device_info= device_facts)
+            module.exit_json(device_info=device_facts)
         else:
             module.fail_json(msg="Failed to fetch the device information")
     except (URLError, HTTPError, SSLValidationError, ConnectionError, TypeError, ValueError) as err:
