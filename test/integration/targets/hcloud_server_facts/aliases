@@ -1,3 +1,2 @@
 cloud/hcloud
 shippable/hcloud/group1
-unstable  # tests are unstable because they conflict when run concurrently
