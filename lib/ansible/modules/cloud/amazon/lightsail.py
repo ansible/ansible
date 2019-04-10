@@ -443,7 +443,7 @@ def main():
         key_pair_name=dict(type='str'),
         user_data=dict(type='str'),
         wait=dict(type='bool', default=True),
-        wait_timeout=dict(default=300),
+        wait_timeout=dict(default=300, type='int'),
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)
