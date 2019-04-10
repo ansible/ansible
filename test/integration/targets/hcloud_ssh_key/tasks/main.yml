@@ -85,11 +85,11 @@
 - name: test update ssh key with same labels
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
-    name: "changed-ssh-key-name"
+    name: "changed-{{ hcloud_ssh_key_name }}"
     labels:
       key: value
   register: result
-- name: test update ssh key  with same labels
+- name: test update ssh key with same labels
   assert:
     that:
       - result is not changed
