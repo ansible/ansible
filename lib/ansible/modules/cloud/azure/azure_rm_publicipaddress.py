@@ -77,9 +77,11 @@ options:
             - Each element should contain type:value pair.
         suboptions:
             type: 
-                description: Sets the ip_tags type: Example FirstPartyUsage.
+                description:
+                    - Sets the ip_tags type.
             value:
-                 description: Sets value of the ip_tags associated with the public IP: Example Storage.
+                 description:
+                     - Sets the ip_tags value.
         version_added: 2.8
     idle_timeout:
         description:
