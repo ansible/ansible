@@ -66,6 +66,7 @@ message:
     returned: always
 '''
 import imaplib
+import email
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -114,6 +115,8 @@ def run_module():
     # AnsibleModule.fail_json() to pass in the message and the result
     # if module.params['name'] == 'fail me':
     #     module.fail_json(msg='You requested this to fail', **result)
+
+    # create connection
     try:
         if module.params['ssl']:
             port = 993 if module.params['port'] is None else module.params['port']
@@ -124,6 +127,7 @@ def run_module():
     except Exception as e:
         module.fail_json(msg=str(e), **result)
 
+    # login
     try:
         M.login(module.params['username'], module.params['password'])
     except Exception as e:
@@ -131,10 +135,19 @@ def run_module():
 
     M.list()
     M.select('inbox')
-    _, search = M.search(None, 'SUBJECT', '"Subject"')
-    last_email_id = search[0].split()[-1]
-    _, body = M.fetch(last_email_id, '(RFC822)')
-    print(body[0][1])
+    err, search = M.search(None, 'SUBJECT', '"Alerta"')
+    if err != 'OK':
+        module.fail_json(msg='Error', **result)
+
+    for email_id in search[0].split():
+        # last_email_id = search[0].split()[-1]
+        err, body = M.fetch(email_id, '(RFC822)')
+        if err != 'OK':
+            module.fail_json(msg='Error', **result)
+
+        msg = email.message_from_bytes(body[0][1])
+        print(msg['to'])
+        print(msg['from'])
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
