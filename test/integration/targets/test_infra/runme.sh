@@ -24,8 +24,12 @@ echo "$PB_OUT" | grep -F "assert works (True)" || exit 1
 
 set -e
 
-# ensure test-module script works well
 PING_MODULE_PATH="../../../../lib/ansible/modules/system/ping.py"
+
+# ensure test-module script works without passing Python interpreter path
+../../../../hacking/test-module -m "$PING_MODULE_PATH"
+
+# ensure test-module script works well
 ../../../../hacking/test-module -m "$PING_MODULE_PATH" -I ansible_python_interpreter="$(which python)"
 
 # ensure module.ansible_version is defined when using test-module
