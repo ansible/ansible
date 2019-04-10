@@ -1,52 +1,61 @@
-# Copyright (c) 2018 Deric Crago <deric.crago@gmail.com>
-# Copyright (c) 2018 Ansible Project
+# Copyright: (c) 2018, Deric Crago <deric.crago@gmail.com>
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import re
 from os.path import dirname, exists, getsize
 from socket import gaierror
 from ssl import SSLEOFError, SSLError
 from time import sleep
-
-import requests
 import urllib3
+import traceback
+
+REQUESTS_IMP_ERR = None
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
+    HAS_REQUESTS = False
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
+from ansible.module_utils.basic import missing_required_lib
 
 try:
     from pyVim.connect import Disconnect, SmartConnect, SmartConnectNoSSL
     from pyVmomi import vim
 
     HAS_PYVMOMI = True
-except ImportError as e:
+except ImportError:
     HAS_PYVMOMI = False
-    PYVMOMI_IMPORT_ERROR = e
+    PYVMOMI_IMP_ERR = traceback.format_exc()
 
-
-__metaclass__ = type
 
 DOCUMENTATION = """
     author: Deric Crago <deric.crago@gmail.com>
     connection: vmware_tools
-    short_description: Execute modules via VMware Tools.
+    short_description: Execute tasks inside a VM via VMware Tools
     description:
-      - Execute modules via VMware Tools.
-      - "Note: Windows VMs will need to have C(ansible_shell_type: powershell) set."
-      - Does not work with 'become'
+      - Use VMware tools to run tasks in, or put/fetch files to guest operating systems running in VMware infrastructure.
+      - In case of Windows VMs, set C(ansible_shell_type) to C(powershell).
+      - Does not work with 'become'.
     version_added: "2.8"
     requirements:
-      - pyvmomi (python library)
+      - pyvmomi (Python library)
+      - requests (Python library)
     options:
       vmware_host:
         description:
-          - Address for the connection (vCenter or ESXi Host).
+          - FQDN or IP Address for the connection (vCenter or ESXi Host).
         env:
           - name: VI_SERVER
+          - name: VMWARE_HOST
         vars:
           - name: ansible_host
           - name: ansible_vmware_host
@@ -60,6 +69,7 @@ DOCUMENTATION = """
                - VirtualMachine.GuestOperations.Query"
         env:
           - name: VI_USERNAME
+          - name: VMWARE_USER
         vars:
           - name: ansible_user
           - name: ansible_vmware_user
@@ -69,14 +79,28 @@ DOCUMENTATION = """
           - Password for the connection.
         env:
           - name: VI_PASSWORD
+          - name: VMWARE_PASSWORD
         vars:
           - name: ansible_password
           - name: ansible_vmware_password
         required: True
+      vmware_port:
+        description:
+          - Port for the connection.
+        env:
+          - name: VI_PORTNUMBER
+          - name: VMWARE_PORT
+        vars:
+          - name: ansible_port
+          - name: ansible_vmware_port
+        required: False
+        default: 443
       validate_certs:
         description:
           - Verify SSL for the connection.
           - "Note: This will validate certs for both C(vmware_host) and the ESXi host running the VM."
+        env:
+          - name: VMWARE_VALIDATE_CERTS
         vars:
           - name: ansible_vmware_validate_certs
         default: True
@@ -90,10 +114,13 @@ DOCUMENTATION = """
         type: bool
       vm_path:
         description:
-          - VM path relative to the connection.
-          - "vCenter Example: C(Datacenter/vm/Discovered virtual machine/testVM) (Needs to include C(vm) between the Datacenter and the rest of the VM path.)"
-          - "ESXi Host Example: C(ha-datacenter/vm/testVM) (Needs to include C(vm) between the Datacenter (C(ha-datacenter)) and the rest of the VM path.)"
-          - Must include VM name, appended to 'folder' as would be passed to vmware_guest.
+          - VM path absolute to the connection.
+          - "vCenter Example: C(Datacenter/vm/Discovered virtual machine/testVM)."
+          - "ESXi Host Example: C(ha-datacenter/vm/testVM)."
+          - Must include VM name, appended to 'folder' as would be passed to M(vmware_guest).
+          - Needs to include C(vm) between the Datacenter and the rest of the VM path.
+          - Datacenter default value for ESXi server is C(ha-datacenter).
+          - C(vm) is not visible in vSphere Web Client but necessary for VMware API to work.
         vars:
           - name: ansible_vmware_guest_path
         required: True
@@ -106,14 +133,14 @@ DOCUMENTATION = """
         required: True
       vm_password:
         description:
-          - VM password.
+          - Password for the user in guest operating system.
         vars:
           - name: ansible_password
           - name: ansible_vmware_tools_password
         required: True
       exec_command_sleep_interval:
         description:
-          - exec command sleep interval in seconds.
+          - Time in seconds to sleep between execution of command.
         vars:
           - name: ansible_vmware_tools_exec_command_sleep_interval
         default: 0.5
@@ -160,7 +187,7 @@ ansible_shell_type: powershell
 
 # example playbook_linux.yml
 ---
-- name: Test VMware Tools Connection Plugin
+- name: Test VMware Tools Connection Plugin for Linux
   hosts: linux
   tasks:
     - command: whoami
@@ -183,7 +210,7 @@ ansible_shell_type: powershell
 
 # example playbook_windows.yml
 ---
-- name: Test VMware Tools Connection Plugin
+- name: Test VMware Tools Connection Plugin for Windows
   hosts: windows
   tasks:
     - win_command: whoami
@@ -251,7 +278,12 @@ class Connection(ConnectionBase):
             self.allow_extras = True
 
     def _establish_connection(self):
-        connection_kwargs = {"host": self.vmware_host, "user": self.get_option("vmware_user"), "pwd": self.get_option("vmware_password")}
+        connection_kwargs = {
+            "host": self.vmware_host,
+            "user": self.get_option("vmware_user"),
+            "pwd": self.get_option("vmware_password"),
+            "port": self.get_option("vmware_port"),
+        }
 
         if self.validate_certs:
             connect = SmartConnect
@@ -294,8 +326,11 @@ class Connection(ConnectionBase):
             raise AnsibleConnectionFailure("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
 
     def _connect(self):
+        if not HAS_REQUESTS:
+            raise AnsibleError("%s : %s" % (missing_required_lib('requests'), REQUESTS_IMP_ERR))
+
         if not HAS_PYVMOMI:
-            raise AnsibleError("missing 'pyvmomi' or dependencies: %s" % to_native(PYVMOMI_IMPORT_ERROR))
+            raise AnsibleError("%s : %s" % (missing_required_lib('PyVmomi'), PYVMOMI_IMP_ERR))
 
         super(Connection, self)._connect()
 
