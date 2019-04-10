@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cloudscale_server_group
-short_description: Manager server groups on the cloudscale.ch IaaS service
+short_description: Manages server groups on the cloudscale.ch IaaS service
 description:
   - Create, update and remove server groups.
 author:
