@@ -1,0 +1,20 @@
+# This is the configuration template for ansible-test OpenNebula integration tests.
+#
+# You do not need this template if you are:
+#
+# 1) Running integration tests without using ansible-test.
+# 2) Running integration tests against previously recorded XMLRPC fixtures
+#
+# If you want to test against a Live OpenNebula platform,
+# fill in the values below and save this file without the .template extension.
+# This will cause ansible-test to use the given configuration.
+#
+# If you run with @FIXTURES enabled (true) then you can decide if you want to
+# run in @REPLAY mode (true) or, record mode (false).
+
+[default]
+opennebula_url: @URL
+opennebula_username: @USERNAME
+opennebula_password: @PASSWORD
+opennebula_test_fixture: @FIXTURES
+opennebula_test_fixture_replay: @REPLAY

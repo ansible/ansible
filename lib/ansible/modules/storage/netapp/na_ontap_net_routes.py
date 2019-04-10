@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -44,28 +44,32 @@ options:
     description:
     - Specify the route metric.
     - If this field is not provided the default will be set to 20.
-  new_destination:
+  from_destination:
     description:
-    - Specify the new route destination.
-  new_gateway:
+    - Specify the route destination that should be changed.
+    - new_destination was removed to fix idempotency issues. To rename destination the original goes to from_destination and the new goes to destination.
+    version_added: '2.8'
+  from_gateway:
     description:
-    - Specify the new route gateway.
-  new_metric:
+    - Specify the route gateway that should be changed.
+    version_added: '2.8'
+  from_metric:
     description:
-    - Specify the new route metric.
+    - Specify the route metric that should be changed.
+    version_added: '2.8'
 '''
 
 EXAMPLES = """
     - name: create route
       na_ontap_net_routes:
-        state=present
-        vserver={{ Vserver name }}
-        username={{ netapp_username }}
-        password={{ netapp_password }}
-        hostname={{ netapp_hostname }}
-        destination=10.7.125.5/20
-        gateway=10.7.125.1
-        metric=30
+        state: present
+        vserver: "{{ Vserver name }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
+        destination: 10.7.125.5/20
+        gateway: 10.7.125.1
+        metric: 30
 """
 
 RETURN = """
@@ -99,9 +103,9 @@ class NetAppOntapNetRoutes(object):
             destination=dict(required=True, type='str'),
             gateway=dict(required=True, type='str'),
             metric=dict(required=False, type='str'),
-            new_destination=dict(required=False, type='str', default=None),
-            new_gateway=dict(required=False, type='str', default=None),
-            new_metric=dict(required=False, type='str', default=None),
+            from_destination=dict(required=False, type='str', default=None),
+            from_gateway=dict(required=False, type='str', default=None),
+            from_metric=dict(required=False, type='str', default=None),
         ))
 
         self.module = AnsibleModule(
@@ -137,13 +141,15 @@ class NetAppOntapNetRoutes(object):
                                   % (to_native(error)),
                                   exception=traceback.format_exc())
 
-    def delete_net_route(self):
+    def delete_net_route(self, params=None):
         """
         Deletes a given Route
         """
         route_obj = netapp_utils.zapi.NaElement('net-routes-destroy')
-        route_obj.add_new_child("destination", self.parameters['destination'])
-        route_obj.add_new_child("gateway", self.parameters['gateway'])
+        if params is None:
+            params = self.parameters
+        route_obj.add_new_child("destination", params['destination'])
+        route_obj.add_new_child("gateway", params['gateway'])
         try:
             self.server.invoke_successfully(route_obj, True)
         except netapp_utils.zapi.NaApiError as error:
@@ -157,11 +163,13 @@ class NetAppOntapNetRoutes(object):
         """
         # return if there is nothing to change
         for key, val in desired.items():
-            if val == current[key]:
-                self.na_helper.changed = False
-                return
+            if val != current[key]:
+                self.na_helper.changed = True
+                break
+        if not self.na_helper.changed:
+            return
         # delete and re-create with new params
-        self.delete_net_route()
+        self.delete_net_route(current)
         route_obj = netapp_utils.zapi.NaElement('net-routes-create')
         for attribute in ['metric', 'destination', 'gateway']:
             if desired.get(attribute) is not None:
@@ -191,7 +199,7 @@ class NetAppOntapNetRoutes(object):
             # we need at least on of the new_destination or new_gateway to fetch desired route
             if params.get('destination') is None and params.get('gateway') is None:
                 return None
-        current = dict()
+        current = None
         route_obj = netapp_utils.zapi.NaElement('net-routes-get')
         for attr in ['destination', 'gateway']:
             if params and params.get(attr) is not None:
@@ -201,10 +209,14 @@ class NetAppOntapNetRoutes(object):
             route_obj.add_new_child(attr, value)
         try:
             result = self.server.invoke_successfully(route_obj, True)
-            route_info = result.get_child_by_name('attributes').get_child_by_name('net-vs-routes-info')
-            current['destination'] = route_info.get_child_content('destination')
-            current['gateway'] = route_info.get_child_content('gateway')
-            current['metric'] = route_info.get_child_content('metric')
+            if result.get_child_by_name('attributes') is not None:
+                route_info = result.get_child_by_name('attributes').get_child_by_name('net-vs-routes-info')
+                current = {
+                    'destination': route_info.get_child_content('destination'),
+                    'gateway': route_info.get_child_content('gateway'),
+                    'metric': route_info.get_child_content('metric')
+                }
+
         except netapp_utils.zapi.NaApiError as error:
             # Error 13040 denotes a route doesn't exist.
             if to_native(error.code) == "15661":
@@ -260,21 +272,26 @@ class NetAppOntapNetRoutes(object):
         """
         Run Module based on play book
         """
-        # changed = False
         netapp_utils.ems_log_event("na_ontap_net_routes", self.server)
-        # route_exists = False
         current = self.get_net_route()
         modify, cd_action = None, None
-        modify_params = {'destination': self.parameters.get('new_destination'),
-                         'gateway': self.parameters.get('new_gateway'),
-                         'metric': self.parameters.get('new_metric')}
-        # if any new_* param is present in playbook, check for modify action
+        modify_params = {'destination': self.parameters.get('from_destination'),
+                         'gateway': self.parameters.get('from_gateway'),
+                         'metric': self.parameters.get('from_metric')}
+        # if any from_* param is present in playbook, check for modify action
         if any(modify_params.values()):
-            # get parameters that are eligible for modify
-            d = self.get_net_route(modify_params)
-            modify = self.na_helper.is_rename_action(current, d)
+            # destination and gateway combination is unique, and is considered like a id. so modify destination
+            # or gateway is considered a rename action. metric is considered an attribute of the route so it is
+            # considered as modify.
+            if modify_params.get('metric') is not None:
+                modify = True
+                old_params = current
+            else:
+                # get parameters that are eligible for modify
+                old_params = self.get_net_route(modify_params)
+                modify = self.na_helper.is_rename_action(old_params, current)
             if modify is None:
-                self.module.fail_json(msg="Error modifying: route %s does not exist" % self.parameters['destination'])
+                self.module.fail_json(msg="Error modifying: route %s does not exist" % self.parameters['from_destination'])
         else:
             cd_action = self.na_helper.get_cd_action(current, self.parameters)
 
@@ -283,8 +300,13 @@ class NetAppOntapNetRoutes(object):
         elif cd_action == 'delete':
             self.delete_net_route()
         elif modify:
-            self.modify_net_route(current, modify_params)
-
+            desired = {}
+            for key, value in old_params.items():
+                desired[key] = value
+            for key, value in modify_params.items():
+                if value is not None:
+                    desired[key] = self.parameters.get(key)
+            self.modify_net_route(old_params, desired)
         self.module.exit_json(changed=self.na_helper.changed)
 
 

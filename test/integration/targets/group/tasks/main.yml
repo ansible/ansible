@@ -23,6 +23,7 @@
   loop:
   - ansibullgroup
   - ansibullgroup2
+  - ansibullgroup3
 
 - block:
   - name: run tests
@@ -36,3 +37,4 @@
     loop:
     - ansibullgroup
     - ansibullgroup2
+    - ansibullgroup3

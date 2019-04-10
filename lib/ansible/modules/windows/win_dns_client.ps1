@@ -122,11 +122,11 @@ Function Get-DnsClientMatch {
 
     $current_dns_v4 = ($current_dns_all | Where-Object AddressFamily -eq 2 <# IPv4 #>).ServerAddresses
 
-    If (($current_dns_v4 -eq $null) -and ($ipv4_addresses -eq $null)) {
+    If (($null -eq $current_dns_v4) -and ($null -eq $ipv4_addresses)) {
         $v4_match = $True
     }
 
-    ElseIf (($current_dns_v4 -eq $null) -or ($ipv4_addresses -eq $null)) {
+    ElseIf (($null -eq $current_dns_v4) -or ($null -eq $ipv4_addresses)) {
         $v4_match = $False
     }
 
@@ -158,7 +158,7 @@ Function Set-DnsClientAddresses
 
     Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ($ipv4_addresses -join ", "))
     
-    If ($ipv4_addresses -eq $null) {
+    If ($null -eq $ipv4_addresses) {
         Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ResetServerAddress
     }
 

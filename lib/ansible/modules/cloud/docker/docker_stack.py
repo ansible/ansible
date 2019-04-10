@@ -83,13 +83,13 @@ requirements:
 '''
 
 RETURN = '''
-docker_stack_spec_diff:
+stack_spec_diff:
     description: |
         dictionary containing the differences between the 'Spec' field
         of the stack services before and after applying the new stack
         definition.
     sample: >
-        "docker_stack_specs_diff":
+        "stack_spec_diff":
         {'test_stack_test_service': {u'TaskTemplate': {u'ContainerSpec': {delete: [u'Env']}}}}
     returned: on change
     type: dict
@@ -277,9 +277,9 @@ def main():
         else:
             module.exit_json(
                 changed=True,
-                docker_stack_spec_diff=json_diff(before_stack_services,
-                                                 after_stack_services,
-                                                 dump=True))
+                stack_spec_diff=json_diff(before_stack_services,
+                                          after_stack_services,
+                                          dump=True))
 
     else:
         if docker_stack_services(module, name):

@@ -1,0 +1,3 @@
+cloud/aws
+shippable/aws/group2
+unstable  # sometimes tries to delete while in state pending

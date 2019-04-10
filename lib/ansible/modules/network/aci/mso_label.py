@@ -31,7 +31,7 @@ options:
     - Alternative to the name, you can use C(label_id).
     type: str
     required: yes
-    aliases: [ label_name, name ]
+    aliases: [ name ]
   type:
     description:
     - The type of the label.
@@ -98,8 +98,8 @@ from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, i
 def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
-        label=dict(type='str', required=False, aliases=['name', 'label_name']),
-        label_id=dict(type='str', required=False),
+        label=dict(type='str', aliases=['name']),
+        label_id=dict(type='str'),
         type=dict(type='str', default='site', choices=['site']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )

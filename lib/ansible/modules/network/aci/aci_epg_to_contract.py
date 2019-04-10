@@ -19,16 +19,6 @@ description:
 notes:
 - The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
-seealso:
-- module: aci_tenant
-- module: aci_ap
-- module: aci_epg
-- module: aci_contract
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(fv:RsCons) and B(fv:RsProv).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   ap:
@@ -77,6 +67,15 @@ options:
     type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
+seealso:
+- module: aci_ap
+- module: aci_epg
+- module: aci_contract
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(fv:RsCons) and B(fv:RsProv).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -236,20 +235,35 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
-ACI_CLASS_MAPPING = {"consumer": {"class": "fvRsCons", "rn": "rscons-"}, "provider": {"class": "fvRsProv", "rn": "rsprov-"}}
-PROVIDER_MATCH_MAPPING = {"all": "All", "at_least_one": "AtleastOne", "at_most_one": "AtmostOne", "none": "None"}
+ACI_CLASS_MAPPING = dict(
+    consumer={
+        'class': 'fvRsCons',
+        'rn': 'rscons-',
+    },
+    provider={
+        'class': 'fvRsProv',
+        'rn': 'rsprov-',
+    },
+)
+
+PROVIDER_MATCH_MAPPING = dict(
+    all='All',
+    at_least_one='AtleastOne',
+    at_most_one='tmostOne',
+    none='None',
+)
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
+        contract_type=dict(type='str', required=True, choices=['consumer', 'provider']),
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         epg=dict(type='str', aliases=['epg_name']),  # Not required for querying all objects
         contract=dict(type='str', aliases=['contract_name']),  # Not required for querying all objects
-        contract_type=dict(type='str', required=True, choices=['consumer', 'provider']),
         priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),

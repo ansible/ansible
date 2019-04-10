@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a firewall facts
+- name: " a firewall facts"
   gcp_compute_firewall_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -169,7 +170,7 @@ items:
         networks/my-network projects/myproject/global/networks/my-network global/networks/default
         .'
       returned: success
-      type: str
+      type: dict
     priority:
       description:
       - Priority for this rule. This is an integer between 0 and 65535, both inclusive.

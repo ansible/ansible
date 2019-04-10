@@ -1,4 +1,4 @@
 cloud/azure
-shippable/azure/group1
+shippable/azure/group2
 destructive
 azure_rm_publicipaddress_facts

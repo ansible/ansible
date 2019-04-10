@@ -62,7 +62,7 @@ else:
 
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\(.*')
+TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\([^)].*')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 BLACKLIST_IMPORTS = {
     'requests': {
@@ -229,6 +229,9 @@ class ModuleValidator(Validator):
         'async_status.ps1',
         'slurp.ps1',
         'setup.ps1'
+    ))
+    PS_ARG_VALIDATE_BLACKLIST = frozenset((
+        'win_dsc.ps1',  # win_dsc is a dynamic arg spec, the docs won't ever match
     ))
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
@@ -773,6 +776,7 @@ class ModuleValidator(Validator):
                 code=503,
                 msg='Missing python documentation file'
             )
+        return py_path
 
     def _get_docs(self):
         docs = {
@@ -1098,7 +1102,7 @@ class ModuleValidator(Validator):
                 )
                 return
 
-        if existing_doc and version_added_raw != existing_doc.get('version_added'):
+        if existing_doc and str(version_added_raw) != str(existing_doc.get('version_added')):
             self.reporter.error(
                 path=self.object_path,
                 code=307,
@@ -1301,6 +1305,14 @@ class ModuleValidator(Validator):
                          "but documentation defines choices as (%r)" % (arg, arg_choices, doc_choices))
                 )
 
+        for arg in args_from_argspec:
+            if not str(arg).isidentifier():
+                self.reporter.error(
+                    path=self.object_path,
+                    code=336,
+                    msg="Argument '%s' is not a valid python identifier" % arg
+                )
+
         if docs:
             file_common_arguments = set()
             for arg, data in FILE_COMMON_ARGUMENTS.items():
@@ -1370,7 +1382,8 @@ class ModuleValidator(Validator):
                 return
 
         try:
-            mod_version_added = StrictVersion(
+            mod_version_added = StrictVersion()
+            mod_version_added.parse(
                 str(existing_doc.get('version_added', '0.0'))
             )
         except ValueError:
@@ -1415,7 +1428,8 @@ class ModuleValidator(Validator):
                 continue
 
             try:
-                version_added = StrictVersion(
+                version_added = StrictVersion()
+                version_added.parse(
                     str(details.get('version_added', '0.0'))
                 )
             except ValueError:
@@ -1521,7 +1535,14 @@ class ModuleValidator(Validator):
 
         if self._powershell_module():
             self._validate_ps_replacers()
-            self._find_ps_docs_py_file()
+            docs_path = self._find_ps_docs_py_file()
+
+            # We can only validate PowerShell arg spec if it is using the new Ansible.Basic.AnsibleModule util
+            pattern = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*Ansible\.Basic'
+            if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_BLACKLIST:
+                with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
+                    docs = docs_mv._validate_docs()[1]
+                    self._validate_ansible_module_call(docs)
 
         self._check_gpl3_header()
         if not self._just_docs() and not end_of_deprecation_should_be_removed_only:

@@ -52,8 +52,14 @@ options:
      choices: ['first', 'last']
    uuid:
      description:
-     - UUID of the instance to manage if known, this is VMware's unique identifier.
-     - This is required parameter, if C(name) is not supplied.
+     - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
+     - This is required if C(name) parameter is not supplied.
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -127,7 +133,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: snap1
@@ -140,7 +146,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: absent
       snapshot_name: snap1
@@ -152,7 +158,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: revert
       snapshot_name: snap1
@@ -164,7 +170,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: remove_all
     delegate_to: localhost
@@ -175,7 +181,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: dummy_vm_snap_0001
@@ -189,7 +195,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: absent
       remove_children: yes
@@ -202,7 +208,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: current_snap_name
@@ -367,6 +373,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
         snapshot_name=dict(type='str'),

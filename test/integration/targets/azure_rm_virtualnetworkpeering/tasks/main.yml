@@ -89,6 +89,22 @@
 - assert:
     that: output.changed
 
+- name: Get facts
+  azure_rm_virtualnetworkpeering_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ peering_name }}"
+    virtual_network: "{{ vnetname1 }}"
+  register: facts
+
+- name: Assert Facts
+  assert:
+    that:
+      - facts['vnetpeerings'] | length == 1
+      - facts['vnetpeerings'][0]['id']
+      - facts['vnetpeerings'][0]['peering_state']
+      - facts['vnetpeerings'][0]['remote_virtual_network']
+      - facts['vnetpeerings'][0]['provisioning_state']
+
 - name: Delete virtual network peering
   azure_rm_virtualnetworkpeering:
     resource_group: "{{ resource_group }}"

@@ -92,7 +92,7 @@ author:
   - Alex Grönholm (@agronholm)
 
 requirements:
-  - "docker-py >= 1.10.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.10.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "The docker server >= 1.9.0"
 '''
 
@@ -115,11 +115,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-docker_volume:
+volume:
     description:
     - Volume inspection results for the affected volume.
     - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
-      are also accessible directly.
+      are also accessible directly as C(docker_volume). Note that the returned fact will be removed in Ansible 2.12.
     returned: success
     type: dict
     sample: {}
@@ -128,7 +128,7 @@ docker_volume:
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import (
@@ -291,7 +291,7 @@ class DockerVolumeManager(object):
 
         volume_facts = self.get_existing_volume()
         self.results['ansible_facts'] = {u'docker_volume': volume_facts}
-        self.results['docker_volume'] = volume_facts
+        self.results['volume'] = volume_facts
 
     def absent(self):
         self.diff_tracker.add('exists', parameter=False, active=self.existing_volume is not None)

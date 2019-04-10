@@ -98,7 +98,6 @@ options:
                 choices:
                     - Tcp
                     - Http
-                default: Tcp
             interval:
                 description:
                     - The interval, in seconds, for how frequently to probe the endpoint for health status.
@@ -138,7 +137,6 @@ options:
                     - Tcp
                     - Udp
                     - All
-                default: Tcp
             frontend_port_range_start:
                 description:
                     - The first port in the range of external ports that will be used to provide inbound NAT to NICs associated with the load balancer.
@@ -176,7 +174,6 @@ options:
                     - Tcp
                     - Udp
                     - All
-                default: Tcp
             load_distribution:
                 description:
                     - The session persistence policy for this rule; C(Default) is no persistence.
@@ -206,6 +203,53 @@ options:
                 description:
                     - Configures SNAT for the VMs in the backend pool to use the publicIP address specified in the frontend of the load balancing rule.
         version_added: 2.5
+    inbound_nat_rules:
+        description:
+            - Collection of inbound NAT Rules used by a load balancer.
+            - Defining inbound NAT rules on your load balancer is mutually exclusive with defining an inbound NAT pool.
+            - Inbound NAT pools are referenced from virtual machine scale sets.
+            - NICs that are associated with individual virtual machines cannot reference an Inbound NAT pool.
+            - They have to reference individual inbound NAT rules.
+        suboptions:
+            name:
+                description: name of the inbound nat rule.
+                required: True
+            frontend_ip_configuration:
+                description: A reference to frontend IP addresses.
+                required: True
+            protocol:
+                description: IP protocol for the inbound nat rule.
+                choices:
+                    - Tcp
+                    - Udp
+                    - All
+            frontend_port:
+                description:
+                    - The port for the external endpoint.
+                    - Frontend port numbers must be unique across all rules within the load balancer.
+                    - Acceptable values are between 0 and 65534.
+                    - Note that value 0 enables "Any Port"
+            backend_port:
+                description:
+                    - The port used for internal connections on the endpoint.
+                    - Acceptable values are between 0 and 65535.
+                    - Note that value 0 enables "Any Port"
+            idle_timeout:
+                description:
+                    - The timeout for the TCP idle connection.
+                    - The value can be set between 4 and 30 minutes.
+                    - The default value is 4 minutes.
+                    - This element is only used when the protocol is set to TCP.
+            enable_floating_ip:
+                description:
+                    - Configures a virtual machine's endpoint for the floating IP capability required to configure a SQL AlwaysOn Availability Group.
+                    - This setting is required when using the SQL AlwaysOn Availability Groups in SQL server.
+                    - This setting can't be changed after you create the endpoint.
+            enable_tcp_reset:
+                description:
+                    - Receive bidirectional TCP Reset on TCP flow idle timeout or unexpected connection termination.
+                    - This element is only used when the C(protocol) is set to C(Tcp).
+        version_added: 2.8
     public_ip_address_name:
         description:
             - (deprecated) Name of an existing public IP address object to associate with the security group.
@@ -319,6 +363,12 @@ EXAMPLES = '''
         frontend_port: 80
         backend_port: 80
         probe: prob0
+    inbound_nat_rules:
+      - name: inboundnatrule0
+        backend_port: 8080
+        protocol: Tcp
+        frontend_port: 8080
+        frontend_ip_configuration: frontendipconf0
 '''
 
 RETURN = '''
@@ -334,7 +384,7 @@ changed:
 
 import random
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
-
+from ansible.module_utils._text import to_native
 try:
     from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
@@ -382,8 +432,7 @@ probes_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Http'],
-        default='Tcp'
+        choices=['Tcp', 'Http']
     ),
     interval=dict(
         type='int',
@@ -411,8 +460,7 @@ inbound_nat_pool_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Udp', 'All'],
-        default='Tcp'
+        choices=['Tcp', 'Udp', 'All']
     ),
     frontend_port_range_start=dict(
         type='int',
@@ -425,6 +473,39 @@ inbound_nat_pool_spec = dict(
     backend_port=dict(
         type='int',
         required=True
+    )
+)
+
+
+inbound_nat_rule_spec = dict(
+    name=dict(
+        type='str',
+        required=True
+    ),
+    frontend_ip_configuration=dict(
+        type='str',
+        required=True
+    ),
+    protocol=dict(
+        type='str',
+        choices=['Tcp', 'Udp', 'All']
+    ),
+    frontend_port=dict(
+        type='int',
+        required=True
+    ),
+    idle_timeout=dict(
+        type='int'
+    ),
+    backend_port=dict(
+        type='int',
+        required=True
+    ),
+    enable_floating_ip=dict(
+        type='bool'
+    ),
+    enable_tcp_reset=dict(
+        type='bool'
     )
 )
 
@@ -448,8 +529,7 @@ load_balancing_rule_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Udp', 'All'],
-        default='Tcp'
+        choices=['Tcp', 'Udp', 'All']
     ),
     load_distribution=dict(
         type='str',
@@ -512,6 +592,11 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 type='list',
                 elements='dict',
                 options=probes_spec
+            ),
+            inbound_nat_rules=dict(
+                type='list',
+                elements='dict',
+                options=inbound_nat_rule_spec
             ),
             inbound_nat_pools=dict(
                 type='list',
@@ -584,6 +669,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.frontend_ip_configurations = None
         self.backend_address_pools = None
         self.probes = None
+        self.inbound_nat_rules = None
         self.inbound_nat_pools = None
         self.load_balancing_rules = None
         self.public_ip_address_name = None
@@ -626,7 +712,10 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
         if self.state == 'present':
             # compatible parameters
-            if not self.frontend_ip_configurations and not self.backend_address_pools and not self.probes and not self.inbound_nat_pools:
+            is_compatible_param = not self.frontend_ip_configurations and not self.backend_address_pools and not self.probes and not self.inbound_nat_pools
+            is_compatible_param = is_compatible_param and not load_balancer  # the instance should not be exist
+            is_compatible_param = is_compatible_param or self.public_ip_address_name or self.probe_protocol or self.natpool_protocol or self.protocol
+            if is_compatible_param:
                 self.deprecate('Discrete load balancer config settings are deprecated and will be removed.'
                                ' Use frontend_ip_configurations, backend_address_pools, probes, inbound_nat_pools lists instead.', version='2.9')
                 frontend_ip_name = 'frontendip0'
@@ -740,6 +829,25 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 enable_floating_ip=item.get('enable_floating_ip')
             ) for item in self.load_balancing_rules] if self.load_balancing_rules else None
 
+            inbound_nat_rules_param = [self.network_models.InboundNatRule(
+                name=item.get('name'),
+                frontend_ip_configuration=self.network_models.SubResource(
+                    id=frontend_ip_configuration_id(
+                        self.subscription_id,
+                        self.resource_group,
+                        self.name,
+                        item.get('frontend_ip_configuration')
+                    )
+                ) if item.get('frontend_ip_configuration') else None,
+                protocol=item.get('protocol'),
+                frontend_port=item.get('frontend_port'),
+                backend_port=item.get('backend_port'),
+                idle_timeout_in_minutes=item.get('idle_timeout'),
+                enable_tcp_reset=item.get('enable_tcp_reset'),
+                enable_floating_ip=item.get('enable_floating_ip')
+            ) for item in self.inbound_nat_rules] if self.inbound_nat_rules else None
+
+            # construct the new instance, if the parameter is none, keep remote one
             self.new_load_balancer = self.network_models.LoadBalancer(
                 sku=self.network_models.LoadBalancerSku(name=self.sku) if self.sku else None,
                 location=self.location,
@@ -748,14 +856,17 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 backend_address_pools=backend_address_pools_param,
                 probes=probes_param,
                 inbound_nat_pools=inbound_nat_pools_param,
-                load_balancing_rules=load_balancing_rules_param
+                load_balancing_rules=load_balancing_rules_param,
+                inbound_nat_rules=inbound_nat_rules_param
             )
 
+            self.new_load_balancer = self.assign_protocol(self.new_load_balancer, load_balancer)
+
             if load_balancer:
+                self.new_load_balancer = self.object_assign(self.new_load_balancer, load_balancer)
+                load_balancer_dict = load_balancer.as_dict()
                 new_dict = self.new_load_balancer.as_dict()
-                if (self.location != load_balancer['location'] or
-                        self.sku != load_balancer['sku']['name'] or
-                        not default_compare(new_dict, load_balancer, '')):
+                if not default_compare(new_dict, load_balancer_dict, ''):
                     changed = True
                 else:
                     changed = False
@@ -764,7 +875,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         elif self.state == 'absent' and load_balancer:
             changed = True
 
-        self.results['state'] = load_balancer if load_balancer else {}
+        self.results['state'] = load_balancer.as_dict() if load_balancer else {}
         if 'tags' in self.results['state']:
             update_tags, self.results['state']['tags'] = self.update_tags(self.results['state']['tags'])
             if update_tags:
@@ -775,7 +886,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.results['changed'] = changed
 
         if self.state == 'present' and changed:
-            self.results['state'] = self.create_or_update_load_balancer(self.new_load_balancer)
+            self.results['state'] = self.create_or_update_load_balancer(self.new_load_balancer).as_dict()
         elif self.state == 'absent' and changed:
             self.delete_load_balancer()
             self.results['state'] = None
@@ -792,7 +903,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         """Get a load balancer"""
         self.log('Fetching loadbalancer {0}'.format(self.name))
         try:
-            return self.network_client.load_balancers.get(self.resource_group, self.name).as_dict()
+            return self.network_client.load_balancers.get(self.resource_group, self.name)
         except CloudError:
             return None
 
@@ -809,9 +920,31 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         try:
             poller = self.network_client.load_balancers.create_or_update(self.resource_group, self.name, param)
             new_lb = self.get_poller_result(poller)
-            return new_lb.as_dict()
+            return new_lb
         except CloudError as exc:
             self.fail("Error creating or updating load balancer {0} - {1}".format(self.name, str(exc)))
+
+    def object_assign(self, patch, origin):
+        attribute_map = set(self.network_models.LoadBalancer._attribute_map.keys()) - set(self.network_models.LoadBalancer._validation.keys())
+        for key in attribute_map:
+            if not getattr(patch, key):
+                setattr(patch, key, getattr(origin, key))
+        return patch
+
+    def assign_protocol(self, patch, origin):
+        attribute_map = ['probes', 'inbound_nat_rules', 'inbound_nat_pools', 'load_balancing_rules']
+        for attribute in attribute_map:
+            properties = getattr(patch, attribute)
+            if not properties:
+                continue
+            references = getattr(origin, attribute) if origin else []
+            for item in properties:
+                if item.protocol:
+                    continue
+                refs = [x for x in references if to_native(x.name) == item.name]
+                ref = refs[0] if len(refs) > 0 else None
+                item.protocol = ref.protocol if ref else 'Tcp'
+        return patch
 
 
 def default_compare(new, old, path):
@@ -825,6 +958,8 @@ def default_compare(new, old, path):
     elif isinstance(new, list):
         if not isinstance(old, list) or len(new) != len(old):
             return False
+        if len(old) == 0:
+            return True
         if isinstance(old[0], dict):
             key = None
             if 'id' in old[0] and 'id' in new[0]:

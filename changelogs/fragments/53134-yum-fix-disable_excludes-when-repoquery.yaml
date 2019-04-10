@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - fix disable_excludes on systems with yum rhn plugin enabled (https://github.com/ansible/ansible/issues/53134)

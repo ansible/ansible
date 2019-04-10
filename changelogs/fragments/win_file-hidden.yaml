@@ -1,0 +1,2 @@
+bugfixes:
+- win_file - Fix issue when managing hidden files and directories - https://github.com/ansible/ansible/issues/42466

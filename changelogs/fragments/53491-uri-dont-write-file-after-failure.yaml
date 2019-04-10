@@ -1,0 +1,2 @@
+bugfixes:
+  - uri - do not write the file after failure (https://github.com/ansible/ansible/issues/53491)

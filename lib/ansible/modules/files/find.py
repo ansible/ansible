@@ -45,7 +45,7 @@ options:
     excludes:
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
-            - Items matching an C(excludes) pattern are culled from C(patterns) matches.
+            - Items whose basenames match an C(excludes) pattern are culled from C(patterns) matches.
               Multiple patterns can be specified using a list.
         type: list
         aliases: [ exclude ]

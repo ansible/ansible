@@ -7,8 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-# see examples/playbooks/get_url.yml
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -162,6 +160,11 @@ options:
       - If C(client_cert) contains both the certificate and key, this option is not required.
     type: path
     version_added: '2.4'
+  http_agent:
+    description:
+      - Header to identify as, generally appears in web server logs.
+    type: str
+    default: ansible-httpget
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
@@ -484,33 +487,41 @@ def main():
     if checksum:
         try:
             algorithm, checksum = checksum.split(':', 1)
-            if checksum.startswith('http://') or checksum.startswith('https://') or checksum.startswith('ftp://'):
-                checksum_url = checksum
-                # download checksum file to checksum_tmpsrc
-                checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
-                with open(checksum_tmpsrc) as f:
-                    lines = [line.rstrip('\n') for line in f]
-                os.remove(checksum_tmpsrc)
-                lines = dict(s.split(None, 1) for s in lines)
-                filename = url_filename(url)
-
-                # Look through each line in the checksum file for a hash corresponding to
-                # the filename in the url, returning the first hash that is found.
-                for cksum in (s for (s, f) in lines.items() if f.strip('./') == filename):
-                    checksum = cksum
-                    break
-                else:
-                    checksum = None
-
-                if checksum is None:
-                    module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
-            # Remove any non-alphanumeric characters, including the infamous
-            # Unicode zero-width space
-            checksum = re.sub(r'\W+', '', checksum).lower()
-            # Ensure the checksum portion is a hexdigest
-            int(checksum, 16)
         except ValueError:
             module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>", **result)
+
+        if checksum.startswith('http://') or checksum.startswith('https://') or checksum.startswith('ftp://'):
+            checksum_url = checksum
+            # download checksum file to checksum_tmpsrc
+            checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
+            with open(checksum_tmpsrc) as f:
+                lines = [line.rstrip('\n') for line in f]
+            os.remove(checksum_tmpsrc)
+            checksum_map = {}
+            for line in lines:
+                parts = line.split(None, 1)
+                if len(parts) == 2:
+                    checksum_map[parts[0]] = parts[1]
+            filename = url_filename(url)
+
+            # Look through each line in the checksum file for a hash corresponding to
+            # the filename in the url, returning the first hash that is found.
+            for cksum in (s for (s, f) in checksum_map.items() if f.strip('./') == filename):
+                checksum = cksum
+                break
+            else:
+                checksum = None
+
+            if checksum is None:
+                module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
+        # Remove any non-alphanumeric characters, including the infamous
+        # Unicode zero-width space
+        checksum = re.sub(r'\W+', '', checksum).lower()
+        # Ensure the checksum portion is a hexdigest
+        try:
+            int(checksum, 16)
+        except ValueError:
+            module.fail_json(msg='The checksum format is invalid', **result)
 
     if not dest_is_dir and os.path.exists(dest):
         checksum_mismatch = False
@@ -562,12 +573,7 @@ def main():
             # it.
             filename = url_filename(info['url'])
         dest = os.path.join(dest, filename)
-
-    # If the remote URL exists, we're done with check mode
-    if module.check_mode:
-        os.remove(tmpsrc)
-        result['changed'] = True
-        module.exit_json(msg=info.get('msg', ''), **result)
+        result['dest'] = dest
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
@@ -595,6 +601,13 @@ def main():
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
             module.fail_json(msg="Destination %s is not writable" % (os.path.dirname(dest)), **result)
+
+    if module.check_mode:
+        if os.path.exists(tmpsrc):
+            os.remove(tmpsrc)
+        result['changed'] = ('checksum_dest' not in result or
+                             result['checksum_src'] != result['checksum_dest'])
+        module.exit_json(msg=info.get('msg', ''), **result)
 
     backup_file = None
     if result['checksum_src'] != result['checksum_dest']:

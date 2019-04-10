@@ -1,3 +1,5 @@
+.. _playbooks_reuse_includes:
+
 Including and Importing
 =======================
 

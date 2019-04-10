@@ -63,6 +63,7 @@ namespace Ansible.Basic
             { "selinux_special_fs", null },
             { "shell_executable", null },
             { "socket", null },
+            { "string_conversion_action", null },
             { "syslog_facility", null },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
@@ -314,7 +315,16 @@ namespace Ansible.Basic
             using (EventLog eventLog = new EventLog("Application"))
             {
                 eventLog.Source = logSource;
-                eventLog.WriteEntry(message, logEntryType, 0);
+                try
+                {
+                    eventLog.WriteEntry(message, logEntryType, 0);
+                }
+                catch (System.InvalidOperationException) { }  // Ignore permission errors on the Application event log
+                catch (System.Exception e)
+                {
+                    // Cannot call Warn as that calls LogEvent and we get stuck in a loop
+                    warnings.Add(String.Format("Unknown error when creating event log entry: {0}", e.Message));
+                }
             }
         }
 
@@ -776,6 +786,8 @@ namespace Ansible.Basic
                                                        k, choiceMsg, String.Join(", ", choices), String.Join(", ", diffList));
                             FailJson(FormatOptionsContext(msg));
                         }
+                        /*
+                        For now we will just silently accept case insensitive choices, uncomment this if we want to add it back in
                         else if (caseDiffList.Count > 0)
                         {
                             // For backwards compatibility with Legacy.psm1 we need to be matching choices that are not case sensitive.
@@ -785,7 +797,7 @@ namespace Ansible.Basic
                                 k, choiceMsg, String.Join(", ", choices), String.Join(", ", caseDiffList.Select(x => RemoveNoLogValues(x, noLogValues)))
                             );
                             Warn(FormatOptionsContext(msg));
-                        }
+                        }*/
                     }
                 }
             }
@@ -860,6 +872,8 @@ namespace Ansible.Basic
                 FailJson(msg);
             }
 
+            /*
+            // Uncomment when we want to start warning users around options that are not a case sensitive match to the spec
             if (caseUnsupportedParameters.Count > 0)
             {
                 legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
@@ -867,7 +881,7 @@ namespace Ansible.Basic
                 msg = String.Format("{0}. Module options will become case sensitive in a future Ansible release. Supported parameters include: {1}",
                     FormatOptionsContext(msg), String.Join(", ", legalInputs));
                 Warn(msg);
-            }
+            }*/
 
             // Make sure we convert all the incorrect case params to the ones set by the module spec
             foreach (string key in caseUnsupportedParameters)
@@ -1038,13 +1052,26 @@ namespace Ansible.Basic
 
         private void CheckSubOption(IDictionary param, string key, IDictionary spec)
         {
+            object value = param[key];
+
             string type;
             if (spec["type"].GetType() == typeof(string))
                 type = (string)spec["type"];
             else
                 type = "delegate";
-            string elements = (string)spec["elements"];
-            object value = param[key];
+
+            string elements = null;
+            Delegate typeConverter = null;
+            if (spec["elements"] != null && spec["elements"].GetType() == typeof(string))
+            {
+                elements = (string)spec["elements"];
+                typeConverter = optionTypes[elements];
+            }
+            else if (spec["elements"] != null)
+            {
+                elements = "delegate";
+                typeConverter = (Delegate)spec["elements"];
+            }
 
             if (!(type == "dict" || (type == "list" && elements != null)))
                 // either not a dict, or list with the elements set, so continue
@@ -1056,7 +1083,6 @@ namespace Ansible.Basic
                     return;
 
                 List<object> newValue = new List<object>();
-                Delegate typeConverter = optionTypes[elements];
                 foreach (object element in (List<object>)value)
                 {
                     if (elements == "dict")
@@ -1232,7 +1258,7 @@ namespace Ansible.Basic
                     return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
                 foreach (string omitMe in noLogStrings)
                     if (stringValue.Contains(omitMe))
-                        return (stringValue).Replace(omitMe, new String('*', omitMe.Length));
+                        return (stringValue).Replace(omitMe, "********");
                 value = stringValue;
             }
             return value;

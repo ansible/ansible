@@ -1,0 +1,4 @@
+bugfixes:
+- get_url - Fix issue with checksum validation when using a file to ensure we skip lines in the file that
+  do not contain exactly 2 parts. Also restrict exception handling to the minimum number of
+  necessary lines (https://github.com/ansible/ansible/issues/48790)

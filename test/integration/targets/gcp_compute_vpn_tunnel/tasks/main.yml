@@ -15,63 +15,63 @@
 # Pre-test setup
 - name: create a network
   gcp_compute_network:
-      name: "network-vpn-tunnel"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-vpn-tunnel
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 - name: create a router
   gcp_compute_router:
-      name: "router-vpn-tunnel"
-      network: "{{ network }}"
-      bgp:
-        asn: 64514
-        advertise_mode: CUSTOM
-        advertised_groups:
-        - ALL_SUBNETS
-        advertised_ip_ranges:
-        - range: 1.2.3.4
-        - range: 6.7.0.0/16
-      region: us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: router-vpn-tunnel
+    network: "{{ network }}"
+    bgp:
+      asn: 64514
+      advertise_mode: CUSTOM
+      advertised_groups:
+      - ALL_SUBNETS
+      advertised_ip_ranges:
+      - range: 1.2.3.4
+      - range: 6.7.0.0/16
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: router
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "gateway-vpn-tunnel"
-      region: us-west1
-      network: "{{ network }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: gateway-vpn-tunnel
+    region: us-west1
+    network: "{{ network }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: gateway
 - name: delete a vpn tunnel
   gcp_compute_vpn_tunnel:
-      name: "{{ resource_name }}"
-      region: us-west1
-      target_vpn_gateway: "{{ gateway }}"
-      router: "{{ router }}"
-      shared_secret: super secret
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    region: us-west1
+    target_vpn_gateway: "{{ gateway }}"
+    router: "{{ router }}"
+    shared_secret: super secret
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a vpn tunnel
   gcp_compute_vpn_tunnel:
-      name: "{{ resource_name }}"
-      region: us-west1
-      target_vpn_gateway: "{{ gateway }}"
-      router: "{{ router }}"
-      shared_secret: super secret
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    region: us-west1
+    target_vpn_gateway: "{{ gateway }}"
+    router: "{{ router }}"
+    shared_secret: super secret
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -96,15 +96,15 @@
 # ----------------------------------------------------------------------------
 - name: create a vpn tunnel that already exists
   gcp_compute_vpn_tunnel:
-      name: "{{ resource_name }}"
-      region: us-west1
-      target_vpn_gateway: "{{ gateway }}"
-      router: "{{ router }}"
-      shared_secret: super secret
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    region: us-west1
+    target_vpn_gateway: "{{ gateway }}"
+    router: "{{ router }}"
+    shared_secret: super secret
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -114,15 +114,15 @@
 #----------------------------------------------------------
 - name: delete a vpn tunnel
   gcp_compute_vpn_tunnel:
-      name: "{{ resource_name }}"
-      region: us-west1
-      target_vpn_gateway: "{{ gateway }}"
-      router: "{{ router }}"
-      shared_secret: super secret
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    region: us-west1
+    target_vpn_gateway: "{{ gateway }}"
+    router: "{{ router }}"
+    shared_secret: super secret
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -147,15 +147,15 @@
 # ----------------------------------------------------------------------------
 - name: delete a vpn tunnel that does not exist
   gcp_compute_vpn_tunnel:
-      name: "{{ resource_name }}"
-      region: us-west1
-      target_vpn_gateway: "{{ gateway }}"
-      router: "{{ router }}"
-      shared_secret: super secret
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    region: us-west1
+    target_vpn_gateway: "{{ gateway }}"
+    router: "{{ router }}"
+    shared_secret: super secret
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
@@ -167,40 +167,40 @@
 # If errors happen, don't crash the playbook!
 - name: delete a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "gateway-vpn-tunnel"
-      region: us-west1
-      network: "{{ network }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: gateway-vpn-tunnel
+    region: us-west1
+    network: "{{ network }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: gateway
   ignore_errors: true
 - name: delete a router
   gcp_compute_router:
-      name: "router-vpn-tunnel"
-      network: "{{ network }}"
-      bgp:
-        asn: 64514
-        advertise_mode: CUSTOM
-        advertised_groups:
-        - ALL_SUBNETS
-        advertised_ip_ranges:
-        - range: 1.2.3.4
-        - range: 6.7.0.0/16
-      region: us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: router-vpn-tunnel
+    network: "{{ network }}"
+    bgp:
+      asn: 64514
+      advertise_mode: CUSTOM
+      advertised_groups:
+      - ALL_SUBNETS
+      advertised_ip_ranges:
+      - range: 1.2.3.4
+      - range: 6.7.0.0/16
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: router
   ignore_errors: true
 - name: delete a network
   gcp_compute_network:
-      name: "network-vpn-tunnel"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: network-vpn-tunnel
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: network
   ignore_errors: true

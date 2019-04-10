@@ -148,7 +148,7 @@ def main():
             if sender.changed_messages > 0:
                 result['changed'] = True
         except TowerCLIError as e:
-            result['msg'] = e
+            result['msg'] = e.message
             failed = True
         finally:
             if path is not None:

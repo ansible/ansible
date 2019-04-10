@@ -60,6 +60,29 @@ DOCUMENTATION = r'''
                 C(exclude_host_filters) to exclude powered-off and not-fully-provisioned hosts. Set this to a different
                 value or empty list if you need to include hosts in these states.
             default: ['powerstate != "running"', 'provisioning_state != "succeeded"']
+        use_contrib_script_compatible_sanitization:
+          description:
+            - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
+              This option allows you to override that, in efforts to allow migration from the old inventory script and
+              matches the sanitization of groups when the script's ``replace_dash_in_groups`` option is set to ``False``.
+              To replicate behavior of ``replace_dash_in_groups = True`` with constructed groups,
+              you will need to replace hyphens with underscores via the regex_replace filter for those entries.
+            - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
+              otherwise the core engine will just use the standard sanitization on top.
+            - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
+              which group names end up being used as.
+          type: bool
+          default: False
+          version_added: '2.8'
+        plain_host_names:
+          description:
+            - By default this plugin will use globally unique host names.
+              This option allows you to override that, and use the name that matches the old inventory script naming.
+            - This is not the default, as these names are not truly unique, and can conflict with other hosts.
+              The default behavior will add extra hashing to the end of the hostname to prevent such conflicts.
+          type: bool
+          default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -152,7 +175,7 @@ except ImportError:
 
 from collections import namedtuple
 from ansible import release
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.azure_rm_common import AzureRMAuth
 from ansible.errors import AnsibleParserError, AnsibleError
@@ -162,6 +185,7 @@ from itertools import chain
 from msrest import ServiceClient, Serializer, Deserializer
 from msrestazure import AzureConfiguration
 from msrestazure.polling.arm_polling import ARMPolling
+from msrestazure.tools import parse_resource_id
 
 
 class AzureRMRestConfiguration(AzureConfiguration):
@@ -226,14 +250,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         self._read_config_data(path)
+
+        if self.get_option('use_contrib_script_compatible_sanitization'):
+            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+
         self._batch_fetch = self.get_option('batch_fetch')
+
+        self._legacy_hostnames = self.get_option('plain_host_names')
 
         self._filters = self.get_option('exclude_host_filters') + self.get_option('default_host_filters')
 
         try:
             self._credential_setup()
             self._get_hosts()
-        except Exception as ex:
+        except Exception:
             raise
 
     def _credential_setup(self):
@@ -354,7 +384,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if 'value' in response:
             for h in response['value']:
                 # FUTURE: add direct VM filtering by tag here (performance optimization)?
-                self._hosts.append(AzureHost(h, self, vmss=vmss))
+                self._hosts.append(AzureHost(h, self, vmss=vmss, legacy_name=self._legacy_hostnames))
 
     def _on_vmss_page_response(self, response):
         next_link = response.get('nextLink')
@@ -445,14 +475,22 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         return json.loads(content)
 
+    @staticmethod
+    def _legacy_script_compatible_group_sanitization(name):
+
+        # note that while this mirrors what the script used to do, it has many issues with unicode and usability in python
+        regex = re.compile(r"[^A-Za-z0-9\_\-]")
+
+        return regex.sub('_', name)
 
 # VM list (all, N resource groups): VM -> InstanceView, N NICs, N PublicIPAddress)
 # VMSS VMs (all SS, N specific SS, N resource groups?): SS -> VM -> InstanceView, N NICs, N PublicIPAddress)
 
+
 class AzureHost(object):
     _powerstate_regex = re.compile('^PowerState/(?P<powerstate>.+)$')
 
-    def __init__(self, vm_model, inventory_client, vmss=None):
+    def __init__(self, vm_model, inventory_client, vmss=None, legacy_name=False):
         self._inventory_client = inventory_client
         self._vm_model = vm_model
         self._vmss = vmss
@@ -462,8 +500,11 @@ class AzureHost(object):
         self._powerstate = "unknown"
         self.nics = []
 
-        # Azure often doesn't provide a globally-unique filename, so use resource name + a chunk of ID hash
-        self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(to_bytes(vm_model['id'])).hexdigest()[0:4])
+        if legacy_name:
+            self.default_inventory_hostname = vm_model['name']
+        else:
+            # Azure often doesn't provide a globally-unique filename, so use resource name + a chunk of ID hash
+            self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(to_bytes(vm_model['id'])).hexdigest()[0:4])
 
         self._hostvars = {}
 
@@ -499,7 +540,10 @@ class AzureHost(object):
             vmss=dict(
                 id=self._vmss['id'],
                 name=self._vmss['name'],
-            ) if self._vmss else {}
+            ) if self._vmss else {},
+            virtual_machine_size=self._vm_model['properties']['hardwareProfile']['vmSize'] if self._vm_model['properties'].get('hardwareProfile') else None,
+            plan=self._vm_model['properties']['plan']['name'] if self._vm_model['properties'].get('plan') else None,
+            resource_group=parse_resource_id(self._vm_model['id']).get('resource_group').lower()
         )
 
         # set nic-related values from the primary NIC first
@@ -511,11 +555,47 @@ class AzureHost(object):
                     new_hostvars['private_ipv4_addresses'].append(private_ip)
                 pip_id = ipc['properties'].get('publicIPAddress', {}).get('id')
                 if pip_id:
+                    new_hostvars['public_ip_id'] = pip_id
+
                     pip = nic.public_ips[pip_id]
+                    new_hostvars['public_ip_name'] = pip._pip_model['name']
                     new_hostvars['public_ipv4_addresses'].append(pip._pip_model['properties'].get('ipAddress', None))
                     pip_fqdn = pip._pip_model['properties'].get('dnsSettings', {}).get('fqdn')
                     if pip_fqdn:
                         new_hostvars['public_dns_hostnames'].append(pip_fqdn)
+
+            new_hostvars['mac_address'] = nic._nic_model['properties'].get('macAddress')
+            new_hostvars['network_interface'] = nic._nic_model['name']
+            new_hostvars['network_interface_id'] = nic._nic_model['id']
+            new_hostvars['security_group_id'] = nic._nic_model['properties']['networkSecurityGroup']['id'] \
+                if nic._nic_model['properties'].get('networkSecurityGroup') else None
+            new_hostvars['security_group'] = parse_resource_id(new_hostvars['security_group_id'])['resource_name'] \
+                if nic._nic_model['properties'].get('networkSecurityGroup') else None
+
+        # set image and os_disk
+        new_hostvars['image'] = {}
+        new_hostvars['os_disk'] = {}
+        storageProfile = self._vm_model['properties'].get('storageProfile')
+        if storageProfile:
+            imageReference = storageProfile.get('imageReference')
+            if imageReference:
+                if imageReference.get('publisher'):
+                    new_hostvars['image'] = dict(
+                        sku=imageReference.get('sku'),
+                        publisher=imageReference.get('publisher'),
+                        version=imageReference.get('version'),
+                        offer=imageReference.get('offer')
+                    )
+                elif imageReference.get('id'):
+                    new_hostvars['image'] = dict(
+                        id=imageReference.get('id')
+                    )
+
+            osDisk = storageProfile.get('osDisk')
+            new_hostvars['os_disk'] = dict(
+                name=osDisk.get('name'),
+                operating_system_type=osDisk.get('osType').lower() if osDisk.get('osType') else None
+            )
 
         self._hostvars = new_hostvars
 
@@ -527,9 +607,8 @@ class AzureHost(object):
                                  for s in vm_instanceview_model.get('statuses', []) if self._powerstate_regex.match(s.get('code', ''))), 'unknown')
 
     def _on_nic_response(self, nic_model, is_primary=False):
-        if nic_model.get('type') == 'Microsoft.Network/networkInterfaces':
-            nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
-            self.nics.append(nic)
+        nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
+        self.nics.append(nic)
 
 
 class AzureNic(object):
@@ -540,10 +619,11 @@ class AzureNic(object):
 
         self.public_ips = {}
 
-        for ipc in nic_model['properties']['ipConfigurations']:
-            pip = ipc['properties'].get('publicIPAddress')
-            if pip:
-                self._inventory_client._enqueue_get(url=pip['id'], api_version=self._inventory_client._network_api_version, handler=self._on_pip_response)
+        if nic_model.get('properties', {}).get('ipConfigurations'):
+            for ipc in nic_model['properties']['ipConfigurations']:
+                pip = ipc['properties'].get('publicIPAddress')
+                if pip:
+                    self._inventory_client._enqueue_get(url=pip['id'], api_version=self._inventory_client._network_api_version, handler=self._on_pip_response)
 
     def _on_pip_response(self, pip_model):
         self.public_ips[pip_model['id']] = AzurePip(pip_model)

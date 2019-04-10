@@ -101,6 +101,17 @@ options:
     type: str
     version_added: '2.1'
     aliases: [ params ]
+  pinned:
+    description:
+    - Whether to pin the Chocolatey package or not.
+    - If omitted then no checks on package pins are done.
+    - Will pin/unpin the specific version if I(version) is set.
+    - Will pin the latest version of a package if C(yes), I(version) is not set
+      and and no pin already exists.
+    - Will unpin all versions of a package if C(no) and I(version) is not set.
+    - This is ignored when C(state=absent).
+    type: bool
+    version_added: '2.8'
   proxy_url:
     description:
     - Proxy URL used to install chocolatey and the package.
@@ -328,6 +339,19 @@ EXAMPLES = r'''
   become: yes
   become_user: Administrator
   become_method: runas
+
+- name: install and pin Notepad++ at 7.6.3
+  win_chocolatey:
+    name: notepadplusplus
+    version: 7.6.3
+    pinned: yes
+    state: present
+
+- name: remove all pins for Notepad++ on all versions
+  win_chocolatey:
+    name: notepadplusplus
+    pinned: no
+    state: present
 '''
 
 RETURN = r'''

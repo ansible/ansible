@@ -190,6 +190,12 @@ options:
     type: bool
     default: "yes"
     version_added: "2.8"
+  download_dir:
+    description:
+      - Specifies an alternate directory to store packages.
+      - Has an effect only if I(download_only) is specified.
+    type: str
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -377,7 +383,7 @@ class DnfModule(YumDnf):
         ]
 
         rpm_arch_re = re.compile(r'(.*)\.(.*)')
-        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.]*)')
+        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.+]*)')
         try:
             arch = None
             rpm_arch_match = rpm_arch_re.match(packagename)
@@ -564,6 +570,8 @@ class DnfModule(YumDnf):
 
         if self.download_only:
             conf.downloadonly = True
+            if self.download_dir:
+                conf.destdir = self.download_dir
 
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
@@ -592,13 +600,17 @@ class DnfModule(YumDnf):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
-        self._specify_repositories(base, disablerepo, enablerepo)
         try:
             base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
             base.pre_configure_plugins()
+        except AttributeError:
+            pass  # older versions of dnf didn't require this and don't have these methods
+        self._specify_repositories(base, disablerepo, enablerepo)
+        try:
             base.configure_plugins()
         except AttributeError:
             pass  # older versions of dnf didn't require this and don't have these methods
+
         try:
             if self.update_cache:
                 try:
@@ -920,6 +932,7 @@ class DnfModule(YumDnf):
                             if not self._is_module_installed(module):
                                 response['results'].append("Module {0} installed.".format(module))
                             self.module_base.install([module])
+                            self.module_base.enable([module])
                         except dnf.exceptions.MarkingErrors as e:
                             failure_response['failures'].append(
                                 " ".join(
@@ -1058,8 +1071,9 @@ class DnfModule(YumDnf):
                         try:
                             if self._is_module_installed(module):
                                 response['results'].append("Module {0} removed.".format(module))
-                            self.module_base.disable([module])
                             self.module_base.remove([module])
+                            self.module_base.disable([module])
+                            self.module_base.reset([module])
                         except dnf.exceptions.MarkingErrors as e:
                             failure_response['failures'].append(
                                 " ".join(
@@ -1094,8 +1108,21 @@ class DnfModule(YumDnf):
 
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
-                    if ("*" in pkg_spec) or installed.filter(name=pkg_spec):
-                        self.base.remove(pkg_spec)
+                    installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
+                    if installed_pkg:
+                        candidate_pkg = self._packagename_dict(installed_pkg[0])
+                        installed_pkg = installed.filter(name=candidate_pkg['name']).run()
+                    else:
+                        candidate_pkg = self._packagename_dict(pkg_spec)
+                        installed_pkg = installed.filter(nevra=pkg_spec).run()
+                    if installed_pkg:
+                        installed_pkg = installed_pkg[0]
+                        evr_cmp = self._compare_evr(
+                            installed_pkg.epoch, installed_pkg.version, installed_pkg.release,
+                            candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
+                        )
+                        if evr_cmp == 0:
+                            self.base.remove(pkg_spec)
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages
@@ -1122,6 +1149,10 @@ class DnfModule(YumDnf):
                     self.module.exit_json(**response)
 
                 try:
+                    if self.download_only and self.download_dir and self.base.conf.destdir:
+                        dnf.util.ensure_dir(self.base.conf.destdir)
+                        self.base.repos.all().pkgdir = self.base.conf.destdir
+
                     self.base.download_packages(self.base.transaction.install_set)
                 except dnf.exceptions.DownloadError as e:
                     self.module.fail_json(
@@ -1168,6 +1199,14 @@ class DnfModule(YumDnf):
             if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
                 self.module.fail_json(
                     msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__,
+                    results=[],
+                )
+
+        # Check if download_dir is called correctly
+        if self.download_dir:
+            if LooseVersion(dnf.__version__) < LooseVersion('2.6.2'):
+                self.module.fail_json(
+                    msg="download_dir requires dnf>=2.6.2. Current dnf version is %s" % dnf.__version__,
                     results=[],
                 )
 

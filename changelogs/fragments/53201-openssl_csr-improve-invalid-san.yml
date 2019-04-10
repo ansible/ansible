@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_csr - improve error messages for invalid SANs."

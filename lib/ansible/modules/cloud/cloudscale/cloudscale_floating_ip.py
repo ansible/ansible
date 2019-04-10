@@ -176,7 +176,8 @@ class AnsibleCloudscaleFloatingIP(AnsibleCloudscaleBase):
 
         # Replace the server with just the UUID, the href to the server is useless and just makes
         # things more complicated
-        resp['server'] = resp['server']['uuid']
+        if resp['server'] is not None:
+            resp['server'] = resp['server']['uuid']
 
         return resp
 

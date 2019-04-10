@@ -82,6 +82,12 @@ options:
     - This is required if C(name) is not supplied.
     - If virtual machine does not exists, then this parameter is ignored.
     - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
+  use_instance_uuid:
+    description:
+    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    default: no
+    type: bool
+    version_added: '2.8'
   template:
     description:
     - Template or existing virtual machine used to create new virtual machine.
@@ -1812,8 +1818,8 @@ class PyVmomiHelper(PyVmomi):
             if 'filename' in expected_disk_spec and expected_disk_spec['filename'] is not None:
                 self.add_existing_vmdk(vm_obj, expected_disk_spec, diskspec, scsi_ctl)
                 continue
-            elif vm_obj is None:
-                # We are creating new VM
+            elif vm_obj is None or self.params['template']:
+                # We are creating new VM or from Template
                 diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
 
             # which datastore?
@@ -2523,6 +2529,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
@@ -2609,6 +2616,9 @@ def main():
             if not tmp_result["failed"]:
                 result["failed"] = False
             result['instance'] = tmp_result['instance']
+            if tmp_result["failed"]:
+                result["failed"] = True
+                result["msg"] = tmp_result["msg"]
         else:
             # This should not happen
             raise AssertionError()

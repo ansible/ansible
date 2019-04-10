@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
+# Copyright: (c) 2015, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,51 +13,51 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipify_facts
-short_description: Retrieve the public IP of your internet gateway.
+short_description: Retrieve the public IP of your internet gateway
 description:
   - If behind NAT and need to know the public IP of your internet gateway.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author:
+- René Moser (@resmo)
 options:
   api_url:
     description:
       - URL of the ipify.org API service.
       - C(?format=json) will be appended per default.
-    required: false
-    default: 'https://api.ipify.org'
+    type: str
+    default: https://api.ipify.org/
   timeout:
     description:
       - HTTP connection timeout in seconds.
-    required: false
+    type: int
     default: 10
     version_added: "2.3"
   validate_certs:
     description:
       - When set to C(NO), SSL certificates will not be validated.
-    required: false
-    default: "yes"
     type: bool
+    default: yes
     version_added: "2.4"
 notes:
-  - "Visit https://www.ipify.org to get more information."
+  - Visit https://www.ipify.org to get more information.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Gather IP facts from ipify.org
-- name: get my public IP
+- name: Get my public IP
   ipify_facts:
 
 # Gather IP facts from your own ipify service endpoint with a custom timeout
-- name: get my public IP
+- name: Get my public IP
   ipify_facts:
     api_url: http://api.example.com/ipify
     timeout: 20
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 ipify_public_ip:
   description: Public IP of the internet gateway.
@@ -97,7 +97,7 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            api_url=dict(default='https://api.ipify.org/'),
+            api_url=dict(type='str', default='https://api.ipify.org/'),
             timeout=dict(type='int', default=10),
             validate_certs=dict(type='bool', default=True),
         ),

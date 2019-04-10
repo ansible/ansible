@@ -119,9 +119,10 @@ def write_file(module, dest, content):
             raise ModuleFailException("Destination %s not readable" % (dest))
         checksum_dest = module.sha1(dest)
     else:
-        if not os.access(os.path.dirname(dest), os.W_OK):
+        dirname = os.path.dirname(dest) or '.'
+        if not os.access(dirname, os.W_OK):
             os.remove(tmpsrc)
-            raise ModuleFailException("Destination dir %s not writable" % (os.path.dirname(dest)))
+            raise ModuleFailException("Destination dir %s not writable" % (dirname))
     if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
@@ -429,7 +430,7 @@ class ACMEDirectory(object):
     and allows to obtain a Replay-Nonce. The acme_directory URL
     needs to support unauthenticated GET requests; ACME endpoints
     requiring authentication are not supported.
-    https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.1.1
+    https://tools.ietf.org/html/rfc8555#section-7.1.1
     '''
 
     def __init__(self, module, account):
@@ -500,7 +501,7 @@ class ACMEAccount(object):
     def get_keyauthorization(self, token):
         '''
         Returns the key authorization for the given token
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.1
+        https://tools.ietf.org/html/rfc8555#section-8.1
         '''
         accountkey_json = json.dumps(self.jwk, sort_keys=True, separators=(',', ':'))
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
@@ -541,10 +542,10 @@ class ACMEAccount(object):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.2
+        https://tools.ietf.org/html/rfc8555#section-6.2
 
         If payload is None, a POST-as-GET is performed.
-        (https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.3)
+        (https://tools.ietf.org/html/rfc8555#section-6.3)
         '''
         key_data = key_data or self.key_data
         jws_header = jws_header or self.jws_header
@@ -575,7 +576,7 @@ class ACMEAccount(object):
                     try:
                         decoded_result = self.module.from_json(content.decode('utf8'))
                         # In case of badNonce error, try again (up to 5 times)
-                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.7)
+                        # (https://tools.ietf.org/html/rfc8555#section-6.7)
                         if (400 <= info['status'] < 600 and
                                 decoded_result.get('type') == 'urn:ietf:params:acme:error:badNonce' and
                                 failed_tries <= 5):
@@ -651,7 +652,7 @@ class ACMEAccount(object):
         ``False`` if it already existed (e.g. it was not newly created),
         or does not exist. In case the account was created or exists,
         ``data`` contains the account data; otherwise, it is ``None``.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
+        https://tools.ietf.org/html/rfc8555#section-7.3
         '''
         contact = contact or []
 
@@ -670,7 +671,7 @@ class ACMEAccount(object):
                 'contact': contact
             }
             if not allow_creation:
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.1
+                # https://tools.ietf.org/html/rfc8555#section-7.3.1
                 new_reg['onlyReturnExisting'] = True
             if terms_agreed:
                 new_reg['termsOfServiceAgreed'] = True
@@ -686,9 +687,10 @@ class ACMEAccount(object):
         elif info['status'] == (409 if self.version == 1 else 200):
             # Account did exist
             if result.get('status') == 'deactivated':
-                # A probable bug in Pebble (https://github.com/letsencrypt/pebble/issues/179)
-                # and Boulder: this should not return a valid account object according to
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.6:
+                # A bug in Pebble (https://github.com/letsencrypt/pebble/issues/179) and
+                # Boulder (https://github.com/letsencrypt/boulder/issues/3971): this should
+                # not return a valid account object according to
+                # https://tools.ietf.org/html/rfc8555#section-7.3.6:
                 #     "Once an account is deactivated, the server MUST NOT accept further
                 #      requests authorized by that account's key."
                 if not allow_creation:
@@ -701,6 +703,14 @@ class ACMEAccount(object):
         elif info['status'] == 400 and result['type'] == 'urn:ietf:params:acme:error:accountDoesNotExist' and not allow_creation:
             # Account does not exist (and we didn't try to create it)
             return False, None
+        elif info['status'] == 403 and result['type'] == 'urn:ietf:params:acme:error:unauthorized' and 'deactivated' in (result.get('detail') or ''):
+            # Account has been deactivated; currently works for Pebble; hasn't been
+            # implemented for Boulder (https://github.com/letsencrypt/boulder/issues/3971),
+            # might need adjustment in error detection.
+            if not allow_creation:
+                return False, None
+            else:
+                raise ModuleFailException("Account is deactivated")
         else:
             raise ModuleFailException("Error registering: {0} {1}".format(info['status'], result))
 
@@ -755,7 +765,7 @@ class ACMEAccount(object):
         The account URI will be stored in ``self.uri``; if it is ``None``,
         the account does not exist.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
+        https://tools.ietf.org/html/rfc8555#section-7.3
         '''
 
         if self.uri is not None:
@@ -793,7 +803,7 @@ class ACMEAccount(object):
         would be changed (check mode), and ``account_data`` the updated
         account data.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.2
+        https://tools.ietf.org/html/rfc8555#section-7.3.2
         '''
         # Create request
         update_request = {}
@@ -813,21 +823,97 @@ class ACMEAccount(object):
         return True, account_data
 
 
-def cryptography_get_csr_domains(module, csr_filename):
+def _normalize_ip(ip):
+    if ':' not in ip:
+        # For IPv4 addresses: remove trailing zeros per nibble
+        ip = '.'.join([nibble.lstrip('0') or '0' for nibble in ip.split('.')])
+        return ip
+    # For IPv6 addresses:
+    # 1. Make them lowercase and split
+    ip = ip.lower()
+    i = ip.find('::')
+    if i >= 0:
+        front = ip[:i].split(':') or []
+        back = ip[i + 2:].split(':') or []
+        ip = front + ['0'] * (8 - len(front) - len(back)) + back
+    else:
+        ip = ip.split(':')
+    # 2. Remove trailing zeros per nibble
+    ip = [nibble.lstrip('0') or '0' for nibble in ip]
+    # 3. Find longest consecutive sequence of zeros
+    zeros_start = -1
+    zeros_length = -1
+    current_start = -1
+    for i, nibble in enumerate(ip):
+        if nibble == '0':
+            if current_start < 0:
+                current_start = i
+        elif current_start >= 0:
+            if i - current_start > zeros_length:
+                zeros_start = current_start
+                zeros_length = i - current_start
+            current_start = -1
+    if current_start >= 0:
+        if 8 - current_start > zeros_length:
+            zeros_start = current_start
+            zeros_length = 8 - current_start
+    # 4. If the sequence has at least two elements, contract
+    if zeros_length >= 2:
+        return ':'.join(ip[:zeros_start]) + '::' + ':'.join(ip[zeros_start + zeros_length:])
+    # 5. If not, return full IP
+    return ':'.join(ip)
+
+
+def openssl_get_csr_identifiers(openssl_binary, module, csr_filename):
     '''
-    Return a set of requested domains (CN and SANs) for the CSR.
+    Return a set of requested identifiers (CN and SANs) for the CSR.
+    Each identifier is a pair (type, identifier), where type is either
+    'dns' or 'ip'.
     '''
-    domains = set([])
+    openssl_csr_cmd = [openssl_binary, "req", "-in", csr_filename, "-noout", "-text"]
+    dummy, out, dummy = module.run_command(openssl_csr_cmd, check_rc=True)
+
+    identifiers = set([])
+    common_name = re.search(r"Subject:.* CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
+    if common_name is not None:
+        identifiers.add(('dns', common_name.group(1)))
+    subject_alt_names = re.search(
+        r"X509v3 Subject Alternative Name: (?:critical)?\n +([^\n]+)\n",
+        to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
+    if subject_alt_names is not None:
+        for san in subject_alt_names.group(1).split(", "):
+            if san.lower().startswith("dns:"):
+                identifiers.add(('dns', san[4:]))
+            elif san.lower().startswith("ip:"):
+                identifiers.add(('ip', _normalize_ip(san[3:])))
+            elif san.lower().startswith("ip address:"):
+                identifiers.add(('ip', _normalize_ip(san[11:])))
+            else:
+                raise ModuleFailException('Found unsupported SAN identifier "{0}"'.format(san))
+    return identifiers
+
+
+def cryptography_get_csr_identifiers(module, csr_filename):
+    '''
+    Return a set of requested identifiers (CN and SANs) for the CSR.
+    Each identifier is a pair (type, identifier), where type is either
+    'dns' or 'ip'.
+    '''
+    identifiers = set([])
     csr = cryptography.x509.load_pem_x509_csr(read_file(csr_filename), _cryptography_backend)
     for sub in csr.subject:
         if sub.oid == cryptography.x509.oid.NameOID.COMMON_NAME:
-            domains.add(sub.value)
+            identifiers.add(('dns', sub.value))
     for extension in csr.extensions:
         if extension.oid == cryptography.x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME:
             for name in extension.value:
                 if isinstance(name, cryptography.x509.DNSName):
-                    domains.add(name.value)
-    return domains
+                    identifiers.add(('dns', name.value))
+                elif isinstance(name, cryptography.x509.IPAddress):
+                    identifiers.add(('ip', _normalize_ip(str(name.value))))
+                else:
+                    raise ModuleFailException('Found unsupported SAN identifier {0}'.format(name))
+    return identifiers
 
 
 def cryptography_get_cert_days(module, cert_file, now=None):

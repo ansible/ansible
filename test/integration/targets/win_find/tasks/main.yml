@@ -22,8 +22,10 @@
         "emptynested\nest\dir1",
         "emptynested\nest\dir2"
     )
+
+    $tmp_dir = '{{ win_find_dir }}'
     foreach ($directory in $directories) {
-        New-Item -Path "{{win_find_dir}}\$directory" -ItemType Directory
+        New-Item -Path "$tmp_dir\$directory" -ItemType Directory
     }
 
     $normal_content = "abcdefg1234567"
@@ -42,40 +44,42 @@
         "hard-link-dest\file-abc.log"
     )
     foreach ($file in $normal_files) {
-        New-Item -Path "{{win_find_dir}}\$file" -ItemType File
-        [System.IO.File]::WriteAllText("{{win_find_dir}}\$file", $normal_content)
+        New-Item -Path "$tmp_dir\$file" -ItemType File
+        [System.IO.File]::WriteAllText("$tmp_dir\$file", $normal_content)
     }
 
-    New-Item -Path "{{win_find_dir}}\single\small.ps1" -ItemType File
-    [System.IO.File]::WriteAllText("{{win_find_dir}}\single\small.ps1", "a")
+    New-Item -Path "$tmp_dir\single\small.ps1" -ItemType File
+    [System.IO.File]::WriteAllText("$tmp_dir\single\small.ps1", "a")
 
-    New-Item -Path "{{win_find_dir}}\date\new.ps1" -ItemType File
-    [System.IO.File]::WriteAllText("{{win_find_dir}}\date\new.ps1", "random text for new date")
+    New-Item -Path "$tmp_dir\date\new.ps1" -ItemType File
+    [System.IO.File]::WriteAllText("$tmp_dir\date\new.ps1", "random text for new date")
 
-    New-Item -Path "{{win_find_dir}}\date\old.ps1" -ItemType File
-    [System.IO.File]::WriteAllText("{{win_find_dir}}\date\old.ps1", "random text for old date")
+    New-Item -Path "$tmp_dir\date\old.ps1" -ItemType File
+    [System.IO.File]::WriteAllText("$tmp_dir\date\old.ps1", "random text for old date")
 
-    New-Item -Path "{{win_find_dir}}\single\large.ps1" -ItemType File
-    Set-Content -Path "{{win_find_dir}}\single\large.ps1" -Value ('abcdefghijklmnopqrstuvwxyz' * 10000)
+    New-Item -Path "$tmp_dir\single\large.ps1" -ItemType File
+    Set-Content -LiteralPath "$tmp_dir\single\large.ps1" -Value ('abcdefghijklmnopqrstuvwxyz' * 10000)
 
     $share_stat = Get-WmiObject -Class Win32_Share -Filter "name='folder-share'"
     if ($share_stat) {
         $share_stat.Delete()
     }
     $wmi = [wmiClass] 'Win32_Share'
-    $wmi.Create("{{win_find_dir}}\shared\folder", "folder-share", 0)
+    $wmi.Create("$tmp_dir\shared\folder", "folder-share", 0)
 
-    cmd.exe /c mklink /D "{{win_find_dir}}\nested\link" "{{win_find_dir}}\link-dest"
-    cmd.exe /c mklink /D "{{win_find_dir}}\broken-link" "{{win_find_dir}}\broken-link-dest"
-    cmd.exe /c mklink /H "{{win_find_dir}}\hard-link-dest\hard-link.log" "{{win_find_dir}}\hard-link-dest\file-abc.log"
-    cmd.exe /c mklink /J "{{win_find_dir}}\junction-link" "{{win_find_dir}}\junction-link-dest"
-  
+    cmd.exe /c mklink /D "$tmp_dir\nested\link" "$tmp_dir\link-dest"
+    cmd.exe /c mklink /D "$tmp_dir\broken-link" "$tmp_dir\broken-link-dest"
+    cmd.exe /c mklink /H "$tmp_dir\hard-link-dest\hard-link.log" "$tmp_dir\hard-link-dest\file-abc.log"
+    cmd.exe /c mklink /J "$tmp_dir\junction-link" "$tmp_dir\junction-link-dest"
+
     $date = Get-Date -Year 2016 -Month 11 -Day 1 -Hour 7 -Minute 10 -Second 5 -Millisecond 0
-    Get-ChildItem -Path "{{win_find_dir}}" -Recurse | Where-Object { $_.Name -ne "new.ps1" } | ForEach-Object {
+    Set-Location -LiteralPath $tmp_dir
+    Get-ChildItem -Recurse | Where-Object { $_.Name -ne "new.ps1" } | ForEach-Object {
         $_.CreationTime = $date
         $_.LastAccessTime = $date
         $_.LastWriteTime = $date
     }
+    Pop-Location
 
     $attributes = @{
         "hidden" = "Hidden"
@@ -85,7 +89,7 @@
         "single\hidden.ps1" = "Hidden"
     }
     foreach ($attribute in $attributes.GetEnumerator()) {
-        $item = Get-Item -Path "{{win_find_dir}}\$($attribute.Name)"
+        $item = Get-Item -LiteralPath "$tmp_dir\$($attribute.Name)"
         $file_attributes = $item.Attributes -split ','
         if ($file_attributes -notcontains $attribute.Value) {
             $file_attributes += $attribute.Value
@@ -93,7 +97,7 @@
         $item.Attributes = $file_attributes -join ','
     }
 
-    Remove-Item -Path "{{win_find_dir}}\broken-link-dest" -Force
+    Remove-Item -LiteralPath "$tmp_dir\broken-link-dest" -Force
 
 - block:
   - include_tasks: tests.yml

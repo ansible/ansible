@@ -31,7 +31,7 @@ options:
     - Alternative to the name, you can use C(tenant_id).
     type: str
     required: yes
-    aliases: [ name, tenant_name ]
+    aliases: [ name ]
   display_name:
     description:
     - The name of the tenant to be displayed in the web UI.
@@ -115,8 +115,8 @@ def main():
     argument_spec.update(
         description=dict(type='str'),
         display_name=dict(type='str'),
-        tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),
-        tenant_id=dict(type='str', required=False),
+        tenant=dict(type='str', aliases=['name']),
+        tenant_id=dict(type='str'),
         users=dict(type='list'),
         sites=dict(type='list'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),

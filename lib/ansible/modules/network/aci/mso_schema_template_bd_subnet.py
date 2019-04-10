@@ -36,11 +36,12 @@ options:
     - The name of the BD to manage.
     type: str
     required: yes
-  ip:
+  subnet:
     description:
     - The IP range in CIDR notation.
     type: str
     required: true
+    aliases: [ ip ]
   description:
     description:
     - The description of this subnet.
@@ -79,7 +80,7 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     bd: BD 1
-    ip: 10.0.0.0/24
+    subnet: 10.0.0.0/24
     state: present
   delegate_to: localhost
 
@@ -91,7 +92,7 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     bd: BD 1
-    ip: 10.0.0.0/24
+    subnet: 10.0.0.0/24
     state: absent
   delegate_to: localhost
 
@@ -103,7 +104,7 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     bd: BD 1
-    ip: 10.0.0.0/24
+    subnet: 10.0.0.0/24
     state: query
   delegate_to: localhost
   register: query_result
@@ -142,15 +143,15 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['ip']],
-            ['state', 'present', ['ip']],
+            ['state', 'absent', ['subnet']],
+            ['state', 'present', ['subnet']],
         ],
     )
 
     schema = module.params['schema']
     template = module.params['template']
     bd = module.params['bd']
-    ip = module.params['ip']
+    subnet = module.params['subnet']
     description = module.params['description']
     scope = module.params['scope']
     shared = module.params['shared']
@@ -172,7 +173,7 @@ def main():
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
 
-    # Get EPG
+    # Get BD
     bds = [b['name'] for b in schema_obj['templates'][template_idx]['bds']]
     if bd not in bds:
         mso.fail_json(msg="Provided BD '{0}' does not exist. Existing BDs: {1}".format(bd, ', '.join(bds)))
@@ -180,17 +181,17 @@ def main():
 
     # Get Subnet
     subnets = [s['ip'] for s in schema_obj['templates'][template_idx]['bds'][bd_idx]['subnets']]
-    if ip in subnets:
-        ip_idx = subnets.index(ip)
+    if subnet in subnets:
+        subnet_idx = subnets.index(subnet)
         # FIXME: Changes based on index are DANGEROUS
-        subnet_path = '/templates/{0}/bds/{1}/subnets/{2}'.format(template, bd, ip_idx)
-        mso.existing = schema_obj['templates'][template_idx]['bds'][bd_idx]['subnets'][ip_idx]
+        subnet_path = '/templates/{0}/bds/{1}/subnets/{2}'.format(template, bd, subnet_idx)
+        mso.existing = schema_obj['templates'][template_idx]['bds'][bd_idx]['subnets'][subnet_idx]
 
     if state == 'query':
-        if ip is None:
+        if subnet is None:
             mso.existing = schema_obj['templates'][template_idx]['bds'][bd_idx]['subnets']
         elif not mso.existing:
-            mso.fail_json(msg="Subnet '{ip}' not found".format(ip=ip))
+            mso.fail_json(msg="Subnet IP '{subnet}' not found".format(subnet=subnet))
         mso.exit_json()
 
     subnets_path = '/templates/{0}/bds/{1}/subnets'.format(template, bd)
@@ -203,17 +204,18 @@ def main():
             ops.append(dict(op='remove', path=subnet_path))
 
     elif state == 'present':
-        if description is None and not mso.existing:
-            description = ip
-        if scope is None and not mso.existing:
-            scope = 'private'
-        if shared is None and not mso.existing:
-            shared = False
-        if no_default_gateway is None and not mso.existing:
-            no_default_gateway = False
+        if not mso.existing:
+            if description is None:
+                description = subnet
+            if scope is None:
+                scope = 'private'
+            if shared is None:
+                shared = False
+            if no_default_gateway is None:
+                no_default_gateway = False
 
         payload = dict(
-            ip=ip,
+            ip=subnet,
             description=description,
             scope=scope,
             shared=shared,
