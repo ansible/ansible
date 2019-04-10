@@ -99,6 +99,7 @@ options:
             - Allowed values are 0 - 10.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        version_added: "2.8"
     archive_shm_limit:
         description:
             - Amount of se memory in gb until which shared memory is collected in core archive.
