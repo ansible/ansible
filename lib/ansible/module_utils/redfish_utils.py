@@ -537,7 +537,7 @@ class RedfishUtils(object):
                             title = action['title']
                         else:
                             title = key
-                        result['entries'][title] = action.get('TransferProtocol@Redfish.AllowableValues', 
+                        result['entries'][title] = action.get('TransferProtocol@Redfish.AllowableValues',
                                                                 ["Key TransferProtocol@Redfish.AllowableValues not found"])
                 else:
                     return {'ret': "False", 'msg': "Actions list is empty."}
