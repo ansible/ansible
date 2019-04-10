@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 
 import pytest
 import datetime
-import tzlocal
+import dateutil.tz
 from copy import copy
 
 from ansible.errors import AnsibleError
@@ -38,7 +38,7 @@ simple_variable_success_response = {
     'VersionId': 'cafe8168-e6ce-4e59-8830-5b143faf6c52',
     'SecretString': '{"secret":"simplesecret"}',
     'VersionStages': ['AWSCURRENT'],
-    'CreatedDate': datetime.datetime(2019, 4, 4, 11, 41, 0, 878000, tzinfo=tzlocal.get_localzone()),
+    'CreatedDate': datetime.datetime(2019, 4, 4, 11, 41, 0, 878000, tzinfo=dateutil.tz.tzlocal()),
     'ResponseMetadata': {
         'RequestId': '21099462-597c-490a-800f-8b7a41e5151c',
         'HTTPStatusCode': 200,
