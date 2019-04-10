@@ -505,7 +505,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
                 self.sku = self.sku or 'B1'
                 self.unit = self.unit or 1
                 self.event_endpoint = self.event_endpoint or {}
-                self.event_endpoint['partiotion_count'] = self.event_endpoint.get('partition_count') or 2
+                self.event_endpoint['partition_count'] = self.event_endpoint.get('partition_count') or 2
                 self.event_endpoint['retention_time_in_days'] = self.event_endpoint.get('retention_time_in_days') or 1
                 event_hub_properties = dict()
                 event_hub_properties['events'] = self.IoThub_models.EventHubProperties(**self.event_endpoint)
@@ -741,6 +741,8 @@ class AzureRMIoTHub(AzureRMModuleBase):
 
     def instance_dict_to_dict(self, instance_dict):
         result = dict()
+        if not instance_dict:
+            return result
         for key in instance_dict.keys():
             result[key] = instance_dict[key].as_dict()
         return result
@@ -758,14 +760,15 @@ class AzureRMIoTHub(AzureRMModuleBase):
         result['cloud_to_device'] = dict(
             max_delivery_count=properties.cloud_to_device.feedback.max_delivery_count,
             ttl_as_iso8601=str(properties.cloud_to_device.feedback.ttl_as_iso8601)
-        )
+        ) if properties.cloud_to_device else dict()
         result['enable_file_upload_notifications'] = properties.enable_file_upload_notifications
         result['event_endpoint'] = properties.event_hub_endpoints.get('events').as_dict() if properties.event_hub_endpoints.get('events') else None
         result['host_name'] = properties.host_name
         result['ip_filters'] = [x.as_dict() for x in properties.ip_filter_rules]
-        result['routing_endpoints'] = properties.routing.endpoints.as_dict()
-        result['routes'] = [self.route_to_dict(x) for x in properties.routing.routes]
-        result['fallback_route'] = self.route_to_dict(properties.routing.fallback_route)
+        if properties.routing:
+            result['routing_endpoints'] = properties.routing.endpoints.as_dict()
+            result['routes'] = [self.route_to_dict(x) for x in properties.routing.routes]
+            result['fallback_route'] = self.route_to_dict(properties.routing.fallback_route)
         result['status'] = properties.state
         result['storage_endpoints'] = self.instance_dict_to_dict(properties.storage_endpoints)
         return result
