@@ -127,6 +127,9 @@ class CDotMotd(object):
         return api_call
 
     def commit_changes(self):
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event("na_ontap_motd", cserver)
         if self.parameters['state'] == 'absent':
             # Just make sure it is empty
             self.parameters['message'] = ''
