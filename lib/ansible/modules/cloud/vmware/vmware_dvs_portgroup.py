@@ -43,6 +43,7 @@ options:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
             - 'If C(vlan_trunk) is configured to be I(true), this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
+            - The valid C(vlan_id) range is from 0 to 4094. Overlapping ranges are allowed.
         required: True
     num_ports:
         description:
@@ -260,8 +261,10 @@ class VMwareDvsPortgroup(PyVmomi):
             vlan_id_list = []
             for vlan_id_splitted in self.module.params['vlan_id'].split(','):
                 try:
-                    vlan_id_start, vlan_id_end = vlan_id_splitted.split('-')
-                    vlan_id_list.append(vim.NumericRange(start=int(vlan_id_start.strip()), end=int(vlan_id_end.strip())))
+                    vlan_id_start, vlan_id_end = map(int, vlan_id_splitted.split('-'))
+                    if vlan_id_start not in range(0, 4095) or vlan_id_end not in range(0, 4095):
+                        self.module.fail_json(msg="vlan_id range %s specified is incorrect. The valid vlan_id range is from 0 to 4094." % vlan_id_splitted)
+                    vlan_id_list.append(vim.NumericRange(start=vlan_id_start, end=vlan_id_end))
                 except ValueError:
                     vlan_id_list.append(vim.NumericRange(start=int(vlan_id_splitted.strip()), end=int(vlan_id_splitted.strip())))
             config.defaultPortConfig.vlan.vlanId = vlan_id_list
