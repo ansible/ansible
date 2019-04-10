@@ -50,6 +50,7 @@ TODO: realpath follows symlinks.  There isn't a test for this just now.
 
 TODO: add tests for set theory operations like union
 
-TODO: add tests for regex, match, and search
-
-
+regex_replace = {{ 'foo' | regex_replace('^foo', 'bar') }}
+regex_search = {{ 'test_value_0001' | regex_search('([0-9]+)$')}}
+regex_findall = "{{ 'car\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True) }}"
+regex_escape = {{ '^f.*o(.*)$' | regex_escape() }}
