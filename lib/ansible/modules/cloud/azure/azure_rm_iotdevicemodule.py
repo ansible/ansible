@@ -95,25 +95,28 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Create simplest Azure IoT Hub device
-  azure_rm_iotdevice:
+- name: Create simplest Azure IoT Hub device module
+  azure_rm_iotdevicemodule:
     hub: myHub
     name: Testing
+    device: mydevice
     hub_policy_name: iothubowner
     hub_policy_key: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
-- name: Create Azure IoT Edge device
+- name: Create Azure IoT Edge device module
   azure_rm_iotdevice:
     hub: myHub
+    device: mydevice
     name: Testing
     hub_policy_name: iothubowner
     hub_policy_key: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     edge_enabled: yes
 
-- name: Create Azure IoT Hub device with device twin properties and tag
+- name: Create Azure IoT Hub device module with module twin properties and tag
   azure_rm_iotdevice:
     hub: myHub
     name: Testing
+    device: mydevice
     hub_policy_name: iothubowner
     hub_policy_key: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     twin_tags:
@@ -126,15 +129,15 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-device:
+module:
     description: IoT Hub device.
     returned: always
     type: complex
     contains: {
         "authentication": {
             "symmetricKey": {
-                "primaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-                "secondaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                "primaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+                "secondaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
             },
             "type": "sas",
             "x509Thumbprint": {
@@ -142,72 +145,15 @@ device:
                 "secondaryThumbprint": null
             }
         },
-        "capabilities": {
-            "iotEdge": false
-        },
-        "changed": true,
         "cloudToDeviceMessageCount": 0,
         "connectionState": "Disconnected",
         "connectionStateUpdatedTime": "0001-01-01T00:00:00",
-        "deviceId": "Testing",
-        "etag": "NzA2NjU2ODc=",
-        "failed": false,
-        "generationId": "636903014505613307",
+        "deviceId": "mydevice",
+        "etag": "ODM2NjI3ODg=",
+        "generationId": "636904759703045768",
         "lastActivityTime": "0001-01-01T00:00:00",
-        "modules": [
-            {
-                "authentication": {
-                    "symmetricKey": {
-                        "primaryKey": "XXXXXXXXXXXXXXXXXXX",
-                        "secondaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                    },
-                    "type": "sas",
-                    "x509Thumbprint": {
-                        "primaryThumbprint": null,
-                        "secondaryThumbprint": null
-                    }
-                },
-                "cloudToDeviceMessageCount": 0,
-                "connectionState": "Disconnected",
-                "connectionStateUpdatedTime": "0001-01-01T00:00:00",
-                "deviceId": "testdevice",
-                "etag": "MjgxOTE5ODE4",
-                "generationId": "636903840872788074",
-                "lastActivityTime": "0001-01-01T00:00:00",
-                "managedBy": null,
-                "moduleId": "test"
-            }
-        ],
-        "properties": {
-            "desired": {
-                "$metadata": {
-                    "$lastUpdated": "2019-04-10T05:00:46.2702079Z",
-                    "$lastUpdatedVersion": 8,
-                    "period": {
-                        "$lastUpdated": "2019-04-10T05:00:46.2702079Z",
-                        "$lastUpdatedVersion": 8
-                    }
-                },
-                "$version": 1,
-                "period": 100
-            },
-            "reported": {
-                "$metadata": {
-                    "$lastUpdated": "2019-04-08T06:24:10.5613307Z"
-                },
-                "$version": 1
-            }
-        },
-        "status": "enabled",
-        "statusReason": null,
-        "statusUpdatedTime": "0001-01-01T00:00:00",
-        "tags": {
-            "location": {
-                "country": "us",
-                "city": "Redmond"
-            },
-            "sensor": "humidity"
-        }
+        "managedBy": null,
+        "moduleId": "Testing"
     }
 '''  # NOQA
 
@@ -226,7 +172,7 @@ except ImportError:
     pass
 
 
-class AzureRMIoTDevice(AzureRMModuleBase):
+class AzureRMIoTDeviceModule(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -235,9 +181,8 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             hub_policy_name=dict(type='str', required=True),
             hub_policy_key=dict(type='str', required=True),
             hub=dict(type='str', required=True),
+            device=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            status=dict(type='bool'),
-            edge_enabled=dict(type='bool'),
             twin_tags=dict(type='dict'),
             desired=dict(type='dict'),
             auth_method=dict(type='str', choices=['self_signed',  'sas', 'certificate_authority'], default='sas'),
@@ -252,11 +197,10 @@ class AzureRMIoTDevice(AzureRMModuleBase):
 
         self.name = None
         self.hub = None
+        self.device = None
         self.hub_policy_key = None
         self.hub_policy_name = None
         self.state = None
-        self.status = None
-        self.edge_enabled = None
         self.twin_tags = None
         self.desired = None
         self.auth_method = None
@@ -276,7 +220,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
            'Content-Type': 'application/json; charset=utf-8',
            'accept-language': 'en-US'
         }
-        super(AzureRMIoTDevice, self).__init__(self.module_arg_spec, supports_check_mode=True, required_if=required_if)
+        super(AzureRMIoTDeviceModule, self).__init__(self.module_arg_spec, supports_check_mode=True, required_if=required_if)
 
     def exec_module(self, **kwargs):
 
@@ -293,9 +237,9 @@ class AzureRMIoTDevice(AzureRMModuleBase):
 
         changed = False
 
-        device = self.get_device()
+        module = self.get_module()
         if self.state == 'present':
-            if not device:
+            if not module:
                 changed = True
                 auth = {'type': _snake_to_camel(self.auth_method)}
                 if self.auth_method == 'self_signed':
@@ -308,24 +252,13 @@ class AzureRMIoTDevice(AzureRMModuleBase):
                         'primaryKey': self.primary_key,
                         'secondaryKey': self.secondary_key
                     }
-                device = {
-                    'deviceId': self.name,
-                    'capabilities': { 'iotEdge': self.edge_enabled or False },
+                module = {
+                    'deviceId': self.device,
+                    'moduleId': self.name,
                     'authentication': auth
                 }
-                if self.status == False:
-                    device['status'] = 'disabled'
-            else:
-                if self.edge_enabled is not None and self.edge_enabled != device['capabilities']['iotEdge']:
-                    changed = True
-                    device['capabilities']['iotEdge'] = self.edge_enabled
-                if self.status is not None:
-                    status = 'enabled' if self.status else 'disabled'
-                    if status != device['status']:
-                        changed = True
-                        device['status'] = status
             if changed and not self.check_mode:
-                device = self.create_or_update_device(device)
+                module = self.create_or_update_module(module)
             twin = self.get_twin()
             if not twin.get('tags'):
                 twin['tags'] = dict()
@@ -333,19 +266,19 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             if self.twin_tags and not self.is_equal(self.twin_tags, twin['tags']):
                 twin_change = True
             if self.desired and not self.is_equal(self.desired, twin['properties']['desired']):
+                self.module.warn('desired')
                 twin_change = True
             if twin_change and not self.check_mode:
-                self.update_twin(twin)
+                twin = self.update_twin(twin)
             changed = changed or twin_change
-            device['tags'] = twin.get('tags') or dict()
-            device['properties'] = twin['properties']
-            device['modules'] = self.list_device_modules()
-        elif device:
+            module['tags'] = twin.get('tags') or dict()
+            module['properties'] = twin['properties']
+        elif module:
             if not self.check_mode:
-                self.delete_device(device['etag'])
+                self.delete_module(module['etag'])
             changed = True
-            device = None
-        self.results = device or dict()
+            module = None
+        self.results = module or dict()
         self.results['changed'] = changed
         return self.results
 
@@ -369,23 +302,23 @@ class AzureRMIoTDevice(AzureRMModuleBase):
                 original[key] = updated_value
         return not changed
 
-    def create_or_update_device(self, device):
+    def create_or_update_module(self, module):
         try:
-            url = '/devices/{0}'.format(self.name)
+            url = '/devices/{0}/modules/{1}'.format(self.device, self.name)
             headers = copy.copy(self.header_parameters)
-            if device.get('etag'):
-                headers['If-Match'] = '"{0}"'.format(device['etag'])
+            if module.get('etag'):
+                headers['If-Match'] = '"{0}"'.format(module['etag'])
             request = self._mgmt_client.put(url, self.query_parameters)
-            response = self._mgmt_client.send(request=request, headers=headers, content=device)
-            if not response.status_code in [200, 201, 202]:
+            response = self._mgmt_client.send(request=request, headers=headers, content=module)
+            if not response.status_code in [200, 201]:
                 raise CloudError(response)
             return json.loads(response.text)
         except Exception as exc:
             self.fail('Error when creating or updating IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc)))
 
-    def delete_device(self, etag):
+    def delete_module(self, etag):
         try:
-            url = '/devices/{0}'.format(self.name)
+            url = '/devices/{0}/modules/{1}'.format(self.device, self.name)
             headers = copy.copy(self.header_parameters)
             headers['If-Match'] = '"{0}"'.format(etag)
             request = self._mgmt_client.delete(url, self.query_parameters)
@@ -395,41 +328,33 @@ class AzureRMIoTDevice(AzureRMModuleBase):
         except Exception as exc:
             self.fail('Error when deleting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc))) 
 
-    def get_device(self):
+    def get_module(self):
         try:
-            url = '/devices/{0}'.format(self.name)
-            device = self._https_get(url, self.query_parameters, self.header_parameters)
-            return device
+            url = '/devices/{0}/modules/{1}'.format(self.device, self.name)
+            return self._https_get(url, self.query_parameters, self.header_parameters)
         except Exception:
             pass
             return None
 
     def get_twin(self):
         try:
-            url = '/twins/{0}'.format(self.name)
+            url = '/twins/{0}/modules/{1}'.format(self.device, self.name)
             return self._https_get(url, self.query_parameters, self.header_parameters)
         except Exception as exc:
-            self.fail('Error when getting IoT Hub device {0} twin: {1}'.format(self.name, exc.message or str(exc)))
+            self.fail('Error when getting IoT Hub device {0} module twin {1}: {2}'.format(self.device, self.name, exc.message or str(exc)))
 
     def update_twin(self, twin):
         try:
-            url = '/twins/{0}'.format(self.name)
+            url = '/twins/{0}/modules/{1}'.format(self.device, self.name)
             headers = copy.copy(self.header_parameters)
-            headers['If-Match'] = '"{0}"'.format(twin['etag'])
+            headers['If-Match'] = twin['etag']
             request = self._mgmt_client.patch(url, self.query_parameters)
             response = self._mgmt_client.send(request=request, headers=headers, content=twin)
             if not response.status_code in [200]:
                 raise CloudError(response)
             return json.loads(response.text)
         except Exception as exc:
-            self.fail('Error when creating or updating IoT Hub device twin {0}: {1}'.format(self.name, exc.message or str(exc)))
-
-    def list_device_modules(self):
-        try:
-            url = '/devices/{0}/modules'.format(self.name)
-            return self._https_get(url, self.query_parameters, self.header_parameters)
-        except Exception as exc:
-            self.fail('Error when listing IoT Hub device {0} modules: {1}'.format(self.name, exc.message or str(exc)))
+            self.fail('Error when creating or updating IoT Hub device {0} module twin {1}: {2}'.format(self.device, self.name, exc.message or str(exc)))
 
     def _https_get(self, url, query_parameters, header_parameters):
         request = self._mgmt_client.get(url, query_parameters)
@@ -439,7 +364,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
         return json.loads(response.text)
 
 def main():
-    AzureRMIoTDevice()
+    AzureRMIoTDeviceModule()
 
 
 if __name__ == '__main__':
