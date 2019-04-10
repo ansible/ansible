@@ -476,6 +476,7 @@ def main():
     name = module.params['name']
     state = module.params['state']
     changed = False
+    diff = None
 
     obj = list(ldap_search(
         '(&(objectClass=univentionShare)(cn={}))'.format(name),
