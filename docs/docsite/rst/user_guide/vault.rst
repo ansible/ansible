@@ -93,6 +93,12 @@ First you will be prompted for a password. After providing a password, the tool 
 
 The default cipher is AES (which is shared-secret based).
 
+To create a new encrypted data file with the Vault ID 'password1' assigned to it and be prompted for the password, run:
+
+.. code-block:: bash
+
+   ansible-vault create --vault-id password1@prompt foo.yml
+
 
 .. _editing_encrypted_files:
 
@@ -106,6 +112,12 @@ the file, saving it back when done and removing the temporary file:
 .. code-block:: bash
 
    ansible-vault edit foo.yml
+
+To edit a file encrypted with the 'vault2' password file and assigned the 'pass2' vault ID:
+
+.. code-block:: bash
+
+   ansible-vault edit --vault-id pass2@vault2 foo.yml
 
 
 .. _rekeying_files:
@@ -122,6 +134,13 @@ Should you wish to change your password on a vault-encrypted file or files, you 
 This command can rekey multiple data files at once and will ask for the original
 password and also the new password.
 
+To rekey files encrypted with the 'preprod2' vault ID and the 'ppold' file and be prompted for the new password:
+
+.. code-block:: bash
+
+    ansible-vault rekey --vault-id preprod2@ppold --new-vault-id preprod2@prompt foo.yml bar.yml baz.yml
+
+A different ID could have been set for the rekeyed files by passing it to ``--new-vault-id``.
 
 .. _encrypting_files:
 
@@ -134,6 +153,18 @@ the :ref:`ansible-vault encrypt <ansible_vault_encrypt>` command.  This command 
 .. code-block:: bash
 
    ansible-vault encrypt foo.yml bar.yml baz.yml
+
+To encrypt existing files with the 'project' ID and be prompted for the password:
+
+.. code-block:: bash
+
+   ansible-vault encrypt --vault-id project@prompt foo.yml bar.yml baz.yml
+
+.. note::
+
+   It is technically possible to separately encrypt files or strings with the *same* vault ID but *different* passwords, if different password files or prompted passwords are provided each time.
+   This could be desirable if you use vault IDs as references to classes of passwords (rather than a single password) and you always know which specific password or file to use in context. However this may be an unnecessarily complex use-case.
+   If two files are encrypted with the same vault ID but different passwords by accident, you can use the :ref:`rekey <rekeying_files>` command to fix the issue.
 
 
 .. _decrypting_files:
