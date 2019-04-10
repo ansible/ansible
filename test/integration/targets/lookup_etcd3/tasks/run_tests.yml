@@ -27,16 +27,29 @@
     name: "{{ etcd3_deps_packages }}"
     state: present
 
-- name: Install etcd3 module python
-  pip:
-    name: etcd3
-    state: present
+- name: clone source etcd3 python
+  git:
+    clone: true
+    dest: /tmp/etcd3
+    repo: https://github.com/kragniz/python-etcd3.git
+  environment:
+    http_proxy: "http://Majlinux:linux3c@proxyintercsn.cnaf:80/"
+    https_proxy: "http://Majlinux:linux3c@proxyintercsn.cnaf:80/"
 
-- name: Install etcd3 module python for lookup in localhost
-  pip:
-    name: etcd3
-    state: present
-  delegate_to: localhost
+- name: install etcd3 python
+  shell: cd /tmp/etcd3 ; python /tmp/etcd3/setup.py install
+
+
+# - name: Install etcd3 module python
+#  pip:
+#    name: etcd3
+#    state: present
+
+# - name: Install etcd3 module python for lookup in localhost
+#  pip:
+#    name: etcd3
+#    state: present
+#  delegate_to: localhost
 
 - name: If can't reuse
   block:
