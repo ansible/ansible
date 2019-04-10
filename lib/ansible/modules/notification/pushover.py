@@ -36,9 +36,14 @@ options:
     description:
       - Pushover issued authentication key for your user.
     required: true
+  title:
+    description:
+      - Message title.
+    required: false
+    version_added: "2.8"
   pri:
     description:
-      - Message priority (see U(https://pushover.net) for details.)
+      - Message priority (see U(https://pushover.net) for details).
     required: false
 
 author: "Jim Richardson (@weaselkeeper)"
@@ -46,7 +51,15 @@ author: "Jim Richardson (@weaselkeeper)"
 
 EXAMPLES = '''
 - pushover:
+    msg: '{{ inventory_hostname }} is acting strange ...'
+    app_token: wxfdksl
+    user_key: baa5fe97f2c5ab3ca8f0bb59
+  delegate_to: localhost
+
+- pushover:
+    title: 'Alert!'
     msg: '{{ inventory_hostname }} has exploded in flames, It is now time to panic'
+    pri: 1
     app_token: wxfdksl
     user_key: baa5fe97f2c5ab3ca8f0bb59
   delegate_to: localhost
@@ -66,7 +79,7 @@ class Pushover(object):
         self.user = user
         self.token = token
 
-    def run(self, priority, msg):
+    def run(self, priority, msg, title):
         ''' Do, whatever it is, we do. '''
 
         url = '%s/1/messages.json' % (self.base_uri)
@@ -76,6 +89,11 @@ class Pushover(object):
                        token=self.token,
                        priority=priority,
                        message=msg)
+
+        if title is not None:
+            options = dict(options,
+                           title=title)
+
         data = urlencode(options)
 
         headers = {"Content-type": "application/x-www-form-urlencoded"}
@@ -90,6 +108,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
+            title=dict(type='str'),
             msg=dict(required=True),
             app_token=dict(required=True, no_log=True),
             user_key=dict(required=True, no_log=True),
@@ -99,7 +118,7 @@ def main():
 
     msg_object = Pushover(module, module.params['user_key'], module.params['app_token'])
     try:
-        response = msg_object.run(module.params['pri'], module.params['msg'])
+        response = msg_object.run(module.params['pri'], module.params['msg'], module.params['title'])
     except Exception:
         module.fail_json(msg='Unable to send msg via pushover')
 
