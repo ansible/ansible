@@ -59,4 +59,24 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                 for line in fcinfo_out.splitlines():
                     data = line.split(' ')
                     fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
+        elif sys.platform.startswith('aix'):
+            # get list of available fibre-channel devices (fcs)
+            cmd = module.get_bin_path('lsdev')
+            cmd = cmd + " -Cc adapter -l fcs*"
+            rc, lsdev_out, err = module.run_command(cmd)
+            if lsdev_out:
+                lscfg_cmd = module.get_bin_path('lscfg')
+                for line in lsdev_out.splitlines():
+                    # if device is available (not in defined state), get its WWN
+                    if 'Available' in line:
+                        data = line.split(' ')
+                        cmd = lscfg_cmd + " -vl %s" % data[0]
+                        rc, lscfg_out, err = module.run_command(cmd)
+                        # example output
+                        # lscfg -vpl fcs3 | grep "Network Address"
+                        #        Network Address.............10000090FA551509
+                        for line in lscfg_out.splitlines():
+                            if 'Network Address' in line:
+                                data = line.split('.')
+                                fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         return fc_facts
