@@ -334,7 +334,7 @@ def main():
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
-        "db": "database"
+        "db": "database",
         "login_host": "host",
         "login_user": "user",
         "login_password": "password",
