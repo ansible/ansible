@@ -29,10 +29,11 @@ options:
         type: str
         default: export
         choices: [ export, parse ]
-    ca_certificates:
+    other_certificates:
         description:
-            - List of CA certificate to include.
+            - List of other certificates to include.
         type: list
+        aliases: [ ca_certificates ]
     certificate_path:
         description:
             - The path to read certificates and private keys from.
