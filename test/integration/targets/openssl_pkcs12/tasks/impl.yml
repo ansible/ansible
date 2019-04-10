@@ -4,6 +4,14 @@
     openssl_privatekey:
       path: "{{ output_dir }}/ansible_pkey.pem"
 
+  - name: 'Generate privatekey2'
+    openssl_privatekey:
+      path: "{{ output_dir }}/ansible_pkey2.pem"
+
+  - name: 'Generate privatekey3'
+    openssl_privatekey:
+      path: "{{ output_dir }}/ansible_pkey3.pem"
+
   - name: 'Generate CSR'
     openssl_csr:
       path: "{{ output_dir }}/ansible.csr"
@@ -13,25 +21,28 @@
   - name: 'Generate CSR 2'
     openssl_csr:
       path: "{{ output_dir }}/ansible2.csr"
-      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      privatekey_path: "{{ output_dir }}/ansible_pkey2.pem"
       commonName: 'www2.ansible.com'
 
   - name: 'Generate CSR 3'
     openssl_csr:
       path: "{{ output_dir }}/ansible3.csr"
-      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      privatekey_path: "{{ output_dir }}/ansible_pkey3.pem"
       commonName: 'www3.ansible.com'
 
   - name: 'Generate certificate'
     openssl_certificate:
-      path: "{{ output_dir }}/{{ item }}.crt"
-      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
-      csr_path: "{{ output_dir }}/{{ item }}.csr"
+      path: "{{ output_dir }}/{{ item.name }}.crt"
+      privatekey_path: "{{ output_dir }}/{{ item.pkey }}"
+      csr_path: "{{ output_dir }}/{{ item.name }}.csr"
       provider: selfsigned
     loop:
-      - ansible
-      - ansible2
-      - ansible3
+      - name: ansible
+        pkey: ansible_pkey.pem
+      - name: ansible2
+        pkey: ansible_pkey2.pem
+      - name: ansible3
+        pkey: ansible_pkey3.pem
 
   - name: 'Generate PKCS#12 file'
     openssl_pkcs12:
