@@ -334,7 +334,7 @@ class ClcSnapshot:
         """
         argument_spec = dict(
             server_ids=dict(type='list', required=True),
-            expiration_days=dict(default=7),
+            expiration_days=dict(default=7, type='int'),
             wait=dict(default=True),
             state=dict(
                 default='present',
