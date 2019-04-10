@@ -1,9 +1,3 @@
----
-- name: 'Install pexpect'
-  pip:
-    name: 'pexpect'
-    state: 'present'
-
 - name: 'Validate PKCS#12'
   command: "openssl pkcs12 -info -in {{ output_dir }}/ansible.p12 -nodes -passin pass:''"
   register: p12
@@ -11,6 +5,10 @@
 - name: 'Validate PKCS#12 with no private key'
   command: "openssl pkcs12 -info -in {{ output_dir }}/ansible_no_pkey.p12 -nodes -passin pass:''"
   register: p12_validate_no_pkey
+
+- name: 'Validate PKCS#12 with multiple certs'
+  shell: "openssl pkcs12 -info -in {{ output_dir }}/ansible_multi_certs.p12 -nodes -passin pass:'' | grep subject"
+  register: p12_validate_multi_certs
 
 - name: 'Validate PKCS#12 (assert)'
   assert:
@@ -21,6 +19,11 @@
       - p12_validate_no_pkey.stdout_lines[-1] == '-----END CERTIFICATE-----'
       - p12_force.changed
       - p12_force_and_mode.mode == '0644' and p12_force_and_mode.changed
+      - not p12_standard_idempotency.changed
+      - not p12_multiple_certs_idempotency.changed
+      - "'www.' in p12_validate_multi_certs.stdout"
+      - "'www2.' in p12_validate_multi_certs.stdout"
+      - "'www3.' in p12_validate_multi_certs.stdout"
 
 - name: Check passphrase on private key
   assert:
