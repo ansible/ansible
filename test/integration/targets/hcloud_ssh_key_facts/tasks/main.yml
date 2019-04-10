@@ -11,7 +11,7 @@
 - name: setup test ssh_key
   hcloud_ssh_key:
     name: "{{hcloud_ssh_key_name}}"
-    public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGpl/tnk74nnQJxxLAtutUApUZMRJxryKh7VXkNbd4g9 john@example.com"
+    public_key: "{{ key_material }}"
     labels:
       key: value
   register: result
@@ -19,7 +19,7 @@
   assert:
     that:
       - result is changed
-      - result.hcloud_ssh_key.public_key == "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGpl/tnk74nnQJxxLAtutUApUZMRJxryKh7VXkNbd4g9 john@example.com"
+      - result.hcloud_ssh_key.public_key == "{{ key_material }}"
 
 - name: test gather hcloud ssh key facts in check mode
   hcloud_ssh_key_facts:
