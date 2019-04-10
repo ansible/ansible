@@ -110,7 +110,7 @@ def request(module, api_url, project, path, access_token, private_token, rawdata
 def deprecation_warning(module):
     deprecated_aliases = ['login_token', 'private_token', 'access_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), '2.10')
 
 
 def gitlab_auth_argument_spec():
