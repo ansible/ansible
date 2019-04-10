@@ -133,7 +133,9 @@ class NetAppOntapNetRoutes(object):
             metric = self.parameters['metric']
         else:
             metric = current_metric
-        route_obj.add_new_child("metric", metric)
+        # Metric can be None, Can't set metric to none
+        if metric is not None:
+            route_obj.add_new_child("metric", metric)
         try:
             self.server.invoke_successfully(route_obj, True)
         except netapp_utils.zapi.NaApiError as error:
