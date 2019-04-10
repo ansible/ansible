@@ -254,10 +254,3 @@ class InventoryModule(K8sInventoryModule):
             if path.endswith(('kubevirt.yml', 'kubevirt.yaml')):
                 return True
         return False
-
-    def _sanitize_group_name(self, name):
-        """ Replace unsupported charactes in group name by underscore character """
-        name = name.replace('/', '_')
-        name = name.replace('.', '_')
-        name = name.replace('-', '_')
-        return name
