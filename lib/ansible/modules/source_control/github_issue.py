@@ -40,11 +40,8 @@ options:
     default: 'get_status'
     choices:
         - 'get_status'
-
 author:
     - Abhijeet Kasurde (@Akasurde)
-requirements:
-    - "github3.py >= 1.0.0"
 '''
 
 RETURN = '''
@@ -70,17 +67,10 @@ EXAMPLES = '''
   when: r.issue_status == 'open'
 '''
 
-import traceback
+import json
 
-GITHUB_IMP_ERR = None
-try:
-    import github3
-    HAS_GITHUB_PACKAGE = True
-except ImportError:
-    GITHUB_IMP_ERR = traceback.format_exc()
-    HAS_GITHUB_PACKAGE = False
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
 def main():
@@ -94,43 +84,33 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_GITHUB_PACKAGE:
-        module.fail_json(msg=missing_required_lib('github3.py >= 1.0.0'),
-                         exception=GITHUB_IMP_ERR)
-
-    try:
-        current_version = tuple(map(int, github3.__version__.split(".")))
-        if current_version < (1, 0, 0):
-            raise ValueError
-    except ValueError:
-        module.fail_json(msg="Failed to parse github3.py version."
-                             " Please make sure you have correct version install."
-                             " Required is >= 1.0.0, got %s" % github3.__version__)
-
     organization = module.params['organization']
     repo = module.params['repo']
     issue = module.params['issue']
     action = module.params['action']
 
     result = dict()
-    gh_obj = None
-    not_found = False
 
-    try:
-        gh_obj = github3.issue(organization, repo, issue)
-    except (github3.exceptions.NotFoundError, github3.exceptions.GitHubError, ValueError):
-        not_found = True
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github.v3+json',
+    }
 
-    if gh_obj is None or not_found:
-        module.fail_json(msg="Failed to get details about issue specified. "
-                             "Please check organization [%s], repo [%s] and issue "
-                             "details [%s] and try again." % (organization, repo, issue))
+    url = "https://api.github.com/repos/%s/%s/issues/%s" % (organization, repo, issue)
+
+    response, info = fetch_url(module, url, headers=headers)
+    if not (200 <= info['status'] < 400):
+        if info['status'] == 404:
+            module.fail_json(msg="Failed to find issue %s" % issue)
+        module.fail_json(msg="Failed to send request to %s: %s" % (url, info['msg']))
+
+    gh_obj = json.loads(response.read())
 
     if action == 'get_status' or action is None:
         if module.check_mode:
             result.update(changed=True)
         else:
-            result.update(changed=True, issue_status=gh_obj.state)
+            result.update(changed=True, issue_status=gh_obj['state'])
 
     module.exit_json(**result)
 

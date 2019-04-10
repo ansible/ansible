@@ -3,70 +3,30 @@
 # Copyright: (c) 2017-2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- block:
-  - name: make sure github3.py is not installed
-    pip:
-      name: github3.py
-      state: absent
+- name: Check if GitHub issue is closed or not
+  github_issue:
+    organization: "{{ organization }}"
+    repo: "{{ repo }}"
+    issue: "{{ issue }}"
+    action: get_status
+  register: get_status_0002
 
-  # Testcase 0001: Check if dependency is installed
-  - name: Check if github3.py is installed or not
-    github_issue:
-      organization: "{{ organization }}"
-      repo: "{{ repo }}"
-      issue: "{{ non_existent_issue }}"
-      action: get_status
-    register: lib_missing
-    ignore_errors: True
+- assert:
+    that:
+      - "{{ get_status_0002.changed == True }}"
+      - "{{ get_status_0002.issue_status == 'closed' }}"
 
-  - assert:
-      that:
-        - "{{ lib_missing.failed == True }}"
-        - "{{ lib_missing.changed == False }}"
-        - "{{ 'Failed to import the required Python library' in lib_missing.msg }}"
+- name: Check if GitHub issue is closed or not
+  github_issue:
+    organization: "{{ organization }}"
+    repo: "{{ repo }}"
+    issue: "{{ non_existent_issue }}"
+    action: get_status
+  register: get_status_0003
+  ignore_errors: True
 
-  - include: '{{ item }}'
-    with_first_found:
-      - files:
-          - '{{ ansible_distribution }}-{{ ansible_distribution_version }}-python{{ ansible_python_version.split(".")[0] }}.yml'
-          - '{{ ansible_distribution }}-python{{ ansible_python_version.split(".")[0] }}.yml'
-          - '{{ ansible_os_family }}-python{{ ansible_python_version.split(".")[0] }}.yml'
-          - 'default-python{{ ansible_python_version.split(".")[0] }}.yml'
-
-  - name: make sure github3.py is installed
-    pip:
-      name: github3.py==1.0.0
-
-  # Testcase 0002: Check if issue exists
-  - name: Check if GitHub issue is closed or not
-    github_issue:
-      organization: "{{ organization }}"
-      repo: "{{ repo }}"
-      issue: "{{ issue }}"
-      action: get_status
-    register: get_status_0002
-
-  - assert:
-      that:
-        - "{{ get_status_0002.changed == True }}"
-        - "{{ get_status_0002.issue_status == 'closed' }}"
-
-  # Testcase 0003: Check non-existent issue status
-  - name: Check if GitHub issue is closed or not
-    github_issue:
-      organization: "{{ organization }}"
-      repo: "{{ repo }}"
-      issue: "{{ non_existent_issue }}"
-      action: get_status
-    register: get_status_0003
-    ignore_errors: True
-
-  - assert:
-      that:
-        - "{{ get_status_0003.changed == False }}"
-        - "{{ get_status_0003.failed == True }}"
-        - "{{ 'Failed' in get_status_0003.msg }}"
-
-  # CentOS 6 and OpenSuSE 42 does not support installation of latest setuptools which is required for requests and github3.py
-  # Skipping this testcase using following
-  when: not ((ansible_os_family == 'Suse' and ansible_distribution_major_version | int == 42 ) or (ansible_os_family == 'RedHat' and ansible_distribution_major_version | int == 6))
+- assert:
+    that:
+      - "{{ get_status_0003.changed == False }}"
+      - "{{ get_status_0003.failed == True }}"
+      - "{{ 'Failed' in get_status_0003.msg }}"
