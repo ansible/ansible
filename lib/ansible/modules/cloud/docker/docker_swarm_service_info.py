@@ -51,6 +51,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+exists:
+    description:
+      - Returns whether the service exists.
+    type: bool
+    returned: always
+    sample: true
 service:
     description:
       - A dictionary representing the current state of the service. Matches the C(docker service inspect) output.
@@ -89,6 +95,7 @@ def main():
     client.module.exit_json(
         changed=False,
         service=service,
+        exists=bool(service)
     )
 
 

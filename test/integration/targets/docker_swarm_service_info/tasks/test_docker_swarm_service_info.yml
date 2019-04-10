@@ -44,6 +44,7 @@
   - name: assert reading reading service info
     assert:
       that:
+        - 'output.exists == true'
         - 'output.service.ID is string'
         - 'output.service.Spec.Name == service_name'
 
@@ -60,6 +61,7 @@
     assert:
       that:
         - 'output.service is none'
+        - 'output.exists == false'
 
   always:
     - name: Remove services
