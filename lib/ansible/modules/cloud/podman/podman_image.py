@@ -31,7 +31,7 @@ DOCUMENTATION = """
         - Path to C(podman) executable if it is not in the C($PATH) on the machine running C(podman)
       default: 'podman'
       type: str
-    cert_dir:
+    ca_cert_dir:
       description:
         - Path to directory containing TLS certificates and keys to use
       type: 'path'
@@ -58,12 +58,13 @@ DOCUMENTATION = """
         - present
         - absent
         - build
-    tls_verify:
+    validate_certs:
       description:
         - Require HTTPS and validate certificates when pulling or pushing. Also used during build if a pull or push is necessary.
       default: True
       aliases:
         - tlsverify
+        - tls_verify
     password:
       description:
         - Password to use when authenticating to remote regstries.
@@ -379,11 +380,11 @@ class PodmanImageManager(object):
         self.path = self.module.params.get('path')
         self.force = self.module.params.get('force')
         self.state = self.module.params.get('state')
-        self.tls_verify = self.module.params.get('tls_verify')
+        self.validate_certs = self.module.params.get('validate_certs')
         self.auth_file = self.module.params.get('auth_file')
         self.username = self.module.params.get('username')
         self.password = self.module.params.get('password')
-        self.cert_dir = self.module.params.get('cert_dir')
+        self.ca_cert_dir = self.module.params.get('ca_cert_dir')
         self.build = self.module.params.get('build')
         self.push_args = self.module.params.get('push_args')
 
@@ -484,11 +485,11 @@ class PodmanImageManager(object):
         if self.auth_file:
             args.extend(['--authfile', self.auth_file])
 
-        if self.tls_verify:
+        if self.validate_certs:
             args.append('--tls-verify')
 
-        if self.cert_dir:
-            args.extend(['--cert-dir', self.cert_dir])
+        if self.ca_cert_dir:
+            args.extend(['--cert-dir', self.ca_cert_dir])
 
         rc, out, err = self._run(args, ignore_errors=True)
         if rc != 0:
@@ -499,7 +500,7 @@ class PodmanImageManager(object):
         args = ['build', '-q']
         args.extend(['-t', self.image_name])
 
-        if self.tls_verify:
+        if self.validate_certs:
             args.append('--tls-verify')
 
         annotation = self.build.get('annotation')
@@ -507,8 +508,8 @@ class PodmanImageManager(object):
             for k, v in annotation.items():
                 args.extend(['--annotation', '{k}={v}'.format(k=k, v=v)])
 
-        if self.cert_dir:
-            args.extend(['--cert-dir', self.cert_dir])
+        if self.ca_cert_dir:
+            args.extend(['--cert-dir', self.ca_cert_dir])
 
         if self.build.get('force_rm'):
             args.append('--force-rm')
@@ -547,11 +548,11 @@ class PodmanImageManager(object):
     def push_image(self):
         args = ['push']
 
-        if self.tls_verify:
+        if self.validate_certs:
             args.append('--tls-verify')
 
-        if self.cert_dir:
-            args.extend(['--cert-dir', self.cert_dir])
+        if self.ca_cert_dir:
+            args.extend(['--cert-dir', self.ca_cert_dir])
 
         if self.username and self.password:
             cred_string = '{user}:{password}'.format(user=self.username, password=self.password)
@@ -651,12 +652,12 @@ def main():
             path=dict(type='str'),
             force=dict(type='bool', default=False),
             state=dict(type='str', default='present', choices=['absent', 'present', 'build']),
-            tls_verify=dict(type='bool', default=True, aliases=['tlsverify']),
+            validate_certs=dict(type='bool', default=True, aliases=['tlsverify', 'tls_verify']),
             executable=dict(type='str', default='podman'),
             auth_file=dict(type='path', aliases=['authfile']),
             username=dict(type='str'),
             password=dict(type='str', no_log=True),
-            cert_dir=dict(type='path'),
+            ca_cert_dir=dict(type='path'),
             build=dict(
                 type='dict',
                 aliases=['build_args', 'buildargs'],
