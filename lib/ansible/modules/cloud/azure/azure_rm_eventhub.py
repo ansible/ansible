@@ -202,7 +202,7 @@ class AzureRMEventHub(AzureRMModuleBase):
 
         changed = False
 
-        self.status = self.Eventhub_models.EntityStatus[self.status] if self.status else None
+        self.status = self.eventhub_models.EntityStatus[self.status] if self.status else None
         event_hub = self.get_event_hub()
 
         if self.state == 'present':
@@ -210,7 +210,7 @@ class AzureRMEventHub(AzureRMModuleBase):
             if not event_hub:
                 changed = True
                 self.log('Creating a new event hub')
-                event_hub = self.Eventhub_models.Eventhub(message_retention_in_days=self.message_retention_in_days,
+                event_hub = self.eventhub_models.Eventhub(message_retention_in_days=self.message_retention_in_days,
                                                           partition_count=self.partition_count,
                                                           status=self.status)
                 if not self.check_mode:
@@ -251,13 +251,13 @@ class AzureRMEventHub(AzureRMModuleBase):
     def create_or_update_event_hub(self, event_hub):
         try:
             return self.eventhub_client.event_hubs.create_or_update(self.resource_group, self.namespace, self.name, event_hub)
-        except CloudError as exc:
+        except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error creating or updating Event Hub{0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def delete_event_hub(self):
         try:
             return self.eventhub_client.event_hubs.delete(self.resource_group, self.namespace, self.name)
-        except CloudError as exc:
+        except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error deleting Event Hub{0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def to_dict(self, event_hub):

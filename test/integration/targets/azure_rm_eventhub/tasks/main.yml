@@ -1,7 +1,7 @@
 - name: Create necessary names for eventhub
   set_fact:
-      namespace_aname: "namespace{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}a"
-      namespace_bname: "namespace{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}b"
+      namespace_aname: "eventhubnamespace{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}a"
+      namespace_bname: "eventhubnamespace{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}b"
       eventhub_aname: "eventhub{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}a"
       eventhub_bname: "eventhub{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}b"
   run_once: yes
@@ -44,7 +44,7 @@
     that: 
       - output.changed
       - output.maximum_throughput_units == 4
-    
+
 - name: Update an eventhub namespace (idempotent)
   azure_rm_eventhubnamespace:
     name: "{{ namespace_aname }}"
@@ -59,7 +59,7 @@
     that: not output.changed
 
 - name: Get facts for an eventhub namespace
-  azure_rm_eventhubnamespace:
+  azure_rm_eventhubnamespace_facts:
     name: "{{ namespace_aname }}"
     resource_group: "{{ resource_group }}"
   register: output
@@ -75,9 +75,9 @@
        - output.eventhubnamespaces[0]['is_auto_inflate_enabled'] != None
        - output.eventhubnamespaces[0]['maximum_throughput_units'] != None
        - output.eventhubnamespaces[0]['kafka_enabled'] != None
-       
+
 - name: Get all facts for eventhub namespace in the resource group
-  azure_rm_eventhubnamespace:
+  azure_rm_eventhubnamespace_facts:
     resource_group: "{{ resource_group }}"
   register: output
 
@@ -106,11 +106,11 @@
     resource_group: "{{ resource_group }}"
     namespace: "{{ namespace_aname}}"
   register: output
-  
+
 - name: Assert the event hub was created
   assert:
     that: output.changed
-    
+
 - name: Create an event hub for listing facts
   azure_rm_eventhub:
     name: "{{ eventhub_bname}}"
@@ -119,11 +119,11 @@
     message_retention_in_days: 2
     partition_count: 8
   register: output
-  
+
 - name: Assert the event hub was created
   assert:
     that: output.changed
-    
+
 - name: Update an event hub
   azure_rm_eventhub:
     name: "{{ eventhub_aname}}"
@@ -132,14 +132,14 @@
     message_retention_in_days: 7
     status: disabled
   register: output
-  
+
 - name: Assert the event hub was updated
   assert:
     that: 
        - output.changed
-       - output.status == 'disabled'
+       - output.status == 'Disabled'
        - output.message_retention_in_days == 7
-       
+
 - name: Update an event hub (idempotent)
   azure_rm_eventhub:
     name: "{{ eventhub_aname}}"
@@ -148,11 +148,11 @@
     message_retention_in_days: 7
     status: disabled
   register: output
-  
+
 - name: Assert the event hub was updated
   assert:
     that: not output.changed
-    
+
 - name: Gather facts for event hub by namespace
   azure_rm_eventhub_facts:
     resource_group: "{{ resource_group }}"
@@ -163,18 +163,18 @@
   assert:
     that:
        - not output.changed
-       - output.eventhubnamespaces[0]['id'] != None
-       - output.eventhubnamespaces[0]['name'] != None
-       - output.eventhubnamespaces[0]['message_retention_in_days'] != None
-       - output.eventhubnamespaces[0]['partition_count'] != None
-       - output.eventhubnamespaces[0]['partition_ids'] != None
-       - output.eventhubnamespaces[0]['status'] != None
-       - output.eventhubnamespaces[1]['id'] != None
-       - output.eventhubnamespaces[1]['name'] != None
-       - output.eventhubnamespaces[1]['message_retention_in_days'] != None
-       - output.eventhubnamespaces[1]['partition_count'] != None
-       - output.eventhubnamespaces[1]['partition_ids'] != None
-       - output.eventhubnamespaces[1]['status'] != None
+       - output.eventhubs[0]['id'] != None
+       - output.eventhubs[0]['name'] != None
+       - output.eventhubs[0]['message_retention_in_days'] != None
+       - output.eventhubs[0]['partition_count'] != None
+       - output.eventhubs[0]['partition_ids'] != None
+       - output.eventhubs[0]['status'] != None
+       - output.eventhubs[1]['id'] != None
+       - output.eventhubs[1]['name'] != None
+       - output.eventhubs[1]['message_retention_in_days'] != None
+       - output.eventhubs[1]['partition_count'] != None
+       - output.eventhubs[1]['partition_ids'] != None
+       - output.eventhubs[1]['status'] != None
 
 - name: Gather facts for an event hub
   azure_rm_eventhub_facts:
@@ -187,71 +187,77 @@
   assert:
     that:
        - not output.changed
-       - output.eventhubnamespaces[0]['id'] != None
-       - output.eventhubnamespaces[0]['name'] != None
-       - output.eventhubnamespaces[0]['message_retention_in_days'] != None
-       - output.eventhubnamespaces[0]['partition_count'] != None
-       - output.eventhubnamespaces[0]['partition_ids'] != None
-       - output.eventhubnamespaces[0]['status'] != None
-       
+       - output.eventhubs[0]['id'] != None
+       - output.eventhubs[0]['name'] != None
+       - output.eventhubs[0]['message_retention_in_days'] != None
+       - output.eventhubs[0]['partition_count'] != None
+       - output.eventhubs[0]['partition_ids'] != None
+       - output.eventhubs[0]['status'] != None
+
 - name: Delete first event hub
   azure_rm_eventhub:
     name: "{{ eventhub_aname}}"
     resource_group: "{{ resource_group }}"
     namespace: "{{ namespace_aname}}"
     state: absent
+  register: output
 
 - name: Assert the event hub was deleted
   assert:
     that: output.changed
-    
+
 - name: Delete first event hub (idempotent)
   azure_rm_eventhub:
     name: "{{ eventhub_aname}}"
     resource_group: "{{ resource_group }}"
     namespace: "{{ namespace_aname}}"
     state: absent
+  register: output
 
 - name: Assert the event hub was deleted
   assert:
     that: not output.changed
-    
+
 - name: Delete second event hub
   azure_rm_eventhub:
     name: "{{ eventhub_bname}}"
     resource_group: "{{ resource_group }}"
     namespace: "{{ namespace_aname}}"
     state: absent
+  register: output
 
 - name: Assert the event hub was deleted
   assert:
     that: output.changed
-    
+
 - name: Delete first eventhub namespace
   azure_rm_eventhubnamespace:
     name: "{{ namespace_aname}}"
     resource_group: "{{ resource_group }}"
     state: absent
+  register: output
 
 - name: Assert the eventhub namespace was deleted
   assert:
     that: output.changed
-    
+
 - name: Delete first eventhub namespace (idempotent)
   azure_rm_eventhubnamespace:
     name: "{{ namespace_aname}}"
     resource_group: "{{ resource_group }}"
     state: absent
+  register: output
 
 - name: Assert the eventhub namespace was deleted
   assert:
     that: not output.changed
-    
+
 - name: Delete second eventhub namespace
   azure_rm_eventhubnamespace:
     name: "{{ namespace_bname}}"
     resource_group: "{{ resource_group }}"
     state: absent
+  register: output
 
 - name: Assert the eventhub namespace was deleted
   assert:

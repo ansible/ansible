@@ -277,9 +277,9 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
                     self.kafka_enabled = None
 
                 if self.sku:
-                    self.sku = self.Eventhub_models.Sku(name=self.sku, tier=self.sku)
+                    self.sku = self.eventhub_models.Sku(name=self.sku, tier=self.sku)
 
-                eventhubnamespace = self.Eventhub_models.EHNamespace(location=self.location,
+                eventhubnamespace = self.eventhub_models.EHNamespace(location=self.location,
                                                                      sku=self.sku,
                                                                      tags=self.tags,
                                                                      is_auto_inflate_enabled=self.is_auto_inflate_enabled,
@@ -338,8 +338,8 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
         try:
             poller = self.eventhub_client.namespaces.create_or_update(self.resource_group, self.name, eventhubnamespace)
             return self.get_poller_result(poller)
-        except Exception as exc:
-            self.fail('Error creating or updating Event Hub Namespace {0}: {1}'.format(self.name, str(exc)))
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Error creating or updating Event Hub Namespace {0}: {1}'.format(self.name, str(exc.inner_exception) or str(exc.message) or str(exc)))
 
     def get_namespace(self):
         try:
@@ -352,8 +352,8 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
         try:
             poller = self.eventhub_client.namespaces.delete(self.resource_group, self.name)
             return self.get_poller_result(poller)
-        except Exception as exc:
-            self.fail('Error deleting Event Hub Namespace{0}: {1}'.format(self.name, str(exc)))
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Error deleting Event Hub Namespace{0}: {1}'.format(self.name, str(exc.inner_exception) or str(exc.message) or str(exc)))
             return False
 
     def to_dict(self, eventhubnamespace):

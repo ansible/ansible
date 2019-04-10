@@ -309,7 +309,7 @@ class AzureRMModuleBase(object):
         self._resource = None
         self._log_analytics_client = None
         self._servicebus_client = None
-        self._eventhub_clinet = None
+        self._eventhub_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -1010,14 +1010,14 @@ class AzureRMModuleBase(object):
     @property
     def eventhub_client(self):
         self.log('Getting eventhub client')
-        if not self._eventhub_clinet:
-            self._eventhub_clinet = self.get_mgmt_svc_client(EventHubManagementClient,
+        if not self._eventhub_client:
+            self._eventhub_client = self.get_mgmt_svc_client(EventHubManagementClient,
                                                              base_url=self._cloud_environment.endpoints.resource_manager,
                                                              api_version='2017-04-01')
-        return self._eventhub_clinet
+        return self._eventhub_client
 
     @property
-    def Eventhub_models(self):
+    def eventhub_models(self):
         self.log("Getting eventhub models...")
         return EventHubManagementClient.models('2017-04-01')
 

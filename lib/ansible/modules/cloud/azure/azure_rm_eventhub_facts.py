@@ -122,22 +122,21 @@ class AzureRMEventHubFact(AzureRMModuleBase):
         try:
             item = self.eventhub_client.event_hubs.get(self.resource_group, self.namespace, self.name)
             return [item]
-        except Exception as exc:
-            self.fail('Error when getting eventhub {0}: {1}'.format(self.name, exc.message or str(exc)))
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Error when getting eventhub {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def list_by_namespace(self):
         '''Get all eventhub namespaces in a resource group'''
 
         try:
             return self.eventhub_client.event_hubs.list_by_namespace(self.resource_group, self.namespace)
-        except Exception as exc:
-            self.fail('Filed to list eventhub by namespace {0}: {1}'.format(self.namespace, exc.message or str(exc)))
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Filed to list eventhub by namespace {0}: {1}'.format(self.namespace, str(exc.inner_exception) or exc.message or str(exc)))
 
     def to_dict(self, eventhub):
         result = dict(
             id=eventhub.id,
             name=eventhub.name,
-            resource_group=parse_resource_id(eventhub.id).get('resourceGroups'),
             message_retention_in_days=eventhub.message_retention_in_days,
             partition_count=eventhub.partition_count,
             partition_ids=eventhub.partition_ids,

@@ -126,16 +126,17 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
         try:
             item = self.eventhub_client.namespaces.get(self.resource_group, self.name)
             return [item]
-        except Exception as exc:
-            self.fail('Error when getting eventhub namespace {0}: {1}'.format(self.name, exc.message or str(exc)))
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Error when getting eventhub namespace {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def list_by_resource_group(self):
         '''Get all eventhub namespaces in a resource group'''
 
         try:
             return self.eventhub_client.namespaces.list_by_resource_group(self.resource_group)
-        except Exception as exc:
-            self.fail('Filed to list eventhub namespace in resource group {0}: {1}'.format(self.resource_group, exc.message or str(exc)))
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Filed to list eventhub namespace in resource group {0}: {1}'.format(self.resource_group,
+                                                                                           str(exc.inner_exception) or exc.message or str(exc)))
 
     def list_all(self):
         '''Get all eventhub namespaces'''
