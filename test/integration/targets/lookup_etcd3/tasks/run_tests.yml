@@ -38,47 +38,36 @@
     state: present
   delegate_to: localhost
 
-- name: debug
-  shell: pip list
-  register: debug1
+- name: prepare download folder
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: directory
+  register: _etcddownloadexists
 
-- name: debug
-  shell: pip list
-  delegate_to: localhost
-  register: debug2
+- name: Delete download folder if already exists (to start clean)
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: absent
+  when:
+    - _etcddownloadexists is not changed
 
-- name: debug
-  debug:
-    msg: "{{ debug1.stdout_lines }} {{ debug2.stdout_lines }} {{ vars }}"
+- name: Recreate download folder if purged
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: directory
+  when:
+    - _etcddownloadexists is not changed
 
-- name: If can't reuse
-  block:
-    - name: prepare download folder
-      file:
-        path: "{{ etcd3_download_location }}"
-        state: directory
-      register: _etcddownloadexists
-    - name: Delete download folder if already exists (to start clean)
-      file:
-        path: "{{ etcd3_download_location }}"
-        state: absent
-      when:
-        - _etcddownloadexists is not changed
-    - name: Recreate download folder if purged
-      file:
-        path: "{{ etcd3_download_location }}"
-        state: directory
-      when:
-        - _etcddownloadexists is not changed
-    - name: Download etcd3
-      unarchive:
-        src: "{{ etcd3_download_url }}"
-        dest: "{{ etcd3_download_location }}"
-        remote_src: yes
-    - name: Run etcd3
-      shell: "{{ etcd3_path }}/etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' >/dev/null 2>&1 &"
-      register: _etcd3run
-      changed_when: true
+- name: Download etcd3
+   unarchive:
+      src: "{{ etcd3_download_url }}"
+      dest: "{{ etcd3_download_location }}"
+      remote_src: yes
+
+- name: Run etcd3
+  shell: "{{ etcd3_path }}/etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' >/dev/null 2>&1 &"
+  register: _etcd3run
+  changed_when: true
 
 - name: wait api up
   wait_for:
