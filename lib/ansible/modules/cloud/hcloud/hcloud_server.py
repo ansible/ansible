@@ -301,7 +301,7 @@ class AnsibleHcloudServer(Hcloud):
             timeout = 100
             if self.module.params.get("upgrade_disk"):
                 timeout = (
-                    500
+                    1000
                 )  # When we upgrade the disk too the resize progress takes some more time.
             if not self.module.check_mode:
                 self.hcloud_server.change_type(

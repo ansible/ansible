@@ -7,13 +7,6 @@
     state: absent
   register: result
 
-- name: test gather hcloud server facts - empty resources
-  hcloud_server_facts:
-- name: verify test gather hcloud server facts - empty resources
-  assert:
-    that:
-      - ansible_facts.hcloud_server_facts | count == 0
-
 - name: create server
   hcloud_server:
     name: "{{ hcloud_server_name }}"

@@ -8,17 +8,10 @@
     state: absent
   register: result
 
-- name: test gather hcloud ssh key facts - empty resources
-  hcloud_ssh_key_facts:
-- name: verify test gather hcloud ssh key facts - empty resources
-  assert:
-    that:
-      - ansible_facts.hcloud_ssh_key_facts | count == 0
-
 - name: setup test ssh_key
   hcloud_ssh_key:
     name: "{{hcloud_ssh_key_name}}"
-    public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGpl/tnk74nnQJxxLAtutUApUZMRJxryKh7VXkNbd4g9 john@example.com"
+    public_key: "{{ key_material }}"
     labels:
       key: value
   register: result
@@ -26,7 +19,7 @@
   assert:
     that:
       - result is changed
-      - result.hcloud_ssh_key.public_key == "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGpl/tnk74nnQJxxLAtutUApUZMRJxryKh7VXkNbd4g9 john@example.com"
+      - result.hcloud_ssh_key.public_key == "{{ key_material }}"
 
 - name: test gather hcloud ssh key facts in check mode
   hcloud_ssh_key_facts:
@@ -34,7 +27,7 @@
 - name: verify test gather hcloud ssh key facts in check mode
   assert:
     that:
-     - ansible_facts.hcloud_ssh_key_facts| list | count == 1
+     - ansible_facts.hcloud_ssh_key_facts| list | count >= 1
 
 - name: test gather hcloud ssh key facts
   hcloud_ssh_key_facts:
@@ -42,7 +35,7 @@
 - name: verify test gather hcloud ssh key facts
   assert:
     that:
-     - ansible_facts.hcloud_ssh_key_facts| list | count == 1
+     - ansible_facts.hcloud_ssh_key_facts| list | count >= 1
 
 - name: test gather hcloud ssh key facts with correct label selector
   hcloud_ssh_key_facts:
@@ -59,7 +52,6 @@
   assert:
     that:
       - ansible_facts.hcloud_ssh_key_facts | list | count == 0
-
 
 - name: cleanup
   hcloud_ssh_key:

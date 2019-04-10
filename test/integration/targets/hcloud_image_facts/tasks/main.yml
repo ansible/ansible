@@ -49,7 +49,9 @@
   hcloud_image_facts:
       id: "{{hcloud_test_image_id}}1"
       type: snapshot
+  ignore_errors: yes
+  register: result
 - name: verify test gather hcloud image with wrong id
   assert:
     that:
-      - ansible_facts.hcloud_image_facts | list | count == 0
+      - result is failed
