@@ -157,7 +157,7 @@ class IscsiTarget(object):
 
         if not self.url.endswith('/'):
             self.url += '/'
-        self._logger.info(self.chap_secret)
+
         if self.chap_secret is not None:
             if len(self.chap_secret) < 12 or len(self.chap_secret) > 16:
                 self.module.fail_json(msg="The provided CHAP secret is not valid, it must be between 12 and 16"
@@ -234,8 +234,6 @@ class IscsiTarget(object):
         elif target['chap']:
             update = True
             body.update(dict(enableChapAuthentication=False))
-
-        self._logger.info(pformat(body))
 
         if update and not self.check_mode:
             try:
