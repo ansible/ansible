@@ -2121,7 +2121,7 @@ def main():
             description=dict(required=False, default=""),
             fullpath=dict(required=False, default=None),
             starttime=dict(required=False, default=None),
-            duration=dict(required=False, default=30),
+            duration=dict(required=False, default=30, type='int'),
             properties=dict(required=False, default={}, type="dict"),
             groups=dict(required=False, default=[], type="list"),
             alertenable=dict(required=False, default="true", type="bool")
