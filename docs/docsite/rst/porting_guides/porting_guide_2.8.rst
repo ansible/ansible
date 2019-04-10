@@ -333,6 +333,8 @@ Noteworthy module changes
 * The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options
   would be ignored but are now not.
 
+* The ``openssl_pkcs12`` module will now regenerate the pkcs12 file if there are differences between the file on disk and the parameters passed to the module.
+
 Plugins
 =======
 
