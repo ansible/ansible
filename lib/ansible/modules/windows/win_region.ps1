@@ -61,7 +61,7 @@ Function Get-ValidGeoIds($cultures) {
 
 Function Test-RegistryProperty($reg_key, $property) {
     $type = Get-ItemProperty $reg_key -Name $property -ErrorAction SilentlyContinue
-    if ($type -eq $null) {
+    if ($null -eq $type) {
         $false
     } else {
         $true
@@ -211,32 +211,32 @@ Function Set-SystemLocaleLegacy($unicode_language) {
     }
 }
 
-if ($format -eq $null -and $location -eq $null -and $unicode_language -eq $null) {
+if ($null -eq $format -and $null -eq $location -and $null -eq $unicode_language) {
     Fail-Json $result "An argument for 'format', 'location' or 'unicode_language' needs to be supplied"
 } else {
     $valid_cultures = [System.Globalization.CultureInfo]::GetCultures('InstalledWin32Cultures')
     $valid_geoids = Get-ValidGeoIds -cultures $valid_cultures
 
-    if ($location -ne $null) {
+    if ($null -ne $location) {
         if ($valid_geoids -notcontains $location) {
             Fail-Json $result "The argument location '$location' does not contain a valid Geo ID"
         }
     }
 
-    if ($format -ne $null) {
+    if ($null -ne $format) {
         if ($valid_cultures.Name -notcontains $format) {
             Fail-Json $result "The argument format '$format' does not contain a valid Culture Name"
         }
     }
 
-    if ($unicode_language -ne $null) {
+    if ($null -ne $unicode_language) {
         if ($valid_cultures.Name -notcontains $unicode_language) {
             Fail-Json $result "The argument unicode_language '$unicode_language' does not contain a valid Culture Name"
         }
     }
 }
 
-if ($location -ne $null) {
+if ($null -ne $location) {
     # Get-WinHomeLocation was only added in Server 2012 and above
     # Use legacy option if older
     if (Get-Command 'Get-WinHomeLocation' -ErrorAction SilentlyContinue) {
@@ -256,7 +256,7 @@ if ($location -ne $null) {
     }
 }
 
-if ($format -ne $null) {
+if ($null -ne $format) {
     $current_format = (Get-Culture).Name
     if ($current_format -ne $format) {
         # Set-Culture was only added in Server 2012 and above, use legacy option if older
@@ -271,7 +271,7 @@ if ($format -ne $null) {
     }
 }
 
-if ($unicode_language -ne $null) {
+if ($null -ne $unicode_language) {
     # Get/Set-WinSystemLocale was only added in Server 2012 and above, use legacy option if older
     if (Get-Command 'Get-WinSystemLocale' -ErrorAction SilentlyContinue) {
         $current_unicode_language = (Get-WinSystemLocale).Name

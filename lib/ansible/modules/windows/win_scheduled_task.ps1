@@ -151,7 +151,7 @@ Function Compare-Properties($property_name, $parent_property, $map, $enum_map=$n
     foreach ($entry in $map.GetEnumerator()) {
         $new_value = $entry.Value
 
-        if ($new_value -ne $null) {
+        if ($null -ne $new_value) {
             $property_name = $entry.Name
             $existing_value = $parent_property.$property_name
             if ($existing_value -cne $new_value) {
@@ -161,7 +161,7 @@ Function Compare-Properties($property_name, $parent_property, $map, $enum_map=$n
                     Fail-Json -obj $result -message "failed to set $property_name property '$property_name' to '$new_value': $($_.Exception.Message)"
                 }
 
-                if ($enum_map -ne $null -and $enum_map.ContainsKey($property_name)) {
+                if ($null -ne $enum_map -and $enum_map.ContainsKey($property_name)) {
                     $enum = [type]$enum_map.$property_name
                     $existing_value = [Enum]::ToObject($enum, $existing_value)
                     $new_value = [Enum]::ToObject($enum, $new_value)
@@ -247,7 +247,7 @@ Function Compare-PropertyList {
 
         # now we have validated the input and have gotten the metadata, let's
         # get the diff string
-        if ($existing_property -eq $null) {
+        if ($null -eq $existing_property) {
             # we have more properties than before,just add to the new
             # properties list
             $diff_list = [System.Collections.ArrayList]@()
@@ -308,20 +308,20 @@ Function Compare-PropertyList {
                             $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
                             $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
-                            if ($sub_property_value -ne $null) {
+                            if ($null -ne $sub_property_value) {
                                 [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
                             }
 
-                            if ($sub_existing_value -ne $null) {
+                            if ($null -ne $sub_existing_value) {
                                 [void]$diff_list.Add("-$com_name.$sub_com_name=$sub_existing_value")
                             }
                         }
                     } else {
-                        if ($property_value -ne $null) {
+                        if ($null -ne $property_value) {
                             [void]$diff_list.Add("+$com_name=$property_value")
                         }
 
-                        if ($existing_value -ne $null) {
+                        if ($null -ne $existing_value) {
                             [void]$diff_list.Add("-$com_name=$existing_value")
                         }
                     }
@@ -337,12 +337,12 @@ Function Compare-PropertyList {
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
                 $property_value = $new_property.$property_arg
                 $existing_value = $existing_property.$com_name
-                
+
                 if ($property_value -is [Hashtable]) {
                     foreach ($kv in $property_value.GetEnumerator()) {
                         $sub_property_value = $kv.Value
-                        
-                        if ($sub_property_value -ne $null) {
+
+                        if ($null -ne $sub_property_value) {
                             $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
                             $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
@@ -352,7 +352,7 @@ Function Compare-PropertyList {
                             }
                         }
                     }
-                } elseif ($property_value -ne $null -and $property_value -cne $existing_value) {
+                } elseif ($null -ne $property_value -and $property_value -cne $existing_value) {
                     [void]$diff_list.Add("-$com_name=$existing_value")
                     [void]$diff_list.Add("+$com_name=$property_value")
                 }
@@ -370,14 +370,14 @@ Function Compare-PropertyList {
             if ($new_value -is [Hashtable]) {
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
                 $new_object_property = $new_object.$com_name
-    
+
                 foreach ($kv in $new_value.GetEnumerator()) {
                     $value = $kv.Value
-                    if ($value -ne $null) {
+                    if ($null -ne $value) {
                         Set-PropertyForComObject -com_object $new_object_property -name $property_name -arg $kv.Key -value $value
                     }
                 }
-            } elseif ($new_value -ne $null) {
+            } elseif ($null -ne $new_value) {
                 Set-PropertyForComObject -com_object $new_object -name $property_name -arg $property_arg -value $new_value
             }
         }
@@ -397,7 +397,7 @@ Function Compare-PropertyList {
                 foreach ($property_arg in $property_args) {
                     $com_name = Convert-SnakeToPascalCase -snake $property_arg
                     $existing_value = $existing_property.$com_name
-                    if ($existing_value -ne $null) {
+                    if ($null -ne $existing_value) {
                         [void]$diff_list.Add("-$com_name=$existing_value")
                     }
                 }
@@ -417,7 +417,7 @@ Function Compare-Actions($task_definition) {
     # actions for use in a diff string
     # ActionCollection - https://msdn.microsoft.com/en-us/library/windows/desktop/aa446804(v=vs.85).aspx
     # Action - https://msdn.microsoft.com/en-us/library/windows/desktop/aa446803(v=vs.85).aspx
-    if ($actions -eq $null) {
+    if ($null -eq $actions) {
         return ,[System.Collections.ArrayList]@()
     }
 
@@ -468,22 +468,22 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
     # the actual sid/username. Depending on OS version this could be the SID
     # or it could be the username, we need to handle that accordingly
     $principal_username_sid = $task_definition_xml.Task.Principals.Principal.UserId
-    if ($principal_username_sid -ne $null -and $principal_username_sid -notmatch "^S-\d-\d+(-\d+){1,14}(-\d+){0,1}$") {
+    if ($null -ne $principal_username_sid -and $principal_username_sid -notmatch "^S-\d-\d+(-\d+){1,14}(-\d+){0,1}$") {
         $principal_username_sid = Convert-ToSID -account_name $principal_username_sid
     }
     $principal_group_sid = $task_definition_xml.Task.Principals.Principal.GroupId
-    if ($principal_group_sid -ne $null -and $principal_group_sid -notmatch "^S-\d-\d+(-\d+){1,14}(-\d+){0,1}$") {
+    if ($null -ne $principal_group_sid -and $principal_group_sid -notmatch "^S-\d-\d+(-\d+){1,14}(-\d+){0,1}$") {
         $principal_group_sid = Convert-ToSID -account_name $principal_group_sid
     }
-    
-    if ($username_sid -ne $null) {
+
+    if ($null -ne $username_sid) {
         $new_user_name = Convert-FromSid -sid $username_sid
-        if ($principal_group_sid -ne $null) {
+        if ($null -ne $principal_group_sid) {
             $existing_account_name = Convert-FromSid -sid $principal_group_sid
             [void]$changes.Add("-GroupId=$existing_account_name`n+UserId=$new_user_name")
             $task_principal.UserId = $new_user_name
             $task_principal.GroupId = $null
-        } elseif ($principal_username_sid -eq $null) {
+        } elseif ($null -eq $principal_username_sid) {
             [void]$changes.Add("+UserId=$new_user_name")
             $task_principal.UserId = $new_user_name
         } elseif ($principal_username_sid -ne $username_sid) {
@@ -492,14 +492,14 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
             $task_principal.UserId = $new_user_name
         }
     }
-    if ($group_sid -ne $null) {
+    if ($null -ne $group_sid) {
         $new_group_name = Convert-FromSid -sid $group_sid
-        if ($principal_username_sid -ne $null) {
+        if ($null -ne $principal_username_sid) {
             $existing_account_name = Convert-FromSid -sid $principal_username_sid
             [void]$changes.Add("-UserId=$existing_account_name`n+GroupId=$new_group_name")
             $task_principal.UserId = $null
             $task_principal.GroupId = $new_group_name
-        } elseif ($principal_group_sid -eq $null) {
+        } elseif ($null -eq $principal_group_sid) {
             [void]$changes.Add("+GroupId=$new_group_name")
             $task_principal.GroupId = $new_group_name
         } elseif ($principal_group_sid -ne $group_sid) {
@@ -508,7 +508,7 @@ Function Compare-Principal($task_definition, $task_definition_xml) {
             $task_principal.GroupId = $new_group_name
         }
     }
-    
+
     return ,$changes
 }
 
@@ -563,7 +563,7 @@ Function Compare-Triggers($task_definition) {
     # for use in a diff string
     # TriggerCollection - https://msdn.microsoft.com/en-us/library/windows/desktop/aa383875(v=vs.85).aspx
     # Trigger - https://msdn.microsoft.com/en-us/library/windows/desktop/aa383868(v=vs.85).aspx
-    if ($triggers -eq $null) {
+    if ($null -eq $triggers) {
         return ,[System.Collections.ArrayList]@()
     }
 
@@ -639,7 +639,7 @@ Function Test-TaskExists($task_folder, $name) {
     $task = $null
     if ($task_folder) {
         $raw_tasks = $task_folder.GetTasks(1) # 1 = TASK_ENUM_HIDDEN
-        
+
         for ($i = 1; $i -le $raw_tasks.Count; $i++) {
             if ($raw_tasks.Item($i).Name -eq $name) {
                 $task = $raw_tasks.Item($i)
@@ -676,24 +676,24 @@ if ($group) {
 }
 
 # validate store_password and logon_type
-if ($logon_type -ne $null) {
+if ($null -ne $logon_type) {
     $full_enum_name = "TASK_LOGON_$($logon_type.ToUpper())"
     $logon_type = [TASK_LOGON_TYPE]::$full_enum_name
 }
 
 # now validate the logon_type option with the other parameters
-if ($username -ne $null -and $group -ne $null) {
+if ($null -ne $username -and $null -ne $group) {
     Fail-Json -obj $result -message "username and group can not be set at the same time"
 }
-if ($logon_type -ne $null) {
-    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD -and $password -eq $null) {
+if ($null -ne $logon_type) {
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD -and $null -eq $password) {
         Fail-Json -obj $result -message "password must be set when logon_type=password"
     }
-    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_S4U -and $password -eq $null) {
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_S4U -and $null -eq $password) {
         Fail-Json -obj $result -message "password must be set when logon_type=s4u"
     }
 
-    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_GROUP -and $group -eq $null) {
+    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_GROUP -and $null -eq $group) {
         Fail-Json -obj $result -message "group must be set when logon_type=group"
     }
 
@@ -704,7 +704,7 @@ if ($logon_type -ne $null) {
 }
 
 # convert the run_level to enum value
-if ($run_level -ne $null) {
+if ($null -ne $run_level) {
     if ($run_level -eq "limited") {
         $run_level = [TASK_RUN_LEVEL]::TASK_RUNLEVEL_LUA
     } else {
@@ -770,16 +770,16 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
         }
 
         $interval_timespan = $null
-        if ($trigger.repetition.ContainsKey("interval") -and $trigger.repetition.interval -ne $null) {
+        if ($trigger.repetition.ContainsKey("interval") -and $null -ne $trigger.repetition.interval) {
             $interval_timespan = Test-XmlDurationFormat -key "interval" -value $trigger.repetition.interval
         }
 
         $duration_timespan = $null
-        if ($trigger.repetition.ContainsKey("duration") -and $trigger.repetition.duration -ne $null) {
+        if ($trigger.repetition.ContainsKey("duration") -and $null -ne $trigger.repetition.duration) {
             $duration_timespan = Test-XmlDurationFormat -key "duration" -value $trigger.repetition.duration
         }
 
-        if ($interval_timespan -ne $null -and $duration_timespan -ne $null -and $interval_timespan -gt $duration_timespan) {
+        if ($null -ne $interval_timespan -and $null -ne $duration_timespan -and $interval_timespan -gt $duration_timespan) {
             Fail-Json -obj $result -message "trigger repetition option 'interval' value '$($trigger.repetition.interval)' must be less than or equal to 'duration' value '$($trigger.repetition.duration)'"
         }
     }
@@ -792,7 +792,7 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
         } elseif ($days -isnot [Array]) {
             $days = @($days)
         }
-        
+
         $day_value = 0
         foreach ($day in $days) {
             # https://msdn.microsoft.com/en-us/library/windows/desktop/aa382057(v=vs.85).aspx
@@ -955,7 +955,7 @@ $task = Test-TaskExists -task_folder $task_folder -name $name
 $task_path = Join-Path -Path $path -ChildPath $name
 
 if ($state -eq "absent") {
-    if ($task -ne $null) {
+    if ($null -ne $task) {
         if (-not $check_mode) {
             try {
                 $task_folder.DeleteTask($name, 0)
@@ -979,10 +979,10 @@ if ($state -eq "absent") {
         }
     }
 } else {
-    if ($task -eq $null) {
+    if ($null -eq $task) {
         $create_diff_string = "+[Task]`n+$task_path`n`n"
         # to create a bare minimum task we need 1 action
-        if ($actions -eq $null -or $actions.Count -eq 0) {
+        if ($null -eq $actions -or $actions.Count -eq 0) {
             Fail-Json -obj $result -message "cannot create a task with no actions, set at least one action with a path to an executable"
         }
 
@@ -997,11 +997,11 @@ if ($state -eq "absent") {
             $create_diff_string += "+action[0] = {`n  +Type=$([TASK_ACTION_TYPE]::TASK_ACTION_EXEC),`n  +Path=$($action.path)`n"
             $task_action = $task_actions.Create([TASK_ACTION_TYPE]::TASK_ACTION_EXEC)
             $task_action.Path = $action.path
-            if ($action.arguments -ne $null) {
+            if ($null -ne $action.arguments) {
                 $create_diff_string += "  +Arguments=$($action.arguments)`n"
                 $task_action.Arguments = $action.arguments
             }
-            if ($action.working_directory -ne $null) {
+            if ($null -ne $action.working_directory) {
                 $create_diff_string += "  +WorkingDirectory=$($action.working_directory)`n"
                 $task_action.WorkingDirectory = $action.working_directory
             }
@@ -1019,12 +1019,12 @@ if ($state -eq "absent") {
         }
 
         # folder doesn't exist, need to create
-        if ($task_folder -eq $null) {
+        if ($null -eq $task_folder) {
             $task_folder = $service.GetFolder("\")
             try {
                 if (-not $check_mode) {
                     $task_folder = $task_folder.CreateFolder($path)
-                }                
+                }
             } catch {
                 Fail-Json -obj $result -message "failed to create new folder at path '$path': $($_.Exception.Message)"
             }
@@ -1055,7 +1055,7 @@ if ($state -eq "absent") {
         $trigger_changes = Compare-Triggers -task_definition $task_definition
 
         # compile the diffs into one list with headers
-        $task_diff = [System.Collections.ArrayList]@()        
+        $task_diff = [System.Collections.ArrayList]@()
         if ($action_changes.Count -gt 0) {
             [void]$task_diff.Add("[Actions]")
             foreach ($action_change in $action_changes) {
@@ -1092,7 +1092,7 @@ if ($state -eq "absent") {
             [void]$task_diff.Add("`n")
         }
 
-        if ($password -ne $null -and (($update_password -eq $true) -or ($task_diff.Count -gt 0))) {
+        if ($null -ne $password -and (($update_password -eq $true) -or ($task_diff.Count -gt 0))) {
             # because we can't compare the passwords we just need to reset it
             $register_username = $username
             $register_password = $password
@@ -1103,8 +1103,8 @@ if ($state -eq "absent") {
             $register_password = $null
             $register_logon_type = $null
         }
-        
-        if ($task_diff.Count -gt 0 -or $register_password -ne $null) {
+
+        if ($task_diff.Count -gt 0 -or $null -ne $register_password) {
             if ($check_mode) {
                 # Only validate the task in check mode
                 $task_creation_flags = [TASK_CREATION]::TASK_VALIDATE_ONLY
@@ -1117,12 +1117,12 @@ if ($state -eq "absent") {
             } catch {
                 Fail-Json -obj $result -message "failed to modify scheduled task: $($_.Exception.Message)"
             }
-            
+
             $result.changed = $true
 
             if ($diff_mode) {
                 $changed_diff_text = $task_diff -join "`n"
-                if ($result.diff.prepared -ne $null) {
+                if ($null -ne $result.diff.prepared) {
                     $diff_text = "$($result.diff.prepared)`n$changed_diff_text"
                 } else {
                     $diff_text = $changed_diff_text

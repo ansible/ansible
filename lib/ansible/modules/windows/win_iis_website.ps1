@@ -24,7 +24,7 @@ $bind_ssl = Get-AnsibleParam -obj $params -name "ssl" -type "str"
 # are separated by a pipe and property name/values by colon.
 # Ex. "foo:1|bar:2"
 $parameters = Get-AnsibleParam -obj $params -name "parameters" -type "str"
-if($parameters -ne $null) {
+if($null -ne $parameters) {
   $parameters = @($parameters -split '\|' | ForEach {
     return ,($_ -split "\:", 2);
   })
@@ -32,7 +32,7 @@ if($parameters -ne $null) {
 
 
 # Ensure WebAdministration module is loaded
-if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
+if ($null -eq (Get-Module "WebAdministration" -ErrorAction SilentlyContinue)) {
   Import-Module WebAdministration
 }
 
@@ -84,7 +84,7 @@ Try {
     # This is a bug in the New-WebSite commandlet. Apparently there must be at least one site configured in IIS otherwise New-WebSite crashes.
     # For more details, see http://stackoverflow.com/questions/3573889/ps-c-new-website-blah-throws-index-was-outside-the-bounds-of-the-array
     $sites_list = get-childitem -Path IIS:\sites
-    if ($sites_list -eq $null) { $site_parameters.ID = 1 }
+    if ($null -eq $sites_list) { $site_parameters.ID = 1 }
 
     $site = New-Website @site_parameters -Force
     $result.changed = $true

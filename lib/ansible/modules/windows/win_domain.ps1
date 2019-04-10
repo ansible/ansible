@@ -59,13 +59,13 @@ if ($check_mode -and $installed) {
 
 # Check that we got a valid domain_mode
 $valid_domain_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.DomainMode.ParameterType)
-if (($domain_mode -ne $null) -and -not ($domain_mode -in $valid_domain_modes)) {
+if (($null -ne $domain_mode) -and -not ($domain_mode -in $valid_domain_modes)) {
     Fail-Json -obj $result -message "The parameter 'domain_mode' does not accept '$domain_mode', please use one of: $valid_domain_modes"
 }
 
 # Check that we got a valid forest_mode
 $valid_forest_modes = [Enum]::GetNames((Get-Command -Name Install-ADDSForest).Parameters.ForestMode.ParameterType)
-if (($forest_mode -ne $null) -and -not ($forest_mode -in $valid_forest_modes)) {
+if (($null -ne $forest_mode) -and -not ($forest_mode -in $valid_forest_modes)) {
     Fail-Json -obj $result -message "The parameter 'forest_mode' does not accept '$forest_mode', please use one of: $valid_forest_modes"
 }
 
@@ -103,7 +103,7 @@ if (-not $forest) {
         $install_params.DomainNetBiosName = $domain_netbios_name
     }
 
-    if ($create_dns_delegation -ne $null) {
+    if ($null -ne $create_dns_delegation) {
         $install_params.CreateDnsDelegation = $create_dns_delegation
     }
 

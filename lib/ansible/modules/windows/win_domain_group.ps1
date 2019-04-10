@@ -14,7 +14,7 @@ $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -d
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $display_name = Get-AnsibleParam -obj $params -name "display_name" -type "str"
 $domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
-$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($domain_username -ne $null)
+$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($null -ne $domain_username)
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $category = Get-AnsibleParam -obj $params -name "category" -type "str" -validateset "distribution","security"
 $scope = Get-AnsibleParam -obj $params -name "scope" -type "str" -validateset "domainlocal","global","universal"
@@ -40,12 +40,12 @@ if (-not (Get-Module -Name ActiveDirectory -ListAvailable)) {
 Import-Module ActiveDirectory
 
 $extra_args = @{}
-if ($domain_username -ne $null) {
+if ($null -ne $domain_username) {
     $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
     $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
     $extra_args.Credential = $credential
 }
-if ($domain_server -ne $null) {
+if ($null -ne $domain_server) {
     $extra_args.Server = $domain_server
 }
 
@@ -57,7 +57,7 @@ try {
     Fail-Json $result "failed to retrieve initial details for group $($name): $($_.Exception.Message)"
 }
 if ($state -eq "absent") {
-    if ($group -ne $null) {
+    if ($null -ne $group) {
         if ($group.ProtectedFromAccidentalDeletion -eq $true -and $ignore_protection -eq $true) {
             $group = $group | Set-ADObject -ProtectedFromAccidentalDeletion $false -WhatIf:$check_mode -PassThru @extra_args
         } elseif ($group.ProtectedFromAccidentalDeletion -eq $true -and $ignore_protection -eq $false) {
@@ -69,7 +69,7 @@ if ($state -eq "absent") {
         } catch {
             Fail-Json $result "failed to remove group $($name): $($_.Exception.Message)"
         }
-        
+
         $result.changed = $true
         if ($diff_mode) {
             $result.diff.prepared = "-[$name]"
@@ -77,7 +77,7 @@ if ($state -eq "absent") {
     }
 } else {
     # validate that path is an actual path
-    if ($organizational_unit -ne $null) {
+    if ($null -ne $organizational_unit) {
         try {
             Get-ADObject -Identity $organizational_unit @extra_args | Out-Null
         } catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
@@ -86,12 +86,12 @@ if ($state -eq "absent") {
     }
 
     $diff_text = $null
-    if ($group -ne $null) {
+    if ($null -ne $group) {
         # will be overriden later if no change actually occurs
         $diff_text += "[$name]`n"
 
         # change the path of the group
-        if ($organizational_unit -ne $null) {
+        if ($null -ne $organizational_unit) {
             $group_cn = $group.CN
             $existing_path = $group.DistinguishedName -replace "^CN=$group_cn,",''
             if ($existing_path -ne $organizational_unit) {
@@ -112,7 +112,7 @@ if ($state -eq "absent") {
                         $group | Set-ADObject -ProtectedFromAccidentalDeletion $true -WhatIf:$check_mode -PassThru @extra_args | Out-Null
                     }
                 }
-                
+
                 $result.changed = $true
                 $diff_text += "-DistinguishedName = CN=$group_cn,$existing_path`n+DistinguishedName = CN=$group_cn,$organizational_unit`n"
 
@@ -129,7 +129,7 @@ if ($state -eq "absent") {
         $run_change = $false
         $set_args = $extra_args.Clone()
 
-        if ($scope -ne $null) {
+        if ($null -ne $scope) {
             if ($group.GroupScope -ne $scope) {
                 # you cannot from from Global to DomainLocal and vice-versa, we
                 # need to change it to Universal and then finally to the target
@@ -148,26 +148,26 @@ if ($state -eq "absent") {
             }
         }
 
-        if ($description -ne $null -and $group.Description -cne $description) {
+        if ($null -ne $description -and $group.Description -cne $description) {
             $set_args.Description = $description
             $run_change = $true
             $diff_text += "-Description = $($group.Description)`n+Description = $description`n"
         }
 
-        if ($display_name -ne $null -and $group.DisplayName -cne $display_name) {
+        if ($null -ne $display_name -and $group.DisplayName -cne $display_name) {
             $set_args.DisplayName = $display_name
             $run_change = $true
             $diff_text += "-DisplayName = $($group.DisplayName)`n+DisplayName = $display_name`n"
         }
 
-        if ($category -ne $null -and $group.GroupCategory -ne $category) {
+        if ($null -ne $category -and $group.GroupCategory -ne $category) {
             $set_args.GroupCategory = $category
             $run_change = $true
             $diff_text += "-GroupCategory = $($group.GroupCategory)`n+GroupCategory = $category`n"
         }
 
-        if ($managed_by -ne $null) {
-            if ($group.ManagedBy -eq $null) {
+        if ($null -ne $managed_by) {
+            if ($null -eq $group.ManagedBy) {
                 $set_args.ManagedBy = $managed_by
                 $run_change = $true
                 $diff_text += "+ManagedBy = $managed_by`n"
@@ -190,7 +190,7 @@ if ($state -eq "absent") {
             }
         }
 
-        if ($attributes -ne $null) {
+        if ($null -ne $attributes) {
             $add_attributes = @{}
             $replace_attributes = @{}
             foreach ($attribute in $attributes.GetEnumerator()) {
@@ -227,7 +227,7 @@ if ($state -eq "absent") {
             }
             $result.changed = $true
 
-            if ($extra_scope_change -ne $null) {
+            if ($null -ne $extra_scope_change) {
                 try {
                     $group = $group | Set-ADGroup -GroupScope $extra_scope_change -WhatIf:$check_mode -PassThru @extra_args
                 } catch {
@@ -242,7 +242,7 @@ if ($state -eq "absent") {
         }
     } else {
         # validate if scope is set
-        if ($scope -eq $null) {
+        if ($null -eq $scope) {
             Fail-Json $result "scope must be set when state=present and the group doesn't exist"
         }
 
@@ -251,34 +251,34 @@ if ($state -eq "absent") {
         $add_args.Name = $name
         $add_args.GroupScope = $scope
 
-        if ($description -ne $null) {
+        if ($null -ne $description) {
             $add_args.Description = $description
             $diff_text += "+Description = $description`n"
         }
 
-        if ($display_name -ne $null) {
+        if ($null -ne $display_name) {
             $add_args.DisplayName = $display_name
             $diff_text += "+DisplayName = $display_name`n"
         }
 
-        if ($category -ne $null) {
+        if ($null -ne $category) {
             $add_args.GroupCategory = $category
             $diff_text += "+GroupCategory = $category`n"
         }
 
-        if ($managed_by -ne $null) {
+        if ($null -ne $managed_by) {
             $add_args.ManagedBy = $managed_by
             $diff_text += "+ManagedBy = $managed_by`n"
         }
 
-        if ($attributes -ne $null) {
+        if ($null -ne $attributes) {
             $add_args.OtherAttributes = $attributes
             foreach ($attribute in $attributes.GetEnumerator()) {
                 $diff_text += "+$($attribute.Name) = $($attribute.Value)`n"
             }
         }
 
-        if ($organizational_unit -ne $null) {
+        if ($null -ne $organizational_unit) {
             $add_args.Path = $organizational_unit
             $diff_text += "+Path = $organizational_unit`n"
         }
@@ -292,12 +292,12 @@ if ($state -eq "absent") {
     }
 
     # set the protection value
-    if ($protect -ne $null) {
+    if ($null -ne $protect) {
         if (-not $check_mode) {
             $group = Get-ADGroup -Identity $name -Properties * @extra_args
         }
         $existing_protection_value = $group.ProtectedFromAccidentalDeletion
-        if ($existing_protection_value -eq $null) {
+        if ($null -eq $existing_protection_value) {
             $existing_protection_value = $false
         }
         if ($existing_protection_value -ne $protect) {
@@ -311,7 +311,7 @@ if ($state -eq "absent") {
         }
     }
 
-    if ($diff_mode -and $diff_text -ne $null) {
+    if ($diff_mode -and $null -ne $diff_text) {
         $result.diff.prepared = $diff_text
     }
 
@@ -329,7 +329,7 @@ if ($state -eq "absent") {
         $result.group_scope = ($group.GroupScope).ToString()
         $result.category = ($group.GroupCategory).ToString()
 
-        if ($attributes -ne $null) {
+        if ($null -ne $attributes) {
             $result.attributes = @{}
             foreach ($attribute in $attributes.GetEnumerator()) {
                 $attribute_name = $attribute.Name
