@@ -914,7 +914,7 @@ def rfc2822_date_string(timetuple, zone='-0000'):
         zone)
 
 
-def normalize_headers(headers):
+def normalize_headers(headers, force_lower_case=False):
     if PY3:
         normalized = httplib.HTTPMessage()
     else:
@@ -922,8 +922,11 @@ def normalize_headers(headers):
 
     # Don't be lossy, append header values for duplicate headers
     for name, value in headers.items():
-        # lower case keys to match py2 behavior, and create more consistent results
-        name = name.lower()
+
+        if force_lower_case:
+            # lower case keys to match py2 behavior, and create more consistent results
+            name = name.lower()
+
         if name in normalized:
             old = normalized[name]
             del normalized[name]
@@ -1374,7 +1377,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
-        info.update(normalize_headers(r.headers))
+        info.update(normalize_headers(r.headers), force_lower_case=True)
 
         # parse the cookies into a nice dictionary
         cookie_list = []
@@ -1409,7 +1412,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
             info.update(dict((k.lower(), v) for k, v in e.info().items()))
 
-            info.update(normalize_headers(e.headers))
+            info.update(normalize_headers(e.headers), force_lower_case=True)
         except Exception:
             pass
 
