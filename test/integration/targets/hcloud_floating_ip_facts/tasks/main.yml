@@ -37,7 +37,7 @@
 - name: test gather hcloud floating ip facts with correct id
   hcloud_floating_ip_facts:
     id: "{{hcloud_test_floating_ip_id}}"
-- name: verify test gather hcloud loating ip with correct id
+- name: verify test gather hcloud floating ip with correct id
   assert:
     that:
       - ansible_facts.hcloud_floating_ip_facts|selectattr('description','equalto','{{ hcloud_test_floating_ip_name }}') | list | count == 1
