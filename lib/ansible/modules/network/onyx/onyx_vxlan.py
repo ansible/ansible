@@ -33,19 +33,15 @@ options:
   bgp:
     description:
       - configure bgp on nve interface.
-    choices: ['True', 'False']
-    default: True
   mlag_tunnel_ip:
     description:
       - vxlan Mlag tunnel IP
   vni_vlan_list:
     description:
-      - Each item in the list has two attributes: vlan_id, vni_id.
+      - Each item in the list has two attributes vlan_id, vni_id.
   arp_suppression:
     description:
       - A flag telling if to configure arp suppression.
-    choices: ['True', 'False']
-    default: False
 """
 
 EXAMPLES = """
@@ -77,7 +73,6 @@ commands:
     - interface nve 1 vxlan mlag-tunnel-ip 100.0.0.1
     - interface nve 1 nve vni 10010 vlan 10
     - interface nve 1 nve vni 10060 vlan 6
-  ARP suppression:
     - interface nve 1 nve neigh-suppression
     - interface vlan 6
     - interface vlan 10
@@ -91,8 +86,8 @@ from ansible.module_utils.network.onyx.onyx import BaseOnyxModule
 
 class OnyxVxlanModule(BaseOnyxModule):
 
-    LOOPBACK_REGEX = re.compile("loopback (\d+).*")
-    NVE_ID_REGEX = re.compile("Interface NVE (\d+).*")
+    LOOPBACK_REGEX = re.compile(r'^loopback (\d+).*')
+    NVE_ID_REGEX = re.compile(r'^Interface NVE (\d+).*')
 
     def init_module(self):
         """ initialize module
@@ -143,8 +138,7 @@ class OnyxVxlanModule(BaseOnyxModule):
             loopback_id = match.group(1)
             self._current_config['loopback_id'] = int(loopback_id)
 
-        self._current_config['global_neigh_suppression'] = vxlan_config.get(
-                                                            "Global Neigh-Suppression")
+        self._current_config['global_neigh_suppression'] = vxlan_config.get("Global Neigh-Suppression")
 
         self._current_config['vni_vlan_mapping'] = dict()
         nve_detail = self._show_nve_detail()
@@ -156,8 +150,7 @@ class OnyxVxlanModule(BaseOnyxModule):
                 for vlan_id in nve_detail:
                     self._current_config['vni_vlan_mapping'][int(vlan_id)] = dict(
                                     vni_id=int(nve_detail[vlan_id][0].get("VNI")),
-                                    arp_suppression=nve_detail[vlan_id][0].get(
-                                                                "Neigh Suppression"))
+                                    arp_suppression=nve_detail[vlan_id][0].get("Neigh Suppression"))
 
     def _show_vxlan_config(self):
         cmd = "show interfaces nve"
