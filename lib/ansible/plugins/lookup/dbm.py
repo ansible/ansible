@@ -5,8 +5,8 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: dbm
-    author: Stoned Elipot <stoned.elipot(at)gmail.com>
-    version_added: "2.7"
+    author: Stoned Elipot (@stoned)
+    version_added: "2.8"
     short_description: return a list of values from a DBM database
     description:
         - The dbm lookup fetches the values of a list of keys from a DBM database.
