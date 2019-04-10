@@ -400,7 +400,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         if not server_group_params:
             return None
 
-        matchin_group_names = []
+        matching_group_names = []
         results = []
         server_groups = self._get('server-groups')
         for server_group in server_groups:
@@ -412,10 +412,10 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
                 results.append(server_group['uuid'])
                 server_group_params.remove(server_group['name'])
                 # Remember the names found
-                matchin_group_names.append(server_group['name'])
+                matching_group_names.append(server_group['name'])
 
             # Names are not unique, verify if name already found in previous iterations
-            elif server_group['name'] in matchin_group_names:
+            elif server_group['name'] in matching_group_names:
                 self._module.fail_json(msg="More than one server group with name exists: '%s'. "
                                        "Use the 'uuid' parameter to identify the server group." % server_group['name'])
 
