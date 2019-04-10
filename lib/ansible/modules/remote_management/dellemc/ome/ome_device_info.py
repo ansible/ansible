@@ -21,11 +21,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: ome_device_facts
-short_description: Retrieves the facts about Device.
+module: ome_device_info
+short_description: Retrieves the information about Device.
 version_added: "2.8"
 description:
-   - This module retrieves the list of all devices facts with the exhaustive inventory of each
+   - This module retrieves the list of all devices information with the exhaustive inventory of each
      device.
 options:
     hostname:
@@ -90,13 +90,13 @@ author: "Sajna Shetty(@Sajna-Shetty)"
 EXAMPLES = """
 ---
 - name: Retrieve basic inventory of all devices.
-  ome_device_facts:
+  ome_device_info:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
 
 - name: Retrieve basic inventory for devices identified by IDs 33333 or 11111 using filtering.
-  ome_device_facts:
+  ome_device_info:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -105,7 +105,7 @@ EXAMPLES = """
       filter: "Id eq 33333 or Id eq 11111"
 
 - name: Retrieve inventory details of specified devices identified by IDs 11111 and 22222.
-  ome_device_facts:
+  ome_device_info:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -116,7 +116,7 @@ EXAMPLES = """
         - 22222
 
 - name: Retrieve inventory details of specified devices identified by service tags MXL1234 and MXL4567.
-  ome_device_facts:
+  ome_device_info:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -127,7 +127,7 @@ EXAMPLES = """
         - MXL4567
 
 - name: Retrieve details of specified inventory type of specified devices identified by ID and service tags.
-  ome_device_facts:
+  ome_device_info:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -141,7 +141,7 @@ EXAMPLES = """
       inventory_type: "serverDeviceCards"
 
 - name: Retrieve subsystem health of specified devices identified by service tags.
-  ome_device_facts:
+  ome_device_info:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -157,15 +157,15 @@ RETURN = """
 ---
 msg:
   type: str
-  description: Over all device facts status.
+  description: Over all device information status.
   returned: on error
-  sample: "Failed to fetch the device facts"
-ansible_facts:
+  sample: "Failed to fetch the device information"
+device_info:
   type: dict
-  description: Returns the facts collected from the Device.
+  description: Returns the information collected from the Device.
   returned: success
   sample: {
-        "192.168.0.1": [
+        [
             {
                 "Actions": null,
                 "AssetTag": null,
@@ -407,9 +407,9 @@ def main():
                     else:
                         device_facts["device_service_tag"] = device_fact_error_report
         if 200 in resp_status:
-            module.exit_json(ansible_facts={module.params["hostname"]: device_facts})
+            module.exit_json(device_info= device_facts)
         else:
-            module.fail_json(msg="Failed to fetch the device facts")
+            module.fail_json(msg="Failed to fetch the device information")
     except (URLError, HTTPError, SSLValidationError, ConnectionError, TypeError, ValueError) as err:
         module.fail_json(msg=str(err))
 
