@@ -413,6 +413,7 @@ def main():
     subpath = module.params['subpath']
     state = module.params['state']
     changed = False
+    diff = None
 
     users = list(ldap_search(
         '(&(objectClass=posixAccount)(uid={0}))'.format(username),
