@@ -63,7 +63,7 @@ def replace_resource_dict(item, value):
         return item.get(value)
 
 
-# Handles all authentation and HTTP sessions for GCP API calls.
+# Handles all authentication and HTTP sessions for GCP API calls.
 class GcpSession(object):
     def __init__(self, module, product):
         self.module = module
@@ -114,12 +114,12 @@ class GcpSession(object):
 
         if self.module.params.get('service_account_email') is not None and self.module.params['auth_kind'] != 'machineaccount':
             self.module.fail_json(
-                msg="Service Acccount Email only works with Machine Account-based authentication"
+                msg="Service Account Email only works with Machine Account-based authentication"
             )
 
         if self.module.params.get('service_account_file') is not None and self.module.params['auth_kind'] != 'serviceaccount':
             self.module.fail_json(
-                msg="Service Acccount File only works with Service Account-based authentication"
+                msg="Service Account File only works with Service Account-based authentication"
             )
 
     def _credentials(self):
@@ -134,7 +134,7 @@ class GcpSession(object):
             return google.auth.compute_engine.Credentials(
                 self.module.params['service_account_email'])
         else:
-            self.module.fail_json(msg="Credential type '%s' not implmented" % cred_type)
+            self.module.fail_json(msg="Credential type '%s' not implemented" % cred_type)
 
     def _headers(self):
         return {
