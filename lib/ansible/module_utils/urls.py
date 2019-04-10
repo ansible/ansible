@@ -914,6 +914,23 @@ def rfc2822_date_string(timetuple, zone='-0000'):
         zone)
 
 
+def normalize_headers(headers):
+    if PY3:
+        normalized = httplib.HTTPMessage()
+    else:
+        normalized = httplib.HTTPMessage(io.StringIO())
+
+    # Don't be lossy, append header values for duplicate headers
+    for name, value in headers.items():
+        if name in normalized:
+            old = normalized[name]
+            del normalized[name]
+            normalized[name] = ', '.join((old, value))
+        else:
+            normalized[name] = value
+    return normalized
+
+
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
@@ -1351,21 +1368,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
                      unix_socket=unix_socket)
-        # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
-        info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
-        # Don't be lossy, append header values for duplicate headers
-        # In Py2 there is nothing that needs done, py2 does this for us
-        if PY3:
-            temp_headers = {}
-            for name, value in r.headers.items():
-                # The same as above, lower case keys to match py2 behavior, and create more consistent results
-                name = name.lower()
-                if name in temp_headers:
-                    temp_headers[name] = ', '.join((temp_headers[name], value))
-                else:
-                    temp_headers[name] = value
-            info.update(temp_headers)
+        info.update(normalize_headers(r.headers))
 
         # parse the cookies into a nice dictionary
         cookie_list = []
@@ -1397,20 +1401,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
         # Try to add exception info to the output but don't fail if we can't
         try:
-            # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
-            info.update(dict((k.lower(), v) for k, v in e.info().items()))
-            # Don't be lossy, append header values for duplicate headers
-            # In Py2 there is nothing that needs done, py2 does this for us
-            if PY3:
-                temp_headers = {}
-                for name, value in e.headers.items():
-                    # The same as above, lower case keys to match py2 behavior, and create more consistent results
-                    name = name.lower()
-                    if name in temp_headers:
-                        temp_headers[name] = ', '.join((temp_headers[name], value))
-                    else:
-                        temp_headers[name] = value
-                info.update(temp_headers)
+            info.update(normalize_headers(e.headers))
         except Exception:
             pass
 
