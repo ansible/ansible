@@ -33,6 +33,7 @@ options:
   bgp:
     description:
       - configure bgp on nve interface.
+    default: True
   mlag_tunnel_ip:
     description:
       - vxlan Mlag tunnel IP
@@ -149,8 +150,8 @@ class OnyxVxlanModule(BaseOnyxModule):
             if nve_detail:
                 for vlan_id in nve_detail:
                     self._current_config['vni_vlan_mapping'][int(vlan_id)] = dict(
-                                    vni_id=int(nve_detail[vlan_id][0].get("VNI")),
-                                    arp_suppression=nve_detail[vlan_id][0].get("Neigh Suppression"))
+                        vni_id=int(nve_detail[vlan_id][0].get("VNI")),
+                        arp_suppression=nve_detail[vlan_id][0].get("Neigh Suppression"))
 
     def _show_vxlan_config(self):
         cmd = "show interfaces nve"
