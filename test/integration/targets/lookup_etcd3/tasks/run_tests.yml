@@ -27,26 +27,29 @@
     name: "{{ etcd3_deps_packages }}"
     state: present
 
-- name: clone source etcd3 python
-  git:
-    clone: true
-    dest: /tmp/etcd3
-    repo: https://github.com/kragniz/python-etcd3.git
+- name: Install etcd3 module python
+  pip:
+    name: etcd3
+    state: present
 
-- name: install etcd3 python
-  shell: cd /tmp/etcd3 ; python /tmp/etcd3/setup.py install
+- name: Install etcd3 module python for lookup in localhost
+  pip:
+    name: etcd3
+    state: present
+  delegate_to: localhost
 
+- name: debug
+  shell: pip list
+  register: debug1
 
-# - name: Install etcd3 module python
-#  pip:
-#    name: etcd3
-#    state: present
+- name: debug
+  shell: pip list
+  delegate_to: localhost
+  register: debug2
 
-# - name: Install etcd3 module python for lookup in localhost
-#  pip:
-#    name: etcd3
-#    state: present
-#  delegate_to: localhost
+- name: debug
+  debug:
+    msg: "{{ debug1.stdout_lines }} {{ debug2.stdout_lines }} {{ vars }}"
 
 - name: If can't reuse
   block:
