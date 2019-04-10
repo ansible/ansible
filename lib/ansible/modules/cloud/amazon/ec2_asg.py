@@ -73,6 +73,15 @@ options:
   max_size:
     description:
       - Maximum number of instances in group, if unspecified then the current group value will be used.
+  mixed_instances_policy:
+    description:
+      - Using mixed intances policy while ASG present
+    required: false
+    version_added: "2.8"
+    suboptions:
+      instance_types:
+        description:
+          - A list of instance_types.
   placement_group:
     description:
       - Physical location of your cluster placement group created in Amazon EC2.
@@ -696,6 +705,7 @@ def get_launch_object(connection, ec2_connection):
     launch_object = dict()
     launch_config_name = module.params.get('launch_config_name')
     launch_template = module.params.get('launch_template')
+    mixed_instances_policy = module.params.get('mixed_instances_policy')
     if launch_config_name is None and launch_template is None:
         return launch_object
     elif launch_config_name:
@@ -714,6 +724,20 @@ def get_launch_object(connection, ec2_connection):
             launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": launch_template['version']}}
         else:
             launch_object = {"LaunchTemplate": {"LaunchTemplateId": lt['LaunchTemplateId'], "Version": str(lt['LatestVersionNumber'])}}
+        launch_object = {'LaunchTemplate': launch_object}
+        if mixed_instances_policy:
+            instance_types = mixed_instances_policy.get('instance_types', [])
+            policy = {
+                'LaunchTemplate': {
+                    'LaunchTemplateSpecification': launch_object
+                }
+            }
+            if instance_types:
+                policy['LaunchTemplate']['Overrides'] = []
+                for instance_type in instance_types:
+                    instance_type_dict = {'InstanceType': instance_type}
+                    policy['LaunchTemplate']['Overrides'].append(instance_type_dict)
+            launch_object['MixedInstancesPolicy'] = policy
         return launch_object
 
 
@@ -909,6 +933,7 @@ def create_autoscaling_group(connection):
     availability_zones = module.params['availability_zones']
     launch_config_name = module.params.get('launch_config_name')
     launch_template = module.params.get('launch_template')
+    mixed_instances_policy = module.params.get('mixed_instances_policy')
     min_size = module.params['min_size']
     max_size = module.params['max_size']
     placement_group = module.params.get('placement_group')
@@ -986,7 +1011,10 @@ def create_autoscaling_group(connection):
         if 'LaunchConfigurationName' in launch_object:
             ag['LaunchConfigurationName'] = launch_object['LaunchConfigurationName']
         elif 'LaunchTemplate' in launch_object:
-            ag['LaunchTemplate'] = launch_object['LaunchTemplate']
+            if 'MixedInstancesPolicy' in launch_object:
+                ag['MixedInstancesPolicy'] = launch_object['MixedInstancesPolicy']
+            else:
+                ag['LaunchTemplate'] = launch_object['LaunchTemplate']
         else:
             module.fail_json(msg="Missing LaunchConfigurationName or LaunchTemplate",
                              exception=traceback.format_exc())
@@ -1593,6 +1621,11 @@ def main():
                                      launch_template_id=dict(type='str'),
                                  ),
                                  ),
+            mixed_instances_policy=dict(type='dict',
+                                        default=None,
+                                        options=dict(
+                                            instance_types=dict(type='list'),
+                                        )),
             min_size=dict(type='int'),
             max_size=dict(type='int'),
             placement_group=dict(type='str'),
