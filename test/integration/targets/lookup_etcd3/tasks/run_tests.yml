@@ -59,10 +59,10 @@
     - _etcddownloadexists is not changed
 
 - name: Download etcd3
-   unarchive:
-      src: "{{ etcd3_download_url }}"
-      dest: "{{ etcd3_download_location }}"
-      remote_src: yes
+  unarchive:
+    src: "{{ etcd3_download_url }}"
+    dest: "{{ etcd3_download_location }}"
+    remote_src: yes
 
 - name: Run etcd3
   shell: "{{ etcd3_path }}/etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' >/dev/null 2>&1 &"
