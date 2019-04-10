@@ -460,7 +460,7 @@ def main():
         for nsp_name in nsps_enabled:
             if nsp_name.lower() in ['virtualrouter', 'vpcvirtualrouter']:
                 acs_network.set_vrouter_element_state(enabled=True, nsp_name=nsp_name)
-            elif nsp_name == 'internallbvm':
+            elif nsp_name.lower() == 'internallbvm':
                 acs_network.set_loadbalancer_element_state(enabled=True, nsp_name=nsp_name)
 
             acs_network.update_nsp(name=nsp_name, state='Enabled')
