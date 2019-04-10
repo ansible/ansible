@@ -127,7 +127,6 @@ def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
         role=dict(type='str', aliases=['name']),
-        role_id=dict(type='str'),
         display_name=dict(type='str'),
         description=dict(type='str'),
         permissions=dict(type='list', choices=[
