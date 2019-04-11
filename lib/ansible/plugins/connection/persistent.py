@@ -37,6 +37,7 @@ import sys
 import termios
 
 from ansible import constants as C
+from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection as SocketConnection, write_to_file_descriptor
@@ -93,6 +94,15 @@ class Connection(ConnectionBase):
         '''
         master, slave = pty.openpty()
 
+        env = os.environ.copy()
+        env.update({
+                   'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
+                   'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
+                   'ANSIBLE_CONNECTION_PLUGINS': connection_loader.print_paths(),
+                   'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
+                   'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
+                   'ANSIBLE_TERMINAL_PLUGINS': terminal_loader.print_paths(),
+                   })
         python = sys.executable
 
         def find_file_in_path(filename):
@@ -107,7 +117,7 @@ class Connection(ConnectionBase):
 
         p = subprocess.Popen(
             [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
-            stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
         os.close(slave)
 
