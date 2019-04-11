@@ -8,6 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: docker_machine
     plugin_type: inventory
+    author: Ximon Eighteen (@ximon18)
     short_description: Docker Machine inventory source
     requirements:
         - L(Docker Machine,https://docs.docker.com/machine/)
@@ -79,6 +80,7 @@ from ansible.utils.display import Display
 
 import json
 import re
+import shutil
 import subprocess
 
 display = Display()
@@ -90,16 +92,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = 'docker_machine'
 
     def _run_command(self, args):
-        command = ['docker-machine']
+        command = [(shutil.which('docker-machine'))]
         command.extend(args)
         display.debug('Executing command {0}'.format(command))
         try:
             result = subprocess.check_output(command)
-        except Exception as e:
+        except subprocess.CalledProcessError as e:
             display.warning('Exception {0} caught while executing command {1}, this was the original exception: {2}'.format(type(e).__name__, command, e))
             raise e
 
-        return result.decode('utf-8').strip()
+        return to_text(result).strip()
 
     def _get_docker_daemon_variables(self, id):
         '''
@@ -108,9 +110,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         try:
             env_lines = self._run_command(['env', '--shell=sh', id]).splitlines()
-        except Exception:
+        except subprocess.CalledProcessError:
             # This can happen when the machine is created but provisioning is incomplete
-            return None
+            return []
 
         # example output of docker-machine env --shell=sh:
         #   export DOCKER_TLS_VERIFY="1"
@@ -142,14 +144,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         try:
             ls_lines = self._run_command(ls_command)
         except Exception:
-            return None
+            return []
 
         return ls_lines.splitlines()
 
     def _inspect_docker_machine_host(self, node):
         try:
             inspect_lines = self._run_command(['inspect', self.node])
-        except Exception:
+        except Exception as e:
             return None
 
         return json.loads(inspect_lines)
@@ -213,7 +215,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         except Exception as e:
             raise AnsibleError('Unable to fetch hosts from Docker Machine, this was the original exception: %s' %
-                               to_native(e))
+                               to_native(e), orig_exc=e)
 
     def verify_file(self, path):
         """Return the possibility of a file being consumable by this plugin."""
