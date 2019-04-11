@@ -1,2 +1,0 @@
-bugfixes:
-- "acme_certificate - writing result failed when no path was specified (i.e. destination in current working directory)."

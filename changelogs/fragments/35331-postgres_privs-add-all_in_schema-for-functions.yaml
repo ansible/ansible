@@ -1,2 +1,0 @@
-minor_changes:
-  - postgres_privs now accepts 'ALL_IN_SCHEMA' objs for 'function' type (https://github.com/ansible/ansible/pull/35331).

@@ -1,2 +1,0 @@
-bugfixes:
-  - setup - properly detect is_chroot on Btrfs (https://github.com/ansible/ansible/issues/55006)

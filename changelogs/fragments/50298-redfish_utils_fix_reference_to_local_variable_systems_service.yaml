@@ -1,3 +1,0 @@
----
-bugfixes:
-- redfish_utils - fix reference to local variable 'systems_service'
