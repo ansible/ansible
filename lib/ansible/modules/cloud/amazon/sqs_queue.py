@@ -310,13 +310,12 @@ def main():
         connection = connect_to_aws(boto.sqs, region, **aws_connect_params)
 
         state = module.params.get('state')
-        if fifo_queue:
+        if not fifo_queue:
+            fifo_queue = 'false'
+        else:
             if (fifo_queue != 'true' and fifo_queue != 'false'):
                 module.fail_json(msg='fifo_queue can only be either true or false. If no value is specified standard queue will be created.')
                 
-        if not fifo_queue:
-            fifo_queue = 'false'
-        
         if state == 'present':
             create_or_update_sqs_queue(connection, module)
         elif state == 'absent':
