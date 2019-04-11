@@ -225,6 +225,8 @@ class AzureRMHDInsightclusterFacts(AzureRMModuleBase):
         if self.name is not None:
             self.results['clusters'] = self.get()
         elif self.resource_group is not None:
+            self.results['clusters'] = self.list_by_resource_group()
+        else:
             self.results['clusters'] = self.list_all()
         return self.results
 
