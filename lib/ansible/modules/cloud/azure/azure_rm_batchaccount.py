@@ -35,14 +35,12 @@ options:
         description:
         - Specifies the supported Azure location where the resource exists.
         required: true
-    auto_storage_account_id:
+    auto_storage_account:
         description:
         - The ID of the Batch Account auto storage account.
-        required: false
     key_vault_reference:
         description:
         - A reference to the Azure key vault associated with the Batch account.
-        required: false
         suboptions:
             id:
                 description:
@@ -56,15 +54,10 @@ options:
     pool_allocation_mode:
         description:
         - The pool acclocation mode of the Batch Account.
-        required: false
-        default: BatchService
+        default: batch_service
         choices:
-        - BatchService
-        - UserSubscription
-    tags:
-        description:
-        - A mapping of tags to assign to the batch account.
-        required: false
+        - batch_service
+        - user_subscription
     state:
         description:
         - Assert the state of the Batch Account.
@@ -77,6 +70,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Junyi Yi (@JunyiYi)"
@@ -88,7 +82,7 @@ EXAMPLES = '''
       resource_group: MyResGroup
       name: "test_object"
       location: West US
-      storage_account_id: MyStorageAccountId
+      auto_storage_account: MyStorageAccountId
       state: present
 '''
 
@@ -135,7 +129,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 required=True,
                 type='str'
             ),
-            auto_storage_account_id=dict(
+            auto_storage_account=dict(
                 type='str'
             ),
             key_vault_reference=dict(
@@ -152,9 +146,9 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 )
             ),
             pool_allocation_mode=dict(
-                default='BatchService',
+                default='batch_service',
                 type='str',
-                choices=['BatchService', 'UserSubscription']
+                choices=['batch_service', 'user_subscription']
             ),
             tags=dict(
                 type='str'
