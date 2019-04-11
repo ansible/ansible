@@ -1,2 +1,0 @@
-minor_changes:
-  - "meraki_network - type parameter no longer accepts combined. Instead, the network types should be specified in a list."

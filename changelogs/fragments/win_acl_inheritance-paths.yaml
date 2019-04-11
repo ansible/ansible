@@ -1,2 +1,0 @@
-bugfixes:
-- win_acl_inheritance - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
