@@ -251,7 +251,7 @@ def run_module():
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
-        port=dict(type='str', required=True),
+        port=dict(type='int', required=True),
         portname=dict(type='str', required=False, default=None),
         baud=dict(type='int', required=False, default=None, choices=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
         handshake=dict(type='int', required=False, default=None, choices=[0, 1, 2, 3]),
