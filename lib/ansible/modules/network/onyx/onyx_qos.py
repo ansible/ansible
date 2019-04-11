@@ -184,7 +184,7 @@ class OnyxQosModule(BaseOnyxModule):
         if_id = current_interface_qos_config.get("if_id")
         current_trust = current_interface_qos_config.get('trust')
 
-        return current_rewrite_pcp,  current_rewrite_dscp, current_trust, if_type, if_id
+        return current_rewrite_pcp, current_rewrite_dscp, current_trust, if_type, if_id
 
     def _add_interface_trust_cmds(self, if_type, if_id, interface, trust, current_trust):
 
