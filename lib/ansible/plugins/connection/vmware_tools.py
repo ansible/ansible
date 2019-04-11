@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import re
-from os.path import dirname, exists, getsize
+from os.path import exists, getsize
 from socket import gaierror
 from ssl import SSLEOFError, SSLError
 from time import sleep
@@ -24,7 +24,6 @@ except ImportError:
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase
-from ansible.utils.path import makedirs_safe
 from ansible.module_utils.basic import missing_required_lib
 
 try:
@@ -71,7 +70,6 @@ DOCUMENTATION = """
           - name: VI_USERNAME
           - name: VMWARE_USER
         vars:
-          - name: ansible_user
           - name: ansible_vmware_user
         required: True
       vmware_password:
@@ -81,7 +79,6 @@ DOCUMENTATION = """
           - name: VI_PASSWORD
           - name: VMWARE_PASSWORD
         vars:
-          - name: ansible_password
           - name: ansible_vmware_password
         required: True
       vmware_port:
@@ -118,9 +115,9 @@ DOCUMENTATION = """
           - "vCenter Example: C(Datacenter/vm/Discovered virtual machine/testVM)."
           - "ESXi Host Example: C(ha-datacenter/vm/testVM)."
           - Must include VM name, appended to 'folder' as would be passed to M(vmware_guest).
-          - Needs to include C(vm) between the Datacenter and the rest of the VM path.
+          - Needs to include I(vm) between the Datacenter and the rest of the VM path.
           - Datacenter default value for ESXi server is C(ha-datacenter).
-          - C(vm) is not visible in vSphere Web Client but necessary for VMware API to work.
+          - Folder I(vm) is not visible in the vSphere Web Client but necessary for VMware API to work.
         vars:
           - name: ansible_vmware_guest_path
         required: True
@@ -171,7 +168,7 @@ ansible_vmware_host: vcenter.example.com
 ansible_vmware_user: administrator@vsphere.local
 ansible_vmware_password: Secr3tP4ssw0rd!12
 ansible_vmware_validate_certs: no  # default is yes
-ansible_vmware_silence_tls_warnings: yes # default is no
+ansible_vmware_silence_tls_warnings: yes # default is yes
 
 # vCenter Connection VM Path Example
 ansible_vmware_guest_path: DATACENTER/vm/FOLDER/{{ inventory_hostname }}
