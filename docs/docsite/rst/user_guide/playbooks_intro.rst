@@ -407,9 +407,9 @@ Here's an example handlers section::
 
 You may want your Ansible handlers to use variables. For example, if the name of a service varies slightly by distribution, you want your output to show the exact name of the restarted service for each target machine. Avoid placing variables in the name of the handler. Since handler names are templated early on, Ansible may not have a value available for a handler name like this::
 
-   handlers:
-   # this handler name may cause your play to fail!
-   - name: restart "{{ web_service_name }}"
+    handlers:
+    # this handler name may cause your play to fail!
+    - name: restart "{{ web_service_name }}"
 
 If the variable used in the handler name is not available, the entire play fails. Changing that variable mid-play **will not** result in newly created handler.
 
