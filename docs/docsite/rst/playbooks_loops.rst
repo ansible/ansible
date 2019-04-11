@@ -262,7 +262,7 @@ The following properties are also available:
 
 * ``root``: allows filtering by original location
 * ``path``: contains the relative path to root
-* ``uidi``, ``gid``: force-create by exact id, rather than by name
+* ``uid``, ``gid``: force-create by exact id, rather than by name
 * ``size``, ``mtime``, ``ctime``: filter out files by size, mtime or ctime
 
 
