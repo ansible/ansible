@@ -91,9 +91,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'docker_machine'
 
-    DOCKER_MACHINE_PATH = get_bin_path('docker-machine')
+    DOCKER_MACHINE_PATH = None
 
     def _run_command(self, args):
+        if not self.DOCKER_MACHINE_PATH:
+            try:
+                self.DOCKER_MACHINE_PATH = get_bin_path('docker-machine', required=True)
+            except ValueError as e:
+                raise AnsibleError('Unable to locate the docker-machine binary.', orig_exc=e)
+
         command = [self.DOCKER_MACHINE_PATH]
         command.extend(args)
         display.debug('Executing command {0}'.format(command))
