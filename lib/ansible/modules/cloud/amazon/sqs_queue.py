@@ -36,6 +36,12 @@ options:
     description:
       - Name of the queue.
     required: true
+  fifo_queue:
+    description:
+      - true or false.
+    choices: ['true', 'false']
+    default: 'false'
+    version_added: "2.6"
   default_visibility_timeout:
     description:
       - The default visibility timeout in seconds.
@@ -148,6 +154,7 @@ def create_or_update_sqs_queue(connection, module):
     queue_name = module.params.get('name')
 
     queue_attributes = dict(
+        fifo_queue=module.params.get('fifo_queue'),
         default_visibility_timeout=module.params.get('default_visibility_timeout'),
         message_retention_period=module.params.get('message_retention_period'),
         maximum_message_size=module.params.get('maximum_message_size'),
@@ -192,6 +199,7 @@ def create_or_update_sqs_queue(connection, module):
 
 def update_sqs_queue(queue,
                      check_mode=False,
+                     fifo_queue=None,
                      default_visibility_timeout=None,
                      message_retention_period=None,
                      maximum_message_size=None,
@@ -201,6 +209,13 @@ def update_sqs_queue(queue,
                      redrive_policy=None):
     changed = False
 
+    if fifo_queue == 'true':
+         changed = set_queue_attribute(queue, 'FifoQueue', true,
+                                  check_mode=check_mode) or changed
+    else:
+         changed = set_queue_attribute(queue, 'FifoQueue', false,
+                                  check_mode=check_mode) or changed
+    
     changed = set_queue_attribute(queue, 'VisibilityTimeout', default_visibility_timeout,
                                   check_mode=check_mode) or changed
     changed = set_queue_attribute(queue, 'MessageRetentionPeriod', message_retention_period,
@@ -271,6 +286,7 @@ def main():
     argument_spec.update(dict(
         state=dict(default='present', choices=['present', 'absent']),
         name=dict(required=True, type='str'),
+        fifo_queue=dict(type='str', default='false', choices=['true', 'false']),
         default_visibility_timeout=dict(type='int'),
         message_retention_period=dict(type='int'),
         maximum_message_size=dict(type='int'),
@@ -294,15 +310,18 @@ def main():
     try:
         connection = connect_to_aws(boto.sqs, region, **aws_connect_params)
 
+        state = module.params.get('state')
+        if fifo_queue:
+            if (fifo_queue != 'true' and fifo_queue != 'false'):
+                module.fail_json(msg='fifo_queue can only be either true or false. If no value is specified standard queue will be created.')
+        
+        if state == 'present':
+            create_or_update_sqs_queue(connection, module)
+        elif state == 'absent':
+            delete_sqs_queue(connection, module)
+        
     except (NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
-
-    state = module.params.get('state')
-    if state == 'present':
-        create_or_update_sqs_queue(connection, module)
-    elif state == 'absent':
-        delete_sqs_queue(connection, module)
-
 
 if __name__ == '__main__':
     main()
