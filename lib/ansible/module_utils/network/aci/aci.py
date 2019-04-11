@@ -267,7 +267,7 @@ class ACIModule(object):
         self.headers['Cookie'] = 'APIC-Certificate-Algorithm=v1.0; ' +\
                                  'APIC-Certificate-DN=%s; ' % sig_dn +\
                                  'APIC-Certificate-Fingerprint=fingerprint; ' +\
-                                 'APIC-Request-Signature=%s' % sig_signature
+                                 'APIC-Request-Signature=%s' % sig_signature.decode('ascii')
 
     def response_json(self, rawoutput):
         ''' Handle APIC JSON response output '''
