@@ -41,7 +41,7 @@
 
 - name: Assert the eventhub namespace was updated
   assert:
-    that: 
+    that:
       - output.changed
       - output.maximum_throughput_units == 4
 
@@ -135,7 +135,7 @@
 
 - name: Assert the event hub was updated
   assert:
-    that: 
+    that:
        - output.changed
        - output.status == 'Disabled'
        - output.message_retention_in_days == 7
@@ -193,6 +193,101 @@
        - output.eventhubs[0]['partition_count'] != None
        - output.eventhubs[0]['partition_ids'] != None
        - output.eventhubs[0]['status'] != None
+
+- name: Create a sas policy for an eventhub namespace
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    rights: send
+  register: output
+
+- name: Assert the event hub was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+       - output.keys != None
+
+- name: Update a sas policy for an eventhub namespace
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    rights: listen_send
+  register: output
+
+- name: Assert the event hub was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+       - output.rights == "listen_send"
+
+- name: Update a sas policy for an eventhub namespace
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    regenerate_secondary_key: true
+    regenerate_primary_key: true
+    rights: listen_send
+  register: output
+
+- name: Assert the event hub was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+
+- name: Create a sas policy for an eventhub
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    rights: send
+  register: output
+
+- name: Assert the event hub was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+       - output.keys != None
+
+- name: Update a sas policy for an eventhub
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    rights: listen_send
+  register: output
+
+- name: Assert the event hub was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+       - output.rights == "listen_send"
+
+- name: Update a sas policy for an eventhub
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    regenerate_secondary_key: true
+    regenerate_primary_key: true
+    rights: listen_send
+  register: output
+
+- name: Assert the event hub was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id != None
 
 - name: Delete first event hub
   azure_rm_eventhub:
