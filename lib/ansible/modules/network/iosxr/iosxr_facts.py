@@ -356,7 +356,7 @@ class Interfaces(FactsBase):
         match = re.search(r'Port Description: (.+)$', data, re.M)
         if match:
             return match.group(1)
-    
+
     def parse_lldp_host(self, data):
         match = re.search(r'System Name: (.+)$', data, re.M)
         if match:
