@@ -105,7 +105,7 @@ notes:
 author:
 - Jonathan Mainguy (@Jmainguy)
 - Benjamin Malynovytch (@bmalynovytch)
--Aliaksei Zeliashchonak (@azeliashchonak)
+- Aliaksei Zeliashchonak (@azeliashchonak)
 extends_documentation_fragment: mysql
 '''
 
