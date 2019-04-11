@@ -8,7 +8,7 @@ __metaclass__ = type
 import re
 from os.path import exists, getsize
 from socket import gaierror
-from ssl import SSLEOFError, SSLError
+from ssl import SSLError
 from time import sleep
 import urllib3
 import traceback
@@ -298,7 +298,7 @@ class Connection(ConnectionBase):
             self._si = connect(**connection_kwargs)
         except SSLError:
             raise AnsibleError("SSL Error: Certificate verification failed.")
-        except (gaierror, SSLEOFError):
+        except (gaierror):
             raise AnsibleError("Connection Error: Unable to connect to '%s'." % to_native(connection_kwargs["host"]))
         except vim.fault.InvalidLogin as e:
             raise AnsibleError("Connection Login Error: %s" % to_native(e.msg))
