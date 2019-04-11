@@ -1904,9 +1904,8 @@ def main():
             module.exit_json(changed=False, msg="vm %s not present" % guest)
 
         # check if user is trying to perform state operation on a vm which doesn't exists
-        elif state in ['present', 'powered_off', 'powered_on'] and not all((vm_extra_config,
-                                                                            vm_hardware, vm_disk, vm_nic, esxi)):
-            module.exit_json(changed=False, msg="vm %s not present" % guest)
+        elif state in ['present', 'powered_off', 'powered_on'] and not all((vm_hardware, vm_disk, vm_nic, esxi)):
+            module.fail_json(msg="vm %s not present and not all options neccessary to create are provided" % guest)
 
         # Create the VM
         elif state in ['present', 'powered_off', 'powered_on']:
