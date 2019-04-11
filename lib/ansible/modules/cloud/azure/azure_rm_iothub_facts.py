@@ -53,10 +53,16 @@ options:
         description:
             - Test route message.
             - Used when C(test_route_names) set.
+        type: bool
+    list_consumer_groups:
+        description:
+            - List the consumer group of the built-in event hub.
+        type: bool
     list_keys:
         description:
             - List the keys of IoT Hub.
             - Note this will have network overhead for each IoT Hub.
+        type: bool
 extends_documentation_fragment:
     - azure
 
@@ -316,6 +322,7 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
             show_endpoint_health=dict(type='bool'),
             list_keys=dict(type='bool'),
             test_route_message=dict(type='str'),
+            list_consumer_groups=dict(type='bool')
         )
 
         self.results = dict(
@@ -331,6 +338,7 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
         self.show_endpoint_health = None
         self.list_keys = None
         self.test_route_message = None
+        self.list_consumer_groups = None
 
         super(AzureRMIoTHubFacts, self).__init__(
             derived_arg_spec=self.module_args,
@@ -391,7 +399,7 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
     def show_hub_quota_metrics(self, resource_group, name):
         result = []
         try:
-            resp = self.IoThub_client.iot_hub_resource.show_hub_quota_metrics(resource_group, name)
+            resp = self.IoThub_client.iot_hub_resource.get_quota_metrics(resource_group, name)
             while True:
                 result.append(resp.next().as_dict())
         except StopIteration:
@@ -428,6 +436,22 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
             pass
         except Exception as exc:
             self.fail('Failed to getting health for IoT Hub {0}/{1} routing endpoint: {2}'.format(resource_group, name, str(exc)))
+        return result
+
+    def list_event_hub_consumer_groups(self, resource_group, name, event_hub_endpoint='events'):
+        result = []
+        try:
+            resp = self.IoThub_client.iot_hub_resource.list_event_hub_consumer_groups(resource_group, name, event_hub_endpoint)
+            while True:
+                cg = resp.next()
+                result.append(dict(
+                    id=cg.id,
+                    name=cg.name
+                ))
+        except StopIteration:
+            pass
+        except Exception as exc:
+            self.fail('Failed to listing consumer group for IoT Hub {0}/{1} routing endpoint: {2}'.format(resource_group, name, str(exc)))
         return result
 
     def route_to_dict(self, route):
@@ -480,6 +504,8 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
             result['keys'] = self.list_hub_keys(result['resource_group'], hub.name)
         if self.test_route_message:
             result['test_route_result'] = self.test_all_routes(result['resource_group'], hub.name)
+        if self.list_consumer_groups:
+            result['consumer_groups'] = self.list_event_hub_consumer_groups(result['resource_group'], hub.name)
         return result
 
 
