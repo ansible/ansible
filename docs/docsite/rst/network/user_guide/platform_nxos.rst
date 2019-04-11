@@ -21,11 +21,12 @@ Connections Available
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                         |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: httpapi``       |
+| | **Connection Settings** | | ``ansible_connection: network_cli``         | | * ``ansible_connection: httpapi``     |
 | |                         | |                                             | | OR                                    |
-| |                         | |                                             | | ``ansible_connection: local``         |
-| |                         | |                                             | | with ``transport: nxapi``             |
-| |                         | |                                             | | in the ``provider`` dictionary        |
+| |                         | |                                             | |                                       |
+| |                         | |                                             | | * ``ansible_connection: local``       |
+| |                         | |                                             | |    with ``transport: nxapi``          |
+| |                         | |                                             | |    in the ``provider`` dictionary     |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | not supported by NX-API               |
 | | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | |                                       |
