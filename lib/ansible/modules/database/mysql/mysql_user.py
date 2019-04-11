@@ -102,7 +102,6 @@ notes:
      the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
      the file."
    - Currently, there is only support for the `mysql_native_password` encrypted password hash module.
-
 author:
 - Jonathan Mainguy (@Jmainguy)
 - Benjamin Malynovytch (@bmalynovytch)
@@ -115,20 +114,17 @@ EXAMPLES = r'''
     name: ''
     host: localhost
     state: absent
-
 - name: Removes all anonymous user accounts
   mysql_user:
     name: ''
     host_all: yes
     state: absent
-
 - name: Create database user with name 'bob' and password '12345' with all database privileges
   mysql_user:
     name: bob
     password: 12345
     priv: '*.*:ALL'
     state: present
-
 - name: Create database user using hashed password with all database privileges
   mysql_user:
     name: bob
@@ -136,14 +132,12 @@ EXAMPLES = r'''
     encrypted: yes
     priv: '*.*:ALL'
     state: present
-
 - name: Create database user with password and all database privileges and 'WITH GRANT OPTION'
   mysql_user:
     name: bob
     password: 12345
     priv: '*.*:ALL,GRANT'
     state: present
-
 # Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
 - name: Modify user to require SSL connections.
   mysql_user:
@@ -151,43 +145,36 @@ EXAMPLES = r'''
     append_privs: yes
     priv: '*.*:REQUIRESSL'
     state: present
-
 - name: Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
   mysql_user:
     login_user: root
     login_password: 123456
     name: sally
     state: absent
-
 - name: Ensure no user named 'sally' exists at all
   mysql_user:
     name: sally
     host_all: yes
     state: absent
-
 - name: Specify grants composed of more than one word
   mysql_user:
     name: replication
     password: 12345
     priv: "*.*:REPLICATION CLIENT"
     state: present
-
 - name: Revoke all privileges for user 'bob' and password '12345'
   mysql_user:
     name: bob
     password: 12345
     priv: "*.*:USAGE"
     state: present
-
 # Example privileges string format
 # mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
-
 - name: Example using login_unix_socket to connect to server
   mysql_user:
     name: root
     password: abc123
     login_unix_socket: /var/run/mysqld/mysqld.sock
-
 - name: Example of skipping binary logging while adding user 'bob'
   mysql_user:
     name: bob
@@ -195,7 +182,6 @@ EXAMPLES = r'''
     priv: "*.*:USAGE"
     state: present
     sql_log_bin: no
-
 # Example .my.cnf file for setting the root password
 # [client]
 # user=root
@@ -462,9 +448,7 @@ def privileges_get(cursor, user, host):
     """ MySQL doesn't have a better method of getting privileges aside from the
     SHOW GRANTS query syntax, which requires us to then parse the returned string.
     Here's an example of the string that is returned from MySQL:
-
      GRANT USAGE ON *.* TO 'user'@'localhost' IDENTIFIED BY 'pass';
-
     This function makes the query and returns a dictionary containing the results.
     The dictionary format is the same as that returned by privileges_unpack() below.
     """
@@ -479,7 +463,8 @@ def privileges_get(cursor, user, host):
             return x
 
     for grant in grants:
-        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\\6)? ?(.*)""", grant[0])
+        res = re.match(
+            """GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\5)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
@@ -493,14 +478,28 @@ def privileges_get(cursor, user, host):
     return output
 
 
+def privileges_get_all(cursor):
+    privileges = []
+    cursor.execute('SELECT DISTINCT PRIVILEGE_TYPE FROM INFORMATION_SCHEMA.USER_PRIVILEGES WHERE IS_GRANTABLE="yes"')
+    grants = cursor.fetchall()
+    for grant in grants:
+        privileges.append(grant[0])
+    return privileges
+
+
+def get_db_version(cursor):
+    cursor.execute("Select @@version")
+    output = cursor.fetchall()[0]
+    version = output[0].split(".")[0]
+    return version
+
+
 def privileges_unpack(priv, mode):
     """ Take a privileges string, typically passed as a parameter, and unserialize
     it into a dictionary, the same format as privileges_get() above. We have this
     custom format to avoid using YAML/JSON strings inside YAML playbooks. Example
     of a privileges string:
-
      mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanother.*:ALL
-
     The privilege USAGE stands for no privileges, so we add that in on *.* if it's
     not specified in the string, as MySQL will always provide this by default.
     """
