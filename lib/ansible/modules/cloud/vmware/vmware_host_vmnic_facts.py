@@ -192,11 +192,10 @@ class HostVmnicMgr(PyVmomi):
             host_vmnic_facts = dict(all=[], available=[], used=[], vswitch=dict(), dvswitch=dict())
             host_nw_system = host.configManager.networkSystem
             if host_nw_system:
+                vmnics = [pnic.device for pnic in nw_config.pnic if pnic.startswith('vmnic')]
                 nw_config = host_nw_system.networkConfig
                 host_vmnic_facts['all'] = [pnic.device for pnic in nw_config.pnic]
-                host_vmnic_facts['num_vmnics'] = (
-                    len(filter(lambda s: s.startswith('vmnic'), [pnic.device for pnic in nw_config.pnic]))
-                )
+                host_vmnic_facts['num_vmnics'] = len(vmnics)
                 host_vmnic_facts['vmnic_details'] = []
                 for pnic in host.config.network.pnic:
                     pnic_facts = dict()
