@@ -426,7 +426,6 @@ def generate_config_dict(array):
                 'group': roles[role]['group'],
                 'group_base': roles[role]['group_base'],
             }
-        config_facts['directory_service'].update(array.list_directory_service_roles())
     else:
         config_facts['directory_service'].update(array.get_directory_service(groups=True))
     # NTP
