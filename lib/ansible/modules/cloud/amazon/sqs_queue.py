@@ -41,7 +41,6 @@ options:
       - true or false.
     choices: ['true', 'false']
     default: 'false'
-    version_added: "2.6"
   default_visibility_timeout:
     description:
       - The default visibility timeout in seconds.
