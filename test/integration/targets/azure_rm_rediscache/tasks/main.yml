@@ -13,6 +13,7 @@
     sku:
       name: basic
       size: C1
+  wait_for_provisioning: False
   check_mode: yes
   register: output
 
@@ -28,6 +29,7 @@
     sku:
       name: basic
       size: C1
+    wait_for_provisioning: False
   register: output
 
 - name: Assert creating redis cache
@@ -59,6 +61,7 @@
     sku:
       name: basic
       size: C1
+    wait_for_provisioning: False
   register: output
 
 - name: assert output not changed
@@ -92,7 +95,7 @@
       enable_non_ssl_port: true
       tags:
         testing: foo
-      wait_for_running: True
+      wait_for_provisioning: True
     register: output
 
   - name: assert output changed
@@ -107,7 +110,7 @@
       sku:
         name: basic
         size: C1
-      enable_non_ssl_port: true
+      enable_non_ssl_port: True
       maxmemory_policy: allkeys_lru
       tags:
         testing: foo
@@ -127,7 +130,7 @@
         size: C1
       tags:
         testing: foo
-      wait_for_running: True
+      wait_for_provisioning: True
     register: output
 
   - assert:
@@ -194,6 +197,7 @@
     subnet:
       name: "{{ subnet_name }}"
       virtual_network_name: "{{ vnet_name }}"
+    wait_for_provisioning: False
   register: output
 
 - name: Assert creating redis cache
