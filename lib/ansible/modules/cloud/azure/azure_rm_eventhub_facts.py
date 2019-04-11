@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_eventhub_facts
-version_added: "2.8"
+version_added: "2.9"
 short_description: Get Azure event hub facts.
 description:
     - Get facts for an a specific event hub or all event hubs.

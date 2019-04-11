@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_eventhub
-version_added: "2.8"
+version_added: "2.9"
 short_description: Manage Azure Event hub.
 description:
     - Create, update and delete an Azure Event hub.
@@ -52,13 +52,8 @@ options:
         choices:
             - active
             - disabled
-            - restoring
             - send_disabled
             - receive_disabled
-            - creating
-            - deleting
-            - renaming
-            - unknown
 
 extends_documentation_fragment:
     - azure
@@ -174,7 +169,7 @@ class AzureRMEventHub(AzureRMModuleBase):
             ),
             status=dict(
                 type='str',
-                choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unknown']
+                choices=['active', 'disabled', 'send_disabled', 'receive_disabled']
             )
         )
 

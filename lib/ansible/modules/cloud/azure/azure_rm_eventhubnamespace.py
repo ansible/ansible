@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_eventhubnamespace
-version_added: "2.8"
+version_added: "2.9"
 short_description: Manage Azure Eventhub Namespace.
 description:
     - Create, update and delete an Azure Eventhub Namespace.
@@ -46,25 +46,21 @@ options:
         choices:
             - basic
             - standard
-    is_auto_inflate_enabled:
+    auto_inflate_enabled:
         description:
             - Value that indicates whether AutoInflate is enabled for eventhub namespace.
             - Default is false when creation.
-        choices:
-            - true
-            - false
+        type: bool
     maximum_throughput_units:
         description:
             - Upper limit of throughput units when AutoInflate is enabled, value should be within 0 to 20 throughput units. ( '0' if AutoInflateEnabled = false)
-            - Only can be set when the C(is_auto_inflate_enabled) == true
+            - Only can be set when the C(auto_inflate_enabled) == true
     kafka_enabled:
         description:
             - Value that indicates whether Kafka is enabled for eventhub namespace.
             - Default is false when creation.
             - Cannot be updated after the creation
-        choices:
-            - true
-            - false
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -108,15 +104,15 @@ EXAMPLES = '''
         name: Testing
         location: eastus
         resource_group: myResourceGroup
-        is_auto_inflate_enabled: true
+        auto_inflate_enabled: true
         maximum_throughput_units: 8
 
-    - name: Update event hub namespace is_auto_inflate_enabled to false
+    - name: Update event hub namespace auto_inflate_enabled to false
       azure_rm_eventhubnamespace:
         name: Testing
         location: eastus
         resource_group: myResourceGroup
-        is_auto_inflate_enabled: false
+        auto_inflate_enabled: false
 
     - name: Delete event hub namespace
       azure_rm_eventhubnamespace:
@@ -151,7 +147,7 @@ sku:
     returned: always
     type: str
     sample: standard
-is_auto_inflate_enabled:
+auto_inflate_enabled:
     description:
         - Value that indicates whether AutoInflate is enabled for eventhub namespace.
     returned: always
@@ -222,16 +218,14 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
                 type='str',
                 choices=['basic', 'standard']
             ),
-            is_auto_inflate_enabled=dict(
-                type='bool',
-                choices=[True, False]
+            auto_inflate_enabled=dict(
+                type='bool'
             ),
             maximum_throughput_units=dict(
                 type='int'
             ),
             kafka_enabled=dict(
-                type='bool',
-                choices=[True, False]
+                type='bool'
             )
         )
 
@@ -245,7 +239,7 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
         self.state = None
         self.location = None
         self.sku = None
-        self.is_auto_inflate_enabled = None
+        self.auto_inflate_enabled = None
         self.maximum_throughput_units = None
         self.kafka_enabled = None
         self.tags = None
@@ -282,7 +276,7 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
                 eventhubnamespace = self.eventhub_models.EHNamespace(location=self.location,
                                                                      sku=self.sku,
                                                                      tags=self.tags,
-                                                                     is_auto_inflate_enabled=self.is_auto_inflate_enabled,
+                                                                     is_auto_inflate_enabled=self.auto_inflate_enabled,
                                                                      maximum_throughput_units=self.maximum_throughput_units,
                                                                      kafka_enabled=self.kafka_enabled)
                 if not self.check_mode:
@@ -300,9 +294,9 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
                         changed = True
 
                 # Compare is_auto_inflate_enabled
-                if self.is_auto_inflate_enabled is not None and self.is_auto_inflate_enabled != eventhubnamespace.is_auto_inflate_enabled:
-                    self.log('is_auto_inflate_enabled changed')
-                    eventhubnamespace.is_auto_inflate_enabled = self.is_auto_inflate_enabled
+                if self.auto_inflate_enabled is not None and self.auto_inflate_enabled != eventhubnamespace.is_auto_inflate_enabled:
+                    self.log('auto_inflate_enabled changed')
+                    eventhubnamespace.is_auto_inflate_enabled = self.auto_inflate_enabled
                     changed = True
 
                 # Compare maximum_throughput_units
@@ -319,7 +313,8 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
                     warning = True
 
                 # Compare tags
-                if self.tags and self.tags != eventhubnamespace.tags:
+                update_tags, self.tags = self.update_tags(eventhubnamespace.tags)
+                if update_tags:
                     eventhubnamespace.tags = self.tags
                     changed = True
 

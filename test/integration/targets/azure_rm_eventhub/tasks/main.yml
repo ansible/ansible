@@ -22,7 +22,7 @@
     name: "{{ namespace_bname }}"
     location: eastus
     resource_group: "{{ resource_group }}"
-    is_auto_inflate_enabled: true
+    auto_inflate_enabled: true
     maximum_throughput_units: 8
   register: output
 
@@ -35,7 +35,7 @@
     name: "{{ namespace_aname }}"
     location: eastus
     resource_group: "{{ resource_group }}"
-    is_auto_inflate_enabled: true
+    auto_inflate_enabled: true
     maximum_throughput_units: 4
   register: output
 
@@ -50,7 +50,7 @@
     name: "{{ namespace_aname }}"
     location: eastus
     resource_group: "{{ resource_group }}"
-    is_auto_inflate_enabled: true
+    auto_inflate_enabled: true
     maximum_throughput_units: 4
   register: output
 
@@ -85,6 +85,7 @@
   assert:
     that:
        - not output.changed
+       - output.eventhubnamespaces | length > 1
        - output.eventhubnamespaces[0]['id'] != None
        - output.eventhubnamespaces[0]['name'] != None
        - output.eventhubnamespaces[0]['location'] != None
@@ -163,6 +164,7 @@
   assert:
     that:
        - not output.changed
+       - output.eventhubs | length > 1
        - output.eventhubs[0]['id'] != None
        - output.eventhubs[0]['name'] != None
        - output.eventhubs[0]['message_retention_in_days'] != None

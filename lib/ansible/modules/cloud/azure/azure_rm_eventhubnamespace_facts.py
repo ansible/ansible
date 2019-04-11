@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_eventhubnamespace_facts
-version_added: "2.8"
+version_added: "2.9"
 short_description: Get Azure eventhub namespace facts.
 description:
     - Get facts for an a specific eventhub namespace or all eventhub namespaces.
@@ -150,7 +150,7 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
         result = dict(
             id=eventhubnamespace.id,
             name=eventhubnamespace.name,
-            resource_group=parse_resource_id(eventhubnamespace.id).get('resourceGroups'),
+            resource_group=parse_resource_id(eventhubnamespace.id).get('resource_group'),
             location=eventhubnamespace.location,
             tags=eventhubnamespace.tags,
             sku=eventhubnamespace.sku.name.lower(),
