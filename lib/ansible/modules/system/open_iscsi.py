@@ -42,6 +42,7 @@ options:
     login:
         description:
         - Whether the target node should be connected.
+          when target and portal not specified, connect to all targets.
         type: bool
         aliases: [ state ]
     node_auth:
@@ -83,10 +84,9 @@ EXAMPLES = r'''
     discover: yes
     portal: 10.1.2.3
 
-# NOTE: Only works if exactly one target is exported to the initiator
-- name: Discover targets on portal and login to the one available
+- name: Discover targets on portal and login to all available targets in specific portal
   open_iscsi:
-    portal: '{{ iscsi_target }}'
+    portal: '{{ iscsi_portal_ip }}'
     login: yes
     discover: yes
 
@@ -99,6 +99,10 @@ EXAMPLES = r'''
   open_iscsi:
     login: no
     target: iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d
+
+- name: disconnect from all targets
+  open_iscsi:
+    login: no
 '''
 
 import glob
@@ -154,34 +158,34 @@ def iscsi_discover(module, portal, port):
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
 
-def target_loggedon(module, target):
+def target_loggedon(module, target=None):
     cmd = '%s --mode session' % iscsiadm_cmd
     (rc, out, err) = module.run_command(cmd)
 
     if rc == 0:
-        return target in out
+        return target in out if target else False
     elif rc == 21:
         return False
     else:
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
 
-def target_login(module, target, portal=None, port=None):
+def target_login(module, target=None, portal=None, port=None):
     node_auth = module.params['node_auth']
     node_user = module.params['node_user']
     node_pass = module.params['node_pass']
+    target_opt = '--targetname %s' % target if target else ''
 
     if node_user:
         params = [('node.session.auth.authmethod', node_auth),
                   ('node.session.auth.username', node_user),
                   ('node.session.auth.password', node_pass)]
         for (name, value) in params:
-            cmd = '%s --mode node --targetname %s --op=update --name %s --value %s' % (iscsiadm_cmd, target, name, value)
+            cmd = '%s --mode node %s --op=update --name %s --value %s' % (iscsiadm_cmd, target_opt, name, value)
             (rc, out, err) = module.run_command(cmd)
             if rc > 0:
                 module.fail_json(cmd=cmd, rc=rc, msg=err)
-
-    cmd = '%s --mode node --targetname %s --login' % (iscsiadm_cmd, target)
+    cmd = '%s --mode node %s --login' % (iscsiadm_cmd, target_opt)
     if portal is not None and port is not None:
         cmd += ' --portal %s:%s' % (portal, port)
 
@@ -191,8 +195,9 @@ def target_login(module, target, portal=None, port=None):
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
 
-def target_logout(module, target):
-    cmd = '%s --mode node --targetname %s --logout' % (iscsiadm_cmd, target)
+def target_logout(module, target=None):
+    target_opt = '--targetname %s' % target if target else ''
+    cmd = '%s --mode node %s --logout' % (iscsiadm_cmd, target_opt)
     (rc, out, err) = module.run_command(cmd)
 
     if rc > 0:
@@ -305,12 +310,7 @@ def main():
         nodes = cached
 
     if login is not None or automatic is not None:
-        if target is None:
-            if len(nodes) > 1:
-                module.fail_json(msg="Need to specify a target")
-            else:
-                target = nodes[0]
-        else:
+        if target is not None:
             # check given target is in cache
             check_target = False
             for node in nodes:
