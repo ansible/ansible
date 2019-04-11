@@ -91,8 +91,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'docker_machine'
 
+    DOCKER_MACHINE_PATH = get_bin_path('docker-machine')
+
     def _run_command(self, args):
-        command = [(get_bin_path('docker-machine'))]
+        command = [self.DOCKER_MACHINE_PATH]
         command.extend(args)
         display.debug('Executing command {0}'.format(command))
         try:
