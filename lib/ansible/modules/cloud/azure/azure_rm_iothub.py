@@ -199,26 +199,38 @@ id:
     description:
         - Resource ID of the IoT hub.
     sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.Devices/IotHubs/Testing"
+    returned: success
+    type: str
 name:
     description:
         - Name of the IoT hub.
     sample: Testing
+    returned: success
+    type: str
 resource_group:
     description:
         - Resource group of the IoT hub.
     sample: myResourceGroup.
+    returned: success
+    type: str
 location:
     description:
         - Location of the IoT hub.
     sample: eastus
+    returned: success
+    type: str
 unit:
     description:
         - Units in the IoT Hub.
     sample: 1
+    returned: success
+    type: int
 sku:
     description:
         - Pricing tier for Azure IoT Hub.
     sample: f1
+    returned: success
+    type: str
 cloud_to_device:
     description:
         - Cloud to device message properties.
@@ -233,10 +245,14 @@ cloud_to_device:
                 - The period of time for which a message is available to consume before it is expired by the IoT hub.
                 - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
             sample: "1:00:00"
+    returned: success
+    type: complex
 enable_file_upload_notifications:
     description:
         - Whether file upload notifications are enabled.
     sample: True
+    returned: success
+    type: bool
 event_endpoints:
     description:
         - Built-in endpoint where to deliver device message.
@@ -259,10 +275,14 @@ event_endpoints:
             description:
                 - List of the partition id for the event endpoint.
             sample: ["0", "1"]
+    returned: success
+    type: complex
 host_name:
     description:
         - Host of the IoT hub
     sample: "testing.azure-devices.net"
+    returned: success
+    type: str
 ip_filters:
     description:
         - Configure rules for rejecting or accepting traffic from specific IPv4 addresses.
@@ -279,6 +299,8 @@ ip_filters:
             description:
                 - The desired action for requests captured by this rule.
             sample: Reject
+    returned: success
+    type: complex
 routing_endpoints:
     description:
         - Custom endpoints.
@@ -363,6 +385,8 @@ routing_endpoints:
                     description:
                         - Connection string of the custom endpoint.
                     sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
+    returned: success
+    type: complex
 routes:
     description:
         - Route device-to-cloud messages to service-facing endpoints.
@@ -390,9 +414,13 @@ routes:
                 - "For more information about constructing a query,
                     see I(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax)"
             sample: "true"
+    returned: success
+    type: complex
 tags:
     description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        - Limit results by providing a dict of tags. Format tags as 'key' or 'key:value'.
+    returned: success
+    type: complex
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id

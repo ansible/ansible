@@ -79,13 +79,14 @@ id:
         - Resource ID of the consumer group.
     sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup
              /providers/Microsoft.Devices/IotHubs/Testing/events/ConsumerGroups/%24Default"
+    returned: success
+    type: str
 name:
     description:
         - Name of the consumer group.
     sample: Testing
-tags:
-    description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    returned: success
+    type: str
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
@@ -141,7 +142,10 @@ class AzureRMIoTHubConsumerGroup(AzureRMModuleBase):
             cg = None
             if not self.check_mode:
                 self.delete_cg()
-        self.results = cg.as_dict() if cg else dict()
+        self.results = dict(
+            id=cg.id,
+            name=cg.name
+        ) if cg else dict()
         self.results['changed'] = changed
         return self.results
 
