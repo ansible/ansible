@@ -1,2 +1,0 @@
-bugfixes:
-    - Fix how debconf handles boolean questions to accurately compare

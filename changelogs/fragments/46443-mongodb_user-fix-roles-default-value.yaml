@@ -1,2 +1,0 @@
-minor_changes:
-- mongodb_user - Change value for parameter roles to empty (https://github.com/ansible/ansible/issues/46443)

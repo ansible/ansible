@@ -1,3 +1,0 @@
----
-minor_changes:
-- Added support for iptables module iprange and its parameters src-range and dst-range

@@ -1,3 +1,0 @@
-minor_changes:
-  - "default value for ``INVENTORY_ENABLED`` option was ``['host_list', 'script', 'yaml', 'ini', 'toml', 'auto']``
-    and is now ``['host_list', 'script', 'auto', 'yaml', 'ini', 'toml']``"

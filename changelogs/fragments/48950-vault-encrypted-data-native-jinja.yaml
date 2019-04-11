@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix using vault encrypted data with jinja2_native (https://github.com/ansible/ansible/issues/48950)

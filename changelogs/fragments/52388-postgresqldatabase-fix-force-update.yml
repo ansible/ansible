@@ -1,2 +1,0 @@
-bugfixes:
-  - azure_rm_postgresqldatabase - fix force_update bug (https://github.com/ansible/ansible/issues/50978).

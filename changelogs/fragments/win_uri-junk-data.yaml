@@ -1,2 +1,0 @@
-bugfixes:
-- win_uri - stop junk output from being returned to Ansible - https://github.com/ansible/ansible/issues/47998

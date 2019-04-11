@@ -1,2 +1,0 @@
-bugfixes:
-- win_user_right - Fix output containing non json data - https://github.com/ansible/ansible/issues/54413

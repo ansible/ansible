@@ -1,2 +1,0 @@
-minor_changes:
-- "openssl_pkcs12 - Fixed idempotency checks, the module will regenerate the pkcs12 file if any of the parameters differ from the ones in the file. The ``ca_certificates`` parameter has been renamed to ``other_certificates``. "

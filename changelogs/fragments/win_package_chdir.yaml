@@ -1,2 +1,0 @@
-minor_changes:
-- win_package - added the ``chdir`` option to specify the working directory used when installing and uninstalling a package.

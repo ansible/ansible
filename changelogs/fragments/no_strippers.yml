@@ -1,2 +1,0 @@
-minor_changes:
-    - add option to shell/command to control stripping of empty lines at end of outputs

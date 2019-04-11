@@ -1,2 +1,0 @@
-bugfixes:
-- "ufw: make sure that only valid values for ``direction`` are passed on."

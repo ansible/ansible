@@ -1,2 +1,0 @@
-bugfixes:
-- omit - support list types containing dicts (https://github.com/ansible/ansible/issues/45907)

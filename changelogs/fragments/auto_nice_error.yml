@@ -1,2 +1,0 @@
-bugfixes:
-    - allow nice error to work when auto plugin reads file w/o `plugin` field

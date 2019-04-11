@@ -1,3 +1,0 @@
-minor_changes:
-- "docker_container - Allow to use image ID instead of image name."
-- "docker_image_facts - Allow to use image ID instead of image name."

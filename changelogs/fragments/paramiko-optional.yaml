@@ -1,3 +1,0 @@
----
-minor_changes:
-  - paramiko is now optional.  There is no compat package on certain platforms to worry about.

@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - fix behavior of ``detach: yes`` if ``auto_remove: yes`` is specified."

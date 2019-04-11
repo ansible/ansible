@@ -1,2 +1,0 @@
-bugfixes:
-  - ec2 - Correctly sets the end date of the Spot Instance request. Sets `ValidUntil` value in proper way so it will be auto-canceled through `spot_wait_timeout` interval.

@@ -1,2 +1,0 @@
-minor_changes:
-- loop - expose loop var name as ``ansible_loop_var``
