@@ -60,7 +60,7 @@ exists:
 service:
     description:
       - A dictionary representing the current state of the service. Matches the C(docker service inspect) output.
-      - Will be C(None) if service does not exist.
+      - Will be C(none) if service does not exist.
     returned: always
     type: dict
 '''
