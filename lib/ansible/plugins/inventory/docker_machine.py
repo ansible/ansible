@@ -217,11 +217,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def verify_file(self, path):
         """Return the possibility of a file being consumable by this plugin."""
-        if super(InventoryModule, self).verify_file(path):
-            if path.endswith(('docker_machine.yml', 'docker_machine.yaml')):
-                return True
-        display.debug("docker_machine inventory filename must end with 'docker_machine.yml' or 'docker_machine.yaml'")
-        return False
+        return (
+            super(InventoryModule, self).verify_file(path) and
+            path.endswith((self.NAME + '.yaml', self.NAME + '.yml')))
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
