@@ -21,20 +21,22 @@ Connections Available
 +---------------------------+-----------------------------------------------+---------------------------------------------+
 | **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                             |
 +---------------------------+-----------------------------------------------+---------------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: httpapi``           |
+| | **Connection Settings** | | ``ansible_connection: network_cli``         | | * ``ansible_connection: httpapi``         |
 | |                         | |                                             | | OR                                        |
-| |                         | |                                             | | ``ansible_connection: local``             |
-| |                         | |                                             | | with ``transport: eapi``                  |
-| |                         | |                                             | | in the ``provider`` dictionary            |
+| |                         | |                                             | |                                           |
+| |                         | |                                             | | * ``ansible_connection: local``           |
+| |                         | |                                             | |    with ``transport: eapi``               |
+| |                         | |                                             | |    in the ``provider`` dictionary         |
 +---------------------------+-----------------------------------------------+---------------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | supported:                                |
-| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | | ``httpapi``                               |
-| |                         | |                                             | | uses ``ansible_become: yes``              |
-| |                         | |                                             | | with ``ansible_become_method: enable``    |
-| |                         | |                                             | | ``local``                                 |
-| |                         | |                                             | | uses ``authorize: yes``                   |
-| |                         | |                                             | | and ``auth_pass:``                        |
-| |                         | |                                             | | in the ``provider`` dictionary            |
+| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | | * ``httpapi``                             |
+| |                         | |                                             | |    uses ``ansible_become: yes``           |
+| |                         | |                                             | |    with ``ansible_become_method: enable`` |
+| |                         | |                                             | |                                           |
+| |                         | |                                             | | * ``local``                               |
+| |                         | |                                             | |    uses ``authorize: yes``                |
+| |                         | |                                             | |    and ``auth_pass:``                     |
+| |                         | |                                             | |    in the ``provider`` dictionary         |
 +---------------------------+-----------------------------------------------+---------------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``                  |
 +---------------------------+-----------------------------------------------+---------------------------------------------+
