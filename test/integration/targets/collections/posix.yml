@@ -38,11 +38,9 @@
     testns.testcoll.uses_leaf_mu_flat_import:
     register: flat_out
 
-  # FIXME: this one doesn't work yet
   # module with a full-module module_utils import using 'from' (from (this collection).module_utils import leaf)
   - name: exec module with full-module module_utils import using 'from' from this collection
     testns.testcoll.uses_leaf_mu_module_import_from:
-    ignore_errors: true
     register: from_out
 
   - assert:
@@ -54,7 +52,8 @@
       - granular_out.mu_result == 'thingtocall in leaf'
       - granular_nested_out.mu_result == 'thingtocall in base called thingtocall in secondary'
       - flat_out.mu_result == 'thingtocall in leaf'
-      - from_out is failed  # FIXME: switch back once this import is fixed --> from_out.mu_result == 'thingtocall in leaf'
+      - from_out.mu_result == 'thingtocall in leaf'
+      - from_out.mu2_result == 'thingtocall in secondary'
 
   - name: exercise filters/tests/lookups
     assert:
@@ -169,16 +168,10 @@
     systestmodule:
     register: systestmodule_out
 
-  # ensure we're looking up actions properly
-  - name: unqualified action test
-    plugin_lookup:
-    register: pluginlookup_out
-
   - assert:
       that:
       - testmodule_out.source == 'user'
       - systestmodule_out.source == 'sys'
-      - pluginlookup_out.collection_list == ['testns.testcoll', 'testns.coll_in_sys', 'testns.contentadj', 'ansible.legacy']
 
 # FIXME: this won't work until collections list gets passed through task templar
 #  - name: exercise unqualified filters/tests/lookups
@@ -255,6 +248,22 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
+
+
+- name: validate static task include behavior
+  hosts: testhost
+  collections:
+  - bogus.bogus
+  tasks:
+  - import_tasks: includeme.yml
+
+
+- name: validate dynamic task include behavior
+  hosts: testhost
+  collections:
+  - bogus.bogus
+  tasks:
+  - include_tasks: includeme.yml
 
 
 - name: test a collection-hosted connection plugin against a host from a collection-hosted inventory plugin

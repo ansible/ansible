@@ -35,8 +35,9 @@ class PSModuleDepFinder(object):
         self.os_version = None
         self.become = False
 
-        self._re_cs_module = re.compile(to_bytes(r'(?i)^using\s(Ansible\..+);$'))
-        self._re_cs_in_ps_module = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+(Ansible\..+)'))
+        self._re_cs_module = re.compile(to_bytes(r'(?i)^using\s((Ansible\..+)|(AnsibleCollections\.\w.+\.\w.+\w.+));\s*$'))
+        self._re_cs_in_ps_module = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\..+)|(AnsibleCollections\.\w.+\.\w.+\w.+))'))
+        self._re_coll_ps_in_ps_module = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-powershell\s+((Ansible\..+)|(AnsibleCollections\.\w.+\.\w.+\w.+))'))
         self._re_module = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
         self._re_wrapper = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-wrapper\s+(\w*)'))
         self._re_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
@@ -55,12 +56,14 @@ class PSModuleDepFinder(object):
             checks = [
                 # PS module contains '#Requires -Module Ansible.ModuleUtils.*'
                 (self._re_module, self.ps_modules, ".psm1"),
+                # PS module contains '#AnsibleRequires -Powershell Ansible.*' (or FQ collections module_utils ref)
+                (self._re_coll_ps_in_ps_module, self.ps_modules, ".psm1"),
                 # PS module contains '#AnsibleRequires -CSharpUtil Ansible.*'
                 (self._re_cs_in_ps_module, cs_utils, ".cs"),
             ]
         else:
             checks = [
-                # CS module contains 'using Ansible.*;'
+                # CS module contains 'using Ansible.*;' or 'using AnsibleCollections.ns.coll.*;'
                 (self._re_cs_module, cs_utils, ".cs"),
             ]
 
@@ -70,7 +73,8 @@ class PSModuleDepFinder(object):
                 if match:
                     # tolerate windows line endings by stripping any remaining
                     # newline chars
-                    module_util_name = to_text(match.group(1).rstrip())
+                    module_util_name = self._normalize_mu_name(match.group(1).rstrip())
+
                     if module_util_name not in check[1].keys():
                         module_utils.add((module_util_name, check[2]))
 
@@ -155,6 +159,15 @@ class PSModuleDepFinder(object):
             # determine which is the latest version and set that
             if LooseVersion(new_version) > LooseVersion(existing_version):
                 setattr(self, attribute, new_version)
+
+    def _normalize_mu_name(self, mu):
+        # normalize Windows module_utils to remove 'AnsibleCollections.' prefix so the plugin loader can find them
+        mu = to_text(mu)
+
+        if not mu.startswith(u'AnsibleCollections.'):
+            return mu
+
+        return mu.replace(u'AnsibleCollections.', u'', 1)
 
 
 def _slurp(path):
