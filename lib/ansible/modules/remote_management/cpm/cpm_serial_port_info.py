@@ -126,7 +126,7 @@ def run_module():
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
-        port=dict(type='str', required=True),
+        port=dict(type='list', required=True),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
         use_proxy=dict(type='bool', default=False)
@@ -147,7 +147,11 @@ def run_module():
     else:
         protocol = "http://"
 
-    fullurl = ("%s%s/api/v2/config/serialports?ports=%s" % (protocol, to_native(module.params['cpm_url']), to_native(module.params['port'])))
+    ports = module.params['port']
+    if isinstance(ports, list):
+        ports = ','.join(to_native(x) for x in ports)
+    fullurl = ("%s%s/api/v2/config/serialports?ports=%s" % (protocol, to_native(module.params['cpm_url']), ports))
+
 
     try:
         response = open_url(fullurl, data=None, method='GET', validate_certs=module.params['validate_certs'], use_proxy=module.params['use_proxy'],
