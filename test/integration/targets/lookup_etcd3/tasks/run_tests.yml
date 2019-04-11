@@ -73,32 +73,32 @@
 
 - name: create key foo
   etcd3:
-    key: "foo"
-    value: "bar"
-    state: "present"
+    key: foo
+    value: bar
+    state: present
 
 - name: create key cf11
   etcd3:
-    key: "cf11"
-    value: "cnaf"
-    state: "present"
+    key: cf11
+    value: cnaf
+    state: present
 
 - name: Check if key foo is set
   etcd3:
-    key: "foo"
-    value: "bar"
-    state: "present"
+    key: foo
+    value: bar
+    state: present
     
 - name: Check if key cf11 is set
   etcd3:
-    key: "cf11"
-    value: "cnaf"
-    state: "present"
+    key: cf11
+    value: cnaf
+    state: present
   
 - name: check read key
   set_fact:
-    keyfoo: "{{ lookup('etcd3', 'foo', url='127.0.0.1:2379')}}"
-    keycf11: "{{ lookup('etcd3', 'cf11', url='127.0.0.1:2379')}}"
+    keyfoo: "{{lookup('etcd3', 'foo', url='127.0.0.1:2379')}}"
+    keycf11: "{{lookup('etcd3', 'cf11', url='127.0.0.1:2379')}}"
     
 - name: debug
   debug:
