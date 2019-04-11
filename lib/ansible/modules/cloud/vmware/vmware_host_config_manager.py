@@ -164,7 +164,7 @@ class VmwareConfigManager(PyVmomi):
                         changed_list.append(option_key)
                 else:  # Don't silently drop unknown options. This prevents typos from falling through the cracks.
                     self.module.fail_json(msg="Unsupported option %s" % option_key)
-            if changed_list:
+            if change_option_list:
                 if self.module.check_mode:
                     changed_suffix = ' would be changed.'
                 else:
