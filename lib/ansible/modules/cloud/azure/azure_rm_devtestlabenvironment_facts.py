@@ -37,6 +37,9 @@ options:
     name:
         description:
             - The name of the environment.
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -124,7 +127,7 @@ except ImportError:
     pass
 
 
-class AzureRMEnvironmentFacts(AzureRMModuleBase):
+class AzureRMDtlEnvironmentFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -142,6 +145,9 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
             ),
             name=dict(
                 type='str'
+            ),
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
@@ -153,7 +159,8 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
         self.lab_name = None
         self.user_name = None
         self.name = None
-        super(AzureRMEnvironmentFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        self.tags = None
+        super(AzureRMDtlEnvironmentFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -180,7 +187,7 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get facts for Environment.')
 
-        if response:
+        if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
 
         return results
@@ -198,7 +205,8 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                results.append(self.format_response(item))
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_response(item))
 
         return results
 
@@ -220,7 +228,7 @@ class AzureRMEnvironmentFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMEnvironmentFacts()
+    AzureRMDtlEnvironmentFacts()
 
 
 if __name__ == '__main__':
