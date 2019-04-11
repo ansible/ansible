@@ -606,9 +606,8 @@ class ModuleManager(object):
         self.want = None
         self.have = None
         self.changes = None
-        self.replace_all_with = False
+        self.replace_all_with = None
         self.purge_links = list()
-        self.on_device = None
 
     def _set_changed_options(self):
         changed = {}
@@ -711,7 +710,7 @@ class ModuleManager(object):
 
         if diff:
             to_purge = [item['selfLink'] for item in on_device if self._transform_api_names(item) in diff]
-            self.purge_links = to_purge
+            self.purge_links.extend(to_purge)
 
     def execute(self, params=None):
         self.want = ModuleParameters(params=params)
