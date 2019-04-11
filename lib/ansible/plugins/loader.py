@@ -324,7 +324,7 @@ class PluginLoader:
             # only current non-class special case, module_utils don't use this loader method
             if append_plugin_type == 'library':
                 append_plugin_type = 'modules'
-            else:
+            elif append_plugin_type != 'module_utils':
                 append_plugin_type = get_plugin_class(append_plugin_type)
             package += '.plugins.{0}'.format(append_plugin_type)
 

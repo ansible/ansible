@@ -1,0 +1,20 @@
+- hosts: windows
+  tasks:
+  - testns.testcoll.win_selfcontained:
+    register: selfcontained_out
+
+  - testns.testcoll.win_csbasic_only:
+    register: csbasic_only_out
+
+  - testns.testcoll.win_uses_coll_psmu:
+    register: uses_coll_psmu
+
+  - testns.testcoll.win_uses_coll_csmu:
+    register: uses_coll_csmu
+
+  - assert:
+      that:
+      - selfcontained_out.source == 'user'
+      - csbasic_only_out.source == 'user'
+      - uses_coll_psmu.source == 'user' and 'user_mu' in uses_coll_psmu.ping
+      - uses_coll_csmu.source == 'user' and 'user_mu' in uses_coll_csmu.ping

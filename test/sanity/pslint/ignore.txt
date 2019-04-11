@@ -151,6 +151,7 @@ lib/ansible/modules/windows/win_wait_for.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_wait_for.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_xml.ps1 PSCustomUseLiteralPath
+test/integration/targets/collections/collection_root_user/ansible_collections/testns/testcoll/plugins/module_utils/MyPSMU.psm1 PSUseApprovedVerbs
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 PSAvoidUsingCmdletAliases
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 PSCustomUseLiteralPath
 test/integration/targets/win_chocolatey/files/tools/chocolateyUninstall.ps1 PSCustomUseLiteralPath
