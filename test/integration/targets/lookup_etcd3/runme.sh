@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if python -c "help('modules')" | grep sysconfig; then
+if python -c "help('modules')" | grep -q sysconfig; then
 
 set -eux
 
