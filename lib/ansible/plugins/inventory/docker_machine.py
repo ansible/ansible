@@ -75,12 +75,12 @@ compose:
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common.process import get_bin_path
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.utils.display import Display
 
 import json
 import re
-import shutil
 import subprocess
 
 display = Display()
@@ -92,7 +92,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = 'docker_machine'
 
     def _run_command(self, args):
-        command = [(shutil.which('docker-machine'))]
+        command = [(get_bin_path('docker-machine'))]
         command.extend(args)
         display.debug('Executing command {0}'.format(command))
         try:
