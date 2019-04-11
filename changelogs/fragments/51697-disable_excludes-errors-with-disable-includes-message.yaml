@@ -1,2 +1,0 @@
-bugfixes:
-  - yum - Remove incorrect disable_includes error message when using disable_excludes (https://github.com/ansible/ansible/issues/51697)

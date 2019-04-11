@@ -1,4 +1,0 @@
----
-minor_changes:
-- synchronize module - Warn when the empty string is present in rsync_opts as it is likely
-  unexpected that it will transfer the current working directory.

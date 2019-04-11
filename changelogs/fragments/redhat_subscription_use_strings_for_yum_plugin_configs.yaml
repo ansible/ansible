@@ -1,2 +1,0 @@
-bugfixes:
-- redhat_subscription - For compatibility using the redhat_subscription module on hosts set to use a python 3 interpreter, use string values when updating yum plugin configuration files.

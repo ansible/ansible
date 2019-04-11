@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "dnf properly support modularity appstream installation via overloaded group modifier syntax"

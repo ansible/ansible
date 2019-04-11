@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - fix ``paused`` option (which never worked)."

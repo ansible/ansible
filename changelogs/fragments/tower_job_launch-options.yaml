@@ -1,4 +1,0 @@
----
-bugfixes:
-  - Fixed to handle arguments correctly even if inventory and credential
-    variables are not specified (#25017,#37567)

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - gather Fibre Channel WWNs fact (https://github.com/ansible/ansible/pull/37043)

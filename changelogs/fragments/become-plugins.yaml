@@ -1,8 +1,0 @@
-major_changes:
-- become - become functionality has been migrated to a plugin architecture, to
-  allow customization of become functionality and 3rd party become methods
-  (https://github.com/ansible/ansible/pull/50991)
-- become - The deprecated CLI arguments for ``--sudo``, ``--sudo-user``,
-  ``--ask-sudo-pass``, ``-su``, ``--su-user``, and ``--ask-su-pass`` have been
-  removed, in favor of the more generic ``--become``, ``--become-user``,
-  ``--become-method``, and ``--ask-become-pass``.

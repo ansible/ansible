@@ -1,2 +1,0 @@
-bugfixes:
-    - now default is ``list`` so ``None`` is bad comparison for gathering

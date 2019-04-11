@@ -1,3 +1,0 @@
----
-bugfixes:
-  - "yum allows comparison operators like '>=' for selecting package version"

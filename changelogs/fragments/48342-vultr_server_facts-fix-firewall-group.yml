@@ -1,2 +1,0 @@
-bugfixes:
-  - vultr_server_facts - fixed facts gathering fails if firewall is enabled.

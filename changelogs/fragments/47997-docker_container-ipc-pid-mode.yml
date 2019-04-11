@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - fix ``ipc_mode`` and ``pid_mode`` idempotency if the ``host:<container-name>`` form is used (as opposed to ``host:<container-id>``)."

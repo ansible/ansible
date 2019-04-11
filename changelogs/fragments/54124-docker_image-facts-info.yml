@@ -1,2 +1,0 @@
-minor_changes:
-- The ``docker_image_facts`` module has been renamed to ``docker_image_info``.

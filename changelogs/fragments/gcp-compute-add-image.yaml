@@ -1,3 +1,0 @@
----
-minor_changes:
-  - gcp_compute - add the image field to map to disk source iamges in the configured zones bringing it in line with old gce inventory script data

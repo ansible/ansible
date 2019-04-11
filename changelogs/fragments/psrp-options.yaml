@@ -1,2 +1,0 @@
-bugfixes:
-- psrp - Explicitly documented the extra auth options that could have been passed in - https://github.com/ansible/ansible/issues/54664

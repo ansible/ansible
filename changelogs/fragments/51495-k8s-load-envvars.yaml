@@ -1,3 +1,0 @@
----
-bugfixes:
-- All K8S_AUTH_* environment variables are now properly loaded by the k8s lookup plugin

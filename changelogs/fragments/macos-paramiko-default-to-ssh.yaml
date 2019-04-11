@@ -1,2 +1,0 @@
-minor_changes:
-  - change default connection plugin on macOS when using smart mode to ssh instead of paramiko (https://github.com/ansible/ansible/pull/54738)

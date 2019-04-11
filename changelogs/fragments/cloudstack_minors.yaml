@@ -1,4 +1,0 @@
----
-minor_changes:
-  - cs_zone - The option network_type uses capitalized values for the types e.g. 'Advanced' and 'Basic' to match the return from the API.
-  - cloudstack - The choice list for the param 'hypervisor' had been removed to allow the API to validate depending on your setup directly.

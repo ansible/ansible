@@ -1,3 +1,0 @@
-minor_changes:
-  - assert - added ``quiet`` option to the ``assert`` module to avoid verbose
-    output (https://github.com/ansible/ansible/issues/27124).

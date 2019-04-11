@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix bug where some inventory parsing tracebacks were missing or reported under the wrong plugin.

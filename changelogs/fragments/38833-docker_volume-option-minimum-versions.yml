@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "docker_volume - option minimal versions now checked. (https://github.com/ansible/ansible/issues/38833)"

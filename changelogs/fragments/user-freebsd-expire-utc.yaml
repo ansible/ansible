@@ -1,2 +1,0 @@
-bugfixes:
-  - user - on FreeBSD set the user expiration time as seconds since the epoch in UTC to avoid timezone issues

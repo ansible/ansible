@@ -1,3 +1,0 @@
-minor_changes:
-- inheritance - Improve ``FieldAttribute`` inheritance, by using a sentinel
-  instead of ``None`` to indicate that the option has not been explicitly set

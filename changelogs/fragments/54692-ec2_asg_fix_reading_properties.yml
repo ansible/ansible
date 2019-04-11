@@ -1,2 +1,0 @@
-bugfixes:
-  - ec2_asg - Fix error where ASG dict has no launch config or launch template key

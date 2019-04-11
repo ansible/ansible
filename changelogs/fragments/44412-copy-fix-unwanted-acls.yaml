@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix unwanted ACLs when using copy module (https://github.com/ansible/ansible/issues/44412)

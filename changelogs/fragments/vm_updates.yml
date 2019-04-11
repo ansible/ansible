@@ -1,2 +1,0 @@
-minor_changes:
-    - moved some operations to inside VariableManager to make using it simpler and slightly optimized, but creating API changes

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "Increase the default persistent command_timeout value from 10 to 30 seconds to reduce frequent timeout issues."
