@@ -154,6 +154,11 @@ DOCUMENTATION = """
         description:
             - shell to use for execution inside container
         default: /bin/sh
+        ini:
+          - section: defaults
+            key: executable
+        env:
+          - name: ANSIBLE_EXECUTABLE
         vars:
             - name: ansible_executable
             - name: ansible_vmware_tools_executable
