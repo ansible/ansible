@@ -149,6 +149,8 @@ class MerakiModule(object):
                 l.append((k, v))
         return l
 
+
+    # Option 1 - Bidirectional check
     def is_update_required(self, original, proposed, optional_ignore=None):
         ''' Compare two data-structures '''
         if optional_ignore:
@@ -173,6 +175,34 @@ class MerakiModule(object):
                 # print("Values don't match: {0} vs {1}".format(original, proposed))
                 return True
         return False
+
+    # Option 2 - Unidirectional (proposed -> original ) check
+    # def is_update_required(self, original, proposed, optional_ignore=None):
+    #     ''' Compare two data-structures '''
+    #     self.ignored_keys = ['net_id']
+    #     if optional_ignore is not None:
+    #         self.ignored_keys = self.ignored_keys + optional_ignore
+
+    #     if type(original) != type(proposed):
+    #         return True
+    #     if isinstance(original, list):
+    #         if len(original) != len(proposed):
+    #             return True
+    #         for a, b in zip(original, proposed):
+    #             if self.is_update_required(a, b):
+    #                 return True
+    #     elif isinstance(original, dict):
+    #         for k, v in proposed.items():
+    #             if k not in self.ignored_keys:
+    #                 if k in original:
+    #                     if self.is_update_required(original[k], proposed[k]):
+    #                         return True
+    #                 else:
+    #                     return True
+    #     else:
+    #         if original != proposed:
+    #             return True
+    #     return False
 
     def get_orgs(self):
         """Downloads all organizations for a user."""
