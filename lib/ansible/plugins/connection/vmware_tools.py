@@ -111,13 +111,6 @@ DOCUMENTATION = """
           - name: ansible_vmware_validate_certs
         default: True
         type: bool
-      silence_tls_warnings:
-        description:
-          - Don't output warnings about insecure connections.
-        vars:
-          - name: ansible_vmware_silence_tls_warnings
-        default: True
-        type: bool
       vm_path:
         description:
           - VM path absolute to the connection.
@@ -182,7 +175,6 @@ ansible_vmware_host: vcenter.example.com
 ansible_vmware_user: administrator@vsphere.local
 ansible_vmware_password: Secr3tP4ssw0rd!12
 ansible_vmware_validate_certs: no  # default is yes
-ansible_vmware_silence_tls_warnings: yes # default is yes
 
 # vCenter Connection VM Path Example
 ansible_vmware_guest_path: DATACENTER/vm/FOLDER/{{ inventory_hostname }}
@@ -299,7 +291,7 @@ class Connection(ConnectionBase):
         if self.validate_certs:
             connect = SmartConnect
         else:
-            if HAS_URLLIB3 and self.get_option("silence_tls_warnings"):
+            if HAS_URLLIB3:
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             connect = SmartConnectNoSSL
 
