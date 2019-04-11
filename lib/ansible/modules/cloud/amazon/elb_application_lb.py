@@ -35,12 +35,16 @@ options:
     type: bool
   access_logs_s3_bucket:
     description:
-      - The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same
+      - The name of the S3 bucket for the access logs.
+      - Required if access logs in Amazon S3 are enabled.
+      - The bucket must exist in the same
         region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
     required: false
   access_logs_s3_prefix:
     description:
-      - The prefix for the location in the S3 bucket. If you don't specify a prefix, the access logs are stored in the root of the bucket.  Note that the prefix must not start or end with a slash.
+      - The prefix for the log location in the S3 bucket.
+      - If you don't specify a prefix, the access logs are stored in the root of the bucket.
+      - Cannot begin or end with a slash.
     required: false
   deletion_protection:
     description:
