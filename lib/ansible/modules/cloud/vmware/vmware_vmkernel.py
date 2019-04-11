@@ -286,18 +286,7 @@ class PyVmomiHelper(PyVmomi):
             self.ip_address = self.params['network'].get('ip_address', None)
             self.subnet_mask = self.params['network'].get('subnet_mask', None)
             self.default_gateway = self.params['network'].get('default_gateway', None)
-            if self.network_type == 'static':
-                if not self.ip_address:
-                    module.fail_json(msg="ip_address is a required parameter when network type is set to 'static'")
-                if not self.subnet_mask:
-                    module.fail_json(msg="subnet_mask is a required parameter when network type is set to 'static'")
             self.tcpip_stack = self.params['network'].get('tcpip_stack')
-        else:
-            self.network_type = 'dhcp'
-            self.ip_address = None
-            self.subnet_mask = None
-            self.default_gateway = None
-            self.tcpip_stack = 'default'
         self.device = self.params['device']
         if self.network_type == 'dhcp' and not self.device:
             module.fail_json(msg="device is a required parameter when network type is set to 'dhcp'")
@@ -322,6 +311,14 @@ class PyVmomiHelper(PyVmomi):
             self.module.fail_json(
                 msg="Failed to get details of ESXi server. Please specify esxi_hostname."
             )
+
+        if self.network_type == 'static':
+            if self.module.params['state'] == 'absent':
+                pass
+            elif not self.ip_address:
+                module.fail_json(msg="ip_address is a required parameter when network type is set to 'static'")
+            elif not self.subnet_mask:
+                module.fail_json(msg="subnet_mask is a required parameter when network type is set to 'static'")
 
         # find Port Group
         if self.vswitch_name:
