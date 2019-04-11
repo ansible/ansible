@@ -152,7 +152,6 @@ def run_module():
         ports = ','.join(to_native(x) for x in ports)
     fullurl = ("%s%s/api/v2/config/serialports?ports=%s" % (protocol, to_native(module.params['cpm_url']), ports))
 
-
     try:
         response = open_url(fullurl, data=None, method='GET', validate_certs=module.params['validate_certs'], use_proxy=module.params['use_proxy'],
                             headers={'Content-Type': 'application/json', 'Authorization': "Basic %s" % auth})
