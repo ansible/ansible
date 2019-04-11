@@ -431,7 +431,6 @@ EXAMPLES = '''
 
 - name: Terminate instances
   hosts: localhost
-  connection: local
   tasks:
     - name: Terminate instances that were previously launched
       ec2:
@@ -444,7 +443,6 @@ EXAMPLES = '''
 - name: Start sandbox instances
   hosts: localhost
   gather_facts: false
-  connection: local
   vars:
     instance_ids:
       - 'i-xxxxxx'
@@ -467,7 +465,6 @@ EXAMPLES = '''
 - name: Stop sandbox instances
   hosts: localhost
   gather_facts: false
-  connection: local
   vars:
     instance_ids:
       - 'i-xxxxxx'

@@ -88,7 +88,6 @@ you can use the following configuration:
 
    - name: Create IP address
      hosts: localhost
-     connection: local
      gather_facts: no
 
      vars:
@@ -169,7 +168,6 @@ rest.
    - name: Create an instance
      hosts: localhost
      gather_facts: no
-     connection: local
      vars:
          project: my-project
          auth_kind: serviceaccount
