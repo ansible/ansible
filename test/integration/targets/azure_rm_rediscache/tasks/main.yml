@@ -13,7 +13,7 @@
     sku:
       name: basic
       size: C1
-  wait_for_provisioning: False
+    wait_for_provisioning: False
   check_mode: yes
   register: output
 
