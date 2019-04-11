@@ -101,6 +101,7 @@ EXAMPLES = '''
 import ssl
 import atexit
 from ansible.errors import AnsibleError, AnsibleParserError
+from urllib.parse import quote_plus
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -361,6 +362,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         if update_cache:
             self._cache[cache_key] = cacheable_results
 
+    def _get_fullName(self, vm_obj_obj):
+        if(vm_obj_obj.parent):
+            return self._get_fullName(vm_obj_obj.parent) + '/' + quote_plus(vm_obj_obj.name, safe='')
+        else:
+            return '/' + quote_plus(vm_obj_obj.name)
+
     def _populate_from_cache(self, source_data):
         """ Populate cache using source data """
         hostvars = source_data.pop('_meta', {}).get('hostvars', {})
@@ -405,12 +412,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             for vm_obj_property in vm_obj.propSet:
                 # VMware does not provide a way to uniquely identify VM by its name
                 # i.e. there can be two virtual machines with same name
-                # Appending "_" and VMware UUID to make it unique
-                if not vm_obj.obj.config:
-                    # Sometime orphaned VMs return no configurations
-                    continue
-
-                current_host = vm_obj_property.val + "_" + vm_obj.obj.config.uuid
+                current_host = self._get_fullName(vm_obj.obj)
 
                 if current_host not in hostvars:
                     hostvars[current_host] = {}
