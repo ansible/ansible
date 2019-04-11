@@ -43,7 +43,7 @@ options:
         description:
             - Pricing tier for Azure IoT Hub.
             - Note that only one free IoT hub instance is allowed in each subscription. Exception will be thrown if free instances exceed one.
-            - Default is b1 when creation.
+            - Default is s1 when creation.
         choices:
             - b1
             - b2
@@ -502,7 +502,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
         if self.state == 'present':
             if not iothub:
                 changed = True
-                self.sku = self.sku or 'B1'
+                self.sku = self.sku or 'S1'
                 self.unit = self.unit or 1
                 self.event_endpoint = self.event_endpoint or {}
                 self.event_endpoint['partition_count'] = self.event_endpoint.get('partition_count') or 2
@@ -724,7 +724,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
 
     def delete_hub(self):
         try:
-            self.IoThub_client.iot_hub_resource.create_or_update(self.resource_group, self.name)
+            self.IoThub_client.iot_hub_resource.delete(self.resource_group, self.name)
             return True
         except Exception as exc:
             self.fail('Error deleting IoT Hub {0}: {1}'.format(self.name, exc.message or str(exc)))

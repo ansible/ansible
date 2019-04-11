@@ -63,15 +63,14 @@
         - iothub.iothubs | length == 1
 
 - set_fact:
-    registry_write_name: item.key_name
-    registry_write_key: item.primary_key
+    registry_write_name: "{{ item.key_name }}"
+    registry_write_key: "{{ item.primary_key }}"
   with_items: "{{ iothub.iothubs[0]['keys'] }}"
-  when: item.rights == 'RegistryWrite'
+  when: item.rights == 'RegistryWrite, ServiceConnect, DeviceConnect'
 
 - name: Create devices
   azure_rm_iotdevice:
       hub: "hub{{ rpfx }}"
-      resource_group: "{{ resource_group }}"
       hub_policy_name: "{{ registry_write_name }}"
       hub_policy_key: "{{ registry_write_key }}"
       name: "mydevice{{ item }}"
@@ -87,46 +86,42 @@
 - name: Query devices
   azure_rm_iotdevice_facts:
       hub: "hub{{ rpfx }}"
-      resource_group: "{{ resource_group }}"
       hub_policy_name: "{{ registry_write_name }}"
       hub_policy_key: "{{ registry_write_key }}"
   register: devices
 
 - assert:
      that:
-        - devices.devices | length == 2
+        - devices.iot_devices | length == 2
 
 - name: Query devices
   azure_rm_iotdevice_facts:
       hub: "hub{{ rpfx }}"
       name: "mydevice1"
-      resource_group: "{{ resource_group }}"
       hub_policy_name: "{{ registry_write_name }}"
       hub_policy_key: "{{ registry_write_key }}"
   register: devices
 
 - assert:
      that:
-        - devices.devices | length == 1
-        - devices.devices[0].deviceId == 'mydevice1'
+        - devices.iot_devices | length == 1
+        - devices.iot_devices[0].deviceId == 'mydevice1'
 
 - name: Query devices twin
   azure_rm_iotdevice_facts:
       hub: "hub{{ rpfx }}"
       query: "SELECT * FROM devices WHERE tags.location.country = 'US'"
-      resource_group: "{{ resource_group }}"
       hub_policy_name: "{{ registry_write_name }}"
       hub_policy_key: "{{ registry_write_key }}"
   register: devices
 
 - assert:
      that:
-        - devices.devices | length == 2
+        - devices.iot_devices | length == 2
 
 - name: Update devices
   azure_rm_iotdevice:
       hub: "hub{{ rpfx }}"
-      resource_group: "{{ resource_group }}"
       hub_policy_name: "{{ registry_write_name }}"
       hub_policy_key: "{{ registry_write_key }}"
       name: "mydevice{{ item }}"
@@ -143,16 +138,15 @@
 - name: Query devices twin
   azure_rm_iotdevice_facts:
       hub: "hub{{ rpfx }}"
-      query: "SELECT deviceId FROM devices WHERE tags.location.country = 'us'"
-      resource_group: "{{ resource_group }}"
+      query: "SELECT * FROM devices WHERE tags.location.country = 'US'"
       hub_policy_name: "{{ registry_write_name }}"
       hub_policy_key: "{{ registry_write_key }}"
   register: devices
 
 - assert:
      that:
-        - devices.devices | length == 1
-        - devices.devices[0].DeviceId == 'mydevice2'
+        - devices.iot_devices | length == 1
+        - devices.iot_devices[0].deviceId == 'mydevice2'
 
 - name: Delete IoT Hub (check mode)
   azure_rm_iothub:
@@ -176,14 +170,3 @@
 - assert:
     that:
         - iothub.changed
-
-- name: Delete IoT Hub (idempontent)
-  azure_rm_iothub:
-      name: "hub{{ rpfx }}"
-      resource_group: "{{ resource_group }}"
-      state: absent
-  register: iothub
-
-- assert:
-    that:
-        - not iothub.changed

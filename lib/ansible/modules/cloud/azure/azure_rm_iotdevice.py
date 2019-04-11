@@ -28,7 +28,7 @@ options:
     hub_policy_name:
         description:
             - Policy name of the IoT Hub which will be used to query from IoT hub.
-            - This policy should have at least 'Registry Read' access.
+            - This policy should have 'RegistryWrite, ServiceConnect, DeviceConnect' accesses. You may get 401 error when you lack any of these.
         required: true
     hub_policy_key:
         description:
@@ -72,6 +72,7 @@ options:
     edge_enabled:
         description:
             - Flag indicating edge enablement.
+            - Not supported in IoT Hub with Basic tier.
         type: bool
     twin_tags:
         description:
@@ -79,12 +80,14 @@ options:
             - Tags are not visible to device apps.
             - "The tag can be nested dictionary, '.', '$', '#', ' ' is not allowed in the key."
             - List is not supported.
+            - Not supported in IoT Hub with Basic tier.
         type: dict
     desired:
         description:
             - Used along with reported properties to synchronize device configuration or conditions.
             - "The tag can be nested dictionary, '.', '$', '#', ' ' is not allowed in the key."
             - List is not supported.
+            - Not supported in IoT Hub with Basic tier.
         type: dict
 extends_documentation_fragment:
     - azure
@@ -327,19 +330,22 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             if changed and not self.check_mode:
                 device = self.create_or_update_device(device)
             twin = self.get_twin()
-            if not twin.get('tags'):
-                twin['tags'] = dict()
-            twin_change = False
-            if self.twin_tags and not self.is_equal(self.twin_tags, twin['tags']):
-                twin_change = True
-            if self.desired and not self.is_equal(self.desired, twin['properties']['desired']):
-                twin_change = True
-            if twin_change and not self.check_mode:
-                self.update_twin(twin)
-            changed = changed or twin_change
-            device['tags'] = twin.get('tags') or dict()
-            device['properties'] = twin['properties']
-            device['modules'] = self.list_device_modules()
+            if twin:
+                if not twin.get('tags'):
+                    twin['tags'] = dict()
+                twin_change = False
+                if self.twin_tags and not self.is_equal(self.twin_tags, twin['tags']):
+                    twin_change = True
+                if self.desired and not self.is_equal(self.desired, twin['properties']['desired']):
+                    twin_change = True
+                if twin_change and not self.check_mode:
+                    self.update_twin(twin)
+                changed = changed or twin_change
+                device['tags'] = twin.get('tags') or dict()
+                device['properties'] = twin['properties']
+                device['modules'] = self.list_device_modules()
+            elif self.twin_tags or self.desired:
+                self.fail("Device twin is not supported in IoT Hub with basic tier.")
         elif device:
             if not self.check_mode:
                 self.delete_device(device['etag'])
@@ -381,7 +387,10 @@ class AzureRMIoTDevice(AzureRMModuleBase):
                 raise CloudError(response)
             return json.loads(response.text)
         except Exception as exc:
-            self.fail('Error when creating or updating IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc)))
+            if exc.status_code in [403] and self.edge_enabled:
+                self.fail('Edge device is not supported in IoT Hub with Basic tier.')
+            else:
+                self.fail('Error when creating or updating IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc)))
 
     def delete_device(self, etag):
         try:
@@ -393,23 +402,29 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             if not response.status_code in [204]:
                 raise CloudError(response)
         except Exception as exc:
-            self.fail('Error when deleting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc)))
+            self.fail('Error when deleting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc))) 
 
     def get_device(self):
         try:
             url = '/devices/{0}'.format(self.name)
             device = self._https_get(url, self.query_parameters, self.header_parameters)
             return device
-        except Exception:
-            pass
-            return None
+        except Exception as exc:
+            if exc.status_code in [404]:
+                return None
+            else:
+                self.fail('Error when getting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc)))
 
     def get_twin(self):
         try:
             url = '/twins/{0}'.format(self.name)
             return self._https_get(url, self.query_parameters, self.header_parameters)
         except Exception as exc:
-            self.fail('Error when getting IoT Hub device {0} twin: {1}'.format(self.name, exc.message or str(exc)))
+            if exc.status_code in [403]:
+                # The Basic sku has nothing to to with twin
+                return None
+            else:
+                self.fail('Error when getting IoT Hub device {0} twin: {1}'.format(self.name, exc.message or str(exc)))
 
     def update_twin(self, twin):
         try:
