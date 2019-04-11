@@ -1,0 +1,2 @@
+bugfixes:
+ - "purefa_facts - remove unnecessary line that could cause failure in rare circumstances."
