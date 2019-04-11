@@ -18,8 +18,10 @@ DOCUMENTATION = r'''
 module: postgresql_idx
 short_description: Create or drop indexes from a PostgreSQL database
 description:
-- Create or drop indexes from a PostgreSQL database
-  U(https://www.postgresql.org/docs/current/sql-createindex.html).
+- Create or drop indexes from a PostgreSQL database.
+- "For more information see:"
+- Create index U(https://www.postgresql.org/docs/current/sql-createindex.html)
+- Drop index U(https://www.postgresql.org/docs/current/sql-dropindex.html)
 version_added: '2.8'
 
 options:
@@ -30,9 +32,72 @@ options:
     required: true
     aliases:
     - name
+  schema:
+    description:
+    - Name of a database schema where the index will be created.
+    type: str
+  state:
+    description:
+    - Index state.
+    - I(state=present) implies the index will be created if it does not exist.
+    - I(state=absent) implies the index will be dropped if it exists.
+    type: str
+    default: present
+    choices: [ absent, present ]
+  table:
+    description:
+    - Table to create index on it.
+    - Mutually exclusive with I(state=absent).
+    type: str
+    required: true
+  columns:
+    description:
+    - List of index columns that need to be covered by index.
+    - Mutually exclusive with I(state=absent).
+    type: list
+    aliases:
+    - column
+  cond:
+    description:
+    - Index conditions.
+    - Mutually exclusive with I(state=absent).
+    type: str
+  idxtype:
+    description:
+    - Index type (like btree, gist, gin, etc.).
+    - Mutually exclusive with I(state=absent).
+    type: str
+    aliases:
+    - type
+  concurrent:
+    description:
+    - Enable or disable concurrent mode (CREATE / DROP INDEX CONCURRENTLY).
+    - "Pay attention: if I(concurrent=no), the table will be locked (ACCESS EXCLUSIVE) during operation."
+    - Mutually exclusive with I(cascade=yes).
+    type: bool
+    default: yes
+  tablespace:
+    description:
+    - Set a tablespace for the index.
+    - Mutually exclusive with I(state=absent).
+    required: false
+    type: str
+  storage_params:
+    description:
+    - Storage parameters like fillfactor, vacuum_cleanup_index_scale_factor, etc.
+    - Mutually exclusive with I(state=absent).
+    type: list
+  cascade:
+    description:
+    - Automatically drop objects that depend on the index,
+      and in turn all objects that depend on those objects U(https://www.postgresql.org/docs/current/sql-dropindex.html).
+    - It used only with I(state=absent).
+    - Mutually exclusive with I(concurrent=yes)
+    type: bool
+    default: no
   db:
     description:
-    - Name of database where the index will be created/dropped.
+    - Name of database to connect to and where the index will be created/dropped.
     type: str
     aliases:
     - login_db
@@ -55,9 +120,6 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-  schema:
-    description:
-    - Name of a database schema.
   login_password:
     description:
     - Password used to authenticate with PostgreSQL.
@@ -87,64 +149,9 @@ options:
       verified to be signed by one of these authorities.
     type: str
     aliases: [ ssl_rootcert ]
-  state:
-    description:
-    - Index state.
-    type: str
-    default: present
-    choices: [ absent, present ]
-  table:
-    description:
-    - Table to create index on it.
-    - Mutually exclusive with I(state=absent).
-    type: str
-    required: true
-  columns:
-    description:
-    - List of index columns.
-    - Mutually exclusive with I(state=absent).
-    type: list
-    aliases:
-    - column
-  cond:
-    description:
-    - Index conditions.
-    - Mutually exclusive with I(state=absent).
-    type: str
-  idxtype:
-    description:
-    - Index type (like btree, gist, gin, etc.).
-    - Mutually exclusive with I(state=absent).
-    type: str
-    aliases:
-    - type
-  concurrent:
-    description:
-    - Enable or disable concurrent mode (CREATE / DROP INDEX CONCURRENTLY).
-    - Mutually exclusive with I(cascade=yes).
-    type: bool
-    default: yes
-  tablespace:
-    description:
-    - Set a tablespace for the index.
-    - Mutually exclusive with I(state=absent).
-    required: false
-    type: str
-  storage_params:
-    description:
-    - Storage parameters like fillfactor, vacuum_cleanup_index_scale_factor, etc.
-    - Mutually exclusive with I(state=absent).
-    type: list
-  cascade:
-    description:
-    - Automatically drop objects that depend on the index,
-      and in turn all objects that depend on those objects U(https://www.postgresql.org/docs/current/sql-dropindex.html).
-    - It used only with I(state=absent).
-    - Mutually exclusive with I(concurrent=yes)
-    type: bool
-    default: no
 
 notes:
+- To avoid table locks on production databases, use I(concurrent=yes) (default behavior).
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
 - This module uses psycopg2, a Python PostgreSQL database adapter. You must
