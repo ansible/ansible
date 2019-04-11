@@ -10,8 +10,15 @@ from os.path import exists, getsize
 from socket import gaierror
 from ssl import SSLError
 from time import sleep
-import urllib3
 import traceback
+
+URLLIB3_IMP_ERR = None
+try:
+    import urllib3
+    HAS_URLLIB3 = True
+except ImportError:
+    URLLIB3_IMP_ER = traceback.format_exc()
+    HAS_URLLIB3 = False
 
 REQUESTS_IMP_ERR = None
 try:
@@ -290,7 +297,7 @@ class Connection(ConnectionBase):
         if self.validate_certs:
             connect = SmartConnect
         else:
-            if self.get_option("silence_tls_warnings"):
+            if HAS_URLLIB3 and self.get_option("silence_tls_warnings"):
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             connect = SmartConnectNoSSL
 
