@@ -29,7 +29,7 @@ options:
   trust:
     description:
       - trust type.
-    choices: ['L2', 'L3', 'Both']
+    choices: ['L2', 'L3', 'both']
     default: L2
   rewrite_pcp:
     description:
@@ -171,7 +171,7 @@ class OnyxQosModule(BaseOnyxModule):
         rewrite_pcp = self._required_config.get("rewrite_pcp")
         rewrite_dscp = self._required_config.get("rewrite_dscp")
         for interface in self._required_config.get("interfaces"):
-            _, _, current_trust, if_type, if_id = self._get_current_rewrite_config(interface)
+            ignored1, ignored2, current_trust, if_type, if_id = self._get_current_rewrite_config(interface)
             self._add_interface_trust_cmds(if_type, if_id, interface, trust, current_trust)
             self._add_interface_rewrite_cmds(if_type, if_id, interface,
                                              rewrite_pcp, rewrite_dscp)
@@ -184,14 +184,14 @@ class OnyxQosModule(BaseOnyxModule):
         if_id = current_interface_qos_config.get("if_id")
         current_trust = current_interface_qos_config.get('trust')
 
-        return current_rewrite_pcp, current_rewrite_dscp, current_trust, if_type, if_id
+        return current_rewrite_pcp,  current_rewrite_dscp, current_trust, if_type, if_id
 
     def _add_interface_trust_cmds(self, if_type, if_id, interface, trust, current_trust):
 
-        current_rewrite_pcp, current_rewrite_dscp, _, _, _ = self._get_current_rewrite_config(interface)
+        current_rewrite_pcp, current_rewrite_dscp, ignored1, ignored2, ignored3 = self._get_current_rewrite_config(
+            interface)
 
         if trust == "L3" and trust != current_trust:
-            # checks if dscp enable and disable it if it's
             self._add_no_rewrite_cmd(if_type, if_id, interface, self.REWRITE_DSCP, current_rewrite_dscp)
             self._commands.append(self.TRUST_CMD.format(if_type, if_id, trust))
         elif trust == "L2" and trust != current_trust:
@@ -203,7 +203,8 @@ class OnyxQosModule(BaseOnyxModule):
             self._commands.append(self.TRUST_CMD.format(if_type, if_id, trust))
 
     def _add_interface_rewrite_cmds(self, if_type, if_id, interface, rewrite_pcp, rewrite_dscp):
-        current_rewrite_pcp, current_rewrite_dscp, _, _, _ = self._get_current_rewrite_config(interface)
+        current_rewrite_pcp, current_rewrite_dscp, ignored1, ignored2, ignored3 = self._get_current_rewrite_config(
+            interface)
 
         if rewrite_pcp == "enabled" and rewrite_pcp != current_rewrite_pcp:
             self._commands.append(self.REWRITE_PCP_CMD.format(if_type, if_id))
