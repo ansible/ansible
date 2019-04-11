@@ -554,6 +554,14 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             raise CertificateSigningRequestError(exc)
 
+    def _normalize_san(self, san):
+        if san.startswith('IP Address:'):
+            san = 'IP:' + san[len('IP Address:'):]
+        if san.startswith('IP:'):
+            ip = ipaddress.ip_address(san[3:])
+            san = 'IP:{0}'.format(ip.compressed)
+        return san
+
     def _check_csr(self):
         def _check_subject(csr):
             subject = [(OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])), to_bytes(sub[1])) for sub in self.subject]
@@ -568,9 +576,10 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
             altnames = [altname.strip() for altname in str(altnames_ext).split(',') if altname.strip()]
             # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
             # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
-            altnames = [name if not name.startswith('IP Address:') else "IP:" + name.split(':', 1)[1] for name in altnames]
+            altnames = [self._normalize_san(name) for name in altnames]
             if self.subjectAltName:
-                if set(altnames) != set(self.subjectAltName) or altnames_ext.get_critical() != self.subjectAltName_critical:
+                if (set(altnames) != set([self._normalize_san(name) for name in self.subjectAltName]) or
+                        altnames_ext.get_critical() != self.subjectAltName_critical):
                     return False
             else:
                 if altnames:
