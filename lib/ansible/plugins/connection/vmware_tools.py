@@ -12,14 +12,6 @@ from ssl import SSLError
 from time import sleep
 import traceback
 
-URLLIB3_IMP_ERR = None
-try:
-    import urllib3
-    HAS_URLLIB3 = True
-except ImportError:
-    URLLIB3_IMP_ER = traceback.format_exc()
-    HAS_URLLIB3 = False
-
 REQUESTS_IMP_ERR = None
 try:
     import requests
@@ -27,6 +19,16 @@ try:
 except ImportError:
     REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
+
+try:
+    from requests.packages import urllib3
+    HAS_URLLIB3 = True
+except ImportError:
+    try:
+        import urllib3
+        HAS_URLLIB3 = True
+    except ImportError:
+        HAS_URLLIB3 = False
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_native
