@@ -86,7 +86,7 @@ options:
     choices: [ 0, 1, 2, 3 ]
   stopbits:
     description:
-      - This is the stop bits to assign to the port, 0=1 Stop Bit, 1=1 Stop Bit.
+      - This is the stop bits to assign to the port, 0=1 Stop Bit, 1=2 Stop Bit.
     required: false
     choices: [ 0, 1 ]
   parity:
@@ -121,7 +121,7 @@ options:
     choices: [ 0, 1 ]
   break_allow:
     description:
-      - This is the how to handle a break_allow character for the port, . 0=No, 1=Yes
+      - This is if the break character is allowed to be passed through the port, 0=Off, 1=On
     required: false
     choices: [ 0, 1 ]
   logoff:
@@ -225,13 +225,13 @@ def assemble_json(cpmmodule, existing_serial):
             total_change = (total_change | 256)
             json_load = '%s,"tout": %s' % (json_load, to_native(cpmmodule.params["tout"]))
     if cpmmodule.params["echo"] is not None:
-        if (existing_serial["serialports"][0]["echo"] != to_native(cpmmodule.params["echo"])):
+        if (int(existing_serial["serialports"][0]["echo"]) != int(cpmmodule.params["echo"])):
             total_change = (total_change | 512)
-            json_load = '%s,"echo": %s' % (json_load, to_native(cpmmodule.params["echo"]))
+            json_load = '%s,"echo": %d' % (json_load, int(cpmmodule.params["echo"]))
     if cpmmodule.params["break_allow"] is not None:
-        if (existing_serial["serialports"][0]["break"] != to_native(cpmmodule.params["break_allow"])):
+        if (int(existing_serial["serialports"][0]["break"]) != int(cpmmodule.params["break_allow"])):
             total_change = (total_change | 1024)
-            json_load = '%s,"break": %s' % (json_load, to_native(cpmmodule.params["break_allow"]))
+            json_load = '%s,"break": %d' % (json_load, int(cpmmodule.params["break_allow"]))
     if cpmmodule.params["logoff"] is not None and (len(cpmmodule.params["logoff"]) > 0):
         if (existing_serial["serialports"][0]["logoff"] != to_native(cpmmodule.params["logoff"])):
             total_change = (total_change | 2048)
@@ -241,7 +241,6 @@ def assemble_json(cpmmodule, existing_serial):
 
     if (total_change == 0):
         json_load = None
-
     return json_load
 
 
@@ -262,8 +261,8 @@ def run_module():
         cmd=dict(type='int', required=False, default=None, choices=[0, 1]),
         seq=dict(type='int', required=False, default=None, choices=[1, 2, 3]),
         tout=dict(type='int', required=False, default=None, choices=[0, 1, 2, 3, 4, 5]),
-        echo=dict(type='int', required=False, default=None, choices=[0, 1]),
-        break_allow=dict(type='int', required=False, default=None, choices=[0, 1]),
+        echo=dict(type='bool', required=False, default=None, choices=[0, 1]),
+        break_allow=dict(type='bool', required=False, default=None, choices=[0, 1]),
         logoff=dict(type='str', required=False, default=None),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
@@ -287,7 +286,6 @@ def run_module():
 
     fullurl = ("%s%s/api/v2/config/serialports?ports=%s" % (protocol, to_native(module.params['cpm_url']), to_native(module.params['port'])))
     method = 'GET'
-    read_data = ""
     try:
         response = open_url(fullurl, data=None, method=method, validate_certs=module.params['validate_certs'], use_proxy=module.params['use_proxy'],
                             headers={'Content-Type': 'application/json', 'Authorization': "Basic %s" % auth})
@@ -305,34 +303,36 @@ def run_module():
         fail_json = dict(msg='GET: Error connecting to {0} : {1}'.format(fullurl, to_native(e)), changed=False)
         module.fail_json(**fail_json)
 
-    read_data = json.loads(response.read())
-    payload = assemble_json(module, read_data)
+    result['data'] = json.loads(response.read())
+    payload = assemble_json(module, result['data'])
 
-    if ((module.check_mode) | (payload is None)):
-        result['data'] = read_data
+    if module.check_mode:
+        if payload is not None:
+            result['changed'] = True
     else:
-        fullurl = ("%s%s/api/v2/config/serialports" % (protocol, to_native(module.params['cpm_url'])))
-        method = 'POST'
+        if payload is not None:
+            fullurl = ("%s%s/api/v2/config/serialports" % (protocol, to_native(module.params['cpm_url'])))
+            method = 'POST'
 
-        try:
-            response = open_url(fullurl, data=payload, method=method, validate_certs=module.params['validate_certs'], use_proxy=module.params['use_proxy'],
-                                headers={'Content-Type': 'application/json', 'Authorization': "Basic %s" % auth})
+            try:
+                response = open_url(fullurl, data=payload, method=method, validate_certs=module.params['validate_certs'], use_proxy=module.params['use_proxy'],
+                                    headers={'Content-Type': 'application/json', 'Authorization': "Basic %s" % auth})
 
-        except HTTPError as e:
-            fail_json = dict(msg='POST: Received HTTP error for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
-            module.fail_json(**fail_json)
-        except URLError as e:
-            fail_json = dict(msg='POST: Failed lookup url for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
-            module.fail_json(**fail_json)
-        except SSLValidationError as e:
-            fail_json = dict(msg='POST: Error validating the server''s certificate for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
-            module.fail_json(**fail_json)
-        except ConnectionError as e:
-            fail_json = dict(msg='POST: Error connecting to {0} : {1}'.format(fullurl, to_native(e)), changed=False)
-            module.fail_json(**fail_json)
+            except HTTPError as e:
+                fail_json = dict(msg='POST: Received HTTP error for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+                module.fail_json(**fail_json)
+            except URLError as e:
+                fail_json = dict(msg='POST: Failed lookup url for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+                module.fail_json(**fail_json)
+            except SSLValidationError as e:
+                fail_json = dict(msg='POST: Error validating the server''s certificate for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+                module.fail_json(**fail_json)
+            except ConnectionError as e:
+                fail_json = dict(msg='POST: Error connecting to {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+                module.fail_json(**fail_json)
 
-        result['changed'] = True
-        result['data'] = json.loads(response.read())
+            result['changed'] = True
+            result['data'] = json.loads(response.read())
 
     module.exit_json(**result)
 
