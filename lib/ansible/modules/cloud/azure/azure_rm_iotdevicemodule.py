@@ -38,6 +38,11 @@ options:
         description:
             - Name of the IoT hub device identity.
         required: true
+    device:
+        description:
+            - Device name the module associate with.
+        required: true
+        type: str
     state:
         description:
             - Assert the state of the IoT hub. Use C(present) to create or update an IoT hub device and C(absent) to delete an IoT hub device.
@@ -65,14 +70,6 @@ options:
             - Explicit Shared Private Key to use for secondary key.
         aliases:
             - secondary_thumbprint
-    status:
-        description:
-            - Set device status upon creation.
-        type: bool
-    edge_enabled:
-        description:
-            - Flag indicating edge enablement.
-        type: bool
     twin_tags:
         description:
             - A section that the solution back end can read from and write to.

@@ -53,24 +53,11 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Create a simplest IoT hub
+- name: Create an IoT hub consumer group
   azure_rm_iothubconsumergroup:
-    name: Testing
+    name: test
     resource_group: myResourceGroup
-- name: Create an IoT hub with route
-  azure_rm_iothubconsumergroup:
-    resource_group: myResourceGroup
-    name: Testing
-    routing_endpoints:
-        - connection_string: "Endpoint=sb://qux.servicebus.windows.net/;SharedAccessKeyName=quux;SharedAccessKey=****;EntityPath=myQueue"
-          name: foo
-          resource_type: queue
-          resource_group: myResourceGroup1
-    routes:
-        - name: bar
-          source: device_messages
-          endpoint_name: foo
-          enabled: yes
+    hub: Testing
 '''
 
 RETURN = '''

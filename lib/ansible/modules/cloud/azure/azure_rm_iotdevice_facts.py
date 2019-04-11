@@ -37,6 +37,12 @@ options:
     name:
         description:
             - Name of the IoT hub device identity.
+        aliases:
+            - device_id
+    module_id:
+        description:
+            - Name of the IoT hub device module.
+            - Must use with C(device_id) defined.
     query:
         description:
             - Query an IoT hub to retrieve information regarding device twins using a SQL-like language.
@@ -179,7 +185,7 @@ class AzureRMIoTDeviceFacts(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            name=dict(type='str'),
+            name=dict(type='str', aliases=['device_id']),
             module_id=dict(type='str'),
             query=dict(type='str'),
             hub=dict(type='str', required=True),

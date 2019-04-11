@@ -56,7 +56,7 @@ options:
         description:
             - Units in your IoT Hub.
             - Default is 1
-        type: long
+        type: int
     event_endpoint:
         description:
             - The Event Hub-compatible endpoint property.
@@ -72,7 +72,7 @@ options:
                     - The retention time for device-to-cloud messages in days.
                     - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
                     - Default is 1.
-                type: long
+                type: int
     enable_file_upload_notifications:
         description:
             - File upload notifications are enabled if set to C(True).
@@ -416,11 +416,6 @@ routes:
             sample: "true"
     returned: success
     type: complex
-tags:
-    description:
-        - Limit results by providing a dict of tags. Format tags as 'key' or 'key:value'.
-    returned: success
-    type: complex
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
@@ -472,7 +467,7 @@ routes_spec = dict(
 
 event_endpoint_spec = dict(
     partition_count=dict(type='int'),
-    retention_time_in_days=dict(type='long')
+    retention_time_in_days=dict(type='int')
 )
 
 
@@ -486,7 +481,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
             sku=dict(type='str', choices=['b1', 'b2', 'b3', 'f1', 's1', 's2', 's3']),
-            unit=dict(type='long'),
+            unit=dict(type='int'),
             event_endpoint=dict(type='dict', options=event_endpoint_spec),
             enable_file_upload_notifications=dict(type='bool'),
             ip_filters=dict(type='list', elements='dict', options=ip_filter_spec),
