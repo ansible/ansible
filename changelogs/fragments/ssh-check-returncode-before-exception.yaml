@@ -1,0 +1,5 @@
+bugfixes:
+- ssh - Check the return code of the ssh process before raising AnsibleConnectionFailure, as the error message
+  for the ssh process will likely contain more useful information. This will improve the missing interpreter messaging
+  when using modules such as setup which have a larger payload to transfer when combined with pipelining.
+  (https://github.com/ansible/ansible/issues/53487)

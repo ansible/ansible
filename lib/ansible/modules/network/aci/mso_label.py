@@ -21,17 +21,12 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'
 options:
-  label_id:
-    description:
-    - The ID of the label.
-    type: str
   label:
     description:
     - The name of the label.
-    - Alternative to the name, you can use C(label_id).
     type: str
     required: yes
-    aliases: [ label_name, name ]
+    aliases: [ name ]
   type:
     description:
     - The type of the label.
@@ -98,8 +93,7 @@ from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, i
 def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
-        label=dict(type='str', required=False, aliases=['name', 'label_name']),
-        label_id=dict(type='str', required=False),
+        label=dict(type='str', aliases=['name']),
         type=dict(type='str', default='site', choices=['site']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -114,32 +108,23 @@ def main():
     )
 
     label = module.params['label']
-    label_id = module.params['label_id']
     label_type = module.params['type']
     state = module.params['state']
 
     mso = MSOModule(module)
 
+    label_id = None
     path = 'labels'
 
     # Query for existing object(s)
-    if label_id is None and label is None:
-        mso.existing = mso.query_objs(path)
-    elif label_id is None:
+    if label:
         mso.existing = mso.get_obj(path, displayName=label)
         if mso.existing:
             label_id = mso.existing['id']
-    elif label is None:
-        mso.existing = mso.get_obj(path, id=label_id)
+            # If we found an existing object, continue with it
+            path = 'labels/{id}'.format(id=label_id)
     else:
-        mso.existing = mso.get_obj(path, id=label_id)
-        existing_by_name = mso.get_obj(path, displayName=label)
-        if existing_by_name and label_id != existing_by_name['id']:
-            mso.fail_json(msg="Provided label '{0}' with id '{1}' does not match existing id '{2}'.".format(label, label_id, existing_by_name['id']))
-
-    # If we found an existing object, continue with it
-    if label_id:
-        path = 'labels/{id}'.format(id=label_id)
+        mso.existing = mso.query_objs(path)
 
     if state == 'query':
         pass

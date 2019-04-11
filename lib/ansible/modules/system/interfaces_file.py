@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2016, Roman Belyakovsky <ihryamzik () gmail.com>
+# Copyright: (c) 2016, Roman Belyakovsky <ihryamzik () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -265,7 +265,7 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state, address_f
     if len(iface_lines) < 1:
         # interface not found
         module.fail_json(msg="Error: interface %s not found" % iface)
-        return changed
+        return changed, None
 
     iface_options = list(filter(lambda i: i['line_type'] == 'option', iface_lines))
     target_options = list(filter(lambda i: i['option'] == option, iface_options))
@@ -275,12 +275,11 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state, address_f
             changed = True
             # add new option
             last_line_dict = iface_lines[-1]
-            lines = addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options, address_family)
+            changed, lines = addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options, address_family)
         else:
             if option in ["pre-up", "up", "down", "post-up"]:
                 if len(list(filter(lambda i: i['value'] == value, target_options))) < 1:
-                    changed = True
-                    lines = addOptionAfterLine(option, value, iface, lines, target_options[-1], iface_options, address_family)
+                    changed, lines = addOptionAfterLine(option, value, iface, lines, target_options[-1], iface_options, address_family)
             else:
                 # if more than one option found edit the last one
                 if target_options[-1]['value'] != value:
@@ -316,11 +315,13 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state, address_f
 def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options, address_family):
     # Changing method of interface is not an addition
     if option == 'method':
+        changed = False
         for ln in lines:
-            if ln.get('line_type', '') == 'iface' and ln.get('iface', '') == iface:
+            if ln.get('line_type', '') == 'iface' and ln.get('iface', '') == iface and value != ln.get('params', {}).get('method', ''):
+                changed = True
                 ln['line'] = re.sub(ln.get('params', {}).get('method', '') + '$', value, ln.get('line'))
                 ln['params']['method'] = value
-        return lines
+        return changed, lines
 
     last_line = last_line_dict['line']
     prefix_start = last_line.find(last_line.split()[0])
@@ -335,7 +336,7 @@ def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_option
     option_dict = optionDict(line, iface, option, value, address_family)
     index = len(lines) - lines[::-1].index(last_line_dict)
     lines.insert(index, option_dict)
-    return lines
+    return True, lines
 
 
 def write_changes(module, lines, dest):
@@ -350,16 +351,19 @@ def write_changes(module, lines, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(default='/etc/network/interfaces', required=False, type='path'),
-            iface=dict(required=False),
-            address_family=dict(required=False),
-            option=dict(required=False),
-            value=dict(required=False),
-            backup=dict(default='no', type='bool'),
-            state=dict(default='present', choices=['present', 'absent']),
+            dest=dict(type='path', default='/etc/network/interfaces'),
+            iface=dict(type='str'),
+            address_family=dict(type='str'),
+            option=dict(type='str'),
+            value=dict(type='str'),
+            backup=dict(type='bool', default=False),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         add_file_common_args=True,
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_by=dict(
+            option=('iface',),
+        ),
     )
 
     dest = module.params['dest']
@@ -369,9 +373,6 @@ def main():
     value = module.params['value']
     backup = module.params['backup']
     state = module.params['state']
-
-    if option is not None and iface is None:
-        module.fail_json(msg="Inteface must be set if option is defined")
 
     if option is not None and state == "present" and value is None:
         module.fail_json(msg="Value must be set if option is defined and state is 'present'")

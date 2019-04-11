@@ -44,11 +44,12 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a topic facts
+- name: " a topic facts"
   gcp_pubsub_topic_facts:
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -62,6 +63,11 @@ items:
       - Name of the topic.
       returned: success
       type: str
+    labels:
+      description:
+      - A set of key/value label pairs to assign to this Topic.
+      returned: success
+      type: dict
 '''
 
 ################################################################################

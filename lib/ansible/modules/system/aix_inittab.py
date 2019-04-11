@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author:
 - Joris Weijters (@molekuul)
@@ -42,7 +42,7 @@ options:
     - bootwait
     - hold
     - initdefault
-    - off
+    - 'off'
     - once
     - ondemand
     - powerfail
@@ -174,7 +174,7 @@ def main():
             ]),
             command=dict(type='str', required=True),
             insertafter=dict(type='str'),
-            state=dict(type='str', required=True, choices=['absent', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
     )

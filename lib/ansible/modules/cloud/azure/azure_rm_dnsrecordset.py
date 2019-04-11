@@ -103,11 +103,10 @@ EXAMPLES = '''
 
 - name: ensure an "A" record set with multiple records
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     relative_name: www
     zone_name: testing.com
     record_type: A
-    state: present
     records:
       - entry: 192.168.100.101
       - entry: 192.168.100.102
@@ -115,7 +114,7 @@ EXAMPLES = '''
 
 - name: delete a record set
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     record_type: A
     relative_name: www
     zone_name: testing.com
@@ -123,9 +122,8 @@ EXAMPLES = '''
 
 - name: create multiple "A" record sets with multiple records
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     zone_name: testing.com
-    state: present
     relative_name: "{{ item.name }}"
     record_type: "{{ item.type }}"
     records: "{{ item.records }}"
@@ -136,12 +134,11 @@ EXAMPLES = '''
 
 - name: create SRV records in a new record set
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     relative_name: _sip._tcp.testing.com
     zone_name: testing.com
     time_to_live: 7200
     record_type: SRV
-    state: present
     records:
     - entry: sip.testing.com
       preference: 10
@@ -151,7 +148,7 @@ EXAMPLES = '''
 
 - name: create PTR record in a new record set
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     relative_name: 192.168.100.101.in-addr.arpa
     zone_name: testing.com
     record_type: PTR
@@ -160,7 +157,7 @@ EXAMPLES = '''
 
 - name: create TXT record in a new record set
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     relative_name: mail.testing.com
     zone_name: testing.com
     record_type: TXT

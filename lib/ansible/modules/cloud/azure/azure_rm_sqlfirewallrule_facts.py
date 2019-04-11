@@ -45,13 +45,13 @@ author:
 EXAMPLES = '''
   - name: Get instance of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group: testgroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: testrule
 
   - name: List instances of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group: testgroup
+      resource_group: myResourceGroup
       server_name: testserver
 '''
 
@@ -66,7 +66,7 @@ rules:
                 - Resource ID
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testgroup/providers/Microsoft.Sql/servers/testser
+            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/testser
                     ver/firewallRules/testrule"
         resource_group:
             description:
@@ -112,7 +112,7 @@ except ImportError:
     pass
 
 
-class AzureRMFirewallRulesFacts(AzureRMModuleBase):
+class AzureRMSqlFirewallRuleFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -135,7 +135,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMFirewallRulesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMSqlFirewallRuleFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -203,7 +203,7 @@ class AzureRMFirewallRulesFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMFirewallRulesFacts()
+    AzureRMSqlFirewallRuleFacts()
 
 
 if __name__ == '__main__':

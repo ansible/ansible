@@ -145,19 +145,19 @@ def get_connection(module):
     if hasattr(module, 'connection'):
         return module.connection
 
-    capabilities = get_device_capabilities(module)
+    capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
     if network_api == 'cliconf':
         module.connection = Connection(module._socket_path)
     elif network_api == 'netconf':
         module.connection = NetconfConnection(module._socket_path)
     else:
-        module.fail_json(msg='Invalid connection type {!s}'.format(network_api))
+        module.fail_json(msg='Invalid connection type {0!s}'.format(network_api))
 
     return module.connection
 
 
-def get_device_capabilities(module):
+def get_capabilities(module):
     if hasattr(module, 'capabilities'):
         return module.capabilities
     try:
@@ -317,12 +317,12 @@ def etree_findall(root, node):
 
 
 def is_cliconf(module):
-    capabilities = get_device_capabilities(module)
-    return True if capabilities.get('network_api') == 'cliconf' else False
+    capabilities = get_capabilities(module)
+    return (capabilities.get('network_api') == 'cliconf')
 
 
 def is_netconf(module):
-    capabilities = get_device_capabilities(module)
+    capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
     if network_api == 'netconf':
         if not HAS_NCCLIENT:

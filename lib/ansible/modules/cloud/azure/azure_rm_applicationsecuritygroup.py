@@ -36,7 +36,7 @@ options:
     state:
       description:
         - Assert the state of the Application Security Group.
-        - Use 'present' to create or update an Application Security Group and 'absent' to delete it.
+        - Use C(present) to create or update an Application Security Group and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -54,8 +54,8 @@ author:
 EXAMPLES = '''
   - name: Create application security group
     azure_rm_applicationsecuritygroup:
-      resource_group: myRG
-      name: MyAsg
+      resource_group: myResourceGroup
+      name: mySecurityGroup
       location: eastus
       tags:
         foo: bar
@@ -67,7 +67,8 @@ id:
         - Resource id of the application security group.
     returned: always
     type: str
-    sample: /subscriptions/<subid>/resourceGroups/<resourcegroup>/providers/Microsoft.Network/applicationSecurityGroups/MyAsg
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/applicationSecurityGroups/
+             mySecurityGroup"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

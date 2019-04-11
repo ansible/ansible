@@ -36,6 +36,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
+from ansible.utils.collection_loader import is_collection_ref
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
@@ -165,6 +166,10 @@ class TaskQueueManager:
                 display.deprecated("%s callback, does not support setting 'options', it will work for now, "
                                    " but this will be required in the future and should be updated, "
                                    " see the 2.4 porting guide for details." % callback_obj._load_name, version="2.9")
+            self._callback_plugins.append(callback_obj)
+
+        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if is_collection_ref(c)):
+            callback_obj = callback_loader.get(callback_plugin_name)
             self._callback_plugins.append(callback_obj)
 
         self._callbacks_loaded = True

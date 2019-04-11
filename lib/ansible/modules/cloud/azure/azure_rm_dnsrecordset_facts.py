@@ -52,18 +52,18 @@ author:
 EXAMPLES = '''
 - name: Get facts for one Record Set
   azure_rm_dnsrecordset_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
     zone_name: example.com
     relative_name: server10
     record_type: A
 - name: Get facts for all Type A Record Sets in a Zone
   azure_rm_dnsrecordset_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
     zone_name: example.com
     record_type: A
 - name: Get all record sets in one zone
   azure_rm_dnsrecordset_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
     zone_name: example.com
 '''
 
@@ -73,24 +73,23 @@ azure_dnsrecordset:
     returned: always
     type: list
     example: [
-            {
-                "etag": "60ac0480-44dd-4881-a2ed-680d20b3978e",
-                "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Network/dnszones/newzone.com/A/servera",
-                "name": "servera",
-                "properties": {
-                    "ARecords": [
-                        {
-                            "ipv4Address": "10.4.5.7"
-                        },
-                        {
-                            "ipv4Address": "2.4.5.8"
-                        }
-                    ],
-                    "TTL": 12900
+    {
+        "etag": "60ac0480-44dd-4881-a2ed-680d20b3978e",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/dnszones/newzone.com/A/servera",
+        "name": "servera",
+        "properties": {
+            "ARecords": [
+                {
+                    "ipv4Address": "10.4.5.7"
                 },
-                "type": "Microsoft.Network/dnszones/A"
-            }
-        ]
+                {
+                    "ipv4Address": "2.4.5.8"
+                }
+            ],
+            "TTL": 12900
+        },
+        "type": "Microsoft.Network/dnszones/A"
+    }]
 dnsrecordsets:
     description: List of record set dicts, which shares the same hierarchy as azure_rm_dnsrecordset module's parameter.
     returned: always
@@ -98,7 +97,8 @@ dnsrecordsets:
     contains:
         id:
             description: ID of the dns recordset.
-            sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Network/dnszones/newzone.com/A/servera"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/dnszones/newzone.
+                     com/A/servera"
         relative_name:
             description: Name of the dns recordset.
             sample: servera

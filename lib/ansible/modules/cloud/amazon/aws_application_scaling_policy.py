@@ -444,24 +444,24 @@ def create_scaling_policy(connection, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent'], type='str'),
-        policy_name=dict(required=True, type='str'),
-        service_namespace=dict(required=True, choices=['ecs', 'elasticmapreduce', 'ec2', 'appstream', 'dynamodb'], type='str'),
-        resource_id=dict(required=True, type='str'),
-        scalable_dimension=dict(required=True, choices=['ecs:service:DesiredCount',
-                                                        'ec2:spot-fleet-request:TargetCapacity',
-                                                        'elasticmapreduce:instancegroup:InstanceCount',
-                                                        'appstream:fleet:DesiredCapacity',
-                                                        'dynamodb:table:ReadCapacityUnits',
-                                                        'dynamodb:table:WriteCapacityUnits',
-                                                        'dynamodb:index:ReadCapacityUnits',
-                                                        'dynamodb:index:WriteCapacityUnits'
-                                                        ], type='str'),
-        policy_type=dict(required=True, choices=['StepScaling', 'TargetTrackingScaling'], type='str'),
-        step_scaling_policy_configuration=dict(required=False, type='dict'),
+    argument_spec.update(
+        state=dict(type='str', required=True, choices=['present', 'absent']),
+        policy_name=dict(type='str', required=True),
+        service_namespace=dict(type='str', required=True, choices=['appstream', 'dynamodb', 'ec2', 'ecs', 'elasticmapreduce']),
+        resource_id=dict(type='str', required=True),
+        scalable_dimension=dict(type='str',
+                                required=True,
+                                choices=['ecs:service:DesiredCount',
+                                         'ec2:spot-fleet-request:TargetCapacity',
+                                         'elasticmapreduce:instancegroup:InstanceCount',
+                                         'appstream:fleet:DesiredCapacity',
+                                         'dynamodb:table:ReadCapacityUnits',
+                                         'dynamodb:table:WriteCapacityUnits',
+                                         'dynamodb:index:ReadCapacityUnits',
+                                         'dynamodb:index:WriteCapacityUnits']),
+        policy_type=dict(type='str', required=True, choices=['StepScaling', 'TargetTrackingScaling']),
+        step_scaling_policy_configuration=dict(type='dict'),
         target_tracking_scaling_policy_configuration=dict(
-            required=False,
             type='dict',
             options=dict(
                 CustomizedMetricSpecification=dict(type='dict'),
@@ -472,10 +472,10 @@ def main():
                 TargetValue=dict(type='float'),
             )
         ),
-        minimum_tasks=dict(required=False, type='int'),
-        maximum_tasks=dict(required=False, type='int'),
-        override_task_capacity=dict(required=False, type=bool)
-    ))
+        minimum_tasks=dict(type='int'),
+        maximum_tasks=dict(type='int'),
+        override_task_capacity=dict(type='bool'),
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 

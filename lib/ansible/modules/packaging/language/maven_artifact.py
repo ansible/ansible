@@ -61,6 +61,11 @@ options:
         description:
             - The password to authenticate with to the Maven Repository. Use AWS secret access key of the repository is hosted on S3
         aliases: [ "aws_secret_access_key" ]
+    headers:
+        description:
+            - Add custom HTTP headers to a request in hash/dict format.
+        type: dict
+        version_added: "2.8"
     dest:
         description:
             - The path where the artifact should be written to
@@ -192,7 +197,10 @@ def split_pre_existing_dir(dirname):
     head, tail = os.path.split(dirname)
     b_head = to_bytes(head, errors='surrogate_or_strict')
     if not os.path.exists(b_head):
-        (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
+        if head == dirname:
+            return None, [head]
+        else:
+            (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
         return head, [tail]
     new_directory_list.append(tail)
@@ -204,7 +212,11 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     Walk the new directories list and make sure that permissions are as we would expect
     '''
     if new_directory_list:
-        working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
+        first_sub_dir = new_directory_list.pop(0)
+        if not pre_existing_dir:
+            working_dir = first_sub_dir
+        else:
+            working_dir = os.path.join(pre_existing_dir, first_sub_dir)
         directory_args['path'] = working_dir
         changed = module.set_fs_attributes_if_different(directory_args, changed)
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
@@ -278,12 +290,13 @@ class Artifact(object):
 
 
 class MavenDownloader:
-    def __init__(self, module, base="http://repo1.maven.org/maven2", local=False):
+    def __init__(self, module, base="http://repo1.maven.org/maven2", local=False, headers=None):
         self.module = module
         if base.endswith("/"):
             base = base.rstrip("/")
         self.base = base
         self.local = local
+        self.headers = headers
         self.user_agent = "Maven Artifact Downloader/1.0"
         self.latest_version_found = None
         self.metadata_file_name = "maven-metadata-local.xml" if local else "maven-metadata.xml"
@@ -369,7 +382,7 @@ class MavenDownloader:
         self.module.params['url_password'] = self.module.params.get('password', '')
         self.module.params['http_agent'] = self.module.params.get('user_agent', None)
 
-        response, info = fetch_url(self.module, url_to_use, timeout=req_timeout)
+        response, info = fetch_url(self.module, url_to_use, timeout=req_timeout, headers=self.headers)
         if info['status'] == 200:
             return response
         if force:
@@ -457,6 +470,7 @@ def main():
             repository_url=dict(default=None),
             username=dict(default=None, aliases=['aws_secret_key']),
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
+            headers=dict(type='dict'),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
             dest=dict(type="path", required=True),
@@ -489,6 +503,7 @@ def main():
     version = module.params["version"]
     classifier = module.params["classifier"]
     extension = module.params["extension"]
+    headers = module.params['headers']
     state = module.params["state"]
     dest = module.params["dest"]
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
@@ -497,7 +512,7 @@ def main():
     verify_download = verify_checksum in ['download', 'always']
     verify_change = verify_checksum in ['change', 'always']
 
-    downloader = MavenDownloader(module, repository_url, local)
+    downloader = MavenDownloader(module, repository_url, local, headers)
 
     try:
         artifact = Artifact(group_id, artifact_id, version, classifier, extension)

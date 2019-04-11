@@ -1,0 +1,2 @@
+minor_changes:
+- "acme_challenge_cert_helper - add support for IP address identifiers."

@@ -1,0 +1,5 @@
+---
+minor_changes:
+- An `os` module_defaults group has been added to simplify parameters for
+  multiple OpenStack tasks.  This group includes all OpenStack modules with
+  an `os_`-prefixed module name.

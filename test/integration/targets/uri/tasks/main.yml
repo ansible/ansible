@@ -233,6 +233,19 @@
       - result is failed
   when: result is not skipped
 
+- name: check if urllib3 is installed as an OS package
+  package:
+    name: "{{ uri_os_packages[ansible_os_family].urllib3 }}"
+  check_mode: yes
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default
+  register: urllib3
+
+- name: uninstall conflicting urllib3 pip package
+  pip:
+    name: urllib3
+    state: absent
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default and urllib3.changed
+
 - name: install OS packages that are needed for SNI on old python
   package:
     name: "{{ item }}"
@@ -390,6 +403,20 @@
     - result is failure
     - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
 
+- name: Validate invalid method
+  uri:
+    url: https://{{ httpbin_host }}/anything
+    method: UNKNOWN
+  register: result
+  ignore_errors: yes
+
+- name: Assert invalid method fails
+  assert:
+    that:
+    - result is failure
+    - result.status == 405
+    - "'METHOD NOT ALLOWED' in result.msg"
+
 - name: Test client cert auth, no certs
   uri:
     url: "https://ansible.http.tests/ssl_client_verify"
@@ -486,6 +513,31 @@
   assert:
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Create a testing file
+  copy:
+    content: "content"
+    dest: "{{ output_dir }}/output"
+
+- name: Download a file from non existing location
+  uri:
+    url: http://does/not/exist
+    dest: "{{ output_dir }}/output"
+  ignore_errors: yes
+
+- name: Save testing file's output
+  command: "cat {{ output_dir }}/output"
+  register: file_out
+
+- name: Test the testing file was not overwritten
+  assert:
+    that:
+      - "'content' in file_out.stdout"
+
+- name: Clean up
+  file:
+    dest: "{{ output_dir }}/output"
+    state: absent
 
 - name: Test follow_redirects=none
   import_tasks: redirect-none.yml

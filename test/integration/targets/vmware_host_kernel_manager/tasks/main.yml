@@ -1,0 +1,66 @@
+# test code for the vmware_host_kernel_manager module
+# Copyright: (c) 2019, Aaron Longchamps <a.j.longchamps@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&host=1
+  register: vcsim_instance
+
+- debug: var=vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of hosts from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=host' }}"
+  register: hostlist
+
+- set_fact:
+    host1: "{{ hostlist['json'][0] }}"
+
+- name: host connected, module exists, options exist, arguments different
+  vmware_host_kernel_manager:
+    hostname: '{{ vcsim }}'
+    username: '{{ vcsim_instance.json.username }}'
+    password: '{{ vcsim_instance.json.password }}'
+    validate_certs: False
+    esxi_hostname: '{{ host1 }}'
+    kernel_module_name: "tcpip4"
+    kernel_module_option: "ipv6=0"
+  register: my_results_01
+
+- name: Check that the provided kernel_module_name has kernel_module_option set
+  assert:
+    that:
+      - "my_results_01.results['DC0_H0']['configured_options'] == 'ipv6=0'"
+
+- name: host connected, module exists, same options for idempotence test
+  vmware_host_kernel_manager:
+    hostname: '{{ vcsim }}'
+    username: '{{ vcsim_instance.json.username }}'
+    password: '{{ vcsim_instance.json.password }}'
+    validate_certs: False
+    esxi_hostname: '{{ host1 }}'
+    kernel_module_name: "tcpip4"
+    kernel_module_option: "ipv6=0"
+  register: my_results_02
+
+- name: Check that changed is false
+  assert:
+    that:
+      - "my_results_02.results['DC0_H0']['changed'] == false"

@@ -54,6 +54,12 @@ options:
             - Status of the action.
         choices: ['enabled', 'disabled']
         default: 'enabled'
+    pause_in_maintenance:
+        description:
+            - Whether to pause escalation during maintenance periods or not.
+            - Can be used when I(event_source=trigger).
+        type: 'bool'
+        default: true
     esc_period:
         description:
             - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
@@ -217,16 +223,27 @@ options:
             send_to_users:
                 type: list
                 description:
-                    - Users to send messages to.
+                    - Users (usernames or aliases) to send messages to.
             message:
                 description:
                     - Operation message text.
+                    - Will check the 'default message' and use the text from I(default_message) if this and I(default_subject) are not specified
             subject:
                 description:
                     - Operation message subject.
+                    - Will check the 'default message' and use the text from I(default_subject) if this and I(default_subject) are not specified
             media_type:
                 description:
                     - Media type that will be used to send the message.
+                    - Set to C(all) for all media types
+                default: 'all'
+            operation_condition:
+                type: 'str'
+                description:
+                    - The action operation condition object defines a condition that must be met to perform the current operation.
+                choices:
+                    - acknowledged
+                    - not_acknowledged
             host_groups:
                 type: list
                 description:
@@ -658,6 +675,8 @@ class Zapi(object):
 
         """
         try:
+            if str(mediatype_name).lower() == 'all':
+                return '0'
             mediatype_list = self._zapi.mediatype.get({
                 'output': 'extend',
                 'selectInventory': 'extend',
@@ -666,7 +685,7 @@ class Zapi(object):
             if len(mediatype_list) < 1:
                 self._module.fail_json(msg="Media type not found: %s" % mediatype_name)
             else:
-                return mediatype_list[0]
+                return mediatype_list[0]['mediatypeid']
         except Exception as e:
             self._module.fail_json(msg="Failed to get mediatype '%s': %s" % (mediatype_name, e))
 
@@ -761,7 +780,8 @@ class Action(object):
         Returns:
             dict: dictionary of specified parameters
         """
-        return {
+
+        _params = {
             'name': kwargs['name'],
             'eventsource': to_numeric_value([
                 'trigger',
@@ -783,6 +803,13 @@ class Action(object):
                 'enabled',
                 'disabled'], kwargs['status'])
         }
+        if kwargs['event_source'] == 'trigger':
+            if float(self._zapi.api_version().rsplit('.', 1)[0]) >= 4.0:
+                _params['pause_suppressed'] = '1' if kwargs['pause_in_maintenance'] else '0'
+            else:
+                _params['maintenance_mode'] = '1' if kwargs['pause_in_maintenance'] else '0'
+
+        return _params
 
     def check_difference(self, **kwargs):
         """Check difference between action and user specified parameters.
@@ -897,10 +924,10 @@ class Operations(object):
         """
         try:
             return {
-                'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
+                'default_msg': '0' if operation.get('message') is not None or operation.get('subject')is not None else '1',
                 'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
                     operation.get('media_type')
-                )['mediatypeid'] if operation.get('media_type') is not None else None,
+                ) if operation.get('media_type') is not None else '0',
                 'message': operation.get('message'),
                 'subject': operation.get('subject'),
             }
@@ -1042,6 +1069,28 @@ class Operations(object):
         """
         return {'inventory_mode': operation.get('inventory')}
 
+    def _construct_opconditions(self, operation):
+        """Construct operation conditions.
+
+        Args:
+            operation: operation to construct the conditions
+
+        Returns:
+            list: constructed operation conditions
+        """
+        _opcond = operation.get('operation_condition')
+        if _opcond is not None:
+            if _opcond == 'acknowledged':
+                _value = '1'
+            elif _opcond == 'not_acknowledged':
+                _value = '0'
+            return [{
+                'conditiontype': '14',
+                'operator': '0',
+                'value': _value
+            }]
+        return []
+
     def construct_the_data(self, operations):
         """Construct the operation data using helper methods.
 
@@ -1065,12 +1114,14 @@ class Operations(object):
                 constructed_operation['opmessage'] = self._construct_opmessage(op)
                 constructed_operation['opmessage_usr'] = self._construct_opmessage_usr(op)
                 constructed_operation['opmessage_grp'] = self._construct_opmessage_grp(op)
+                constructed_operation['opconditions'] = self._construct_opconditions(op)
 
             # Send Command type
             if constructed_operation['operationtype'] == '1':
                 constructed_operation['opcommand'] = self._construct_opcommand(op)
                 constructed_operation['opcommand_hst'] = self._construct_opcommand_hst(op)
                 constructed_operation['opcommand_grp'] = self._construct_opcommand_grp(op)
+                constructed_operation['opconditions'] = self._construct_opconditions(op)
 
             # Add to/Remove from host group
             if constructed_operation['operationtype'] in ('4', '5'):
@@ -1172,6 +1223,7 @@ class AcknowledgeOperations(Operations):
             return to_numeric_value([
                 "send_message",
                 "remote_command",
+                None,
                 None,
                 None,
                 None,
@@ -1595,6 +1647,7 @@ def cleanup_data(obj):
 def main():
     """Main ansible module function
     """
+
     module = AnsibleModule(
         argument_spec=dict(
             server_url=dict(type='str', required=True, aliases=['url']),
@@ -1609,18 +1662,303 @@ def main():
             event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
             status=dict(type='str', required=False, default='enabled', choices=['enabled', 'disabled']),
-            default_message=dict(type='str', required=False, default=None),
-            default_subject=dict(type='str', required=False, default=None),
-            recovery_default_message=dict(type='str', required=False, default=None),
-            recovery_default_subject=dict(type='str', required=False, default=None),
-            acknowledge_default_message=dict(type='str', required=False, default=None),
-            acknowledge_default_subject=dict(type='str', required=False, default=None),
-            conditions=dict(type='list', required=False, default=None),
+            pause_in_maintenance=dict(type='bool', required=False, default=True),
+            default_message=dict(type='str', required=False, default=''),
+            default_subject=dict(type='str', required=False, default=''),
+            recovery_default_message=dict(type='str', required=False, default=''),
+            recovery_default_subject=dict(type='str', required=False, default=''),
+            acknowledge_default_message=dict(type='str', required=False, default=''),
+            acknowledge_default_subject=dict(type='str', required=False, default=''),
+            conditions=dict(
+                type='list',
+                required=False,
+                elements='dict',
+                options=dict(
+                    formulaid=dict(type='str', required=False),
+                    operator=dict(type='str', required=True),
+                    type=dict(type='str', required=True),
+                    value=dict(type='str', required=True),
+                    value2=dict(type='str', required=False)
+                )
+            ),
             formula=dict(type='str', required=False, default=None),
             eval_type=dict(type='str', required=False, default=None, choices=['andor', 'and', 'or', 'custom_expression']),
-            operations=dict(type='list', required=False, default=None),
-            recovery_operations=dict(type='list', required=False, default=[]),
-            acknowledge_operations=dict(type='list', required=False, default=[])
+            operations=dict(
+                type='list',
+                required=False,
+                elements='dict',
+                options=dict(
+                    type=dict(
+                        type='str',
+                        required=True,
+                        choices=[
+                            'send_message',
+                            'remote_command',
+                            'add_host',
+                            'remove_host',
+                            'add_to_host_group',
+                            'remove_from_host_group',
+                            'link_to_template',
+                            'unlink_from_template',
+                            'enable_host',
+                            'disable_host',
+                            'set_host_inventory_mode',
+                        ]
+                    ),
+                    esc_period=dict(type='int', required=False),
+                    esc_step_from=dict(type='int', required=False, default=1),
+                    esc_step_to=dict(type='int', required=False, default=1),
+                    operation_condition=dict(
+                        type='str',
+                        required=False,
+                        default=None,
+                        choices=['acknowledged', 'not_acknowledged']
+                    ),
+                    # when type is remote_command
+                    command_type=dict(
+                        type='str',
+                        required=False,
+                        choices=[
+                            'custom_script',
+                            'ipmi',
+                            'ssh',
+                            'telnet',
+                            'global_script'
+                        ]
+                    ),
+                    command=dict(type='str', required=False),
+                    execute_on=dict(
+                        type='str',
+                        required=False,
+                        choices=['agent', 'server', 'proxy']
+                    ),
+                    password=dict(type='str', required=False),
+                    port=dict(type='int', required=False),
+                    run_on_groups=dict(type='list', required=False),
+                    run_on_hosts=dict(type='list', required=False),
+                    script_name=dict(type='str', required=False),
+                    ssh_auth_type=dict(
+                        type='str',
+                        required=False,
+                        default='password',
+                        choices=['password', 'public_key']
+                    ),
+                    ssh_privatekey_file=dict(type='str', required=False),
+                    ssh_publickey_file=dict(type='str', required=False),
+                    username=dict(type='str', required=False),
+                    # when type is send_message
+                    media_type=dict(type='str', required=False),
+                    subject=dict(type='str', required=False),
+                    message=dict(type='str', required=False),
+                    send_to_groups=dict(type='list', required=False),
+                    send_to_users=dict(type='list', required=False),
+                    # when type is add_to_host_group or remove_from_host_group
+                    host_groups=dict(type='list', required=False),
+                    # when type is set_host_inventory_mode
+                    inventory=dict(type='str', required=False),
+                    # when type is link_to_template or unlink_from_template
+                    templates=dict(type='list', required=False)
+                ),
+                required_if=[
+                    ['type', 'remote_command', ['command_type']],
+                    ['type', 'remote_command', ['run_on_groups', 'run_on_hosts'], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
+                    ['command_type', 'ipmi', ['command']],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
+                    ['command_type', 'global_script', ['script_name']],
+                    ['type', 'add_to_host_group', ['host_groups']],
+                    ['type', 'remove_from_host_group', ['host_groups']],
+                    ['type', 'link_to_template', ['templates']],
+                    ['type', 'unlink_from_template', ['templates']],
+                    ['type', 'set_host_inventory_mode', ['inventory']],
+                    ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
+                ]
+            ),
+            recovery_operations=dict(
+                type='list',
+                required=False,
+                default=[],
+                elements='dict',
+                options=dict(
+                    type=dict(
+                        type='str',
+                        required=True,
+                        choices=[
+                            'send_message',
+                            'remote_command',
+                            'notify_all_involved'
+                        ]
+                    ),
+                    # when type is remote_command
+                    command_type=dict(
+                        type='str',
+                        required=False,
+                        choices=[
+                            'custom_script',
+                            'ipmi',
+                            'ssh',
+                            'telnet',
+                            'global_script'
+                        ]
+                    ),
+                    command=dict(type='str', required=False),
+                    execute_on=dict(
+                        type='str',
+                        required=False,
+                        choices=['agent', 'server', 'proxy']
+                    ),
+                    password=dict(type='str', required=False),
+                    port=dict(type='int', required=False),
+                    run_on_groups=dict(type='list', required=False),
+                    run_on_hosts=dict(type='list', required=False),
+                    script_name=dict(type='str', required=False),
+                    ssh_auth_type=dict(
+                        type='str',
+                        required=False,
+                        default='password',
+                        choices=['password', 'public_key']
+                    ),
+                    ssh_privatekey_file=dict(type='str', required=False),
+                    ssh_publickey_file=dict(type='str', required=False),
+                    username=dict(type='str', required=False),
+                    # when type is send_message
+                    media_type=dict(type='str', required=False),
+                    subject=dict(type='str', required=False),
+                    message=dict(type='str', required=False),
+                    send_to_groups=dict(type='list', required=False),
+                    send_to_users=dict(type='list', required=False),
+                ),
+                required_if=[
+                    ['type', 'remote_command', ['command_type']],
+                    ['type', 'remote_command', [
+                        'run_on_groups',
+                        'run_on_hosts'
+                    ], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
+                    ['command_type', 'ipmi', ['command']],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
+                    ['command_type', 'global_script', ['script_name']],
+                    ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
+                ]
+            ),
+            acknowledge_operations=dict(
+                type='list',
+                required=False,
+                default=[],
+                elements='dict',
+                options=dict(
+                    type=dict(
+                        type='str',
+                        required=True,
+                        choices=[
+                            'send_message',
+                            'remote_command',
+                            'notify_all_involved'
+                        ]
+                    ),
+                    # when type is remote_command
+                    command_type=dict(
+                        type='str',
+                        required=False,
+                        choices=[
+                            'custom_script',
+                            'ipmi',
+                            'ssh',
+                            'telnet',
+                            'global_script'
+                        ]
+                    ),
+                    command=dict(type='str', required=False),
+                    execute_on=dict(
+                        type='str',
+                        required=False,
+                        choices=['agent', 'server', 'proxy']
+                    ),
+                    password=dict(type='str', required=False),
+                    port=dict(type='int', required=False),
+                    run_on_groups=dict(type='list', required=False),
+                    run_on_hosts=dict(type='list', required=False),
+                    script_name=dict(type='str', required=False),
+                    ssh_auth_type=dict(
+                        type='str',
+                        required=False,
+                        default='password',
+                        choices=['password', 'public_key']
+                    ),
+                    ssh_privatekey_file=dict(type='str', required=False),
+                    ssh_publickey_file=dict(type='str', required=False),
+                    username=dict(type='str', required=False),
+                    # when type is send_message
+                    media_type=dict(type='str', required=False),
+                    subject=dict(type='str', required=False),
+                    message=dict(type='str', required=False),
+                    send_to_groups=dict(type='list', required=False),
+                    send_to_users=dict(type='list', required=False),
+                ),
+                required_if=[
+                    ['type', 'remote_command', ['command_type']],
+                    ['type', 'remote_command', [
+                        'run_on_groups',
+                        'run_on_hosts'
+                    ], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
+                    ['command_type', 'ipmi', ['command']],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
+                    ['command_type', 'global_script', ['script_name']],
+                    ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
+                ]
+            )
         ),
         supports_check_mode=True
     )
@@ -1640,6 +1978,7 @@ def main():
     event_source = module.params['event_source']
     state = module.params['state']
     status = module.params['status']
+    pause_in_maintenance = module.params['pause_in_maintenance']
     default_message = module.params['default_message']
     default_subject = module.params['default_subject']
     recovery_default_message = module.params['recovery_default_message']
@@ -1682,6 +2021,7 @@ def main():
                 event_source=event_source,
                 esc_period=esc_period,
                 status=status,
+                pause_in_maintenance=pause_in_maintenance,
                 default_message=default_message,
                 default_subject=default_subject,
                 recovery_default_message=recovery_default_message,
@@ -1711,6 +2051,7 @@ def main():
                 event_source=event_source,
                 esc_period=esc_period,
                 status=status,
+                pause_in_maintenance=pause_in_maintenance,
                 default_message=default_message,
                 default_subject=default_subject,
                 recovery_default_message=recovery_default_message,

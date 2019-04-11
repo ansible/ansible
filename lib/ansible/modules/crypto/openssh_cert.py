@@ -26,69 +26,65 @@ requirements:
     - "ssh-keygen"
 options:
     state:
-        required: false
-        default: "present"
-        choices: [ 'present', 'absent' ]
         description:
             - Whether the host or user certificate should exist or not, taking action if the state is different from what is stated.
+        type: str
+        default: "present"
+        choices: [ 'present', 'absent' ]
     type:
-        required: true
-        choices: ['host', 'user']
         description:
             - Whether the module should generate a host or a user certificate.
+        type: str
+        required: true
+        choices: ['host', 'user']
     force:
-        required: false
-        default: false
-        type: bool
         description:
             - Should the certificate be regenerated even if it already exists and is valid.
+        type: bool
+        default: false
     path:
-        required: true
-        type: path
         description:
             - Path of the file containing the certificate.
-    signing_key:
-        required: true
         type: path
+        required: true
+    signing_key:
         description:
             - The path to the private openssh key that is used for signing the public key in order to generate the certificate.
-    public_key:
-        required: true
         type: path
+        required: true
+    public_key:
         description:
             - The path to the public key that will be signed with the signing key in order to generate the certificate.
-    valid_from:
+        type: path
         required: true
-        type: str
+    valid_from:
         description:
             - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
                Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | always)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
-    valid_to:
-        required: true
         type: str
+        required: true
+    valid_to:
         description:
             - "The point in time the certificate is valid to. Time can be specified either as relative time or as absolute timestamp.
                Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | forever)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
-    valid_at:
-        required: false
         type: str
+        required: true
+    valid_at:
         description:
             - "Check if the certificate is valid at a certain point in time. If it is not the certificate will be regenerated.
                Time will always be interpreted as UTC. Mainly to be used with relative timespec for I(valid_from) and / or I(valid_to).
                Note that if using relative time this module is NOT idempotent."
+        type: str
     principals:
-        required: false
-        type: list
         description:
             - "Certificates may be limited to be valid for a set of principal (user/host) names.
               By default, generated certificates are valid for all users or hosts."
-    options:
-        required: false
         type: list
+    options:
         description:
             - "Specify certificate options when signing a key. The option that are valid for user certificates are:"
             - "C(clear): Clear all enabled permissions.  This is useful for clearing the default set of permissions so permissions may be added individually."
@@ -107,12 +103,19 @@ options:
             - "C(source-address=address_list): Restrict the source addresses from which the certificate is considered valid.
                The C(address_list) is a comma-separated list of one or more address/netmask pairs in CIDR format."
             - "At present, no options are valid for host keys."
-
+        type: list
     identifier:
-        required: false
-        type: str
         description:
             - Specify the key identity when signing a public key. The identifier that is logged by the server when the certificate is used for authentication.
+        type: str
+    serial_number:
+        description:
+            - "Specify the certificate serial number.
+               The serial number is logged by the server when the certificate is used for authentication.
+               The certificate serial number may be used in a KeyRevocationList.
+               The serial number may be omitted for checks, but must be specified again for a new certificate.
+               Note: The default value set by ssh-keygen is 0."
+        type: int
 
 extends_documentation_fragment: files
 '''
@@ -221,6 +224,7 @@ class Certificate(object):
         self.public_key = module.params['public_key']
         self.path = module.params['path']
         self.identifier = module.params['identifier']
+        self.serial_number = module.params['serial_number']
         self.valid_from = module.params['valid_from']
         self.valid_to = module.params['valid_to']
         self.valid_at = module.params['valid_at']
@@ -294,6 +298,9 @@ class Certificate(object):
                 args.extend(['-I', self.identifier])
             else:
                 args.extend(['-I', ""])
+
+            if self.serial_number is not None:
+                args.extend(['-z', str(self.serial_number)])
 
             if self.principals:
                 args.extend(['-n', ','.join(self.principals)])
@@ -382,6 +389,7 @@ class Certificate(object):
             if principals == ["(none)"]:
                 principals = None
             cert_type = re.findall("( user | host )", proc[1])[0].strip()
+            serial_number = re.search(r"Serial: (\d+)", proc[1]).group(1)
             validity = re.findall("(from (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}) to (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}))", proc[1])
             if validity:
                 if validity[0][1]:
@@ -406,6 +414,11 @@ class Certificate(object):
         def _check_perms(module):
             file_args = module.load_file_common_arguments(module.params)
             return not module.set_fs_attributes_if_different(file_args, False)
+
+        def _check_serial_number():
+            if self.serial_number is None:
+                return True
+            return self.serial_number == int(serial_number)
 
         def _check_type():
             return self.type == cert_type
@@ -446,10 +459,10 @@ class Certificate(object):
 
             return False
 
-        if not perms_required:
-            return _check_type() and _check_principals() and _check_validity(module)
+        if perms_required and not _check_perms(module):
+            return False
 
-        return _check_perms(module) and _check_type() and _check_principals() and _check_validity(module)
+        return _check_type() and _check_principals() and _check_validity(module) and _check_serial_number()
 
     def dump(self):
 
@@ -461,9 +474,12 @@ class Certificate(object):
             for word in arr:
                 if word in keywords:
                     concated.append(string)
-                    string = ""
-                string += " " + word
+                    string = word
+                else:
+                    string += " " + word
             concated.append(string)
+            # drop the certificate path
+            concated.pop(0)
             return concated
 
         def format_cert_info():
@@ -510,22 +526,23 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            force=dict(default=False, type=bool),
-            type=dict(choices=['host', 'user'], type='str'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            force=dict(type='bool', default=False),
+            type=dict(type='str', choices=['host', 'user']),
             signing_key=dict(type='path'),
             public_key=dict(type='path'),
-            path=dict(required=True, type='path'),
+            path=dict(type='path', required=True),
             identifier=dict(type='str'),
+            serial_number=dict(type='int'),
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),
-            principals=dict(type=list),
-            options=dict(type=list),
+            principals=dict(type='list'),
+            options=dict(type='list'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
-        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])]
+        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])],
     )
 
     def isBaseDir(path):

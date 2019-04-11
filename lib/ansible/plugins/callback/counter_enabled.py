@@ -85,21 +85,25 @@ class CallbackModule(CallbackBase):
         for host in hosts:
             stat = stats.summarize(host)
 
-            self._display.display(u"%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s %s %s" % (
                 hostcolor(host, stat),
                 colorize(u'ok', stat['ok'], C.COLOR_OK),
                 colorize(u'changed', stat['changed'], C.COLOR_CHANGED),
                 colorize(u'unreachable', stat['unreachable'], C.COLOR_UNREACHABLE),
-                colorize(u'failed', stat['failures'], C.COLOR_ERROR)),
+                colorize(u'failed', stat['failures'], C.COLOR_ERROR),
+                colorize(u'rescued', stat['rescued'], C.COLOR_OK),
+                colorize(u'ignored', stat['ignored'], C.COLOR_WARN)),
                 screen_only=True
             )
 
-            self._display.display(u"%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s %s %s" % (
                 hostcolor(host, stat, False),
                 colorize(u'ok', stat['ok'], None),
                 colorize(u'changed', stat['changed'], None),
                 colorize(u'unreachable', stat['unreachable'], None),
-                colorize(u'failed', stat['failures'], None)),
+                colorize(u'failed', stat['failures'], None),
+                colorize(u'rescued', stat['rescued'], None),
+                colorize(u'ignored', stat['ignored'], None)),
                 log_only=True
             )
 
@@ -127,7 +131,7 @@ class CallbackModule(CallbackBase):
         # args can be specified as no_log in several places: in the task or in
         # the argument spec.  We can check whether the task is no_log but the
         # argument spec can't be because that is only run on the target
-        # machine and we haven't run it thereyet at this time.
+        # machine and we haven't run it there yet at this time.
         #
         # So we give people a config option to affect display of the args so
         # that they can secure this if they feel that their stdout is insecure

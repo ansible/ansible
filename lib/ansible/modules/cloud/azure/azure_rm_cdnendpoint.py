@@ -33,16 +33,16 @@ options:
             - Valid azure location. Defaults to location of the resource group.
     started:
         description:
-            - Use with I(state) 'present' to start the endpoint. Set to false to stop the endpoint. Set to true to start the endpoint.
+            - Use with I(state) C(present) to start the endpoint. Set to C(false) to stop the endpoint. Set to C(true) to start the endpoint.
         type: bool
     purge:
         description:
-            - Use with I(state) 'present' to purge the endpoint. Set to true to have the endpoint be purged.
+            - Use with I(state) C(present) to purge the endpoint. Set to C(true) to have the endpoint be purged.
         type: bool
         default: false
     purge_content_paths:
         description:
-            - Use with I(state) 'present' and I(purge) 'true' to specify content paths to be purged.
+            - Use with I(state) C(present) and I(purge) C(true) to specify content paths to be purged.
         type: list
         default: ['/']
     profile_name:
@@ -124,9 +124,9 @@ author:
 EXAMPLES = '''
     - name: Create a Azure CDN endpoint
       azure_rm_cdnendpoint:
-          resource_group: TestRg
-          name: TestEndpoint
-          profile_name: TestProfile
+          resource_group: myResourceGroup
+          profile_name: myProfile
+          name: myEndpoint
           origins:
             - name: TestOrig
               host_name: "www.example.com"
@@ -136,9 +136,9 @@ EXAMPLES = '''
               foo: bar
     - name: Delete a Azure CDN endpoint
       azure_rm_cdnendpoint:
-          resource_group: TestRg
-          name: TestEndpoint
-          profile_name: TestProfile
+          resource_group: myResourceGroup
+          profile_name: myProfile
+          name: myEndpoint
           state: absent
 '''
 RETURN = '''
@@ -151,7 +151,8 @@ id:
         - Id of the CDN endpoint.
     returned: always
     type: str
-    sample: "/subscriptions/<subs_id>/resourcegroups/xxx/providers/Microsoft.Cdn/profiles/xxx/endpoints/xxx"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Cdn/profiles/myProfile/endpoints/
+             myEndpoint"
 host_name:
     description:
         - Host name of the CDN endpoint.

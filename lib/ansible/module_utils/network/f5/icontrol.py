@@ -280,7 +280,7 @@ class TransactionContextManager(object):
         return self.client
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        self.client.request.headers.pop('X-F5-REST-Coordination-Id')
+        self.client.api.request.headers.pop('X-F5-REST-Coordination-Id')
         if exc_tb is None:
             uri = "https://{0}:{1}/mgmt/tm/transaction/{2}".format(
                 self.client.provider['server'],
@@ -504,6 +504,35 @@ def tmos_version(client):
     query = to_parse.query
     version = query.split('=')[1]
     return version
+
+
+def bigiq_version(client):
+    uri = "https://{0}:{1}/mgmt/shared/resolver/device-groups/cm-shared-all-big-iqs/devices".format(
+        client.provider['server'],
+        client.provider['server_port'],
+    )
+    query = "?$select=version"
+
+    resp = client.api.get(uri + query)
+
+    try:
+        response = resp.json()
+    except ValueError as ex:
+        raise F5ModuleError(str(ex))
+
+    if 'code' in response and response['code'] in [400, 403]:
+        if 'message' in response:
+            raise F5ModuleError(response['message'])
+        else:
+            raise F5ModuleError(resp.content)
+
+    if 'items' in response:
+        version = response['items'][0]['version']
+        return version
+
+    raise F5ModuleError(
+        'Failed to retrieve BIGIQ version information.'
+    )
 
 
 def module_provisioned(client, module_name):

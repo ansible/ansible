@@ -50,17 +50,17 @@ options:
     state:
         description:
             - Assert the state of the virtual machine.
-            - State 'present' will check that the machine exists with the requested configuration. If the configuration
+            - State C(present) will check that the machine exists with the requested configuration. If the configuration
               of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's power
               state.
-            - State 'absent' will remove the virtual machine.
+            - State C(absent) will remove the virtual machine.
         default: present
         choices:
             - absent
             - present
     started:
         description:
-            - Use with state 'present' to start the machine. Set to false to have the machine be 'stopped'.
+            - Use with state C(present) to start the machine. Set to false to have the machine be 'stopped'.
         default: true
         type: bool
     allocated:
@@ -70,13 +70,13 @@ options:
         type: bool
     generalized:
         description:
-            - Use with state 'present' to generalize the machine. Set to true to generalize the machine.
+            - Use with state C(present) to generalize the machine. Set to true to generalize the machine.
             - Please note that this operation is irreversible.
         type: bool
         version_added: "2.8"
     restarted:
         description:
-            - Use with state 'present' to restart a running VM.
+            - Use with state C(present) to restart a running VM.
         type: bool
     location:
         description:
@@ -314,6 +314,43 @@ options:
             - A list of Availability Zones for your virtual machine
         type: list
         version_added: "2.8"
+    license_type:
+        description:
+            - Specifies that the image or disk that is being used was licensed on-premises. This element is only
+              used for images that contain the Windows Server operating system.
+            - "Note: To unset this value, it has to be set to the string 'None'."
+        version_added: 2.8
+        choices:
+            - Windows_Server
+            - Windows_Client
+    vm_identity:
+        description:
+            - Identity for the virtual machine.
+        version_added: 2.8
+        choices:
+            - SystemAssigned
+    winrm:
+        description:
+            - List of Windows Remote Management configurations of the VM.
+        version_added: 2.8
+        suboptions:
+            protocol:
+                description:
+                    - Specifies the protocol of listener
+                required: true
+                choices:
+                    - http
+                    - https
+            source_vault:
+                description:
+                    - The relative URL of the Key Vault containing the certificate
+            certificate_url:
+                description:
+                    - This is the URL of a certificate that has been uploaded to Key Vault as a secret.
+            certificate_store:
+                description:
+                    - Specifies the certificate store on the Virtual Machine to which the certificate
+                      should be added. The specified certificate store is implicitly in the LocalMachine account.
 
 extends_documentation_fragment:
     - azure
@@ -322,12 +359,14 @@ extends_documentation_fragment:
 author:
     - "Chris Houseknecht (@chouseknecht)"
     - "Matt Davis (@nitzmahone)"
+    - "Christopher Perrin (@cperrin88)"
+
 '''
 EXAMPLES = '''
 
 - name: Create VM with defaults
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm10
     admin_username: chouseknecht
     admin_password: <your password here>
@@ -340,14 +379,14 @@ EXAMPLES = '''
 - name: Create an availability set for managed disk vm
   azure_rm_availabilityset:
     name: avs-managed-disk
-    resource_group: Testing
+    resource_group: myResourceGroup
     platform_update_domain_count: 5
     platform_fault_domain_count: 2
     sku: Aligned
 
 - name: Create a VM with managed disk
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: vm-managed-disk
     admin_username: adminUser
     availability_set: avs-managed-disk
@@ -361,7 +400,7 @@ EXAMPLES = '''
 
 - name: Create a VM with existing storage account and NIC
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm002
     vm_size: Standard_D4
     storage_account: testaccount001
@@ -378,7 +417,7 @@ EXAMPLES = '''
 
 - name: Create a VM with OS and multiple data managed disks
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_D4
     managed_disk_type: Standard_LRS
@@ -401,7 +440,7 @@ EXAMPLES = '''
 
 - name: Create a VM with OS and multiple data storage accounts
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_DS1_v2
     admin_username: adminUser
@@ -429,7 +468,7 @@ EXAMPLES = '''
 
 - name: Create a VM with a custom image
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_DS1_v2
     admin_username: adminUser
@@ -438,18 +477,18 @@ EXAMPLES = '''
 
 - name: Create a VM with a custom image from a particular resource group
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_DS1_v2
     admin_username: adminUser
     admin_password: password01
     image:
       name: customimage001
-      resource_group: Testing
+      resource_group: myResourceGroup
 
 - name: Create VM with spcified OS disk size
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: big-os-disk
     admin_username: chouseknecht
     admin_password: <your password here>
@@ -462,7 +501,7 @@ EXAMPLES = '''
 
 - name: Create VM with OS and Plan, accepting the terms
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: f5-nva
     admin_username: chouseknecht
     admin_password: <your password here>
@@ -478,13 +517,13 @@ EXAMPLES = '''
 
 - name: Power Off
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm002
     started: no
 
 - name: Deallocate
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm002
     allocated: no
 
@@ -501,7 +540,7 @@ EXAMPLES = '''
 
 - name: Create a VM with an Availability Zone
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_DS1_v2
     admin_username: adminUser
@@ -511,7 +550,7 @@ EXAMPLES = '''
 
 - name: Remove a VM and all resources that were autocreated
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm002
     remove_on_absent: all_autocreated
     state: absent
@@ -545,7 +584,7 @@ azure_vm:
     contains: {
         "properties": {
             "availabilitySet": {
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/availabilitySets/MYAVAILABILITYSET"
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/availabilitySets/MYAVAILABILITYSET"
             },
             "hardwareProfile": {
                 "vmSize": "Standard_D1"
@@ -594,7 +633,7 @@ azure_vm:
             "networkProfile": {
                 "networkInterfaces": [
                     {
-                        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01",
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01",
                         "name": "testvm10_NIC01",
                         "properties": {
                             "dnsSettings": {
@@ -605,20 +644,20 @@ azure_vm:
                             "ipConfigurations": [
                                 {
                                     "etag": 'W/"041c8c2a-d5dd-4cd7-8465-9125cfbe2cf8"',
-                                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default",
+                                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default",
                                     "name": "default",
                                     "properties": {
                                         "privateIPAddress": "10.10.0.5",
                                         "privateIPAllocationMethod": "Dynamic",
                                         "provisioningState": "Succeeded",
                                         "publicIPAddress": {
-                                            "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/testvm10_PIP01",
+                                            "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/testvm10_PIP01",
                                             "name": "testvm10_PIP01",
                                             "properties": {
                                                 "idleTimeoutInMinutes": 4,
                                                 "ipAddress": "13.92.246.197",
                                                 "ipConfiguration": {
-                                                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default"
+                                                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default"
                                                 },
                                                 "provisioningState": "Succeeded",
                                                 "publicIPAllocationMethod": "Static",
@@ -633,7 +672,7 @@ azure_vm:
                             "provisioningState": "Succeeded",
                             "resourceGuid": "10979e12-ccf9-42ee-9f6d-ff2cc63b3844",
                             "virtualMachine": {
-                                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/virtualMachines/testvm10"
+                                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/virtualMachines/testvm10"
                             }
                         }
                     }
@@ -754,8 +793,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             generalized=dict(type='bool', default=False),
             data_disks=dict(type='list'),
             plan=dict(type='dict'),
+            zones=dict(type='list'),
             accept_terms=dict(type='bool', default=False),
-            zones=dict(type='list')
+            license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client']),
+            vm_identity=dict(type='str', choices=['SystemAssigned']),
+            winrm=dict(type='list')
         )
 
         self.resource_group = None
@@ -797,6 +839,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.plan = None
         self.accept_terms = None
         self.zones = None
+        self.license_type = None
+        self.vm_identity = None
 
         self.results = dict(
             changed=False,
@@ -996,6 +1040,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     differences.append('Zones')
                     changed = True
 
+                if self.license_type is not None and vm_dict['properties'].get('licenseType') != self.license_type:
+                    differences.append('License Type')
+                    changed = True
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -1087,6 +1134,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                         publisher=self.plan.get('publisher'),
                                                         promotion_code=self.plan.get('promotion_code'))
 
+                    license_type = self.license_type
+
                     vm_resource = self.compute_models.VirtualMachine(
                         location=self.location,
                         tags=self.tags,
@@ -1115,6 +1164,46 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         plan=plan,
                         zones=self.zones,
                     )
+
+                    if self.license_type is not None:
+                        vm_resource.license_type = self.license_type
+
+                    if self.vm_identity:
+                        vm_resource.identity = self.compute_models.VirtualMachineIdentity(type=self.vm_identity)
+
+                    if self.winrm:
+                        winrm_listeners = list()
+                        for winrm_listener in self.winrm:
+                            winrm_listeners.append(self.compute_models.WinRMListener(
+                                protocol=winrm_listener.get('protocol'),
+                                certificate_url=winrm_listener.get('certificate_url')
+                            ))
+                            if winrm_listener.get('source_vault'):
+                                if not vm_resource.os_profile.secrets:
+                                    vm_resource.os_profile.secrets = list()
+
+                                vm_resource.os_profile.secrets.append(self.compute_models.VaultSecretGroup(
+                                    source_vault=self.compute_models.SubResource(
+                                        id=winrm_listener.get('source_vault')
+                                    ),
+                                    vault_certificates=[
+                                        self.compute_models.VaultCertificate(
+                                            certificate_url=winrm_listener.get('certificate_url'),
+                                            certificate_store=winrm_listener.get('certificate_store')
+                                        ),
+                                    ]
+                                ))
+
+                        winrm = self.compute_models.WinRMConfiguration(
+                            listeners=winrm_listeners
+                        )
+
+                        if not vm_resource.os_profile.windows_configuration:
+                            vm_resource.os_profile.windows_configuration = self.compute_models.WindowsConfiguration(
+                                win_rm=winrm
+                            )
+                        elif not vm_resource.os_profile.windows_configuration.win_rm:
+                            vm_resource.os_profile.windows_configuration.win_rm = winrm
 
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
@@ -1263,6 +1352,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         )
                     else:
                         os_profile = None
+                    license_type = None
+                    if self.license_type is None:
+                        license_type = "None"
 
                     vm_resource = self.compute_models.VirtualMachine(
                         location=vm_dict['location'],
@@ -1285,8 +1377,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         availability_set=availability_set_resource,
                         network_profile=self.compute_models.NetworkProfile(
                             network_interfaces=nics
-                        ),
+                        )
                     )
+
+                    if self.license_type is not None:
+                        vm_resource.license_type = self.license_type
 
                     if vm_dict.get('tags'):
                         vm_resource.tags = vm_dict['tags']
@@ -1779,10 +1874,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Storage account {0} found.".format(storage_account_name))
             self.check_provisioning_state(account)
             return account
-        sku = self.storage_models.Sku(self.storage_models.SkuName.standard_lrs)
+        sku = self.storage_models.Sku(name=self.storage_models.SkuName.standard_lrs)
         sku.tier = self.storage_models.SkuTier.standard
         kind = self.storage_models.Kind.storage
-        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location)
+        parameters = self.storage_models.StorageAccountCreateParameters(sku=sku, kind=kind, location=self.location)
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:
@@ -1894,8 +1989,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         if self.public_ip_allocation_method != 'Disabled':
             self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
             sku = self.network_models.PublicIPAddressSku(name="Standard") if self.zones else None
-            pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method, sku=sku)
-            pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid, sku=sku)
+            pip_facts = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method, sku=sku)
+            pip = self.network_models.PublicIPAddress(id=pip_facts.id, location=pip_facts.location, resource_guid=pip_facts.resource_guid, sku=sku)
             self.tags['_own_pip_'] = self.name + '01'
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))

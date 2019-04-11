@@ -67,12 +67,21 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         )
 
     @property
+    def condition_spec(self):
+        return dict(
+            type=dict(),
+            status=dict(default=True, choices=[True, False, "Unknown"]),
+            reason=dict()
+        )
+
+    @property
     def argspec(self):
         argument_spec = copy.deepcopy(COMMON_ARG_SPEC)
         argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
         argument_spec['merge_type'] = dict(type='list', choices=['json', 'merge', 'strategic-merge'])
         argument_spec['wait'] = dict(type='bool', default=False)
         argument_spec['wait_timeout'] = dict(type='int', default=120)
+        argument_spec['wait_condition'] = dict(type='dict', default=None, options=self.condition_spec)
         argument_spec['validate'] = dict(type='dict', default=None, options=self.validate_spec)
         argument_spec['append_hash'] = dict(type='bool', default=False)
         return argument_spec
@@ -130,17 +139,34 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 }
             }]
 
+    def flatten_list_kind(self, list_resource, definitions):
+        flattened = []
+        parent_api_version = list_resource.group_version if list_resource else None
+        parent_kind = list_resource.kind[:-4] if list_resource else None
+        for definition in definitions.get('items', []):
+            resource = self.find_resource(definition.get('kind', parent_kind), definition.get('apiVersion', parent_api_version), fail=True)
+            flattened.append((resource, self.set_defaults(resource, definition)))
+        return flattened
+
     def execute_module(self):
         changed = False
         results = []
         self.client = self.get_api_client()
+
+        flattened_definitions = []
         for definition in self.resource_definitions:
             kind = definition.get('kind', self.kind)
-            search_kind = kind
-            if kind.lower().endswith('list'):
-                search_kind = kind[:-4]
             api_version = definition.get('apiVersion', self.api_version)
-            resource = self.find_resource(search_kind, api_version, fail=True)
+            if kind.endswith('List'):
+                resource = self.find_resource(kind, api_version, fail=False)
+                flattened_definitions.extend(self.flatten_list_kind(resource, definition))
+            else:
+                resource = self.find_resource(kind, api_version, fail=True)
+                flattened_definitions.append((resource, definition))
+
+        for (resource, definition) in flattened_definitions:
+            kind = definition.get('kind', self.kind)
+            api_version = definition.get('apiVersion', self.api_version)
             definition = self.set_defaults(resource, definition)
             self.warnings = []
             if self.params['validate'] is not None:
@@ -177,12 +203,12 @@ class KubernetesRawModule(KubernetesAnsibleModule):
     def set_defaults(self, resource, definition):
         definition['kind'] = resource.kind
         definition['apiVersion'] = resource.group_version
-        if not definition.get('metadata'):
-            definition['metadata'] = {}
-        if self.name and not definition['metadata'].get('name'):
-            definition['metadata']['name'] = self.name
-        if resource.namespaced and self.namespace and not definition['metadata'].get('namespace'):
-            definition['metadata']['namespace'] = self.namespace
+        metadata = definition.get('metadata', {})
+        if self.name and not metadata.get('name'):
+            metadata['name'] = self.name
+        if resource.namespaced and self.namespace and not metadata.get('namespace'):
+            metadata['namespace'] = self.namespace
+        definition['metadata'] = metadata
         return definition
 
     def perform_action(self, resource, definition):
@@ -194,14 +220,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         existing = None
         wait = self.params.get('wait')
         wait_timeout = self.params.get('wait_timeout')
+        wait_condition = None
+        if self.params.get('wait_condition') and self.params['wait_condition'].get('type'):
+            wait_condition = self.params['wait_condition']
 
         self.remove_aliases()
-
-        if definition['kind'].endswith('List'):
-            result['result'] = resource.get(namespace=namespace).to_dict()
-            result['changed'] = False
-            result['method'] = 'get'
-            return result
 
         try:
             # ignore append_hash for resources other than ConfigMap and Secret
@@ -269,7 +292,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 success = True
                 result['result'] = k8s_obj
                 if wait and not self.check_mode:
-                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout)
+                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
                 result['changed'] = True
                 result['method'] = 'create'
                 if not success:
@@ -294,7 +317,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 success = True
                 result['result'] = k8s_obj
                 if wait:
-                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout)
+                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
                 match, diffs = self.diff_objects(existing.to_dict(), result['result'].to_dict())
                 result['changed'] = not match
                 result['method'] = 'replace'
@@ -322,7 +345,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             success = True
             result['result'] = k8s_obj
             if wait:
-                success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout)
+                success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
             match, diffs = self.diff_objects(existing.to_dict(), result['result'])
             result['result'] = k8s_obj
             result['changed'] = not match
@@ -387,7 +410,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             response = response.to_dict()
         return False, response, _wait_for_elapsed()
 
-    def wait(self, resource, definition, timeout, state='present'):
+    def wait(self, resource, definition, timeout, state='present', condition=None):
 
         def _deployment_ready(deployment):
             # FIXME: frustratingly bool(deployment.status) is True even if status is empty
@@ -405,6 +428,23 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     daemonset.status.numberReady == daemonset.status.desiredNumberScheduled and
                     daemonset.status.observedGeneration == daemonset.metadata.generation)
 
+        def _custom_condition(resource):
+            if not resource.status or not resource.status.conditions:
+                return False
+            match = [x for x in resource.status.conditions if x.type == condition['type']]
+            if not match:
+                return False
+            # There should never be more than one condition of a specific type
+            match = match[0]
+            if match.status == 'Unknown':
+                return False
+            status = True if match.status == 'True' else False
+            if status == condition['status']:
+                if condition.get('reason'):
+                    return match.reason == condition['reason']
+                return True
+            return False
+
         def _resource_absent(resource):
             return not resource
 
@@ -414,8 +454,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             Pod=_pod_ready
         )
         kind = definition['kind']
-        if state == 'present':
-            predicate = waiter.get(kind, lambda x: True)
+        if state == 'present' and not condition:
+            predicate = waiter.get(kind, lambda x: x)
+        elif state == 'present' and condition:
+            predicate = _custom_condition
         else:
             predicate = _resource_absent
         return self._wait_for(resource, definition['metadata']['name'], definition['metadata'].get('namespace'), predicate, timeout, state)

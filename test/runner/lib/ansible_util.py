@@ -4,6 +4,10 @@ from __future__ import absolute_import, print_function
 
 import os
 
+from lib.constants import (
+    SOFT_RLIMIT_NOFILE,
+)
+
 from lib.util import (
     common_environment,
     ApplicationError,
@@ -40,6 +44,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         raise ApplicationError('Configuration not found: %s' % ansible_config)
 
     ansible = dict(
+        ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE=str(SOFT_RLIMIT_NOFILE),
         ANSIBLE_FORCE_COLOR='%s' % 'true' if args.color and color else 'false',
         ANSIBLE_DEPRECATION_WARNINGS='false',
         ANSIBLE_HOST_KEY_CHECKING='false',

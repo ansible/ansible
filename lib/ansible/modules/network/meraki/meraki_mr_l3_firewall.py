@@ -24,28 +24,35 @@ options:
     state:
         description:
         - Create or modify an organization.
+        type: str
+        choices: [ present, query ]
         default: present
-        choices: [present, query]
     org_name:
         description:
         - Name of organization.
+        type: str
     org_id:
         description:
         - ID of organization.
+        type: int
     net_name:
         description:
         - Name of network containing access points.
+        type: str
     net_id:
         description:
         - ID of network containing access points.
+        type: str
     number:
         description:
         - Number of SSID to apply firewall rule to.
-        aliases: [ssid_number]
+        type: int
+        aliases: [ ssid_number ]
     ssid_name:
         description:
         - Name of SSID to apply firewall rule to.
-        aliases: [ssid]
+        type: str
+        aliases: [ ssid ]
     allow_lan_access:
         description:
         - Sets whether devices can talk to other devices on the same LAN.
@@ -54,24 +61,30 @@ options:
     rules:
         description:
         - List of firewall rules.
+        type: list
         suboptions:
             policy:
                 description:
                 - Specifies the action that should be taken when rule is hit.
-                choices: [allow, deny]
+                type: str
+                choices: [ allow, deny ]
             protocol:
                 description:
                 - Specifies protocol to match against.
-                choices: [any, icmp, tcp, udp]
+                type: str
+                choices: [ any, icmp, tcp, udp ]
             dest_port:
                 description:
-                - Comma separated list of destination ports to match.
+                - Comma-seperated list of destination ports to match.
+                type: str
             dest_cidr:
                 description:
-                - Comma separated list of CIDR notation networks to match.
+                - Comma-separated list of CIDR notation networks to match.
+                type: str
             comment:
                 description:
                 - Optional comment describing the firewall rule.
+                type: str
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki

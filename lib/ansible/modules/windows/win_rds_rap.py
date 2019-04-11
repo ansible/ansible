@@ -31,11 +31,13 @@ options:
       - If C(present) will ensure the policy is configured and exists.
       - If C(enabled) will ensure the policy is configured, exists and enabled.
       - If C(disabled) will ensure the policy is configured, exists, but disabled.
-    choices: [ absent, present, enabled, disabled ]
+    type: str
+    choices: [ absent, disabled, enabled, present ]
     default: present
   description:
     description:
       - Optionnal description of the resource authorization policy.
+    type: str
   user_groups:
     description:
       - List of user groups that are associated with this resource authorization policy (RAP).
@@ -53,21 +55,27 @@ options:
       - 'C(rdg_group): RD Gateway-managed group'
       - 'C(ad_network_resource_group): Active Directory Domain Services network resource group'
       - 'C(allow_any): Allow users to connect to any network resource.'
+    type: str
     choices: [ rdg_group, ad_network_resource_group, allow_any ]
   computer_group:
     description:
       - The computer group name that is associated with this resource authorization policy (RAP).
       - This is required when I(computer_group_type) is C(rdg_group) or C(ad_network_resource_group).
+    type: str
 requirements:
   - Windows Server 2008R2 (6.1) or higher.
   - The Windows Feature "RDS-Gateway" must be enabled.
+seealso:
+- module: win_rds_cap
+- module: win_rds_rap
+- module: win_rds_settings
 '''
 
 EXAMPLES = r'''
 - name: Create a new RDS RAP
   win_rds_rap:
     name: My RAP
-    description: 'Allow all users to connect to any resource through ports 3389 and 3390'
+    description: Allow all users to connect to any resource through ports 3389 and 3390
     user_groups:
       - BUILTIN\users
     computer_group_type: allow_any

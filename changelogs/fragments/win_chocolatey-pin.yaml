@@ -1,0 +1,2 @@
+minor_changes:
+- win_chocolatey - Added the ability to pin a package using the ``pinned`` option - https://github.com/ansible/ansible/issues/38526

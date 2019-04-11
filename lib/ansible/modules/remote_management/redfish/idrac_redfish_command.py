@@ -41,6 +41,12 @@ options:
     required: true
     description:
       - Password for authentication with OOB controller
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to OOB controller
+    default: 10
+    type: int
+    version_added: '2.8'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -77,7 +83,7 @@ class IdracRedfishUtils(RedfishUtils):
         jobs = "Jobs"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -126,7 +132,8 @@ def main():
             command=dict(required=True, type='list'),
             baseuri=dict(required=True),
             username=dict(required=True),
-            password=dict(required=True, no_log=True)
+            password=dict(required=True, no_log=True),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
     )
@@ -138,10 +145,13 @@ def main():
     creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
+    # timeout
+    timeout = module.params['timeout']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_uri = "/redfish/v1/"
-    rf_utils = IdracRedfishUtils(creds, root_uri)
+    rf_utils = IdracRedfishUtils(creds, root_uri, timeout)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:

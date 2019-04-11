@@ -233,13 +233,12 @@
   dnf: name=sos installroot='/'
   register: dnf_result
 
-# Test download_only
 - name: uninstall sos for downloadonly test
   dnf:
     name: sos
     state: absent
 
-- name: install sos
+- name: Test download_only
   dnf:
     name: sos
     state: latest
@@ -263,6 +262,33 @@
     that:
         - "dnf_result is success"
         - "not dnf_result is changed"
+
+- name: uninstall sos for downloadonly/downloaddir test
+  dnf:
+    name: sos
+    state: absent
+
+- name: Test download_only/download_dir
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+    download_dir: "/var/tmp/packages"
+  register: dnf_result
+
+- name: verify dnf output
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- command: "ls /var/tmp/packages"
+  register: ls_out
+
+- name: Verify specified download_dir was used
+  assert:
+    that:
+      - "'sos' in ls_out.stdout"
 
 # GROUP INSTALL
 - name: install Custom Group group

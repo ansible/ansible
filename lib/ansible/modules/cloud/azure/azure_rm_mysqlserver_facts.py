@@ -44,12 +44,12 @@ author:
 EXAMPLES = '''
   - name: Get instance of MySQL Server
     azure_rm_mysqlserver_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       name: server_name
 
   - name: List instances of MySQL Server
     azure_rm_mysqlserver_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''
@@ -63,13 +63,13 @@ servers:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
         resource_group:
             description:
                 - Resource group name.
             returned: always
             type: str
-            sample: testresourcegroup
+            sample: myResourceGroup
         name:
             description:
                 - Resource name.
@@ -159,7 +159,7 @@ except ImportError:
     pass
 
 
-class AzureRMServersFacts(AzureRMModuleBase):
+class AzureRMMySqlServerFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -181,7 +181,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMServersFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlServerFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -246,7 +246,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMServersFacts()
+    AzureRMMySqlServerFacts()
 
 
 if __name__ == '__main__':

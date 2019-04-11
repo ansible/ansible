@@ -1,0 +1,9 @@
+minor_changes:
+  - inventory plugins - Inventory plugins that support caching can now use any cache plugin
+    shipped with Ansible.
+deprecated_features:
+  - inventory plugins - Inventory plugins using self.cache is deprecated and will be removed
+    in 2.12. Inventory plugins should use self._cache as a dictionary to store results.
+  - cache plugins - Importing cache plugins directly is deprecated and will be removed in 2.12.
+    Cache plugins should use the cache_loader instead so cache options can be reconciled via
+    the configuration system rather than constants.

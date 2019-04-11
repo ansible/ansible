@@ -37,6 +37,12 @@ options:
         description:
             - UUID of the virtual machine to manage if known, this is VMware's unique identifier.
             - This is required if C(name) is not supplied.
+   use_instance_uuid:
+        description:
+            - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+        default: no
+        type: bool
+        version_added: '2.8'
    name_match:
         description:
             - If multiple virtual machines matching the name, use the first or last found.
@@ -74,7 +80,7 @@ EXAMPLES = r'''
     datacenter: datacenter
     validate_certs: no
     name: testvm-1
-    dest_folder: /"{{ datacenter }}"/vm
+    dest_folder: "/{{ datacenter }}/vm"
   delegate_to: localhost
 
 - name: Get VM UUID
@@ -84,7 +90,7 @@ EXAMPLES = r'''
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     name: "{{ vm_name }}"
   delegate_to: localhost
   register: vm_facts
@@ -169,6 +175,7 @@ def main():
         name_match=dict(
             type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         dest_folder=dict(type='str', required=True),
         datacenter=dict(type='str', required=True),
     )
@@ -178,7 +185,6 @@ def main():
     # FindByInventoryPath() does not require an absolute path
     # so we should leave the input folder path unmodified
     module.params['dest_folder'] = module.params['dest_folder'].rstrip('/')
-
     pyv = PyVmomiHelper(module)
     search_index = pyv.content.searchIndex
 
@@ -192,6 +198,8 @@ def main():
             vm_full = vm_path + '/' + module.params['name']
             folder = search_index.FindByInventoryPath(
                 module.params['dest_folder'])
+            if folder is None:
+                module.fail_json(msg="Folder name and/or path does not exist")
             vm_to_move = search_index.FindByInventoryPath(vm_full)
             if vm_path != module.params['dest_folder'].lstrip('/'):
                 move_task = folder.MoveInto([vm_to_move])

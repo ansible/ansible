@@ -62,7 +62,7 @@ author:
 EXAMPLES = '''
     - name: Create a CDN profile
       azure_rm_cdnprofile:
-          resource_group: Testing
+          resource_group: myResourceGroup
           name: cdntest
           sku: standard_akamai
           tags:
@@ -70,7 +70,7 @@ EXAMPLES = '''
 
     - name: Delete the CDN profile
       azure_rm_cdnprofile:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: cdntest
         state: absent
 '''
@@ -80,7 +80,7 @@ id:
     returned: always
     type: dict
     example:
-            id: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
+            id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 

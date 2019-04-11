@@ -42,6 +42,12 @@ options:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
     - This is required if name is not supplied.
+  use_instance_uuid:
+    description:
+    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    default: no
+    type: bool
+    version_added: '2.8'
   folder:
     description:
     - Destination folder, absolute or relative path to find an existing guest or create the new guest.
@@ -88,7 +94,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    folder: /"{{ datacenter_name }}"/vm/my_folder
+    folder: "/{{ datacenter_name }}/vm/my_folder"
     name: "{{ guest_name }}"
     state: powered-off
   delegate_to: localhost
@@ -99,7 +105,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: /"{{ datacenter_name }}"/vm/my_folder
+    folder: "/{{ datacenter_name }}/vm/my_folder"
     name: "{{ guest_name }}"
     state: powered-off
     scheduled_at: "09/01/2018 10:18"
@@ -139,6 +145,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str', default='/vm'),
         force=dict(type='bool', default=False),
         scheduled_at=dict(type='str'),

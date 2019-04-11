@@ -72,7 +72,7 @@ options:
     description:
     - Whether to validate the remote server's certificate or not.
     - Set to C(ignore) to not validate any certificates.
-    - I(cert_trust_path) can be set to the path of a PEM certificate chain to
+    - I(ca_cert) can be set to the path of a PEM certificate chain to
       use in the validation.
     choices:
     - validate
@@ -80,13 +80,15 @@ options:
     default: validate
     vars:
     - name: ansible_psrp_cert_validation
-  cert_trust_path:
+  ca_cert:
     description:
     - The path to a PEM certificate chain to use when validating the server's
       certificate.
     - This value is ignored if I(cert_validation) is set to C(ignore).
     vars:
     - name: ansible_psrp_cert_trust_path
+    - name: ansible_psrp_ca_cert
+    aliases: [ cert_trust_path ]
   connection_timeout:
     description:
     - The connection timeout for making the request to the remote host.
@@ -154,6 +156,87 @@ options:
     - name: ansible_psrp_ignore_proxy
     type: bool
     default: 'no'
+
+  # auth options
+  certificate_key_pem:
+    description:
+    - The local path to an X509 certificate key to use with certificate auth.
+    vars:
+    - name: ansible_psrp_certificate_key_pem
+  certificate_pem:
+    description:
+    - The local path to an X509 certificate to use with certificate auth.
+    vars:
+    - name: ansible_psrp_certificate_pem
+  credssp_auth_mechanism:
+    description:
+    - The sub authentication mechanism to use with CredSSP auth.
+    - When C(auto), both Kerberos and NTLM is attempted with kerberos being
+      preferred.
+    choices:
+    - auto
+    - kerberos
+    - ntlm
+    default: auto
+    vars:
+    - name: ansible_psrp_credssp_auth_mechanism
+  credssp_disable_tlsv1_2:
+    description:
+    - Disables the use of TLSv1.2 on the CredSSP authentication channel.
+    - This should not be set to C(yes) unless dealing with a host that does not
+      have TLSv1.2.
+    default: no
+    type: bool
+    vars:
+    - name: ansible_psrp_credssp_disable_tlsv1_2
+  credssp_minimum_version:
+    description:
+    - The minimum CredSSP server authentication version that will be accepted.
+    - Set to C(5) to ensure the server has been patched and is not vulnerable
+      to CVE 2018-0886.
+    default: 2
+    type: int
+    vars:
+    - name: ansible_psrp_credssp_minimum_version
+  negotiate_delegate:
+    description:
+    - Allow the remote user the ability to delegate it's credentials to another
+      server, i.e. credential delegation.
+    - Only valid when Kerberos was the negotiated auth or was explicitly set as
+      the authentication.
+    - Ignored when NTLM was the negotiated auth.
+    vars:
+    - name: ansible_psrp_negotiate_delegate
+  negotiate_hostname_override:
+    description:
+    - Override the remote hostname when searching for the host in the Kerberos
+      lookup.
+    - This allows Ansible to connect over IP but authenticate with the remote
+      server using it's DNS name.
+    - Only valid when Kerberos was the negotiated auth or was explicitly set as
+      the authentication.
+    - Ignored when NTLM was the negotiated auth.
+    vars:
+    - name: ansible_psrp_negotiate_hostname_override
+  negotiate_send_cbt:
+    description:
+    - Send the Channel Binding Token (CBT) structure when authenticating.
+    - CBT is used to provide extra protection against Man in the Middle C(MitM)
+      attacks by binding the outer transport channel to the auth channel.
+    - CBT is not used when using just C(HTTP), only C(HTTPS).
+    default: yes
+    type: bool
+    vars:
+    - name: ansible_psrp_negotiate_send_cbt
+  negotiate_service:
+    description:
+    - Override the service part of the SPN used during Kerberos authentication.
+    - Only valid when Kerberos was the negotiated auth or was explicitly set as
+      the authentication.
+    - Ignored when NTLM was the negotiated auth.
+    default: WSMAN
+    vars:
+    - name: ansible_psrp_negotiate_service
 
   # protocol options
   operation_timeout:
@@ -516,7 +599,7 @@ if ($bytes_read -gt 0) {
         self._psrp_auth = self.get_option('auth')
         # cert validation can either be a bool or a path to the cert
         cert_validation = self.get_option('cert_validation')
-        cert_trust_path = self.get_option('cert_trust_path')
+        cert_trust_path = self.get_option('ca_cert')
         if cert_validation == 'ignore':
             self._psrp_cert_validation = False
         elif cert_trust_path is not None:
@@ -534,6 +617,16 @@ if ($bytes_read -gt 0) {
         self._psrp_configuration_name = self.get_option('configuration_name')
         self._psrp_reconnection_retries = int(self.get_option('reconnection_retries'))
         self._psrp_reconnection_backoff = float(self.get_option('reconnection_backoff'))
+
+        self._psrp_certificate_key_pem = self.get_option('certificate_key_pem')
+        self._psrp_certificate_pem = self.get_option('certificate_pem')
+        self._psrp_credssp_auth_mechanism = self.get_option('credssp_auth_mechanism')
+        self._psrp_credssp_disable_tlsv1_2 = self.get_option('credssp_disable_tlsv1_2')
+        self._psrp_credssp_minimum_version = self.get_option('credssp_minimum_version')
+        self._psrp_negotiate_send_cbt = self.get_option('negotiate_send_cbt')
+        self._psrp_negotiate_delegate = self.get_option('negotiate_delegate')
+        self._psrp_negotiate_hostname_override = self.get_option('negotiate_hostname_override')
+        self._psrp_negotiate_service = self.get_option('negotiate_service')
 
         supported_args = []
         for auth_kwarg in AUTH_KWARGS.values():
@@ -556,6 +649,15 @@ if ($bytes_read -gt 0) {
             no_proxy=self._psrp_ignore_proxy,
             max_envelope_size=self._psrp_max_envelope_size,
             operation_timeout=self._psrp_operation_timeout,
+            certificate_key_pem=self._psrp_certificate_key_pem,
+            certificate_pem=self._psrp_certificate_pem,
+            credssp_auth_mechanism=self._psrp_credssp_auth_mechanism,
+            credssp_disable_tlsv1_2=self._psrp_credssp_disable_tlsv1_2,
+            credssp_minimum_version=self._psrp_credssp_minimum_version,
+            negotiate_send_cbt=self._psrp_negotiate_send_cbt,
+            negotiate_delegate=self._psrp_negotiate_delegate,
+            negotiate_hostname_override=self._psrp_negotiate_hostname_override,
+            negotiate_service=self._psrp_negotiate_service,
         )
 
         # Check if PSRP version supports newer read_timeout argument (needs pypsrp 0.3.0+)

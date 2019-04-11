@@ -25,39 +25,65 @@ options:
         description:
         - Name of the dashboard administrator.
         - Required when creating a new administrator.
+        type: str
     email:
         description:
         - Email address for the dashboard administrator.
         - Email cannot be updated.
         - Required when creating or editing an administrator.
-    orgAccess:
+        type: str
+    org_access:
         description:
         - Privileges assigned to the administrator in the organization.
+        aliases: [ orgAccess ]
         choices: [ full, none, read-only ]
+        type: str
     tags:
         description:
         - Tags the administrator has privileges on.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
         - If C(none) is specified, C(network) or C(tags) must be specified.
+        suboptions:
+            tag:
+                description:
+                - Object tag which privileges should be assigned.
+                type: str
+            access:
+                description:
+                - The privilege of the dashboard administrator for the tag.
+                type: str
     networks:
         description:
         - List of networks the administrator has privileges on.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
+        suboptions:
+            id:
+                description:
+                - Network ID for which administrator should have privileges assigned.
+                type: str
+            access:
+                description:
+                - The privilege of the dashboard administrator on the network.
+                - Valid options are C(full), C(read-only), or C(none).
+                type: str
     state:
         description:
         - Create or modify, or delete an organization
         - If C(state) is C(absent), name takes priority over email if both are specified.
         choices: [ absent, present, query ]
         required: true
+        type: str
     org_name:
         description:
         - Name of organization.
         - Used when C(name) should refer to another object.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
         aliases: ['organization']
+        type: str
     org_id:
         description:
         - ID of organization.
+        type: str
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -91,7 +117,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Create new administrator with organization access
@@ -100,7 +126,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Create a new administrator with organization access
@@ -109,7 +135,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Revoke access to an organization for an administrator
@@ -118,6 +144,32 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: absent
     email: jane@doe.com
+
+- name: Create a new administrator with full access to two tags
+  meraki_admin:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    name: Jane Doe
+    orgAccess: read-only
+    email: jane@doe.com
+    tags:
+        - tag: tenant
+          access: full
+        - tag: corporate
+          access: read-only
+
+- name: Create a new administrator with full access to a network
+  meraki_admin:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    name: Jane Doe
+    orgAccess: read-only
+    email: jane@doe.com
+    networks:
+        - id: N_12345
+          access: full
 '''
 
 RETURN = r'''
@@ -141,6 +193,26 @@ data:
             returned: success
             type: str
             sample: John Doe
+        accountStatus:
+            description: Status of account.
+            returned: success
+            type: str
+            sample: ok
+        twoFactorAuthEnabled:
+            description: Enabled state of two-factor authentication for administrator.
+            returned: success
+            type: bool
+            sample: false
+        hasApiKey:
+            description: Defines whether administrator has an API assigned to their account.
+            returned: success
+            type: bool
+            sample: false
+        lastActive:
+            description: Date and time of time the administrator was active within Dashboard.
+            returned: success
+            type: str
+            sample: 2019-01-28 14:58:56 -0800
         networks:
             description: List of networks administrator has access on.
             returned: success
@@ -176,6 +248,7 @@ data:
             returned: success
             type: str
             sample: full
+
 '''
 
 import os
@@ -257,8 +330,8 @@ def create_admin(meraki, org_id, name, email):
 
     is_admin_existing = find_admin(meraki, get_admins(meraki, org_id), email)
 
-    if meraki.params['orgAccess'] is not None:
-        payload['orgAccess'] = meraki.params['orgAccess']
+    if meraki.params['org_access'] is not None:
+        payload['orgAccess'] = meraki.params['org_access']
     if meraki.params['tags'] is not None:
         payload['tags'] = json.loads(meraki.params['tags'])
     if meraki.params['networks'] is not None:
@@ -302,11 +375,11 @@ def main():
     argument_spec.update(state=dict(type='str', choices=['present', 'query', 'absent'], required=True),
                          name=dict(type='str'),
                          email=dict(type='str'),
-                         orgAccess=dict(type='str', choices=['full', 'read-only', 'none']),
+                         org_access=dict(type='str', aliases=['orgAccess'], choices=['full', 'read-only', 'none']),
                          tags=dict(type='json'),
                          networks=dict(type='json'),
                          org_name=dict(type='str', aliases=['organization']),
-                         org_id=dict(type='int'),
+                         org_id=dict(type='str'),
                          )
 
     # seed the result dict in the object

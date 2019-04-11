@@ -98,16 +98,16 @@ notes:
 EXAMPLES = '''
 - name: create a ssl policy
   gcp_compute_ssl_policy:
-      name: "test_object"
-      profile: CUSTOM
-      min_tls_version: TLS_1_2
-      custom_features:
-      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    profile: CUSTOM
+    min_tls_version: TLS_1_2
+    custom_features:
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -403,10 +403,10 @@ class SslPolicyWarningsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({u'code': item.get('code'), u'message': item.get('message')})
+        return remove_nones_from_dict({})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({u'code': item.get(u'code'), u'message': item.get(u'message')})
+        return remove_nones_from_dict({})
 
 
 if __name__ == '__main__':

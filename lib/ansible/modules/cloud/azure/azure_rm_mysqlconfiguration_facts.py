@@ -45,13 +45,13 @@ author:
 EXAMPLES = '''
   - name: Get specific setting of MySQL Server
     azure_rm_mysqlconfiguration_facts:
-      resource_group: testrg
+      resource_group: myResourceGroup
       server_name: testmysqlserver
       name: deadlock_timeout
 
   - name: Get all settings of MySQL Server
     azure_rm_mysqlconfiguration_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       server_name: server_name
 '''
 
@@ -66,7 +66,7 @@ settings:
                 - Setting resource ID
             returned: always
             type: str
-            sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/testrg/providers/Microsoft.DBforMySQL/servers/testmysqlser
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testmysqlser
                      ver/configurations/deadlock_timeout"
         name:
             description:
@@ -106,7 +106,7 @@ except ImportError:
     pass
 
 
-class AzureRMMySQLConfigurationFacts(AzureRMModuleBase):
+class AzureRMMySqlConfigurationFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -123,15 +123,12 @@ class AzureRMMySQLConfigurationFacts(AzureRMModuleBase):
             )
         )
         # store the results of the module operation
-        self.results = dict(
-            changed=False,
-            ansible_facts=dict()
-        )
+        self.results = dict(changed=False)
         self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMMySQLConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -202,7 +199,7 @@ class AzureRMMySQLConfigurationFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMMySQLConfigurationFacts()
+    AzureRMMySqlConfigurationFacts()
 
 
 if __name__ == '__main__':

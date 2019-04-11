@@ -49,12 +49,6 @@ class ActionModule(_ActionModule):
 
         return result
 
-    def _handle_src_option(self):
-        try:
-            self._handle_template()
-        except ValueError as exc:
-            return dict(failed=True, msg=to_text(exc))
-
     def _handle_backup_option(self, result, task_vars):
 
         filename = None
@@ -132,7 +126,7 @@ class ActionModule(_ActionModule):
             cwd = self._task._role._role_path
         return cwd
 
-    def _handle_template(self, convert_data=True):
+    def _handle_src_option(self, convert_data=True):
         src = self._task.args.get('src')
         working_path = self._get_working_path()
 
@@ -144,13 +138,13 @@ class ActionModule(_ActionModule):
                 source = self._loader.path_dwim_relative(working_path, src)
 
         if not os.path.exists(source):
-            raise ValueError('path specified in src not found')
+            raise AnsibleError('path specified in src not found')
 
         try:
             with open(source, 'r') as f:
                 template_data = to_text(f.read())
-        except IOError:
-            return dict(failed=True, msg='unable to load src file')
+        except IOError as e:
+            raise AnsibleError("unable to load src file {0}, I/O error({1}): {2}".format(source, e.errno, e.strerror))
 
         # Create a template search path in the following order:
         # [working_path, self_role_path, dependent_role_paths, dirname(source)]

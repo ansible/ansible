@@ -1275,7 +1275,7 @@ class Host(LogicMonitor):
         self.module.debug("Running Host.update...")
 
         if self.info:
-            self.module.debug("Host already registed")
+            self.module.debug("Host already registered")
             if self.is_changed():
                 self.module.debug("System changed")
                 self.change = True
@@ -1309,7 +1309,7 @@ class Host(LogicMonitor):
                 )
                 return self.info
         else:
-            self.module.debug("Host not registed. Registering")
+            self.module.debug("Host not registered. Registering")
             self.module.debug("System changed")
             self.change = True
 
@@ -2121,7 +2121,7 @@ def main():
             description=dict(required=False, default=""),
             fullpath=dict(required=False, default=None),
             starttime=dict(required=False, default=None),
-            duration=dict(required=False, default=30),
+            duration=dict(required=False, default=30, type='int'),
             properties=dict(required=False, default={}, type="dict"),
             groups=dict(required=False, default=[], type="list"),
             alertenable=dict(required=False, default="true", type="bool")

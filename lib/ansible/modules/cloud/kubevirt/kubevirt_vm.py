@@ -29,10 +29,10 @@ options:
     state:
         description:
             - Set the virtual machine to either I(present), I(absent), I(running) or I(stopped).
-            - "I(present) - Create or update virtual machine."
-            - "I(absent) - Removes virtual machine."
-            - "I(running) - Create or update virtual machine and run it."
-            - "I(stopped) - Stops the virtual machine."
+            - "I(present) - Create or update a virtual machine. (And run it if it's ephemeral.)"
+            - "I(absent) - Remove a virtual machine."
+            - "I(running) - Create or update a virtual machine and run it."
+            - "I(stopped) - Stop a virtual machine. (This deletes ephemeral VMs.)"
         default: "present"
         choices:
             - present
@@ -56,10 +56,23 @@ options:
             - Works only with C(state) I(present) and I(absent).
         type: bool
         default: false
+    datavolumes:
+        description:
+            - "DataVolumes are a way to automate importing virtual machine disks onto pvcs during the virtual machine's
+               launch flow. Without using a DataVolume, users have to prepare a pvc with a disk image before assigning
+               it to a VM or VMI manifest. With a DataVolume, both the pvc creation and import is automated on behalf of the user."
+        type: list
+    template:
+        description:
+            - "Name of Template to be used in creation of a virtual machine."
+        type: str
+    template_parameters:
+        description:
+            - "New values of parameters from Template."
+        type: dict
 
 extends_documentation_fragment:
   - k8s_auth_options
-  - k8s_resource_options
   - kubevirt_vm_options
   - kubevirt_common_options
 
@@ -80,7 +93,18 @@ EXAMPLES = '''
       state: running
       name: myvm
       namespace: vms
-      memory: 64M
+      memory: 64Mi
+      cpu_cores: 1
+      bootloader: efi
+      smbios_uuid: 5d307ca9-b3ef-428c-8861-06e72d69f223
+      cpu_model: Conroe
+      headless: true
+      hugepage_size: 2Mi
+      tablets:
+        - bus: virtio
+          name: tablet1
+      cpu_limit: 3
+      cpu_shares: 2
       disks:
         - name: containerdisk
           volume:
@@ -159,6 +183,7 @@ EXAMPLES = '''
       memory: 1024M
       cloud_init_nocloud:
         userData: |-
+          #cloud-config
           password: fedora
           chpasswd: { expire: False }
       disks:
@@ -180,9 +205,9 @@ EXAMPLES = '''
 RETURN = '''
 kubevirt_vm:
   description:
-    - The virtual machine dictionary specification returned by the API.
-    - "This dictionary contains all values returned by the KubeVirt API all options
-       are described here U(https://kubevirt.io/api-reference/master/definitions.html#_v1_virtualmachine)"
+      - The virtual machine dictionary specification returned by the API.
+      - "This dictionary contains all values returned by the KubeVirt API all options
+         are described here U(https://kubevirt.io/api-reference/master/definitions.html#_v1_virtualmachine)"
   returned: success
   type: complex
   contains: {}
@@ -192,20 +217,15 @@ kubevirt_vm:
 import copy
 import traceback
 
-try:
-    from openshift.dynamic.client import ResourceInstance
-except ImportError:
-    # Handled in module_utils
-    pass
+from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 
 from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 from ansible.module_utils.kubevirt import (
     virtdict,
     KubeVirtRawModule,
     VM_COMMON_ARG_SPEC,
-    API_VERSION,
+    VM_SPEC_DEF_ARG_SPEC
 )
-
 
 VM_ARG_SPEC = {
     'ephemeral': {'type': 'bool', 'default': False},
@@ -216,7 +236,13 @@ VM_ARG_SPEC = {
         ],
         'default': 'present'
     },
+    'datavolumes': {'type': 'list'},
+    'template': {'type': 'str'},
+    'template_parameters': {'type': 'dict'},
 }
+
+# Which params (can) modify 'spec:' contents of a VM:
+VM_SPEC_PARAMS = list(VM_SPEC_DEF_ARG_SPEC.keys()) + ['datavolumes', 'template', 'template_parameters']
 
 
 class KubeVirtVM(KubeVirtRawModule):
@@ -229,98 +255,161 @@ class KubeVirtVM(KubeVirtRawModule):
         argument_spec.update(VM_ARG_SPEC)
         return argument_spec
 
-    def _manage_state(self, running, resource, existing, wait, wait_timeout):
-        definition = {'metadata': {'name': self.name, 'namespace': self.namespace}, 'spec': {'running': running}}
-        self.patch_resource(resource, definition, existing, self.name, self.namespace, merge_type='merge')
+    @staticmethod
+    def fix_serialization(obj):
+        if obj and hasattr(obj, 'to_dict'):
+            return obj.to_dict()
+        return obj
 
-        if wait:
-            resource = self.find_resource('VirtualMachineInstance', self.api_version, fail=True)
-            w, stream = self._create_stream(resource, self.namespace, wait_timeout)
+    def _wait_for_vmi_running(self):
+        for event in self._kind_resource.watch(namespace=self.namespace, timeout=self.params.get('wait_timeout')):
+            entity = event['object']
+            if entity.metadata.name != self.name:
+                continue
+            status = entity.get('status', {})
+            phase = status.get('phase', None)
+            if phase == 'Running':
+                return entity
 
-        if wait and stream is not None:
-            self._read_stream(resource, w, stream, self.name, running)
+        self.fail("Timeout occurred while waiting for virtual machine to start. Maybe try a higher wait_timeout value?")
 
-    def _read_stream(self, resource, watcher, stream, name, running):
-        """ Wait for ready_replicas to equal the requested number of replicas. """
-        for event in stream:
-            if event.get('object'):
-                obj = ResourceInstance(resource, event['object'])
-                if running:
-                    if obj.metadata.name == name and hasattr(obj, 'status'):
-                        phase = getattr(obj.status, 'phase', None)
-                        if phase:
-                            if phase == 'Running' and running:
-                                watcher.stop()
-                                return
-                else:
-                    # TODO: wait for stopped state:
-                    watcher.stop()
-                    return
+    def _wait_for_vm_state(self, new_state):
+        if new_state == 'running':
+            want_created = want_ready = True
+        else:
+            want_created = want_ready = False
 
-        self.fail_json(msg="Error waiting for virtual machine. Try a higher wait_timeout value. %s" % obj.to_dict())
+        for event in self._kind_resource.watch(namespace=self.namespace, timeout=self.params.get('wait_timeout')):
+            entity = event['object']
+            if entity.metadata.name != self.name:
+                continue
+            status = entity.get('status', {})
+            created = status.get('created', False)
+            ready = status.get('ready', False)
+            if (created, ready) == (want_created, want_ready):
+                return entity
 
-    def manage_state(self, state):
-        wait = self.params.get('wait')
-        wait_timeout = self.params.get('wait_timeout')
-        resource_version = self.params.get('resource_version')
+        self.fail("Timeout occurred while waiting for virtual machine to achieve '{0}' state. "
+                  "Maybe try a higher wait_timeout value?".format(new_state))
 
-        resource_vm = self.find_resource('VirtualMachine', self.api_version)
-        existing = self.get_resource(resource_vm)
-        if resource_version and resource_version != existing.metadata.resourceVersion:
-            return False
+    def manage_vm_state(self, new_state, already_changed):
+        new_running = True if new_state == 'running' else False
+        changed = False
+        k8s_obj = {}
 
-        existing_running = False
-        resource_vmi = self.find_resource('VirtualMachineInstance', self.api_version)
-        existing_running_vmi = self.get_resource(resource_vmi)
-        if existing_running_vmi and hasattr(existing_running_vmi.status, 'phase'):
-            existing_running = existing_running_vmi.status.phase == 'Running'
+        if not already_changed:
+            k8s_obj = self.get_resource(self._kind_resource)
+            if not k8s_obj:
+                self.fail("VirtualMachine object disappeared during module operation, aborting.")
+            if k8s_obj.spec.get('running', False) == new_running:
+                return False, k8s_obj
 
-        if state == 'running':
-            if existing_running:
-                return False
+            newdef = dict(metadata=dict(name=self.name, namespace=self.namespace), spec=dict(running=new_running))
+            k8s_obj, err = self.patch_resource(self._kind_resource, newdef, k8s_obj,
+                                               self.name, self.namespace, merge_type='merge')
+            if err:
+                self.fail_json(**err)
             else:
-                self._manage_state(True, resource_vm, existing, wait, wait_timeout)
-                return True
-        elif state == 'stopped':
-            if not existing_running:
-                return False
-            else:
-                self._manage_state(False, resource_vm, existing, wait, wait_timeout)
-                return True
+                changed = True
 
-    def execute_module(self):
-        # Parse parameters specific for this module:
+        if self.params.get('wait'):
+            k8s_obj = self._wait_for_vm_state(new_state)
+
+        return changed, k8s_obj
+
+    def construct_definition(self, kind, our_state, ephemeral):
         definition = virtdict()
-        ephemeral = self.params.get('ephemeral')
-        state = self.params.get('state')
+        processedtemplate = {}
+
+        # Construct the API object definition:
+        vm_template = self.params.get('template')
+        if vm_template:
+            # Find the template the VM should be created from:
+            template_resource = self.client.resources.get(api_version='template.openshift.io/v1', kind='Template', name='templates')
+            proccess_template = template_resource.get(name=vm_template, namespace=self.params.get('namespace'))
+
+            # Set proper template values taken from module option 'template_parameters':
+            for k, v in self.params.get('template_parameters', {}).items():
+                for parameter in proccess_template.parameters:
+                    if parameter.name == k:
+                        parameter.value = v
+
+            # Proccess the template:
+            processedtemplates_res = self.client.resources.get(api_version='template.openshift.io/v1', kind='Template', name='processedtemplates')
+            processedtemplate = processedtemplates_res.create(proccess_template.to_dict()).to_dict()['objects'][0]
 
         if not ephemeral:
-            definition['spec']['running'] = state == 'running'
+            definition['spec']['running'] = our_state == 'running'
+        template = definition if ephemeral else definition['spec']['template']
+        template['metadata']['labels']['vm.cnv.io/name'] = self.params.get('name')
+        dummy, definition = self.construct_vm_definition(kind, definition, template)
+        definition = dict(self.merge_dicts(processedtemplate, definition))
 
-        # Execute the CURD of VM:
-        template = definition['spec']['template']
+        return definition
+
+    def execute_module(self):
+        # Parse parameters specific to this module:
+        ephemeral = self.params.get('ephemeral')
+        k8s_state = our_state = self.params.get('state')
         kind = 'VirtualMachineInstance' if ephemeral else 'VirtualMachine'
-        result = self.execute_crud(kind, definition, template)
-        changed = result['changed']
+        _used_params = [name for name in self.params if self.params[name] is not None]
+        # Is 'spec:' getting changed?
+        vm_spec_change = True if set(VM_SPEC_PARAMS).intersection(_used_params) else False
+        changed = False
+        crud_executed = False
+        method = ''
 
-        # Manage state of the VM:
-        if state in ['running', 'stopped']:
-            if not self.check_mode:
-                ret = self.manage_state(state)
-                changed = changed or ret
+        # Underlying module_utils/k8s/* code knows only of state == present/absent; let's make sure not to confuse it
+        if ephemeral:
+            # Ephemerals don't actually support running/stopped; we treat those as aliases for present/absent instead
+            if our_state == 'running':
+                self.params['state'] = k8s_state = 'present'
+            elif our_state == 'stopped':
+                self.params['state'] = k8s_state = 'absent'
+        else:
+            if our_state != 'absent':
+                self.params['state'] = k8s_state = 'present'
+
+        self.client = self.get_api_client()
+        self._kind_resource = self.find_supported_resource(kind)
+        k8s_obj = self.get_resource(self._kind_resource)
+        if not self.check_mode and not vm_spec_change and k8s_state != 'absent' and not k8s_obj:
+            self.fail("It's impossible to create an empty VM or change state of a non-existent VM.")
+
+        # Changes in VM's spec or any changes to VMIs warrant a full CRUD, the latter because
+        # VMIs don't really have states to manage; they're either present or don't exist
+        # Also check_mode always warrants a CRUD, as that'll produce a sane result
+        if vm_spec_change or ephemeral or k8s_state == 'absent' or self.check_mode:
+            definition = self.construct_definition(kind, our_state, ephemeral)
+            result = self.execute_crud(kind, definition)
+            changed = result['changed']
+            k8s_obj = result['result']
+            method = result['method']
+            crud_executed = True
+
+        if ephemeral and self.params.get('wait') and k8s_state == 'present' and not self.check_mode:
+            # Waiting for k8s_state==absent is handled inside execute_crud()
+            k8s_obj = self._wait_for_vmi_running()
+
+        if not ephemeral and our_state in ['running', 'stopped'] and not self.check_mode:
+            # State==present/absent doesn't involve any additional VMI state management and is fully
+            # handled inside execute_crud() (including wait logic)
+            patched, k8s_obj = self.manage_vm_state(our_state, crud_executed)
+            changed = changed or patched
+            if changed:
+                method = method or 'patch'
 
         # Return from the module:
         self.exit_json(**{
             'changed': changed,
-            'kubevirt_vm': result.pop('result'),
-            'result': result,
+            'kubevirt_vm': self.fix_serialization(k8s_obj),
+            'method': method
         })
 
 
 def main():
     module = KubeVirtVM()
     try:
-        module.api_version = API_VERSION
         module.execute_module()
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())

@@ -1,0 +1,7 @@
+[ClassVersion("1.0.0"), FriendlyName("xSetReboot")]
+class ANSIBLE_xSetReboot : OMI_BaseResource
+{
+    [Key] String KeyParam;
+    [Write] Boolean Value;
+};
+

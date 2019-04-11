@@ -33,7 +33,7 @@ import json
 import re
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values, get_timestamp
+from ansible.module_utils.basic import env_fallback, get_timestamp
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
@@ -301,14 +301,16 @@ class LocalNxapi:
         if isinstance(commands, (list, set, tuple)):
             commands = ' ;'.join(commands)
 
-        msg = {
-            'version': version,
-            'type': command_type,
-            'chunk': chunk,
-            'sid': sid,
-            'input': commands,
-            'output_format': 'json'
-        }
+        # Order should not matter but some versions of NX-OS software fail
+        # to process the payload properly if 'input' gets serialized before
+        # 'type' and the payload of 'input' contains the word 'type'.
+        msg = collections.OrderedDict()
+        msg['version'] = version
+        msg['type'] = command_type
+        msg['chunk'] = chunk
+        msg['sid'] = sid
+        msg['input'] = commands
+        msg['output_format'] = 'json'
 
         return dict(ins_api=msg)
 
@@ -448,7 +450,6 @@ class LocalNxapi:
             commands = 'config replace {0}'.format(replace)
 
         commands = to_list(commands)
-
         msg, msg_timestamps = self.send_request(commands, output='config', check_status=True,
                                                 return_error=return_error, opts=opts)
         if return_error:
@@ -547,7 +548,11 @@ class HttpApi:
             if response[0] == '{':
                 out[index] = json.loads(response)
 
-        return out
+        if return_timestamps:
+            # workaround until timestamps are implemented
+            return out, list()
+        else:
+            return out
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
@@ -660,13 +665,18 @@ class HttpApi:
             raise ValueError("commit comment is not supported")
 
     def read_module_context(self, module_key):
-        if self._module_context.get(module_key):
-            return self._module_context[module_key]
+        try:
+            module_context = self._connection.read_module_context(module_key)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-        return None
+        return module_context
 
     def save_module_context(self, module_key, module_context):
-        self._module_context[module_key] = module_context
+        try:
+            self._connection.save_module_context(module_key, module_context)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
         return None
 

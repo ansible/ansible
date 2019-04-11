@@ -1,0 +1,2 @@
+bugfixes:
+    - skip invalid plugin after warning in loader

@@ -1,9 +1,13 @@
 ---
 - block:
+  - shell: "docker info --format '{% raw %}{{json .}}{% endraw %}' | python -m json.tool"
+
   - name: Make sure we're not already using Docker swarm
     docker_swarm:
       state: absent
       force: true
+
+  - shell: "docker info --format '{% raw %}{{json .}}{% endraw %}' | python -m json.tool"
 
   - name: Create a Swarm cluster
     docker_swarm:

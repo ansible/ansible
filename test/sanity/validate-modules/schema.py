@@ -9,6 +9,7 @@ from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Length, Invalid, Re
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
 list_string_types = list(string_types)
+tuple_string_types = tuple(string_types)
 any_string_types = Any(*string_types)
 
 # Valid DOCUMENTATION.author lines
@@ -67,6 +68,7 @@ ansible_module_kwargs_schema = Schema(
         'add_file_common_args': bool,
         'supports_check_mode': bool,
         'required_if': sequence_of_sequences(min=3),
+        'required_by': Schema({str: Any(list_string_types, tuple_string_types, *string_types)}),
     }
 )
 
@@ -79,7 +81,7 @@ suboption_schema = Schema(
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'str'),
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
         # Recursive suboptions
         'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
     },
@@ -100,7 +102,7 @@ option_schema = Schema(
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'str'),
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
     },
     extra=PREVENT_EXTRA
 )

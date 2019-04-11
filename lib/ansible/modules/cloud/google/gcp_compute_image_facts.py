@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a image facts
+- name: " a image facts"
   gcp_compute_image_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -243,7 +244,7 @@ items:
       - You must provide either this property or the rawDisk.source property but not
         both to create an image.
       returned: success
-      type: str
+      type: dict
     sourceDiskEncryptionKey:
       description:
       - The customer-supplied encryption key of the source disk. Required if the source

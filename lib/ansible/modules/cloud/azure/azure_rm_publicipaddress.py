@@ -53,8 +53,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the Public IP. Use 'present' to create or update a and
-              'absent' to delete.
+            - Assert the state of the Public IP. Use C(present) to create or update a and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -75,6 +75,11 @@ options:
         description:
             - List of IpTag associated with the public IP address.
             - Each element should contain type:value pair.
+        suboptions:
+            type:
+                description: Sets the ip_tags type.
+            value:
+                description: Sets the ip_tags value.
         version_added: 2.8
     idle_timeout:
         description:
@@ -102,14 +107,14 @@ author:
 EXAMPLES = '''
     - name: Create a public ip address
       azure_rm_publicipaddress:
-        resource_group: testing
+        resource_group: myResourceGroup
         name: my_public_ip
         allocation_method: static
         domain_name: foobar
 
     - name: Delete public ip
       azure_rm_publicipaddress:
-        resource_group: testing
+        resource_group: myResourceGroup
         name: my_public_ip
         state: absent
 '''
@@ -236,7 +241,8 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             self.log("PIP {0} exists".format(self.name))
             if self.state == 'present':
                 results = pip_to_dict(pip)
-                if self.domain_name != results['dns_settings'].get('domain_name_label'):
+                domain_lable = results['dns_settings'].get('domain_name_label')
+                if self.domain_name is not None and ((self.domain_name or domain_lable) and self.domain_name != domain_lable):
                     self.log('CHANGED: domain_name_label')
                     changed = True
                     results['dns_settings']['domain_name_label'] = self.domain_name

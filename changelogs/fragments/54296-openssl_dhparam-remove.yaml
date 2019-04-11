@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_dhparam - fix ``state=absent`` idempotency and ``changed`` flag."

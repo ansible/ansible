@@ -144,7 +144,7 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = role.revoke(**params)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update role: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

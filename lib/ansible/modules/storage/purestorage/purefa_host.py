@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# Copyright: (c) 2017, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -19,36 +19,43 @@ short_description: Manage hosts on Pure Storage FlashArrays
 description:
 - Create, delete or modify hosts on Pure Storage FlashArrays.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 notes:
 - If specifying C(lun) option ensure host support requested value
 options:
   host:
     description:
     - The name of the host.
+    type: str
     required: true
   state:
     description:
     - Define whether the host should exist or not.
     - When removing host all connected volumes will be disconnected.
+    type: str
     default: present
     choices: [ absent, present ]
   protocol:
     description:
     - Defines the host connection protocol for volumes.
+    type: str
     default: iscsi
     choices: [ fc, iscsi, nvme, mixed ]
   wwns:
+    type: list
     description:
     - List of wwns of the host if protocol is fc or mixed.
   iqn:
+    type: list
     description:
     - List of IQNs of the host if protocol is iscsi or mixed.
   nqn:
+    type: list
     description:
     - List of NQNs of the host if protocol is nvme or mixed.
     version_added: '2.8'
   volume:
+    type: str
     description:
     - Volume name to map to the host.
   lun:
@@ -56,8 +63,10 @@ options:
     - LUN ID to assign to volume for host. Must be unique.
     - If not provided the ID will be automatically assigned.
     - Range for LUN ID is 1 to 4095.
+    type: int
     version_added: '2.8'
   personality:
+    type: str
     description:
     - Define which operating system the host is. Recommend for
       ActiveCluster integration.
@@ -341,7 +350,7 @@ def main():
         try:
             array.get_volume(module.params['volume'])
         except Exception:
-            module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
+            module.fail_json(msg='Volume {0} not found'.format(module.params['volume']))
 
     if host is None and state == 'present':
         make_host(module, array)

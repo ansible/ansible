@@ -20,7 +20,9 @@ def test_xenserverobject_xenapi_lib_detection(mocker, fake_ansible_module, xense
     with pytest.raises(FailJsonException) as exc_info:
         xenserver.XenServerObject(fake_ansible_module)
 
-    assert exc_info.value.kwargs['msg'] == "XenAPI.py required for this module! Please download XenServer SDK and copy XenAPI.py to your site-packages."
+    assert exc_info.value.kwargs['msg'] == ("XenAPI Python library is required for this module! "
+                                            "Please download XenServer SDK and copy XenAPI.py to your Python site-packages. "
+                                            "Check Notes section in module documentation for more info.")
 
 
 def test_xenserverobject_xenapi_failure(mock_xenapi_failure, fake_ansible_module, xenserver):
@@ -39,7 +41,7 @@ def test_xenserverobject(mocker, fake_ansible_module, XenAPI, xenserver):
         "pool.get_all.return_value": [fake_xenapi_ref('pool')],
         "pool.get_default_SR.return_value": fake_xenapi_ref('SR'),
         "session.get_this_host.return_value": fake_xenapi_ref('host'),
-        "host.get_software_version.return_value": {"product_version_text_short": "7.2"},
+        "host.get_software_version.return_value": {"product_version": "7.2.0"},
     }
 
     mocked_xenapi.configure_mock(**mocked_returns)
@@ -47,4 +49,4 @@ def test_xenserverobject(mocker, fake_ansible_module, XenAPI, xenserver):
     xso = xenserver.XenServerObject(fake_ansible_module)
 
     assert xso.pool_ref == fake_xenapi_ref('pool')
-    assert xso.xenserver_version == ['7', '2']
+    assert xso.xenserver_version == [7, 2, 0]

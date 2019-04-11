@@ -1,0 +1,2 @@
+bugfixes: 
+  - azure_rm_postgresqldatabase - fix force_update bug.

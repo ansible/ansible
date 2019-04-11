@@ -119,8 +119,6 @@
   shell: mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l
   register: remount_options
 
-- debug: var=remount_options
-
 - name: Make sure the filesystem now has the new opts
   assert:
     that:
@@ -247,4 +245,34 @@
     that:
       - "swap2_removed['changed']"
       - "not swap2_removed_again['changed']"
+  when: ansible_system in ('Linux')
+
+- name: Create fstab record with missing last two fields
+  copy:
+    dest: /etc/fstab
+    content: |
+      //nas/photo /home/jik/pictures cifs defaults,credentials=/etc/security/nas.creds,uid=jik,gid=users,forceuid,forcegid,noserverino,_netdev
+  when: ansible_system in ('Linux')
+
+- name: Try to change the fstab record with the missing last two fields
+  mount:
+    src: //nas/photo
+    path: /home/jik/pictures
+    fstype: cifs
+    opts: defaults,credentials=/etc/security/nas.creds,uid=jik,gid=users,forceuid,forcegid,noserverino,_netdev,x-systemd.mount-timeout=0
+    state: present
+  register: optional_fields_update
+  when: ansible_system in ('Linux')
+
+- name: Get the content of the fstab file
+  shell: cat /etc/fstab
+  register: optional_fields_content
+  when: ansible_system in ('Linux')
+
+- name: Check if the line containing the missing last two fields was changed
+  assert:
+    that:
+      - "optional_fields_update['changed']"
+      - "' 0 0' in optional_fields_content.stdout"
+      - "1 == optional_fields_content.stdout_lines | length"
   when: ansible_system in ('Linux')

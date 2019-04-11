@@ -1,0 +1,6 @@
+windows
+shippable/windows/group1
+shippable/windows/smoketest
+skip/windows/2008  # Windows Server 2008 does not support Win32-OpenSSH
+needs/target/connection
+needs/target/setup_remote_tmp_dir

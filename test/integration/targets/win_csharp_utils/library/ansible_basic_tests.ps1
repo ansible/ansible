@@ -503,6 +503,47 @@ $tests = @{
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $expected_module_args}
     }
 
+    "Parse module args with list elements and delegate type" = {
+        $spec = @{
+            options = @{
+                list_delegate_type = @{
+                    type = "list"
+                    elements = [Func[[Object], [UInt16]]]{ [System.UInt16]::Parse($args[0]) }
+                }
+            }
+        }
+        $complex_args = @{
+            list_delegate_type = @(
+                "1234",
+                4321
+            )
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.Params.list_delegate_type.GetType().Name | Assert-Equals -Expected 'List`1'
+        $m.Params.list_delegate_type[0].GetType().FullName | Assert-Equals -Expected "System.UInt16"
+        $m.Params.list_delegate_Type[1].GetType().FullName | Assert-Equals -Expected "System.UInt16"
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected_module_args = @{
+            list_delegate_type = @(
+                1234,
+                4321
+            )
+        }
+        $actual.Keys.Count | Assert-Equals -Expected 2
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $expected_module_args}
+    }
+
     "Parse module args with case insensitive input" = {
         $spec = @{
             options = @{
@@ -543,7 +584,8 @@ $tests = @{
                     option1 = 1
                 }
             }
-            warnings = @($expected_warnings)
+            # We have disabled the warning for now
+            #warnings = @($expected_warnings)
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
@@ -615,25 +657,25 @@ $tests = @{
                         dict = @{
                             pass = "plain"
                             hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-                            sub_hide = "****word"
+                            sub_hide = "********word"
                             int_hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
                         }
                         custom = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
                         list = @(
                             "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
-                            "****word",
+                            "********word",
                             "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
                             "pa ss",
                             @{
                                 pass = "plain"
                                 hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-                                sub_hide = "****word"
+                                sub_hide = "********word"
                                 int_hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
                             }
                         )
-                        data = "Oops this is secret: ****"
+                        data = "Oops this is secret: ********"
                     }
-                    username = "user - **** - name"
+                    username = "user - ******** - name"
                     password = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
                 }
             }
@@ -644,21 +686,21 @@ $tests = @{
 
         $expected_event = @'
 test_no_log - Invoked with:
-  username: user - **** - name
+  username: user - ******** - name
   dict: dict: sub_hide: ****word
       pass: plain
-      int_hide: ****56
+      int_hide: ********56
       hide: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-      data: Oops this is secret: ****
+      data: Oops this is secret: ********
       custom: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
       list: 
       - VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-      - ****word
-      - ****567
+      - ********word
+      - ********567
       - pa ss
-      - sub_hide: ****word
+      - sub_hide: ********word
           pass: plain
-          int_hide: ****56
+          int_hide: ********56
           hide: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
   password2: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
   password: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
@@ -704,6 +746,206 @@ test_no_log - Invoked with:
                     version = "2.1"
                 }
             )
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by - single value" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+            option2 = "option2"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                    option2 = "option2"
+                    option3 = $null
+                }
+            }
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by - multiple values" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2", "option3"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+            option2 = "option2"
+            option3 = "option3"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                    option2 = "option2"
+                    option3 = "option3"
+                }
+            }
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by explicit null" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+            option2 = $null
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                    option2 = $null
+                    option3 = $null
+                }
+            }
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by failed - single value" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+        }
+
+        $failed = $false
+        try {
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            failed = $true
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                }
+            }
+            msg = "missing parameter(s) required by 'option1': option2"
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by failed - multiple values" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2", "option3"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+        }
+
+        $failed = $false
+        try {
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            failed = $true
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                }
+            }
+            msg = "missing parameter(s) required by 'option1': option2, option3"
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
@@ -1184,7 +1426,7 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
-        $expected_msg += "required, required_if, required_one_of, required_together, supports_check_mode, type"
+        $expected_msg += "required, required_by, required_if, required_one_of, required_together, supports_check_mode, type"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -1216,7 +1458,7 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
-        $expected_msg += "required, required_if, required_one_of, required_together, supports_check_mode, type - "
+        $expected_msg += "required, required_by, required_if, required_one_of, required_together, supports_check_mode, type - "
         $expected_msg += "found in option_key -> sub_option_key"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
@@ -1538,8 +1780,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: ABC"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "ABC"}}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Case insensitive choice no_log" = {
@@ -1566,8 +1809,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"}}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Case insentitive choice as list" = {
@@ -1595,8 +1839,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: AbC, jkl"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = $complex_args}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Invalid choice" = {
@@ -1653,7 +1898,7 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equals -Expected $true
 
-        $expected_msg = "value of option_key must be one of: a, b. Got no match for: ***"
+        $expected_msg = "value of option_key must be one of: a, b. Got no match for: ********"
 
         $actual.Keys.Count | Assert-Equals -Expected 4
         $actual.changed | Assert-Equals -Expected $false

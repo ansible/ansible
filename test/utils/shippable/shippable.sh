@@ -1,6 +1,6 @@
-#!/bin/bash -eux
+#!/usr/bin/env bash
 
-set -o pipefail
+set -o pipefail -eux
 
 declare -a args
 IFS='/:' read -ra args <<< "$1"
@@ -14,7 +14,7 @@ docker images quay.io/ansible/*
 docker ps
 
 for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/' | sed 's/^.* //'); do
-    docker rm -f "${container}"
+    docker rm -f "${container}" || true  # ignore errors
 done
 
 docker ps
@@ -46,7 +46,7 @@ elif [[ "${COMMIT_MESSAGE}" =~ ci_coverage ]]; then
     export COVERAGE="--coverage"
 else
     # on-demand coverage reporting disabled (default behavior, always-on coverage reporting remains enabled)
-    export COVERAGE=""
+    export COVERAGE="--coverage-check"
 fi
 
 if [ -n "${COMPLETE:-}" ]; then
@@ -75,7 +75,7 @@ function cleanup
 {
     if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
         # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "other" ]; then
+        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/1" ]; then
             stub="--stub"
         else
             stub=""
@@ -86,10 +86,12 @@ function cleanup
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
         # upload coverage report to codecov.io only when using complete on-demand coverage
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ]; then
+        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
             for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
                 flags="${flags%.xml}"
+                # remove numbered component from stub files when converting to tags
+                flags="${flags//stub-[0-9]*/stub}"
                 flags="${flags//=/,}"
                 flags="${flags//[^a-zA-Z0-9_,]/_}"
 
@@ -116,6 +118,12 @@ function cleanup
 
 trap cleanup EXIT
 
-ansible-test env --dump --show --color -v
+if [[ "${COVERAGE:-}" == "--coverage" ]]; then
+    timeout=60
+else
+    timeout=45
+fi
+
+ansible-test env --dump --show --timeout "${timeout}" --color -v
 
 "test/utils/shippable/${script}.sh" "${test}"

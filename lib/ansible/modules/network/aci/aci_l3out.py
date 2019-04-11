@@ -16,18 +16,6 @@ module: aci_l3out
 short_description: Manage Layer 3 Outside (L3Out) objects (l3ext:Out)
 description:
 - Manage Layer 3 Outside (L3Out) on Cisco ACI fabrics.
-notes:
-- The C(tenant) and C(domain) and C(vrf) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_domain) and M(aci_vrf) modules can be used for this.
-seealso:
-- module: aci_tenant
-- module: aci_domain
-- module: aci_vrf
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(l3ext:Out).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Rostyslav Davydenko (@rost-d)
 version_added: '2.6'
 options:
   tenant:
@@ -92,6 +80,18 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) and C(domain) and C(vrf) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_domain) and M(aci_vrf) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_domain
+- module: aci_vrf
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(l3ext:Out).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Rostyslav Davydenko (@rost-d)
 '''
 
 EXAMPLES = r'''
@@ -236,17 +236,17 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        l3out=dict(type='str', aliases=['l3out_name', 'name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        l3out=dict(type='str', aliases=['l3out_name', 'name']),  # Not required for querying all objects
         domain=dict(type='str', aliases=['ext_routed_domain_name', 'routed_domain']),
         vrf=dict(type='str', aliases=['vrf_name']),
-        tenant=dict(type='str', aliases=['tenant_name']),
         description=dict(type='str', aliases=['descr']),
         route_control=dict(type='list', choices=['export', 'import'], aliases=['route_control_enforcement']),
         dscp=dict(type='str',

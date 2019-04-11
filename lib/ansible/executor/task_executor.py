@@ -319,6 +319,8 @@ class TaskExecutor:
         no_log = False
         items_len = len(items)
         for item_index, item in enumerate(items):
+            task_vars['ansible_loop_var'] = loop_var
+
             task_vars[loop_var] = item
             if index_var:
                 task_vars[index_var] = item_index
@@ -376,6 +378,7 @@ class TaskExecutor:
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
+            res['ansible_loop_var'] = loop_var
             if index_var:
                 res[index_var] = item_index
             if extended:
@@ -556,18 +559,18 @@ class TaskExecutor:
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
         if self._task.action in ('include', 'include_tasks'):
-            include_variables = self._task.args.copy()
-            include_file = include_variables.pop('_raw_params', None)
+            include_args = self._task.args.copy()
+            include_file = include_args.pop('_raw_params', None)
             if not include_file:
                 return dict(failed=True, msg="No include file was specified to the include")
 
             include_file = templar.template(include_file)
-            return dict(include=include_file, include_variables=include_variables)
+            return dict(include=include_file, include_args=include_args)
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
-            include_variables = self._task.args.copy()
-            return dict(include_variables=include_variables)
+            include_args = self._task.args.copy()
+            return dict(include_args=include_args)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)
@@ -1010,13 +1013,18 @@ class TaskExecutor:
 
         module_prefix = self._task.action.split('_')[0]
 
+        collections = self._task.collections
+
         # let action plugin override module, fallback to 'normal' action plugin otherwise
-        if self._task.action in self._shared_loader_obj.action_loader:
+        if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
+        # FIXME: is this code path even live anymore? check w/ networking folks; it trips sometimes when it shouldn't
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
             handler_name = module_prefix
         else:
+            # FUTURE: once we're comfortable with collections impl, preface this action with ansible.builtin so it can't be hijacked
             handler_name = 'normal'
+            collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
@@ -1026,6 +1034,7 @@ class TaskExecutor:
             loader=self._loader,
             templar=templar,
             shared_loader_obj=self._shared_loader_obj,
+            collection_list=collections
         )
 
         if not handler:

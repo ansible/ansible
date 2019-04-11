@@ -63,7 +63,7 @@ options:
                 description:
                     - "The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be
                        unique for the list of access policies."
-                    - Please note this is not application id. Object id can be obtained by running "az ad show sp --id <application id>".
+                    - Please note this is not application id. Object id can be obtained by running "az ad sp show --id <application id>".
                 required: True
             application_id:
                 description:
@@ -143,7 +143,7 @@ options:
         type: bool
     state:
         description:
-            - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
+            - Assert the state of the KeyVault. Use C(present) to create or update an KeyVault and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -161,7 +161,7 @@ author:
 EXAMPLES = '''
   - name: Create instance of Key Vault
     azure_rm_keyvault:
-      resource_group: myresourcegroup
+      resource_group: myResourceGroup
       vault_name: samplekeyvault
       enabled_for_deployment: yes
       vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
@@ -190,8 +190,8 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.keyvault import KeyVaultManagementClient
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -325,7 +325,8 @@ class AzureRMVaults(AzureRMModuleBase):
         response = None
 
         self.mgmt_client = self.get_mgmt_svc_client(KeyVaultManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
+                                                    base_url=self._cloud_environment.endpoints.resource_manager,
+                                                    api_version="2018-02-14")
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -448,7 +449,7 @@ class AzureRMVaults(AzureRMModuleBase):
             response = self.mgmt_client.vaults.create_or_update(resource_group_name=self.resource_group,
                                                                 vault_name=self.vault_name,
                                                                 parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

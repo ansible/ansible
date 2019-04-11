@@ -1,0 +1,2 @@
+minor_changes:
+- Added check for assert module for msg and failed_msg as a list or string types.

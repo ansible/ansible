@@ -210,7 +210,7 @@ class GalaxyCLI(CLI):
             author='your name',
             description='your description',
             company='your company (optional)',
-            license='license (GPLv2, CC-BY, etc)',
+            license='license (GPL-2.0-or-later, MIT, etc)',
             issue_tracker_url='http://example.com/issue/tracker',
             min_ansible_version='2.4',
             role_type=context.CLIARGS['role_type']

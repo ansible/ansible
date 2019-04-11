@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_certificate - make sure that extensions are actually present when their values should be checked."

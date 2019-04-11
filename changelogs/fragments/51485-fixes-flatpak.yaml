@@ -1,0 +1,2 @@
+bugfixes:
+  - flatpak - Makes querying of present flatpak name more robust, fixes #51485 (https://github.com/ansible/ansible/issues/51485)

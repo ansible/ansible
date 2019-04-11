@@ -1,0 +1,2 @@
+bugfixes:
+- win_copy - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``

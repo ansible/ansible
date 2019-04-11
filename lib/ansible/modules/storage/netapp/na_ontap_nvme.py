@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (@carchi8py) (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - Create/Delete NVMe Service
 extends_documentation_fragment:
@@ -87,7 +87,7 @@ class NetAppONTAPNVMe(object):
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str'),
-            status_admin=dict(required=False, type=bool)
+            status_admin=dict(required=False, type='bool')
         ))
 
         self.module = AnsibleModule(

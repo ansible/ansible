@@ -23,17 +23,19 @@ description:
 - To modify an existing directory service configuration you must first delete
   an exisitng configuration and then recreate with new settings.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Create or delete directory service configuration
     default: present
+    type: str
     choices: [ absent, present ]
   dstype:
     description:
     - The type of directory service to work on
     choices: [ management, nfs, smb ]
+    type: str
   enable:
     description:
     - Whether to enable or disable directory service support.
@@ -46,6 +48,7 @@ options:
       domain name or IP address. For example, ldap://ad.company.com configures
       the directory service with the hostname "ad" in the domain "company.com"
       while specifying the unencrypted LDAP protocol.
+    type: list
   base_dn:
     description:
     - Sets the base of the Distinguished Name (DN) of the directory service
@@ -54,9 +57,11 @@ options:
       parsing domain components from the URI. The base DN should specify DC=
       for each domain component and multiple DCs should be separated by commas.
     required: true
+    type: str
   bind_password:
     description:
     - Sets the password of the bind_user user name account.
+    type: str
   bind_user:
     description:
     - Sets the user name that can be used to bind to and query the directory.
@@ -64,12 +69,13 @@ options:
       sAMAccountName or User Logon Name - of the account that is used to
       perform directory lookups.
     - For OpenLDAP, enter the full DN of the user.
+    type: str
 extends_documentation_fragment:
 - purestorage.fb
 '''
 
 EXAMPLES = r'''
-- name: Delete exisitng management directory service
+- name: Delete existing management directory service
   purefb_ds:
     dstype: management
     state: absent
@@ -86,14 +92,14 @@ EXAMPLES = r'''
     fb_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Enable exisitng SMB directory service
+- name: Enable existing SMB directory service
   purefb_ds:
     dstypr: smb
     enable: true
     fb_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Disable exisitng management directory service
+- name: Disable existing management directory service
   purefb_ds:
     dstype: management
     enable: false

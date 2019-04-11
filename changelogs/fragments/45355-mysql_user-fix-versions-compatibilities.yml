@@ -1,0 +1,2 @@
+bugfixes:
+- "mysql_user: fix compatibility issues with various MySQL/MariaDB versions"

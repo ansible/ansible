@@ -80,7 +80,7 @@ options:
     geo_mapping:
         description:
             - The list of countries/regions mapped to this endpoint when traffic manager profile has routing_method of C(geographic).
-        type: str
+        type: list
     state:
         description:
             - Assert the state of the Traffic Manager endpoint. Use C(present) to create or update a Traffic Manager endpoint and C(absent) to delete it.
@@ -117,7 +117,8 @@ id:
   returned: when traffic manager endpoint exists
   type: str
   example:
-    "/subscriptions/<subsid>/resourceGroups/testRg/providers/Microsoft.Network/trafficManagerProfiles/testProfile/externalEndpoints/testendpoint"
+    "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/trafficManagerProfiles/testProfil
+     e/externalEndpoints/testendpoint"
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 from ansible.module_utils.common.dict_transformations import _snake_to_camel

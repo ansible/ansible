@@ -18,8 +18,10 @@ short_description: Create or delete an AWS CloudFormation stack
 description:
      - Launches or updates an AWS CloudFormation stack and waits for it complete.
 notes:
-     - As of version 2.3, migrated to boto3 to enable new features. To match existing behavior, YAML parsing is done in the module, not given to AWS as YAML.
-       This will change (in fact, it may change before 2.3 is out).
+     - Cloudformation features change often, and this module tries to keep up. That means your botocore version should be fresh.
+       The version listed in the requirements is the oldest version that works with the module as a whole.
+       Some features may require recent versions, and we do not pinpoint a minimum version for each feature.
+       Instead of relying on the minimum version, keep botocore up to date. AWS is always releasing features and fixing bugs.
 version_added: "1.1"
 options:
   stack_name:
@@ -141,12 +143,19 @@ options:
     version_added: "2.8"
     type: int
     required: False
+  capabilities:
+    description:
+    - Specify capabilites that stack template contains.
+    - Valid values are CAPABILITY_IAM, CAPABILITY_NAMED_IAM and CAPABILITY_AUTO_EXPAND.
+    type: list
+    version_added: "2.8"
+    default: [ CAPABILITY_IAM, CAPABILITY_NAMED_IAM ]
 
 author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
 - aws
 - ec2
-requirements: [ boto3, botocore>=1.4.57 ]
+requirements: [ boto3, botocore>=1.5.45 ]
 '''
 
 EXAMPLES = '''
@@ -603,6 +612,7 @@ def main():
         backoff_retries=dict(type='int', default=10, required=False),
         backoff_delay=dict(type='int', default=3, required=False),
         backoff_max_delay=dict(type='int', default=30, required=False),
+        capabilities=dict(type='list', default=['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'])
     )
     )
 
@@ -614,9 +624,19 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required for this module')
 
+    invalid_capabilities = []
+    user_capabilities = module.params.get('capabilities')
+    for user_cap in user_capabilities:
+        if user_cap not in ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM', 'CAPABILITY_AUTO_EXPAND']:
+            invalid_capabilities.append(user_cap)
+
+    if invalid_capabilities:
+        module.fail_json(msg="Specified capabilities are invalid : %r,"
+                             " please check documentation for valid capabilities" % invalid_capabilities)
+
     # collect the parameters that are passed to boto3. Keeps us from having so many scalars floating around.
     stack_params = {
-        'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
+        'Capabilities': user_capabilities,
         'ClientRequestToken': to_native(uuid.uuid4()),
     }
     state = module.params['state']

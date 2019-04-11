@@ -1,8 +1,3 @@
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-- debug: var=vcsim
-
 - name: kill vcsim
   uri:
     url: "{{ 'http://' + vcsim + ':5000/killall' }}"

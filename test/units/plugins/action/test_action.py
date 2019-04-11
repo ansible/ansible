@@ -121,7 +121,7 @@ class TestActionBase(unittest.TestCase):
         mock_connection = MagicMock()
 
         # create a mock shared loader object
-        def mock_find_plugin(name, options):
+        def mock_find_plugin(name, options, collection_list=None):
             if name == 'badmodule':
                 return None
             elif '.ps1' in options:
@@ -143,7 +143,7 @@ class TestActionBase(unittest.TestCase):
             connection=mock_connection,
             play_context=play_context,
             loader=fake_loader,
-            templar=None,
+            templar=Templar(loader=fake_loader),
             shared_loader_obj=mock_shared_obj_loader,
         )
 
@@ -152,7 +152,8 @@ class TestActionBase(unittest.TestCase):
             with patch.object(os, 'rename'):
                 mock_task.args = dict(a=1, foo='fö〩')
                 mock_connection.module_implementation_preferences = ('',)
-                (style, shebang, data, path) = action_base._configure_module(mock_task.action, mock_task.args)
+                (style, shebang, data, path) = action_base._configure_module(mock_task.action, mock_task.args,
+                                                                             task_vars=dict(ansible_python_interpreter='/usr/bin/python'))
                 self.assertEqual(style, "new")
                 self.assertEqual(shebang, u"#!/usr/bin/python")
 

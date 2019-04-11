@@ -47,11 +47,11 @@ EXAMPLES = '''
     - name: Get facts for one route table
       azure_rm_routetable_facts:
         name: Testing
-        resource_group: foo
+        resource_group: myResourceGroup
 
     - name: Get facts for all route tables
       azure_rm_routetable_facts:
-        resource_group: foo
+        resource_group: myResourceGroup
 
     - name: Get facts by tags
       azure_rm_routetable_facts:
@@ -86,7 +86,7 @@ routes:
     type: list
     sample: [
         {
-          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar/routes/route",
+          "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/routeTables/foobar/routes/route",
           "name": "route",
           "resource_group": "Testing",
           "routeTables": "foobar",
