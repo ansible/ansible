@@ -1,2 +1,0 @@
-bugfixes:
-- win_chocolatey - Fix hang when used with proxy for the first time - https://github.com/ansible/ansible/issues/47669

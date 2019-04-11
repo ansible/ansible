@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "postgresql_privs - introduces support to postgresql_privs to use 'FOR { ROLE | USER } target_role' in 'ALTER DEFAULT PRIVILEGES'. (https://github.com/ansible/ansible/issues/50877)"

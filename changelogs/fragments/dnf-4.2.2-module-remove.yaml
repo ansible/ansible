@@ -1,3 +1,0 @@
----
-bugfixes:
-  - dnf - fix issue with dnf API calls to adapt to changes in upstream dnf version 4.2.2

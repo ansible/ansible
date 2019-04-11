@@ -1,2 +1,0 @@
-minor_changes:
-  - "docker_swarm - Added support for ``default_addr_pool`` and ``subnet_size``."

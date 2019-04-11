@@ -1,2 +1,0 @@
-bugfixes:
-  - azure_rm_mysqlserver - fixed issues with passing parameters while updating existing server instance

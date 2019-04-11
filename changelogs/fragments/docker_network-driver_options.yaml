@@ -1,3 +1,0 @@
----
-bugfixes:
-  - "docker_network - ``driver_options`` containing Python booleans would cause Docker to throw exceptions."

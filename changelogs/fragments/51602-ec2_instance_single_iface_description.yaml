@@ -1,2 +1,0 @@
-bugfixes:
-  - ec2_instance - Correctly adds description when adding a single ENI to the instance

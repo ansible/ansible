@@ -1,6 +1,0 @@
-bugfixes:
-  - udm_user - Fix issues when state is absent with undefined variable diff at the module return.
-  - udm_group - Fix issues when state is absent with undefined variable diff at the module return.
-  - udm_share - Fix issues when state is absent with undefined variable diff at the module return.
-  - udm_dns_zone - Fix issues when state is absent with undefined variable diff at the module return.
-  - udm_dns_record - Fix issues when state is absent with undefined variable diff at the module return.

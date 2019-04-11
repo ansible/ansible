@@ -1,2 +1,0 @@
-bugfixes:
-- dynamic includes - Add missed ``run_once`` to valid include attributes (https://github.com/ansible/ansible/pull/48068)

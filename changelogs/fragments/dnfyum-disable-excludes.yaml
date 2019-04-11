@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "dnf appropriately handles disable_excludes repoid argument"

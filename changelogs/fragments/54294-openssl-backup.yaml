@@ -1,6 +1,0 @@
-minor_changes:
-- "openssl_certificate - add ``backup`` option."
-- "openssl_csr - add ``backup`` option."
-- "openssl_dhparam - add ``backup`` option."
-- "openssl_pkcs12 - add ``backup`` option."
-- "openssl_publickey - add ``backup`` option."

@@ -1,3 +1,0 @@
-minor_changes:
-- "ufw - type of option ``insert`` is now enforced to be ``int``."
-- "ufw - new ``insert_relative_to`` option allows to specify rule insertion position relative to first/last IPv4/IPv6 address."

@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_swarm - the ``force`` option was ignored when ``state: present``."

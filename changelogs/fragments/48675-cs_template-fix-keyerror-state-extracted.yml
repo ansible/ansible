@@ -1,2 +1,0 @@
-bugfixes:
-  - cs_template - Fixed a KeyError on state=extracted.

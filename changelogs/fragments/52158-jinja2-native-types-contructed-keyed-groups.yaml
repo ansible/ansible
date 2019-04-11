@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix unexpected error when using Jinja2 native types with non-strict constructed keyed_groups (https://github.com/ansible/ansible/issues/52158).

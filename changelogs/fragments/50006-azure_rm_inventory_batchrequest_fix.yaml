@@ -1,2 +1,0 @@
-bugfixes:
-- azure_rm inventory plugin - fix azure batch request (https://github.com/ansible/ansible/pull/50006)

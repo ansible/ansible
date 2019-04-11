@@ -1,3 +1,0 @@
-bugfixes:
-    - Add code to detect correctly a host running openSUSE Tumbleweed
-    - Fix detection string for SUSE distribution variants like Leap and SLES (SUSE Enterprise Linux Server).

@@ -1,2 +1,0 @@
-bugfixes:
-    - Fix Amazon system-release version parsing (https://github.com/ansible/ansible/issues/48823)

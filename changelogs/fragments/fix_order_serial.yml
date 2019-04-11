@@ -1,2 +1,0 @@
-bugfixes:
-    - play order is now applied under all circumstances, fixes #49846

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - influxdb_user - Implemented the update of the admin role of a user

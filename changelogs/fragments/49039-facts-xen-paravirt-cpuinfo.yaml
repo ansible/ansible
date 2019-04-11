@@ -1,2 +1,0 @@
-minor_changes:
- - "ansible facts properly detect xen paravirt vs hvm"

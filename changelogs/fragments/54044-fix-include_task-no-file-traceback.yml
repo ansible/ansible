@@ -1,2 +1,0 @@
-bugfixes:
-  - include_tasks - Fixed an unexpected exception if no file was given to include.

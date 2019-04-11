@@ -1,2 +1,0 @@
-bugfixes:
-  - yum - properly handle a proxy config in yum.conf for an unauthenticated proxy

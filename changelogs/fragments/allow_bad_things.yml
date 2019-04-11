@@ -1,3 +1,0 @@
-minor_changes:
-    - Embed an overridable static sanitization method into base inventory plugin class to allow individual plugins to optionally override
-      Add override implementation to inital set of cloud plugins

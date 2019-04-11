@@ -1,3 +1,0 @@
-minor_changes:
-- "docker_image - the deprecated settings ``state: build`` and ``use_tls`` now
-   display warnings when being used. They will be removed in Ansible 2.11."
