@@ -31,6 +31,16 @@ options:
     name:
         description:
             - Name of the event hub.
+    show_sas_policies:
+        description:
+            - Whether to show the SAS policies.
+            - Note if enable this option, the facts module will raise more than two HTTP calls for each resources, need more network overhead.
+        type: bool
+    show_consumer_groups:
+        description:
+            - Whether to show the consumer groups.
+            - Note if enable this option, the facts module will raise one more HTTP call for each resources, need more network overhead.
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -85,6 +95,12 @@ class AzureRMEventHubFact(AzureRMModuleBase):
             ),
             name=dict(
                 type='str'
+            ),
+            show_sas_policies=dict(
+                type='bool'
+            ),
+            show_consumer_groups=dict(
+                type='bool'
             )
         )
 
@@ -96,6 +112,8 @@ class AzureRMEventHubFact(AzureRMModuleBase):
         self.resource_group = None
         self.namespace = None
         self.name = None
+        self.show_sas_policies = None
+        self.show_consumer_groups = None
 
         super(AzureRMEventHubFact, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
@@ -110,6 +128,10 @@ class AzureRMEventHubFact(AzureRMModuleBase):
         else:
             response = self.list_by_namespace()
         self.results['eventhubs'] = [self.to_dict(x) for x in response]
+        if self.show_sas_policies:
+            self.results['eventhubs'] = [self.get_sas_policies(x) for x in self.results['eventhubs']]
+        if self.show_consumer_groups:
+            self.results['eventhubs'] = [self.get_consumer_groups(x) for x in self.results['eventhubs']]
         return self.results
 
     def get_item(self):
@@ -132,6 +154,38 @@ class AzureRMEventHubFact(AzureRMModuleBase):
             return self.eventhub_client.event_hubs.list_by_namespace(self.resource_group, self.namespace)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Filed to list eventhub by namespace {0}: {1}'.format(self.namespace, str(exc.inner_exception) or exc.message or str(exc)))
+
+    def get_sas_policies(self, eventhub):
+        results = eventhub
+        name = eventhub['name']
+        rules = self.list_authorization_rules(name)
+        results['sas_keys'] = [self.list_keys(name, x.name).as_dict() for x in rules]
+        return results
+
+    def list_authorization_rules(self, name):
+        try:
+            return self.eventhub_client.event_hubs.list_authorization_rules(self.resource_group, self.namespace, name)
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Failed to list authorization rules of namespace {0}: {1}'.format(name, str(exc.inner_exception) or exc.message or str(exc)))
+
+    def list_keys(self, name, rule_name):
+        try:
+            return self.eventhub_client.event_hubs.list_keys(self.resource_group, self.namespace, name, rule_name)
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Failed to list keys of authorization rules {0}: {1}'.format(rule_name,
+                                                                                   str(exc.inner_exception) or exc.message or str(exc)))
+
+    def get_consumer_groups(self, eventhub):
+        results = eventhub
+        consumer_groups = self.list_consumer_groups(eventhub['name'])
+        results['consumer_groups'] = [x.as_dict() for x in consumer_groups]
+        return results
+
+    def list_consumer_groups(self, name):
+        try:
+            return self.eventhub_client.consumer_groups.list_by_event_hub(self.resource_group, self.namespace, name)
+        except self.eventhub_models.ErrorResponseException as exc:
+            self.fail('Failed to list consumer groups of the eventhub {0}: {1}'.format(name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def to_dict(self, eventhub):
         result = dict(
