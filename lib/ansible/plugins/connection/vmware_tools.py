@@ -10,7 +10,6 @@ from os.path import exists, getsize
 from socket import gaierror
 from ssl import SSLError
 from time import sleep
-import urllib3
 import traceback
 
 REQUESTS_IMP_ERR = None
@@ -35,6 +34,10 @@ except ImportError:
     HAS_PYVMOMI = False
     PYVMOMI_IMP_ERR = traceback.format_exc()
 
+try:
+    from requests.packages.urllib3 import disable_warnings, InsecureRequestWarning
+except ImportError:
+    from urllib3 import disable_warnings, InsecureRequestWarning
 
 DOCUMENTATION = """
     author: Deric Crago <deric.crago@gmail.com>
@@ -291,7 +294,7 @@ class Connection(ConnectionBase):
             connect = SmartConnect
         else:
             if self.get_option("silence_tls_warnings"):
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                disable_warnings(InsecureRequestWarning)
             connect = SmartConnectNoSSL
 
         try:
