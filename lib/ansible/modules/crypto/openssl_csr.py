@@ -770,8 +770,8 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
         def _check_basicConstraints(extensions):
             bc_ext = _find_extension(extensions, cryptography.x509.BasicConstraints)
-            current_ca = bc_ext.ca if bc_ext else False
-            current_path_length = bc_ext.path_length if bc_ext else None
+            current_ca = bc_ext.value.ca if bc_ext else False
+            current_path_length = bc_ext.value.path_length if bc_ext else None
             ca, path_length = crypto_utils.cryptography_get_basic_constraints(self.basicConstraints)
             # Check CA flag
             if ca != current_ca:
