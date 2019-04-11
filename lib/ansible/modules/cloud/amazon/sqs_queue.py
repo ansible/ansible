@@ -313,6 +313,9 @@ def main():
         if fifo_queue:
             if (fifo_queue != 'true' and fifo_queue != 'false'):
                 module.fail_json(msg='fifo_queue can only be either true or false. If no value is specified standard queue will be created.')
+                
+        if not fifo_queue:
+            fifo_queue = 'false'
         
         if state == 'present':
             create_or_update_sqs_queue(connection, module)
