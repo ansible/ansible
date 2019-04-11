@@ -40,10 +40,14 @@ options:
         description:
         - Unique username for this account. (May be 1 to 64 characters in length).
         required: true
+        aliases:
+        - account_id
 
-    new_element_username:
+    from_name:
         description:
-        - New name for the user account.
+        - ID or Name of the account to rename.
+        - Required to create an account called 'element_username' by renaming 'from_name'.
+        version_added: '2.8'
 
     initiator_secret:
         description:
@@ -60,10 +64,6 @@ options:
 
     attributes:
         description: List of Name/Value pairs in JSON object format.
-
-    account_id:
-        description:
-        - The ID of the account to manage or update.
 
     status:
         description:
@@ -86,8 +86,27 @@ EXAMPLES = """
     username: "{{ elementsw_username }}"
     password: "{{ elementsw_password }}"
     state: present
+    status: locked
     element_username: TenantA
-    new_element_username: TenantA-Renamed
+
+- name: Rename Account
+  na_elementsw_account:
+    hostname: "{{ elementsw_hostname }}"
+    username: "{{ elementsw_username }}"
+    password: "{{ elementsw_password }}"
+    state: present
+    element_username: TenantA_Renamed
+    from_name: TenantA
+
+- name: Rename and modify Account
+  na_elementsw_account:
+    hostname: "{{ elementsw_hostname }}"
+    username: "{{ elementsw_username }}"
+    password: "{{ elementsw_password }}"
+    state: present
+    status: locked
+    element_username: TenantA_Renamed
+    from_name: TenantA
 
 - name: Delete Account
   na_elementsw_account:
@@ -95,7 +114,7 @@ EXAMPLES = """
     username: "{{ elementsw_username }}"
     password: "{{ elementsw_password }}"
     state: absent
-    element_username: TenantA-Renamed
+    element_username: TenantA_Renamed
 """
 
 RETURN = """
@@ -121,10 +140,8 @@ class ElementSWAccount(object):
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=True, choices=['present', 'absent']),
-            element_username=dict(required=True, type='str'),
-            account_id=dict(required=False, type='int', default=None),
-
-            new_element_username=dict(required=False, type='str', default=None),
+            element_username=dict(required=True, aliases=["account_id"], type='str'),
+            from_name=dict(required=False, default=None),
             initiator_secret=dict(required=False, type='str'),
             target_secret=dict(required=False, type='str'),
             attributes=dict(required=False, type='dict'),
@@ -139,15 +156,13 @@ class ElementSWAccount(object):
         params = self.module.params
 
         # set up state variables
-        self.state = params['state']
-        self.element_username = params['element_username']
-        self.account_id = params['account_id']
-
-        self.new_element_username = params['new_element_username']
-        self.initiator_secret = params['initiator_secret']
-        self.target_secret = params['target_secret']
-        self.attributes = params['attributes']
-        self.status = params['status']
+        self.state = params.get('state')
+        self.element_username = params.get('element_username')
+        self.from_name = params.get('from_name')
+        self.initiator_secret = params.get('initiator_secret')
+        self.target_secret = params.get('target_secret')
+        self.attributes = params.get('attributes')
+        self.status = params.get('status')
 
         if HAS_SF_SDK is False:
             self.module.fail_json(msg="Unable to import the Element SW Python SDK")
@@ -162,29 +177,24 @@ class ElementSWAccount(object):
         else:
             self.attributes = self.elementsw_helper.set_element_attributes(source='na_elementsw_account')
 
-    def get_account(self):
+    def get_account(self, username):
         """
         Get Account
-            :description: Get Account object from account id
+            :description: Get Account object from account id or name
 
             :return: Details about the account. None if not found.
             :rtype: object (Account object)
         """
 
         account_list = self.sfe.list_accounts()
-        account_obj = None
 
         for account in account_list.accounts:
-            if account.username == self.element_username:
-                # Update self.account_id:
-                if self.account_id is not None:
-                    if account.account_id == self.account_id:
-                        account_obj = account
-                else:
-                    self.account_id = account.account_id
-                    account_obj = account
-
-        return account_obj
+            # Check and get account object for a given name
+            if str(account.account_id) == username:
+                return account
+            elif account.username == username:
+                return account
+        return None
 
     def create_account(self):
         """
@@ -196,7 +206,7 @@ class ElementSWAccount(object):
                                  target_secret=self.target_secret,
                                  attributes=self.attributes)
         except Exception as e:
-            self.module.fail_json(msg='Error creating account %s: %s)' % (self.element_username, to_native(e)),
+            self.module.fail_json(msg='Error creating account %s: %s' % (self.element_username, to_native(e)),
                                   exception=traceback.format_exc())
 
     def delete_account(self):
@@ -210,13 +220,28 @@ class ElementSWAccount(object):
             self.module.fail_json(msg='Error deleting account %s: %s' % (self.account_id, to_native(e)),
                                   exception=traceback.format_exc())
 
-    def update_account(self):
+    def rename_account(self):
         """
-        Update the Account
+        Rename the Account
         """
         try:
             self.sfe.modify_account(account_id=self.account_id,
-                                    username=self.new_element_username,
+                                    username=self.element_username,
+                                    status=self.status,
+                                    initiator_secret=self.initiator_secret,
+                                    target_secret=self.target_secret,
+                                    attributes=self.attributes)
+
+        except Exception as e:
+            self.module.fail_json(msg='Error renaming account %s: %s' % (self.account_id, to_native(e)),
+                                  exception=traceback.format_exc())
+
+    def update_account(self):
+        """
+        Update the Account if account already exists
+        """
+        try:
+            self.sfe.modify_account(account_id=self.account_id,
                                     status=self.status,
                                     initiator_secret=self.initiator_secret,
                                     target_secret=self.target_secret,
@@ -231,24 +256,24 @@ class ElementSWAccount(object):
         Process the account operation on the Element OS Cluster
         """
         changed = False
-        account_exists = False
         update_account = False
-        account_detail = self.get_account()
+        account_detail = self.get_account(self.element_username)
 
-        if account_detail:
-            account_exists = True
+        if account_detail is None and self.state == 'present':
+            changed = True
+
+        elif account_detail is not None:
+            # If account found
+            self.account_id = account_detail.account_id
 
             if self.state == 'absent':
                 changed = True
-
-            elif self.state == 'present':
-                # Check if we need to update the account
-
-                if account_detail.username is not None and self.new_element_username is not None and \
-                        account_detail.username != self.new_element_username:
+            else:
+                # If state - present, check for any parameter of exising account needs modification.
+                if account_detail.username is not None and self.element_username is not None and \
+                        account_detail.username != self.element_username:
                     update_account = True
                     changed = True
-
                 elif account_detail.status is not None and self.status is not None \
                         and account_detail.status != self.status:
                     update_account = True
@@ -268,20 +293,28 @@ class ElementSWAccount(object):
                         and account_detail.attributes != self.attributes:
                     update_account = True
                     changed = True
-        else:
-            if self.state == 'present' and self.status is None:
-                changed = True
-
         if changed:
             if self.module.check_mode:
+                # Skipping the changes
                 pass
             else:
                 if self.state == 'present':
-                    if not account_exists:
-                        self.create_account()
-                    elif update_account:
+                    if update_account:
                         self.update_account()
-
+                    else:
+                        if self.from_name is not None:
+                            # If from_name is defined
+                            account_exists = self.get_account(self.from_name)
+                            if account_exists is not None:
+                                # If resource pointed by from_name exists, rename the account to name
+                                self.account_id = account_exists.account_id
+                                self.rename_account()
+                            else:
+                                # If resource pointed by from_name does not exists, error out
+                                self.module.fail_json(msg="Resource does not exist : %s" % self.from_name)
+                        else:
+                            # If from_name is not defined, create from scratch.
+                            self.create_account()
                 elif self.state == 'absent':
                     self.delete_account()
 
