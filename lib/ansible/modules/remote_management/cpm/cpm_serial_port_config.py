@@ -68,6 +68,7 @@ options:
     description:
       - This is the port number that is getting the action performed on.
     required: true
+    type: int
   portname:
     description:
       - This is the Name of the Port that is displayed.
