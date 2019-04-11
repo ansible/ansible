@@ -39,7 +39,7 @@ from copy import deepcopy
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 # Optional, only used for APIC signature-based authentication
 try:
@@ -267,7 +267,7 @@ class ACIModule(object):
         self.headers['Cookie'] = 'APIC-Certificate-Algorithm=v1.0; ' +\
                                  'APIC-Certificate-DN=%s; ' % sig_dn +\
                                  'APIC-Certificate-Fingerprint=fingerprint; ' +\
-                                 'APIC-Request-Signature=%s' % sig_signature
+                                 'APIC-Request-Signature=%s' % to_native(sig_signature)
 
     def response_json(self, rawoutput):
         ''' Handle APIC JSON response output '''
