@@ -185,7 +185,7 @@ class AzureRMIoTDeviceModule(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             twin_tags=dict(type='dict'),
             desired=dict(type='dict'),
-            auth_method=dict(type='str', choices=['self_signed',  'sas', 'certificate_authority'], default='sas'),
+            auth_method=dict(type='str', choices=['self_signed', 'sas', 'certificate_authority'], default='sas'),
             primary_key=dict(type='str', no_log=True, aliases=['primary_thumbprint']),
             secondary_key=dict(type='str', no_log=True, aliases=['secondary_thumbprint'])
         )
@@ -207,7 +207,7 @@ class AzureRMIoTDeviceModule(AzureRMModuleBase):
         self.primary_key = None
         self.secondary_key = None
 
-        required_if  = [
+        required_if = [
             ['auth_method', 'self_signed', ['certificate_authority']]
         ]
 

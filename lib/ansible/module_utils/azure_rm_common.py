@@ -178,6 +178,7 @@ try:
     from msrestazure import AzureConfiguration
     from msrest.authentication import Authentication
 except ImportError as exc:
+    Authentication = object
     HAS_AZURE_EXC = traceback.format_exc()
     HAS_AZURE = False
 
@@ -1080,7 +1081,6 @@ class AzureSASAuthentication(Authentication):
     """Simple SAS Authentication.
     An implementation of Authentication in
     https://github.com/Azure/msrest-for-python/blob/0732bc90bdb290e5f58c675ffdd7dbfa9acefc93/msrest/authentication.py
-    
 
     :param str token: SAS token
     """

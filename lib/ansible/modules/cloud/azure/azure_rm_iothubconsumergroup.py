@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_iothub
+module: azure_rm_iothubconsumergroup
 version_added: "2.9"
 short_description: Manage Azure IoT hub.
 description:
@@ -54,11 +54,11 @@ author:
 
 EXAMPLES = '''
 - name: Create a simplest IoT hub
-  azure_rm_iothub:
+  azure_rm_iothubconsumergroup:
     name: Testing
     resource_group: myResourceGroup
 - name: Create an IoT hub with route
-  azure_rm_iothub:
+  azure_rm_iothubconsumergroup:
     resource_group: myResourceGroup
     name: Testing
     routing_endpoints:

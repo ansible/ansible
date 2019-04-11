@@ -243,7 +243,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             edge_enabled=dict(type='bool'),
             twin_tags=dict(type='dict'),
             desired=dict(type='dict'),
-            auth_method=dict(type='str', choices=['self_signed',  'sas', 'certificate_authority'], default='sas'),
+            auth_method=dict(type='str', choices=['self_signed', 'sas', 'certificate_authority'], default='sas'),
             primary_key=dict(type='str', no_log=True, aliases=['primary_thumbprint']),
             secondary_key=dict(type='str', no_log=True, aliases=['secondary_thumbprint'])
         )
@@ -266,7 +266,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
         self.primary_key = None
         self.secondary_key = None
 
-        required_if  = [
+        required_if = [
             ['auth_method', 'self_signed', ['certificate_authority']]
         ]
 
@@ -313,10 +313,10 @@ class AzureRMIoTDevice(AzureRMModuleBase):
                     }
                 device = {
                     'deviceId': self.name,
-                    'capabilities': { 'iotEdge': self.edge_enabled or False },
+                    'capabilities': {'iotEdge': self.edge_enabled or False},
                     'authentication': auth
                 }
-                if self.status == False:
+                if not self.status is None and not self.status:
                     device['status'] = 'disabled'
             else:
                 if self.edge_enabled is not None and self.edge_enabled != device['capabilities']['iotEdge']:
@@ -402,7 +402,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             if not response.status_code in [204]:
                 raise CloudError(response)
         except Exception as exc:
-            self.fail('Error when deleting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc))) 
+            self.fail('Error when deleting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc)))
 
     def get_device(self):
         try:

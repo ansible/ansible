@@ -426,16 +426,16 @@ routing_endpoints_spec = dict(
 
 
 routing_endpoints_resource_type_mapping = {
-    'eventhub': { 'model': 'RoutingEventHubProperties', 'attribute': 'event_hubs'},
-    'queue': { 'model': 'RoutingServiceBusQueueEndpointProperties', 'attribute': 'service_bus_queues'},
-    'topic': { 'model': 'RoutingServiceBusTopicEndpointProperties', 'attribute': 'service_bus_topics'},
-    'storage': { 'model': 'RoutingStorageContainerProperties', 'attribute': 'storage_containers'}
+    'eventhub': {'model': 'RoutingEventHubProperties', 'attribute': 'event_hubs'},
+    'queue': {'model': 'RoutingServiceBusQueueEndpointProperties', 'attribute': 'service_bus_queues'},
+    'topic': {'model': 'RoutingServiceBusTopicEndpointProperties', 'attribute': 'service_bus_topics'},
+    'storage': {'model': 'RoutingStorageContainerProperties', 'attribute': 'storage_containers'}
 }
 
 
 routes_spec = dict(
     name=dict(type='str', required=True),
-    source=dict(type='str', required=True,  choices=['device_messages', 'twin_change_events', 'device_lifecycle_events', 'device_job_lifecycle_events']),
+    source=dict(type='str', required=True, choices=['device_messages', 'twin_change_events', 'device_lifecycle_events', 'device_job_lifecycle_events']),
     enabled=dict(type='bool', required=True),
     endpoint_name=dict(type='str', required=True),
     condition=dict(type='str')
@@ -523,7 +523,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
                 if routes or routing_endpoints:
                     routing_property = self.IoThub_models.RoutingProperties(endpoints=routing_endpoints,
                                                                             routes=routes)
-                    iothub_property.routing =  routing_property
+                    iothub_property.routing = routing_property
                 iothub = self.IoThub_models.IotHubDescription(location=self.location,
                                                               sku=self.IoThub_models.IotHubSkuInfo(name=self.sku, capacity=self.unit),
                                                               properties=iothub_property,
@@ -585,7 +585,7 @@ class AzureRMIoTHub(AzureRMModuleBase):
                     else:
                         for item in self.routes:
                             if not self.lookup_route(item, original_routes):
-                                routes_changed =  True
+                                routes_changed = True
                                 break
                     if routes_changed:
                         changed = True
