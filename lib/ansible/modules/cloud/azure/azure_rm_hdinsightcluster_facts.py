@@ -301,7 +301,6 @@ class AzureRMHDInsightclusterFacts(AzureRMModuleBase):
             } for item in d.get('properties', []).get('compute_profile', {}).get('roles', [])],
             'connectivity_endpoints': d.get('properties', {}).get('connectivity_endpoints'),
             'tags': d.get('tags', None)
-            #'all': d
         }
 
         return d
