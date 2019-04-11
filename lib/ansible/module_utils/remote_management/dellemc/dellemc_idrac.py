@@ -32,7 +32,7 @@ class iDRACConnection:
             raise ImportError("Dell EMC OMSDK library is required for this module")
         self.idrac_ip = module_params['idrac_ip']
         self.idrac_user = module_params['idrac_user']
-        self.idrac_pwd = module_params['idrac_pwd']
+        self.idrac_pwd = module_params['idrac_password']
         self.idrac_port = module_params['idrac_port']
         if not all((self.idrac_ip, self.idrac_user, self.idrac_pwd)):
             raise ValueError("hostname, username and password required")
