@@ -1040,7 +1040,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     differences.append('Zones')
                     changed = True
 
-                if vm_dict['properties'].get('licenseType') != self.license_type:
+                if self.license_type is not None and vm_dict['properties'].get('licenseType') != self.license_type:
                     differences.append('License Type')
                     changed = True
                 self.differences = differences
