@@ -413,7 +413,7 @@ You may want your Ansible handlers to use variables. For example, if the name of
 
 If the variable used in the handler name is not available, the entire play fails. Changing that variable mid-play **will not** result in newly created handler.
 
-It is possible to use variables in handler *task parameters*. For example, if the name of a service varies slightly by distribution, the service name can be set using ``include_vars``.
+Instead, place variables in the task parameters of your handler. You can load the values using ``include_vars`` like this:
 
 Here is an example using ``include_vars``:
 
