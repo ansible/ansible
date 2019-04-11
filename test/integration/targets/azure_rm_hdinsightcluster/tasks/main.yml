@@ -199,6 +199,27 @@
     that:
       - output.changed
 
+- name: Get facts of Cluster
+  azure_rm_hdinsightcluster_facts:
+    resource_group: "{{ resource_group }}"
+    name: "cluster{{ rpfx }}"
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.clusters[0]['id'] != None
+      - output.clusters[0]['resource_group'] != None
+      - output.clusters[0]['name'] != None
+      - output.clusters[0]['location'] != None
+      - output.clusters[0]['cluster_version'] != None
+      - output.clusters[0]['os_type'] != None
+      - output.clusters[0]['tier'] != None
+      - output.clusters[0]['cluster_definition'] != None
+      - output.clusters[0]['compute_profile_roles'] != None
+      - output.clusters[0]['connectivity_endpoints'] != None
+
 - name: Delete instance of Cluster -- check mode
   azure_rm_hdinsightcluster:
     resource_group: "{{ resource_group }}"
