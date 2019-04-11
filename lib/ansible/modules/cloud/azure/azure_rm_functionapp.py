@@ -87,24 +87,36 @@ author:
 EXAMPLES = '''
 - name: Create a function app
   azure_rm_functionapp:
-      resource_group: myResourceGroup
-      name: myFunctionApp
-      storage_account: myStorageAccount
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    storage_account: myStorageAccount
 
 - name: Create a function app with app settings
   azure_rm_functionapp:
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    storage_account: myStorageAccount
+    app_settings:
+      setting1: value1
+      setting2: value2
+
+- name: Create container based function app
+  azure_rm_functionapp:
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    storage_account: myStorageAccount
+    plan:
       resource_group: myResourceGroup
-      name: myFunctionApp
-      storage_account: myStorageAccount
-      app_settings:
-          setting1: value1
-          setting2: value2
+      name: myAppPlan
+    container_settings:
+      name: httpd
+      registry_server_url: index.docker.io
 
 - name: Delete a function app
   azure_rm_functionapp:
-      resource_group: myResourceGroup
-      name: myFunctionApp
-      state: absent
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    state: absent
 '''
 
 RETURN = '''
