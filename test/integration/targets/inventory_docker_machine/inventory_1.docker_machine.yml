@@ -1,4 +1,3 @@
 plugin: docker_machine
-split_tags: yes
 compose:
   ansible_ssh_common_args: '"-o StrictHostKeyChecking=accept-new"'

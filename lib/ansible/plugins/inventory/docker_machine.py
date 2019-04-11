@@ -37,14 +37,6 @@ DOCUMENTATION = '''
             description: when true, include all available nodes metadata (e.g. Image, Region, Size) as a JSON object.
             type: bool
             default: yes
-        split_tags:
-            description: for keyed_groups add two variables as if the tag were actually a key value pair separated by a colon, instead of just a single value.
-            type: bool
-            default: no
-        split_separator:
-            description: for keyed_groups when splitting tags this is the separator to split the tag value on.
-            type: str
-            default: ":"
 '''
 
 EXAMPLES = '''
@@ -73,27 +65,6 @@ strict: no
 keyed_groups:
   - prefix: tag
     key: 'dm_tags'
-
-# Example using tag splitting where the Docker Machine was created with a tag containing a ':' in the value.
-# When using multiple tags this is perhaps more useful than 'dm_tags' as it will create a separate variable
-# per key:value pair encoded in the tag value, e.g.
-#   $ docker-machine create --driver digitalocean ... --digitalocean-tags 'mycolon:separatedtagvalue,myother:tagvalue' mymachine
-#   $ docker-machine inspect mymachine --format '{{ .Driver.Tags }}'
-#   mycolon:separatedtagvalue,myother:tagvalue
-#   $ ansible-inventory -i ./path/to/docker-machine.yml --host=mymachine
-#   {
-#     ...
-#     "dm_tags": "mycolon:separatedtagvalue,myother:Tag",
-#     "dm_tag_mycolon": "separatedtagvalue",
-#     "dm_tag_myother": "tagvalue",
-#     ...
-#   }
-strict: no
-split_tags: yes
-split_separator: ":"
-keyed_groups:
-  - prefix: gantry_component
-    key: 'dm_tag_gantry_component'
 
 # Example using compose to override the default SSH behaviour of asking the user to accept the remote host key
 compose:
@@ -183,20 +154,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return json.loads(inspect_lines)
 
-    def _set_tag_variables(self, id):
-        tags = self.node_attrs['Driver'].get('Tags') or ''
-        self.inventory.set_variable(id, 'dm_tags', tags)
-
-        if tags:
-            split_tags = self.get_option('split_tags')
-            split_separator = self.get_option('split_separator')
-
-            kv_pairs = [kv_pair.strip() for kv_pair in tags.split(',') if kv_pair.strip()]
-            for kv_pair in kv_pairs:
-                if split_tags and split_separator in kv_pair:
-                    k, v = kv_pair.split(split_separator)
-                    self.inventory.set_variable(id, 'dm_tag_{0}'.format(k), v)
-
     def _should_skip_host(self, id, env_var_tuples):
         if not env_var_tuples:
             if self.get_option('daemon_required'):
@@ -232,7 +189,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self.inventory.set_variable(id, 'ansible_ssh_private_key_file', self.node_attrs['Driver']['SSHKeyPath'])
 
                 # set variables based on Docker Machine tags
-                self._set_tag_variables(id)
+                tags = self.node_attrs['Driver'].get('Tags') or ''
+                self.inventory.set_variable(id, 'dm_tags', tags)
 
                 # set variables based on Docker Machine env variables
                 for kv in env_var_tuples:
