@@ -1,4 +1,4 @@
-- hosts: testhost
+- hosts: windows
   tasks:
   - testns.testcoll.win_selfcontained:
     register: selfcontained_out
