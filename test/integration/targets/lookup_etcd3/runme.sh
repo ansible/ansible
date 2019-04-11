@@ -10,5 +10,3 @@ pip install passlib
 pip install etcd3
 
 ANSIBLE_ROLES_PATH=../ ansible-playbook lookup_etcd3.yml -i ../../inventory -e @../../integration_config.yml "$@"
-
-ansible-playbook lookup_etcd3.yml -i ../../inventory -e @../../integration_config.yml
