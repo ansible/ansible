@@ -143,7 +143,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         try:
             ls_lines = self._run_command(ls_command)
-        except Exception:
+        except subprocess.CalledProcessError:
             return []
 
         return ls_lines.splitlines()
@@ -151,7 +151,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _inspect_docker_machine_host(self, node):
         try:
             inspect_lines = self._run_command(['inspect', self.node])
-        except Exception as e:
+        except subprocess.CalledProcessError:
             return None
 
         return json.loads(inspect_lines)
