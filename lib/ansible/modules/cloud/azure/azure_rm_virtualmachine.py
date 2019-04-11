@@ -321,7 +321,6 @@ options:
         choices:
             - Windows_Server
             - Windows_Client
-            - None
     vm_identity:
         description:
             - Identity for the virtual machine.
@@ -796,7 +795,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             plan=dict(type='dict'),
             zones=dict(type='list'),
             accept_terms=dict(type='bool', default=False),
-            license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client', 'None']),
+            license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client']),
             vm_identity=dict(type='str', choices=['SystemAssigned']),
             winrm=dict(type='list')
         )
