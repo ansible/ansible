@@ -91,6 +91,7 @@ options:
         type: dict
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Yuwei Zhou (@yuwzho)"
@@ -276,8 +277,8 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             'api-version': '2018-06-30'
         }
         self.header_parameters = {
-           'Content-Type': 'application/json; charset=utf-8',
-           'accept-language': 'en-US'
+            'Content-Type': 'application/json; charset=utf-8',
+            'accept-language': 'en-US'
         }
         super(AzureRMIoTDevice, self).__init__(self.module_arg_spec, supports_check_mode=True, required_if=required_if)
 
@@ -288,9 +289,9 @@ class AzureRMIoTDevice(AzureRMModuleBase):
 
         self._base_url = '{0}.azure-devices.net'.format(self.hub)
         config = {
-          'base_url': self._base_url,
-          'key': self.hub_policy_key,
-          'policy': self.hub_policy_name
+            'base_url': self._base_url,
+            'key': self.hub_policy_key,
+            'policy': self.hub_policy_name
         }
         self._mgmt_client = self.get_data_svc_client(**config)
 
@@ -316,7 +317,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
                     'capabilities': {'iotEdge': self.edge_enabled or False},
                     'authentication': auth
                 }
-                if not self.status is None and not self.status:
+                if self.status is not None and not self.status:
                     device['status'] = 'disabled'
             else:
                 if self.edge_enabled is not None and self.edge_enabled != device['capabilities']['iotEdge']:
@@ -383,7 +384,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
                 headers['If-Match'] = '"{0}"'.format(device['etag'])
             request = self._mgmt_client.put(url, self.query_parameters)
             response = self._mgmt_client.send(request=request, headers=headers, content=device)
-            if not response.status_code in [200, 201, 202]:
+            if response.status_code not in [200, 201, 202]:
                 raise CloudError(response)
             return json.loads(response.text)
         except Exception as exc:
@@ -399,7 +400,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             headers['If-Match'] = '"{0}"'.format(etag)
             request = self._mgmt_client.delete(url, self.query_parameters)
             response = self._mgmt_client.send(request=request, headers=headers)
-            if not response.status_code in [204]:
+            if response.status_code not in [204]:
                 raise CloudError(response)
         except Exception as exc:
             self.fail('Error when deleting IoT Hub device {0}: {1}'.format(self.name, exc.message or str(exc)))
@@ -433,7 +434,7 @@ class AzureRMIoTDevice(AzureRMModuleBase):
             headers['If-Match'] = '"{0}"'.format(twin['etag'])
             request = self._mgmt_client.patch(url, self.query_parameters)
             response = self._mgmt_client.send(request=request, headers=headers, content=twin)
-            if not response.status_code in [200]:
+            if response.status_code not in [200]:
                 raise CloudError(response)
             return json.loads(response.text)
         except Exception as exc:
@@ -449,9 +450,10 @@ class AzureRMIoTDevice(AzureRMModuleBase):
     def _https_get(self, url, query_parameters, header_parameters):
         request = self._mgmt_client.get(url, query_parameters)
         response = self._mgmt_client.send(request=request, headers=header_parameters, content=None)
-        if not response.status_code in [200]:
+        if response.status_code not in [200]:
             raise CloudError(response)
         return json.loads(response.text)
+
 
 def main():
     AzureRMIoTDevice()

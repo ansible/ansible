@@ -206,7 +206,8 @@ class AzureRMIoTDeviceFacts(AzureRMModuleBase):
             'api-version': '2018-06-30'
         }
         self.header_parameters = {
-            'Content-Type': 'application/json; charset=utf-8'
+            'Content-Type': 'application/json; charset=utf-8',
+            'accept-language': 'en-US'
         }
         super(AzureRMIoTDeviceFacts, self).__init__(self.module_arg_spec, supports_check_mode=True)
 
@@ -217,9 +218,9 @@ class AzureRMIoTDeviceFacts(AzureRMModuleBase):
 
         self._base_url = '{0}.azure-devices.net'.format(self.hub)
         config = {
-          'base_url': self._base_url,
-          'key': self.hub_policy_key,
-          'policy': self.hub_policy_name
+            'base_url': self._base_url,
+            'key': self.hub_policy_key,
+            'policy': self.hub_policy_name
         }
         if self.top:
             self.query_parameters['top'] = self.top
@@ -243,15 +244,14 @@ class AzureRMIoTDeviceFacts(AzureRMModuleBase):
             url = '/devices/query'
             request = self._mgmt_client.post(url, self.query_parameters)
             query = {
-              'query': self.query
+                'query': self.query
             }
             response = self._mgmt_client.send(request=request, headers=self.header_parameters, content=query)
-            if not response.status_code in [200]:
+            if response.status_code not in [200]:
                 raise CloudError(response)
             return json.loads(response.text)
         except Exception as exc:
             self.fail('Error when running query "{0}" in IoT Hub {1}: {2}'.format(self.query, self.hub, exc.message or str(exc)))
-
 
     def get_device(self):
         try:
@@ -286,7 +286,7 @@ class AzureRMIoTDeviceFacts(AzureRMModuleBase):
     def _https_get(self, url, query_parameters, header_parameters):
         request = self._mgmt_client.get(url, query_parameters)
         response = self._mgmt_client.send(request=request, headers=header_parameters, content=None)
-        if not response.status_code in [200]:
+        if response.status_code not in [200]:
             raise CloudError(response)
         return json.loads(response.text)
 

@@ -51,9 +51,7 @@ options:
         type: bool
     test_route_message:
         description:
-            - Test route message.
-            - Used when C(test_route_names) set.
-        type: bool
+            - Test routes message. It will be used to test all routes.
     list_consumer_groups:
         description:
             - List the consumer group of the built-in event hub.
@@ -305,7 +303,6 @@ try:
 except Exception:
     # handled in azure_rm_common
     pass
-
 
 
 class AzureRMIoTHubFacts(AzureRMModuleBase):
