@@ -493,6 +493,23 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     cacheable_results[vm_guest_id]['hosts'].append(current_host)
                     self.inventory.add_child(vm_guest_id, current_host)
 
+                    # Based on folder of virtual machine
+                    folders = current_host.split('/')[1:]
+                    if folders[0] not in cacheable_results:
+                        parent_folder = ''
+                        self.inventory.add_group(folders[0])
+                        while bool(folders):
+                            parent_folder = folders.pop(0)
+                            if len(folders) > 1:
+                                self.inventory.add_group(folders[0])
+                                cacheable_results[parent_folder] = {'hosts': []}
+                                self.inventory.add_child(parent_folder, folders[0])
+                            elif len(folders) == 1:
+                                cacheable_results[parent_folder] = {'hosts': []}
+                                self.inventory.add_child(parent_folder, current_host)
+                            else:
+                                pass
+
         for host in hostvars:
             h = self.inventory.get_host(host)
             cacheable_results['_meta']['hostvars'][h.name] = h.vars
