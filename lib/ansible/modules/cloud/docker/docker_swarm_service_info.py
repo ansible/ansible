@@ -31,6 +31,7 @@ options:
     description:
       - The name of the service to inspect.
     type: str
+    required: yes
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
@@ -78,7 +79,7 @@ def get_service_info(client):
 
 def main():
     argument_spec = dict(
-        name=dict(type='str'),
+        name=dict(type='str', required=True),
     )
 
     client = AnsibleDockerSwarmClient(
