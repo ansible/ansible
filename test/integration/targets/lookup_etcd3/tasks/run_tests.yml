@@ -1,0 +1,111 @@
+---
+# test code for the etcd3 plugin lookup
+# (c) 2017,  Jean-Philippe Evrard <jean-philippe@evrard.me> Christophe FERREIRA <christophe.ferreira@cnaf.fr>
+# ============================================================================================================
+
+- name: python 2
+  set_fact:
+    python_suffix: ""
+  when: ansible_python_version is version('3', '<')
+
+- name: python 3
+  set_fact:
+    python_suffix: "-py3"
+  when: ansible_python_version is version('3', '>=')
+
+- include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_os_family }}{{ python_suffix }}.yml'
+        - 'default{{ python_suffix }}.yml'
+      skip: true 
+      paths: '../vars'
+
+- name: Install deps etcd3 packages
+  package:
+    name: "{{ etcd3_deps_packages }}"
+    state: present
+  ignore_errors: true
+
+- name: Install etcd3 module python
+  pip:
+    name: etcd3
+    state: present
+
+- name: prepare download folder
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: directory
+  register: _etcddownloadexists
+
+- name: Delete download folder if already exists (to start clean)
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: absent
+  when:
+    - _etcddownloadexists is not changed
+
+- name: Recreate download folder if purged
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: directory
+  when:
+    - _etcddownloadexists is not changed
+
+- name: Download etcd3
+  unarchive:
+    src: "{{ etcd3_download_url }}"
+    dest: "{{ etcd3_download_location }}"
+    remote_src: yes
+
+- name: Run etcd3
+  shell: "{{ etcd3_path }}/etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' >/dev/null 2>&1 &"
+  changed_when: true
+
+- name: wait api up
+  wait_for:
+    port: 2379
+    delay: 10
+
+# Integration tests
+
+- name: create key foo
+  etcd3:
+    key: foo
+    value: bar
+    state: present
+
+- name: create key cf11
+  etcd3:
+    key: cf11
+    value: cnaf
+    state: present
+
+- name: Check if key foo is set
+  etcd3:
+    key: foo
+    value: bar
+    state: present
+    
+- name: Check if key cf11 is set
+  etcd3:
+    key: cf11
+    value: cnaf
+    state: present
+  
+- name: check read key
+  set_fact:
+    keyfoo: "{{lookup('etcd3', 'foo', url='127.0.0.1:2379')}}"
+    keycf11: "{{lookup('etcd3', 'cf11', url='127.0.0.1:2379')}}"
+    
+- name: debug
+  debug:
+    msg: " vars keyfoo {{keyfoo}} , vars keycf11 {{keycf11}}"
+
+- name: Checking the status are expected
+  assert:
+    that:
+      - keyfoo == 'bar'
+      - keycf11 == 'cnaf'
