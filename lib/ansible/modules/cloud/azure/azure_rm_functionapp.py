@@ -100,6 +100,18 @@ EXAMPLES = '''
           setting1: value1
           setting2: value2
 
+- name: Create container based function app
+    azure_rm_functionapp:
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    storage_account: myStorageAccount
+    plan:
+        resource_group: myResourceGroup
+        name: myAppPlan
+    container_settings:
+        name: httpd
+        registry_server_url: index.docker.io
+
 - name: Delete a function app
   azure_rm_functionapp:
       resource_group: myResourceGroup
