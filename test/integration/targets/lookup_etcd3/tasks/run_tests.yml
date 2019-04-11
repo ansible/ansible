@@ -12,10 +12,6 @@
   set_fact:
     python_suffix: "-py3"
   when: ansible_python_version is version('3', '>=')
-  
-- name: debug
-  debug:
-    msg: "{{ansible_python_version }}"
 
 - include_vars: '{{ item }}'
   with_first_found:
@@ -24,12 +20,14 @@
         - '{{ ansible_distribution }}-{{ ansible_distribution_version }}{{ python_suffix }}.yml'
         - '{{ ansible_os_family }}{{ python_suffix }}.yml'
         - 'default{{ python_suffix }}.yml'
+      skip: true 
       paths: '../vars'
 
 - name: Install deps etcd3 packages
   package:
     name: "{{ etcd3_deps_packages }}"
     state: present
+  ignore_errors: true
 
 - name: Install etcd3 module python
   pip:
@@ -64,7 +62,6 @@
 
 - name: Run etcd3
   shell: "{{ etcd3_path }}/etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' >/dev/null 2>&1 &"
-  register: _etcd3run
   changed_when: true
 
 - name: wait api up
