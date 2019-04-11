@@ -3,8 +3,6 @@
 import json
 import sys
 
-# FIXME: this is only required due to a bug around "new style module detection"
-from ansible.module_utils.basic import AnsibleModule
 import ansible_collections.testns.testcoll.plugins.module_utils.leaf
 
 
