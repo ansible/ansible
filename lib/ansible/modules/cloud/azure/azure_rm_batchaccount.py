@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_batchaccount
-version_added: "2.9"
+version_added: "2.8"
 
 short_description: Manages a Batch Account on Azure.
 
@@ -112,6 +112,7 @@ except ImportError:
 class Actions:
     NoAction, Create, Update, Delete = range(4)
 
+
 class AzureRMBatchAccount(AzureRMModuleBase):
     """Configuration class for an Azure RM Batch Account resource"""
 
@@ -150,9 +151,6 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 type='str',
                 choices=['batch_service', 'user_subscription']
             ),
-            tags=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -186,6 +184,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
                 self.batch_account[key] = kwargs[key]
+        self.batch_account['pool_allocation_mode'] = _snake_to_camel(self.batch_account['pool_allocation_mode'], True)
 
         response = None
 
@@ -206,7 +205,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 if (not default_compare(self.batch_account, old_response, '', self.results)):
-                  self.to_do = Actions.Update
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Batch Account instance")
@@ -286,7 +285,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
         :return: deserialized Batch Account instance state dictionary
         '''
         self.log("Checking if the Batch Account instance {0} is present".format(self.name))
-        found = false
+        found = False
         try:
             response = self.mgmt_client.batch_account.get(resource_group_name=self.resource_group,
                                                           name=self.name)
@@ -303,6 +302,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMBatchAccount()
+
 
 if __name__ == '__main__':
     main()
