@@ -40,7 +40,7 @@ options:
     required: false
   access_logs_s3_prefix:
     description:
-      - The prefix for the location in the S3 bucket. If you don't specify a prefix, the access logs are stored in the root of the bucket.
+      - The prefix for the location in the S3 bucket. If you don't specify a prefix, the access logs are stored in the root of the bucket.  Note that the prefix must not start or end with a slash.
     required: false
   deletion_protection:
     description:
@@ -161,7 +161,7 @@ EXAMPLES = '''
 - elb_application_lb:
     access_logs_enabled: yes
     access_logs_s3_bucket: mybucket
-    access_logs_s3_prefix: "/logs"
+    access_logs_s3_prefix: "logs"
     name: myelb
     security_groups:
       - sg-12345678
@@ -232,7 +232,7 @@ access_logs_s3_prefix:
     description: The prefix for the location in the S3 bucket.
     returned: when state is present
     type: str
-    sample: /my/logs
+    sample: my/logs
 availability_zones:
     description: The Availability Zones for the load balancer.
     returned: when state is present
