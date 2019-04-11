@@ -371,7 +371,15 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             # and in the new privileges, then we need to see if there's a difference.
             db_table_intersect = set(new_priv.keys()) & set(curr_priv.keys())
             for db_table in db_table_intersect:
-                priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
+                if "ALL" in new_priv[db_table] and db_table == "*.*":
+                    version = get_db_version(cursor)
+                    if version == "8":
+                        full_priv = {db_table: privileges_get_all(cursor)}
+                        priv_diff = set(full_priv[db_table]) ^ set(curr_priv[db_table])
+                    else:
+                        priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
+                else:
+                    priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
                 if len(priv_diff) > 0:
                     if module.check_mode:
                         return True
@@ -439,7 +447,13 @@ def privileges_get(cursor, user, host):
         if "REQUIRE SSL" in res.group(7):
             privileges.append('REQUIRESSL')
         db = res.group(2)
-        output[db] = privileges
+        if db in output.keys() and db == '*.*':
+            privileges = res.group(1).split(",")
+            if "GRANT" in output[db]:
+                output[db].remove("GRANT")
+            output[db] += privileges
+        else:
+            output[db] = privileges
     return output
 
 
