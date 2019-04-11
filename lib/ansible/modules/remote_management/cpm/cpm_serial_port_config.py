@@ -163,7 +163,7 @@ EXAMPLES = """
     use_https: true
     validate_certs: false
     port: "4"
-    portname: "NewPortName"
+    portname: "NewPortName1"
     baud: "8"
 """
 
