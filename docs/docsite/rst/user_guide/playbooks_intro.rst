@@ -415,7 +415,6 @@ If the variable used in the handler name is not available, the entire play fails
 
 Instead, place variables in the task parameters of your handler. You can load the values using ``include_vars`` like this:
 
-
   .. code-block:: yaml+jinja
 
     tasks:
