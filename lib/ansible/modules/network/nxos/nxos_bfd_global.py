@@ -107,9 +107,8 @@ commands:
 
 import re, yaml
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config   # CVH CHECK WHICH OF THESE ARE NEEDED
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands, get_capabilities
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.connection import ConnectionError
@@ -162,15 +161,14 @@ def init_cmd_ref(module):
     return cmd_ref
 
 def get_platform_defaults(module, cmd_ref):
-    '''Get platform type and update ref with platform specific defaults
+    '''Get platform type and update cmd_ref with platform specific defaults
     '''
-    data = execute_show_command(module, 'show inventory', 'json')
-    if data:
-        pid = data['TABLE_inv']['ROW_inv'][0]['productid']
+    cap = get_capabilities(module)
+    if cap:
+        device_info = cap['device_info']['network_os_platform']
         plat = None
-        if re.search(r'N3K', pid):
+        if 'N3K' in device_info:
             plat = 'N3K'
-        plat = 'N3K'
         if plat:
             for k in cmd_ref:
                 if plat in cmd_ref[k]:
