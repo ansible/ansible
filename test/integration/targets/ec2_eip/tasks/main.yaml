@@ -1,0 +1,358 @@
+---
+- block:
+  - name: set up aws connection info
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  # ============================================================
+  - name: create a VPC
+    ec2_vpc_net:
+      name: "{{ resource_prefix }}-vpc"
+      state: present
+      cidr_block: "10.232.232.128/26"
+      <<: *aws_connection_info
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+    register: vpc_result
+
+  # ============================================================
+  - name: Create internet gateway
+    ec2_vpc_igw:
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+      state: present
+    register: igw_result
+
+  # ============================================================
+  - name: create a subnet
+    ec2_vpc_subnet:
+      cidr: "10.232.232.128/28"
+      az: "{{ aws_region }}a"
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+      state: present
+    register: vpc_subnet_result
+
+  # ============================================================
+  - name: create an ENI with 1 primary address
+    ec2_eni:
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      <<: *aws_connection_info
+      state: present
+    register: eni_result
+
+  #============================================================
+  - name: Attempt to allocate ec2_classic EIP for VPC device
+    ec2_eip:
+      private_ip_address: "{{ eni_result.interface.private_ip_address }}"
+      device_id: "{{ eni_result.interface.id }}"
+      ec2_classic: true
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: eip_result
+
+  - debug:
+      var: eip_result
+      verbosity: 2
+
+  - name: Ensure allocation failed due to mismatching domain types
+    assert:
+      that:
+        - eip_result.failed
+
+  #============================================================
+  - name: Allocate EIP in VPC
+    ec2_eip:
+      name: myEIP1
+      private_ip_address: "{{ eni_result.interface.private_ip_address }}"
+      device_id: "{{ eni_result.interface.id }}"
+      <<: *aws_connection_info
+      tags:
+        group: Finance
+    register: eip_result
+
+  - debug:
+      var: eip_result
+      verbosity: 2
+
+  - name: Ensure address was allocated
+    assert:
+      that:
+        - '"public_ip" in eip_result'
+        - '"myEIP1" == eip_result.name'
+        - '"group" in eip_result.tags'
+        - '"Finance" == eip_result.tags.group'
+        - '"Name" in eip_result.tags'
+
+  #============================================================
+  - name: Try to allocate duplicate
+    ec2_eip:
+      name: myEIP1
+      <<: *aws_connection_info
+    register: eip_dup_result
+
+  - debug:
+      var: eip_dup_result
+      verbosity: 2
+
+  - name: Ensure address was allocated
+    assert:
+      that:
+        - eip_dup_result.changed == False
+
+  #============================================================
+  - name: Change tags in EIP
+    ec2_eip:
+      name: myEIP1
+      purge_tags: true
+      <<: *aws_connection_info
+      tags:
+        example: test tag
+    register: eip_result
+
+  - debug:
+      var: eip_result
+      verbosity: 2
+
+  - name: Ensure address was allocated
+    assert:
+      that:
+        - '"public_ip" in eip_result'
+        - '"myEIP1" == eip_result.name'
+        - '"group" not in eip_result.tags'
+        - '"test tag" == eip_result.tags.example'
+        - '"Name" in eip_result.tags'
+
+  #============================================================
+  - name: Disassociate VPC EIP
+    ec2_eip:
+      private_ip_address: "{{ eni_result.interface.private_ip_address }}"
+      device_id: "{{ eni_result.interface.id }}"
+      <<: *aws_connection_info
+      state: absent
+    register: eip_result2
+
+  - debug:
+      var: eip_result2
+      verbosity: 2
+
+  - name: Ensure address no longer exists
+    assert:
+      that:
+        - '"public_ip" not in eip_result2'
+
+  #============================================================
+  - name: Reassociate VPC EIP
+    ec2_eip:
+      public_ip: "{{ eip_result.public_ip }}"
+      device_id: "{{ eni_result.interface.id }}"
+      private_ip_address: "{{ eni_result.interface.private_ip_address }}"
+      <<: *aws_connection_info
+    register: eip_result3
+
+  - debug:
+      var: eip_result3
+      verbosity: 2
+
+  - name: Ensure address we got the address back
+    assert:
+      that:
+        - '"public_ip" in eip_result3'
+        - eip_result.public_ip == eip_result3.public_ip
+
+  #============================================================
+  - name: Allocate EIP for instance
+    ec2_eip:
+      ec2_classic: true
+      <<: *aws_connection_info
+    register: eip2_result
+
+  - debug:
+      var: eip2_result
+      verbosity: 2
+
+  - name: Ensure address was allocated
+    assert:
+      that:
+        - '"public_ip" in eip2_result'
+
+  # ============================================================
+  - name: create instance
+    ec2_instance:
+      name: TestInstance
+      instance_type: t2.micro
+      image_id: ami-0ff8a91507f77f867
+      vpc_subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      <<: *aws_connection_info
+      state: present
+    register: ec2_result
+
+  # ============================================================
+  - name: Attempt to associate standard EIP to vpc instance
+    ec2_eip:
+      device_id: "{{ ec2_result.instances[0].instance_id }}"
+      private_ip_address: "{{ ec2_result.instances[0].private_ip_address }}"
+      public_ip: "{{ eip2_result.public_ip }}"
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: eip2_result2
+
+  - debug:
+      var: eip2_result2
+      verbosity: 2
+
+  - name: Ensure association failed due to mismatching domain types
+    assert:
+      that:
+        - eip2_result2.failed
+        - 'eip2_result2.msg.startswith("Failed to associate address")'
+
+  #============================================================
+  - name: Attempt to reassociate eip that is in use
+    ec2_eip:
+      public_ip: "{{ eip_result.public_ip }}"
+      device_id: "{{ ec2_result.instances[0].instance_id }}"
+      private_ip_address: "{{ ec2_result.instances[0].private_ip_address }}"
+      <<: *aws_connection_info
+    ignore_errors: yes
+    register: eip_result4
+
+  - debug:
+      var: eip_result4
+      verbosity: 2
+
+  - name: Ensure association failed due to mismatching domain types
+    assert:
+      that:
+        - eip_result4.failed
+        - '"Resource.AlreadyAssociated" in eip_result4.msg'
+
+  #============================================================
+  - name: Disassociate VPC EIP
+    ec2_eip:
+      private_ip_address: "{{ eni_result.interface.private_ip_address }}"
+      device_id: "{{ eni_result.interface.id }}"
+      <<: *aws_connection_info
+      state: absent
+    register: eip_result5
+
+  - debug:
+      var: eip_result5
+      verbosity: 2
+
+  - name: Ensure address no longer exists
+    assert:
+      that:
+        - '"public_ip" not in eip_result5'
+
+  # ============================================================
+  - name: Associate vpc EIP to vpc instance
+    ec2_eip:
+      device_id: "{{ ec2_result.instances[0].instance_id }}"
+      private_ip_address: "{{ ec2_result.instances[0].private_ip_address }}"
+      public_ip: "{{ eip_result.public_ip }}"
+      <<: *aws_connection_info
+    register: eip_result4
+
+  - debug:
+      var: eip_result4
+      verbosity: 2
+
+  - name: Ensure address was allocated
+    assert:
+      that:
+        - '"public_ip" in eip_result4'
+
+  #============================================================
+  - name: Allocate EIP3 in VPC
+    ec2_eip:
+      name: myEIP3
+      <<: *aws_connection_info
+    register: eip3_result
+
+  - debug:
+      var: eip3_result
+      verbosity: 2
+
+  - name: Ensure address was allocated
+    assert:
+      that:
+        - '"public_ip" in eip3_result'
+        - '"myEIP3" == eip3_result.name'
+        - '"Name" in eip3_result.tags'
+
+  always:
+    # ============================================================
+    - name: tidy up instance
+      ec2_instance:
+        instance_ids:
+          - "{{ ec2_result.instances[0].instance_id }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up EIP
+      ec2_eip:
+        release_on_disassociation: true
+        public_ip: "{{ eip_result.public_ip }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up EIP2
+      ec2_eip:
+        release_on_disassociation: true
+        ip: "{{ eip2_result.public_ip }}"
+        device_id: "{{ ec2_result.instances[0].instance_id }}"
+        private_ip_address: "{{ ec2_result.instances[0].private_ip_address }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up EIP3
+      ec2_eip:
+        release_on_disassociation: true
+        name: myEIP3
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up IGW
+      ec2_vpc_igw:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up ENI
+      ec2_eni:
+        eni_id: "{{ eni_result.interface.id }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up subnet
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ aws_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: "10.232.232.128/26"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true

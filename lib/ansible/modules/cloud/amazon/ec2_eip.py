@@ -40,12 +40,6 @@ options:
       - If absent, disassociate the EIP from the device and optionally release it.
     choices: ['present', 'absent']
     default: present
-  in_vpc:
-    description:
-      - Allocate an EIP inside a VPC or not. Required if specifying an ENI.
-    default: 'no'
-    type: bool
-    version_added: "1.4"
   reuse_existing_ip_allowed:
     description:
       - Reuse an EIP that is not associated to a device (when available), instead of allocating a new one.
@@ -69,10 +63,42 @@ options:
     default: 'no'
     type: bool
     version_added: "2.5"
+  name:
+    description:
+      - Name for the elastic IP.  If name is unique within the account, can be used to maintain idempotency.  This
+        field is set as the "Name" tag and will overwrite any existing value in the "Name" tag
+    required: false
+    version_added: 2.8
+  tags:
+    description:
+      - A hash/dictionary of tags to add to the new EIP or to add/remove from an existing one.  Please note that
+        the name field sets the "Name" tag.  So if you manually clear the Name tag, you will also clear the name.
+    required: false
+    version_added: 2.8
+  purge_tags:
+    description:
+      - Delete any tags not specified in the task that are on the instance.
+        This means you have to specify all the desired tags on each task affecting an instance.
+    default: false
+    type: bool
+    version_added: 2.8
+  ec2_classic:
+    description:
+      - Indicates that the elastic ip should be created in the EC2-Classic domain.  This is only needed when
+        pre-allocating an EIP without associating it.  Otherwise, we will detect the correct EIP domain and allocate as
+        needed to support the associated device.  This is false by default to reflect the fact that AWS is deprecating
+        EC2-Classic in preference of VPC.  The old option of in_vpc is aliased to this option and the logic is inverted
+        (if in_vpc is set to True, then ec2_classic is False. Likewise if in_vpc = False, then ec2-classic= True).
+    required: false
+    type: bool
+    aliases: [ in_vpc ]
+    version_added: "2.8"
 extends_documentation_fragment:
     - aws
     - ec2
-author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
+author:
+   - "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
+   - "Mike Healey (@healem) <healem@gmail.com>"
 notes:
    - There may be a delay between the time the EIP is assigned and when
      the cloud instance is reachable via the new address. Use wait_for and
@@ -88,13 +114,17 @@ EXAMPLES = '''
 
 - name: associate an elastic IP with an instance
   ec2_eip:
+    name: myeip-finance
     device_id: i-1212f003
     ip: 93.184.216.119
 
 - name: associate an elastic IP with a device
   ec2_eip:
+    name: myeip-finance
     device_id: eni-c8ad70f3
     ip: 93.184.216.119
+    tags:
+      group: Finance
 
 - name: associate an elastic IP with a device and allow reassociation
   ec2_eip:
@@ -104,22 +134,35 @@ EXAMPLES = '''
 
 - name: disassociate an elastic IP from an instance
   ec2_eip:
-    device_id: i-1212f003
     ip: 93.184.216.119
+    state: absent
+
+- name: disassociate an elastic IP from an instance using name
+  ec2_eip:
+    name: myeip-finance
     state: absent
 
 - name: disassociate an elastic IP with a device
   ec2_eip:
     device_id: eni-c8ad70f3
+    private_ip: 10.0.0.4
     ip: 93.184.216.119
+    state: absent
+
+- name: disassociate and release an elastic IP from an instance public_ip
+  ec2_eip:
+    release_on_disassociation: true
+    public_ip: 93.184.216.119
     state: absent
 
 - name: allocate a new elastic IP and associate it with an instance
   ec2_eip:
+    name: myNewEIP
     device_id: i-1212f003
 
 - name: allocate a new elastic IP without associating it to anything
   ec2_eip:
+    name: myNewEIP
     state: present
   register: eip
 
@@ -144,8 +187,14 @@ EXAMPLES = '''
 
 - name: allocate a new elastic IP inside a VPC in us-west-2
   ec2_eip:
+    name: myeip-finance
     region: us-west-2
-    in_vpc: yes
+  register: eip
+
+- name: Allocate an elastic ip for future use with an EC2-Classic instance
+  ec2_eip:
+    name: myeip-finance
+    ec2_classic: yes
   register: eip
 
 - name: output the IP
@@ -159,233 +208,347 @@ allocation_id:
   returned: on success
   type: str
   sample: eipalloc-51aa3a6c
+name:
+  description: name of the elastic ip
+  returned: on success
+  type: str
+  sample: myElasticIp-29
 public_ip:
   description: an elastic ip address
   returned: on success
   type: str
   sample: 52.88.159.209
+tags:
+  description: tags associated with the elastic ip
+  returned: on success
+  type: dict
+  sample:
+    key: value
+    key2: value2
 '''
 
 try:
-    import boto.exception
+    import botocore.exceptions
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO
+    pass  # Taken care of by ec2.HAS_BOTO3
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
+from ansible.module_utils.ec2 import (HAS_BOTO3, ec2_argument_spec, compare_aws_tags,
+                                      boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list)
+
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 
 class EIPException(Exception):
     pass
 
 
-def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation, check_mode, isinstance=True):
-    if address_is_associated_with_device(ec2, address, device_id, isinstance):
-        return {'changed': False}
-
-    # If we're in check mode, nothing else to do
-    if not check_mode:
-        if isinstance:
-            if address.domain == "vpc":
-                res = ec2.associate_address(device_id,
-                                            allocation_id=address.allocation_id,
-                                            private_ip_address=private_ip_address,
-                                            allow_reassociation=allow_reassociation)
-            else:
-                res = ec2.associate_address(device_id,
-                                            public_ip=address.public_ip,
-                                            private_ip_address=private_ip_address,
-                                            allow_reassociation=allow_reassociation)
-        else:
-            res = ec2.associate_address(network_interface_id=device_id,
-                                        allocation_id=address.allocation_id,
-                                        private_ip_address=private_ip_address,
-                                        allow_reassociation=allow_reassociation)
-        if not res:
-            raise EIPException('association failed')
-
-    return {'changed': True}
-
-
-def disassociate_ip_and_device(ec2, address, device_id, check_mode, isinstance=True):
-    if not address_is_associated_with_device(ec2, address, device_id, isinstance):
-        return {'changed': False}
-
-    # If we're in check mode, nothing else to do
-    if not check_mode:
-        if address.domain == 'vpc':
-            res = ec2.disassociate_address(
-                association_id=address.association_id)
-        else:
-            res = ec2.disassociate_address(public_ip=address.public_ip)
-
-        if not res:
-            raise EIPException('disassociation failed')
-
-    return {'changed': True}
-
-
-def _find_address_by_ip(ec2, public_ip):
-    try:
-        return ec2.get_all_addresses([public_ip])[0]
-    except boto.exception.EC2ResponseError as e:
-        if "Address '{0}' not found.".format(public_ip) not in e.message:
-            raise
-
-
-def _find_address_by_device_id(ec2, device_id, isinstance=True):
-    if isinstance:
-        addresses = ec2.get_all_addresses(None, {'instance-id': device_id})
+def is_instance(device_id):
+    if device_id.startswith("i-"):
+        return True
     else:
-        addresses = ec2.get_all_addresses(None, {'network-interface-id': device_id})
-    if addresses:
-        return addresses[0]
+        return False
 
 
-def find_address(ec2, public_ip, device_id, isinstance=True):
-    """ Find an existing Elastic IP address """
-    if public_ip:
-        return _find_address_by_ip(ec2, public_ip)
-    elif device_id and isinstance:
-        return _find_address_by_device_id(ec2, device_id)
-    elif device_id:
-        return _find_address_by_device_id(ec2, device_id, isinstance=False)
+def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation, check_mode):
+    if address_is_associated_with_device(ec2, address, device_id):
+        return False
 
-
-def address_is_associated_with_device(ec2, address, device_id, isinstance=True):
-    """ Check if the elastic IP is currently associated with the device """
-    address = ec2.get_all_addresses(address.public_ip)
-    if address:
-        if isinstance:
-            return address and address[0].instance_id == device_id
+    # If we're in check mode, nothing else to do
+    if not check_mode:
+        if is_instance(device_id):
+            if address["Domain"] == "vpc":
+                res = ec2.associate_address(InstanceId=device_id,
+                                            AllocationId=address["AllocationId"],
+                                            PrivateIpAddress=private_ip_address,
+                                            AllowReassociation=allow_reassociation)
+            else:
+                res = ec2.associate_address(InstanceId=device_id,
+                                            PublicIp=address["PublicIp"],
+                                            PrivateIpAddress=private_ip_address,
+                                            AllowReassociation=allow_reassociation)
         else:
-            return address and address[0].network_interface_id == device_id
+            res = ec2.associate_address(NetworkInterfaceId=device_id,
+                                        AllocationId=address["AllocationId"],
+                                        PrivateIpAddress=private_ip_address,
+                                        AllowReassociation=allow_reassociation)
+
+        if not res:
+            raise EIPException('Association of eip {0} to {1} failed'.format(address["PublicIp"], device_id))
+
+    return True
+
+
+def disassociate_ip_and_device(ec2, address, device_id, check_mode):
+    if not address_is_associated_with_device(ec2, address, device_id):
+        return False
+
+    # If we're in check mode, nothing else to do
+    if not check_mode:
+        if address["Domain"] == 'vpc':
+            res = ec2.disassociate_address(AssociationId=address["AssociationId"])
+        else:
+            res = ec2.disassociate_address(PublicIp=address["PublicIp"])
+
+        if not res:
+            raise EIPException('Disassociation of eip {0} from {1} failed'.format(address["PublicIp"], device_id))
+
+    return True
+
+
+def find_address(ec2, name, public_ip, device_id):
+    """ Find an existing Elastic IP address """
+    args = {}
+    filters = []
+    if name:
+        filters.append({"Name": 'tag:Name', "Values": [name]})
+
+    if public_ip:
+        args["PublicIps"] = [public_ip]
+    elif device_id:
+        if is_instance(device_id):
+            filters.append({"Name": 'instance-id', "Values": [device_id]})
+        else:
+            filters.append({'Name': 'network-interface-id', "Values": [device_id]})
+
+    if len(filters) > 0:
+        args["Filters"] = filters
+    elif len(filters) == 0 and public_ip is None:
+        return None
+
+    addresses = ec2.describe_addresses(**args)["Addresses"]
+    if len(addresses) == 1:
+        return addresses[0]
+    elif len(addresses) > 1:
+        msg = "Found more than one address using args {0}".format(args)
+        msg += "Addresses found: {0}".format(addresses)
+        raise EIPException(msg)
+
+
+def address_is_associated_with_device(ec2, address, device_id):
+    """ Check if the elastic IP is currently associated with the device """
+    address = find_address(ec2, None, address["PublicIp"], None)
+    if address:
+        if is_instance(device_id):
+            if "InstanceId" in address and address["InstanceId"] == device_id:
+                return address
+        else:
+            if "NetworkInterfaceId" in address and address["NetworkInterfaceId"] == device_id:
+                return address
     return False
 
 
 def allocate_address(ec2, domain, reuse_existing_ip_allowed):
     """ Allocate a new elastic IP address (when needed) and return it """
+    changed = False
+    address = None
     if reuse_existing_ip_allowed:
-        domain_filter = {'domain': domain or 'standard'}
-        all_addresses = ec2.get_all_addresses(filters=domain_filter)
+        all_addresses = ec2.describe_addresses(Filters=[{'Name': 'domain', "Values": [domain]}])["Addresses"]
 
         if domain == 'vpc':
             unassociated_addresses = [a for a in all_addresses
-                                      if not a.association_id]
+                                      if not a["AssociationId"]]
         else:
             unassociated_addresses = [a for a in all_addresses
-                                      if not a.instance_id]
+                                      if not a["InstanceId"]]
         if unassociated_addresses:
-            return unassociated_addresses[0], False
+            address = unassociated_addresses[0]
 
-    return ec2.allocate_address(domain=domain), True
+    if not address:
+        changed = True
+        address = ec2.allocate_address(Domain=domain)
+
+    return address, changed
 
 
-def release_address(ec2, address, check_mode):
+def release_address(ec2, address, domain, check_mode):
     """ Release a previously allocated elastic IP address """
 
     # If we're in check mode, nothing else to do
     if not check_mode:
-        if not address.release():
-            EIPException('release failed')
+        if domain == "vpc":
+            args = {"AllocationId": address["AllocationId"]}
+        else:
+            args = {"PublicIp": address["PublicIp"]}
 
-    return {'changed': True}
+        if not ec2.release_address(**args):
+            EIPException('Release of address {0} failed'.format(address["PublicIp"]))
+
+    return True
 
 
-def find_device(ec2, module, device_id, isinstance=True):
-    """ Attempt to find the EC2 instance and return it """
+def determine_domain(ec2, device_id, ec2_classic):
+    """ Determine device type and return the domain of the device (standard, vpc) """
+    domain = "vpc"
+    if device_id:
+        if is_instance(device_id):
+            # The device is an instance
+            try:
+                paginator = ec2.get_paginator('describe_instances')
+                reservations = list(paginator.paginate(InstanceIds=[device_id]).search('Reservations[]'))
+            except botocore.exceptions.ClientError as e:
+                msg = "Failed to find instance with device_id {0}".format(device_id)
+                msg += "Took error from AWS: {0}".format(str(e))
+                raise EIPException(msg)
 
-    if isinstance:
-        try:
-            reservations = ec2.get_all_reservations(instance_ids=[device_id])
-        except boto.exception.EC2ResponseError as e:
-            module.fail_json(msg=str(e))
-
-        if len(reservations) == 1:
-            instances = reservations[0].instances
-            if len(instances) == 1:
-                return instances[0]
+            if len(reservations) == 1:
+                instances = reservations[0]["Instances"]
+                if len(instances) == 1:
+                    if "VpcId" not in instances[0]:
+                        domain = "standard"
     else:
-        try:
-            interfaces = ec2.get_all_network_interfaces(network_interface_ids=[device_id])
-        except boto.exception.EC2ResponseError as e:
-            module.fail_json(msg=str(e))
+        if ec2_classic:
+            domain = "standard"
 
-        if len(interfaces) == 1:
-            return interfaces[0]
+    if ec2_classic and domain == "vpc":
+        msg = "{0} is in the VPC domain, but you specified an EC2-Classic EIP.".format(device_id)
+        msg += "Remove the ec2_classic parameter or specify an EC2-Classic device"
+        raise EIPException(msg)
+    else:
+        return domain
 
-    raise EIPException("could not find instance" + device_id)
 
+def manage_tags(resource, resource_id, new_tags, purge_tags, connection, check_mode):
+    """
+        Align the tags on the resource to the desired tags specified in new_tags.  This method will add or optionally
+        delete tags to bring the resources tags into compliance with new_tags.  This method supports check_mode.
 
-def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                   reuse_existing_ip_allowed, allow_reassociation, check_mode, isinstance=True):
+        Note: Currently supports tags kept in the resource as "Tags" or "TagSet" - since AWS seems vary where it stores
+        tags by resource type.
+
+        :param resource: The boto3 resource as returned by calls like describe_instances
+        :param resource_id: The resource id of the resource we are checking the tags on.  Example: vpc-3897234
+        :param new_tags: ansible_dict of desired tags for the resource.  Example: { "key": "value", "key2": "value2" }
+        :param connection: The ec2 connection
+        :param purge_tags: Bool that indicates if we should delete existing tags that are not included in new_tags
+        :param check_mode: Bool indicating if we are checking if something has changed, or if we should actually make
+                           the change
+        :return: bool: True if we changed any tags, False if no changes were made
+        """
     changed = False
 
-    # Return the EIP object since we've been given a public IP
+    if "Tags" in resource:
+        old_tags = boto3_tag_list_to_ansible_dict(resource['Tags'])
+    elif "TagSet" in resource:
+        old_tags = boto3_tag_list_to_ansible_dict(resource['TagSet'])
+    elif new_tags:
+        old_tags = {}
+    else:
+        # No new tags and nothing in Tags
+        return False
+
+    tags_to_set, tags_to_delete = compare_aws_tags(
+        old_tags, new_tags,
+        purge_tags=purge_tags,
+    )
+    if tags_to_set:
+        if not check_mode:
+            connection.create_tags(
+                Resources=[resource_id],
+                Tags=ansible_dict_to_boto3_tag_list(tags_to_set)
+            )
+        changed |= True
+    if tags_to_delete:
+        if not check_mode:
+            delete_with_current_values = dict((k, old_tags.get(k)) for k in tags_to_delete)
+            connection.delete_tags(
+                Resources=[resource_id],
+                Tags=ansible_dict_to_boto3_tag_list(delete_with_current_values)
+            )
+        changed |= True
+    return changed
+
+
+def ensure_present(ec2, domain, address, private_ip_address, device_id, reuse_existing_ip_allowed,
+                   allow_reassociation, check_mode, name, tags, purge_tags):
+    changed_alloc = False
+    changed_assoc = False
+    changed_tags = False
+    result = {}
     if not address:
+        # Allocate an IP for instance since no public_ip was provided
         if check_mode:
             return {'changed': True}
 
-        address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
+        address, changed_alloc = allocate_address(ec2, domain, reuse_existing_ip_allowed)
 
-    if device_id:
-        # Allocate an IP for instance since no public_ip was provided
-        if isinstance:
-            instance = find_device(ec2, module, device_id)
-            if reuse_existing_ip_allowed:
-                if instance.vpc_id and len(instance.vpc_id) > 0 and domain is None:
-                    raise EIPException("You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
-            # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
-                                                   check_mode)
-        else:
-            instance = find_device(ec2, module, device_id, isinstance=False)
-            # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
-                                                   check_mode, isinstance=False)
+    if device_id and address:
+        # Associate address object (provided or allocated) with instance or network interface
+        changed_assoc = associate_ip_and_device(
+            ec2, address, private_ip_address, device_id, allow_reassociation, check_mode
+        )
 
-        if instance.vpc_id:
-            domain = 'vpc'
+    if "AllocationId" in address:
+        # Modify the tags, if needed
+        changed_tags = manage_tags(address, address["AllocationId"], tags, purge_tags, ec2, check_mode)
+        result["allocation_id"] = address["AllocationId"]
 
-        changed = changed or assoc_result['changed']
+    if changed_alloc or changed_assoc or changed_tags:
+        result["changed"] = True
+        # Update the address object to get more complete info
+        address = find_address(ec2, name, address["PublicIp"], device_id)
+    else:
+        result["changed"] = False
 
-    return {'changed': changed, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
+    if "PublicIp" in address:
+        result["public_ip"] = address["PublicIp"]
+
+    if "AllocationId" in address:
+        result["allocation_id"] = address["AllocationId"]
+
+    if "Tags" in address:
+        tags = boto3_tag_list_to_ansible_dict(address["Tags"])
+        result["tags"] = tags
+        if "Name" in tags:
+            result["name"] = tags["Name"]
+
+    return result
 
 
-def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
+def ensure_absent(ec2, domain, address, device_id, release_on_disassociation, check_mode):
     if not address:
         return {'changed': False}
 
-    # disassociating address from instance
+    changed_dis = False
+    changed_rel = False
     if device_id:
-        if isinstance:
-            return disassociate_ip_and_device(ec2, address, device_id,
-                                              check_mode)
-        else:
-            return disassociate_ip_and_device(ec2, address, device_id,
-                                              check_mode, isinstance=False)
-    # releasing address
+        # disassociating address from instance
+        changed_dis = disassociate_ip_and_device(ec2, address, device_id, check_mode)
+
+    if release_on_disassociation or not device_id:
+        # releasing address
+        changed_rel = release_address(ec2, address, domain, check_mode)
+
+    if changed_dis or changed_rel:
+        result = {"changed": True}
     else:
-        return release_address(ec2, address, check_mode)
+        result = {"changed": False}
+
+    result["disassociated"] = changed_dis
+    result["released"] = changed_rel
+
+    return result
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        device_id=dict(required=False, aliases=['instance_id']),
+        device_id=dict(required=False, default=None, aliases=['instance_id']),
         public_ip=dict(required=False, aliases=['ip']),
         state=dict(required=False, default='present',
                    choices=['present', 'absent']),
-        in_vpc=dict(required=False, type='bool', default=False),
+        ec2_classic=dict(required=False, type='bool', default=False, aliases=['in_vpc']),
         reuse_existing_ip_allowed=dict(required=False, type='bool',
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
-        wait_timeout=dict(default=300, type='int'),
-        private_ip_address=dict(required=False, default=None, type='str')
+        wait_timeout=dict(default=300),
+        private_ip_address=dict(required=False, default=None, type='str'),
+        name=dict(required=False, default=None, type='str'),
+        purge_tags=dict(required=False, default=False, type='bool'),
+        tags=dict(required=False, default={}, type='dict')
     ))
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_by={
@@ -393,66 +556,58 @@ def main():
         },
     )
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    warnings = []
 
-    ec2 = ec2_connect(module)
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
+
+    ec2 = module.client('ec2')
 
     device_id = module.params.get('device_id')
     instance_id = module.params.get('instance_id')
     public_ip = module.params.get('public_ip')
     private_ip_address = module.params.get('private_ip_address')
     state = module.params.get('state')
-    in_vpc = module.params.get('in_vpc')
-    domain = 'vpc' if in_vpc else None
+    ec2_classic = module.params.get('ec2_classic')
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
     allow_reassociation = module.params.get('allow_reassociation')
+    invpc = module.params.get('in_vpc')
+    name = module.params.get('name')
+    tags = module.params.get('tags')
+    purge_tags = module.params.get('purge_tags')
+
+    if name:
+        tags["Name"] = name
+
+    if invpc:
+        warnings.append("Option in_vpc is no longer used.  Please use ec2_classic.")
+        ec2_classic = not invpc
 
     if instance_id:
-        warnings = ["instance_id is no longer used, please use device_id going forward"]
-        is_instance = True
+        warnings.append("Option instance_id is no longer used.  Please use device_id going forward")
         device_id = instance_id
-    else:
-        if device_id and device_id.startswith('i-'):
-            is_instance = True
-        elif device_id:
-            if device_id.startswith('eni-') and not in_vpc:
-                module.fail_json(msg="If you are specifying an ENI, in_vpc must be true")
-            is_instance = False
 
     try:
-        if device_id:
-            address = find_address(ec2, public_ip, device_id, isinstance=is_instance)
-        else:
-            address = find_address(ec2, public_ip, None)
+        domain = determine_domain(ec2, device_id, ec2_classic)
+        address = find_address(ec2, name, public_ip, device_id)
+
+        if device_id and address and address["Domain"] != domain:
+            msg = "Failed to associate address {0} with {1} ".format(address["PublicIp"], device_id)
+            msg += "Cannot associate an address of domain {0} ".format(address["Domain"])
+            msg += "with a device of domain {0}".format(domain)
+            module.fail_json_aws(msg)
 
         if state == 'present':
-            if device_id:
-                result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                                        reuse_existing_ip_allowed, allow_reassociation,
-                                        module.check_mode, isinstance=is_instance)
-            else:
-                if address:
-                    changed = False
-                else:
-                    address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
-                result = {'changed': changed, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
+            result = ensure_present(ec2, domain, address, private_ip_address, device_id, reuse_existing_ip_allowed,
+                                    allow_reassociation, module.check_mode, name, tags, purge_tags)
         else:
-            if device_id:
-                disassociated = ensure_absent(ec2, domain, address, device_id, module.check_mode, isinstance=is_instance)
+            result = ensure_absent(ec2, domain, address, device_id, release_on_disassociation, module.check_mode)
 
-                if release_on_disassociation and disassociated['changed']:
-                    released = release_address(ec2, address, module.check_mode)
-                    result = {'changed': True, 'disassociated': disassociated, 'released': released}
-                else:
-                    result = {'changed': disassociated['changed'], 'disassociated': disassociated, 'released': {'changed': False}}
-            else:
-                released = release_address(ec2, address, module.check_mode)
-                result = {'changed': released['changed'], 'disassociated': {'changed': False}, 'released': released}
-
-    except (boto.exception.EC2ResponseError, EIPException) as e:
-        module.fail_json(msg=str(e))
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(str(e))
+    except EIPException as f:
+        module.fail_json_aws(str(f))
 
     if instance_id:
         result['warnings'] = warnings
