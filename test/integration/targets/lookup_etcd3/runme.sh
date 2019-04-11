@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 
-if ! uname -s -r | grep el6; then
+printenv
 
-  set -eux
+set -eux
 
-  source virtualenv.sh
+source virtualenv.sh
 
-  # Requirements have to be installed prior to running ansible-playbook
-  # because plugins and requirements are loaded before the task runs
-  pip install passlib
-  pip install etcd3
+# Requirements have to be installed prior to running ansible-playbook
+# because plugins and requirements are loaded before the task runs
+pip install passlib
+pip install etcd3
 
-  ANSIBLE_ROLES_PATH=../ ansible-playbook lookup_etcd3.yml -i ../../inventory -e @../../integration_config.yml "$@"
-
-fi
+ANSIBLE_ROLES_PATH=../ ansible-playbook lookup_etcd3.yml -i ../../inventory -e @../../integration_config.yml "$@"
