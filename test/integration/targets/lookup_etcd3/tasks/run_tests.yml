@@ -99,6 +99,10 @@
   set_fact:
     keyfoo: "{{ lookup('etcd3', 'foo', url='127.0.0.1:2379')}}"
     keycf11: "{{ lookup('etcd3', 'cf11', url='127.0.0.1:2379')}}"
+    
+- name: debug
+  debug:
+    msg: " vars keyfoo {{keyfoo}} , vars keycf11 {{keycf11}}"
 
 - name: Checking the status are expected
   assert:
