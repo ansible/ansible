@@ -163,7 +163,7 @@ def create_or_update_sqs_queue(connection, module):
         policy=module.params.get('policy'),
         redrive_policy=module.params.get('redrive_policy')
     )
-    
+
     if fifo_queue == 'true':
         queue_name = queue_name + '.fifo'
 
@@ -182,9 +182,9 @@ def create_or_update_sqs_queue(connection, module):
             # Create new
             if not module.check_mode:
                 if fifo_queue == 'true':
-                    queue = connection.create_queue(queue_name, Attributes={'FifoQueue': 'True'})
+                    queue = connection.create_queue(queue_name)
                 else:
-                    queue = connection.create_queue(queue_name, Attributes={'FifoQueue': 'False'})
+                    queue = connection.create_queue(queue_name)
 
                 update_sqs_queue(queue, **queue_attributes)
             result['changed'] = True
@@ -215,6 +215,8 @@ def update_sqs_queue(queue,
                      redrive_policy=None):
     changed = False
 
+    changed = set_queue_attribute(queue, 'FifoQueue', fifo_queue,
+                                  check_mode=check_mode) or changed
     changed = set_queue_attribute(queue, 'VisibilityTimeout', default_visibility_timeout,
                                   check_mode=check_mode) or changed
     changed = set_queue_attribute(queue, 'MessageRetentionPeriod', message_retention_period,
@@ -257,7 +259,7 @@ def set_queue_attribute(queue, attribute, value, check_mode=False):
 
 def delete_sqs_queue(connection, module):
     queue_name = module.params.get('name')
-    
+
     if module.params.get('fifo_queue') == 'true':
         queue_name = queue_name + '.fifo'
 
@@ -321,6 +323,6 @@ def main():
     except (NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
-        
+
 if __name__ == '__main__':
     main()
