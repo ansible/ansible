@@ -73,10 +73,10 @@ EXAMPLES = '''
       - i-289189288278
     parameters:
       commands:
-        - "c:\scripts\get-inventory.ps1"
-        - "c:\scripts\cleanup.ps1"
+        - "c:\\scripts\\get-inventory.ps1"
+        - "c:\\scripts\\cleanup.ps1"
       workingDirectory:
-        - "c:\scripts"
+        - "c:\\scripts"
       executionTimeout:
         - "600"
     wait: true
