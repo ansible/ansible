@@ -227,6 +227,10 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_handler_task_start(self, task):
         self._task_start(task, prefix='RUNNING HANDLER')
 
+    def v2_runner_on_start(self, host, task):
+        if self.get_option('show_per_host_start'):
+            self._display.display(" [started %s on %s]" % (task, host), color=C.COLOR_OK)
+
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
         if not name:
