@@ -1,0 +1,121 @@
+{
+    "status_code": 200,
+    "data": {
+        "StackEvents": [
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+                "EventId": "945b90a0-3a0f-11e9-adaf-0211d8bec7e2",
+                "StackName": "ansible-test-on-create-failure-rollback",
+                "LogicalResourceId": "ansible-test-on-create-failure-rollback",
+                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+                "ResourceType": "AWS::CloudFormation::Stack",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 43,
+                    "second": 39,
+                    "microsecond": 920000
+                },
+                "ResourceStatus": "ROLLBACK_IN_PROGRESS",
+                "ResourceStatusReason": "The following resource(s) failed to create: [ECRRepo]. . Rollback requested by user."
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+                "EventId": "ECRRepo-CREATE_FAILED-2019-02-26T21:43:39.210Z",
+                "StackName": "ansible-test-on-create-failure-rollback",
+                "LogicalResourceId": "ECRRepo",
+                "PhysicalResourceId": "ansib-ecrre-1lsnxu2zpb20l",
+                "ResourceType": "AWS::ECR::Repository",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 43,
+                    "second": 39,
+                    "microsecond": 210000
+                },
+                "ResourceStatus": "CREATE_FAILED",
+                "ResourceStatusReason": "Invalid parameter at 'PolicyText' failed to satisfy constraint: 'Invalid repository policy provided' (Service: AmazonECR; Status Code: 400; Error Code: InvalidParameterException; Request ID: 93e0bb60-3a0f-11e9-a53c-7162bb423e4d)",
+                "ResourceProperties": "{\"RepositoryPolicyText\":{\"Version\":\"3000-10-17\",\"Statement\":[{\"Action\":[\"ecr:*\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"}}]}}"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+                "EventId": "ECRRepo-CREATE_IN_PROGRESS-2019-02-26T21:43:38.793Z",
+                "StackName": "ansible-test-on-create-failure-rollback",
+                "LogicalResourceId": "ECRRepo",
+                "PhysicalResourceId": "ansib-ecrre-1lsnxu2zpb20l",
+                "ResourceType": "AWS::ECR::Repository",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 43,
+                    "second": 38,
+                    "microsecond": 793000
+                },
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceStatusReason": "Resource creation Initiated",
+                "ResourceProperties": "{\"RepositoryPolicyText\":{\"Version\":\"3000-10-17\",\"Statement\":[{\"Action\":[\"ecr:*\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"}}]}}"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+                "EventId": "ECRRepo-CREATE_IN_PROGRESS-2019-02-26T21:43:38.266Z",
+                "StackName": "ansible-test-on-create-failure-rollback",
+                "LogicalResourceId": "ECRRepo",
+                "PhysicalResourceId": "",
+                "ResourceType": "AWS::ECR::Repository",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 43,
+                    "second": 38,
+                    "microsecond": 266000
+                },
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceProperties": "{\"RepositoryPolicyText\":{\"Version\":\"3000-10-17\",\"Statement\":[{\"Action\":[\"ecr:*\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"}}]}}"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+                "EventId": "9140bc10-3a0f-11e9-94bf-0a9edf17d014",
+                "StackName": "ansible-test-on-create-failure-rollback",
+                "LogicalResourceId": "ansible-test-on-create-failure-rollback",
+                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+                "ResourceType": "AWS::CloudFormation::Stack",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 43,
+                    "second": 34,
+                    "microsecond": 740000
+                },
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceStatusReason": "User Initiated"
+            }
+        ],
+        "ResponseMetadata": {
+            "RequestId": "94e16307-3a0f-11e9-b938-97983b40cabe",
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "x-amzn-requestid": "94e16307-3a0f-11e9-b938-97983b40cabe",
+                "content-type": "text/xml",
+                "content-length": "5241",
+                "vary": "Accept-Encoding",
+                "date": "Tue, 26 Feb 2019 21:43:40 GMT"
+            },
+            "RetryAttempts": 0
+        }
+    }
+}
