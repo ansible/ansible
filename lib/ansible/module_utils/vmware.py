@@ -1109,7 +1109,7 @@ class PyVmomi(object):
                 for host in esxi_host_name:
                     esxi_host_obj = self.find_hostsystem_by_name(host_name=host)
                     if esxi_host_obj:
-                        host_obj_list = [esxi_host_obj]
+                        host_obj_list.append(esxi_host_obj)
                     else:
                         self.module.fail_json(changed=False, msg="ESXi '%s' not found" % host)
 
