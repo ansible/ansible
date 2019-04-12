@@ -152,9 +152,9 @@ from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argume
 
 def create_or_update_sqs_queue(connection, module):
     queue_name = module.params.get('name')
-    fifo_queue = module.params.get('fifo_queue')
 
     queue_attributes = dict(
+        fifo_queue = module.params.get('fifo_queue'),
         default_visibility_timeout=module.params.get('default_visibility_timeout'),
         message_retention_period=module.params.get('message_retention_period'),
         maximum_message_size=module.params.get('maximum_message_size'),
@@ -206,6 +206,7 @@ def create_or_update_sqs_queue(connection, module):
 
 def update_sqs_queue(queue,
                      check_mode=False,
+                     fifo_queue=None,
                      default_visibility_timeout=None,
                      message_retention_period=None,
                      maximum_message_size=None,
