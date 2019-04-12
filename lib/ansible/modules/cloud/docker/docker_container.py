@@ -1193,7 +1193,14 @@ class TaskParameters(DockerBaseClass):
         if self.log_options is not None:
             options['Config'] = dict()
             for k, v in self.log_options.items():
-                options['Config'][k] = str(v)
+                if not isinstance(v, string_types):
+                    self.client.module.warn(
+                        "Non-string value found for log_options option '%s'. The value is automatically converted to '%s'. "
+                        "If this is not correct, or you want to avoid such warnings, please quote the value." % (k, str(v))
+                    )
+                v = str(v)
+                self.log_options[k] = v
+                options['Config'][k] = v
 
         try:
             return LogConfig(**options)
