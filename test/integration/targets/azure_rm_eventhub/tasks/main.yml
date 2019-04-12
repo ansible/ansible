@@ -43,7 +43,7 @@
   assert:
     that:
       - output.changed
-      - output.maximum_throughput_units == 4
+      - output.state['maximum_throughput_units'] == 4
 
 - name: Update an eventhub namespace (idempotent)
   azure_rm_eventhubnamespace:
@@ -141,8 +141,8 @@
   assert:
     that:
        - output.changed
-       - output.status == 'Disabled'
-       - output.message_retention_in_days == 7
+       - output.state['status'] == 'Disabled'
+       - output.state['message_retention_in_days'] == 7
 
 - name: Update an event hub (idempotent)
   azure_rm_eventhub:
@@ -212,11 +212,11 @@
     rights: send
   register: output
 
-- name: Assert the event hub was deleted
+- name: Assert the sas policy was created
   assert:
     that:
        - output.changed
-       - output.id != None
+       - output.state['id'] != None
        - output.keys != None
 
 - name: Update a sas policy for an eventhub namespace
@@ -227,12 +227,12 @@
     rights: listen_send
   register: output
 
-- name: Assert the event hub was deleted
+- name: Assert the sas policy was updated
   assert:
     that:
        - output.changed
-       - output.id != None
-       - output.rights == "listen_send"
+       - output.state['id'] != None
+       - output.state['rights'] == "listen_send"
 
 - name: Update a sas policy for an eventhub namespace
   azure_rm_eventhubsaspolicy:
@@ -244,11 +244,11 @@
     rights: listen_send
   register: output
 
-- name: Assert the event hub was deleted
+- name: Assert the sas policy was updated
   assert:
     that:
        - output.changed
-       - output.id != None
+       - output.state['id'] != None
 
 - name: Create a sas policy for an eventhub
   azure_rm_eventhubsaspolicy:
@@ -263,7 +263,7 @@
   assert:
     that:
        - output.changed
-       - output.id != None
+       - output.state['id'] != None
        - output.keys != None
 
 - name: Update a sas policy for an eventhub
@@ -279,8 +279,8 @@
   assert:
     that:
        - output.changed
-       - output.id != None
-       - output.rights == "listen_send"
+       - output.state['id'] != None
+       - output.state['rights'] == "listen_send"
 
 - name: Update a sas policy for an eventhub
   azure_rm_eventhubsaspolicy:
@@ -297,7 +297,7 @@
   assert:
     that:
        - output.changed
-       - output.id != None
+       - output.state['id'] != None
 
 - name: Create a consumer group
   azure_rm_eventhubconsumergroup:

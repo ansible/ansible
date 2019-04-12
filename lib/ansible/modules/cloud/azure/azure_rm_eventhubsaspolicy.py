@@ -183,7 +183,7 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            id=None
+            state=dict()
         )
 
         super(AzureRMEventHubSASPolicy, self).__init__(self.module_arg_spec, supports_check_mode=True)
@@ -210,14 +210,16 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
                     self.regenerate_sas_key('primary')
                 if self.regenerate_secondary_key and not self.check_mode:
                     self.regenerate_sas_key('secondary')
-            self.results = self.policy_to_dict(policy)
+            policy = self.policy_to_dict(policy)
             self.results['keys'] = self.get_sas_key()
         elif policy:
             changed = True
             if not self.check_mode:
                 self.delete_sas_policy()
+            policy = True
 
         self.results['changed'] = changed
+        self.results['state'] = policy
         return self.results
 
     def _get_client(self):

@@ -228,12 +228,14 @@ class AzureRMEventHub(AzureRMModuleBase):
 
                 if not self.check_mode:
                     event_hub = self.create_or_update_event_hub(event_hub)
-            self.results = self.to_dict(event_hub)
+            event_hub = self.to_dict(event_hub)
         elif event_hub:
             changed = True
             if not self.check_mode:
                 self.delete_event_hub()
+            event_hub = True
         self.results['changed'] = changed
+        self.results['state'] = event_hub
         return self.results
 
     def get_event_hub(self):

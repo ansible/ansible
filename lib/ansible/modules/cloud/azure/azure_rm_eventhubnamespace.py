@@ -320,11 +320,13 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
 
                 if changed and not self.check_mode:
                     eventhubnamespace = self.create_or_update_namespace(eventhubnamespace)
-            self.results = self.to_dict(eventhubnamespace)
+            eventhubnamespace = self.to_dict(eventhubnamespace)
         elif eventhubnamespace:
             changed = True
             if not self.check_mode:
                 self.delete_namespace()
+            eventhubnamespace = True
+        self.results['state'] = eventhubnamespace
         self.results['changed'] = changed
         self.results['warning'] = warning
         return self.results
