@@ -140,8 +140,9 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
     )
 
     if params.get('config') is not None:
-        user_config = botocore.config.Config(**params.pop('config'))
-        config = config.merge(user_config)
+        config = config.merge(params.pop('config'))
+    if params.get('aws_config') is not None:
+        config = config.merge(params.pop('aws_config'))
 
     session = boto3.session.Session(
         profile_name=profile,
@@ -313,7 +314,7 @@ def get_aws_connection_info(module, boto3=False):
 
     if config is not None:
         if HAS_BOTO3 and boto3:
-            boto_params['config'] = config
+            boto_params['aws_config'] = botocore.config.Config(**config)
         elif HAS_BOTO and not boto3:
             if 'user_agent' in config:
                 sys.modules["boto.connection"].UserAgent = config['user_agent']
