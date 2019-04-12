@@ -183,6 +183,7 @@ def create_or_update_sqs_queue(connection, module):
             result['changed'] = True
 
         if not module.check_mode:
+            result['fifo_queue'] = queue.get_attributes('FifoQueue')['FifoQueue']
             result['queue_arn'] = queue.get_attributes('QueueArn')['QueueArn']
             result['default_visibility_timeout'] = queue.get_attributes('VisibilityTimeout')['VisibilityTimeout']
             result['message_retention_period'] = queue.get_attributes('MessageRetentionPeriod')['MessageRetentionPeriod']
@@ -209,11 +210,12 @@ def update_sqs_queue(queue,
                      redrive_policy=None):
     changed = False
 
+    fifo_queue = module.params.get('fifo_queue')
     if fifo_queue == 'true':
-         changed = set_queue_attribute(queue, 'FifoQueue', true,
+        changed = set_queue_attribute(queue, 'FifoQueue', true,
                                   check_mode=check_mode) or changed
     else:
-         changed = set_queue_attribute(queue, 'FifoQueue', false,
+        changed = set_queue_attribute(queue, 'FifoQueue', false,
                                   check_mode=check_mode) or changed
     
     changed = set_queue_attribute(queue, 'VisibilityTimeout', default_visibility_timeout,
@@ -318,6 +320,7 @@ def main():
         elif (fifo_queue != 'true' and fifo_queue != 'false'):
             module.fail_json(msg='possible value of fifo_queue is true or false')
                 
+        module.params.set('fifo_queue', fifo_queue)
         if state == 'present':
             create_or_update_sqs_queue(connection, module)
         elif state == 'absent':
@@ -326,5 +329,6 @@ def main():
     except (NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
+        
 if __name__ == '__main__':
     main()
