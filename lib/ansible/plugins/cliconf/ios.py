@@ -163,23 +163,35 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
+    """
+      ios_config:
+        lines: "{{ macro_lines }}"
+        parents: "macro name {{ macro_name }}"
+        after: '@'
+        match: line
+        replace: block
+    """
     def edit_macro(self, candidate=None, commit=True, replace=None, comment=None):
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
         requests = []
         if commit:
             commands = ''
+            self.send_command('config terminal')
+            time.sleep(0.1)
+            commands += (candidate.pop(0) + '\n') # first item: macro command
+            multiline_delimiter = candidate.pop(-1)
             for line in candidate:
-                if line != 'None':
-                    commands += (' ' + line + '\n')
-                self.send_command('config terminal', sendonly=True)
-                obj = {'command': commands, 'sendonly': True}
-                results.append(self.send_command(**obj))
-                requests.append(commands)
+                commands += (' ' + line + '\n')
+            commands += (multiline_delimiter + '\n')
+            obj = {'command': commands, 'sendonly': True}
+            results.append(self.send_command(**obj))
+            requests.append(commands)
 
+            time.sleep(0.1)
             self.send_command('end', sendonly=True)
             time.sleep(0.1)
             results.append(self.send_command('\n'))
@@ -188,7 +200,7 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         resp['response'] = results
         return resp
-
+                                                                                                                                                                                                                                                                                                                                      
     def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
