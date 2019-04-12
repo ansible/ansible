@@ -40,6 +40,10 @@ DEFAULT_IGNORE_LINES_RE = set([
     re.compile(r"Current configuration : \d+ bytes")
 ])
 
+try:
+    Pattern = re._pattern_type
+except AttributeError:
+    Pattern = re.Pattern
 
 class ConfigLine(object):
 
@@ -162,7 +166,7 @@ class NetworkConfig(object):
 
         if ignore_lines:
             for item in ignore_lines:
-                if not isinstance(item, re._pattern_type):
+                if not isinstance(item, Pattern):
                     item = re.compile(item)
                 DEFAULT_IGNORE_LINES_RE.add(item)
 
