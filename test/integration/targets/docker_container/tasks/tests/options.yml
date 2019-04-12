@@ -2176,7 +2176,7 @@
     that:
     - log_options_1 is changed
     - log_options_2 is not changed
-    - "'Non-string value found for log_options option \'max-file\'. The value is automatically converted to \'5\'. If this is not correct, or you want to
+    - "'Non-string value found for log_options option \\'max-file\\'. The value is automatically converted to \\'5\\'. If this is not correct, or you want to
 avoid such warnings, please quote the value.' in log_options_2.warnings"
     - log_options_3 is not changed
     - log_options_4 is changed
