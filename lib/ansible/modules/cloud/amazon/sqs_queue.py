@@ -152,9 +152,9 @@ from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argume
 
 def create_or_update_sqs_queue(connection, module):
     queue_name = module.params.get('name')
+    fifo_queue = module.params.get('fifo_queue')
 
     queue_attributes = dict(
-        fifo_queue=module.params.get('fifo_queue'),
         default_visibility_timeout=module.params.get('default_visibility_timeout'),
         message_retention_period=module.params.get('message_retention_period'),
         maximum_message_size=module.params.get('maximum_message_size'),
@@ -163,6 +163,9 @@ def create_or_update_sqs_queue(connection, module):
         policy=module.params.get('policy'),
         redrive_policy=module.params.get('redrive_policy')
     )
+    
+    if fifo_queue == 'true':
+        queue_name = queue_name + '.fifo'
 
     result = dict(
         region=module.params.get('region'),
@@ -178,12 +181,15 @@ def create_or_update_sqs_queue(connection, module):
         else:
             # Create new
             if not module.check_mode:
-                queue = connection.create_queue(queue_name)
+                if fifo_queue == 'true':
+                    queue = connection.create_queue(queue_name, Attributes={'FifoQueue': 'True'})
+                else:
+                    queue = connection.create_queue(queue_name, Attributes={'FifoQueue': 'False'})
+
                 update_sqs_queue(queue, **queue_attributes)
             result['changed'] = True
 
         if not module.check_mode:
-            result['fifo_queue'] = queue.get_attributes('FifoQueue')['FifoQueue']
             result['queue_arn'] = queue.get_attributes('QueueArn')['QueueArn']
             result['default_visibility_timeout'] = queue.get_attributes('VisibilityTimeout')['VisibilityTimeout']
             result['message_retention_period'] = queue.get_attributes('MessageRetentionPeriod')['MessageRetentionPeriod']
@@ -200,7 +206,6 @@ def create_or_update_sqs_queue(connection, module):
 
 def update_sqs_queue(queue,
                      check_mode=False,
-                     fifo_queue=None,
                      default_visibility_timeout=None,
                      message_retention_period=None,
                      maximum_message_size=None,
@@ -210,14 +215,6 @@ def update_sqs_queue(queue,
                      redrive_policy=None):
     changed = False
 
-    fifo_queue = module.params.get('fifo_queue')
-    if fifo_queue == 'true':
-        changed = set_queue_attribute(queue, 'FifoQueue', true,
-                                  check_mode=check_mode) or changed
-    else:
-        changed = set_queue_attribute(queue, 'FifoQueue', false,
-                                  check_mode=check_mode) or changed
-    
     changed = set_queue_attribute(queue, 'VisibilityTimeout', default_visibility_timeout,
                                   check_mode=check_mode) or changed
     changed = set_queue_attribute(queue, 'MessageRetentionPeriod', message_retention_period,
@@ -260,6 +257,9 @@ def set_queue_attribute(queue, attribute, value, check_mode=False):
 
 def delete_sqs_queue(connection, module):
     queue_name = module.params.get('name')
+    
+    if module.params.get('fifo_queue') == 'true':
+        queue_name = queue_name + '.fifo'
 
     result = dict(
         region=module.params.get('region'),
@@ -288,7 +288,7 @@ def main():
     argument_spec.update(dict(
         state=dict(default='present', choices=['present', 'absent']),
         name=dict(required=True, type='str'),
-        fifo_queue=dict(type='str', default='false', choices=['true', 'false']),
+        fifo_queue=dict(type='str', default='false', choices=['true', 'false'], required=False),
         default_visibility_timeout=dict(type='int'),
         message_retention_period=dict(type='int'),
         maximum_message_size=dict(type='int'),
@@ -313,19 +313,11 @@ def main():
         connection = connect_to_aws(boto.sqs, region, **aws_connect_params)
 
         state = module.params.get('state')
-        fifo_queue = module.params.get('fifo_queue')
-        
-        if not fifo_queue:
-            fifo_queue = 'false'
-        elif (fifo_queue != 'true' and fifo_queue != 'false'):
-            module.fail_json(msg='possible value of fifo_queue is true or false')
-                
-        module.params.set('fifo_queue', fifo_queue)
         if state == 'present':
             create_or_update_sqs_queue(connection, module)
         elif state == 'absent':
             delete_sqs_queue(connection, module)
-        
+
     except (NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
