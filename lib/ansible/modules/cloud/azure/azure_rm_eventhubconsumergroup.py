@@ -86,6 +86,8 @@ id:
         - Resource ID of the consumer group.
     returned: state is present
     type: str
+    sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces
+             /testingnamespace/eventhubs/testing/consumergroups/myGroup""
 name:
     description:
         - Name of the consumer group.
