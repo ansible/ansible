@@ -1,5 +1,3 @@
-lib/ansible/modules/cloud/amazon/_ec2_ami_find.py E322
-lib/ansible/modules/cloud/amazon/_ec2_ami_find.py E323
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py E322
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E322
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E326
@@ -315,9 +313,6 @@ lib/ansible/modules/clustering/consul_kv.py E322
 lib/ansible/modules/clustering/consul_kv.py E324
 lib/ansible/modules/clustering/consul_session.py E322
 lib/ansible/modules/clustering/etcd3.py E326
-lib/ansible/modules/clustering/k8s/_kubernetes.py E322
-lib/ansible/modules/clustering/k8s/_kubernetes.py E323
-lib/ansible/modules/clustering/k8s/_kubernetes.py E324
 lib/ansible/modules/clustering/znode.py E326
 lib/ansible/modules/commands/command.py E322
 lib/ansible/modules/commands/command.py E323
@@ -583,7 +578,6 @@ lib/ansible/modules/network/netvisor/pn_vrouterbgp.py E324
 lib/ansible/modules/network/netvisor/pn_vrouterif.py E324
 lib/ansible/modules/network/netvisor/pn_vrouterif.py E326
 lib/ansible/modules/network/netvisor/pn_vrouterlbif.py E324
-lib/ansible/modules/network/nxos/_nxos_portchannel.py E324
 lib/ansible/modules/network/nxos/nxos_aaa_server.py E326
 lib/ansible/modules/network/nxos/nxos_acl.py E326
 lib/ansible/modules/network/nxos/nxos_bgp.py E324
@@ -614,10 +608,6 @@ lib/ansible/modules/network/ordnance/ordnance_config.py E324
 lib/ansible/modules/network/ordnance/ordnance_facts.py E322
 lib/ansible/modules/network/ordnance/ordnance_facts.py E324
 lib/ansible/modules/network/ovs/openvswitch_bridge.py E326
-lib/ansible/modules/network/panos/_panos_nat_policy.py E324
-lib/ansible/modules/network/panos/_panos_nat_policy.py E335
-lib/ansible/modules/network/panos/_panos_security_policy.py E322
-lib/ansible/modules/network/panos/_panos_security_policy.py E324
 lib/ansible/modules/network/panos/panos_check.py E324
 lib/ansible/modules/network/panos/panos_match_rule.py E324
 lib/ansible/modules/network/panos/panos_match_rule.py E326
