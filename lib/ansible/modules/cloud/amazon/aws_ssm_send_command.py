@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ssm_send_command
+module: aws_ssm_send_command
 short_description: Execute commands through Simple System Manager (SSM) a.k.a. Run Command
 description:
   - This module allows you to execute commands through SSM/Run Command.
@@ -72,7 +72,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- ssm_send_command:
+- aws_ssm_send_command:
     name: AWS-UpdateSSMAgent
     comment: "SSM agent update check"
     instance_ids:
