@@ -181,6 +181,7 @@
     storage_params: fillfactor=90
   register: result
   ignore_errors: yes
+  when: tablespace.rc == 0
 
 - assert:
     that:
@@ -267,6 +268,7 @@
   check_mode: yes
   register: result
   ignore_errors: yes
+  when: tablespace.rc == 0
 
 - assert:
     that:
@@ -284,7 +286,7 @@
   postgresql_query:
     db: postgres
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'foo_test_idx'"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'foo_test_idx' AND schemaname = 'foo'"
   register: result
   when: tablespace.rc == 0
 
@@ -307,6 +309,7 @@
     concurrent: no
   register: result
   ignore_errors: yes
+  when: tablespace.rc == 0
 
 - assert:
     that:
@@ -324,7 +327,7 @@
   postgresql_query:
     db: postgres
     login_user: "{{ pg_user }}"
-    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'foo_test_idx'"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'foo_test_idx' and schemaname = 'foo'"
   register: result
   when: tablespace.rc == 0
 
