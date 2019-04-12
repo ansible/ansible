@@ -1060,7 +1060,7 @@ class AzureRMModuleBase(object):
         self.log('Getting msi client')
         if not self._msi_client:
             self._msi_client = self.get_mgmt_svc_client(ManagedServiceIdentityClient,
-                                                   base_url=self._cloud_environment.endpoints.resource_manager)
+                                                        base_url=self._cloud_environment.endpoints.resource_manager)
 
         return self._msi_client
 

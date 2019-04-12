@@ -338,10 +338,17 @@ options:
             - Windows_Client
     vm_identity:
         description:
-            - Identity for the VM.
-        version_added: "2.8"
+            - Identity for the virtual machine. SystemAssigned will assign a system assigned identity, UserAssigned
+              will assign a user assigned identity and 'SystemAssigned, UserAssigned' will assign both
         choices:
-            - SystemAssigned
+            - 'SystemAssigned'
+            - 'UserAssigned'
+            - 'SystemAssigned, UserAssigned'
+    vm_user_assigned_identities:
+        description:
+            - List of user assigned identity names to assign to the VM. Only useful with vm_identity='UserAssigned' or 'SystemAssigned, UserAssigned'.
+        type: list
+        version_added: 2.9
     winrm:
         description:
             - List of Windows Remote Management configurations of the VM.
@@ -842,7 +849,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             zones=dict(type='list'),
             accept_terms=dict(type='bool', default=False),
             license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client']),
-            vm_identity=dict(type='str', choices=['SystemAssigned']),
+            vm_identity=dict(type='str', choices=['SystemAssigned', 'UserAssigned', 'SystemAssigned, UserAssigned']),
+            vm_user_assigned_identities=dict(type='list', default=None),
             winrm=dict(type='list'),
             boot_diagnostics=dict(type='dict'),
         )
@@ -888,6 +896,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.zones = None
         self.license_type = None
         self.vm_identity = None
+        self.vm_user_assigned_identities = None
         self.boot_diagnostics = None
 
         self.results = dict(
@@ -1305,7 +1314,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vm_resource.license_type = self.license_type
 
                     if self.vm_identity:
-                        vm_resource.identity = self.compute_models.VirtualMachineIdentity(type=self.vm_identity)
+                        identity_args = {
+                            "type": self.vm_identity
+                        }
+                        if self.vm_user_assigned_identities:
+                            # The user_assigned_identities parameter expects a map whose
+                            # keys are the identity ids, the values don't matter
+                            identity_args["user_assigned_identities"] = {}
+                            for user_assigned_id in self.vm_user_assigned_identities:
+                                identity = self.msi_client.user_assigned_identities.get(
+                                    self.resource_group,
+                                    user_assigned_id
+                                )
+                                identity_args["user_assigned_identities"][identity.id] = {}
+
+                        vm_resource.identity = self.compute_models.VirtualMachineIdentity(**identity_args)
 
                     if self.winrm:
                         winrm_listeners = list()
