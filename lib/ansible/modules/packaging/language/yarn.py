@@ -259,7 +259,7 @@ class Yarn(object):
             return self._exec(['add', self.name_version])
         # And one for installing all packages in package.json
         if self.globally:
-          return self._exec(['add', '--non-interactive'])
+            return self._exec(['add', '--non-interactive'])
         
         return self._exec(['install', '--non-interactive'])
 
