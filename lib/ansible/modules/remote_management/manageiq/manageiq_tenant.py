@@ -35,7 +35,8 @@ version_added: '2.8'
 author: Evert Mulder (@evertmulder)
 description:
   - The manageiq_tenant module supports adding, updating and deleting tenants in ManageIQ.
-
+requirements:
+- manageiq-client
 options:
   state:
     description:
@@ -263,6 +264,9 @@ class ManageIQTenant(object):
             result = self.client.post(url, action='delete')
         except Exception as e:
             self.module.fail_json(msg="failed to delete tenant %s: %s" % (tenant['name'], str(e)))
+
+        if result['success'] is False:
+            self.module.fail_json(msg=result['message'])
 
         return dict(changed=True, msg=result['message'])
 
@@ -513,9 +517,14 @@ def main():
             res_args = manageiq_tenant.delete_tenant(tenant)
         # if we do not have a tenant, nothing to do
         else:
+            if parent_id:
+                msg = "tenant '%s' with parent_id %i does not exist in manageiq" % (name, parent_id)
+            else:
+                msg = "tenant '%s' with parent '%s' does not exist in manageiq" % (name, parent)
+
             res_args = dict(
                 changed=False,
-                msg="tenant %s: with parent: %i does not exist in manageiq" % (name, parent_id))
+                msg=msg)
 
     # tenant should exist
     if state == "present":
