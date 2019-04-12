@@ -28,6 +28,7 @@
 
 import os
 import re
+import sys
 import traceback
 
 from ansible.module_utils.ansible_release import __version__
@@ -311,7 +312,11 @@ def get_aws_connection_info(module, boto3=False):
         boto_params['validate_certs'] = validate_certs
 
     if config is not None:
-        boto_params['config'] = config
+        if boto3:
+            boto_params['config'] = config
+        else:
+            if 'user_agent' in config:
+                sys.modules["boto.connection"].UserAgent = config['user_agent']
 
     for param, value in boto_params.items():
         if isinstance(value, binary_type):
