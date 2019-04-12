@@ -26,9 +26,6 @@ options:
     name:
         description:
             - Name of the eventhub namespace
-    tags:
-        description:
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
     show_sas_policies:
         description:
             - Whether to show the SAS policies.
@@ -37,6 +34,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Fan Qiu (@MyronFanQiu)"
@@ -53,7 +51,7 @@ EXAMPLES = '''
 
     - name: list all azure_rm_eventhubnamespace_facts by name
       azure_rm_eventhubnamespace_facts:
-        name: Testing
+        name: myEventhubNamespace
         resource_group: myResourceGroup
 
     - name: Get facts by tags
@@ -90,9 +88,6 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
             name=dict(
                 type='str'
             ),
-            tags=dict(
-                type='list'
-            ),
             show_sas_policies=dict(
                 type='bool'
             )
@@ -108,11 +103,11 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
         self.tags = None
         self.show_sas_policies = None
 
-        super(AzureRMEventHubNamespaceFact, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
+        super(AzureRMEventHubNamespaceFact, self).__init__(self.module_arg_spec, supports_tags=True, facts_module=True)
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         response = []
@@ -136,7 +131,7 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
         item = None
 
         try:
-            item = self.eventhub_client.namespaces.get(self.resource_group, self.name)
+            item = self.eventhub_client.namespaces.get(resource_group_name=self.resource_group, namespace_name=self.name)
             return [item]
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error when getting eventhub namespace {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
@@ -145,7 +140,7 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
         '''Get all eventhub namespaces in a resource group'''
 
         try:
-            return self.eventhub_client.namespaces.list_by_resource_group(self.resource_group)
+            return self.eventhub_client.namespaces.list_by_resource_group(resource_group_name=self.resource_group)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Failed to list eventhub namespace in resource group {0}: {1}'.format(self.resource_group,
                                                                                             str(exc.inner_exception) or exc.message or str(exc)))
@@ -160,21 +155,26 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
 
     def get_sas_policies(self, eventhubnamespace):
         results = eventhubnamespace
-        name = eventhubnamespace['name']
+        namespace_name = eventhubnamespace['name']
         resource_group_name = eventhubnamespace['resource_group']
-        rules = self.list_authorization_rules(resource_group_name, name)
-        results['sas_keys'] = [self.list_keys(resource_group_name, name, x.name).as_dict() for x in rules]
+        rules = self.list_authorization_rules(resource_group_name=resource_group_name, namespace_name=namespace_name)
+        results['sas_keys'] = [self.list_keys(resource_group_name=resource_group_name, namespace_name=namespace_name, rule_name=x.name) for x in rules]
         return results
 
     def list_authorization_rules(self, resource_group_name, namespace_name):
         try:
-            return self.eventhub_client.namespaces.list_authorization_rules(resource_group_name, namespace_name)
+            self.log("Getting authorization rules of an eventhub namespace")
+            return self.eventhub_client.namespaces.list_authorization_rules(resource_group_name=resource_group_name, namespace_name=namespace_name)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Failed to list authorization rules of namespace {0}: {1}'.format(namespace_name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def list_keys(self, resource_group_name, namespace_name, rule_name):
         try:
-            return self.eventhub_client.namespaces.list_keys(resource_group_name, namespace_name, rule_name)
+            self.log("Getting sas keys of an authorization rule of an eventhub namespace")
+            sas_keys = self.eventhub_client.namespaces.list_keys(resource_group_name=resource_group_name,
+                                                                 namespace_name=namespace_name,
+                                                                 authorization_rule_name=rule_name)
+            return sas_keys.as_dict()
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Failed to list keys of authorization rules {0}: {1}'.format(rule_name,
                                                                                    str(exc.inner_exception) or exc.message or str(exc)))

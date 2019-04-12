@@ -65,7 +65,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Fan Qiu (@MyronFanQiu)"
@@ -186,7 +185,7 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
             state=dict()
         )
 
-        super(AzureRMEventHubSASPolicy, self).__init__(self.module_arg_spec, supports_check_mode=True)
+        super(AzureRMEventHubSASPolicy, self).__init__(self.module_arg_spec, supports_check_mode=True, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -211,7 +210,7 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
                 if self.regenerate_secondary_key and not self.check_mode:
                     self.regenerate_sas_key('secondary')
             policy = self.policy_to_dict(policy)
-            self.results['keys'] = self.get_sas_key()
+            self.results['keys'] = self.get_sas_key().as_dict()
         elif policy:
             changed = True
             if not self.check_mode:
@@ -237,9 +236,16 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
         try:
             client = self._get_client()
             if self.eventhub:
-                rule = client.create_or_update_authorization_rule(self.resource_group, self.namespace, self.eventhub, self.name, rights)
+                rule = client.create_or_update_authorization_rule(resource_group_name=self.resource_group,
+                                                                  namespace_name=self.namespace,
+                                                                  event_hub_name=self.eventhub,
+                                                                  authorization_rule_name=self.name,
+                                                                  rights=rights)
             else:
-                rule = client.create_or_update_authorization_rule(self.resource_group, self.namespace, self.name, rights)
+                rule = client.create_or_update_authorization_rule(resource_group_name=self.resource_group,
+                                                                  namespace_name=self.namespace,
+                                                                  authorization_rule_name=self.name,
+                                                                  rights=rights)
             return rule
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error when creating or updating SAS policy {0} - {1}'.format(self.name, str(exc.inner_exception) or str(exc.message) or str(exc)))
@@ -250,9 +256,14 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
         try:
             client = self._get_client()
             if self.eventhub:
-                rule = client.get_authorization_rule(self.resource_group, self.namespace, self.eventhub, self.name)
+                rule = client.get_authorization_rule(resource_group_name=self.resource_group,
+                                                     namespace_name=self.namespace,
+                                                     event_hub_name=self.eventhub,
+                                                     authorization_rule_name=self.name)
             else:
-                rule = client.get_authorization_rule(self.resource_group, self.namespace, self.name)
+                rule = client.get_authorization_rule(resource_group_name=self.resource_group,
+                                                     namespace_name=self.namespace,
+                                                     authorization_rule_name=self.name)
         except Exception:
             pass
         return rule
@@ -261,9 +272,14 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
         try:
             client = self._get_client()
             if self.eventhub:
-                client.delete_authorization_rule(self.resource_group, self.namespace, self.eventhub, self.name)
+                client.delete_authorization_rule(resource_group_name=self.resource_group,
+                                                 namespace_name=self.namespace,
+                                                 event_hub_name=self.eventhub,
+                                                 authorization_rule_name=self.name)
             else:
-                client.delete_authorization_rule(self.resource_group, self.namespace, self.name)
+                client.delete_authorization_rule(resource_group_name=self.resource_group,
+                                                 namespace_name=self.namespace,
+                                                 authorization_rule_name=self.name)
             return True
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error when deleting SAS policy {0} - {1}'.format(self.name, str(exc.inner_exception) or str(exc.message) or str(exc)))
@@ -273,9 +289,16 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
             client = self._get_client()
             key = str.capitalize(key_type) + 'Key'
             if self.eventhub:
-                client.regenerate_keys(self.resource_group, self.namespace, self.eventhub, self.name, key)
+                client.regenerate_keys(resource_group_name=self.resource_group,
+                                       namespace_name=self.namespace,
+                                       event_hub_name=self.eventhub,
+                                       authorization_rule_name=self.name,
+                                       key_type=key)
             else:
-                client.regenerate_keys(self.resource_group, self.namespace, self.name, key)
+                client.regenerate_keys(resource_group_name=self.resource_group,
+                                       namespace_name=self.namespace,
+                                       authorization_rule_name=self.name,
+                                       key_type=key)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error when generating SAS policy {0}\'s key - {1}'.format(self.name, str(exc.inner_exception) or str(exc.message) or str(exc)))
         return None
@@ -284,9 +307,14 @@ class AzureRMEventHubSASPolicy(AzureRMModuleBase):
         try:
             client = self._get_client()
             if self.eventhub:
-                return client.list_keys(self.resource_group, self.namespace, self.eventhub, self.name).as_dict()
+                return client.list_keys(resource_group_name=self.resource_group,
+                                        namespace_name=self.namespace,
+                                        event_hub_name=self.eventhub,
+                                        authorization_rule_name=self.name)
             else:
-                return client.list_keys(self.resource_group, self.namespace, self.name).as_dict()
+                return client.list_keys(resource_group_name=self.resource_group,
+                                        namespace_name=self.namespace,
+                                        authorization_rule_name=self.name)
         except Exception:
             pass
         return None

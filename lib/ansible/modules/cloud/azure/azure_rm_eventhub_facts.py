@@ -142,7 +142,9 @@ class AzureRMEventHubFact(AzureRMModuleBase):
         item = None
 
         try:
-            item = self.eventhub_client.event_hubs.get(self.resource_group, self.namespace, self.name)
+            item = self.eventhub_client.event_hubs.get(resource_group_name=self.resource_group,
+                                                       namespace_name=self.namespace,
+                                                       event_hub_name=self.name)
             return [item]
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error when getting eventhub {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
@@ -151,7 +153,7 @@ class AzureRMEventHubFact(AzureRMModuleBase):
         '''Get all eventhub namespaces in a resource group'''
 
         try:
-            return self.eventhub_client.event_hubs.list_by_namespace(self.resource_group, self.namespace)
+            return self.eventhub_client.event_hubs.list_by_namespace(resource_group_name=self.resource_group, namespace_name=self.namespace)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Filed to list eventhub by namespace {0}: {1}'.format(self.namespace, str(exc.inner_exception) or exc.message or str(exc)))
 
@@ -159,18 +161,25 @@ class AzureRMEventHubFact(AzureRMModuleBase):
         results = eventhub
         name = eventhub['name']
         rules = self.list_authorization_rules(name)
-        results['sas_keys'] = [self.list_keys(name, x.name).as_dict() for x in rules]
+        results['sas_keys'] = [self.list_keys(eventhub=name, rule_name=x.name).as_dict() for x in rules]
         return results
 
-    def list_authorization_rules(self, name):
+    def list_authorization_rules(self, eventhub):
         try:
-            return self.eventhub_client.event_hubs.list_authorization_rules(self.resource_group, self.namespace, name)
+            self.log('Getting authorization rules of an event hub')
+            return self.eventhub_client.event_hubs.list_authorization_rules(resource_group_name=self.resource_group,
+                                                                            namespace_name=self.namespace,
+                                                                            event_hub_name=eventhub)
         except self.eventhub_models.ErrorResponseException as exc:
-            self.fail('Failed to list authorization rules of namespace {0}: {1}'.format(name, str(exc.inner_exception) or exc.message or str(exc)))
+            self.fail('Failed to list authorization rules of namespace {0}: {1}'.format(eventhub, str(exc.inner_exception) or exc.message or str(exc)))
 
-    def list_keys(self, name, rule_name):
+    def list_keys(self, eventhub, rule_name):
         try:
-            return self.eventhub_client.event_hubs.list_keys(self.resource_group, self.namespace, name, rule_name)
+            self.log('Getting sas keys of a authorization rule')
+            return self.eventhub_client.event_hubs.list_keys(resource_group_name=self.resource_group,
+                                                             namespace_name=self.namespace,
+                                                             event_hub_name=eventhub,
+                                                             authorization_rule_name=rule_name)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Failed to list keys of authorization rules {0}: {1}'.format(rule_name,
                                                                                    str(exc.inner_exception) or exc.message or str(exc)))
@@ -181,11 +190,14 @@ class AzureRMEventHubFact(AzureRMModuleBase):
         results['consumer_groups'] = [x.as_dict() for x in consumer_groups]
         return results
 
-    def list_consumer_groups(self, name):
+    def list_consumer_groups(self, eventhub):
         try:
-            return self.eventhub_client.consumer_groups.list_by_event_hub(self.resource_group, self.namespace, name)
+            self.log('Getting consumer groups of an event hub')
+            return self.eventhub_client.consumer_groups.list_by_event_hub(resource_group_name=self.resource_group,
+                                                                          namespace_name=self.namespace,
+                                                                          event_hub_name=eventhub)
         except self.eventhub_models.ErrorResponseException as exc:
-            self.fail('Failed to list consumer groups of the eventhub {0}: {1}'.format(name, str(exc.inner_exception) or exc.message or str(exc)))
+            self.fail('Failed to list consumer groups of the eventhub {0}: {1}'.format(eventhub, str(exc.inner_exception) or exc.message or str(exc)))
 
     def to_dict(self, eventhub):
         result = dict(

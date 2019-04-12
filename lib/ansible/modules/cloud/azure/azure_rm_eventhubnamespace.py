@@ -55,6 +55,7 @@ options:
         description:
             - Upper limit of throughput units when AutoInflate is enabled, value should be within 0 to 20 throughput units. ( '0' if AutoInflateEnabled = false)
             - Only can be set when the C(auto_inflate_enabled) == true
+        type: int
     kafka_enabled:
         description:
             - Value that indicates whether Kafka is enabled for eventhub namespace.
@@ -74,34 +75,34 @@ author:
 EXAMPLES = '''
     - name: Create event hub namespace with default
       azure_rm_eventhubnamespace:
-        name: Testing
+        name: myEventhubNamespace
         location: eastus
         resource_group: myResourceGroup
 
     - name: Create event hub namespace when C(kafka_enabled) is set to true
       azure_rm_eventhubnamespace:
-        name: Testing02
+        name: myEventhubNamespace02
         location: eastus
         resource_group: myResourceGroup
         kafka_enabled: true
 
     - name: Update event hub namespace sku basic
       azure_rm_eventhubnamespace:
-        name: Testing
+        name: myEventhubNamespace
         location: eastus
         resource_group: myResourceGroup
         sku: basic
 
     - name: Update event hub namespace sku standard
       azure_rm_eventhubnamespace:
-        name: Testing
+        name: myEventhubNamespace
         location: eastus
         resource_group: myResourceGroup
         sku: standard
 
     - name: Update event hub namespace maximum_throughput_units to 8
       azure_rm_eventhubnamespace:
-        name: Testing
+        name: myEventhubNamespace
         location: eastus
         resource_group: myResourceGroup
         auto_inflate_enabled: true
@@ -109,14 +110,14 @@ EXAMPLES = '''
 
     - name: Update event hub namespace auto_inflate_enabled to false
       azure_rm_eventhubnamespace:
-        name: Testing
+        name: myEventhubNamespace
         location: eastus
         resource_group: myResourceGroup
         auto_inflate_enabled: false
 
     - name: Delete event hub namespace
       azure_rm_eventhubnamespace:
-        name: Testing
+        name: myEventhubNamespace
         location: eastus
         resource_group: myResourceGroup
         state: absent
@@ -128,60 +129,7 @@ id:
         - Resource ID of the eventhub namespace.
     returned: always
     type: str
-    sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/Testing"
-name:
-    description:
-        - Name of the eventhub namespace.
-    returned: always
-    type: str
-    sample: Testing
-location:
-    description:
-        - Location of the eventhub namespace.
-    returned: always
-    type: str
-    sample: eastus
-sku:
-    description:
-        - Pricing tier for Azure eventhub namespace.
-    returned: always
-    type: str
-    sample: standard
-auto_inflate_enabled:
-    description:
-        - Value that indicates whether AutoInflate is enabled for eventhub namespace.
-    returned: always
-    type: bool
-    sample: false
-kafka_enabled:
-    description:
-        - Value that indicates whether Kafka is enabled for eventhub namespace.
-    returned: always
-    type: bool
-    sample: false
-maximum_throughput_units:
-    description:
-        - Upper limit of throughput units when AutoInflate is enabled, value should be within 0 to 20 throughput units. ( '0' if AutoInflateEnabled = false)
-    returned: always
-    type: int
-    sample: standard
-service_bus_endpoint:
-    description:
-        - Endpoint you can use to perform Service Bus operations.
-    returned: always
-    type: str
-    sample: https://Testing.servicebus.windows.net:443
-metric_id:
-    description:
-        - Identifier for Azure Insights metrics.
-    returned: always
-    type: str
-    sample: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX:Testing
-tags:
-    description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-    returned: always
-    type: dict
+    sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/myEventhubNamespace"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -231,7 +179,7 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            state=dict()
+            id=dict()
         )
 
         self.resource_group = None
@@ -253,101 +201,106 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         changed = False
-        warning = False
+        results = None
 
         if not self.location:
             # Set default location
             resource_group = self.get_resource_group(self.resource_group)
             self.location = resource_group.location
         self.sku = str.capitalize(self.sku) if self.sku else None
-        eventhubnamespace = self.get_namespace()
+        eventhubnamespace = self.get_namespace() or dict()
         if self.state == 'present':
             if not eventhubnamespace:
                 changed = True
-                self.log('Creating a new event hub namespace')
                 if self.kafka_enabled and self.sku == 'Basic':
                     self.module.warn('kafka_enabled cannot be set to true under basic sku and would be ignored')
-                    warning = True
                     self.kafka_enabled = None
 
                 if self.sku:
                     self.sku = self.eventhub_models.Sku(name=self.sku, tier=self.sku)
 
-                eventhubnamespace = self.eventhub_models.EHNamespace(location=self.location,
-                                                                     sku=self.sku,
-                                                                     tags=self.tags,
-                                                                     is_auto_inflate_enabled=self.auto_inflate_enabled,
-                                                                     maximum_throughput_units=self.maximum_throughput_units,
-                                                                     kafka_enabled=self.kafka_enabled)
+                eventhubnamespace_instance = self.eventhub_models.EHNamespace(location=self.location,
+                                                                              sku=self.sku,
+                                                                              tags=self.tags,
+                                                                              is_auto_inflate_enabled=self.auto_inflate_enabled,
+                                                                              maximum_throughput_units=self.maximum_throughput_units,
+                                                                              kafka_enabled=self.kafka_enabled)
                 if not self.check_mode:
-                    eventhubnamespace = self.create_or_update_namespace(eventhubnamespace)
+                    eventhubnamespace = self.create_or_update_namespace(eventhubnamespace_instance)
             else:
-                # Compare sku
-                if self.sku and self.sku != eventhubnamespace.sku.name:
-                    self.log('SKU changed')
-                    if eventhubnamespace.kafka_enabled and self.sku == 'Basic':
-                        self.module.warn('kafka_enabled cannot be set under basic sku')
-                        warning = True
-                    else:
-                        eventhubnamespace.sku.name = self.sku
-                        eventhubnamespace.sku.tier = self.sku
-                        changed = True
-
-                # Compare is_auto_inflate_enabled
-                if self.auto_inflate_enabled is not None and self.auto_inflate_enabled != eventhubnamespace.is_auto_inflate_enabled:
-                    self.log('auto_inflate_enabled changed')
-                    eventhubnamespace.is_auto_inflate_enabled = self.auto_inflate_enabled
-                    changed = True
-
-                # Compare maximum_throughput_units
-                if self.maximum_throughput_units and self.maximum_throughput_units != eventhubnamespace.maximum_throughput_units:
-                    self.log('maximum_throughput_units changed')
-                    eventhubnamespace.maximum_throughput_units = self.maximum_throughput_units
-                    changed = True
-                else:
-                    eventhubnamespace.maximum_throughput_units = None
-
-                # Compare kafka_enabled
-                if self.kafka_enabled is not None and self.kafka_enabled != eventhubnamespace.kafka_enabled:
-                    self.module.warn('kafka_enabled cannot be updated after creation')
-                    warning = True
-
-                # Compare tags
-                update_tags, self.tags = self.update_tags(eventhubnamespace.tags)
-                if update_tags:
-                    eventhubnamespace.tags = self.tags
-                    changed = True
+                changed, eventhubnamespace = self.check_status(changed=changed, eventhubnamespace=eventhubnamespace)
 
                 if changed and not self.check_mode:
                     eventhubnamespace = self.create_or_update_namespace(eventhubnamespace)
-            eventhubnamespace = self.to_dict(eventhubnamespace)
+            results = self.to_dict(eventhubnamespace)['id']
         elif eventhubnamespace:
             changed = True
             if not self.check_mode:
                 self.delete_namespace()
-            eventhubnamespace = True
-        self.results['state'] = eventhubnamespace
+
+        self.results['id'] = results
         self.results['changed'] = changed
-        self.results['warning'] = warning
         return self.results
 
     def create_or_update_namespace(self, eventhubnamespace):
         try:
-            poller = self.eventhub_client.namespaces.create_or_update(self.resource_group, self.name, eventhubnamespace)
+            self.log('Creating or updating an event hub namespace')
+            poller = self.eventhub_client.namespaces.create_or_update(resource_group_name=self.resource_group,
+                                                                      namespace_name=self.name,
+                                                                      parameters=eventhubnamespace)
             return self.get_poller_result(poller)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error creating or updating Event Hub Namespace {0}: {1}'.format(self.name, str(exc.inner_exception) or str(exc.message) or str(exc)))
 
+    def check_status(self, changed, eventhubnamespace):
+        # Compare sku
+        if self.sku and self.sku != eventhubnamespace.sku.name:
+            self.log('SKU changed')
+            if eventhubnamespace.kafka_enabled and self.sku == 'Basic':
+                self.module.warn('kafka_enabled cannot be set under basic sku')
+            else:
+                eventhubnamespace.sku.name = self.sku
+                eventhubnamespace.sku.tier = self.sku
+                changed = True
+
+        # Compare is_auto_inflate_enabled
+        if self.auto_inflate_enabled is not None and self.auto_inflate_enabled != eventhubnamespace.is_auto_inflate_enabled:
+            self.log('auto_inflate_enabled changed')
+            eventhubnamespace.is_auto_inflate_enabled = self.auto_inflate_enabled
+            changed = True
+
+        # Compare maximum_throughput_units
+        if self.maximum_throughput_units and self.maximum_throughput_units != eventhubnamespace.maximum_throughput_units:
+            self.log('maximum_throughput_units changed')
+            eventhubnamespace.maximum_throughput_units = self.maximum_throughput_units
+            changed = True
+        else:
+            eventhubnamespace.maximum_throughput_units = None
+
+        # Compare kafka_enabled
+        if self.kafka_enabled is not None and self.kafka_enabled != eventhubnamespace.kafka_enabled:
+            self.module.warn('kafka_enabled cannot be updated after creation')
+
+        # Compare tags
+        update_tags, self.tags = self.update_tags(eventhubnamespace.tags)
+        if update_tags:
+            eventhubnamespace.tags = self.tags
+            changed = True
+
+        return changed, eventhubnamespace
+
     def get_namespace(self):
         try:
-            return self.eventhub_client.namespaces.get(self.resource_group, self.name)
+            self.log('Getting an event hub namespace')
+            return self.eventhub_client.namespaces.get(resource_group_name=self.resource_group, namespace_name=self.name)
         except Exception as exc:
             pass
             return None
 
     def delete_namespace(self):
         try:
-            poller = self.eventhub_client.namespaces.delete(self.resource_group, self.name)
+            self.log('Deleting an event hub namespace')
+            poller = self.eventhub_client.namespaces.delete(resource_group_name=self.resource_group, namespace_name=self.name)
             return self.get_poller_result(poller)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error deleting Event Hub Namespace{0}: {1}'.format(self.name, str(exc.inner_exception) or str(exc.message) or str(exc)))

@@ -42,10 +42,12 @@ options:
     message_retention_in_days:
         description:
             - Number of days to retain the events for this Event Hub, value should be 1 to 7 days
+        type: int
     partition_count:
         description:
             - Number of partitions created for the Event Hub, allowed values are from 1 to 32 partitions.
             - Is not changeable after the creation
+        type: int
     status:
         description:
             - Enumerates the possible values for the status of the Event Hub.
@@ -66,22 +68,22 @@ author:
 EXAMPLES = '''
     - name: Create an event hub with default
       azure_rm_eventhub:
-        name: Testing
+        name: myEventhub
         resource_group: myResourceGroup
-        namespace: testingnamespace
+        namespace: myEventhubNamespace
 
     - name: Create an event hub with partition_count
       azure_rm_eventhub:
-        name: Testing
+        name: myEventhub
         resource_group: myResourceGroup
-        namespace: testingnamespace
+        namespace: myEventhubNamespace
         partition_count: 8
 
     - name: Delete the event hub
       azure_rm_eventhub:
-        name: Testing
+        name: myEventhub
         resource_group: myResourceGroup
-        namespace: testingnamespace
+        namespace: myEventhubNamespace
         state: absent
 '''
 
@@ -91,13 +93,13 @@ id:
         - Resource ID of the event hub.
     returned: state is present
     type: str
-    sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/Testing"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/myEventhub"
 name:
     description:
         - Name of the event hub.
     returned: state is present
     type: str
-    sample: Testing
+    sample: myEventhubNamespace
 message_retention_in_days:
     description:
         - Number of days to retain the events for this Event Hub, value should be 1 to 7 days
@@ -175,7 +177,7 @@ class AzureRMEventHub(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            state=dict()
+            id=None
         )
 
         # TODO: Add support for capture_description
@@ -196,6 +198,7 @@ class AzureRMEventHub(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         changed = False
+        results = None
 
         self.status = self.eventhub_models.EntityStatus[self.status] if self.status else None
         event_hub = self.get_event_hub()
@@ -204,56 +207,67 @@ class AzureRMEventHub(AzureRMModuleBase):
             # TODO: Add support for capture_description
             if not event_hub:
                 changed = True
-                self.log('Creating a new event hub')
-                event_hub = self.eventhub_models.Eventhub(message_retention_in_days=self.message_retention_in_days,
-                                                          partition_count=self.partition_count,
-                                                          status=self.status)
+                event_hub_instance = self.eventhub_models.Eventhub(message_retention_in_days=self.message_retention_in_days,
+                                                                   partition_count=self.partition_count,
+                                                                   status=self.status)
                 if not self.check_mode:
-                    event_hub = self.create_or_update_event_hub(event_hub)
+                    event_hub = self.create_or_update_event_hub(event_hub_instance)
 
             else:
-                # Compare message_retention_in_days
-                if self.message_retention_in_days and self.message_retention_in_days != event_hub.message_retention_in_days:
-                    changed = True
-                    event_hub.message_retention_in_days = self.message_retention_in_days
-
-                # Compare partition_count
-                if self.partition_count and self.partition_count != event_hub.partition_count:
-                    self.module.warn("partition_count is not changeable after the creation!")
-
-                # Compare status
-                if self.status and self.status != event_hub.status:
-                    changed = True
-                    event_hub.status = self.status
+                changed, event_hub = self.check_status(changed=changed, event_hub=event_hub)
 
                 if not self.check_mode:
                     event_hub = self.create_or_update_event_hub(event_hub)
-            event_hub = self.to_dict(event_hub)
+            results = self.to_dict(event_hub)['id']
         elif event_hub:
             changed = True
             if not self.check_mode:
                 self.delete_event_hub()
-            event_hub = True
+
         self.results['changed'] = changed
-        self.results['state'] = event_hub
+        self.results['id'] = results
         return self.results
 
     def get_event_hub(self):
         try:
-            return self.eventhub_client.event_hubs.get(self.resource_group, self.namespace, self.name)
+            self.log('Getting an event hub')
+            return self.eventhub_client.event_hubs.get(resouce_group_name=self.resource_group, namespace_name=self.namespace, event_hub_name=self.name)
         except Exception as exc:
             pass
             return None
 
+    def check_status(self, changed, event_hub):
+        # Compare message_retention_in_days
+        if self.message_retention_in_days and self.message_retention_in_days != event_hub.message_retention_in_days:
+            changed = True
+            event_hub.message_retention_in_days = self.message_retention_in_days
+
+        # Compare partition_count
+        if self.partition_count and self.partition_count != event_hub.partition_count:
+            self.module.warn("partition_count is not changeable after the creation!")
+
+        # Compare status
+        if self.status and self.status != event_hub.status:
+            changed = True
+            event_hub.status = self.status
+        return changed, event_hub
+
     def create_or_update_event_hub(self, event_hub):
         try:
-            return self.eventhub_client.event_hubs.create_or_update(self.resource_group, self.namespace, self.name, event_hub)
+            self.log('Creating or updating an event hub')
+            return self.eventhub_client.event_hubs.create_or_update(resource_group_name=self.resource_group,
+                                                                    namespace_name=self.namespace,
+                                                                    event_hub_name=self.name,
+                                                                    parameters=event_hub)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error creating or updating Event Hub{0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def delete_event_hub(self):
         try:
-            return self.eventhub_client.event_hubs.delete(self.resource_group, self.namespace, self.name)
+            self.log('Deleting an event hub')
+            return self.eventhub_client.event_hubs.delete(resource_group_name=self.resource_group,
+                                                          namespace_name=self.namespace,
+                                                          event_hub_name=self.name)
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error deleting Event Hub{0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 

@@ -15,7 +15,9 @@
 
 - name: Assert the eventhub namespace was created
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id != None
 
 - name: Create an eventhub namespace for listing facts
   azure_rm_eventhubnamespace:
@@ -28,7 +30,9 @@
 
 - name: Assert the eventhub namespace was created
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id != None
 
 - name: Update an event hub namespace
   azure_rm_eventhubnamespace:
@@ -42,8 +46,8 @@
 - name: Assert the eventhub namespace was updated
   assert:
     that:
-      - output.changed
-      - output.state['maximum_throughput_units'] == 4
+       - output.changed
+       - output.id != None
 
 - name: Update an eventhub namespace (idempotent)
   azure_rm_eventhubnamespace:
@@ -56,7 +60,9 @@
 
 - name: Assert the eventhub namespace was updated
   assert:
-    that: not output.changed
+    that:
+       - not output.changed
+       - output.id != None
 
 - name: Get facts for an eventhub namespace
   azure_rm_eventhubnamespace_facts:
@@ -113,7 +119,9 @@
 
 - name: Assert the event hub was created
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id != None
 
 - name: Create an event hub for listing facts
   azure_rm_eventhub:
@@ -126,7 +134,9 @@
 
 - name: Assert the event hub was created
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id != None
 
 - name: Update an event hub
   azure_rm_eventhub:
@@ -141,8 +151,7 @@
   assert:
     that:
        - output.changed
-       - output.state['status'] == 'Disabled'
-       - output.state['message_retention_in_days'] == 7
+       - output.id != None
 
 - name: Update an event hub (idempotent)
   azure_rm_eventhub:
@@ -155,7 +164,9 @@
 
 - name: Assert the event hub was updated
   assert:
-    that: not output.changed
+    that:
+       - not output.changed
+       - output.id != None
 
 - name: Gather facts for event hub by namespace
   azure_rm_eventhub_facts:
@@ -232,7 +243,7 @@
     that:
        - output.changed
        - output.state['id'] != None
-       - output.state['rights'] == "listen_send"
+       - output.keys != None
 
 - name: Update a sas policy for an eventhub namespace
   azure_rm_eventhubsaspolicy:
@@ -249,6 +260,7 @@
     that:
        - output.changed
        - output.state['id'] != None
+       - output.keys != None
 
 - name: Create a sas policy for an eventhub
   azure_rm_eventhubsaspolicy:
@@ -311,8 +323,7 @@
   assert:
     that:
        - output.changed
-       - output.state['id'] != None
-       - output.state['name'] != None
+       - output.id != None
 
 - name: Update a consumer group
   azure_rm_eventhubconsumergroup:
@@ -327,8 +338,7 @@
   assert:
     that:
        - output.changed
-       - output.state['id'] != None
-       - output.state['user_metadata'] != None
+       - output.id != None
 
 - name: Update a consumer group (idempotent)
   azure_rm_eventhubconsumergroup:
@@ -354,7 +364,9 @@
 
 - name: Assert the consumer group was deleted
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id == None
 
 - name: Delete first event hub
   azure_rm_eventhub:
@@ -366,7 +378,9 @@
 
 - name: Assert the event hub was deleted
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id == None
 
 - name: Delete first event hub (idempotent)
   azure_rm_eventhub:
@@ -378,7 +392,9 @@
 
 - name: Assert the event hub was deleted
   assert:
-    that: not output.changed
+    that:
+       - not output.changed
+       - output.id == None
 
 - name: Delete second event hub
   azure_rm_eventhub:
@@ -390,7 +406,9 @@
 
 - name: Assert the event hub was deleted
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id == None
 
 - name: Delete first eventhub namespace
   azure_rm_eventhubnamespace:
@@ -401,7 +419,9 @@
 
 - name: Assert the eventhub namespace was deleted
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id == None
 
 - name: Delete first eventhub namespace (idempotent)
   azure_rm_eventhubnamespace:
@@ -412,7 +432,9 @@
 
 - name: Assert the eventhub namespace was deleted
   assert:
-    that: not output.changed
+    that:
+       - not output.changed
+       - output.id == None
 
 - name: Delete second eventhub namespace
   azure_rm_eventhubnamespace:
@@ -423,4 +445,6 @@
 
 - name: Assert the eventhub namespace was deleted
   assert:
-    that: output.changed
+    that:
+       - output.changed
+       - output.id == None
