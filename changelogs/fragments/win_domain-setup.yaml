@@ -1,0 +1,2 @@
+bugfixes:
+- win_domain - Fix checking for a domain introduced in a recent patch
