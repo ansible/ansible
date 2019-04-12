@@ -266,7 +266,7 @@ def main():
             cmd += " --certname='%s'" % p['certname']
         if module.check_mode:
             cmd += " --noop"
-        if p['use_srv_records']:
+        if p['use_srv_records'] is not None:
             if not ['use_srv_records']:
                 cmd += " --no-use_srv_records"
             else:
