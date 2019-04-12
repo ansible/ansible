@@ -41,6 +41,7 @@ options:
       - true or false.
     choices: ['true', 'false']
     default: 'false'
+    version_added: '2.8'
   default_visibility_timeout:
     description:
       - The default visibility timeout in seconds.
@@ -310,6 +311,12 @@ def main():
         connection = connect_to_aws(boto.sqs, region, **aws_connect_params)
 
         state = module.params.get('state')
+        fifo_queue = module.params.get('fifo_queue')
+        
+        if not fifo_queue:
+            fifo_queue = 'false'
+        elif (fifo_queue != 'true' and fifo_queue != 'false'):
+            module.fail_json(msg='possible value of fifo_queue is true or false')
                 
         if state == 'present':
             create_or_update_sqs_queue(connection, module)
