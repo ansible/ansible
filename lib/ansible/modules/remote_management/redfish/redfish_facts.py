@@ -303,8 +303,8 @@ def main():
                 module.fail_json(msg=resource['msg'])
 
             for command in command_list:
-               if command == "GetSessions":
-                  result["session"] = rf_utils.get_sessions()
+                if command == "GetSessions":
+                    result["session"] = rf_utils.get_sessions()
 
         elif category == "Manager":
             # execute only if we find a Manager service resource

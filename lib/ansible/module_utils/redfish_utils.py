@@ -544,7 +544,7 @@ class RedfishUtils(object):
                                         for link in data[u'Links'][u'Drives']:
                                             drive_id_link = link[u'@odata.id']
                                             drive_id = drive_id_link.split("/")[-1]
-                                            drive_id_list.append({'Id':drive_id})
+                                            drive_id_list.append({'Id': drive_id})
                                         volume_result['Linked_disk'] = drive_id_list
 
                                 volume_results.append(volume_result)
