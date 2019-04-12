@@ -45,7 +45,16 @@ Modules removed
 
 The following modules no longer exist:
 
-* No notable changes
+* Apstra's ``aos_*`` modules.  See the new modules at  `https://github.com/apstra <https://github.com/apstra>`_.
+* ec2_ami_find
+* kubernetes
+* nxos_ip_interface use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
+* nxos_portchannel use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
+* nxos_switchport use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
+* oc
+* panos_nat_policy use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
+* panos_security_policy use :ref:`panos_security_rule <panos_security_rule_module>` instead.
+* vsphere_guest use :ref:`vmware_guest <vmware_guest_module>` instead.
 
 
 Deprecation notices
