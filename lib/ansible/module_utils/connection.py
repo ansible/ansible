@@ -137,7 +137,7 @@ class Connection(object):
 
         if not os.path.exists(self.socket_path):
             raise ConnectionError('socket_path does not exist or cannot be found.'
-                                  '\nSee the socket_path issue catergory in Network Debug and Troubleshooting Guide')
+                                  '\nSee the socket_path issue category in Network Debug and Troubleshooting Guide')
 
         try:
             data = json.dumps(req, cls=AnsibleJSONEncoder)
@@ -150,7 +150,7 @@ class Connection(object):
         try:
             out = self.send(data)
         except socket.error as e:
-            raise ConnectionError('unable to connect to socket. See the socket_path issue catergory in Network Debug and Troubleshooting Guide',
+            raise ConnectionError('unable to connect to socket. See the socket_path issue category in Network Debug and Troubleshooting Guide',
                                   err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
 
         try:
