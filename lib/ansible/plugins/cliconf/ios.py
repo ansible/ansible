@@ -163,15 +163,15 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    """
-      ios_config:
-        lines: "{{ macro_lines }}"
-        parents: "macro name {{ macro_name }}"
-        after: '@'
-        match: line
-        replace: block
-    """
     def edit_macro(self, candidate=None, commit=True, replace=None, comment=None):
+        """
+        ios_config:
+          lines: "{{ macro_lines }}"
+          parents: "macro name {{ macro_name }}"
+          after: '@'
+          match: line
+          replace: block
+        """
         resp = {}
         operations = self.get_device_operations()
         self.check_edit_config_capability(operations, candidate, commit, replace, comment)
@@ -182,7 +182,8 @@ class Cliconf(CliconfBase):
             commands = ''
             self.send_command('config terminal')
             time.sleep(0.1)
-            commands += (candidate.pop(0) + '\n') # first item: macro command
+            # first item: macro command
+            commands += (candidate.pop(0) + '\n')
             multiline_delimiter = candidate.pop(-1)
             for line in candidate:
                 commands += (' ' + line + '\n')
@@ -200,7 +201,7 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         resp['response'] = results
         return resp
-                                                                                                                                                                                                                                                                                                                                      
+
     def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
