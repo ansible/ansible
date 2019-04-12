@@ -56,13 +56,13 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
   schema:
     description:
     - Name of a database schema where the index will be created.
+    type: str
+  login_password:
+    description:
+    - Password used to authenticate with PostgreSQL.
     type: str
   login_host:
     description:
