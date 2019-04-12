@@ -45,7 +45,7 @@ options:
     type: str
   schema:
     description:
-    - Name of a database schema.
+    - Name of a database schema where the index will be created.
   state:
     description:
     - Index state.
