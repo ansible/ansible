@@ -24,6 +24,7 @@ notes:
 - Module is not idempotent as the Meraki API is limited in what information it provides about configuration templates.
 - Meraki's API does not support creating new configuration templates.
 - To use the configuration template, simply pass its ID via C(net_id) parameters in Meraki modules.
+- Do not set the C(use_config_template) value to C(no).
 options:
     state:
         description:
@@ -222,6 +223,9 @@ def main():
         meraki.exit_json(**meraki.result)
 
     # execute checks for argument completeness
+
+    if meraki.params['use_config_template'] is False:
+        meraki.fail_json(msg="Do not use use_config_template parameter with meraki_config_template module.")
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
