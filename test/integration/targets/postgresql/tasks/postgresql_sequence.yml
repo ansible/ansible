@@ -251,6 +251,108 @@
       - result.rowcount == 1
 
 
+####################
+# Test: change owner of a sequence
+- name: postgresql_sequence - change owner of an existing sequence from "{{ pg_user }}" to "{{ db_user1 }}"
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: foobar_with_options
+    schema: foobar_schema
+    owner: "{{ db_user1 }}"
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'foobar_with_options'
+      - result.owner == "{{ pg_user }}"
+      - result.queries == ["ALTER SEQUENCE \"foobar_schema\".\"foobar_with_options\" OWNER TO \"{{ db_user1 }}\""]
+
+# Real SQL check
+- name: postgresql_sequence - check that the seqeunce "foobar_with_options" has a new owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT c.relname,a.rolname,n.nspname
+            FROM pg_class as c
+            JOIN pg_authid as a on (c.relowner = a.oid)
+            JOIN pg_namespace as n on (c.relnamespace = n.oid)
+            WHERE c.relkind = 'S' and
+            c.relname = 'foobar_with_options' and
+            n.nspname = 'foobar_schema' and
+            a.rolname = '{{ db_user1 }}'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 1
+
+####################
+# Test: drop seqeunce with cascade
+
+# CREATE SEQUENCE seq1;
+# CREATE TABLE t1 (f1 INT NOT NULL DEFAULT nextval('seq1'));
+# DROP SEQUENCE seq1 CASCADE;
+- name: postgresql_sequence - create sequence for drop cascade test
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: seq1
+
+- name: postgresql_sequence - create table which use seqeunce for drop cascade test
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: t1
+    columns:
+    - f1 INT NOT NULL DEFAULT nextval('seq1')
+
+- name: postgresql_sequence - drop with cascade a sequence called seq1
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: seq1
+    state: absent
+    cascade: yes
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'seq1'
+      - result.queries == ["DROP SEQUENCE \"seq1\" CASCADE"]
+
+# Real SQL check
+- name: postgresql_sequence - check that the seqeunce "seq1" not exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'seq1'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 0
+
 # Cleanup
 - name: postgresql_sequence - destroy DB
   become_user: "{{ pg_user }}"

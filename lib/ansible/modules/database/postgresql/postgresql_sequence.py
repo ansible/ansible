@@ -32,42 +32,46 @@ options:
   state:
     description:
     - The sequence state.
-    - I(state=absent) is mutually exclusive with I(data_type), I(increment), I(minvalue), I(maxvalue),
-      I(start), I(cache), I(cycle), I(rename_to) , I(newschema) and I(owner).
+    - I(state=absent) is mutually exclusive with I(data_type), I(increment),
+      I(minvalue), I(maxvalue), I(start), I(cache), I(cycle), I(rename_to) ,
+      I(newschema) and I(owner).
     default: present
     choices: [ absent, present ]
     type: str
   data_type:
     description:
-    - Specifies the data type of the sequence. Valid types are bigint, integer, and smallint. bigint is the default.
-      The data type determines the default minimum and maximum values of the sequence.
+    - Specifies the data type of the sequence. Valid types are bigint, integer,
+      and smallint. bigint is the default. The data type determines the default
+      minimum and maximum values of the sequence. For more info see the
+      documention
+      U(https://www.postgresql.org/docs/current/sql-createsequence.html).
     - Supported from PostgreSQL 10.
-    required: false
     choices: [ bigint, integer, smallint ]
     type: str
   increment:
     description:
-    - Increment specifies which value is added to the current sequence value to create a new value.
-    - A positive value will make an ascending sequence, a negative one a descending sequence. The default value is 1.
-    required: false
+    - Increment specifies which value is added to the current sequence value
+      to create a new value.
+    - A positive value will make an ascending sequence, a negative one a
+      descending sequence. The default value is 1.
     type: int
   minvalue:
     description:
-    - Minvalue determines the minimum value a sequence can generate. The default for an ascending sequence is 1.
-      The default for a descending sequence is the minimum value of the data type.
-    required: false
+    - Minvalue determines the minimum value a sequence can generate. The
+      default for an ascending sequence is 1. The default for a descending
+      sequence is the minimum value of the data type.
     type: int
   maxvalue:
     description:
-    - Maxvalue determines the maximum value for the sequence. The default for an ascending sequence is the maximum
+    - Maxvalue determines the maximum value for the sequence. The default for
+      an ascending sequence is the maximum
       value of the data type. The default for a descending sequence is -1.
-    required: false
     type: int
   start:
     description:
-    - Start allows the sequence to begin anywhere. The default starting value is
-      I(minvalue) for ascending sequences and I(maxvalue) for descending ones.
-    required: false
+    - Start allows the sequence to begin anywhere. The default starting value
+      is I(minvalue) for ascending sequences and I(maxvalue) for descending
+      ones.
     type: int
   cache:
     description:
@@ -75,57 +79,46 @@ options:
       stored in memory for faster access. The minimum value is 1 (only one
       value can be generated at a time, i.e., no cache), and this is also
       the default.
-    required: false
     type: int
   cycle:
     description:
-    - The cycle option allows the sequence to wrap around when the I(maxvalue) or I(minvalue) has been reached by an
-      ascending or descending sequence respectively. If the limit is reached, the next number generated will be the
-      minvalue or maxvalue, respectively.
-    - If false (NO CYCLE) is specified, any calls to nextval after the sequence has reached its maximum value will
-      return an error. False (NO CYCLE) is the default.
-    required: false
+    - The cycle option allows the sequence to wrap around when the I(maxvalue)
+      or I(minvalue) has been reached by an ascending or descending sequence
+      respectively. If the limit is reached, the next number generated will be
+      the minvalue or maxvalue, respectively.
+    - If false (NO CYCLE) is specified, any calls to nextval after the sequence
+      has reached its maximum value will return an error. False (NO CYCLE) is
+      the default.
     type: bool
   cascade:
     description:
     - Automatically drop objects that depend on the sequence, and in turn all
       objects that depend on those objects.
     - Only used when I(state=absent).
-    required: false
-    type: bool
-  restrict:
-    description:
-    - Refuse to drop the sequence if any objects depend on it. This is the default.
-    - Only used when I(state=absent).
-    required: false
     type: bool
   rename_to:
     description:
     - The new name for the I(sequence).
     - Works only for existing sequences.
-    required: false
     type: str
   owner:
     description:
     - Set the owner for the I(sequence).
     - Works only for existing sequences.
-    required: false
     type: str
   schema:
     description:
     - The schema in the new I(sequence) will be created.
-    required: false
     type: str
   newschema:
     description:
     - The new schema for the I(sequence).
     - Works only for existing sequences.
-    required: false
     type: str
   session_role:
     description:
-    - Switch to session_role after connecting. The specified I(session_role) must
-      be a role that the current I(login_user) is a member of.
+    - Switch to session_role after connecting. The specified I(session_role)
+      must be a role that the current I(login_user) is a member of.
     - Permissions checking for SQL commands is carried out as though
       the I(session_role) were the one that had logged in originally.
     type: str
@@ -197,19 +190,23 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Create an ascending sequence called foobar
+- name: Create an ascending bigint sequence called foobar in the default
+        database
   postgresql_sequence:
     name: foobar
 
-- name: Create an ascending sequence called foobar, starting at 101
+- name: Create an ascending integer sequence called foobar, starting at 101
   postgresql_sequence:
     name: foobar
+    data_type: integer
     start: 101
 
-- name: Create an descending sequence called foobar, starting at 101
+- name: Create an descending sequence called foobar, starting at 101 and
+        preallocated 10 sequence numbers in cache
   postgresql_sequence:
     name: foobar
     increment: -1
+    cache: 10
     start: 101
 
 - name: Create an ascending sequence called foobar, which cycle between 1 to 10
@@ -229,9 +226,20 @@ EXAMPLES = r'''
     name: foobar
     newschema: foobar
 
+- name: Change the owner of an existing sequence to foobar
+  postgresql_sequence:
+    name: foobar
+    owner: foobar
+
 - name: Drop a sequence called foobar
   postgresql_sequence:
     name: foobar
+    state: absent
+
+- name: Drop a sequence called foobar with cascade
+  postgresql_sequence:
+    name: foobar
+    cascade: yes
     state: absent
 '''
 
@@ -262,8 +270,9 @@ data_type:
     type: str
     sample: 'bigint'
 increment:
-    description: The value of increment of the sequence. A positive value will make
-                 an ascending sequence, a negative one a descending sequence.
+    description: The value of increment of the sequence. A positive value will
+                 make an ascending sequence, a negative one a descending
+                 sequence.
     returned: always
     type: int
     sample: '-1'
@@ -325,7 +334,8 @@ def connect_to_db(module, kw, autocommit=False):
             if psycopg2.__version__ >= '2.4.2':
                 db_connection.set_session(autocommit=True)
             else:
-                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+                db_connection.set_isolation_level(
+                    psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
@@ -445,7 +455,7 @@ class Sequence(object):
 
         return self.__exec_sql(query, ddl=True)
 
-    def drop(self, cascade=False, restrict=True, schema=None):
+    def drop(self, cascade=False, schema=None):
         query = "DROP SEQUENCE"
         if schema:
             query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
@@ -455,8 +465,6 @@ class Sequence(object):
 
         if cascade:
             query += " CASCADE"
-        elif restrict:
-            query += " RESTRICT"
 
         return self.__exec_sql(query, ddl=True)
 
@@ -532,7 +540,6 @@ def main():
         cycle=dict(type='bool'),
         schema=dict(type='str'),
         cascade=dict(type='bool'),
-        restrict=dict(type='bool'),
 
         rename_to=dict(type='str'),
         owner=dict(type='str'),
@@ -560,7 +567,6 @@ def main():
     cache = module.params["cache"]
     cycle = module.params["cycle"]
     cascade = module.params["cascade"]
-    restrict = module.params["restrict"]
     rename_to = module.params["rename_to"]
     schema = module.params["schema"]
     owner = module.params["owner"]
@@ -577,30 +583,20 @@ def main():
                              "start, cache, cycle, "
                              "rename_to, newschema or owner" % sequence)
 
-    if rename_to and (data_type or increment or minvalue or maxvalue or start or
-                      cache or cycle or cascade or restrict or
-                      newschema or owner):
+    if rename_to and (data_type or increment or minvalue or maxvalue or start
+                      or cache or cycle or cascade or newschema or owner):
         module.fail_json(msg="'%s': rename_to is mutually exclusive with: "
                              "data_type, increment, minvalue, maxvalue, "
                              "start, cache, cycle, cascade, "
-                             "restrict, newschema or owner" % sequence)
+                             "newschema or owner" % sequence)
 
     if cascade and (data_type or increment or minvalue or maxvalue or start or
-                    cache or cycle or restrict or rename_to or
+                    cache or cycle or rename_to or
                     newschema or owner):
         module.fail_json(msg="'%s': cascade is mutually exclusive with: "
                              "data_type, increment, minvalue, "
                              "maxvalue, start, cache, cycle, "
-                             "restrict, rename_to, newschema "
-                             "or owner" % sequence)
-
-    if restrict and (data_type or increment or minvalue or maxvalue or start or
-                     cache or cycle or cascade or rename_to or
-                     newschema or owner):
-        module.fail_json(msg="'%s': restrict is mutually exclusive with: "
-                             "data_type, increment, minvalue, "
-                             "maxvalue, start, cache, cycle, "
-                             "cascade, rename_to, newschema "
+                             "rename_to, newschema "
                              "or owner" % sequence)
 
     # To use defaults values, keyword arguments must be absent, so
@@ -661,8 +657,10 @@ def main():
         if owner:
             module.fail_json(msg="Sequence '%s' does not exist, owner can't be set during creation" % sequence)
 
-        changed = sequence_obj.create(data_type=data_type, increment=increment, minimum_value=minvalue,
-                                      maximum_value=maxvalue, start=start, cache=cache, cycle_option=cycle,
+        changed = sequence_obj.create(data_type=data_type, increment=increment,
+                                      minimum_value=minvalue,
+                                      maximum_value=maxvalue, start=start,
+                                      cache=cache, cycle_option=cycle,
                                       schema=schema)
 
     # Drop non-existing sequence
@@ -672,7 +670,7 @@ def main():
 
     # Drop existing sequence
     elif sequence_obj.exists and state == 'absent':
-        changed = sequence_obj.drop(cascade=cascade, restrict=restrict, schema=schema)
+        changed = sequence_obj.drop(cascade=cascade, schema=schema)
 
     # Rename sequence
     if sequence_obj.exists and rename_to:
