@@ -171,6 +171,7 @@ try:
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
     from azure.mgmt.loganalytics import LogAnalyticsManagementClient
     import azure.mgmt.loganalytics.models as LogAnalyticsModels
+    from azure.mgmt.msi import ManagedServiceIdentityClient
     from azure.mgmt.automation import AutomationClient
     import azure.mgmt.automation.models as AutomationModel
     from azure.mgmt.iothub import IotHubClient
@@ -328,6 +329,7 @@ class AzureRMModuleBase(object):
         self._resource = None
         self._log_analytics_client = None
         self._servicebus_client = None
+        self._msi_client = None
         self._automation_client = None
         self._IoThub_client = None
         self._lock_client = None
@@ -1052,6 +1054,15 @@ class AzureRMModuleBase(object):
             self._servicebus_client = self.get_mgmt_svc_client(ServiceBusManagementClient,
                                                                base_url=self._cloud_environment.endpoints.resource_manager)
         return self._servicebus_client
+
+    @property
+    def msi_client(self):
+        self.log('Getting msi client')
+        if not self._msi_client:
+            self._msi_client = self.get_mgmt_svc_client(ManagedServiceIdentityClient,
+                                                   base_url=self._cloud_environment.endpoints.resource_manager)
+
+        return self._msi_client
 
     @property
     def servicebus_models(self):
