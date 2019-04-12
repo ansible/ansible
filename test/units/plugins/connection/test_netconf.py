@@ -63,7 +63,7 @@ class TestNetconfConnectionClass(unittest.TestCase):
         pc = PlayContext()
         conn = connection_loader.get('netconf', pc, '/dev/null')
 
-        self.assertEqual('default', conn._network_os)
+        self.assertEqual('auto', conn._network_os)
         self.assertIsNone(conn._manager)
         self.assertFalse(conn._connected)
 
