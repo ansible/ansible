@@ -312,9 +312,9 @@ def get_aws_connection_info(module, boto3=False):
         boto_params['validate_certs'] = validate_certs
 
     if config is not None:
-        if boto3:
+        if HAS_BOTO3 and boto3:
             boto_params['config'] = config
-        else:
+        elif HAS_BOTO and not boto3:
             if 'user_agent' in config:
                 sys.modules["boto.connection"].UserAgent = config['user_agent']
 
