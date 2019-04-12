@@ -29,6 +29,7 @@ options:
       - Database port to connect to.
     type: int
     default: 5432
+    aliases: [ login_port ]
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
