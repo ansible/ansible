@@ -259,7 +259,7 @@
     rights: send
   register: output
 
-- name: Assert the event hub was deleted
+- name: Assert the sas policy was created
   assert:
     that:
        - output.changed
@@ -275,7 +275,7 @@
     rights: listen_send
   register: output
 
-- name: Assert the event hub was deleted
+- name: Assert the sas policy was updated
   assert:
     that:
        - output.changed
@@ -293,11 +293,68 @@
     rights: listen_send
   register: output
 
-- name: Assert the event hub was deleted
+- name: Assert the sas policy was updated
   assert:
     that:
        - output.changed
        - output.id != None
+
+- name: Create a consumer group
+  azure_rm_eventhubconsumergroup:
+    consumer_group: testconsumergroup
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- name: Assert the consumer group was created
+  assert:
+    that:
+       - output.changed
+       - output.state['id'] != None
+       - output.state['name'] != None
+
+- name: Update a consumer group
+  azure_rm_eventhubconsumergroup:
+    consumer_group: testconsumergroup
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    user_metadata: testdata
+  register: output
+
+- name: Assert the consumer group was updated
+  assert:
+    that:
+       - output.changed
+       - output.state['id'] != None
+       - output.state['user_metadata'] != None
+
+- name: Update a consumer group (idempotent)
+  azure_rm_eventhubconsumergroup:
+    consumer_group: testconsumergroup
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    user_metadata: testdata
+  register: output
+
+- name: Assert the consumer group was updated
+  assert:
+    that: not output.changed
+
+- name: Delete a consumer group
+  azure_rm_eventhubconsumergroup:
+    consumer_group: testconsumergroup
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: output
+
+- name: Assert the consumer group was deleted
+  assert:
+    that: output.changed
 
 - name: Delete first event hub
   azure_rm_eventhub:
