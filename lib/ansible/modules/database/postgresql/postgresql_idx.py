@@ -71,7 +71,7 @@ options:
   concurrent:
     description:
     - Enable or disable concurrent mode (CREATE / DROP INDEX CONCURRENTLY).
-    - Pay attention, if I(concurrent=no), the table will be locked (ACCESS EXCLUSIVE) during operation.
+    - Pay attention, if I(concurrent=no), the table will be locked (ACCESS EXCLUSIVE) during the building process.
       For more information about the lock levels see U(https://www.postgresql.org/docs/current/explicit-locking.html).
     - If the building process was interrupted for any reason when I(cuncurrent=yes), the index becomes invalid.
       In this case it should be dropped and created again.
