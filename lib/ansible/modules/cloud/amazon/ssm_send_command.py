@@ -14,16 +14,22 @@
 
 # Based on https://github.com/ansible/ansible/pull/19868
 
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 module: ssm_send_command
 short_description: Execute commands through Simple System Manager (SSM) a.k.a. Run Command
 description:
   - This module allows you to execute commands through SSM/Run Command.
-version_added: "2.3"
+version_added: "2.8"
 extends_documentation_fragment:
   - aws
-author: "Joe Wozniak <woznij@amazon.com>"
+author: "Joe Wozniak (woznij@amazon.com)"
 requirements:
   - python >= 2.6
   - boto3
@@ -35,19 +41,19 @@ options:
   name:
     description:
       - This should match the name of the SSM document to be invoked.
+    type: string
     required: true
-    default: NONE
   comment:
     description:
       - A comment about this particular invocation.
     required: false
-    default: NONE
+    type: str
   instance_ids:
     description:
-      - This should contain an array of instance IDs for the instances you
-        wish to run this command document against.
+      - A list of instance IDs for the instances you wish to run this command
+        document against.
     required: true
-    default: NONE
+    type: list
   wait:
     description:
       - Whether to wait for the function results or not. If I(wait) is false,
@@ -55,6 +61,7 @@ options:
         complete, set C(wait=true) and the result will be available in the
         I(output) key.
     required: false
+    type: bool
     default: true
   parameters:
     description:
@@ -62,6 +69,9 @@ options:
         you're invoking.
     required: false
     default: {}
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -85,17 +95,17 @@ EXAMPLES = '''
 
 RETURN = '''
 output:
-    description: If wait=true, will return the status of sent command.
+    description: If wait=true, will return the output of the executed command.
     returned: success
-    type: dict
-    sample: "{ 'output': 'something' }"
+    type: str
+    sample: "Updating amazon-ssm-agent from 2.3.372.0 to latest"
 status:
-    description: C(Status) of AWS SSM API call
+    description: Status of the run command.
+    returned: always
     type: str
     sample: Success
 '''
 
-from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, AWSRetry
 import traceback
@@ -123,7 +133,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        wait=dict(choices=BOOLEANS, default=True, type='bool'),
+        wait=dict(default=True, type='bool'),
         comment=dict(),
         instance_ids=dict(required=True, type='list'),
         parameters=dict(default={}, type='dict')
