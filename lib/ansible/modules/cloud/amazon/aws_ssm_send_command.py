@@ -26,8 +26,8 @@ module: aws_ssm_send_command
 short_description: Execute commands through Simple System Manager (SSM) a.k.a. Run Command
 description:
   - This module allows you to execute commands through SSM/Run Command.
-version_added: "2.8"
-author: "Joe Wozniak (woznij)"
+version_added: "2.9"
+author: "Joe Wozniak (@woznij)"
 requirements:
   - python >= 2.6
   - boto3
@@ -69,6 +69,7 @@ options:
     default: {}
 extends_documentation_fragment:
     - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -87,10 +88,10 @@ EXAMPLES = '''
 
 RETURN = '''
 output:
-    description: If wait=true, will return the output of the executed command.
+    description: If wait=true, will return the output of the executed command. Sample truncated for brevity.
     returned: success
     type: str
-    sample: "Updating amazon-ssm-agent from 2.3.539.0 to latest\nSuccessfully downloaded https://s3.us-west-2.amazonaws.com/amazon-ssm-us-west-2/ssm-agent-manifest.json\namazon-ssm-agent 2.3.539.0 has already been installed, update skipped\n"
+    sample: "Updating amazon-ssm-agent from 2.3.539.0 to latest\nSuccessfully downloaded https://s3.us-west-2.amazonaws.com/amazon-ssm-us-west-2/ssm-agent..."
 status:
     description: Status of the run command.
     returned: success
