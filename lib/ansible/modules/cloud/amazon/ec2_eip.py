@@ -388,9 +388,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_together=[
-            ['device_id', 'private_ip_address'],
-        ],
+        required_by={
+            'private_ip_address': ['device_id'],
+        },
     )
 
     if not HAS_BOTO:
