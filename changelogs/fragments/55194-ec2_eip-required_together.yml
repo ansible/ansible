@@ -1,0 +1,2 @@
+minor_changes:
+  - In ec2_eip, device_id is required when private_ip_address is set, but the reverse is not true (https://github.com/ansible/ansible/pull/55194).
