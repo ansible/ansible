@@ -125,15 +125,12 @@ def integration_test_environment(args, target, inventory_path):
     if args.no_temp_workdir or 'no/temp_workdir/' in target.aliases:
         display.warning('Disabling the temp work dir is a temporary debugging feature that may be removed in the future without notice.')
 
-        integration_dir = 'test/integration'
+        integration_dir = os.path.abspath('test/integration')
+        inventory_path = os.path.abspath(inventory_path)
         ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
+        vars_file = os.path.join(integration_dir, vars_file)
 
-        inventory_name = os.path.relpath(inventory_path, integration_dir)
-
-        if '/' in inventory_name:
-            inventory_name = inventory_path
-
-        yield IntegrationEnvironment(integration_dir, inventory_name, ansible_config, vars_file)
+        yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
         return
 
     root_temp_dir = os.path.expanduser('~/.ansible/test/tmp')
@@ -216,7 +213,10 @@ def integration_test_environment(args, target, inventory_path):
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        yield IntegrationEnvironment(integration_dir, inventory_name, ansible_config, vars_file)
+        inventory_path = os.path.join(integration_dir, inventory_name)
+        vars_file = os.path.join(integration_dir, vars_file)
+
+        yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
     finally:
         if not args.explain:
             shutil.rmtree(temp_dir)
