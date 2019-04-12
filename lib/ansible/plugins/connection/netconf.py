@@ -44,8 +44,8 @@ options:
     description:
       - Configures the device platform network operating system.  This value is
         used to load a device specific netconf plugin.  If this option is not
-        configured (or set to auto), then ansible will attempt to guess the 
-        correct network_os to use. 
+        configured (or set to auto), then ansible will attempt to guess the
+        correct network_os to use.
         If it can not guess a network_os correctly it will use default.
     vars:
       - name: ansible_network_os
@@ -317,7 +317,7 @@ class Connection(NetworkConnectionBase):
             self._network_os = 'default'
 
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
-        
+
         try:
             port = self._play_context.port or 830
             self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s WITH SSH_CONFIG = %s" %
