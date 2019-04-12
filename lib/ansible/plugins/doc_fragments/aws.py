@@ -50,6 +50,12 @@ options:
       - Uses a boto profile. Only works with boto >= 2.24.0.
     type: str
     version_added: "1.6"
+  aws_config:
+    description:
+      - A dictionary to modify the botocore configuration.
+      - Parameters can be found at U(https://botocore.amazonaws.com/v1/documentation/api/latest/reference/config.html#botocore.config.Config).
+    type: dict
+    version_added: "2.9"
 requirements:
   - python >= 2.6
   - boto
