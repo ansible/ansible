@@ -38,8 +38,9 @@ def main():
         'test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1',
         'test/utils/shippable/timing.py',
         'test/integration/targets/old_style_modules_posix/library/helloworld.sh',
-        # Python 3-only.  Only run by release engineers
+        # The following are Python 3.6+.  Only run by release engineers
         'hacking/release-announcement.py',
+        'hacking/porting-guide.py',
     ])
 
     # see https://unicode.org/faq/utf_bom.html#bom1
