@@ -463,6 +463,24 @@ class AzureRMModuleBase(object):
         resource_dict['subscription_id'] = resource_dict.get('subscription_id', self.subscription_id)
         return resource_dict
 
+    def normalize_resource_id(self, resource_id, pattern):
+        '''
+        Return a proper resource id string..
+
+        :param resource_id: It could be a resource name, resource id or dict containing parts from the pattern.
+        :param pattern: pattern of resource is, just like in Azure Swagger
+        '''
+        return resource_id
+
+    def idempotency_check(self, old_params, new_params):
+        '''
+        Return True if something changed. Function will use fields from module_arg_spec to perform dependency checks.
+
+        :param old_params: old parameters dictionary, body from Get request.
+        :param new_params: new parameters dictionary, unpacked module parameters.
+        '''
+        return False
+
     def serialize_obj(self, obj, class_name, enum_modules=None):
         '''
         Return a JSON representation of an Azure object.
