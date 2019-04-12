@@ -27,7 +27,6 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
@@ -41,7 +40,7 @@ __all__ = ['RoleDefinition']
 display = Display()
 
 
-class RoleDefinition(Base, Become, Conditional, Taggable, CollectionSearch):
+class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     _role = FieldAttribute(isa='string')
 
