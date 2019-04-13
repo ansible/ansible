@@ -991,11 +991,13 @@ class TaskParameters(DockerBaseClass):
             group_add='groups',
             devices='devices',
             pid_mode='pid_mode',
-            tmpfs='tmpfs',
             init='init',
             uts_mode='uts',
             auto_remove='auto_remove',
         )
+
+        if self.client.docker_py_version >= LooseVersion('1.8'):
+            host_config_params['tmpfs'] = 'tmpfs'
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
             # blkio_weight can always be updated, but can only be set on creation
@@ -2260,7 +2262,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             oom_score_adj=dict(docker_api_version='1.22', docker_py_version='2.0.0'),
             shm_size=dict(docker_api_version='1.22'),
             stop_signal=dict(docker_api_version='1.21'),
-            tmpfs=dict(docker_api_version='1.22'),
+            tmpfs=dict(docker_api_version='1.22', docker_py_version='1.8.0'),
             volume_driver=dict(docker_api_version='1.21'),
             memory_reservation=dict(docker_api_version='1.21'),
             kernel_memory=dict(docker_api_version='1.21'),

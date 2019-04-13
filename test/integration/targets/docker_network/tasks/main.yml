@@ -27,7 +27,7 @@
       force: yes
     loop: "{{ dnetworks }}"
 
-  when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.20', '>=')  # FIXME: find out API version!
+  when: docker_py_version is version('1.7.0', '>=') and docker_api_version is version('1.20', '>=')  # FIXME: find out API version!
 
 - fail: msg="Too old docker / docker-py version to run docker_network tests!"
-  when: not(docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)
+  when: not(docker_py_version is version('1.7.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)
