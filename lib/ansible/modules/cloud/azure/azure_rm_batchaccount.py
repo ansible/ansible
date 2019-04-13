@@ -34,7 +34,6 @@ options:
     location:
         description:
         - Specifies the supported Azure location where the resource exists.
-        required: true
     auto_storage_account:
         description:
         - The ID of the Batch Account auto storage account.
@@ -89,13 +88,20 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-    - The identifier of the Batch Account resource.
+    - The ID of the Batch account.
     returned: always
     type: str
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Batch/batchAccounts/sampleacct"
+account_endpoint:
+    description:
+    - The account endpoint used to interact with the Batch service.
+    returned: always
+    type: str
+    sample: sampleacct.westus.batch.azure.com
 '''
 
 import time
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 try:
@@ -127,7 +133,6 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 type='str'
             ),
             location=dict(
-                required=True,
                 type='str'
             ),
             auto_storage_account=dict(
@@ -167,14 +172,9 @@ class AzureRMBatchAccount(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        required_if = [
-            ('state', 'present', [])
-        ]
-
         super(AzureRMBatchAccount, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                   supports_check_mode=True,
-                                                  supports_tags=True,
-                                                  required_if=required_if)
+                                                  supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -184,6 +184,11 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
                 self.batch_account[key] = kwargs[key]
+
+        resource_group = self.get_resource_group(self.resource_group)
+        if not self.location:
+            self.location = resource_group.location
+        self.location = normalize_location_name(self.location)
         self.batch_account['pool_allocation_mode'] = _snake_to_camel(self.batch_account['pool_allocation_mode'], True)
 
         response = None
@@ -231,7 +236,8 @@ class AzureRMBatchAccount(AzureRMModuleBase):
 
         if self.state == 'present':
             self.results.update({
-                'id': response.get('id', None)
+                'id': response.get('id', None),
+                'account_endpoint': response.get('account_endpoint', None)
             })
         return self.results
 
