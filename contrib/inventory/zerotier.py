@@ -23,9 +23,13 @@
 ZeroTier external inventory script
 ==================================
 
-Generates Ansible inventory from a ZeroTier network.
+Generates Ansible inventory from a ZeroTier network.  This script takes configuration from a file named zerotier.ini or the following environmental variables:
+    ZT_CONTROLLER - String, URL to the ZeroTier controller
+    ZT_NETWORK - String, ZeroTier network ID
+    ZT_TOKEN - String, ZeroTier authentication token
+    ZT_INCLUDEOFFLINE - Boolean, include offline hosts in generated inventory
 
-usage: zerotier.py [--list] [--host HOST]
+usage: zerotier.py [--list]
 """
 
 # Standard imports
@@ -134,15 +138,28 @@ class ZeroTierInventory(object):
             my_dict[key] = [element]
 
     def read_settings(self):
-        """Reads the settings from the .ini file"""
-        config = ConfigParser.ConfigParser()
-        config.read(
-            os.path.dirname(os.path.realpath(__file__)) + '/zerotier.ini')
+        """Reads the settings from the .ini file and environment"""
+        config_file = os.path.dirname(
+            os.path.realpath(__file__)) + '/zerotier.ini'
 
-        self.controller = config.get('zerotier', 'controller')
-        self.network = config.get('zerotier', 'network')
-        self.token = config.get('zerotier', 'token')
-        self.include_offline = config.getboolean('zerotier', 'include_offline')
+        if os.path.isfile(config_file):
+            config = ConfigParser.ConfigParser()
+            config.read(config_file)
+
+            self.controller = config.get('zerotier', 'controller')
+            self.network = config.get('zerotier', 'network')
+            self.token = config.get('zerotier', 'token')
+            self.include_offline = config.getboolean('zerotier',
+                                                     'include_offline')
+
+        if os.environ.get('ZT_CONTROLLER'):
+            self.controller = os.environ.get('ZT_CONTROLLER')
+        if os.environ.get('ZT_NETWORK'):
+            self.network = os.environ.get('ZT_NETWORK')
+        if os.environ.get('ZT_TOKEN'):
+            self.token = os.environ.get('ZT_TOKEN')
+        if os.environ.get('ZT_INCLUDEOFFLINE'):
+            self.include_offline = os.environ.get('ZT_INCLUDEOFFLINE')
 
 
 if __name__ == '__main__':
