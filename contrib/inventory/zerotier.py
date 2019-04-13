@@ -159,6 +159,8 @@ class ZeroTierInventory(object):
             self.token = os.environ.get('ZT_TOKEN')
         if os.environ.get('ZT_INCLUDEOFFLINE'):
             self.include_offline = os.environ.get('ZT_INCLUDEOFFLINE')
+            if self.include_offline in ('False', 'false', '0'):
+                self.include_offline = False
 
 
 if __name__ == '__main__':
