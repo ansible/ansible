@@ -1248,7 +1248,7 @@ class RedfishUtils(object):
         entries = []
 
         # Because _find_managers_resource() only find last Manager uri in self.manager_uri, not one list. This should be 1 issue.
-        # I have to put manager_uri into list to reduce future changes when the issue is fixed  
+        # I have to put manager_uri into list to reduce future changes when the issue is fixed.
         resource_uris = [self.manager_uri]
 
         for resource_uri in resource_uris:
