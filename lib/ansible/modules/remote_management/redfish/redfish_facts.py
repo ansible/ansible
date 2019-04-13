@@ -316,7 +316,7 @@ def main():
                 if command == "GetManagerNicInventory":
                     result["manager_nics"] = rf_utils.get_multi_nic_inventory(category)
                 elif command == "GetVirtualMedia":
-                    result["virtual_media"] = rf_utils.get_multi_virtualmedia(category)
+                    result["virtual_media"] = rf_utils.get_multi_virtualmedia()
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 

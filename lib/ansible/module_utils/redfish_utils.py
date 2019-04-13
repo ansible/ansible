@@ -505,7 +505,7 @@ class RedfishUtils(object):
             result['ret'] = True
             data = response['data']
 
-            if data[u'Members']:
+            if data.get('Members'):
                 for controller in data[u'Members']:
                     controller_list.append(controller[u'@odata.id'])
                 for c in controller_list:
@@ -521,7 +521,7 @@ class RedfishUtils(object):
                         response = self.get_request(self.root_uri + volumes_uri)
                         data = response['data']
 
-                        if data[u'Members']:
+                        if data.get('Members'):
                             for volume in data[u'Members']:
                                 volume_list.append(volume[u'@odata.id'])
                             for v in volume_list:
@@ -545,10 +545,12 @@ class RedfishUtils(object):
                                             drive_id_link = link[u'@odata.id']
                                             drive_id = drive_id_link.split("/")[-1]
                                             drive_id_list.append({'Id': drive_id})
-                                        volume_result['Linked_disk'] = drive_id_list
+                                        volume_result['Linked_drives'] = drive_id_list
 
                                 volume_results.append(volume_result)
                 result["entries"].append(volume_results)
+        else:
+            return {'ret': False, 'msg': "Storage resource not found"}
 
         return result
 
@@ -1241,16 +1243,13 @@ class RedfishUtils(object):
         result["entries"] = virtualmedia_results
         return result
 
-    def get_multi_virtualmedia(self, resource_type):
+    def get_multi_virtualmedia(self):
         ret = True
         entries = []
 
-        #  Given resource_type, use the proper URI
-        if resource_type == 'Systems':
-            resource_uris = self.systems_uris
-        elif resource_type == 'Manager':
-            # put in a list to match what we're doing with systems_uris
-            resource_uris = [self.manager_uri]
+        # Because _find_managers_resource() only find last Manager uri in self.manager_uri, not one list. This should be 1 issue.
+        # I have to put manager_uri into list to reduce future changes when the issue is fixed  
+        resource_uris = [self.manager_uri]
 
         for resource_uri in resource_uris:
             virtualmedia = self.get_virtualmedia(resource_uri)
