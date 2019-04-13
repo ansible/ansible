@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # (c) 2019, Brian Clemens <brian@tiuxo.com>
@@ -121,8 +121,7 @@ class ZeroTierInventory(object):
     def parse_cli_args(self):
         """Command line argument processing"""
         parser = argparse.ArgumentParser(
-            description=
-            'Produce an Ansible inventory file based on a ZeroTier network')
+            description='Produce an Ansible inventory from a ZeroTier network')
         parser.add_argument(
             '--list',
             action='store_true',
