@@ -121,8 +121,8 @@ virt_domains_live:
 '''
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.six import reraise, string_types
 from collections import defaultdict
-import ansible.module_utils.six as six
 import sys
 import traceback
 
@@ -148,7 +148,7 @@ class Config():
         try:
             self._etree = etree.fromstring(xml)
         except etree.ParseError as e:
-            six.reraise(type(e), 'Error parsing domain XML, ' + str(e), sys.exc_info()[2])
+            reraise(type(e), 'Error parsing domain XML, ' + str(e), sys.exc_info()[2])
 
     def __str__(self):
         return etree.tostring(self._etree, encoding='utf-8')
@@ -261,7 +261,7 @@ def get_facts(config, domain_stats):
 
     for key in wanted:
         config_item = getattr(config, key)
-        if isinstance(config_item, six.string_types) or isinstance(config_item, int):
+        if isinstance(config_item, string_types) or isinstance(config_item, int):
             facts[key] = config_item
         elif isinstance(config_item, list):
             new_items = list()
@@ -270,8 +270,7 @@ def get_facts(config, domain_stats):
                     # The first key in the output from etree_to_dict is the tag name for the
                     # current element. This is not required as we use the propery name from the
                     # Config object. So only get the value here.
-                    item_dict = flatten_dict(list(
-                        six.itervalues(etree_to_dict(item)))[0])
+                    item_dict = flatten_dict(list(etree_to_dict(item).values())[0])
                     if key == 'disk':
                         # The "domain stats" include information about the size and usage of
                         # qcow2 (and maybe other) disk images. Merge the relevant items here
