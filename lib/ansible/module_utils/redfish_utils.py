@@ -551,6 +551,8 @@ class RedfishUtils(object):
                 result["entries"].append(volume_results)
         else:
             return {'ret': False, 'msg': "Storage resource not found"}
+        else:
+            return {'ret': False, 'msg': "Storage resource not found"}
 
         return result
 
