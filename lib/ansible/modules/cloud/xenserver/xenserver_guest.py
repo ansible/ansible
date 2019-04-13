@@ -93,6 +93,12 @@ options:
     - UUID of a template, an existing VM or a snapshot that should be used to create VM.
     - It is required if template name is not unique.
     type: str
+  is_snapshot:
+    description:
+    - Create a snapshot for a VM.
+    type: bool
+    default: no
+    version_added: "2.9"
   is_template:
     description:
     - Convert VM to template.
@@ -223,6 +229,18 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: deploy
 
+- name: Create a snapshot for a VM
+  xenserver_guest:
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
+    validate_certs: no
+    folder: /testvms
+    name: testvm_6
+    is_snapshot: yes
+  delegate_to: localhost
+  register: deploy
+
 - name: Create a VM template
   xenserver_guest:
     hostname: "{{ xenserver_hostname }}"
@@ -324,6 +342,7 @@ instance:
             "num_cpus": 4
         },
         "home_server": "",
+        "is_snapshot": false,
         "is_template": false,
         "name": "testvm_11",
         "name_desc": "",
@@ -1011,7 +1030,9 @@ class XenServerVM(XenServerObject):
                             custom_param_value = self.module.params['custom_params'][position]['value']
                             self.xapi_session.xenapi_request("VM.set_%s" % custom_param_key, (self.vm_ref, custom_param_value))
 
-            if self.module.params['is_template']:
+            if self.module.params['is_snapshot']:
+                self.xapi_session.xenapi.VM.set_is_a_snapshot(self.vm_ref, True)
+            elif self.module.params['is_template']:
                 self.xapi_session.xenapi.VM.set_is_a_template(self.vm_ref, True)
             elif "need_poweredoff" in config_changes and self.module.params['force'] and vm_power_state_save != 'halted':
                 self.set_power_state("poweredon")
@@ -1766,6 +1787,7 @@ def main():
         uuid=dict(type='str'),
         template=dict(type='str', aliases=['template_src']),
         template_uuid=dict(type='str'),
+        is_snapshot=dict(type='bool', default=False),
         is_template=dict(type='bool', default=False),
         folder=dict(type='str'),
         hardware=dict(
@@ -1849,6 +1871,7 @@ def main():
                            ],
                            mutually_exclusive=[
                                ['template', 'template_uuid'],
+                               ['is_snapshot', 'is_template'],
                            ],
                            )
 
