@@ -6,6 +6,7 @@ __metaclass__ = type
 
 import crypt
 import multiprocessing
+import platform
 import random
 import string
 import sys
@@ -64,10 +65,14 @@ class BaseHash(object):
     algo = namedtuple('algo', ['crypt_id', 'salt_size', 'implicit_rounds'])
     algorithms = {
         'md5_crypt': algo(crypt_id='1', salt_size=8, implicit_rounds=None),
-        'bcrypt': algo(crypt_id='2a', salt_size=22, implicit_rounds=None),
         'sha256_crypt': algo(crypt_id='5', salt_size=16, implicit_rounds=5000),
         'sha512_crypt': algo(crypt_id='6', salt_size=16, implicit_rounds=5000),
     }
+    system = to_text(platform.system(), errors='surrogate_or_strict')
+    if system == u"OpenBSD":
+        algorithms['bcrypt'] = algo(crypt_id='2b', salt_size=22, implicit_rounds=None)
+    else:
+        algorithms['bcrypt'] = algo(crypt_id='2a', salt_size=22, implicit_rounds=None)
 
     def __init__(self, algorithm):
         self.algorithm = algorithm

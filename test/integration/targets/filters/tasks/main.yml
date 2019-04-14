@@ -354,3 +354,8 @@
     - assert:
         that:
           - "combined.key2 == 'is_defined'"
+- name: Test OpenBSD bcrypt algorithm
+  assert:
+    that:
+      "algotithms['bcrypt'] == algo(crypt_id='2b', salt_size=22, implicit_rounds=None)"
+  when: "{{ ( lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import platform; print(platform.system)\"')  is "OpenBSD" ) }}"
