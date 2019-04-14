@@ -23,6 +23,7 @@
   - name: Create a Swarm cluster
     docker_swarm:
       state: present
+      advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
     register: output
 
   - name: assert changed when create a new swarm cluster
@@ -147,6 +148,7 @@
   - name: Update swarm cluster to be locked
     docker_swarm:
       state: present
+      advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
       autolock_managers: true
     register: autolock_managers_update_output
 

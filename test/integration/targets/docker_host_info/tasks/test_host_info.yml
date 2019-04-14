@@ -183,6 +183,7 @@
     docker_host_info:
       disk_usage: yes
     register: output
+    ignore_errors: yes
 
   - name: assert reading docker host facts when docker is running and get disk usage
     assert:
@@ -200,6 +201,7 @@
       disk_usage: yes
       verbose_output: yes
     register: output
+    ignore_errors: yes
 
   - name: assert reading docker host facts when docker is running and get disk usage with verbose output
     assert:
