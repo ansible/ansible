@@ -285,4 +285,3 @@
       net_name: TestNetAppliance
       state: absent
     delegate_to: localhost
-
