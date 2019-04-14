@@ -45,7 +45,7 @@ class TestOnyxQosModule(TestOnyxModule):
     def test_qos_interface_ethernet_with_change(self):
         set_module_args(dict(interfaces=["Eth1/1"], trust="L2", rewrite_pcp="disabled",
                              rewrite_dscp="enabled"))
-        commands = ["no interface ethernet 1/1 qos rewrite pcp",
+        commands = ["interface ethernet 1/1 no qos rewrite pcp",
                     "interface ethernet 1/1 qos trust L2",
                     "interface ethernet 1/1 qos rewrite dscp"
                     ]

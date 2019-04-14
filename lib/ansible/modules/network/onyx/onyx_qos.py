@@ -35,7 +35,7 @@ options:
     description:
       - rewrite with type pcp.
     choices: ['enabled', 'disabled']
-    default: enabled
+    default: disabled
   rewrite_dscp:
     description:
       - rewrite with type dscp.
@@ -86,8 +86,8 @@ from ansible.module_utils.network.onyx.onyx import BaseOnyxModule
 
 class OnyxQosModule(BaseOnyxModule):
     TRUST_CMD = "interface {0} {1} qos trust {2}"
-    NO_REWRITE_PCP_CMD = "no interface {0} {1} qos rewrite pcp"
-    NO_REWRITE_DSCP_CMD = "no interface {0} {1} qos rewrite dscp"
+    NO_REWRITE_PCP_CMD = "interface {0} {1} no qos rewrite pcp"
+    NO_REWRITE_DSCP_CMD = "interface {0} {1} no qos rewrite dscp"
     REWRITE_PCP_CMD = "interface {0} {1} qos rewrite pcp"
     REWRITE_DSCP_CMD = "interface {0} {1} qos rewrite dscp"
 
@@ -114,7 +114,7 @@ class OnyxQosModule(BaseOnyxModule):
         element_spec = dict(
             interfaces=dict(type='list', required=True),
             trust=dict(choices=['L2', 'L3', 'both'], default='L2'),
-            rewrite_pcp=dict(choices=['enabled', 'disabled'], default='enabled'),
+            rewrite_pcp=dict(choices=['enabled', 'disabled'], default='disabled'),
             rewrite_dscp=dict(choices=['enabled', 'disabled'], default='disabled')
         )
         argument_spec = dict()
