@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: onyx_qos
-version_added: "2.8"
+version_added: "2.9"
 author: "Anas Badaha (@anasb)"
 short_description: Configures QoS
 description:
