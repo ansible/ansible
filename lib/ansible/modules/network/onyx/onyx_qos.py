@@ -69,12 +69,13 @@ commands:
   returned: always
   type: list
   sample:
-    - interface ethernet 1/15-1/16 qos trust L3
-    - interface mlag-port-channel 7-8 qos trust L3
+    - interface ethernet 1/16 qos trust L3
+    - interface mlag-port-channel 7 qos trust L3
     - interface port-channel 1 qos trust L3
-    - interface mlag-port-channel 7-8 qos trust L2
-    - interface mlag-port-channel 7-8 qos rewrite dscp
-    - interface ethernet 1/15-1/16 qos rewrite pcp
+    - interface mlag-port-channel 7 qos trust L2
+    - interface mlag-port-channel 7 qos rewrite dscp
+    - interface ethernet 1/16 qos rewrite pcp
+    - interface ethernet 1/1 no qos rewrite pcp
 """
 
 import re
