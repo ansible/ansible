@@ -74,6 +74,7 @@ Complete Steps for the above Example CLI Task
 [all_exos]
 S2
 S1
+
 # cat /etc/hosts
 192.168.75.110  S1
 192.168.75.105  S2
@@ -98,6 +99,7 @@ ansible_ssh_pass: xtrm_pass
 4. Create a playbook.yaml
 
 # cat playbook.yml
+
 ---
 - hosts: all
   tasks:
@@ -105,6 +107,7 @@ ansible_ssh_pass: xtrm_pass
     exos_command:
       commands: show version
     when: ansible_network_os == 'exos'
+
 
 5. Run the playbook using ansible-playbook
 
