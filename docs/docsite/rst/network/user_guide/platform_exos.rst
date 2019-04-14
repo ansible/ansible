@@ -69,7 +69,7 @@ Complete Steps for the above Example CLI Task
 ---------------------------------------------
 
 1.Ensure hosts are configured for inventory file and hosts files on the host OS :
-.. code-block:: yaml
+
 # cat ~/playbooks/hosts
 [all_exos]
 S2
@@ -79,7 +79,7 @@ S1
 192.168.75.105  S2
 
 2.Ensure the ansible.cfg is configured for the inventory path
-.. code-block:: yaml
+
 # cat ansible.cfg
 [defaults]
 ansible_python_interpreter = ~/ansible/venv/bin/python
@@ -87,7 +87,7 @@ host_key_checking = False
 inventory = ~/playbooks/hosts
 
 3. Create the group_vars/exos.yaml file
-.. code-block:: yaml
+
 # cat playbooks/group_vars/exos.yaml
 ---
 ansible_network_os: exos
@@ -96,7 +96,7 @@ ansible_user: xtrm_user
 ansible_ssh_pass: xtrm_pass
 
 4. Create a playbook.yaml
-.. code-block:: yaml
+
 # cat playbook.yml
 ---
 - hosts: all
@@ -107,7 +107,8 @@ ansible_ssh_pass: xtrm_pass
     when: ansible_network_os == 'exos'
 
 5. Run the playbook using ansible-playbook
-.. code-block:: yaml
+
+
 # ansible-playbook playbook.yml
 
 
