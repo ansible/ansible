@@ -35,6 +35,7 @@ testcase_data = {
                }
 }
 
+
 def load_fixture(name):
     path = os.path.join(fixture_path, name)
 
@@ -59,8 +60,9 @@ def module():
     set_module_args({'auth_key': 'abc123',
                      })
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False)    
+                           supports_check_mode=False)
     return MerakiModule(module)
+
 
 def test_define_protocol_https(module):
     module.params['use_https'] = True
@@ -68,16 +70,19 @@ def test_define_protocol_https(module):
     testdata = module.params['protocol']
     assert testdata == 'https'
 
+
 def test_define_protocol_http(module):
     module.params['use_https'] = False
     module.define_protocol()
     testdata = module.params['protocol']
     assert testdata == 'http'
 
+
 def test_is_org_valid_org_name(module):
     data = load_fixture('orgs.json')
     org_count = module.is_org_valid(data, org_name="My organization")
     assert org_count == 1
+
 
 def test_is_org_valid_org_id(module):
     data = load_fixture('orgs.json')
