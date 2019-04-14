@@ -313,7 +313,7 @@ def create_module_params():
             module.params.get('elasticsearchsettings')
 
     if module.params.get('wait'):
-        endpoint_parameters['wait']= module.boolean(module.params.get('wait'))
+        endpoint_parameters['wait'] = module.boolean(module.params.get('wait'))
     return endpoint_parameters
 
 
