@@ -85,7 +85,7 @@ EXAMPLES = '''
     # If the file is JSON or binary, Ansible might modify it (because
     # it is first decoded and later re-encoded). Base64-encoding the
     # file directly after reading it prevents this to happen.
-    data: "{{ lookup('file', '/path/to/secret/file') | base64 }}"
+    data: "{{ lookup('file', '/path/to/secret/file') | b64encode }}"
     data_is_b64: true
     state: present
 
