@@ -82,18 +82,27 @@ S1
 2.Ensure the ansible.cfg is configured for the inventory path
 
 # cat ansible.cfg
+
 [defaults]
+
 ansible_python_interpreter = ~/ansible/venv/bin/python
+
 host_key_checking = False
+
 inventory = ~/playbooks/hosts
 
 3. Create the group_vars/exos.yaml file
 
 # cat playbooks/group_vars/exos.yaml
+
 ---
+
 ansible_network_os: exos
+
 ansible_connection: network_cli
+
 ansible_user: xtrm_user
+
 ansible_ssh_pass: xtrm_pass
 
 4. Create a playbook.yaml
@@ -101,6 +110,7 @@ ansible_ssh_pass: xtrm_pass
 # cat playbook.yml
 
 ---
+
 - hosts: all
   tasks:
   - name: Retrieve EXOS OS version
