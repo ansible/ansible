@@ -40,6 +40,7 @@ options:
             - BFD session creation mode, the currently created BFD session
               only supports static or static auto-negotiation mode.
         choices: ['static', 'auto']
+        default: 'static'
     addr_type:
         description:
             - Specifies the peer IP address type.
@@ -99,7 +100,6 @@ EXAMPLES = '''
       session_name: bfd_l2link
       use_default_ip: true
       out_if_name: 10GE1/0/1
-      local_discr: 163
       remote_discr: 163
       provider: '{{ cli }}'
 
@@ -108,7 +108,6 @@ EXAMPLES = '''
       session_name: bfd_vlanif
       dest_addr: 10.1.1.6
       out_if_name: Vlanif100
-      local_discr: 163
       remote_discr: 163
       provider: '{{ cli }}'
 
