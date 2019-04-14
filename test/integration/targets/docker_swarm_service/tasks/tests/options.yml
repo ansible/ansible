@@ -919,8 +919,8 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     groups:
-      - 1234
-      - 5678
+      - "1234"
+      - "5678"
   register: groups_1
   ignore_errors: yes
 
@@ -931,8 +931,8 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     groups:
-      - 1234
-      - 5678
+      - "1234"
+      - "5678"
   register: groups_2
   ignore_errors: yes
 
@@ -943,7 +943,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     groups:
-      - 1234
+      - "1234"
   register: groups_3
   ignore_errors: yes
 
@@ -1001,7 +1001,7 @@
       test:
         - CMD
         - sleep
-        - 1
+        - "1"
       timeout: 2s
       interval: 0h0m2s3ms4us
       retries: 2
@@ -1035,7 +1035,7 @@
       test:
         - CMD
         - sleep
-        - 1
+        - "1"
       timeout: 3s
       interval: 0h1m2s3ms4us
       retries: 3
