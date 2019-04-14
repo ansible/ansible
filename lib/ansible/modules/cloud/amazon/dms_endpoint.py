@@ -120,7 +120,7 @@ options:
            be deleted when state = absent
        default: False
 author:
-   - Rui Moreira (@ruimoreira)
+   - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment: aws
 '''
 
