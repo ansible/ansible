@@ -13,11 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+__metaclass__ = type
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
-    'status': ['preview'],
-    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -118,15 +119,14 @@ options:
        description:
          - should wait for the object to be deleted when state = absent
        type: bool
+       default: 'false'
 author:
    - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
-
 # Note: These examples do not set authentication details
-
 # Endpoint Creation
 - dms_endpoint:
     state: absent
