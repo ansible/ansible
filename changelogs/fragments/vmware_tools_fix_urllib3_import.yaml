@@ -1,0 +1,2 @@
+minor_changes:
+- Try to use bundled urllib3 first, then falls back to non-bundled version in vmware_tools (https://github.com/ansible/ansible/pull/55187).
