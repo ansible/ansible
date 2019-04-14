@@ -95,22 +95,21 @@ inventory = ~/playbooks/hosts
 
 # cat playbooks/group_vars/exos.yaml
 
+.. code-block:: yaml
+
 ---
-
 ansible_network_os: exos
-
 ansible_connection: network_cli
-
 ansible_user: xtrm_user
-
 ansible_ssh_pass: xtrm_pass
 
 4. Create a playbook.yaml
 
 # cat playbook.yml
 
----
+.. code-block:: yaml
 
+---
 - hosts: all
   tasks:
   - name: Retrieve EXOS OS version
