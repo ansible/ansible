@@ -286,11 +286,11 @@ class FileCopy(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=hostname, username=username, password=password, port=port)
-        full_remote_path = '{}{}'.format(self.file_system, dest)
+        full_remote_path = '{0}{1}'.format(self.file_system, dest)
         scp = SCPClient(ssh.get_transport())
         try:
             scp.put(self.local_file, full_remote_path)
-        except:
+        except Exception:
             time.sleep(10)
             file_exists, temp_size = self.remote_file_exists(
                 dest, self.file_system)
@@ -356,7 +356,7 @@ class FileCopy(object):
 
         if not os.path.isfile(self.local_file):
             self.module.fail_json(
-                msg="Local file {} not found".format(self.local_file))
+                msg="Local file {0} not found".format(self.local_file))
 
         dest = self.remote_file or ('/' + os.path.basename(self.local_file))
         remote_exists, file_size = self.remote_file_exists(
