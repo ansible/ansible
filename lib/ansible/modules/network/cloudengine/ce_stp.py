@@ -167,7 +167,7 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec, exec_command
 
 
 class Stp(object):
@@ -219,20 +219,22 @@ class Stp(object):
     def cli_get_stp_config(self):
         """ Cli get stp configuration """
 
-        regular = "| include stp"
+        cmd = "display current-configuration | include stp"
 
-        flags = list()
-        flags.append(regular)
-        self.stp_cfg = get_config(self.module, flags)
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self._module.fail_json(msg=err)
+        self.stp_cfg = str(out).strip()
 
     def cli_get_interface_stp_config(self):
         """ Cli get interface's stp configuration """
 
         if self.interface:
-            regular = "| ignore-case section include ^interface %s$" % self.interface
-            flags = list()
-            flags.append(regular)
-            tmp_cfg = get_config(self.module, flags)
+            cmd = "display current-configuration | ignore-case section include ^interface %s$" % self.interface
+            rc, out, err = exec_command(self.module, cmd)
+            if rc != 0:
+                self._module.fail_json(msg=err)
+            tmp_cfg = str(out).strip()
 
             if not tmp_cfg:
                 self.module.fail_json(

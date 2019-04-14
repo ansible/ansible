@@ -135,32 +135,8 @@ changed:
 import re
 import copy
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_config, load_config, get_nc_config, set_nc_config
-
-CE_NC_GET_INTF = """
-<filter type="subtree">
-  <ifm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <interfaces>
-      <interface>
-        <ifName>%s</ifName>
-        <isL2SwitchPort></isL2SwitchPort>
-        <ifMtu></ifMtu>
-      </interface>
-    </interfaces>
-  </ifm>
-</filter>
-"""
-
-CE_NC_XML_MERGE_INTF_MTU = """
-  <ifm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <interfaces>
-      <interface operation="merge">
-        <ifName>%s</ifName>
-        <ifMtu>%s</ifMtu>
-      </interface>
-    </interfaces>
-  </ifm>
-"""
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, load_config
+from ansible.module_utils.connection import exec_command
 
 
 def is_interface_support_setjumboframe(interface):
@@ -236,12 +212,6 @@ def get_interface_type(interface):
     return iftype.lower()
 
 
-def build_config_xml(xmlstr):
-    """ build_config_xml"""
-
-    return '<config> ' + xmlstr + ' </config>'
-
-
 class Mtu(object):
     """set mtu"""
 
@@ -276,29 +246,43 @@ class Mtu(object):
         self.module = AnsibleModule(
             argument_spec=self.spec, supports_check_mode=True)
 
-    def check_response(self, xml_str, xml_name):
-        """Check if response message is already succeed."""
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
 
-        if "<ok/>" not in xml_str:
-            self.module.fail_json(msg='Error: %s failed.' % xml_name)
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
 
     def get_interface_dict(self, ifname):
         """ get one interface attributes dict."""
         intf_info = dict()
-        conf_str = CE_NC_GET_INTF % ifname
-        ret_xml = get_nc_config(self.module, conf_str)
-        if "<data/>" in ret_xml:
+
+        flags = list()
+        exp = " interface %s" % ifname
+        flags.append(exp)
+        output = self.get_config(flags)
+        output_list = output.split('\n')
+        if output_list is None:
             return intf_info
 
-        intf = re.findall(
-            r'.*<ifName>(.*)</ifName>.*\s*'
-            r'<isL2SwitchPort>(.*)</isL2SwitchPort>.*\s*'
-            r'<ifMtu>(.*)</ifMtu>.*', ret_xml)
+        mtu = None
+        isL2SwitchPort = 'true'
+        for config in output_list:
+            config = config.strip()
+            if config.startswith('mtu'):
+                mtu = re.findall(r'.*mtu\s*([0-9]*)', output)[0]
 
-        if intf:
-            intf_info = dict(ifName=intf[0][0],
-                             isL2SwitchPort=intf[0][1],
-                             ifMtu=intf[0][2])
+        intf_info = dict(ifName=ifname,
+                         ifMtu=mtu)
 
         return intf_info
 
@@ -322,11 +306,13 @@ class Mtu(object):
 
         return re.findall(r'([0-9]+)', config_str_tmp)
 
-    def cli_load_config(self, commands):
+    def cli_load_config(self):
         """load config by cli"""
 
         if not self.module.check_mode:
-            load_config(self.module, commands)
+            if len(self.commands) > 1:
+                load_config(self.module, self.commands)
+                self.changed = True
 
     def cli_add_command(self, command, undo=False):
         """add command to self.update_cmd and self.commands"""
@@ -344,7 +330,7 @@ class Mtu(object):
         flags = list()
         exp = " all | section inc %s$" % self.interface.upper()
         flags.append(exp)
-        output = get_config(self.module, flags)
+        output = self.get_config(flags)
         output = output.replace('*', '')
 
         return self.prase_jumboframe_para(output)
@@ -387,10 +373,6 @@ class Mtu(object):
                 return
             jbf_value = [9216, 1518]
 
-        # excute commands
-        command = "interface %s" % self.interface
-        self.cli_add_command(command)
-
         if len(jbf_value) == 2:
             self.jbf_cli = "jumboframe enable %s %s" % (
                 jbf_value[0], jbf_value[1])
@@ -398,9 +380,6 @@ class Mtu(object):
             self.jbf_cli = "jumboframe enable %s" % (jbf_value[0])
         self.cli_add_command(self.jbf_cli)
 
-        if self.commands:
-            self.cli_load_config(self.commands)
-            self.changed = True
         if self.state == "present":
             if self.jbf_min:
                 self.updates_cmd.append(
@@ -417,25 +396,24 @@ class Mtu(object):
 
         xmlstr = ''
         change = False
-        self.updates_cmd.append("interface %s" % ifname)
+
+        command = "interface %s" % ifname
+        self.cli_add_command(command)
+
         if self.state == "present":
             if mtu and self.intf_info["ifMtu"] != mtu:
-                xmlstr += CE_NC_XML_MERGE_INTF_MTU % (ifname, mtu)
+                command = "mtu %s" % mtu
+                self.cli_add_command(command)
                 self.updates_cmd.append("mtu %s" % mtu)
                 change = True
         else:
-            if self.intf_info["ifMtu"] != '1500':
-                xmlstr += CE_NC_XML_MERGE_INTF_MTU % (ifname, '1500')
+            if self.intf_info["ifMtu"] != '1500' and self.intf_info["ifMtu"]:
+                command = "mtu 1500"
+                self.cli_add_command(command)
                 self.updates_cmd.append("undo mtu")
                 change = True
 
-        if not change:
-            return
-
-        conf_str = build_config_xml(xmlstr)
-        ret_xml = set_nc_config(self.module, conf_str)
-        self.check_response(ret_xml, "MERGE_INTF_MTU")
-        self.changed = True
+        return
 
     def check_params(self):
         """Check all input params"""
@@ -464,10 +442,6 @@ class Mtu(object):
         self.intf_info = self.get_interface_dict(self.interface)
         if not self.intf_info:
             self.module.fail_json(msg='Error: interface does not exist.')
-
-        # check interface
-        if self.mtu and self.intf_info['isL2SwitchPort'] == 'true':
-            self.module.fail_json(msg='Error: L2Switch Port can not set mtu.')
 
         # check interface can set jumbo frame
         if self.state == 'present':
@@ -570,6 +544,7 @@ class Mtu(object):
 
         self.merge_interface(self.interface, self.mtu)
         self.set_jumboframe()
+        self.cli_load_config()
 
         self.get_existing()
         self.get_end_state()

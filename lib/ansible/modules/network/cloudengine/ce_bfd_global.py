@@ -183,12 +183,6 @@ from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_co
 CE_NC_GET_BFD = """
     <filter type="subtree">
       <bfd xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-      %s
-      </bfd>
-    </filter>
-"""
-
-CE_NC_GET_BFD_GLB = """
         <bfdSchGlobal>
           <bfdEnable></bfdEnable>
           <defaultIp></defaultIp>
@@ -199,6 +193,8 @@ CE_NC_GET_BFD_GLB = """
           <dampSecondWaitTime></dampSecondWaitTime>
           <delayUpTimer></delayUpTimer>
         </bfdSchGlobal>
+      </bfd>
+    </filter>
 """
 
 
@@ -269,7 +265,7 @@ class BfdGlobal(object):
 
         bfd_dict = dict()
         bfd_dict["global"] = dict()
-        conf_str = CE_NC_GET_BFD % CE_NC_GET_BFD_GLB
+        conf_str = CE_NC_GET_BFD
 
         xml_str = get_nc_config(self.module, conf_str)
         if "<data/>" in xml_str:
@@ -281,7 +277,7 @@ class BfdGlobal(object):
         root = ElementTree.fromstring(xml_str)
 
         # get bfd global info
-        glb = root.find("data/bfd/bfdSchGlobal")
+        glb = root.find("bfd/bfdSchGlobal")
         if glb:
             for attr in glb:
                 bfd_dict["global"][attr.tag] = attr.text

@@ -769,9 +769,9 @@ class AaaServer(object):
             return result
         else:
             re_find = re.findall(
-                r'.*<firstAuthenMode>(.*)</firstAuthenMode>.*\s*'
-                r'<secondAuthenMode>(.*)</secondAuthenMode>.*\s*'
-                r'<authenSchemeName>(.*)</authenSchemeName>.*', xml_str)
+                r'.*<authenSchemeName>(.*)</authenSchemeName>.*\s*'
+                r'<firstAuthenMode>(.*)</firstAuthenMode>.*\s*'
+                r'<secondAuthenMode>(.*)</secondAuthenMode>.*\s*', xml_str)
 
             if re_find:
                 return re_find
@@ -954,9 +954,9 @@ class AaaServer(object):
             return result
         else:
             re_find = re.findall(
-                r'.*<firstAuthorMode>(.*)</firstAuthorMode>.*\s*'
-                r'<secondAuthorMode>(.*)</secondAuthorMode>.*\s*'
-                r'<authorSchemeName>(.*)</authorSchemeName>.*', xml_str)
+                r'.*<authorSchemeName>(.*)</authorSchemeName>.*\s*'
+                r'<firstAuthorMode>(.*)</firstAuthorMode>.*\s*'
+                r'<secondAuthorMode>(.*)</secondAuthorMode>.*\s*', xml_str)
 
             if re_find:
                 return re_find
@@ -1138,10 +1138,7 @@ class AaaServer(object):
         if "<data/>" in xml_str:
             return result
         else:
-            re_find = re.findall(
-                r'.*<accountingMode>(.*)</accountingMode>.*\s*'
-                r'<acctSchemeName>(.*)</acctSchemeName>.*', xml_str)
-
+            re_find = re.findall(r'.*<acctSchemeName>(.*)</acctSchemeName>\s*<accountingMode>(.*)</accountingMode>', xml_str)
             if re_find:
                 return re_find
             else:
@@ -1758,8 +1755,7 @@ def main():
     if authen_scheme_name:
 
         scheme_exist = ce_aaa_server.get_authentication_scheme(module=module)
-        scheme_new = (first_authen_mode.lower(), "invalid",
-                      authen_scheme_name.lower())
+        scheme_new = (authen_scheme_name.lower(), first_authen_mode.lower(), "invalid")
 
         existing["authentication scheme"] = scheme_exist
 
@@ -1843,8 +1839,7 @@ def main():
     if author_scheme_name:
 
         scheme_exist = ce_aaa_server.get_authorization_scheme(module=module)
-        scheme_new = (first_author_mode.lower(), "invalid",
-                      author_scheme_name.lower())
+        scheme_new = (author_scheme_name.lower(), first_author_mode.lower(), "invalid")
 
         existing["authorization scheme"] = scheme_exist
 
@@ -1925,7 +1920,7 @@ def main():
     if acct_scheme_name:
 
         scheme_exist = ce_aaa_server.get_accounting_scheme(module=module)
-        scheme_new = (accounting_mode.lower(), acct_scheme_name.lower())
+        scheme_new = (acct_scheme_name.lower(), accounting_mode.lower())
 
         existing["accounting scheme"] = scheme_exist
 

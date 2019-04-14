@@ -213,8 +213,9 @@ changed:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import load_config
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
+from ansible.module_utils.connection import exec_command
 
 
 def get_interface_type(interface):
@@ -292,6 +293,8 @@ class NetStreamGlobal(object):
         self.end_state["statistic"] = list()
         self.end_state["flexible_statistic"] = list()
         self.end_state["index-switch"] = list()
+        self.end_state["ip_record"] = list()
+        self.end_state["vxlan_record"] = list()
         self.sampler_changed = False
         self.statistic_changed = False
         self.flexible_changed = False
@@ -308,6 +311,22 @@ class NetStreamGlobal(object):
 
         if not self.module.check_mode:
             load_config(self.module, commands)
+
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
 
     def cli_add_command(self, command, undo=False):
         """add command to self.update_cmd and self.commands"""
@@ -327,9 +346,16 @@ class NetStreamGlobal(object):
         sampler_tmp = dict()
         sampler_tmp1 = dict()
         flags = list()
-        exp = " | ignore-case  include ^netstream sampler random-packets"
+        exp = " | ignore-case  include netstream sampler random-packets"
         flags.append(exp)
-        config = get_config(self.module, flags)
+        cfg_str = self.get_config(flags)
+
+        cfg_list = cfg_str.split("\n")
+        config = ""
+        for cfg in cfg_list:
+            if not cfg.startswith("display"):
+                config += cfg
+
         if not config:
             sampler_tmp["sampler_interval"] = "null"
             sampler_tmp["sampler_direction"] = "null"
@@ -345,7 +371,16 @@ class NetStreamGlobal(object):
             exp = " | ignore-case  section include ^interface %s$" \
                   " | include netstream sampler random-packets" % self.interface
             flags.append(exp)
-            config = get_config(self.module, flags)
+            cfg_str = self.get_config(flags)
+
+            cfg_list = cfg_str.split("\n")
+            config = list()
+            for cfg in cfg_list:
+                if not cfg.startswith("display"):
+                    config.append(cfg)
+
+            config = "\n".join(config)
+
             if not config:
                 sampler_tmp1["sampler_interval"] = "null"
                 sampler_tmp1["sampler_direction"] = "null"
@@ -377,10 +412,10 @@ class NetStreamGlobal(object):
         statistic_tmp1["interface"] = self.interface
         flags = list()
         exp = " | ignore-case  section include ^interface %s$" \
-              " | include netstream record"\
+              " | include netstream re"\
               % (self.interface)
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
         if not config:
             statistic_tmp["type"] = "ip"
             self.existing["flexible_statistic"].append(statistic_tmp)
@@ -415,10 +450,10 @@ class NetStreamGlobal(object):
         statistic_tmp1["statistics_direction"] = list()
         flags = list()
         exp = " | ignore-case  section include ^interface %s$" \
-              " | include netstream inbound|outbound"\
+              " | include netstream inbound|out"\
               % self.interface
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
         if not config:
             statistic_tmp1["type"] = "null"
         else:
@@ -443,9 +478,9 @@ class NetStreamGlobal(object):
         index_switch_tmp1["index-switch"] = "16"
         index_switch_tmp1["type"] = "vxlan"
         flags = list()
-        exp = " | ignore-case  include index-switch"
+        exp = " | ignore-case  include index-swit"
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
         if not config:
             self.existing["index-switch"].append(index_switch_tmp)
             self.existing["index-switch"].append(index_switch_tmp1)
@@ -467,9 +502,9 @@ class NetStreamGlobal(object):
         """get exist netstream record"""
 
         flags = list()
-        exp = " | ignore-case include netstream record"
+        exp = " | ignore-case include netstream re"
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
         if config:
             config = config.lstrip()
             config_list = config.split('\n')
@@ -486,9 +521,14 @@ class NetStreamGlobal(object):
         sampler_tmp = dict()
         sampler_tmp1 = dict()
         flags = list()
-        exp = " | ignore-case  include ^netstream sampler random-packets"
+        exp = " | ignore-case include netstream sampler random-packets"
         flags.append(exp)
-        config = get_config(self.module, flags)
+        cfg_str = self.get_config(flags)
+        cfg_list = cfg_str.split("\n")
+        config = ""
+        for cfg in cfg_list:
+            if not cfg.startswith("display"):
+                config += cfg
         if not config:
             sampler_tmp["sampler_interval"] = "null"
             sampler_tmp["sampler_direction"] = "null"
@@ -501,10 +541,18 @@ class NetStreamGlobal(object):
         self.end_state["sampler"].append(sampler_tmp)
         if self.interface != "all":
             flags = list()
-            exp = " | ignore-case  section include ^interface %s$" \
+            exp = " | ignore-case section include ^interface %s$" \
                   " | include netstream sampler random-packets" % self.interface
             flags.append(exp)
-            config = get_config(self.module, flags)
+            config = self.get_config(flags)
+
+            cfg_list = cfg_str.split("\n")
+            config = list()
+            for cfg in cfg_list:
+                if not cfg.startswith("display"):
+                    config.append(cfg)
+            config = "\n".join(config)
+
             if not config:
                 sampler_tmp1["sampler_interval"] = "null"
                 sampler_tmp1["sampler_direction"] = "null"
@@ -539,7 +587,7 @@ class NetStreamGlobal(object):
               " | include netstream record"\
               % (self.interface)
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
         if not config:
             statistic_tmp["type"] = "ip"
             self.end_state["flexible_statistic"].append(statistic_tmp)
@@ -577,7 +625,7 @@ class NetStreamGlobal(object):
               " | include netstream inbound|outbound"\
               % self.interface
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
         if not config:
             statistic_tmp1["type"] = "null"
         else:
@@ -604,7 +652,7 @@ class NetStreamGlobal(object):
         flags = list()
         exp = " | ignore-case  include index-switch"
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
         if not config:
             self.end_state["index-switch"].append(index_switch_tmp)
             self.end_state["index-switch"].append(index_switch_tmp1)
@@ -621,6 +669,22 @@ class NetStreamGlobal(object):
                     index_switch_tmp1["type"] = "vxlan"
             self.end_state["index-switch"].append(index_switch_tmp)
             self.end_state["index-switch"].append(index_switch_tmp1)
+
+    def get_end_record(self):
+
+        flags = list()
+        exp = " | ignore-case include netstream re"
+        flags.append(exp)
+        config = self.get_config(flags)
+        if config:
+            config = config.lstrip()
+            config_list = config.split('\n')
+            for config_mem in config_list:
+                config_mem_list = config_mem.split(' ')
+                if config_mem_list[3] == "ip":
+                    self.end_state["ip_record"].append(config_mem_list[2])
+                if config_mem_list[3] == "vxlan":
+                    self.end_state["vxlan_record"].append(config_mem_list[2])
 
     def check_params(self):
         """check all input params"""
@@ -856,6 +920,7 @@ class NetStreamGlobal(object):
         self.get_end_interface_statistic()
         self.get_end_statistic_record()
         self.get_end_index_switch()
+        self.get_end_record()
 
     def work(self):
         """worker"""

@@ -276,7 +276,7 @@ def is_valid_v6addr(addr):
         addr_list = addr.split(':')
         if len(addr_list) > 6:
             return False
-        if addr_list[1] != "":
+        if addr_list[1] == "":
             return False
         return True
     return False
@@ -393,6 +393,7 @@ class StaticRoute(object):
             if self.prefix.find('.') == -1:
                 return False
             if self.mask == '32':
+                self.prefix = self.prefix
                 return True
             if self.mask == '0':
                 self.prefix = '0.0.0.0'
@@ -407,12 +408,13 @@ class StaticRoute(object):
                 if int(each_num) > 255:
                     return False
             byte_len = 8
-            ip_len = int(self.mask) / byte_len
+            ip_len = int(self.mask) // byte_len
             ip_bit = int(self.mask) % byte_len
         else:
             if self.prefix.find(':') == -1:
                 return False
             if self.mask == '128':
+                self.prefix = self.prefix
                 return True
             if self.mask == '0':
                 self.prefix = '::'
@@ -422,7 +424,7 @@ class StaticRoute(object):
             if length > 6:
                 return False
             byte_len = 16
-            ip_len = int(self.mask) / byte_len
+            ip_len = int(self.mask) // byte_len
             ip_bit = int(self.mask) % byte_len
 
         if self.aftype == "v4":
@@ -571,7 +573,7 @@ class StaticRoute(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
         root = ElementTree.fromstring(xml_str)
         static_routes = root.findall(
-            "data/staticrt/staticrtbase/srRoutes/srRoute")
+            "staticrt/staticrtbase/srRoutes/srRoute")
 
         if static_routes:
             for static_route in static_routes:
@@ -763,6 +765,8 @@ class StaticRoute(object):
 
         self.get_static_route(self.state)
         self.end_state['sroute'] = self.static_routes_info["sroute"]
+        if self.existing['sroute'] == self.end_state['sroute']:
+            self.changed = False
 
     def work(self):
         """worker"""
