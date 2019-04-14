@@ -116,9 +116,7 @@ options:
          - Settings in JSON format for the target Elasticsearch endpoint
     wait:
        description:
-         - Boolean stating if we should wait for the object to
-           be deleted when state = absent
-       default: False
+         - should wait for the object to be deleted when state = absent
        type: bool
 author:
    - "Rui Moreira (@ruimoreira)"
