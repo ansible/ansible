@@ -27,7 +27,7 @@ short_description: creates or destroys a data migration services endpoint
 description:
     - creates or destroys a data migration services endpoint,
       that can be used to replicate data.
-version_added: "2.8"
+version_added: "2.9"
 options:
     state:
       description:
@@ -40,7 +40,6 @@ options:
     endpointtype:
       description:
         - Type of endpoint we want to manage
-      default: source
       choices: ['source', 'target']
     enginename:
       description:
@@ -120,6 +119,14 @@ options:
          - should wait for the object to be deleted when state = absent
        type: bool
        default: 'false'
+    timeout:
+       description: 
+         - time in seconds we should wait for when deleting a resource
+       type: int
+    retries:
+       description: 
+          - number of times we should retry when deleting a resource 
+       type: int   
 author:
    - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment: aws
@@ -416,7 +423,7 @@ def main():
             ["wait", "True", ["timeout"]],
             ["wait", "True", ["retries"]],
         ],
-        supports_check_mode=True
+        supports_check_mode=False
     )
     exit_message = None
     changed = False
@@ -424,9 +431,9 @@ def main():
         module.fail_json(msg='boto3 required for this module')
 
     state = module.params.get('state')
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module,
+    aws_config_region, ec2_url, aws_connect_params = get_aws_connection_info(module,
                                                                   boto3=True)
-    dmsclient = get_dms_client(aws_connect_params, region, ec2_url)
+    dmsclient = get_dms_client(aws_connect_params, aws_config_region, ec2_url)
     endpoint = describe_endpoints(dmsclient,
                                   module.params.get('endpointidentifier'))
     if state == 'present':
