@@ -301,7 +301,7 @@ class AnsibleCoreCI(object):
             )
 
             if self.connection.password:
-                display.sensitive.add(self.connection.password)
+                display.sensitive.add(str(self.connection.password))
 
         status = 'running' if self.connection.running else 'starting'
 
@@ -453,7 +453,7 @@ class AnsibleCoreCI(object):
         :type config: dict[str, str]
         :rtype: bool
         """
-        self.instance_id = config['instance_id']
+        self.instance_id = str(config['instance_id'])
         self.endpoint = config['endpoint']
         self.started = True
 
