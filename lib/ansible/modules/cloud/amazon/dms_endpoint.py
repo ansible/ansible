@@ -129,12 +129,12 @@ options:
     region:
        description:
           - aws region, should be read from the running aws config
-    ec2_region: 
-       description: 
+    ec2_region:
+       description:
           - alias for region
     aws_region:
        description:
-          - alias for region             
+          - alias for region
 author:
    - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment: aws
