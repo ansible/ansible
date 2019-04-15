@@ -138,3 +138,10 @@
       - csr_backup_4.backup_file is string
       - csr_backup_5 is not changed
       - csr_backup_5.backup_file is undefined
+
+- name: Check CSR with everything
+  assert:
+    that:
+      - everything_1 is changed
+      - everything_2 is not changed
+      - everything_3 is not changed
