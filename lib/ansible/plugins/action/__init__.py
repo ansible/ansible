@@ -1033,10 +1033,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # only applied for the default executable to avoid interfering with the raw action
                 cmd = self._connection._shell.append_command(cmd, self._connection._shell.sleep0 )
             if executable:
-                if  getattr(self._connection._shell, "_IS_OPENVMS", False):
-                    cmd = 'WRITE SYS$OUTPUT "Exec=%s"\n%s' % (executable,cmd)
-                else:
-                    cmd = executable + ' -c ' + shlex_quote(cmd)
+                cmd = executable + ' -c ' + shlex_quote(cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
 

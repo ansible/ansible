@@ -30,10 +30,10 @@ class ShellModule(ShModule):
     COMPATIBLE_SHELLS = frozenset(('dcl',))
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'dcl'
-    IS_OPENVMS = True
     # commonly used
-    ECHO = 'WRITE SYS$OUTPUT "'
+    ECHO = 'WRITE SYS$OUTPUT "%s"'
     COMMAND_SEP = '\n'
+    shell = 'PIPE'
 
     # This is needed for?
     _SHELL_EMBEDDED_PY_EOL = '\n'
@@ -56,10 +56,11 @@ class ShellModule(ShModule):
     def __init__(self):
         super(ShellModule, self).__init__()
         self.sleep0 = "WAIT 0:0:0.0"
-        self.executable = None
-	self.shell = None
-	self.ECHO = 'WRITE SYS$OUTPUT "'
-        self.COMMAND_SEP = '\n'
+        self.executable = 'PIPE'
+        #'PIPE'
+	self.shell = 'PIPE' 
+	self.ECHO = 'WRITE SYS$OUTPUT "%s"'
+	self._IS_OPENVMS = True
 
     # can only be done by adding assignment before the command...
     # NOT AFTER IF ... THEN... Quoting will be an issue....
@@ -147,7 +148,7 @@ class ShellModule(ShModule):
     prot_chars = {'r': ':R', 'w': ':WD', 'x': ':E', 'rw': ':RWD', 'wr': ':RWD',
                   'rx': ':RE', 'xr': ':RE', 'wx': ':WED', 'xw': ':WED',
                   'rwx': ':RWED', 'rxw': ':RWED', 'wrx': ':RWED', 'wxr': ':RWED',
-                  'xwr': ':RWED'}
+                  'xwr': ':RWED', 'xrw': ':RWED'}
 
     def unix2vms_mode(self, mode):
         display = Display()
@@ -188,7 +189,7 @@ class ShellModule(ShModule):
         Bit involved.......
         needs Work, like create a directory in sys$scratch and return that name...
         '''
-        return ''
+        return 'IF f$search("TMP.DIR;1") .eqs. "" THEN CREATE/DIR [.TMP] ; IF $status THEN WRITE SYS$OUTPUT "[.TMP]"'
 
     def expand_user(self, user_home_path, username=''):
         '''
