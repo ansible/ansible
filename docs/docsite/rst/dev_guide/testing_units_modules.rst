@@ -288,20 +288,15 @@ Passing Arguments
 .. This section should be updated once https://github.com/ansible/ansible/pull/31456 is
    closed since the function below will be provided in a library file.
 
-To pass arguments to a module correctly, use a function that stores the
-parameters in a special string variable.  Module creation and argument processing is
+To pass arguments to a module correctly, use the ``set_module_args`` method which accepts a dictionary
+as its parameter. Module creation and argument processing is
 handled through the :class:`AnsibleModule` object in the basic section of the utilities. Normally
 this accepts input on ``STDIN``, which is not convenient for unit testing. When the special
-variable is set it will be treated as if the input came on ``STDIN`` to the module.::
+variable is set it will be treated as if the input came on ``STDIN`` to the module. Simply call that function before setting up your module::
 
-    import json
-    from ansible.module_utils._text import to_bytes
-
-    def set_module_args(args):
-        args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-        basic._ANSIBLE_ARGS = to_bytes(args)
-
-simply call that function before setting up your module::
+    import json 
+    from units.modules.utils import set_module_args 
+    from ansible.module_utils._text import to_bytes 
 
     def test_already_registered(self):
         set_module_args({
