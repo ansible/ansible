@@ -20,11 +20,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-import datetime
-def logit(msg):
-    with open('/tmp/alog.txt', 'a') as of:
-        d = datetime.datetime.now().replace(microsecond=0).isoformat()
-        of.write("---- %s ----\n%s\n" % (d,msg))
 
 DOCUMENTATION = '''
 ---
@@ -97,11 +92,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-commands:
+cmds:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["router bgp 65535", "vrf test", "router-id 192.0.2.1"]   # ***** TBD ****
+    sample: ["bfd echo-interface loopback1", "bfd slow-timer 2000"]
 '''
 
 
@@ -113,104 +108,142 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.connection import ConnectionError
 
-BFD_CMD_REF = '''
-# BFD does not support json format yet; use cli config strings instead.
+BFD_CMD_REF = """
+# The cmd_ref is a yaml formatted list of module commands. A leading underscore
+# denotes a non-command variable; e.g. _template.
+# BFD does not have convenient json data so this cmd_ref uses raw cli configs.
 ---
+# _template holds common settings for all commands
+_template:
+  # Enable feature bfd if disabled
+  feature: bfd
+  get_command: show run bfd all | incl '^(no )*bfd'
+
 echo_interface:
-  type: str
+  kind: str
   getval: (no )*bfd echo-interface *(\S+)*$
   setval: '{0}bfd echo-interface {1}'
   default: ''
 
 echo_rx_interval:
-  type: int
+  kind: int
   getval: bfd echo-rx-interval (\d+)$
   setval: bfd echo-rx-interval {0}
   default: 50
-  N3K: 250
+  N3K:
+    default: 250
 
 interval:
-  type: int_list
+  kind: list
   getval: bfd interval (\d+) min_rx (\d+) multiplier (\d+)
   setval: bfd interval {0} min_rx {1} multiplier {2}
   default: [50,50,3]
-  N3K: [250,250,3]
+  N3K:
+    default: [250,250,3]
 
 slow_timer:
-  type: int
+  kind: int
   getval: bfd slow-timer (\d+)$
   setval: bfd slow-timer {0}
   default: 2000
-'''
-BFD_SHOW_CMD = "show run bfd all | incl '^(no )*bfd'"
+"""
 
 
-def init_cmd_ref(module):
-    '''Ensure BFD feature is enabled. Create cmd_ref dict.
-    '''
-    output = execute_show_command(module, 'show run bfd', 'text')
-    if output and 'CLI command error' in output:
-        if module.check_mode:
-            msg = "** 'feature bfd' is disabled. BFD will auto-enable when not in check_mode **"
-            module.warn(msg)
-        else:
-            load_config(module, 'feature bfd')
+def init_cmd_ref(module, cmd_ref_str):
+    """Initialize cmd_ref from yaml data.
+    Return cmd_ref dict.
+    """
+    cmd_ref = yaml.load(cmd_ref_str)
+    cmd_ref['_proposed'] = []
 
-    cmd_ref = yaml.load(BFD_CMD_REF)
+    cmd_ref = feature_enable(module, cmd_ref)
+
+    # Create a list of supported commands based on cmd_ref keys
+    cmd_ref['commands'] = [k for k in cmd_ref if not k.startswith('_')]
     cmd_ref = get_platform_defaults(module, cmd_ref)
     return cmd_ref
 
+
+def feature_enable(module, cmd_ref):
+    """Enable the feature if specified in cmd_ref."""
+    feature = cmd_ref['_template'].get('feature')
+    if feature:
+        show_cmd = "show run | incl 'feature {0}'".format(feature)
+        output = execute_show_command(module, show_cmd, 'text')
+        if feature and not output or 'CLI command error' in output:
+            msg = "** 'feature {0}' is not enabled. Module will auto-enable ** ".format(feature)
+            module.warn(msg)
+            cmd_ref['_proposed'].append('feature {0}'.format(feature))
+    return cmd_ref
+
+
 def get_platform_defaults(module, cmd_ref):
-    '''Get platform type and update cmd_ref with platform specific defaults
-    '''
-    cap = get_capabilities(module)
-    if cap:
-        device_info = cap['device_info']['network_os_platform']
-        plat = None
-        if 'N3K' in device_info:
-            plat = 'N3K'
-        if plat:
-            for k in cmd_ref:
-                if plat in cmd_ref[k]:
-                    cmd_ref[k]['default'] = cmd_ref[k][plat]
+    """Query device for platform type; update cmd_ref with platform specific defaults.
+    Return updated cmd_ref.
+    """
+    info = get_capabilities(module).get('device_info')
+    os_platform = info.get('network_os_platform')
+    plat = None
+    if 'N3K' in os_platform:
+        plat = 'N3K'
+
+    # Update platform-specific settings for each item in cmd_ref
+    if plat:
+        plat_spec_cmds = [k for k in cmd_ref['commands'] if plat in cmd_ref[k]]
+        for k in plat_spec_cmds:
+            for plat_key in cmd_ref[k][plat]:
+                cmd_ref[k][plat_key] = cmd_ref[k][plat][plat_key]
 
     return cmd_ref
 
 
 def execute_show_command(module, command, format):
+    """Generic show command helper.
+    'CLI command error' exceptions are caught and must be handled by caller.
+    Return device output as a newline-separated string or None.
+    """
     cmds = [{
         'command': command,
         'output': format,
     }]
     output = None
     try:
-        output = run_commands(module, cmds)[0]
+        output = run_commands(module, cmds)
+        if output:
+            output = output[0]
     except ConnectionError as exc:
         if 'CLI command error' in repr(exc):
+            # CLI may be feature disabled
             output = repr(exc)
         else:
             raise
     return output
 
 
-def get_existing(module, cmd_ref, show_cmd):
-    '''
-    Get a list of existing command states from device; then update cmd_ref
-    with any 'existing' values that differ from default states
-    '''
+def get_existing(module, cmd_ref):
+    """Update cmd_ref with existing command states from the device.
+    Store these states in each command's 'existing' key.
+    Return updated cmd_ref.
+    """
+    show_cmd = cmd_ref['_template']['get_command']
     output = execute_show_command(module, show_cmd, 'text') or []
     if not output:
-        return {}
+        return cmd_ref
 
     # Walk each cmd in cmd_ref, use cmd pattern to discover existing cmds
     output = output.split('\n')
-    for k in cmd_ref:
+    for k in cmd_ref['commands']:
         pattern = cmd_ref[k]['getval']
         match = [m.groups() for m in (re.search(pattern, line) for line in output) if m]
         if not match:
             continue
+        if len(match) > 1:
+            raise "get_existing: multiple match instances are not currently supported"
         match = list(match[0]) # tuple to list
-        # handle 'no' keyword
+        # Example match results for patterns that nvgen with the 'no' prefix:
+        # When pattern: '(no )*foo *(\S+)*$' And:
+        #  When output: 'no foo'  -> match: ['no ', None]
+        #  When output: 'foo 50'  -> match: [None, '50']
         if None is match[0]:
             match.pop(0)
         elif 'no' in match[0]:
@@ -218,59 +251,63 @@ def get_existing(module, cmd_ref, show_cmd):
             match.pop(0)
             if not match:
                 continue
-        type = cmd_ref[k]['type']
-        if 'int' == type:
+        kind = cmd_ref[k]['kind']
+        if 'int' == kind:
             cmd_ref[k]['existing'] = int(match[0])
-        if 'int_list' == type:
-            cmd_ref[k]['existing'] = [int(i) for i in match]
-        if 'str' == type:
+        elif 'list' == kind:
+            cmd_ref[k]['existing'] = [str(i) for i in match]
+        elif 'str' == kind:
             cmd_ref[k]['existing'] = match[0]
+        else:
+            raise "get_existing: unknown 'kind' value specified for key '{0}'".format(k)
 
-    logit(cmd_ref)
     return cmd_ref
 
 
 def get_playvals(module, cmd_ref):
-    '''Update cmd_ref with playbook values
-    '''
+    """Update cmd_ref with values from the playbook.
+    Store these values in each command's 'existing' key.
+    Return updated cmd_ref.
+    """
     for k in cmd_ref.keys():
         if k in module.params and module.params[k] is not None:
             playval = module.params[k]
-            if 'int' is cmd_ref[k]['type']:
+            if 'int' == cmd_ref[k]['kind']:
                 playval = int(playval)
-            elif 'int_list' is cmd_ref[k]['type']:
-                playval = [int(i) for i in playval]
+            elif 'list' == cmd_ref[k]['kind']:
+                playval = [str(i) for i in playval]
             cmd_ref[k]['playval'] = playval
 
     return cmd_ref
 
 
 def get_proposed(cmd_ref):
-    '''
-    Compare playbook values against existing states and create a list
-    of cli commands to play on the device.
-    '''
-    proposed = []
-    # Create a list of playbook values
-    playvals = [k for k,v in cmd_ref.items() if 'playval' in v]
+    """Compare playbook values against existing states and create a list of proposed commands.
+    Return a list of cli command strings.
+    """
+    # '_proposed' may be empty list or contain initializations; e.g. ['feature foo']
+    proposed = cmd_ref['_proposed']
+    # Create a list of commands that have playbook values
+    play_keys = [k for k in cmd_ref['commands'] if 'playval' in cmd_ref[k]]
     # Compare against current state
-    for k in playvals:
+    for k in play_keys:
         playval = cmd_ref[k]['playval']
         existing = cmd_ref[k].get('existing', cmd_ref[k]['default'])
-        logit('pv: %s ex: %s' %(playval,existing))
         if playval == existing:
             continue
         cmd = None
-        type = cmd_ref[k]['type']
-        if 'int' == type:
+        kind = cmd_ref[k]['kind']
+        if 'int' == kind:
             cmd = cmd_ref[k]['setval'].format(playval)
-        elif 'int_list' == type:
+        elif 'list' == kind:
             cmd = cmd_ref[k]['setval'].format(*(playval))
-        elif 'str' == type:
+        elif 'str' == kind:
             if playval:
                 cmd = cmd_ref[k]['setval'].format('', playval)
             elif existing:
                 cmd = cmd_ref[k]['setval'].format('no ', existing)
+        else:
+            raise "get_proposed: unknown 'kind' value specified for key '{0}'".format(k)
         if cmd:
             proposed.append(cmd)
 
@@ -289,8 +326,8 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    cmd_ref = init_cmd_ref(module)
-    cmd_ref = get_existing(module, cmd_ref, BFD_SHOW_CMD)
+    cmd_ref = init_cmd_ref(module, BFD_CMD_REF)
+    cmd_ref = get_existing(module, cmd_ref)
     cmd_ref = get_playvals(module, cmd_ref)
     cmds = get_proposed(cmd_ref)
 
