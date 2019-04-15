@@ -434,7 +434,7 @@ You can also use "sudo make install".
 Shell Completion
 ````````````````
 
-As of Ansible 2.8 shell completion of the ansible command line utilities is available and provided through an optional dependency
+As of Ansible 2.9 shell completion of the ansible command line utilities is available and provided through an optional dependency
 called ``argcomplete``. ``argcomplete`` supports bash, and limited support for zsh and tcsh
 
 ``python-argcomplete`` can be installed from EPEL on Red Hat Enterprise based distributions, and is available in the standard OS repositories for many other distributions.
