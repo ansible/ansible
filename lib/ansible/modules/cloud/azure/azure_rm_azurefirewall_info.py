@@ -183,7 +183,7 @@ class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
-             self.name is not None):
+                self.name is not None):
             self.results['azure_firewalls'] = self.format_item(self.get())
         elif (self.resource_group is not None):
             self.results['azure_firewalls'] = self.format_item(self.list())
