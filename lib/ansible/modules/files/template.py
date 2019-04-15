@@ -162,6 +162,14 @@ EXAMPLES = r'''
     group: wheel
     mode: u=rw,g=r,o=r
 
+- name: Copy a version of named.conf that is dependent on the OS. setype obtained by doing ls -Z /etc/named.conf on original file
+  template:
+    src: named.conf_{{ ansible_os_family}}.j2
+    dest: /etc/named.conf
+    group: named
+    setype: named_conf_t
+    mode: 0640
+
 - name: Create a DOS-style text file from a template
   template:
     src: config.ini.j2
