@@ -1,0 +1,2 @@
+bugfixes:
+    - remove become plugins reference introduced in backport fix
