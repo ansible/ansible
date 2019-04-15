@@ -47,7 +47,7 @@ try:
     HAS_CURRENT_CRYPTOGRAPHY = (LooseVersion(CRYPTOGRAPHY_VERSION) >= LooseVersion('1.5'))
     if HAS_CURRENT_CRYPTOGRAPHY:
         _cryptography_backend = cryptography.hazmat.backends.default_backend()
-except Exception as _:
+except Exception as dummy:
     HAS_CURRENT_CRYPTOGRAPHY = False
 
 
@@ -91,7 +91,7 @@ def write_file(module, dest, content):
     except Exception as err:
         try:
             f.close()
-        except Exception as e:
+        except Exception as dummy:
             pass
         os.remove(tmpsrc)
         raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
@@ -102,7 +102,7 @@ def write_file(module, dest, content):
     if not os.path.exists(tmpsrc):
         try:
             os.remove(tmpsrc)
-        except Exception as e:
+        except Exception as dummy:
             pass
         raise ModuleFailException("Source %s does not exist" % (tmpsrc))
     if not os.access(tmpsrc, os.R_OK):
@@ -175,7 +175,7 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
         except Exception as err:
             try:
                 f.close()
-            except Exception as e:
+            except Exception as dummy:
                 pass
             raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
         f.close()
@@ -920,7 +920,7 @@ def set_crypto_backend(module):
     elif backend == 'cryptography':
         try:
             cryptography.__version__
-        except Exception as _:
+        except Exception as dummy:
             module.fail_json(msg='Cannot find cryptography module!')
         HAS_CURRENT_CRYPTOGRAPHY = True
     else:
