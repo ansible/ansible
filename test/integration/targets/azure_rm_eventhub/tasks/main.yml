@@ -1,0 +1,164 @@
+- name: Create necessary names for eventhub
+  set_fact:
+      namespace_aname: "eventhubnamespace{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}a"
+      namespace_bname: "eventhubnamespace{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}b"
+  run_once: yes
+
+- name: Create an eventhub namespace with default settings
+  azure_rm_eventhubnamespace:
+    name: "{{ namespace_aname }}"
+    location: eastus
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- name: Assert the eventhub namespace was created
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+
+- name: Create an eventhub namespace for listing facts
+  azure_rm_eventhubnamespace:
+    name: "{{ namespace_bname }}"
+    location: eastus
+    resource_group: "{{ resource_group }}"
+    auto_inflate_enabled: true
+    maximum_throughput_units: 8
+  register: output
+
+- name: Assert the eventhub namespace was created
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+
+
+- name: Update an event hub namespace
+  azure_rm_eventhubnamespace:
+    name: "{{ namespace_aname }}"
+    location: eastus
+    resource_group: "{{ resource_group }}"
+    sku: basic
+  register: output
+
+- name: Assert the eventhub namespace was updated
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+
+- name: Update an event hub namespace
+  azure_rm_eventhubnamespace:
+    name: "{{ namespace_aname }}"
+    location: eastus
+    resource_group: "{{ resource_group }}"
+    sku: standard
+    auto_inflate_enabled: true
+    maximum_throughput_units: 4
+  register: output
+
+- name: Assert the eventhub namespace was updated
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+
+- name: Update an eventhub namespace (idempotent)
+  azure_rm_eventhubnamespace:
+    name: "{{ namespace_aname }}"
+    location: eastus
+    resource_group: "{{ resource_group }}"
+    auto_inflate_enabled: true
+    maximum_throughput_units: 4
+  register: output
+
+- name: Assert the eventhub namespace was updated
+  assert:
+    that:
+       - not output.changed
+       - output.id != None
+
+- name: Get facts for an eventhub namespace
+  azure_rm_eventhubnamespace_facts:
+    name: "{{ namespace_aname }}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+       - not output.changed
+       - output.eventhubnamespaces[0]['id'] != None
+       - output.eventhubnamespaces[0]['name'] != None
+       - output.eventhubnamespaces[0]['location'] != None
+       - output.eventhubnamespaces[0]['sku'] != None
+       - output.eventhubnamespaces[0]['is_auto_inflate_enabled'] != None
+       - output.eventhubnamespaces[0]['maximum_throughput_units'] != None
+       - output.eventhubnamespaces[0]['kafka_enabled'] != None
+
+- name: Get all facts for eventhub namespace in the resource group
+  azure_rm_eventhubnamespace_facts:
+    resource_group: "{{ resource_group }}"
+    show_sas_policies: true
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+       - not output.changed
+       - output.eventhubnamespaces | length > 1
+       - output.eventhubnamespaces[0]['id'] != None
+       - output.eventhubnamespaces[0]['name'] != None
+       - output.eventhubnamespaces[0]['location'] != None
+       - output.eventhubnamespaces[0]['sku'] != None
+       - output.eventhubnamespaces[0]['is_auto_inflate_enabled'] != None
+       - output.eventhubnamespaces[0]['maximum_throughput_units'] != None
+       - output.eventhubnamespaces[0]['kafka_enabled'] != None
+       - output.eventhubnamespaces[0]['sas_keys'] != None
+       - output.eventhubnamespaces[1]['id'] != None
+       - output.eventhubnamespaces[1]['name'] != None
+       - output.eventhubnamespaces[1]['location'] != None
+       - output.eventhubnamespaces[1]['sku'] != None
+       - output.eventhubnamespaces[1]['is_auto_inflate_enabled'] != None
+       - output.eventhubnamespaces[1]['maximum_throughput_units'] != None
+       - output.eventhubnamespaces[1]['kafka_enabled'] != None
+       - output.eventhubnamespaces[1]['sas_keys'] != None
+
+- name: Delete first eventhub namespace
+  azure_rm_eventhubnamespace:
+    name: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: output
+
+- name: Assert the eventhub namespace was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id == None
+
+- name: Delete first eventhub namespace (idempotent)
+  azure_rm_eventhubnamespace:
+    name: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: output
+
+- name: Assert the eventhub namespace was deleted
+  assert:
+    that:
+       - not output.changed
+       - output.id == None
+
+- name: Delete second eventhub namespace
+  azure_rm_eventhubnamespace:
+    name: "{{ namespace_bname}}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: output
+
+- name: Assert the eventhub namespace was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id == None

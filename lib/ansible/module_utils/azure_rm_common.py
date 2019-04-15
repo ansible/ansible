@@ -89,7 +89,8 @@ AZURE_API_PROFILES = {
         'PostgreSQLManagementClient': '2017-12-01',
         'MySQLManagementClient': '2017-12-01',
         'MariaDBManagementClient': '2019-03-01',
-        'ManagementLockClient': '2016-09-01'
+        'ManagementLockClient': '2016-09-01',
+        'EventHubManagementClient': '2017-04-01'
     },
     '2019-03-01-hybrid': {
         'StorageManagementClient': '2017-10-01',
@@ -249,6 +250,7 @@ try:
     from msrestazure import AzureConfiguration
     from msrest.authentication import Authentication
     from azure.mgmt.resource.locks import ManagementLockClient
+    from azure.mgmt.eventhub import EventHubManagementClient
 except ImportError as exc:
     Authentication = object
     HAS_AZURE_EXC = traceback.format_exc()
@@ -400,10 +402,8 @@ class AzureRMModuleBase(object):
         self._servicebus_client = None
         self._automation_client = None
         self._IoThub_client = None
-        self._lock_client = None
-
+        self._eventhub_client = None
         self.check_mode = self.module.check_mode
-        self.api_profile = self.module.params.get('api_profile')
         self.facts_module = facts_module
         # self.debug = self.module.params.get('debug')
 
@@ -1192,6 +1192,18 @@ class AzureSASAuthentication(Authentication):
         session = super(AzureSASAuthentication, self).signed_session()
         session.headers['Authorization'] = self.token
         return session
+    def eventhub_client(self):
+        self.log('Getting eventhub client')
+        if not self._eventhub_client:
+            self._eventhub_client = self.get_mgmt_svc_client(EventHubManagementClient,
+                                                             base_url=self._cloud_environment.endpoints.resource_manager,
+                                                             api_version='2017-04-01')
+        return self._eventhub_client
+
+    @property
+    def eventhub_models(self):
+        self.log("Getting eventhub models...")
+        return EventHubManagementClient.models('2017-04-01')
 
 
 class AzureRMAuthException(Exception):
