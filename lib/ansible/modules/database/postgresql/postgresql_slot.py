@@ -340,7 +340,7 @@ def main():
         "login_password": "password",
         "port": "port",
         "sslmode": "ssl_mode",
-        "ca_cert": "ssl_rootcert"
+        "ca_cert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != '')
