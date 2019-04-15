@@ -6,20 +6,28 @@
 Network connection plugins
 **************************
 
-Each network connection plugin has a set of plugins which provide a specification of the connection for a particular set of devices. Public methods of these plugins may be called on the connection proxy object from the module just as connection methods can.
+Each network connection plugin has a set of its own plugins which provide a specification of the
+connection for a particular set of devices. The specific plugin used is selected at runtime based
+on the value of the ``ansible_network_os`` variable assigned to the host. This variable should be
+set to the same value as the name of the plugin to be loaed. Thus, ``ansible_network_os=nxos``
+will try to load a plugin in a file named ``nxos.py``, so it is important to name the plugin in a
+way that will be sensible to users.
+
+Public methods of these plugins may be called from a module or module_utils with the connection
+proxy object just as other connection methods can. The following is a very simple example of using
+such a call in a module_utils file so it may be shared with other modules.
 
 .. code-block:: python
 
   from ansible.module_utils.connection import Connection
 
-  ...
+  def get_config(module):
+      # module is your AnsibleModule instance.
+      connection = Connection(module._socket_path)
 
-  # module is your AnsibleModule instance
-  connection = Connection(module._socket_path)
-
-  # You can now call any method (that doesn't start with '_') of the connection
-  # plugin or its platform-specific plugin
-  connection.get_config()
+      # You can now call any method (that doesn't start with '_') of the connection
+      # plugin or its platform-specific plugin
+      return connection.get_config()
 
 .. contents::
    :local:
@@ -39,6 +47,8 @@ Making requests
 The ``httpapi`` connection plugin has a ``send()`` method, but an httpapi plugin needs a ``send_request(self, data, **message_kwargs)`` method as a higher-level wrapper to ``send()``. This method should prepare requests by adding fixed values like common headers or URL root paths. This method may do more complex work such as turning data into formatted payloads, or determining which path or method to request. It may then also unpack responses to be more easily consumed by the caller.
 
 .. code-block:: python
+
+   from ansible.module-utils.six-moves.urllib.error import HTTPError
 
    def send_request(self, data, path, method='POST'):
        # Fixed headers for requests
