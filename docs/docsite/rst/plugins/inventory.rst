@@ -55,7 +55,7 @@ Or for the openstack plugin the file has to be called ``clouds.yml`` or ``openst
     # clouds.yml or openstack.(yml|yaml)
     plugin: openstack
 
-The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:
+The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options, you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:
 
 .. code-block:: text
 
