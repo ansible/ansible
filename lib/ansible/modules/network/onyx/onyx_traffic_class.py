@@ -200,7 +200,7 @@ class OnyxTrafficClassModule(BaseOnyxModule):
         dcb_mode = tc_config[0].get("S.Mode")
         dcb_weight = int(tc_config[0].get("W"))
         dcb = dict(mode=dcb_mode.lower(), weight=dcb_weight)
-        interface_congestion_control_config = interface_congestion_control_config[tc+1]
+        interface_congestion_control_config = interface_congestion_control_config[tc + 1]
         mode = interface_congestion_control_config.get("Mode")
         if mode == "none":
             self._current_config[interface] = dict(state="disabled", dcb=dcb, if_type=if_type, if_id=if_id)
