@@ -1,0 +1,2 @@
+bugfixes:
+  - tower_job_wait - Fixed wrong variable specification in examples
