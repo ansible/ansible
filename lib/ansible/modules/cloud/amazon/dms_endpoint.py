@@ -125,7 +125,10 @@ options:
     retries:
        description: 
           - number of times we should retry when deleting a resource 
-       type: int   
+       type: int
+    region:
+       description:
+          - aws region, should be read from the running aws config     
 author:
    - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment: aws
