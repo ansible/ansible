@@ -40,11 +40,14 @@ except ImportError:
     except ImportError:
         mysql_driver = None
 
+from ansible.module_utils._text import to_native
+
 mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) module is required.'
 
 
-def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None,
-                  connect_timeout=30):
+def mysql_connect(module, login_user=None, login_password=None,
+                  config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None,
+                  db=None, cursor_class=None, connect_timeout=30):
     config = {}
 
     if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
@@ -76,8 +79,30 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
 
-    db_connection = mysql_driver.connect(**config)
+    try:
+        db_connection = mysql_driver.connect(**config)
+
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database, check login_user and "
+                             "login_password are correct or %s has the credentials. "
+                             "Exception message: %s" % (config_file, to_native(e)))
+
     if cursor_class is not None:
         return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor})
     else:
         return db_connection.cursor()
+
+
+def mysql_common_argument_spec():
+    return dict(
+        login_user=dict(type='str', default='root'),
+        login_password=dict(type='str', no_log=True),
+        login_host=dict(type='str', default='localhost'),
+        login_port=dict(type='int', default=3306),
+        login_unix_socket=dict(type='str'),
+        config_file=dict(type='path', default='~/.my.cnf'),
+        connect_timeout=dict(type='int', default=30),
+        client_cert=dict(type='path', aliases=['ssl_cert']),
+        client_key=dict(type='path', aliases=['ssl_key']),
+        ca_cert=dict(type='path', aliases=['ssl_ca']),
+    )
