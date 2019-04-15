@@ -1292,6 +1292,22 @@ doesn't know it is a boolean value::
 
 .. versionadded:: 1.6
 
+To use extended truth values such as ('y', 'yes', 'on', '1', 'true', 't', 1, 1.0, True), you can use parameter ``logic`` as ``ansible``::
+
+  vars_prompt:
+    - name: sudo_access
+      prompt: Grant Sudo (Y/N)?
+      default: N
+      private: no
+  tasks:
+    - name: Show what sudo_access evaluates to
+      debug:
+        msg: "boolean value for sudo_access is {{ sudo_access | bool(logic='ansible') }}"
+
+Possible values for argument ``logic`` are 'python', 'yaml' and 'ansible', where 'yaml' is a default value.
+
+.. versionadded:: 2.9
+
 To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host

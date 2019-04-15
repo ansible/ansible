@@ -89,15 +89,21 @@ def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
         return to_json(a, *args, **kw)
 
 
-def to_bool(a):
+def to_bool(a, logic='yaml'):
     ''' return a bool for the arg '''
     if a is None or isinstance(a, bool):
         return a
     if isinstance(a, string_types):
         a = a.lower()
-    if a in BOOLEANS_TRUE:
-        return True
-    return False
+
+    if logic == 'python':
+        return bool(a)
+    elif logic == 'yaml':
+        return a in ('yes', 'on', '1', 'true', 1)
+    elif logic == 'ansible':
+        return a in BOOLEANS_TRUE
+    else:
+        raise AnsibleFilterError('Unknown logic, please specify one of %r' % ['python', 'yaml', 'ansible'])
 
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):

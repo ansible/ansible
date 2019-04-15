@@ -30,24 +30,25 @@ a = {{ a | mandatory }}
 There are various casts available
 
 int = {{ a | int }}
+bool = {{ 1 | bool }}
 
-y_bool = {{ 'y' | bool }}
-yes_bool = {{ 'yes' | bool }}
-on_bool = {{ 'on' | bool }}
-str_1_bool = {{ '1' | bool }}
-int_1_bool = {{ 1 | bool }}
-float_1_bool = {{ 1.0 | bool }}
-full_true_bool = {{ 'true' | bool }}
-t_bool = {{ 't' | bool }}
+y_bool = {{ 'y' | bool(logic='yaml') }}
+yes_bool = {{ 'yes' | bool(logic='yaml') }}
+on_bool = {{ 'on' | bool(logic='yaml') }}
+str_1_bool = {{ '1' | bool(logic='yaml') }}
+int_1_bool = {{ 1 | bool(logic='yaml') }}
+float_1_bool = {{ 1.0 | bool(logic='yaml') }}
+full_true_bool = {{ 'true' | bool(logic='yaml') }}
+t_bool = {{ 't' | bool(logic='yaml') }}
 
-n_bool = {{ 'n' | bool }}
-no_bool = {{ 'no' | bool }}
-off_bool = {{ 'off' | bool }}
-str_0_bool = {{ '0' | bool }}
-int_0_bool = {{ 0 | bool }}
-float_0_bool = {{ 0.0 | bool }}
-full_false_bool = {{ 'false' | bool }}
-f_bool = {{ 'f' | bool }}
+n_bool = {{ 'n' | bool(logic='yaml') }}
+no_bool = {{ 'no' | bool(logic='yaml') }}
+off_bool = {{ 'off' | bool(logic='yaml') }}
+str_0_bool = {{ '0' | bool(logic='yaml') }}
+int_0_bool = {{ 0 | bool(logic='yaml') }}
+float_0_bool = {{ 0.0 | bool(logic='yaml') }}
+full_false_bool = {{ 'false' | bool(logic='yaml') }}
+f_bool = {{ 'f' | bool(logic='yaml') }}
 
 String quoting
 

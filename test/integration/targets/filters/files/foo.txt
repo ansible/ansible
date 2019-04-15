@@ -36,6 +36,7 @@ a = 1
 There are various casts available
 
 int = 1
+bool = True
 
 y_bool = True
 yes_bool = True
