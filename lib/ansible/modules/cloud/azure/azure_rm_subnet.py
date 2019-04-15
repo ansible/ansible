@@ -84,7 +84,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
