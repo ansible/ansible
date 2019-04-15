@@ -117,6 +117,11 @@ def split_host_pattern(pattern):
     return [p.strip() for p in patterns]
 
 
+def deduplicate_hosts(hosts):
+    seen = set()
+    return [x for x in hosts if x not in seen and not seen.add(x)]
+
+
 class InventoryManager(object):
     ''' Creates and manages inventory '''
 
@@ -369,8 +374,7 @@ class InventoryManager(object):
                     # exclude hosts mentioned in any restriction (ex: failed hosts)
                     hosts = [h for h in hosts if h.name in self._restriction]
 
-                seen = set()
-                self._hosts_patterns_cache[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+                self._hosts_patterns_cache[pattern_hash] = deduplicate_hosts(hosts)
 
             # sort hosts list if needed (should only happen when called from strategy)
             if order in ['sorted', 'reverse_sorted']:
