@@ -42,22 +42,20 @@ options:
     description:
       - Object unique identifier.
     type: str
-  details_level	:
+  details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the 
+        object to a fully detailed representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
-    default: 'standard'
   limit:
     description:
       - No more than that many results will be returned (1-500).
     type: int
-    default: 50
   offset:
     description:
       - Skip that many results before beginning to return them.
     type: int
-    default: 0
   order:
     description:
       - Sorts results by the given field. By default the results are sorted in the ascending order by name.
@@ -66,39 +64,37 @@ options:
     description:
       - Indicates whether to calculate and show "groups" field for every object in reply.
     type: bool
-    default: 'yes'
 """
 
 EXAMPLES = """
-- name: Get host object facts
-  checkpoint_host_facts:
-    name: attacker
+- name: Get network object facts
+  checkpoint_network_facts:
+    name: "New Network 1"
 """
 
 RETURN = """
-ansible_hosts:
-  description: The checkpoint host object facts.
+ansible_networks:
+  description: The checkpoint network object facts.
   returned: always.
-  type: list
+  type: dict
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, api_call_facts
+from ansible.module_utils.network.checkpoint.checkpoint import api_call_facts
 
 
 def main():
     argument_spec = dict(
         name=dict(type='str'),
         uid=dict(type='str'),
-        details_level=dict(type='str', choises=['uid', 'standard', 'full']),
+        details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         limit=dict(type=int),
         offset=dict(type=int),
-        order=dict(type=list),
-        show_membership=dict(type=bool)
+        order=dict(type='list'),
+        show_membership=dict(type='bool')
     )
 
     user_parameters = list(argument_spec.keys())
-    argument_spec.update(checkpoint_argument_spec)
     module = AnsibleModule(argument_spec=argument_spec)
     api_call_object = "network"
 

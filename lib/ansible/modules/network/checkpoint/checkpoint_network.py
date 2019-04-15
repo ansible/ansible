@@ -32,7 +32,7 @@ description:
   - Manages network objects on Checkpoint devices including creating, updating, removing network objects.
     All operations are performed over Web Services API.
 version_added: "2.8"
-author: Or Soffer (@Or Soffer)
+author: "Or Soffer (@Or Soffer)"
 options:
   name:
     description:
@@ -56,7 +56,8 @@ options:
     type: str
   mask_length:
     description:
-      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
+      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields 
+        explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
     type: int
   mask_length4:
     description:
@@ -85,24 +86,29 @@ options:
     choices: ['disallow', 'allow']
   set_if_exists:
     description:
-      - If another object with the same identifier already exists, it will be updated. The command behaviour will be the same as if originally a set command was called. Pay attention that original object's fields will be overwritten by the fields provided in the request payload!
+      - If another object with the same identifier already exists, it will be updated. The command behaviour will be the
+        same as if originally a set command was called. Pay attention that original object's fields will be overwritten
+        by the fields provided in the request payload!
     type: bool
   color:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
-    default: 'black'
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
+              'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 
+              'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 
+              'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 
+              'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
-  details_level	:
+  details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the 
+        object to a fully detailed representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
-    default: 'standard'
   groups:
     description:
       - Collection of group identifiers.
@@ -111,34 +117,30 @@ options:
     description:
       - Apply changes ignoring warnings.
     type: bool
-    default: 'no'
-  ignore-errors	:
+  ignore-errors:
     description:
-      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted
+        - warnings will also be ignored.
     type: bool
-    default: 'no'
   state:
     description:
       - State of the access rule (present or absent). Defaults to present.
     type: str
-    default: present
+    required: True
   auto_publish_session:
     description:
       - Publish the current session if changes have been performed
         after task completes.
     type: bool
-    default: 'yes'
   auto_install_policy:
     description:
       - Install the package policy if changes have been performed
         after the task completes.
     type: bool
-    default: 'yes'
   policy_package:
     description:
       - Package policy name to be installed.
     type: bool
-    default: 'standard'
   targets:
     description:
       - Targets to install the package policy on.
@@ -151,7 +153,7 @@ EXAMPLES = """
     name: "New Network 1"
     subnet: "192.0.2.0"
     subnet_mask : "255.255.255.0"
-    
+
 
 - name: Delete network object
   checkpoint_host:
@@ -163,36 +165,41 @@ RETURN = """
 checkpoint_networks:
   description: The checkpoint network object created or updated.
   returned: always, except when deleting the network.
-  type: list
+  type: dict
 """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, api_call
 
 
-argument_spec = dict(
-    name=dict(type='str'),
-    uid=dict(type='str'),
-    subnet=dict(type='str'),
-    subnet4=dict(type='str'),
-    subnet6=dict(type='str'),
-    mask_length=dict(type=int),
-    mask_length4=dict(type=int),
-    mask_length6=dict(type=int),
-    subnet_mask=dict(type='str'),
-    nat_settings=dict(type=dict),
-    tags=dict(type=list),
-    broadcast=dict(type='str', choises=['disallow', 'allow']),
-    set_if_exists=dict(type=bool),
-    color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']),
-    comments=dict(type='str'),
-    details_level=dict(type='str', choises=['uid', 'standard', 'full']),
-    groups=dict(type=list),
-    ignore_warnings=dict(type=bool),
-    ignore_errors=dict(type=bool),
-    state=dict(type='str', required=True)
-)
 def main():
+    argument_spec = dict(
+        name=dict(type='str'),
+        uid=dict(type='str'),
+        subnet=dict(type='str'),
+        subnet4=dict(type='str'),
+        subnet6=dict(type='str'),
+        mask_length=dict(type=int),
+        mask_length4=dict(type=int),
+        mask_length6=dict(type=int),
+        subnet_mask=dict(type='str'),
+        nat_settings=dict(type='dict'),
+        tags=dict(type='list'),
+        broadcast=dict(type='str', choices=['disallow', 'allow']),
+        set_if_exists=dict(type='bool'),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise',
+                                        'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray',
+                                        'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue',
+                                        'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
+                                        'red', 'sienna', 'yellow']),
+        comments=dict(type='str'),
+        details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+        groups=dict(type='list'),
+        ignore_warnings=dict(type='bool'),
+        ignore_errors=dict(type='bool'),
+        state=dict(type='str', required=True)
+    )
 
     user_parameters = list(argument_spec.keys())
     user_parameters.remove('state')

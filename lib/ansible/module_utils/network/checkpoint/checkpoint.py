@@ -37,6 +37,7 @@ checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=T
                                 )
 
 
+# publish the session
 def publish(connection, uid=None):
     payload = None
 
@@ -46,6 +47,7 @@ def publish(connection, uid=None):
     connection.send_request('/web_api/publish', payload)
 
 
+# discard changes of session
 def discard(connection, uid=None):
     payload = None
 
@@ -55,6 +57,7 @@ def discard(connection, uid=None):
     connection.send_request('/web_api/discard', payload)
 
 
+# install policy of session
 def install_policy(connection, policy_package, targets):
     payload = {'policy-package': policy_package,
                'targets': targets}
@@ -62,43 +65,48 @@ def install_policy(connection, policy_package, targets):
     connection.send_request('/web_api/install-policy', payload)
 
 
+# get the object from checkpoint DB, if exist
 def get_api_call_object(connection, api_call_object, unique_payload_for_get):
     code, response = connection.send_request('/web_api/show-' + api_call_object, unique_payload_for_get)
 
     return code, response
 
 
-def create_api_call_object(connection, api_call_object, payload):
+# add object to checkpoint DB
+def add_api_call_object(connection, api_call_object, payload):
     code, response = connection.send_request('/web_api/add-' + api_call_object, payload)
 
     return code, response
 
 
-def update_api_call_object(connection, api_call_object, payload):
+# set object in checkpoint DB
+def set_api_call_object(connection, api_call_object, payload):
     code, response = connection.send_request('/web_api/set-' + api_call_object, payload)
 
     return code, response
 
 
+# delete object from checkpoint DB
 def delete_api_call_object(connection, api_call_object, payload):
     code, response = connection.send_request('/web_api/delete-' + api_call_object, payload)
 
     return code, response
 
 
+# check if the object the user inserted is equals to the object in the checkpoint DB
 def needs_update(payload, api_call_object):
-    for key, value in payload.items():
-        if value and isinstance(api_call_object.get(key), str) and value != api_call_object.get(key):
-            return True
-    return False
+    # we implement this as new API call for checkpoint, so ignore this function for now.
+    return True
 
 
+# run the api command
 def run_api_command(connection, command, payload):
     code, response = connection.send_request('/web_api/' + command, payload)
 
     return code, response
 
 
+# get the payload from the user parameters
 def get_payload_from_user_parameters(module, user_parameters):
     payload = {}
     for parameter in user_parameters:
@@ -107,6 +115,7 @@ def get_payload_from_user_parameters(module, user_parameters):
     return payload
 
 
+# handle a command
 def api_command(module, command, user_parameters):
     payload = get_payload_from_user_parameters(module, user_parameters)
     connection = Connection(module._socket_path)
@@ -121,6 +130,7 @@ def api_command(module, command, user_parameters):
     module.exit_json(**result)
 
 
+# handle api call facts
 def api_call_facts(module, api_call_object, user_parameters):
     payload = get_payload_from_user_parameters(module, user_parameters)
     file_name_plural = "checkpoint_" + api_call_object.replace("_", "-") + "s"
@@ -134,6 +144,7 @@ def api_call_facts(module, api_call_object, user_parameters):
         module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
 
 
+# handle api call
 def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
     payload = get_payload_from_user_parameters(module, user_parameters)
     file_name_plural = "checkpoint_" + api_call_object.replace("_", "-") + "s"
@@ -144,7 +155,7 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
     if module.params['state'] == 'present':
         if code == 200:
             if needs_update(payload, response):
-                code, response = update_api_call_object(connection, api_call_object, payload)
+                code, response = set_api_call_object(connection, api_call_object, payload)
                 if module.params['auto_publish_session']:
                     publish(connection)
 
@@ -156,7 +167,9 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
             else:
                 pass
         elif code == 404:
-            code, response = create_api_call_object(connection, api_call_object, payload)
+            code, response = add_api_call_object(connection, api_call_object, payload)
+            if code != 200:
+                module.fail_json(msg=response)
 
             if module.params['auto_publish_session']:
                 publish(connection)
@@ -165,6 +178,7 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
                     install_policy(connection, module.params['policy_package'], module.params['targets'])
 
             result['changed'] = True
+            result['to delete2'] = 'to delete2'
             result[file_name_plural] = response
     else:
         if code == 200:

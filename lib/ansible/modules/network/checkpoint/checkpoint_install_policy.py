@@ -27,15 +27,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_run_script
-short_description: Run scripts on Checkpoint devices over Web Services API
+module: checkpoint_install_policy
+short_description: Install policy on Checkpoint devices over Web Services API
 description:
-  - Run scripts on Checkpoint devices.
+  - Install policy on Checkpoint devices.
     All operations are performed over Web Services API.
 version_added: "2.8"
 author: Or Soffer (@Or Soffer)
 options:
-  policy-package:
+  policy_package:
     description:
       - The name of the Policy Package to be installed.
     type: str
@@ -47,50 +47,51 @@ options:
     required: True
   access:
     description:
-      - Set to be true in order to install the Access Control policy. By default, the value is true if Access Control policy is enabled on the input policy package, otherwise false.
+      - Set to be true in order to install the Access Control policy. By default, the value is true if Access Control
+        policy is enabled on the input policy package, otherwise false.
     type: bool
   desktop_security:
     description:
-      - Set to be true in order to install the Desktop Security policy. By default, the value is true if desktop security policy is enabled on the input policy package, otherwise false.
+      - Set to be true in order to install the Desktop Security policy. By default, the value is true if desktop 
+        security policy is enabled on the input policy package, otherwise false.
     type: bool
   qos:
     description:
-      - Set to be true in order to install the QoS policy. By default, the value is true if Quality-of-Service policy is enabled on the input policy package, otherwise false.
+      - Set to be true in order to install the QoS policy. By default, the value is true if Quality-of-Service policy is
+        enabled on the input policy package, otherwise false.
     type: bool
   threat_prevention:
     description:
-      - Set to be true in order to install the Threat Prevention policy. By default, the value is true if Threat Prevention policy is enabled on the input policy package, otherwise false.
+      - Set to be true in order to install the Threat Prevention policy. By default, the value is true if Threat 
+        Prevention policy is enabled on the input policy package, otherwise false.
     type: bool
   install_on_all_cluster_members_or_fail:
     description:
-      - Relevant for the gateway clusters. If true, the policy is installed on all the cluster members. If the installation on a cluster member fails, don't install on that cluster.
+      - Relevant for the gateway clusters. If true, the policy is installed on all the cluster members. If the 
+        installation on a cluster member fails, don't install on that cluster.
     type: bool
-    default: 'yes'
   prepare_only:
     description:
       - If true, prepares the policy for the installation, but doesn't install it on an installation target.
     type: bool
-    default: 'no'
   revision:
     description:
       - The UID of the revision of the policy to install.
-    type: bool
+    type: str
 """
 
 EXAMPLES = """
-- name: Run script
-  checkpoint_run_script:
-    script_name: "List root"
-    script: ls -l /
-    targets:
-      - mycheckpointgw
+- name: Install policy
+  checkpoint_install_policy:
+    policy_package: "standard"
+    targets: "the_target"
 """
 
 RETURN = """
-checkpoint_run_script:
-  description: The checkpoint run script output.
+checkpoint_install_policy:
+  description: The checkpoint install policy output.
   returned: always.
-  type: list
+  type: str
 """
 
 
@@ -101,13 +102,13 @@ from ansible.module_utils.network.checkpoint.checkpoint import api_command
 def main():
     argument_spec = dict(
         policy_package=dict(type='str', required=True),
-        targets=dict(type=list, required=True),
-        access=dict(type=bool),
-        desktop_security=dict(type=bool),
-        qos=dict(type=bool),
-        threat_prevention=dict(type=bool),
-        install_on_all_cluster_members_or_fail=dict(type=bool),
-        prepare_only=dict(type=bool),
+        targets=dict(type='list', required=True),
+        access=dict(type='bool'),
+        desktop_security=dict(type='bool'),
+        qos=dict(type='bool'),
+        threat_prevention=dict(type='bool'),
+        install_on_all_cluster_members_or_fail=dict(type='bool'),
+        prepare_only=dict(type='bool'),
         revision=dict(type='str')
     )
 
