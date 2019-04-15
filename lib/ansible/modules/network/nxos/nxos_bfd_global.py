@@ -109,14 +109,15 @@ from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.connection import ConnectionError
 
 BFD_CMD_REF = """
-# The cmd_ref is a yaml formatted list of module commands. A leading underscore
-# denotes a non-command variable; e.g. _template.
+# The cmd_ref is a yaml formatted list of module commands.
+# A leading underscore denotes a non-command variable; e.g. _template.
 # BFD does not have convenient json data so this cmd_ref uses raw cli configs.
 ---
 # _template holds common settings for all commands
 _template:
   # Enable feature bfd if disabled
   feature: bfd
+  # Common get syntax for BFD commands
   get_command: show run bfd all | incl '^(no )*bfd'
 
 echo_interface:
@@ -155,7 +156,6 @@ def init_cmd_ref(module, cmd_ref_str):
     """
     cmd_ref = yaml.load(cmd_ref_str)
     cmd_ref['_proposed'] = []
-
     cmd_ref = feature_enable(module, cmd_ref)
 
     # Create a list of supported commands based on cmd_ref keys
@@ -165,12 +165,14 @@ def init_cmd_ref(module, cmd_ref_str):
 
 
 def feature_enable(module, cmd_ref):
-    """Enable the feature if specified in cmd_ref."""
+    """Enable the feature if specified in cmd_ref.
+    Return updated cmd_ref.
+    """
     feature = cmd_ref['_template'].get('feature')
     if feature:
         show_cmd = "show run | incl 'feature {0}'".format(feature)
         output = execute_show_command(module, show_cmd, 'text')
-        if feature and not output or 'CLI command error' in output:
+        if not output or 'CLI command error' in output:
             msg = "** 'feature {0}' is not enabled. Module will auto-enable ** ".format(feature)
             module.warn(msg)
             cmd_ref['_proposed'].append('feature {0}'.format(feature))
@@ -266,7 +268,7 @@ def get_existing(module, cmd_ref):
 
 def get_playvals(module, cmd_ref):
     """Update cmd_ref with values from the playbook.
-    Store these values in each command's 'existing' key.
+    Store these values in each command's 'playval' key.
     Return updated cmd_ref.
     """
     for k in cmd_ref.keys():
@@ -283,7 +285,7 @@ def get_playvals(module, cmd_ref):
 
 def get_proposed(cmd_ref):
     """Compare playbook values against existing states and create a list of proposed commands.
-    Return a list of cli command strings.
+    Return a list of raw cli command strings.
     """
     # '_proposed' may be empty list or contain initializations; e.g. ['feature foo']
     proposed = cmd_ref['_proposed']
