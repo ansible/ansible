@@ -3,7 +3,8 @@
 
 # The aim of this test is to be sure that SSL options work in general
 # and preparing the environment for testing these options in
-# the following PostgreSQL modules (ssl_db, ssl_user, certs)
+# the following PostgreSQL modules (ssl_db, ssl_user, certs).
+# Configured by https://www.postgresql.org/docs/current/ssl-tcp.html
 
 ####################
 # Prepare for tests:
