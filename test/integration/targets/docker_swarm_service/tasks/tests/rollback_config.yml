@@ -1,0 +1,339 @@
+---
+
+- name: Registering service name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-rollback_config' }}"
+
+- name: Registering service name
+  set_fact:
+    service_names: "{{ service_names }} + [service_name]"
+
+###################################################################
+## rollback_config.delay ############################################
+###################################################################
+
+- name: rollback_config.delay
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      delay: 5s
+  register: rollback_config_delay_1
+  ignore_errors: yes
+
+- name: rollback_config.delay (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      delay: 5s
+  register: rollback_config_delay_2
+  ignore_errors: yes
+
+- name: rollback_config.delay (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      delay: 12s
+  register: rollback_config_delay_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - rollback_config_delay_1 is changed
+      - rollback_config_delay_2 is not changed
+      - rollback_config_delay_3 is changed
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('3.5.0', '>=')
+- assert:
+    that:
+      - rollback_config_delay_1 is failed
+      - "'Minimum version required' in rollback_config_delay_1.msg"
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('3.5.0', '<')
+
+###################################################################
+## rollback_config.failure_action ###################################
+###################################################################
+
+- name: rollback_config.failure_action
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      failure_action: "pause"
+  register: rollback_config_failure_action_1
+  ignore_errors: yes
+
+- name: rollback_config.failure_action (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      failure_action: "pause"
+  register: rollback_config_failure_action_2
+  ignore_errors: yes
+
+- name: rollback_config.failure_action (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      failure_action: "continue"
+  register: rollback_config_failure_action_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - rollback_config_failure_action_1 is changed
+      - rollback_config_failure_action_2 is not changed
+      - rollback_config_failure_action_3 is changed
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('3.5.0', '>=')
+- assert:
+    that:
+      - rollback_config_failure_action_1 is failed
+      - "'Minimum version required' in rollback_config_failure_action_1.msg"
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('3.5.0', '<')
+
+###################################################################
+## rollback_config.max_failure_ratio ################################
+###################################################################
+
+- name: rollback_config.max_failure_ratio
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      max_failure_ratio: 0.25
+  register: rollback_config_max_failure_ratio_1
+  ignore_errors: yes
+
+- name: rollback_config.max_failure_ratio (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      max_failure_ratio: 0.25
+  register: rollback_config_max_failure_ratio_2
+  ignore_errors: yes
+
+- name: rollback_config.max_failure_ratio (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      max_failure_ratio: 0.50
+  register: rollback_config_max_failure_ratio_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - rollback_config_max_failure_ratio_1 is changed
+      - rollback_config_max_failure_ratio_2 is not changed
+      - rollback_config_max_failure_ratio_3 is changed
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('3.5.0', '>=')
+- assert:
+    that:
+      - rollback_config_max_failure_ratio_1 is failed
+      - "'Minimum version required' in rollback_config_max_failure_ratio_1.msg"
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('3.5.0', '<')
+
+###################################################################
+# rollback_config.monitor ###########################################
+###################################################################
+
+- name: rollback_config.monitor
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      monitor: 10s
+  register: rollback_config_monitor_1
+  ignore_errors: yes
+
+- name: rollback_config.monitor (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      monitor: 10s
+  register: rollback_config_monitor_2
+  ignore_errors: yes
+
+- name: rollback_config.monitor (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      monitor: 60s
+  register: rollback_config_monitor_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - rollback_config_monitor_1 is changed
+      - rollback_config_monitor_2 is not changed
+      - rollback_config_monitor_3 is changed
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('3.5.0', '>=')
+- assert:
+    that:
+      - rollback_config_monitor_1 is failed
+      - "'Minimum version required' in rollback_config_monitor_1.msg"
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('3.5.0', '<')
+
+###################################################################
+# rollback_config.order #############################################
+###################################################################
+
+- name: rollback_config.order
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      order: "start-first"
+  register: rollback_config_order_1
+  ignore_errors: yes
+
+- name: rollback_config.order (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      order: "start-first"
+  register: rollback_config_order_2
+  ignore_errors: yes
+
+- name: rollback_config.order (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      order: "stop-first"
+  register: rollback_config_order_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - rollback_config_order_1 is changed
+      - rollback_config_order_2 is not changed
+      - rollback_config_order_3 is changed
+  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('2.7.0', '>=')
+- assert:
+    that:
+      - rollback_config_order_1 is failed
+      - "'Minimum version required' in rollback_config_order_1.msg"
+  when: docker_api_version is version('1.29', '<') or docker_py_version is version('2.7.0', '<')
+
+###################################################################
+## rollback_config.parallelism ######################################
+###################################################################
+
+- name: rollback_config.parallelism
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      parallelism: 2
+  register: rollback_config_parallelism_1
+  ignore_errors: yes
+
+- name: rollback_config.parallelism (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      parallelism: 2
+  register: rollback_config_parallelism_2
+  ignore_errors: yes
+
+- name: rollback_config.parallelism (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    rollback_config:
+      parallelism: 1
+  register: rollback_config_parallelism_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - rollback_config_parallelism_1 is changed
+      - rollback_config_parallelism_2 is not changed
+      - rollback_config_parallelism_3 is changed
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('2.7.0', '>=')
+- assert:
+    that:
+      - rollback_config_parallelism_1 is failed
+      - "'Minimum version required' in rollback_config_parallelism_1.msg"
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('2.7.0', '<')

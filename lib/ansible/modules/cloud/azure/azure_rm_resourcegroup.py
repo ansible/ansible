@@ -60,7 +60,7 @@ author:
 EXAMPLES = '''
     - name: Create a resource group
       azure_rm_resourcegroup:
-        name: Testing
+        name: myResourceGroup
         location: westus
         tags:
             testing: testing
@@ -68,7 +68,13 @@ EXAMPLES = '''
 
     - name: Delete a resource group
       azure_rm_resourcegroup:
-        name: Testing
+        name: myResourceGroup
+        state: absent
+
+    - name: Delete a resource group including resources it contains
+      azure_rm_resourcegroup:
+        name: myResourceGroup
+        force_delete_nonempty: yes
         state: absent
 '''
 RETURN = '''
@@ -82,7 +88,7 @@ state:
     returned: always
     type: dict
     sample: {
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup",
         "location": "westus",
         "name": "Testing",
         "provisioning_state": "Succeeded",
@@ -205,7 +211,8 @@ class AzureRMResourceGroup(AzureRMModuleBase):
             elif self.state == 'absent':
                 if contains_resources and not self.force_delete_nonempty:
                     self.fail("Error removing resource group {0}. Resources exist within the group. "
-                              "Use `force_delete_nonempty` to force delete.".format(self.name))
+                              "Use `force_delete_nonempty` to force delete. "
+                              "To list resources under {0}, use `azure_rm_resourcegroup_facts` module with `list_resources` option.".format(self.name))
                 self.delete_resource_group()
 
         return self.results

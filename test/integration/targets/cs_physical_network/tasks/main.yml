@@ -1,0 +1,238 @@
+---
+# Create a new zone - the default one is enabled
+- name: assure zone for tests
+  cs_zone:
+    name: cs-test-zone
+    state: present
+    dns1: 8.8.8.8
+    network_type: Advanced
+  register: cszone
+
+- name: ensure the zone is disabled
+  cs_zone:
+    name: "{{ cszone.name }}"
+    state: disabled
+  register: cszone
+
+- name: setup a network in check_mode
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    isolation_method: VLAN
+    broadcast_domain_range: ZONE
+  check_mode: yes
+  register: pn
+- name: validate setup a network
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.zone == cszone.name
+
+- name: setup a network
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    isolation_method: VLAN
+    broadcast_domain_range: ZONE
+  register: pn
+- name: validate setup a network
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.name == 'net01'
+      - pn.broadcast_domain_range == 'ZONE'
+      - pn.isolation_method == 'VLAN'
+      - pn.zone == cszone.name
+      - pn.state == 'Disabled'
+
+- name: setup a network idempotence
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    isolation_method: VLAN
+    broadcast_domain_range: ZONE
+  register: pn
+- name: validate setup a network idempotence
+  assert:
+    that:
+      - pn is successful
+      - pn is not changed
+      - pn.name == 'net01'
+      - pn.broadcast_domain_range == 'ZONE'
+      - pn.isolation_method == 'VLAN'
+      - pn.zone == cszone.name
+      - pn.state == 'Disabled'
+
+- name: set a tag on a network
+  cs_physical_network:
+    name: net01
+    tag: overlay
+    zone: "{{ cszone.name }}"
+  ignore_errors: true
+  register: pn
+- name: validate set a tag on a network
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.name == 'net01'
+      - pn.broadcast_domain_range == 'ZONE'
+      - pn.isolation_method == 'VLAN'
+      - pn.zone == cszone.name
+      - pn.tags == 'overlay'
+      - pn.state == 'Disabled'
+
+- name: Remove tag on a network
+  cs_physical_network:
+    name: net01
+    tag: ""
+    zone: "{{ cszone.name }}"
+  register: pn
+- name: validate remove tag on a network
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.name == 'net01'
+      - pn.broadcast_domain_range == 'ZONE'
+      - pn.isolation_method == 'VLAN'
+      - pn.zone == cszone.name
+      - pn.tags is undefined
+      - pn.state == 'Disabled'
+
+- name: ensure a network is enabled with specific nsps enabled in check mode
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    isolation_method: VLAN
+    vlan: 100-200,300-400
+    broadcast_domain_range: ZONE
+    state: enabled
+    nsps_enabled:
+      - virtualrouter
+      - internallbvm
+      - vpcvirtualrouter
+  check_mode: yes
+  register: pn
+- name: validate ensure a network is enabled with specific nsps enabled
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.name == 'net01'
+      - pn.zone == cszone.name
+      - "'internallbvm' in pn.nsps_enabled"
+      - "'virtualrouter' in pn.nsps_enabled"
+      - "'vpcvirtualrouter' in pn.nsps_enabled"
+
+- name: ensure a network is enabled with specific nsps enabled
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    isolation_method: VLAN
+    vlan: 100-200,300-400
+    broadcast_domain_range: ZONE
+    state: enabled
+    nsps_enabled:
+      - virtualrouter
+      - internallbvm
+      - vpcvirtualrouter
+  register: pn
+- name: validate ensure a network is enabled with specific nsps enabled
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.name == 'net01'
+      - pn.broadcast_domain_range == 'ZONE'
+      - pn.isolation_method == 'VLAN'
+      - pn.zone == cszone.name
+      - pn.vlan == '100-200,300-400'
+      - pn.state == 'Enabled'
+      - "'internallbvm' in pn.nsps_enabled"
+      - "'virtualrouter' in pn.nsps_enabled"
+      - "'vpcvirtualrouter' in pn.nsps_enabled"
+
+- name: ensure a network is disabled
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    state: disabled
+  register: pn
+- name: validate ensure a network is disabled
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.name == 'net01'
+      - pn.broadcast_domain_range == 'ZONE'
+      - pn.isolation_method == 'VLAN'
+      - pn.zone == cszone.name
+      - pn.tags is undefined
+      - pn.state == 'Disabled'
+
+- name: ensure a network is enabled
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    state: enabled
+  register: pn
+- name: validate ensure a network is enabled
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.name == 'net01'
+      - pn.broadcast_domain_range == 'ZONE'
+      - pn.isolation_method == 'VLAN'
+      - pn.zone == cszone.name
+      - pn.tags is undefined
+      - pn.state == 'Enabled'
+
+- name: ensure a network is not absent in check mode
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    state: absent
+  check_mode: yes
+  register: pn
+- name: validate ensure a network is absent
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.zone == cszone.name
+
+- name: ensure a network is absent
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    state: absent
+  register: pn
+- name: validate ensure a network is absent
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.zone == cszone.name
+      - pn.name == 'net01'
+
+- name: ensure a network is absent idempotence
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    state: absent
+  register: pn
+- name: validate ensure a network is absent idempotence
+  assert:
+    that:
+      - pn is successful
+      - pn is not changed
+      - pn.zone == cszone.name
+
+- name: cleanup zone
+  cs_zone:
+    name: "{{ cszone.name }}"
+    state: absent

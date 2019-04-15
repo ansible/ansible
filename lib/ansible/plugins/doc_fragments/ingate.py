@@ -46,11 +46,12 @@ options:
         description:
           - The timeout (in seconds) for REST API requests.
         type: int
-      verify_ssl:
+      validate_certs:
         description:
           - Verify the unit's HTTPS certificate.
         type: bool
         default: yes
+        aliases: [ verify_ssl ]
 notes:
   - This module requires that the Ingate Python SDK is installed on the
     host. To install the SDK use the pip command from your shell

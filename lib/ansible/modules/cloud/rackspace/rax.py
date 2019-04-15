@@ -820,7 +820,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             user_data=dict(no_log=True),
             wait=dict(default=False, type='bool'),
-            wait_timeout=dict(default=300),
+            wait_timeout=dict(default=300, type='int'),
         )
     )
 

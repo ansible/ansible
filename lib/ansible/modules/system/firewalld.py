@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 module: firewalld
 short_description: Manage arbitrary ports/services with firewalld
 description:
-  - This module allows for addition or deletion of services and ports either tcp or udp in either running or permanent firewalld rules.
+  - This module allows for addition or deletion of services and ports (either TCP or UDP) in either running or permanent firewalld rules.
 version_added: "1.4"
 options:
   service:
@@ -45,20 +45,20 @@ options:
     version_added: "2.1"
   icmp_block:
     description:
-      - The icmp block you would like to add/remove to/from a zone in firewalld.
+      - The ICMP block you would like to add/remove to/from a zone in firewalld.
     type: str
     version_added: "2.8"
   icmp_block_inversion:
     description:
-      - Enable/Disable inversion of icmp blocks for a zone in firewalld.
+      - Enable/Disable inversion of ICMP blocks for a zone in firewalld.
     type: str
     version_added: "2.8"
   zone:
     description:
       - The firewalld zone to add/remove to/from.
       - Note that the default zone can be configured per system but C(public) is default from upstream.
-      - Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).
-      - Possible values include C(block), C(dmz), C(drop), C(external), C(home), C(internal), C(public), C(trusted), C(work) ]
+      - Available choices can be extended based on per-system configs, listed here are "out of the box" defaults.
+      - Possible values include C(block), C(dmz), C(drop), C(external), C(home), C(internal), C(public), C(trusted), C(work).
     type: str
   permanent:
     description:
@@ -75,7 +75,7 @@ options:
   state:
     description:
       - Enable or disable a setting.
-      - 'For ports: Should this port accept(enabled) or reject(disabled) connections.'
+      - 'For ports: Should this port accept (enabled) or reject (disabled) connections.'
       - The states C(present) and C(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
     type: str
     required: true

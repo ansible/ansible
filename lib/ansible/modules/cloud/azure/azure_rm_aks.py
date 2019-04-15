@@ -244,7 +244,7 @@ state:
            vnet_subnet_id: Null
         changed: false
         dns_prefix: aks9860bdcd89
-        id: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/yuwzhoaks/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
+        id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/yuwzhoaks/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
         kubernetes_version: 1.11.4
         linux_profile:
@@ -254,7 +254,7 @@ state:
         name: aks9860bdc
         provisioning_state: Succeeded
         service_principal_profile:
-           client_id: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+           client_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         tags: {}
         type: Microsoft.ContainerService/ManagedClusters
 '''
@@ -540,10 +540,10 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                 self.fail('You cannot specify more than one agent_pool_profiles currently')
 
             available_versions = self.get_all_versions()
-            if self.kubernetes_version not in available_versions.keys():
-                self.fail("Unsupported kubernetes version. Excepted one of {0} but get {1}".format(available_versions.keys(), self.kubernetes_version))
             if not response:
                 to_be_updated = True
+                if self.kubernetes_version not in available_versions.keys():
+                    self.fail("Unsupported kubernetes version. Expected one of {0} but got {1}".format(available_versions.keys(), self.kubernetes_version))
             else:
                 self.results = response
                 self.results['changed'] = False
@@ -582,7 +582,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         to_be_updated = True
 
                     if response['kubernetes_version'] != self.kubernetes_version:
-                        upgrade_versions = available_versions.get(response['kubernetes_version'])
+                        upgrade_versions = available_versions.get(response['kubernetes_version']) or available_versions.keys()
                         if upgrade_versions and self.kubernetes_version not in upgrade_versions:
                             self.fail('Cannot upgrade kubernetes version to {0}, supported value are {1}'.format(self.kubernetes_version, upgrade_versions))
                         to_be_updated = True

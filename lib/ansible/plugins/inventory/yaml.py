@@ -153,7 +153,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                             self.inventory.set_variable(group, var, group_data[key][var])
                     elif key == 'children':
                         for subgroup in group_data[key]:
-                            self._parse_group(subgroup, group_data[key][subgroup])
+                            subgroup = self._parse_group(subgroup, group_data[key][subgroup])
                             self.inventory.add_child(group, subgroup)
 
                     elif key == 'hosts':
@@ -165,6 +165,8 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         else:
             self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
+
+        return group
 
     def _parse_host(self, host_pattern):
         '''

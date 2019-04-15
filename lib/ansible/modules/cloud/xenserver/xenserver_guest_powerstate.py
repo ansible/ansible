@@ -21,12 +21,15 @@ version_added: '2.8'
 author:
 - Bojan Vitnik (@bvitnik) <bvitnik@mainstream.rs>
 notes:
-- Minimal supported version of XenServer is 5.6
-- Module was tested with XenServer 6.5, 7.1 and 7.2
+- Minimal supported version of XenServer is 5.6.
+- Module was tested with XenServer 6.5, 7.1 and 7.2.
+- 'XenAPI Python library can be acquired from XenServer SDK (downloadable from Citrix website) or by running C(pip install XenAPI) (possibly very old
+   version, not compatible with Python 3.x). Latest version can also be acquired from GitHub:
+   https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI.py'
 - 'If no scheme is specified in C(hostname), module defaults to C(http://) because C(https://) is problematic in most setups. Make sure you are
    accessing XenServer host in trusted environment or use C(https://) scheme explicitly.'
 - 'To use C(https://) scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
-   which requires XenAPI.py from XenServer 7.2 SDK or newer and Python 2.7.9 or newer.'
+   which requires XenAPI library from XenServer 7.2 SDK or newer and Python 2.7.9 or newer.'
 requirements:
 - python >= 2.6
 - XenAPI
@@ -36,31 +39,35 @@ options:
     - Specify the state VM should be in.
     - If C(state) is set to value other than C(present), then VM is transitioned into required state and facts are returned.
     - If C(state) is set to C(present), then VM is just checked for existance and facts are returned.
+    type: str
     default: present
     choices: [ powered-on, powered-off, restarted, shutdown-guest, reboot-guest, suspended, present ]
   name:
     description:
-    - Name of the VM to work with.
+    - Name of the VM to manage.
     - VMs running on XenServer do not necessarily have unique names. The module will fail if multiple VMs with same name are found.
     - In case of multiple VMs with same name, use C(uuid) to uniquely specify VM to manage.
     - This parameter is case sensitive.
+    type: str
     required: yes
-    aliases: [ 'name_label' ]
+    aliases: [ name_label ]
   uuid:
     description:
-    - UUID of the VM to manage if known, this is XenServer's unique identifier.
+    - UUID of the VM to manage if known. This is XenServer's unique identifier.
     - It is required if name is not unique.
+    type: str
   wait_for_ip_address:
     description:
     - Wait until XenServer detects an IP address for the VM.
-    - This requires XenServer Tools preinstaled on VM to properly work.
-    default: 'no'
+    - This requires XenServer Tools to be preinstalled on the VM to work properly.
     type: bool
+    default: no
   state_change_timeout:
     description:
     - 'By default, module will wait indefinitely for VM to change state or accquire an IP address if C(wait_for_ip_address: yes).'
     - If this parameter is set to positive value, the module will instead wait specified number of seconds for the state change.
     - In case of timeout, module will generate an error message.
+    type: int
     default: 0
 extends_documentation_fragment: xenserver.documentation
 '''
@@ -68,9 +75,9 @@ extends_documentation_fragment: xenserver.documentation
 EXAMPLES = r'''
 - name: Power on VM
   xenserver_guest_powerstate:
-    hostname: 192.168.1.209
-    username: root
-    password: xenserver
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
     name: testvm_11
     state: powered-on
   delegate_to: localhost
@@ -243,6 +250,7 @@ def main():
 
     result = {'failed': False, 'changed': False}
 
+    # Module will exit with an error message if no VM is found.
     vm = XenServerVM(module)
 
     # Set VM power state.

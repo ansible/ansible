@@ -138,6 +138,15 @@ options:
         default: True
         type: bool
         version_added: 2.6
+    vgpu_placement:
+        description:
+            - If I(consolidated), each vGPU is placed on the first physical card with
+              available space. This is the default placement, utilizing all available
+              space on the physical cards.
+            - If I(separated), each vGPU is placed on a separate physical card, if
+              possible. This can be useful for improving vGPU performance.
+        choices: ['consolidated', 'separated']
+        version_added: 2.8
 extends_documentation_fragment: ovirt
 '''
 
@@ -297,6 +306,9 @@ class HostsModule(BaseModule):
                 enabled=self.param('power_management_enabled'),
                 kdump_detection=self.param('kdump_integration') == 'enabled',
             ) if self.param('power_management_enabled') is not None or self.param('kdump_integration') else None,
+            vgpu_placement=otypes.VgpuPlacement(
+                self.param('vgpu_placement')
+            ) if self.param('vgpu_placement') is not None else None,
         )
 
     def update_check(self, entity):
@@ -308,6 +320,7 @@ class HostsModule(BaseModule):
             equal(self.param('name'), entity.name) and
             equal(self.param('power_management_enabled'), entity.power_management.enabled) and
             equal(self.param('override_display'), getattr(entity.display, 'address', None)) and
+            equal(self.param('vgpu_placement'), str(entity.vgpu_placement)) and
             equal(
                 sorted(kernel_params) if kernel_params else None,
                 sorted(entity.os.custom_kernel_cmdline.split(' '))
@@ -430,6 +443,7 @@ def main():
         iscsi=dict(default=None, type='dict'),
         check_upgrade=dict(default=True, type='bool'),
         reboot_after_upgrade=dict(default=True, type='bool'),
+        vgpu_placement=dict(default=None, choices=['consolidated', 'separated']),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -459,7 +473,8 @@ def main():
                 deploy_hosted_engine=(
                     module.params.get('hosted_engine') == 'deploy'
                 ) if module.params.get('hosted_engine') is not None else None,
-                result_state=hoststate.UP if host is None else None,
+                activate=module.params['activate'],
+                result_state=(hoststate.MAINTENANCE if module.params['activate'] is False else hoststate.UP) if host is None else None,
                 fail_condition=hosts_module.failed_state_after_reinstall if host is None else lambda h: False,
             )
             if module.params['activate'] and host is not None:

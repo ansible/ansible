@@ -1,0 +1,74 @@
+---
+- name: Create server with public network only
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-inventory-public'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    use_public_network: True
+    use_private_network: False
+  register: server_public
+
+- name: Create server with private network only
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-inventory-private'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_alt_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    use_public_network: False
+    use_private_network: True
+  register: server_private
+
+- name: Create server with public and private network
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-inventory-public-private'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    use_public_network: True
+    use_private_network: True
+  register: server_public_private
+
+- name: Create servers with duplicate names
+  # The cloudscale_server module does not allow creating two servers with the same
+  # name. To do this the uri module has to be used.
+  uri:
+    url: 'https://api.cloudscale.ch/v1/servers'
+    method: POST
+    headers:
+      Authorization: 'Bearer {{ lookup("env", "CLOUDSCALE_API_TOKEN") }}'
+    body:
+      name: '{{ cloudscale_resource_prefix }}-duplicate'
+      flavor: '{{ cloudscale_test_flavor }}'
+      image: '{{ cloudscale_test_image }}'
+      ssh_keys:
+        - '{{ cloudscale_test_ssh_key }}'
+    body_format: json
+    status_code: 201
+  register: duplicate
+  with_sequence: count=2
+
+- name: Create server with different prefix
+  cloudscale_server:
+    name: 'other-prefix-{{ cloudscale_resource_prefix }}-inventory'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+  register: server_other_prefix
+
+# The API does not allow creation of a server with a name containing
+# characters not allowed in DNS names. So create a server and rename
+# it afterwards (which is possible). The resaon for this restriction is
+# that on creation a PTR entry for the server is created.
+- name: Create server to be renamed with unsafe characters
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-unsafe-chars'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+  register: server_unsafe_chars
+- name: Rename server to contain unsafe characters
+  cloudscale_server:
+    uuid: '{{ server_unsafe_chars.uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-snowmans-are-cool-☃!'
+  register: server_unsafe_chars

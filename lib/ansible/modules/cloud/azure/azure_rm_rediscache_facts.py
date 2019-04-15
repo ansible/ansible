@@ -18,22 +18,22 @@ module: azure_rm_rediscache_facts
 
 version_added: "2.8"
 
-short_description: Get Azure Redis Cache instance facts
+short_description: Get Azure Cache for Redis instance facts
 
 description:
-    - Get facts for Azure Redis Cache instance.
+    - Get facts for Azure Cache for Redis instance.
 
 options:
     resource_group:
         description:
-            - The resource group to search for the desired Azure Redis Cache
+            - The resource group to search for the desired Azure Cache for Redis
         required: True
     name:
         description:
-            - Limit results to a specific Azure Redis Cache.
+            - Limit results to a specific Azure Cache for Redis.
     return_access_keys:
         description:
-            - Indicate weather to return access keys of the Redis Cache.
+            - Indicate weather to return access keys of the Azure Cache for Redis.
         default: False
         type: bool
     tags:
@@ -48,46 +48,46 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get Redis Cache by name
+    - name: Get Azure Cache for Redis by name
       azure_rm_rediscache_facts:
         resource_group: myResourceGroup
         name: myRedis
 
-    - name: Get Redis Cache with access keys by name
+    - name: Get Azure Cache for Redis with access keys by name
       azure_rm_rediscache_facts:
         resource_group: myResourceGroup
         name: myRedis
         return_access_keys: true
 
-    - name: Get Redis Cache in specific resource group
+    - name: Get Azure Cache for Redis in specific resource group
       azure_rm_rediscache_facts:
         resource_group: myResourceGroup
 '''
 
 RETURN = '''
 rediscaches:
-    description: List of Azure Redis Cache instances.
+    description: List of Azure Cache for Redis instances.
     returned: always
     type: complex
     contains:
         resource_group:
             description:
-                - Name of a resource group where the Azure Redis Cache belongs to.
+                - Name of a resource group where the Azure Cache for Redis belongs to.
             returned: always
             type: str
-            sample: testGroup
+            sample: myResourceGroup
         name:
             description:
-                - Name of the Azure Redis Cache.
+                - Name of the Azure Cache for Redis.
             returned: always
             type: str
-            sample: testRedis
+            sample: myRedis
         id:
             description:
-                - Id of the Azure Redis Cache.
+                - Id of the Azure Cache for Redis.
             returned: always
             type: str
-            sample: /subscriptions/<subs_id>/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis
         provisioning_state:
             description:
                 - Provisioning state of the redis cahe
@@ -96,7 +96,7 @@ rediscaches:
             sample: Creating
         location:
             description:
-                - Location of the Azure Redis Cache.
+                - Location of the Azure Cache for Redis.
             type: str
             sample: WestUS
         enable_non_ssl_port:
@@ -115,7 +115,7 @@ rediscaches:
                     type: str
                     sample: standard
                 size:
-                    description: Size of the Redis Cache.
+                    description: Size of the Azure Cache for Redis.
                     returned: always
                     type: str
                     sample: C1
@@ -126,10 +126,11 @@ rediscaches:
             sample: 10.75.0.11
         subnet:
             description:
-                - The full resource ID of a subnet in a virtual network to deploy the Redis cache in.
+                - The full resource ID of a subnet in a virtual network to deploy the Azure Cache for Redis in.
             type: str
             sample:
-                - /subscriptions/<subid>/resourceGroups/myResourceGroup/Microsoft.Network|ClassicNetwork/VirtualNetworks/vnet1/subnets/subnet1
+                - "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/Microsoft.Network/VirtualNetworks/myVirtualNetwo
+                   rk/subnets/mySubnet"
         configuration:
             description:
                 - Dict of redis configuration.
@@ -157,7 +158,7 @@ rediscaches:
                 - foo
         access_keys:
             description:
-                - Redis cache access keys.
+                - Azure Cache for Redis access keys.
             type: dict
             returned: when C(return_access_keys) is true.
             contains:
@@ -185,7 +186,7 @@ import re
 
 
 class AzureRMRedisCacheFacts(AzureRMModuleBase):
-    """Utility class to get Azure Azure Redis cache facts"""
+    """Utility class to get Azure Cache for Redis facts"""
 
     def __init__(self):
 
@@ -238,7 +239,7 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
         return self.results
 
     def get_item(self):
-        """Get a single Azure Redis Cache"""
+        """Get a single Azure Cache for Redis"""
 
         self.log('Get properties for {0}'.format(self.name))
 
@@ -256,9 +257,9 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
         return result
 
     def list_by_resourcegroup(self):
-        """Get all Azure Azure Redis Cache within a resource group"""
+        """Get all Azure Cache for Redis within a resource group"""
 
-        self.log('List all Azure Redis Cache within a resource group')
+        self.log('List all Azure Cache for Redis within a resource group')
 
         try:
             response = self._client.redis.list_by_resource_group(self.resource_group)
@@ -273,7 +274,7 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
         return results
 
     def list_keys(self):
-        """List Azure Redis Cache keys"""
+        """List Azure Cache for Redis keys"""
 
         self.log('List keys for {0}'.format(self.name))
 
@@ -288,8 +289,8 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
 
     def serialize_rediscache(self, rediscache):
         '''
-        Convert a Azure Redis Cache object to dict.
-        :param cdn: Azure Redis Cache object
+        Convert an Azure Cache for Redis object to dict.
+        :param rediscache: Azure Cache for Redis object
         :return: dict
         '''
         new_result = dict(

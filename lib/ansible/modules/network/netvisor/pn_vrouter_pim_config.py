@@ -84,6 +84,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -96,16 +97,18 @@ def check_cli(module, cli):
     name = module.params['pn_vrouter_name']
 
     show = cli
-    cli += 'vrouter-show name %s format name no-show-headers ' % name
-    out = module.run_command(cli, use_unsafe_shell=True)
-    if out:
+    cli += ' vrouter-show name %s format name no-show-headers ' % name
+    out = run_commands(module, cli)[1]
+    out = out.split()
+    if out[-1] == name:
         pass
     else:
         return False
 
     cli = show
     cli += ' vrouter-show name %s format proto-multi no-show-headers' % name
-    out = module.run_command(cli, use_unsafe_shell=True)[1]
+    out = run_commands(module, cli)[1]
+    out = out.split()
 
     return True if 'none' not in out else False
 

@@ -90,7 +90,7 @@ options:
       - md5
       - sha1
       - sha256
-      - sha385
+      - sha384
       - sha512
     default: sha1
     version_added: "2.8"

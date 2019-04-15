@@ -156,6 +156,9 @@ def main():
         if question not in prev:
             changed = True
         else:
+
+            existing = prev[question]
+
             # ensure we compare booleans supplied to the way debconf sees them (true/false strings)
             if vtype == 'boolean':
                 value = to_text(value).lower()

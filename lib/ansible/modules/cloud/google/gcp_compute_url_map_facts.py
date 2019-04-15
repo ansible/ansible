@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a url map facts
+- name: " a url map facts"
   gcp_compute_url_map_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -73,7 +74,7 @@ items:
       description:
       - A reference to BackendService resource if none of the hostRules match.
       returned: success
-      type: str
+      type: dict
     description:
       description:
       - An optional description of this resource. Provide this property when you create
@@ -138,7 +139,7 @@ items:
             the pathRules defined by this PathMatcher is matched by the URL's path
             portion.
           returned: success
-          type: str
+          type: dict
         description:
           description:
           - An optional description of this resource.
@@ -167,7 +168,7 @@ items:
               description:
               - A reference to the BackendService resource if this rule is matched.
               returned: success
-              type: str
+              type: dict
     tests:
       description:
       - The list of expected URL mappings. Requests to update this UrlMap will succeed
@@ -195,7 +196,7 @@ items:
           - A reference to expected BackendService resource the given URL should be
             mapped to.
           returned: success
-          type: str
+          type: dict
 '''
 
 ################################################################################

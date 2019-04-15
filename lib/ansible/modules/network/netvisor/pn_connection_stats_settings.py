@@ -140,8 +140,7 @@ stdout:
   returned: always
   type: list
 stderr:
-  description: set of error responses from the connection-stats-settings
-               command.
+  description: set of error responses from the connection-stats-settings command.
   returned: on error
   type: list
 changed:

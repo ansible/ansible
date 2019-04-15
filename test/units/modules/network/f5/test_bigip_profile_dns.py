@@ -120,9 +120,11 @@ class TestManager(unittest.TestCase):
             process_recursion_desired=True,
             use_local_bind=True,
             enable_dns_firewall=True,
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

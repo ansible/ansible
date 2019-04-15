@@ -70,10 +70,10 @@ options:
       group uses this template to create all new instances in the managed instance
       group.
     - 'This field represents a link to a InstanceTemplate resource in GCP. It can
-      be specified in two ways. First, you can place in the selfLink of the resource
-      here as a string Alternatively, you can add `register: name-of-resource` to
-      a gcp_compute_instance_template task and then set this instance_template field
-      to "{{ name-of-resource }}"'
+      be specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_instance_template task and then set this
+      instance_template field to "{{ name-of-resource }}"'
     required: true
   name:
     description:
@@ -117,56 +117,56 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-instancetemplate"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-instancetemplate
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a address
   gcp_compute_address:
-      name: "address-instancetemplate"
-      region: us-west1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: address-instancetemplate
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: address
 
 - name: create a instance template
   gcp_compute_instance_template:
-      name: "{{ resource_name }}"
-      properties:
-        disks:
-        - auto_delete: true
-          boot: true
-          initialize_params:
-            source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
-        machine_type: n1-standard-1
-        network_interfaces:
-        - network: "{{ network }}"
-          access_configs:
-          - name: test-config
-            type: ONE_TO_ONE_NAT
-            nat_ip: "{{ address }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    properties:
+      disks:
+      - auto_delete: 'true'
+        boot: 'true'
+        initialize_params:
+          source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
+      machine_type: n1-standard-1
+      network_interfaces:
+      - network: "{{ network }}"
+        access_configs:
+        - name: test-config
+          type: ONE_TO_ONE_NAT
+          nat_ip: "{{ address }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancetemplate
 
 - name: create a instance group manager
   gcp_compute_instance_group_manager:
-      name: "test_object"
-      base_instance_name: test1-child
-      instance_template: "{{ instancetemplate }}"
-      target_size: 3
-      zone: us-west1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    base_instance_name: test1-child
+    instance_template: "{{ instancetemplate }}"
+    target_size: 3
+    zone: us-west1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -261,13 +261,13 @@ instanceGroup:
   description:
   - The instance group being managed.
   returned: success
-  type: str
+  type: dict
 instanceTemplate:
   description:
   - The instance template that is specified for this managed instance group. The group
     uses this template to create all new instances in the managed instance group.
   returned: success
-  type: str
+  type: dict
 name:
   description:
   - The name of the managed instance group. The name must be 1-63 characters long,
@@ -339,10 +339,10 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             base_instance_name=dict(required=True, type='str'),
             description=dict(type='str'),
-            instance_template=dict(required=True),
+            instance_template=dict(required=True, type='dict'),
             name=dict(required=True, type='str'),
             named_ports=dict(type='list', elements='dict', options=dict(name=dict(type='str'), port=dict(type='int'))),
-            target_pools=dict(type='list'),
+            target_pools=dict(type='list', elements='dict'),
             target_size=dict(type='int'),
             zone=dict(required=True, type='str'),
         )
@@ -537,32 +537,10 @@ class InstanceGroupManagerCurrentactions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {
-                u'abandoning': self.request.get('abandoning'),
-                u'creating': self.request.get('creating'),
-                u'creatingWithoutRetries': self.request.get('creating_without_retries'),
-                u'deleting': self.request.get('deleting'),
-                u'none': self.request.get('none'),
-                u'recreating': self.request.get('recreating'),
-                u'refreshing': self.request.get('refreshing'),
-                u'restarting': self.request.get('restarting'),
-            }
-        )
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {
-                u'abandoning': self.request.get(u'abandoning'),
-                u'creating': self.request.get(u'creating'),
-                u'creatingWithoutRetries': self.request.get(u'creatingWithoutRetries'),
-                u'deleting': self.request.get(u'deleting'),
-                u'none': self.request.get(u'none'),
-                u'recreating': self.request.get(u'recreating'),
-                u'refreshing': self.request.get(u'refreshing'),
-                u'restarting': self.request.get(u'restarting'),
-            }
-        )
+        return remove_nones_from_dict({})
 
 
 class InstanceGroupManagerNamedportsArray(object):

@@ -106,17 +106,21 @@ AUTH_ARG_SPEC = {
     'password': {
         'no_log': True,
     },
-    'verify_ssl': {
+    'validate_certs': {
         'type': 'bool',
+        'aliases': ['verify_ssl'],
     },
-    'ssl_ca_cert': {
+    'ca_cert': {
         'type': 'path',
+        'aliases': ['ssl_ca_cert'],
     },
-    'cert_file': {
+    'client_cert': {
         'type': 'path',
+        'aliases': ['cert_file'],
     },
-    'key_file': {
+    'client_key': {
         'type': 'path',
+        'aliases': ['key_file'],
     },
 }
 

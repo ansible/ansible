@@ -69,6 +69,11 @@ options:
        - List of SSH public keys.
        - Use the full content of your .pub file here.
     type: list
+  password:
+    description:
+       - Password for the server.
+    type: str
+    version_added: '2.8'
   use_public_network:
     description:
       - Attach a public network interface to the server.
@@ -87,7 +92,15 @@ options:
   anti_affinity_with:
     description:
       - UUID of another server to create an anti-affinity group with.
+      - Mutually exclusive with I(server_groups).
+      - Deprecated, removed in version 2.11.
     type: str
+  server_groups:
+    description:
+      - List of UUID or names of server groups.
+      - Mutually exclusive with I(anti_affinity_with).
+    type: list
+    version_added: '2.8'
   user_data:
     description:
       - Cloud-init configuration (cloud-config) data to use for the server.
@@ -104,27 +117,28 @@ extends_documentation_fragment: cloudscale
 '''
 
 EXAMPLES = '''
-# Start a server (if it does not exist) and register the server details
+# Create and start a server with an existing server group (shiny-group)
 - name: Start cloudscale.ch server
   cloudscale_server:
     name: my-shiny-cloudscale-server
     image: debian-8
     flavor: flex-4
     ssh_keys: ssh-rsa XXXXXXXXXX...XXXX ansible@cloudscale
+    server_groups: shiny-group
     use_private_network: True
     bulk_volume_size_gb: 100
     api_token: xxxxxx
-  register: server1
 
-# Start another server in anti-affinity to the first one
+# Start another server in anti-affinity (server group shiny-group)
 - name: Start second cloudscale.ch server
   cloudscale_server:
     name: my-other-shiny-server
     image: ubuntu-16.04
     flavor: flex-8
     ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
-    anti_affinity_with: '{{ server1.uuid }}'
+    server_groups: shiny-group
     api_token: xxxxxx
+
 
 # Force to update the flavor of a running server
 - name: Start cloudscale.ch server
@@ -219,10 +233,18 @@ ssh_host_keys:
   type: list
   sample: ["ecdsa-sha2-nistp256 XXXXX", ... ]
 anti_affinity_with:
-  description: List of servers in the same anti-affinity group
+  description:
+  - List of servers in the same anti-affinity group
+  - Deprecated, removed in version 2.11.
   returned: success when not state == absent
-  type: str
+  type: list
   sample: []
+server_groups:
+  description: List of server groups
+  returned: success when not state == absent
+  type: list
+  sample: [ {"href": "https://api.cloudscale.ch/v1/server-groups/...", "uuid": "...", "name": "db-group"} ]
+  version_added: '2.8'
 '''
 
 from datetime import datetime, timedelta
@@ -373,14 +395,42 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
         return server_info
 
+    def _get_server_group_ids(self):
+        server_group_params = self._module.params['server_groups']
+        if not server_group_params:
+            return None
+
+        matching_group_names = []
+        results = []
+        server_groups = self._get('server-groups')
+        for server_group in server_groups:
+            if server_group['uuid'] in server_group_params:
+                results.append(server_group['uuid'])
+                server_group_params.remove(server_group['uuid'])
+
+            elif server_group['name'] in server_group_params:
+                results.append(server_group['uuid'])
+                server_group_params.remove(server_group['name'])
+                # Remember the names found
+                matching_group_names.append(server_group['name'])
+
+            # Names are not unique, verify if name already found in previous iterations
+            elif server_group['name'] in matching_group_names:
+                self._module.fail_json(msg="More than one server group with name exists: '%s'. "
+                                       "Use the 'uuid' parameter to identify the server group." % server_group['name'])
+
+        if server_group_params:
+            self._module.fail_json(msg="Server group name or UUID not found: %s" % ', '.join(server_group_params))
+
+        return results
+
     def _create_server(self, server_info):
         self._result['changed'] = True
-        required_params = ('name', 'ssh_keys', 'image', 'flavor')
-        self._module.fail_on_missing_params(required_params)
 
         data = deepcopy(self._module.params)
         for i in ('uuid', 'state', 'force', 'api_timeout', 'api_token'):
             del data[i]
+        data['server_groups'] = self._get_server_group_ids()
 
         self._result['diff']['before'] = self._init_server_container()
         self._result['diff']['after'] = deepcopy(data)
@@ -392,6 +442,14 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
     def _update_server(self, server_info):
 
         previous_state = server_info.get('state')
+
+        # The API doesn't support to update server groups.
+        # Show a warning to the user if the desired state does not match.
+        desired_server_group_ids = self._get_server_group_ids()
+        if desired_server_group_ids is not None:
+            current_server_group_ids = [grp['uuid'] for grp in server_info['server_groups']]
+            if desired_server_group_ids != current_server_group_ids:
+                self._module.warn("Server groups can not be mutated, server needs redeployment to change groups.")
 
         server_info = self._update_param('flavor', server_info, requires_stop=True)
         server_info = self._update_param('name', server_info)
@@ -443,10 +501,12 @@ def main():
         volume_size_gb=dict(type='int', default=10),
         bulk_volume_size_gb=dict(type='int'),
         ssh_keys=dict(type='list'),
+        password=dict(no_log=True),
         use_public_network=dict(type='bool', default=True),
         use_private_network=dict(type='bool', default=False),
         use_ipv6=dict(type='bool', default=True),
-        anti_affinity_with=dict(),
+        anti_affinity_with=dict(removed_in_version='2.11'),
+        server_groups=dict(type='list'),
         user_data=dict(),
         force=dict(type='bool', default=False)
     ))
@@ -454,6 +514,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=(('name', 'uuid'),),
+        mutually_exclusive=(('anti_affinity_with', 'server_groups'),),
         supports_check_mode=True,
     )
 

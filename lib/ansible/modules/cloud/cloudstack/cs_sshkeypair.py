@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -32,49 +18,55 @@ description:
     - If no key was found and no public key was provided and a new SSH
       private/public key pair will be created and the private key will be returned.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of public key.
+    type: str
     required: true
   domain:
     description:
       - Domain the public key is related to.
+    type: str
   account:
     description:
       - Account the public key is related to.
+    type: str
   project:
     description:
       - Name of the project the public key to be registered in.
+    type: str
   state:
     description:
       - State of the public key.
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   public_key:
     description:
       - String of the public key.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create a new private / public key pair:
-- cs_sshkeypair:
+- name: create a new private / public key pair
+  cs_sshkeypair:
     name: linus@example.com
   delegate_to: localhost
   register: key
 - debug:
     msg: 'Private key is {{ key.private_key }}'
 
-# remove a public key by its name:
-- cs_sshkeypair:
+- name: remove a public key by its name
+  cs_sshkeypair:
     name: linus@example.com
     state: absent
   delegate_to: localhost
 
-# register your existing local public key:
-- cs_sshkeypair:
+- name: register your existing local public key
+  cs_sshkeypair:
     name: linus@example.com
     public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
   delegate_to: localhost

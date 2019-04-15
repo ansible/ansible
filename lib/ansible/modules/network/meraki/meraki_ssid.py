@@ -220,13 +220,82 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data:
-    description: Information about queried or updated object.
-    type: list
-    returned: info
-    sample:
-      "data": {
-
-      }
+    description: List of wireless SSIDs.
+    returned: success
+    type: complex
+    contains:
+        number:
+            description: Zero-based index number for SSIDs.
+            returned: success
+            type: int
+            sample: 0
+        name:
+            description:
+              - Name of wireless SSID.
+              - This value is what is broadcasted.
+            returned: success
+            type: str
+            sample: CorpWireless
+        enabled:
+            description: Enabled state of wireless network.
+            returned: success
+            type: bool
+            sample: true
+        splashPage:
+            description: Splash page to show when user authenticates.
+            returned: success
+            type: str
+            sample: Click-through splash page
+        ssidAdminAccessible:
+            description: Whether SSID is administratively accessible.
+            returned: success
+            type: bool
+            sample: true
+        authMode:
+            description: Authentication method.
+            returned: success
+            type: str
+            sample: psk
+        psk:
+            description: Secret wireless password.
+            returned: success
+            type: str
+            sample: SecretWiFiPass
+        encryptionMode:
+            description: Wireless traffic encryption method.
+            returned: success
+            type: str
+            sample: wpa
+        wpaEncryptionMode:
+            description: Enabled WPA versions.
+            returned: success
+            type: str
+            sample: WPA2 only
+        ipAssignmentMode:
+            description: Wireless client IP assignment method.
+            returned: success
+            type: str
+            sample: NAT mode
+        minBitrate:
+            description: Minimum bitrate a wireless client can connect at.
+            returned: success
+            type: int
+            sample: 11
+        bandSelection:
+            description: Wireless RF frequency wireless network will be broadcast on.
+            returned: success
+            type: str
+            sample: 5 GHz band only
+        perClientBandwidthLimitUp:
+            description: Maximum upload bandwidth a client can use.
+            returned: success
+            type: int
+            sample: 1000
+        perClientBandwidthLimitDown:
+            description: Maximum download bandwidth a client can use.
+            returned: success
+            type: int
+            sample: 0
 '''
 
 import os

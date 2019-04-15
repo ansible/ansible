@@ -21,7 +21,7 @@ short_description: Manage docker secrets.
 version_added: "2.4"
 
 description:
-     - Create and remove Docker secrets in a Swarm environment. Similar to `docker secret create` and `docker secret rm`.
+     - Create and remove Docker secrets in a Swarm environment. Similar to C(docker secret create) and C(docker secret rm).
      - Adds to the metadata of new secrets 'ansible_key', an encrypted hash representation of the data, which is then used
        in future runs to test if a secret has changed. If 'ansible_key is not present, then a secret will not be updated
        unless the C(force) option is set.
@@ -70,7 +70,7 @@ extends_documentation_fragment:
   - docker.docker_py_2_documentation
 
 requirements:
-  - "docker >= 2.1.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.1.0"
   - "Docker API >= 1.25"
 
 author:
@@ -85,7 +85,7 @@ EXAMPLES = '''
     # If the file is JSON or binary, Ansible might modify it (because
     # it is first decoded and later re-encoded). Base64-encoding the
     # file directly after reading it prevents this to happen.
-    data: "{{ lookup('file', '/path/to/secret/file') | base64 }}"
+    data: "{{ lookup('file', '/path/to/secret/file') | b64encode }}"
     data_is_b64: true
     state: present
 
@@ -156,7 +156,7 @@ import hashlib
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic

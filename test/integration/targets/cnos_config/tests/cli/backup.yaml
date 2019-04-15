@@ -5,7 +5,6 @@
   cnos_config:
     commands:
       - no vlan 13
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: collect any backup files
@@ -25,12 +24,11 @@
   cnos_config:
     src: roles/cnos_config/templates/basic/config.j2
     backup: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
-      - "result.changed == false"
+      - "result.changed == true"
  
 - name: collect any backup files
   find:
@@ -47,6 +45,5 @@
   cnos_config:
     commands:
       - no vlan 13
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/backup.yaml"

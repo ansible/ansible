@@ -131,14 +131,6 @@
     - data_create_actual.type == test_win_regedit_key_expected_type
   when: test_win_regedit_key_type not in ['dword', 'qword']
 
-- name: debug 1
-  debug:
-    var: test_win_regedit_key_expected_value1
-
-- name: debug 2
-  debug:
-    var: test_win_regedit_key_expected_value1|int
-
 - name: assert create a {{test_win_regedit_key_type}} for dword or qword
   assert:
     that:

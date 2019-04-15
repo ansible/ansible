@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
 
-# We don't set -u here, due to pypa/virtualenv#150
-set -ex
+set -eux
 
-MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
-
-trap 'rm -rf "${MYTMPDIR}"' EXIT
-
-virtualenv --system-site-packages --python "${ANSIBLE_TEST_PYTHON_INTERPRETER}" "${MYTMPDIR}/jinja2"
-
-source "${MYTMPDIR}/jinja2/bin/activate"
+source virtualenv.sh
 
 pip install -U jinja2
 
