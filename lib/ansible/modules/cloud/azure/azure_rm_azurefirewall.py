@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_azurefirewall
-version_added: '2.8'
+version_added: '2.9'
 short_description: Manage Azure AzureFirewall instance.
 description:
   - 'Create, update and delete instance of Azure AzureFirewall.'
@@ -35,9 +35,6 @@ options:
   location:
     description:
       - Resource location.
-  tags:
-    description:
-      - Resource tags.
   application_rule_collections:
     description:
       - Collection of application rule collections used by Azure Firewall.
@@ -215,12 +212,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                 updatable=False,
                 disposition='/'
             ),
-            tags=dict(
-                type='unknown[DictionaryType {"$id":"440","$type":"DictionaryType","valueType":{"$id":"441","$type":"PrimaryType","knownPrimaryType":"string","name":{"$id":"442","fixed":false,"raw":"String"},"deprecated":false},"supportsAdditionalProperties":false,"name":{"$id":"443","fixed":false},"deprecated":false}]',
-                comparison='',
-                updatable=False,
-                disposition='/'
-            ),
             application_rule_collections=dict(
                 type='dict',
                 comparison='',
@@ -361,9 +352,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
             response = old_response
 
         if response:
-self.results["name"] = response["name"]
-self.results["type"] = response["type"]
-self.results["etag"] = response["etag"]
+            self.results["name"] = response["name"]
+            self.results["type"] = response["type"]
+            self.results["etag"] = response["etag"]
 
         return self.results
 

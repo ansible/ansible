@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_azurefirewall_info
-version_added: '2.8'
+version_added: '2.9'
 short_description: Get AzureFirewall info.
 description:
   - Get info of AzureFirewall.
@@ -286,7 +286,7 @@ class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
 
         return results
 
-    def format_item(item):
+    def format_item(self, item):
         return item
 
 
