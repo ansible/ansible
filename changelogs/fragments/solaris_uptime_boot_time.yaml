@@ -1,0 +1,2 @@
+bugfixes:
+        - facts - change to use boot_time on a solaris OS to report correct uptime (https://github.com/ansible/ansible/issues/53635)
