@@ -37,6 +37,7 @@ options:
     description:
       - VRF for static route.
     default: default
+    version_added: 2.9
   admin_distance:
     description:
       - Admin distance of the static route.
