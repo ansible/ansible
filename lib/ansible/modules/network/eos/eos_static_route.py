@@ -191,7 +191,7 @@ def map_config_to_obj(module):
                         obj['admin_distance'] = int(distance)
                     else:
                         obj['admin_distance'] = 1
-            
+
             vrf_match = re.search(r'ip route vrf ([\w]+) ([\d\./]+)', line, re.M)
             if vrf_match:
                 vrf = vrf_match.group(1)
@@ -199,7 +199,7 @@ def map_config_to_obj(module):
                 address = vrf_match.group(2)
                 if is_address(address):
                     obj['address'] = address
-                hop_vrf_match = re.search(r'ip route vrf {0} {1} ([\d\./]+)'.format(vrf,address), line, re.M)
+                hop_vrf_match = re.search(r'ip route vrf {0} {1} ([\d\./]+)'.format(vrf, address), line, re.M)
                 if hop_vrf_match:
                     hop = hop_vrf_match.group(1)
                     if is_hop(hop):
@@ -210,7 +210,7 @@ def map_config_to_obj(module):
                         obj['admin_distance'] = int(distance)
                     else:
                         obj['admin_distance'] = 1
-            
+
             objs.append(obj)
 
     return objs
