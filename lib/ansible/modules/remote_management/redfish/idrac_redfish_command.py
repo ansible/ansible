@@ -71,7 +71,7 @@ msg:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.redfish_utils import RedfishUtils, HEADERS
+from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
 
 
@@ -105,8 +105,7 @@ class IdracRedfishUtils(RedfishUtils):
 
         payload = {"TargetSettingsURI": set_bios_attr_uri}
         response = self.post_request(
-            self.root_uri + self.manager_uri + "/" + jobs,
-            payload, HEADERS)
+            self.root_uri + self.manager_uri + "/" + jobs, payload)
         if response['ret'] is False:
             return response
 
