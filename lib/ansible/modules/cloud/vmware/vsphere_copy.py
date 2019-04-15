@@ -102,7 +102,8 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote
 from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import open_url
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
+from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 
 
 def vmware_path(datastore, datacenter, path):
@@ -173,13 +174,22 @@ def main():
         else:
             module.fail_json(msg=str(e), status=None, errno=e[0], reason=str(e),
                              url=url, exception=traceback.format_exc())
+    except HTTPError as e:
+        fail_json = dict(msg='Received HTTP error for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
+    except URLError as e:
+        fail_json = dict(msg='Failed lookup url for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
+    except SSLValidationError as e:
+        fail_json = dict(msg='Error validating the server''s certificate for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
+    except ConnectionError as e:
+        fail_json = dict(msg='Error connecting to  for {0} : {1}'.format(fullurl, to_native(e)), changed=False)
+        module.fail_json(**fail_json)
     except Exception as e:
         error_code = -1
-        try:
-            if isinstance(e[0], int):
-                error_code = e[0]
-        except KeyError:
-            pass
+        if isinstance(e, list) and isinstance(e[0], int):
+            error_code = e[0]
         module.fail_json(msg=to_native(e), status=None, errno=error_code,
                          reason=to_native(e), url=url, exception=traceback.format_exc())
 
