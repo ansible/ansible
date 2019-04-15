@@ -129,7 +129,7 @@ id:
         - Resource ID of the eventhub namespace.
     returned: always
     type: str
-    sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/myEventhubNamespace"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/myEventhubNamespace"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

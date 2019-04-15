@@ -57,7 +57,7 @@ EXAMPLES = '''
     - name: Get facts by tags
       azure_rm_eventhubnamespace_facts:
         tags:
-          - testing
+          testing
 '''
 
 RETURN = '''
