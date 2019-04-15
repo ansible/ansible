@@ -89,10 +89,12 @@ options:
         needed to support the associated device.  This is false by default to reflect the fact that AWS is deprecating
         EC2-Classic in preference of VPC.  The old option of in_vpc is aliased to this option and the logic is inverted
         (if in_vpc is set to True, then ec2_classic is False. Likewise if in_vpc = False, then ec2-classic= True).
+        The ec2_classic option was added in version 2.9, but its alias in_vpc was added in 1.4.  The version_added
+        needs to be 1.4 to keep the sanity checks happy.
     required: false
     type: bool
     aliases: [ in_vpc ]
-    version_added: "2.9"
+    version_added: "1.4"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -232,7 +234,7 @@ try:
 except ImportError:
     pass  # Taken care of by ec2.HAS_BOTO3
 
-from ansible.module_utils.ec2 import (HAS_BOTO3, ec2_argument_spec, compare_aws_tags,
+from ansible.module_utils.ec2 import (ec2_argument_spec, compare_aws_tags,
                                       boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list)
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -541,7 +543,7 @@ def main():
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
-        wait_timeout=dict(default=300),
+        wait_timeout=dict(default=300, type='int'),
         private_ip_address=dict(required=False, default=None, type='str'),
         name=dict(required=False, default=None, type='str'),
         purge_tags=dict(required=False, default=False, type='bool'),
@@ -557,9 +559,6 @@ def main():
     )
 
     warnings = []
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     ec2 = module.client('ec2')
 
