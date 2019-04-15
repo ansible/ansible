@@ -95,7 +95,7 @@ inventory = ~/playbooks/hosts
 
 # cat playbooks/group_vars/exos.yaml
 
-.. code-block:: yaml
+
 
 ---
 ansible_network_os: exos
@@ -107,7 +107,7 @@ ansible_ssh_pass: xtrm_pass
 
 # cat playbook.yml
 
-.. code-block:: yaml
+
 
 ---
 - hosts: all
