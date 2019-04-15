@@ -368,7 +368,6 @@ try:
     import cryptography.hazmat.backends
     import cryptography.hazmat.primitives.serialization
     import cryptography.hazmat.primitives.hashes
-    import ipaddress
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
