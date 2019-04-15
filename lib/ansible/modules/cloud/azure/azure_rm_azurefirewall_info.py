@@ -167,7 +167,7 @@ class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         self.mgmt_client = None
-        super(AzureRMAzureFirewallsInfo, self).__init__(self.module_arg_spec)
+        super(AzureRMAzureFirewallsInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
