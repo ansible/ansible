@@ -66,7 +66,7 @@ EXAMPLES = '''
 
 - name: Wait for job max 120s
   tower_job_wait:
-    job_id: job.id
+    job_id: "{{ job.id }}"
     timeout: 120
 
 # Launch job template with inventory and credential for prompt on launch
@@ -78,7 +78,7 @@ EXAMPLES = '''
   register: job
 - name: Wait for job max 120s
   tower_job_wait:
-    job_id: job.id
+    job_id: "{{ job.id }}"
     timeout: 120
 '''
 
