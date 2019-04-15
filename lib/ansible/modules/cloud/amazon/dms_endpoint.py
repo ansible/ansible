@@ -99,7 +99,7 @@ options:
          - Settings in JSON format for the target Amazon DynamoDB endpoint
            if source or target is dynamodb
     s3settings:
-       description
+       description:
          - S3 buckets settings for the target Amazon S3 endpoint.
     dmstransfersettings:
        description:
@@ -170,7 +170,7 @@ def describe_endpoints(connection, endpoint_identifier):
 def dms_delete_endpoint(client, **params):
     """deletes the DMS endpoint based on the EndpointArn"""
     if module.params.get('wait'):
-        return False
+        return delete_dms_endpoint(client)
     else:
         return client.delete_endpoint(**params)
 
@@ -312,6 +312,13 @@ def create_module_params():
 
     if module.params.get('wait'):
         endpoint_parameters['wait'] = module.boolean(module.params.get('wait'))
+
+    if module.params.get('timeout'):
+        endpoint_parameters['timeout'] = module.params.get('timeout')
+
+    if module.params.get('retries'):
+        endpoint_parameters['retries'] = module.params.get('retries')
+
     return endpoint_parameters
 
 
