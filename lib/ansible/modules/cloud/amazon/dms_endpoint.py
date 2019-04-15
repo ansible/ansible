@@ -119,16 +119,16 @@ options:
        type: bool
        default: 'false'
     timeout:
-       description: 
+       description:
          - time in seconds we should wait for when deleting a resource
        type: int
     retries:
-       description: 
-          - number of times we should retry when deleting a resource 
+       description:
+          - number of times we should retry when deleting a resource
        type: int
     region:
        description:
-          - aws region, should be read from the running aws config     
+          - aws region, should be read from the running aws config
 author:
    - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment: aws
@@ -434,8 +434,8 @@ def main():
         module.fail_json(msg='boto3 required for this module')
 
     state = module.params.get('state')
-    aws_config_region, ec2_url, aws_connect_params = get_aws_connection_info(module,
-                                                                  boto3=True)
+    aws_config_region, ec2_url, aws_connect_params = \
+        get_aws_connection_info(module, boto3=True)
     dmsclient = get_dms_client(aws_connect_params, aws_config_region, ec2_url)
     endpoint = describe_endpoints(dmsclient,
                                   module.params.get('endpointidentifier'))
