@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -150,11 +149,11 @@ EXAMPLES = '''
 '''
 
 RETURN = ''' # '''
+__metaclass__ = type
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, \
     camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
-
 try:
     import botocore
 except ImportError:
