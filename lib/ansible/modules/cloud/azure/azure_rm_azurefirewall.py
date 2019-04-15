@@ -433,29 +433,29 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
 
     def inflate_parameters(self, spec, body, level):
         for name in spec.keys():
-          disposition = spec[name].get('disposition', '*')
-          # do nothing if disposition is *
-          if disposition == '*':
-              continue
-          if level == 0 and not disposition.startswith('/'):
-              continue
-          if disposition == '/':
-              disposition = '/*'
-          # find parameter
-          param = body.get(name)
-          if not param:
-              continue
-          parts = disposition.split('/')
-          if parts[0] == '':
-              # should fail if level is > 0?
-              parts.pop(0)
-          target_dict = body
-          while len(parts) > 1:
-              target_dict = target_dict.setdefault(parts.pop(0), {})
-          targetName = parts[0] if parts[0] != '*' else name
-          target_dict[targetName] = body.pop(name)
-          if spec[name].get('options'):
-              self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
+            disposition = spec[name].get('disposition', '*')
+            # do nothing if disposition is *
+            if disposition == '*':
+                continue
+            if level == 0 and not disposition.startswith('/'):
+                continue
+            if disposition == '/':
+                disposition = '/*'
+            # find parameter
+            param = body.get(name)
+            if not param:
+                continue
+            parts = disposition.split('/')
+            if parts[0] == '':
+                # should fail if level is > 0?
+                parts.pop(0)
+            target_dict = body
+            while len(parts) > 1:
+                target_dict = target_dict.setdefault(parts.pop(0), {})
+            targetName = parts[0] if parts[0] != '*' else name
+            target_dict[targetName] = body.pop(name)
+            if spec[name].get('options'):
+                self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
 
 
 def main():
