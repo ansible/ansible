@@ -68,20 +68,20 @@ options:
       - Name for the elastic IP.  If name is unique within the account, can be used to maintain idempotency.  This
         field is set as the "Name" tag and will overwrite any existing value in the "Name" tag
     required: false
-    version_added: 2.8
+    version_added: "2.9"
   tags:
     description:
       - A hash/dictionary of tags to add to the new EIP or to add/remove from an existing one.  Please note that
         the name field sets the "Name" tag.  So if you manually clear the Name tag, you will also clear the name.
     required: false
-    version_added: 2.8
+    version_added: "2.9"
   purge_tags:
     description:
       - Delete any tags not specified in the task that are on the instance.
         This means you have to specify all the desired tags on each task affecting an instance.
     default: false
     type: bool
-    version_added: 2.8
+    version_added: "2.9"
   ec2_classic:
     description:
       - Indicates that the elastic ip should be created in the EC2-Classic domain.  This is only needed when
@@ -92,7 +92,7 @@ options:
     required: false
     type: bool
     aliases: [ in_vpc ]
-    version_added: "2.8"
+    version_added: "2.9"
 extends_documentation_fragment:
     - aws
     - ec2
