@@ -149,6 +149,7 @@ EXAMPLES = '''
     wait: false
 '''
 
+RETURN = ''' # '''
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, \
@@ -207,12 +208,12 @@ def endpoint_exists(endpoint):
     return bool(len(endpoint['Endpoints']))
 
 
-def get_dms_client(aws_connect_params, region, ec2_url):
+def get_dms_client(aws_connect_params, client_region, ec2_url):
     client_params = dict(
         module=module,
         conn_type='client',
         resource='dms',
-        region=region,
+        region=client_region,
         endpoint=ec2_url,
         **aws_connect_params
     )
