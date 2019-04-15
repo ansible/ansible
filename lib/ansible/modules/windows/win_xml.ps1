@@ -23,7 +23,7 @@ function Copy-Xml($dest, $src, $xmlorig) {
         foreach ($childnode in $src.get_ChildNodes()) {
             if ($childnode.get_NodeType() -eq "Element") {
                 $newnode = $xmlorig.CreateElement($childnode.get_Name(), $xmlorig.get_DocumentElement().get_NamespaceURI())
-                Copy-Xml $newnode $childnode $xmlorig
+                Copy-Xml -dest $newnode -src $childnode -xmlorig $xmlorig
                 $dest.AppendChild($newnode) | Out-Null
             } elseif ($childnode.get_NodeType() -eq "Text") {
                 $dest.set_InnerText($childnode.get_InnerText())
@@ -126,7 +126,7 @@ if ($type -eq "element") {
     }
 
     $child = $xmlorig.CreateElement($xmlchild.get_DocumentElement().get_Name(), $xmlorig.get_DocumentElement().get_NamespaceURI())
-    Copy-Xml $child $xmlchild.DocumentElement $xmlorig
+    Copy-Xml -dest $child -src $xmlchild.DocumentElement -xmlorig $xmlorig
 
     $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
     if ($node.get_NodeType() -eq "Document") {
