@@ -826,7 +826,7 @@ class ACMEAccount(object):
 
 def _normalize_ip(ip):
     try:
-        return compat_ipaddress.ip_address(ip).compressed
+        return to_native(compat_ipaddress.ip_address(to_text(ip)).compressed)
     except ValueError:
         # We don't want to error out on something IPAddress() can't parse
         return ip
