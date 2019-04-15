@@ -107,7 +107,7 @@ ansible_ssh_pass: xtrm_pass
 
 # cat playbook.yml
 
-
+.. code-block:: yaml
 
 ---
 - hosts: all
