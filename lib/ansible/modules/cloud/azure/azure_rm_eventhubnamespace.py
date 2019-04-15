@@ -42,7 +42,6 @@ options:
         description:
             - Pricing tier for Azure eventhub namespace.
             - Note that basic eventhub namespace cannot support kafka_enabled.
-            - Default is standard when creation.
         choices:
             - basic
             - standard
@@ -179,7 +178,7 @@ class AzureRMEventHubNamespace(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            id=dict()
+            id=str
         )
 
         self.resource_group = None
