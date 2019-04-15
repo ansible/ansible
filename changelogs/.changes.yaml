@@ -572,7 +572,6 @@ releases:
     - win_copy-empty-dir.yaml
     - win_copy-paths.yaml
     - win_domain-cred.yaml
-    - win_domain_membership-replace.yaml
     - win_dsc-validation.yaml
     - win_dsc-warning.yaml
     - win_file-hidden.yaml
@@ -1409,3 +1408,66 @@ releases:
       shell:
       - cmd
     release_date: '2019-04-04'
+  2.8.0b1:
+    codename: How Many More Times
+    fragments:
+    - 40366-modify-existing-volume.yml
+    - 45355-mysql_user-fix-versions-compatibilities.yml
+    - 49039-facts-xen-paravirt-cpuinfo.yaml
+    - 54494-ec2-user-data.yaml
+    - 54517-include-partition-table-postgresql-privs.yaml
+    - 54633-openssl_pkcs12_idempotency_fixes.yaml
+    - 54690-openssl_certificate-assertonly.yml
+    - 54692-ec2_asg_fix_reading_properties.yml
+    - 54799-ufw-default-direction.yml
+    - 54974-rename-safeconfigparser-to-configparser.yaml
+    - 55006-setup-is_chroot-btrfs.yaml
+    - 55038-rename-results-key-vmware-guest.yml
+    - 55083-univention-diff-UnboundLocalError.yaml
+    - dnf-4.2.2-module-remove.yaml
+    - facts-pkg-mgr-rhel.yaml
+    - fibre_channel_wwn_fact_aix.yaml
+    - fix_cache_assumption.yml
+    - gcp-compute-add-image.yaml
+    - include-no-swallow-error.yaml
+    - jinja2_nested_undefined_getitem.yaml
+    - paramiko-optional.yaml
+    - redhat_subscription_use_strings_for_yum_plugin_configs.yaml
+    - tower_job_launch-options.yaml
+    - use-module_utils-six-in-contrib-inventory.yaml
+    - user-read-passwd-when-local.yaml
+    - v2.8.0b1_summary.yaml
+    - yum-select-version.yml
+    modules:
+    - azure_rm_devtestlabcustomimage_facts
+    - azure_rm_devtestlabenvironment_facts
+    - azure_rm_devtestlabpolicy_facts
+    - azure_rm_devtestlabschedule_facts
+    - azure_rm_hdinsightcluster_facts
+    - azure_rm_virtualnetworkgateway
+    - cloudscale_server_group
+    - docker_swarm_service_info
+    - keycloak_group
+    - oci_vcn
+    - onyx_buffer_pool
+    - onyx_vxlan
+    - openssl_certificate_info
+    - openssl_csr_info
+    - openssl_privatekey_info
+    - ovirt_role
+    - podman_image
+    - podman_image_info
+    - postgresql_owner
+    - postgresql_slot
+    - vexata_volume
+    - win_format
+    - win_http_proxy
+    - win_inet_proxy
+    - xfs_quota
+    plugins:
+      connection:
+      - vmware_tools
+      inventory:
+      - cloudscale
+      - kubevirt
+    release_date: '2019-04-15'

@@ -5,6 +5,163 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.0b1
+========
+
+Release Summary
+---------------
+
+| Release Date: 2019-04-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- add support for extending volumes in os_volume, also add module support for check_mode and diff
+- ansible facts properly detect xen paravirt vs hvm
+- gather Fibre Channel WWNs fact on AIX (extends https://github.com/ansible/ansible/pull/37043)
+- gcp_compute - add the image field to map to disk source iamges in the configured zones bringing it in line with old gce inventory script data
+- jinja2 - accesses to keys/indices on an undefined value now return further undefined values rather than throwing an exception
+- openssl_certificate - the messages of the ``assertonly`` provider with respect to private key and CSR checking are now more precise.
+- openssl_pkcs12 - Fixed idempotency checks, the module will regenerate the pkcs12 file if any of the parameters differ from the ones in the file. The ``ca_certificates`` parameter has been renamed to ``other_certificates``. 
+- paramiko is now optional.  There is no compat package on certain platforms to worry about.
+- rename safeConfigParser to ConfigParser to suppress DeprecationWarning (The SafeConfigParser class has been renamed to ConfigParser in Python 3.2.)
+- use ansible.module_utils.six for all scripts in contrib/inventory
+
+Bugfixes
+--------
+
+- Fixed to handle arguments correctly even if inventory and credential variables are not specified (#25017,#37567)
+- Include partition tables in the ALL_IN_SCHEMA option for postgresql-privs (https://github.com/ansible/ansible/issues/54516)
+- The internal key `results` in vmware_guest_snapshot module return renamed to `snapshot_results`.
+- dnf - fix issue with dnf API calls to adapt to changes in upstream dnf version 4.2.2
+- ec2 - Only use user_data if the user has specified a value. This prevents setting the instance's user data to b'None'.
+- ec2_asg - Fix error where ASG dict has no launch config or launch template key
+- facts - ensure that the default package manager for RHEL < 8 is yum, and dnf for newer
+- include_role - Don't swallow errors when processing included files/roles (https://github.com/ansible/ansible/issues/54786)
+- mysql_user: fix compatibility issues with various MySQL/MariaDB versions
+- redhat_subscription - For compatibility using the redhat_subscription module on hosts set to use a python 3 interpreter, use string values when updating yum plugin configuration files.
+- rely on method existing vs loosely related _cache attribute, also fix data persistence issue on plugin reuse across sources.
+- setup - properly detect is_chroot on Btrfs (https://github.com/ansible/ansible/issues/55006)
+- udm_dns_record - Fix issues when state is absent with undefined variable diff at the module return.
+- udm_dns_zone - Fix issues when state is absent with undefined variable diff at the module return.
+- udm_group - Fix issues when state is absent with undefined variable diff at the module return.
+- udm_share - Fix issues when state is absent with undefined variable diff at the module return.
+- udm_user - Fix issues when state is absent with undefined variable diff at the module return.
+- ufw - when ``default`` is specified, ``direction`` does not needs to be specified. This was accidentally introduced in Ansible 2.7.8.
+- user - fix a bug when checking if a local user account exists on a system using directory authentication (https://github.com/ansible/ansible/issues/50947, https://github.com/ansible/ansible/issues/38206)
+- yum allows comparison operators like '>=' for selecting package version
+
+New Plugins
+-----------
+
+Connection
+~~~~~~~~~~
+
+- vmware_tools - Execute tasks inside a VM via VMware Tools
+
+Inventory
+~~~~~~~~~
+
+- cloudscale - cloudscale.ch inventory source
+- kubevirt - KubeVirt inventory source
+
+New Modules
+-----------
+
+Cloud
+~~~~~
+
+azure
+^^^^^
+
+- azure_rm_devtestlabcustomimage_facts - Get Azure DevTest Lab Custom Image facts.
+- azure_rm_devtestlabenvironment_facts - Get Azure Environment facts.
+- azure_rm_devtestlabpolicy_facts - Get Azure DTL Policy facts.
+- azure_rm_devtestlabschedule_facts - Get Azure Schedule facts.
+- azure_rm_hdinsightcluster_facts - Get Azure HDInsight Cluster facts.
+- azure_rm_virtualnetworkgateway - Manage Azure virtual network gateways.
+
+cloudscale
+^^^^^^^^^^
+
+- cloudscale_server_group - Manages server groups on the cloudscale.ch IaaS service
+
+docker
+^^^^^^
+
+- docker_swarm_service_info - Retrieves information about docker services from a Swarm Manager
+
+oracle
+^^^^^^
+
+- oci_vcn - Manage Virtual Cloud Networks(VCN) in OCI
+
+ovirt
+^^^^^
+
+- ovirt_role - Module to manage roles in oVirt/RHV
+
+podman
+^^^^^^
+
+- podman_image - Pull images for use by podman
+- podman_image_info - Gather info about images using podman
+
+Crypto
+~~~~~~
+
+- openssl_certificate_info - Provide information of OpenSSL X.509 certificates
+- openssl_csr_info - Provide information of OpenSSL Certificate Signing Requests (CSR)
+- openssl_privatekey_info - Provide information for OpenSSL private keys
+
+Database
+~~~~~~~~
+
+postgresql
+^^^^^^^^^^
+
+- postgresql_owner - Change an owner of PostgreSQL database object
+- postgresql_slot - Add or remove slots from a PostgreSQL database
+
+Identity
+~~~~~~~~
+
+keycloak
+^^^^^^^^
+
+- keycloak_group - Allows administration of Keycloak groups via Keycloak API
+
+Network
+~~~~~~~
+
+onyx
+^^^^
+
+- onyx_buffer_pool - Configures Buffer Pool
+- onyx_vxlan - Configures Vxlan
+
+Storage
+~~~~~~~
+
+vexata
+^^^^^^
+
+- vexata_volume - Manage volumes on Vexata VX100 storage arrays
+
+System
+~~~~~~
+
+- xfs_quota - Manage quotas on XFS filesystems
+
+Windows
+~~~~~~~
+
+- win_format - Formats an existing volume or a new volume on an existing partition on Windows
+- win_http_proxy - Manages proxy settings for WinHTTP
+- win_inet_proxy - Manages proxy settings for WinINet and Internet Explorer
+
 v2.8.0a1
 ========
 
@@ -296,7 +453,6 @@ Expression.
 - win_chocolatey - Added the ability to pin a package using the ``pinned`` option - https://github.com/ansible/ansible/issues/38526
 - win_chocolatey - added the allow_multiple module option to allow side by side installs of the same package
 - win_chocolatey - support bootstrapping Chocolatey from other URLs with any PS script that ends with ``.ps1``, originally this script had to be ``install.ps1``
-- win_domain_membership - will now fail if an existing AD object for the host exists and ``allow_existing_computer_account=no`` - https://github.com/ansible/ansible/pull/53542
 - win_dsc - Display the warnings produced by the DSC engine for better troubleshooting - https://github.com/ansible/ansible/issues/51543
 - win_dsc - The Verbose logs will be returned when running with ``-vvv``.
 - win_dsc - The module invocation and possible options will be displayed when running with ``-vvv``.
@@ -1225,7 +1381,7 @@ Net Tools
 netbox
 ^^^^^^
 
-- netbox_device - Create or delete devices within Netbox
+- netbox_device - Create, update or delete devices within Netbox
 - netbox_interface - Creates or removes interfaces from Netbox
 - netbox_ip_address - Creates or removes IP addresses from Netbox
 - netbox_prefix - Creates or removes prefixes from Netbox
