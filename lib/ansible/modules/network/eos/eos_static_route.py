@@ -165,15 +165,9 @@ def map_params_to_obj(module, required_together=None):
 
 def map_config_to_obj(module):
     objs = []
-    vrf = module.params['vrf']
-
-    if vrf == 'default':
-        flags = '| include ip.route'
-    else:
-        flags = '| include ip.route.vrf.{0}'.format(vrf)
 
     try:
-        out = get_config(module, flags=[flags])
+        out = get_config(module, flags=['| include ip.route'])
     except IndexError:
         out = ''
     if out:
@@ -182,26 +176,41 @@ def map_config_to_obj(module):
             obj = {}
             add_match = re.search(r'ip route ([\d\./]+)', line, re.M)
             if add_match:
+                obj['vrf'] = 'default'
                 address = add_match.group(1)
                 if is_address(address):
                     obj['address'] = address
-                if vrf == 'default':
-                    hop_match = re.search(r'ip route {0} ([\d\./]+)'.format(address), line, re.M)
-                else:
-                    hop_match = re.search(r'ip route vrf {0} {1} ([\d\./]+)'.format(vrf, address), line, re.M)
+                hop_match = re.search(r'ip route {0} ([\d\./]+)'.format(address), line, re.M)
                 if hop_match:
                     hop = hop_match.group(1)
                     if is_hop(hop):
                         obj['next_hop'] = hop
-                    if vrf == 'default':
-                        dist_match = re.search(r'ip route {0} {1} (\d+)'.format(address, hop), line, re.M)
-                    else:
-                        dist_match = re.search(r'ip route vrf {0} {1} {2} (\d+)'.format(vrf, address, hop), line, re.M)
+                    dist_match = re.search(r'ip route {0} {1} (\d+)'.format(address, hop), line, re.M)
                     if dist_match:
                         distance = dist_match.group(1)
                         obj['admin_distance'] = int(distance)
                     else:
                         obj['admin_distance'] = 1
+            
+            vrf_match = re.search(r'ip route vrf ([\w]+) ([\d\./]+)', line, re.M)
+            if vrf_match:
+                vrf = vrf_match.group(1)
+                obj['vrf'] = vrf
+                address = vrf_match.group(2)
+                if is_address(address):
+                    obj['address'] = address
+                hop_vrf_match = re.search(r'ip route vrf {0} {1} ([\d\./]+)'.format(vrf,address), line, re.M)
+                if hop_vrf_match:
+                    hop = hop_vrf_match.group(1)
+                    if is_hop(hop):
+                        obj['next_hop'] = hop
+                    dist_vrf_match = re.search(r'ip route vrf {0} {1} {2} (\d+)'.format(vrf, address, hop), line, re.M)
+                    if dist_vrf_match:
+                        distance = dist_vrf_match.group(1)
+                        obj['admin_distance'] = int(distance)
+                    else:
+                        obj['admin_distance'] = 1
+            
             objs.append(obj)
 
     return objs
@@ -261,6 +270,8 @@ def main():
     have = map_config_to_obj(module)
     commands = map_obj_to_commands((want, have), module)
     result['commands'] = commands
+    result['want'] = want
+    result['have'] = have
 
     if commands:
         commit = not module.check_mode
