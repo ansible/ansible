@@ -272,13 +272,6 @@ def fixed_ip_factory(meraki, data):
     return fixed_ips
 
 
-# def temp_get_nets(meraki, org_name):
-#     org_id = meraki.get_org_id(org_name)
-#     path = meraki.construct_path('get_all', function='network', org_id=org_id)
-#     r = meraki.request(path, method='GET')
-#     return r
-
-
 def get_vlans(meraki, net_id):
     path = meraki.construct_path('get_all', net_id=net_id)
     return meraki.request(path, method='GET')
