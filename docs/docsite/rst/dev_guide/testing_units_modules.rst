@@ -295,7 +295,7 @@ this accepts input on ``STDIN``, which is not convenient for unit testing. When 
 variable is set it will be treated as if the input came on ``STDIN`` to the module. Simply call that function before setting up your module::
 
     import json 
-    from ansible.module_utils import set_module_args 
+    from units.modules.utils import set_module_args 
     from ansible.module_utils._text import to_bytes 
 
     def test_already_registered(self):
