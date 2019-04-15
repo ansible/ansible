@@ -7,7 +7,7 @@
       aws_secret_key: "{{ aws_secret_key }}"
       #security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
-  no_log: no
+  no_log: yes
 
 - block:
   - name: create endpoints
