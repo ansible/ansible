@@ -32,7 +32,6 @@ options:
   tc:
     description:
       - traffic class, range 0-7.
-    type: int
     required: true
   congestion_control:
     description:
@@ -127,7 +126,6 @@ class OnyxTrafficClassModule(BaseOnyxModule):
     def init_module(self):
         """ initialize module
         """
-        self.file = open("/tmp/debug.txt", "w")
         congestion_control_spec = dict(control=dict(choices=['red', 'ecn', 'both'], required=True),
                                        min_absolute=dict(type=int),
                                        max_absolute=dict(type=int),
@@ -170,11 +168,9 @@ class OnyxTrafficClassModule(BaseOnyxModule):
                 self._module.fail_json(msg='User can specify absolute or relative not both')
             elif min_absolute is None and min_relative is None and max_absolute is None and max_relative is None:
                 self._module.fail_json(msg='User can not send both absolute and relative empty')
-            elif (min_absolute is not None and max_absolute is None) or (
-                            min_absolute is None and max_absolute is not None):
+            elif (min_absolute is not None and max_absolute is None) or (min_absolute is None and max_absolute is not None):
                 self._module.fail_json(msg='User should send both mix_absolute and min_absolute')
-            elif (min_relative is not None and max_relative is None) or (
-                            min_relative is None and max_relative is not None):
+            elif (min_relative is not None and max_relative is None) or (min_relative is None and max_relative is not None):
                 self._module.fail_json(msg='User should send both max_relative and min_relative')
 
         dcb = obj.get("dcb")
@@ -205,7 +201,6 @@ class OnyxTrafficClassModule(BaseOnyxModule):
         dcb_weight = int(tc_config[0].get("W"))
         dcb = dict(mode=dcb_mode.lower(), weight=dcb_weight)
         interface_congestion_control_config = interface_congestion_control_config[tc+1]
-        self.file.write("interface_congestion_control_config: %s" % interface_congestion_control_config)
         mode = interface_congestion_control_config.get("Mode")
         if mode == "none":
             self._current_config[interface] = dict(state="disabled", dcb=dcb, if_type=if_type, if_id=if_id)
@@ -250,7 +245,6 @@ class OnyxTrafficClassModule(BaseOnyxModule):
             else:
                 self._module.fail_json(
                     msg='Interface {0} does not exist on switch'.format(interface))
-        self.file.write("_current_config: %s\n" % self._current_config)
 
     def generate_commands(self):
         state = self._required_config.get("state")
