@@ -297,7 +297,7 @@ def main():
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
         epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
-        netflow=dict(type='raw'),  # Turn into a boolean in v2.9
+        netflow=dict(type='bool'),
         primary_encap=dict(type='int'),
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
