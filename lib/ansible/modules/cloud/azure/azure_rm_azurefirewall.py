@@ -282,8 +282,7 @@ EXAMPLES = '''
     application_rule_collections:
       - properties:
           priority: '110'
-          action:
-            type: Deny
+          action: {}
           rules:
             - name: rule1
               description: Deny inbound rule
@@ -299,8 +298,7 @@ EXAMPLES = '''
     nat_rule_collections:
       - properties:
           priority: '112'
-          action:
-            type: Dnat
+          action: {}
           rules:
             - name: DNAT-HTTPS-traffic
               description: D-NAT all outbound web traffic for inspection
@@ -318,8 +316,7 @@ EXAMPLES = '''
     network_rule_collections:
       - properties:
           priority: '112'
-          action:
-            type: Deny
+          action: {}
           rules:
             - name: L4-traffic
               description: Block traffic based on source IPs and ports
@@ -885,6 +882,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
             # if not old_response:
             self.results['changed'] = True
             self.results['response'] = response
+            #self.results['xxx'] = self.body
             # else:
             #     self.results['changed'] = old_response.__ne__(response)
             self.log('Creation / Update done')
@@ -987,8 +985,11 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         return False
 
     def inflate_parameters(self, spec, body, level):
+        self.results['log'] = self.results.get('log', [])
         if isinstance(body, list):
+            self.results['log'].append("COMPARING LIST, LEVEL " + str(level))
             for i in range(len(body)):
+                self.results['log'].append("INFLATING ELEMENT " + body[i]['name']) # + " --- " + str(spec))
                 self.inflate_parameters(spec, body[i], level)
             return
 
@@ -1019,6 +1020,82 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
             if spec[name].get('options'):
                 self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
 
+    def normalize_resource_id(self, value, pattern):
+      # normalize pattern
+      pattern_parts = pattern.split('/')
+      for i in range(len(pattern_parts)):
+        x = re.sub('[{} ]+', '', pattern_parts[i], 2)
+        if len(x) < len(pattern_parts[i]):
+          pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
+
+      if isinstance(value, str):
+        value_parts = value.split('/')
+        if len(value_parts) != len(pattern_parts):
+          print "ERROR PATTERN PARTS"
+          return
+        value_dict = {}
+        for i in range(len(value_parts)):
+          if pattern_parts[i].startswith('{'):
+            value_dict[pattern_parts[i][1:-1]] = value_parts[i]
+          elif value_parts[i].lower() != pattern_parts[i].lower():
+            print "ERROR PATTERN DOESN'T MATCH"
+            return
+      elif isinstance(value, dict):
+        value_dict = value
+      else:
+        print "ERROR VALUE MUST BE STR OR DICT"
+        return
+
+      for i in range(len(pattern_parts)):
+        if pattern_parts[i].startswith('{'):
+          value = value_dict.get(pattern_parts[i][1:-1], None)
+          if not value:
+            print "PARAMETER " + pattern_parts[i][1:-1] + " NOT SPECIFIED"
+            return
+          pattern_parts[i] = value
+
+      return "/".join(pattern_parts)
+
+    def idempotency_check(self, old_params, new_params):
+        return self.idempotency_check_internal(self.module_arg_spec, old_params, new_params)
+
+    def idempotency_check_internal(self, spec, old_params, new_params):
+        if isinstance(body, list):
+            self.results['log'].append("COMPARING LIST, LEVEL " + str(level))
+            for i in range(len(body)):
+                self.results['log'].append("INFLATING ELEMENT " + body[i]['name']) # + " --- " + str(spec))
+                self.inflate_parameters(spec, body[i], level)
+            return
+
+        for name in spec.keys():
+            disposition = spec[name].get('disposition', '*')
+            param = body.get(name)
+            if not param:
+                continue
+            if disposition != "*" and not (level == 0 and not disposition.startswith('/')):
+                if disposition == '/':
+                    disposition = '/*'
+                # find parameter
+                param = body.get(name)
+                if not param:
+                    continue
+                parts = disposition.split('/')
+                if parts[0] == '':
+                    # should fail if level is > 0?
+                    parts.pop(0)
+                target_dict = body
+                while len(parts) > 1:
+                    target_dict = target_dict.setdefault(parts.pop(0), {})
+                targetName = parts[0] if parts[0] != '*' else name
+                target_dict[targetName] = body.pop(name)
+            else:
+                target_dict = body
+                targetName = name
+            if spec[name].get('options'):
+                self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
+
+    def idempotency_check_default(self, old_params, new_params):
+        return False
 
 def main():
     AzureRMAzureFirewalls()
