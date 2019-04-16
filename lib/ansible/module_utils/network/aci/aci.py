@@ -141,23 +141,6 @@ class ACIModule(object):
         elif value is False:
             return false
 
-        # When we expect value is of type=raw, deprecate in Ansible v2.8 (and all modules use type=bool)
-        try:
-            # This supports all Ansible boolean types
-            bool_value = boolean(value)
-            if bool_value is True:
-                return true
-            elif bool_value is False:
-                return false
-        except Exception:
-            # This provides backward compatibility to Ansible v2.4, deprecate in Ansible v2.8
-            if value == true:
-                self.module.deprecate("Boolean value '%s' is no longer valid, please use 'yes' as a boolean value." % value, '2.9')
-                return true
-            elif value == false:
-                self.module.deprecate("Boolean value '%s' is no longer valid, please use 'no' as a boolean value." % value, '2.9')
-                return false
-
         # If all else fails, escalate back to user
         self.module.fail_json(msg="Boolean value '%s' is an invalid ACI boolean value.")
 
