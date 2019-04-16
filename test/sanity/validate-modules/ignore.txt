@@ -652,7 +652,6 @@ lib/ansible/modules/packaging/language/pip.py E324
 lib/ansible/modules/packaging/os/apk.py E326
 lib/ansible/modules/packaging/os/apt.py E322
 lib/ansible/modules/packaging/os/apt.py E324
-lib/ansible/modules/packaging/os/apt.py E326
 lib/ansible/modules/packaging/os/apt.py E336
 lib/ansible/modules/packaging/os/apt_key.py E322
 lib/ansible/modules/packaging/os/apt_repository.py E322
