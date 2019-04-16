@@ -402,9 +402,10 @@ class Connection(ConnectionBase):
             else:
                 display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
         else:
-            # in other cases we want to execute the cmd as the script
-            script = cmd
-            display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
+            # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
+            # rc is propagated back to the connection plugin.
+            script = to_text(u"%s\nexit $LASTEXITCODE" % cmd)
+            display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
         rc, stdout, stderr = self._exec_psrp_script(script, in_data)
         return rc, stdout, stderr
@@ -734,29 +735,29 @@ if ($bytes_read -gt 0) {
 
             stdout_list.append(output_msg)
 
-        stdout = u"\r\n".join(stdout_list)
         if len(self.host.ui.stdout) > 0:
-            stdout += u"\r\n" + u"".join(self.host.ui.stdout)
+            stdout_list += self.host.ui.stdout
+        stdout = u"\r\n".join(stdout_list)
 
         stderr_list = []
         for error in pipeline.streams.error:
             # the error record is not as fully fleshed out like we usually get
             # in PS, we will manually create it here
-            error_msg = "%s : %s\r\n" \
-                        "%s\r\n" \
+            command_name = "%s : " % error.command_name if error.command_name else ''
+            position = "%s\r\n" % error.invocation_position_message if error.invocation_position_message else ''
+            error_msg = "%s%s\r\n%s" \
                         "    + CategoryInfo          : %s\r\n" \
                         "    + FullyQualifiedErrorId : %s" \
-                        % (error.command_name, str(error),
-                           error.invocation_position_message, error.message,
-                           error.fq_error)
+                        % (command_name, str(error), position,
+                           error.message, error.fq_error)
             stacktrace = error.script_stacktrace
             if self._play_context.verbosity >= 3 and stacktrace is not None:
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
             stderr_list.append(error_msg)
 
-        stderr = "\r\n".join(stderr_list)
         if len(self.host.ui.stderr) > 0:
-            stderr += "\r\n" + "".join(self.host.ui.stderr)
+            stderr_list += self.host.ui.stderr
+        stderr = u"\r\n".join([to_text(o) for o in stderr_list])
 
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
         display.vvvvv("PSRP STDOUT: %s" % stdout, host=self._psrp_host)
