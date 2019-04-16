@@ -513,7 +513,7 @@ class RedfishUtils(object):
 
     def get_firmware_update_capabilities(self):
         result = {}
-        response = self.get_request(self.root_uri + "/redfish/v1")
+        response = self.get_request(self.root_uri + self.update_uri)
         if response['ret'] is False:
             return response
 
@@ -522,29 +522,22 @@ class RedfishUtils(object):
         result['entries'] = {}
 
         data = response['data']
-        if "UpdateService" in data:
-            updateservce_uri = data['UpdateService']["@odata.id"]
-            response = self.get_request(self.root_uri + updateservce_uri)
 
-            data = response['data']
-
-            if "Actions" in data:
-                actions = data['Actions']
-                if len(actions) > 0:
-                    for key in actions.keys():
-                        action = actions.get(key)
-                        if 'title' in action:
-                            title = action['title']
-                        else:
-                            title = key
-                        result['entries'][title] = action.get('TransferProtocol@Redfish.AllowableValues',
-                                                              ["Key TransferProtocol@Redfish.AllowableValues not found"])
-                else:
-                    return {'ret': "False", 'msg': "Actions list is empty."}
+        if "Actions" in data:
+            actions = data['Actions']
+            if len(actions) > 0:
+                for key in actions.keys():
+                    action = actions.get(key)
+                    if 'title' in action:
+                        title = action['title']
+                    else:
+                        title = key
+                    result['entries'][title] = action.get('TransferProtocol@Redfish.AllowableValues',
+                                                          ["Key TransferProtocol@Redfish.AllowableValues not found"])
             else:
-                return {'ret': "False", 'msg': "Key Actions not found."}
+                return {'ret': "False", 'msg': "Actions list is empty."}
         else:
-            return {'ret': "False", 'msg': "Key UpdateService not found."}
+            return {'ret': "False", 'msg': "Key Actions not found."}
         return result
 
     def get_firmware_inventory(self):
