@@ -29,8 +29,11 @@ from ansible.plugins import AnsiblePlugin
 try:
     from ncclient.operations import RPCError
     from ncclient.xml_ import to_xml, to_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    HAS_NCCLIENT = True
+    NCCLIENT_IMP_ERR = None
+except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
+    NCCLIENT_IMP_ERR = err
 
 try:
     from lxml.etree import Element, SubElement, tostring, fromstring
@@ -101,6 +104,11 @@ class NetconfBase(AnsiblePlugin):
     __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get']
 
     def __init__(self, connection):
+        if not HAS_NCCLIENT:
+            raise AnsibleError(
+                'The required "ncclient" python library is required to use the netconf connection type: %s.\n'
+                'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
+            )
         self._connection = connection
 
     @property

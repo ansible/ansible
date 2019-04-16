@@ -37,16 +37,22 @@ try:
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml, new_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    HAS_NCCLIENT = True
+except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
 
 try:
     from lxml import etree
+    HAS_LXML = True
 except ImportError:
-    raise AnsibleError("lxml is not installed")
+    HAS_LXML = False
 
 
 class Netconf(NetconfBase):
+    def __init__(self, *args, **kwargs):
+        if not HAS_LXML:
+            raise AnsibleError("lxml is not installed")
+        super(self, Netconf).__init__(*args, **kwargs)
 
     @ensure_connected
     def get_device_info(self):
