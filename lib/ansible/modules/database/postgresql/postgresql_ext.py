@@ -58,6 +58,27 @@ options:
     type: bool
     default: no
     version_added: '2.8'
+  login_unix_socket:
+    description:
+      - Path to a Unix domain socket for local connections.
+    type: str
+    version_added: '2.8'
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    type: str
+    default: prefer
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
+    version_added: '2.8'
+  ca_cert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
+    aliases: [ ssl_rootcert ]
+    version_added: '2.8'
 notes:
 - The default authentication assumes that you are either logging in as
   or sudo'ing to the C(postgres) account on the host.
