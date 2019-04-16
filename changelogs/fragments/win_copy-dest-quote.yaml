@@ -1,0 +1,2 @@
+bugfixes:
+- win_copy - Fix issue where the dest return value would be enclosed in single quote when dest is a folder - https://github.com/ansible/ansible/issues/45281

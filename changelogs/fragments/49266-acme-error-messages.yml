@@ -1,0 +1,2 @@
+bugfixes:
+- "ACME modules: improve error messages in some cases (include error returned by server)."

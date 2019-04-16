@@ -1,0 +1,2 @@
+minor_changes:
+    - add facility for playbook attributes that are not templatable, i.e register

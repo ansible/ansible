@@ -1,0 +1,2 @@
+bugfixes:
+- lvg - Take into account current PV in the VG to fix PV removal

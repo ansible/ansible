@@ -67,6 +67,7 @@ Tested against Ansible 1.8.2 and Collins 1.3.0.
 
 
 import argparse
+import ConfigParser
 import logging
 import os
 import re
@@ -76,9 +77,8 @@ import traceback
 
 import json
 
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import configparser as ConfigParser
-from ansible.module_utils.six.moves.urllib.parse import urlencode
+from six import iteritems
+from six.moves.urllib.parse import urlencode
 
 from ansible.module_utils.urls import open_url
 

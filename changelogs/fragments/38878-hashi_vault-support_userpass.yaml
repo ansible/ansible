@@ -1,0 +1,2 @@
+minor_changes:
+- hashi_vault lookup plugin now supports username and password method for the authentication (https://github.com/ansible/ansible/issues/38878).

@@ -58,7 +58,7 @@ if ($check_mode) {
     $robocopy_opts += "/l"
 }
 
-if ($null -eq $flags) {
+if ($flags -eq $null) {
     if ($purge) {
         $robocopy_opts += "/purge"
     }

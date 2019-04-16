@@ -1,0 +1,2 @@
+bugfixes:
+    - ensure we have a XDG_RUNTIME_DIR, as it is not handled correctly by some privilege escalation configurations

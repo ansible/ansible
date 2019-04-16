@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Fix for callback plugins on Python3 when a module returns non-string field
+    names in its results.  (https://github.com/ansible/ansible/issues/49343)

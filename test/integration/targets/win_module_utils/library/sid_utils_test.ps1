@@ -46,7 +46,7 @@ $tests = @(
 )
 
 # Add domain tests if the domain name has been set
-if ($null -ne $test_domain) {
+if ($test_domain -ne $null) {
     Import-Module ActiveDirectory
     $domain_info = Get-ADDomain -Identity $test_domain
     $domain_sid = $domain_info.DomainSID

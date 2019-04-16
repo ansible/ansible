@@ -1,12 +1,21 @@
 # Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
+- name: setup
+  hcloud_ssh_key:
+    fingerprint: "{{ hcloud_ssh_key_fingerprint }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+      - result is success
 - name: test missing required parameters on create ssh_key
   hcloud_ssh_key:
     name: "{{ hcloud_ssh_key_name }}"
   register: result
   ignore_errors: yes
-- name: verify fail test missing required parameters on create ssh_key
+- name: verify fail test missing required parameters on create server
   assert:
     that:
       - result is failed
@@ -15,7 +24,7 @@
 - name: test create ssh key with check mode
   hcloud_ssh_key:
     name: "{{ hcloud_ssh_key_name }}"
-    public_key: "{{ key_material }}"
+    public_key: "{{ hcloud_ssh_key_public_key }}"
   register: result
   check_mode: yes
 - name: test create ssh key with check mode
@@ -26,7 +35,7 @@
 - name: test create ssh key
   hcloud_ssh_key:
     name: "{{ hcloud_ssh_key_name }}"
-    public_key: "{{ key_material }}"
+    public_key: "{{ hcloud_ssh_key_public_key }}"
     labels:
       key: value
       my-label: label
@@ -36,13 +45,14 @@
     that:
       - sshKey is changed
       - sshKey.hcloud_ssh_key.name == "{{ hcloud_ssh_key_name }}"
-      - sshKey.hcloud_ssh_key.public_key ==  "{{ key_material }}"
+      - sshKey.hcloud_ssh_key.public_key ==  "{{ hcloud_ssh_key_public_key }}"
+      - sshKey.hcloud_ssh_key.fingerprint == "{{ hcloud_ssh_key_fingerprint }}"
       - sshKey.hcloud_ssh_key.labels.key == "value"
 
 - name: test create ssh key idempotence
   hcloud_ssh_key:
     name: "{{ hcloud_ssh_key_name }}"
-    public_key: "{{ key_material }}"
+    public_key: "{{ hcloud_ssh_key_public_key }}"
   register: result
 - name: verify create ssh key idempotence
   assert:
@@ -52,7 +62,7 @@
 - name: test update ssh key with check mode
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
-    name: "changed-{{ hcloud_ssh_key_name }}"
+    name: "changed-ssh-key-name"
   register: result
   check_mode: yes
 - name: test create ssh key with check mode
@@ -63,7 +73,7 @@
 - name: test update ssh key
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
-    name: "changed-{{ hcloud_ssh_key_name }}"
+    name: "changed-ssh-key-name"
     labels:
       key: value
   register: result
@@ -71,16 +81,16 @@
   assert:
     that:
       - result is changed
-      - result.hcloud_ssh_key.name == "changed-{{ hcloud_ssh_key_name }}"
+      - result.hcloud_ssh_key.name == "changed-ssh-key-name"
 
 - name: test update ssh key with same labels
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
-    name: "changed-{{ hcloud_ssh_key_name }}"
+    name: "changed-ssh-key-name"
     labels:
       key: value
   register: result
-- name: test update ssh key with same labels
+- name: test update ssh key  with same labels
   assert:
     that:
       - result is not changed
@@ -88,7 +98,7 @@
 - name: test update ssh key with other labels
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
-    name: "changed-{{ hcloud_ssh_key_name }}"
+    name: "changed-ssh-key-name"
     labels:
       key: value
       test: 123

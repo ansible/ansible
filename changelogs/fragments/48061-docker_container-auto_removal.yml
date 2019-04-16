@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - do not fail when removing a container which has ``auto_remove: yes``."

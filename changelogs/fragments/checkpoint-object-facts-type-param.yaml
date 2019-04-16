@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - "add parameter to checkpoint_object_facts to filter out by object type"

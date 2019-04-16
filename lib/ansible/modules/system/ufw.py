@@ -461,8 +461,8 @@ def main():
                 execute(cmd + [[command], [value]])
 
         elif command == 'default':
-            if params['direction'] not in ['outgoing', 'incoming', 'routed', None]:
-                module.fail_json(msg='For default, direction must be one of "outgoing", "incoming" and "routed", or direction must not be specified.')
+            if params['direction'] not in ['outgoing', 'incoming', 'routed']:
+                module.fail_json(msg='For default, direction must be one of "outgoing", "incoming" and "routed".')
             if module.check_mode:
                 regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
                 extract = re.search(regexp, pre_state)
@@ -471,8 +471,7 @@ def main():
                     current_default_values["incoming"] = extract.group(1)
                     current_default_values["outgoing"] = extract.group(2)
                     current_default_values["routed"] = extract.group(3)
-                    v = current_default_values[params['direction'] or 'incoming']
-                    if v not in (value, 'disabled'):
+                    if current_default_values[params['direction']] != value:
                         changed = True
                 else:
                     changed = True
@@ -481,7 +480,7 @@ def main():
 
         elif command == 'rule':
             if params['direction'] not in ['in', 'out', None]:
-                module.fail_json(msg='For rules, direction must be one of "in" and "out", or direction must not be specified.')
+                module.fail_json(msg='For rules, direction must be one of "in" and "out".')
             # Rules are constructed according to the long format
             #
             # ufw [--dry-run] [route] [delete] [insert NUM] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \

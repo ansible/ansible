@@ -288,7 +288,7 @@ if($gather_subset.Contains('interfaces')) {
     }
 }
 
-if ($gather_subset.Contains("local") -and $null -ne $factpath) {
+if ($gather_subset.Contains("local") -and $factpath -ne $null) {
     # Get any custom facts; results are updated in the
     Get-CustomFacts -factpath $factpath
 }

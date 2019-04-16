@@ -35,8 +35,6 @@ version_added: '2.8'
 author: Evert Mulder (@evertmulder)
 description:
   - The manageiq_group module supports adding, updating and deleting groups in ManageIQ.
-requirements:
-- manageiq-client
 
 options:
   state:
@@ -321,12 +319,9 @@ class ManageIQgroup(object):
         """
         try:
             url = '%s/groups/%s' % (self.api_url, group['id'])
-            result = self.client.post(url, action='delete')
+            self.client.post(url, action='delete')
         except Exception as e:
             self.module.fail_json(msg="failed to delete group %s: %s" % (group['description'], str(e)))
-
-        if result['success'] is False:
-            self.module.fail_json(msg=result['message'])
 
         return dict(
             changed=True,
@@ -615,7 +610,7 @@ def main():
         else:
             res_args = dict(
                 changed=False,
-                msg="group '%s' does not exist in manageiq" % description)
+                msg="group %s: does not exist in manageiq" % description)
 
     # group should exist
     if state == "present":

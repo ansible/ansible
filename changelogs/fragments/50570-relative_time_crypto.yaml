@@ -1,0 +1,2 @@
+minor_changes:
+  - "openssl_certificate - Add support for relative time offsets in the ``selfsigned_not_before``/``selfsigned_not_after``/``ownca_not_before``/``ownca_not_after`` and ``valid_in`` parameters."

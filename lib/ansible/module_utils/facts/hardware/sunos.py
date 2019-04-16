@@ -17,7 +17,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import time
 
 from ansible.module_utils.six.moves import reduce
 
@@ -267,15 +266,18 @@ class SunOSHardware(Hardware):
 
     def get_uptime_facts(self):
         uptime_facts = {}
-        # sample kstat output:
-        # unix:0:system_misc:boot_time    1548249689
-        rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:boot_time')
+        # On Solaris, unix:0:system_misc:snaptime is created shortly after machine boots up
+        # and displays tiem in seconds. This is much easier than using uptime as we would
+        # need to have a parsing procedure for translating from human-readable to machine-readable
+        # format.
+        # Example output:
+        # unix:0:system_misc:snaptime     1175.410463590
+        rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:snaptime')
 
         if rc != 0:
             return
 
-        # uptime = $current_time - $boot_time
-        uptime_facts['uptime_seconds'] = int(time.time() - int(out.split('\t')[1]))
+        uptime_facts['uptime_seconds'] = int(float(out.split('\t')[1]))
 
         return uptime_facts
 

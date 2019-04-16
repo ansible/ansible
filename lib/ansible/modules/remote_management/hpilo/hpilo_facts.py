@@ -132,7 +132,6 @@ except ImportError:
     HAS_HPILO = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_native
 
 
 # Suppress warnings from hpilo
@@ -179,11 +178,7 @@ def main():
     }
 
     # TODO: Count number of CPUs, DIMMs and total memory
-    try:
-        data = ilo.get_host_data()
-    except hpilo.IloCommunicationError as e:
-        module.fail_json(msg=to_native(e))
-
+    data = ilo.get_host_data()
     for entry in data:
         if 'type' not in entry:
             continue

@@ -1,0 +1,2 @@
+bugfixes:
+- win_lineinfile - Fix issue where a malformed json block was returned causing an error

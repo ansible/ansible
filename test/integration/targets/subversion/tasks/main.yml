@@ -19,7 +19,7 @@
 
   always:
   - name: stop apache after tests
-    shell: "kill -9 $(cat '{{ subversion_server_dir }}/apache.pid')"
+    command: apachectl -k stop -f {{ subversion_server_dir }}/subversion.conf
 
   - name: remove tmp subversion server dir
     file:

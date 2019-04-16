@@ -60,7 +60,6 @@ options:
     - Whether the trigger is disabled or not. If true, the trigger will never result
       in a build.
     required: false
-    type: bool
   substitutions:
     description:
     - Substitutions data for Build resource.
@@ -301,7 +300,7 @@ disabled:
   - Whether the trigger is disabled or not. If true, the trigger will never result
     in a build.
   returned: success
-  type: bool
+  type: str
 createTime:
   description:
   - Time when the trigger was created.
@@ -542,7 +541,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             id=dict(type='str'),
             description=dict(type='str'),
-            disabled=dict(type='bool'),
+            disabled=dict(type='str'),
             substitutions=dict(type='dict'),
             filename=dict(type='str'),
             ignored_files=dict(type='list', elements='str'),

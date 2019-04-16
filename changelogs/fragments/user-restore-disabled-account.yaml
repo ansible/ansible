@@ -1,0 +1,2 @@
+bugfixes:
+  - user - remove warning when creating a disabled account with '!' or '*' in the password field (https://github.com/ansible/ansible/issues/46334)

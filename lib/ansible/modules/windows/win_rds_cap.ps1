@@ -146,7 +146,7 @@ if ($null -ne $order -and $order -lt 1) {
 }
 
 # Ensure RemoteDesktopServices module is loaded
-if ($null -eq (Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue)) {
+if ((Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue) -eq $null) {
     Import-Module -Name RemoteDesktopServices
 }
 

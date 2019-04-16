@@ -27,7 +27,10 @@ maintainer: J Barnett (github @jbarnett1981)
 import argparse
 import json
 import pymssql
-from ansible.module_utils.six.moves import configparser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 
 class MDTInventory(object):

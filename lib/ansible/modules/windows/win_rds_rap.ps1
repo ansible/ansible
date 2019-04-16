@@ -138,7 +138,7 @@ if ($null -ne $allowed_ports) {
 }
 
 # Ensure RemoteDesktopServices module is loaded
-if ($null -eq (Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue)) {
+if ((Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue) -eq $null) {
     Import-Module -Name RemoteDesktopServices
 }
 

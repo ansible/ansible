@@ -1,0 +1,2 @@
+bugfixes:
+  - "mysql_user: match backticks, single and double quotes when checking user privileges."

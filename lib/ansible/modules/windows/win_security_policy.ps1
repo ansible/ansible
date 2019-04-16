@@ -102,7 +102,7 @@ Function ConvertTo-Ini($ini) {
             $value_key = $value.Name
             $value_value = $value.Value
 
-            if ($null -ne $value_value) {
+            if ($value_value -ne $null) {
                 $content += "$value_key = $value_value"
             }
         }

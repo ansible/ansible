@@ -38,7 +38,10 @@ from __future__ import print_function
 import os
 import sys
 import argparse
-from ansible.module_utils.six.moves import configparser
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 try:
     from zabbix_api import ZabbixAPI

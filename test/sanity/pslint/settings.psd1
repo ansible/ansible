@@ -1,5 +1,6 @@
 @{
     ExcludeRules=@(
+        'PSPossibleIncorrectComparisonWithNull',
         'PSUseOutputTypeCorrectly',
         'PSUseShouldProcessForStateChangingFunctions',
         # We send strings as plaintext so will always come across the 3 issues

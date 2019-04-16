@@ -44,10 +44,6 @@ options:
     description:
     - The name of the EPG.
     type: str
-  pod:
-    description:
-    - The pod of the static leaf.
-    type: str
   leaf:
     description:
     - The path of the static leaf.
@@ -144,7 +140,6 @@ def main():
         template=dict(type='str', required=True),
         anp=dict(type='str', required=True),
         epg=dict(type='str', required=True),
-        pod=dict(type='str'),  # This parameter is not required for querying all objects
         leaf=dict(type='str', aliases=['name']),
         vlan=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -154,8 +149,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['pod', 'leaf', 'vlan']],
-            ['state', 'present', ['pod', 'leaf', 'vlan']],
+            ['state', 'absent', ['leaf', 'vlan']],
+            ['state', 'present', ['leaf', 'vlan']],
         ],
     )
 
@@ -164,12 +159,9 @@ def main():
     template = module.params['template']
     anp = module.params['anp']
     epg = module.params['epg']
-    pod = module.params['pod']
     leaf = module.params['leaf']
     vlan = module.params['vlan']
     state = module.params['state']
-
-    leafpath = 'topology/{0}/node-{1}'.format(pod, leaf)
 
     mso = MSOModule(module)
 
@@ -210,8 +202,8 @@ def main():
 
     # Get Leaf
     leafs = [(l['path'], l['portEncapVlan']) for l in schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]['staticLeafs']]
-    if (leafpath, vlan) in leafs:
-        leaf_idx = leafs.index((leafpath, vlan))
+    if (leaf, vlan) in leafs:
+        leaf_idx = leafs.index((leaf, vlan))
         # FIXME: Changes based on index are DANGEROUS
         leaf_path = '/sites/{0}/anps/{1}/epgs/{2}/staticLeafs/{3}'.format(site_template, anp, epg, leaf_idx)
         mso.existing = schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]['staticLeafs'][leaf_idx]
@@ -234,7 +226,7 @@ def main():
 
     elif state == 'present':
         payload = dict(
-            path=leafpath,
+            path=leaf,
             portEncapVlan=vlan,
         )
 

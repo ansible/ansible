@@ -56,7 +56,6 @@ TODO: realpath follows symlinks.  There isn't a test for this just now.
 
 TODO: add tests for set theory operations like union
 
-regex_replace = bar
-regex_search = 0001
-regex_findall = "['car', 'tar', 'bar']"
-regex_escape = \^f\.\*o\(\.\*\)\$
+TODO: add tests for regex, match, and search
+
+

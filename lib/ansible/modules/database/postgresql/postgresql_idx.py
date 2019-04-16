@@ -18,9 +18,8 @@ DOCUMENTATION = r'''
 module: postgresql_idx
 short_description: Create or drop indexes from a PostgreSQL database
 description:
-- Create or drop indexes from a PostgreSQL database.
-- For more information see U(https://www.postgresql.org/docs/current/sql-createindex.html),
-  U(https://www.postgresql.org/docs/current/sql-dropindex.html).
+- Create or drop indexes from a PostgreSQL database
+  U(https://www.postgresql.org/docs/current/sql-createindex.html).
 version_added: '2.8'
 
 options:
@@ -33,7 +32,7 @@ options:
     - name
   db:
     description:
-    - Name of database to connect to and where the index will be created/dropped.
+    - Name of database where the index will be created/dropped.
     type: str
     aliases:
     - login_db
@@ -58,8 +57,7 @@ options:
     type: str
   schema:
     description:
-    - Name of a database schema where the index will be created.
-    type: str
+    - Name of a database schema.
   login_password:
     description:
     - Password used to authenticate with PostgreSQL.
@@ -92,8 +90,6 @@ options:
   state:
     description:
     - Index state.
-    - I(state=present) implies the index will be created if it does not exist.
-    - I(state=absent) implies the index will be dropped if it exists.
     type: str
     default: present
     choices: [ absent, present ]
@@ -105,7 +101,7 @@ options:
     required: true
   columns:
     description:
-    - List of index columns that need to be covered by index.
+    - List of index columns.
     - Mutually exclusive with I(state=absent).
     type: list
     aliases:
@@ -125,10 +121,6 @@ options:
   concurrent:
     description:
     - Enable or disable concurrent mode (CREATE / DROP INDEX CONCURRENTLY).
-    - Pay attention, if I(concurrent=no), the table will be locked (ACCESS EXCLUSIVE) during the building process.
-      For more information about the lock levels see U(https://www.postgresql.org/docs/current/explicit-locking.html).
-    - If the building process was interrupted for any reason when I(cuncurrent=yes), the index becomes invalid.
-      In this case it should be dropped and created again.
     - Mutually exclusive with I(cascade=yes).
     type: bool
     default: yes
@@ -153,8 +145,6 @@ options:
     default: no
 
 notes:
-- The index building process can affect database performance.
-- To avoid table locks on production databases, use I(concurrent=yes) (default behavior).
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
 - This module uses psycopg2, a Python PostgreSQL database adapter. You must
@@ -605,7 +595,10 @@ def main():
         module.warn("Index %s is invalid! ROLLBACK" % idxname)
 
     if not concurrent:
-        db_connection.commit()
+        if module.check_mode:
+            db_connection.rollback()
+        else:
+            db_connection.commit()
 
     kw['changed'] = changed
     module.exit_json(**kw)

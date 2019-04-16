@@ -1,0 +1,2 @@
+bugfixes:
+  - explain 'bare variables' in error message

@@ -27,8 +27,10 @@ from subprocess import Popen, PIPE
 import distutils.spawn
 import sys
 import json
-
-from ansible.module_utils.six.moves import configparser
+try:
+    import configparser
+except Exception:
+    from six.moves import configparser
 
 # Set up defaults
 resource = 'local:'

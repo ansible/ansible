@@ -76,7 +76,7 @@ Function Convert-CollectionToList($collection) {
 }
 
 Function Compare-Values($current, $new) {
-    if ($null -eq $current) {
+    if ($current -eq $null) {
         return $true
     }
 
@@ -119,7 +119,7 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
         foreach ($key in $attribute_key_split) {
             $attribute_meta = $parent.Attributes | Where-Object { $_.Name -eq $key }
             $parent = $parent.$key
-            if ($null -eq $attribute_meta) {
+            if ($attribute_meta -eq $null) {
                 $attribute_meta = $parent
             }
         }
@@ -152,11 +152,11 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
                         }
                     }
                 }
-            }
+            }            
         }
         # Try and cast the variable using the chosen type, revert to the default if it fails
         Set-Variable -Name casted_value -Value ($value -as ([type] $attribute_meta.TypeName))
-        if ($null -eq $casted_value) {
+        if ($casted_value -eq $null) {
             $value
         } else {
             $casted_value
@@ -167,7 +167,7 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
 }
 
 # Ensure WebAdministration module is loaded
-if ($null -eq (Get-Module -Name "WebAdministration" -ErrorAction SilentlyContinue)) {
+if ((Get-Module -Name "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
     Import-Module WebAdministration
     $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll 
     Add-Type -Path $web_admin_dll_path

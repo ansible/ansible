@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix using omit on play keywords (https://github.com/ansible/ansible/issues/48673)

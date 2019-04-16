@@ -1,0 +1,2 @@
+bugfixes:
+  - basic - modify the correct variable when determining available hashing algorithms to avoid errors when md5 is not available (https://github.com/ansible/ansible/issues/51355)

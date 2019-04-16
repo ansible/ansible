@@ -103,7 +103,7 @@ def main():
             to=dict(required=True),
             msg=dict(required=True),
             host=dict(required=False),
-            port=dict(required=False, default=5222, type='int'),
+            port=dict(required=False, default=5222),
             encoding=dict(required=False),
         ),
         supports_check_mode=True

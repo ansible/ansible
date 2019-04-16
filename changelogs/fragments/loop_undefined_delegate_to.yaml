@@ -1,0 +1,4 @@
+bugfixes:
+- loop - Ensure that a loop with a when condition that evaluates to false and delegate_to, will short circuit if the
+  loop references an undefined variable. This matches the behavior in the same scenario without delegate_to
+  (https://github.com/ansible/ansible/issues/45189)

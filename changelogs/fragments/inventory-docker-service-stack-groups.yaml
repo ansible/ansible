@@ -1,0 +1,2 @@
+minor_changes:
+  - inventory/docker - Group containers by docker-swarm "service" and "stack"

@@ -21,7 +21,7 @@ $result = @{
 }
 
 # Ensure WebAdministration module is loaded
-if ($null -eq (Get-Module "WebAdministration" -ErrorAction SilentlyContinue)) {
+if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $null) {
   Import-Module WebAdministration
 }
 

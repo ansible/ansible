@@ -1,0 +1,2 @@
+minor_changes:
+- Parsing plugin filter may raise TypeError, gracefully handle this exception and let user know about the syntax error in plugin filter file.

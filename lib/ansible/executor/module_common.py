@@ -473,15 +473,7 @@ class ModuleDepFinder(ast.NodeVisitor):
 
         elif node.module.startswith('ansible_collections.'):
             # TODO: finish out the subpackage et al cases
-            if node.module.endswith('plugins.module_utils'):
-                # from ansible_collections.ns.coll.plugins.module_utils import MODULE [as aname] [,MODULE2] [as aname]
-                py_mod = tuple(node.module.split('.'))
-                for alias in node.names:
-                    self.submodules.add(py_mod + (alias.name,))
-            else:
-                # from ansible_collections.ns.coll.plugins.module_utils.MODULE import IDENTIFIER [as aname]
-                self.submodules.add(tuple(node.module.split('.')))
-
+            self.submodules.add(tuple(node.module.split('.')))
         self.generic_visit(node)
 
 
@@ -770,9 +762,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         module_style = 'new'
         module_substyle = 'python'
         b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
-    # FUTURE: combined regex for this stuff, or a "looks like Python, let's inspect further" mechanism
-    elif b'from ansible.module_utils.' in b_module_data or b'from ansible_collections.' in b_module_data\
-            or b'import ansible_collections.' in b_module_data:
+    elif b'from ansible.module_utils.' in b_module_data:
         module_style = 'new'
         module_substyle = 'python'
     elif REPLACER_WINDOWS in b_module_data:
@@ -782,7 +772,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
             or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
             or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE) \
-            or re.search(b'#AnsibleRequires -Powershell', b_module_data, re.IGNORECASE) \
             or re.search(b'#AnsibleRequires -CSharpUtil', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'

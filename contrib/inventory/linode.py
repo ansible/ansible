@@ -108,7 +108,7 @@ except Exception:
 load_chube_config()
 
 # Imports for ansible
-from ansible.module_utils.six.moves import configparser as ConfigParser
+import ConfigParser
 
 
 class LinodeInventory(object):

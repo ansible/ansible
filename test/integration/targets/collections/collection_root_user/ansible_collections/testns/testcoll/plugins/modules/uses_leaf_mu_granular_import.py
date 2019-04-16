@@ -3,11 +3,13 @@
 import json
 import sys
 
-from ansible_collections.testns.testcoll.plugins.module_utils.leaf import thingtocall as aliasedthing
+# FIXME: this is only required due to a bug around "new style module detection"
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.testns.testcoll.plugins.module_utils.leaf import thingtocall
 
 
 def main():
-    mu_result = aliasedthing()
+    mu_result = thingtocall()
     print(json.dumps(dict(changed=False, source='user', mu_result=mu_result)))
 
     sys.exit()

@@ -101,6 +101,13 @@ requirements:
     - "wipefs"
     - "lsblk"
 
+notes:
+    - "This module does not support check mode. The reason being that
+      while it is possible to chain several operations together
+      (e.g. 'create' and 'open'), the latter usually depends on changes
+      to the system done by the previous one. (LUKS cannot be opened,
+      when it does not exist.)"
+
 author:
     "Jan Pokorny (@japokorn)"
 '''
@@ -165,9 +172,7 @@ name:
     sample: "luks-c1da9a58-2fde-4256-9d9f-6ab008b4dd1b"
 '''
 
-import os
 import re
-import stat
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -244,7 +249,7 @@ class CryptHandler(Handler):
         return device
 
     def is_luks(self, device):
-        ''' check if the LUKS container does exist
+        ''' check if the LUKS device does exist
         '''
         result = self._run_command([self._cryptsetup_bin, 'isLuks', device])
         return result[RETURN_CODE] == 0
@@ -459,16 +464,7 @@ def run_module():
     )
 
     module = AnsibleModule(argument_spec=module_args,
-                           supports_check_mode=True)
-
-    if module.params['device'] is not None:
-        try:
-            statinfo = os.stat(module.params['device'])
-            mode = statinfo.st_mode
-            if not stat.S_ISBLK(mode) and not stat.S_ISCHR(mode):
-                raise Exception('{0} is not a device'.format(module.params['device']))
-        except Exception as e:
-            module.fail_json(msg=str(e))
+                           supports_check_mode=False)
 
     crypt = CryptHandler(module)
     conditions = ConditionsHandler(module, crypt)
@@ -478,15 +474,12 @@ def run_module():
 
     # luks create
     if conditions.luks_create():
-        if not module.check_mode:
-            try:
-                crypt.run_luks_create(module.params['device'],
-                                      module.params['keyfile'])
-            except ValueError as e:
-                module.fail_json(msg="luks_device error: %s" % e)
+        try:
+            crypt.run_luks_create(module.params['device'],
+                                  module.params['keyfile'])
+        except ValueError as e:
+            module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
-        if module.check_mode:
-            module.exit_json(**result)
 
     # luks open
 
@@ -501,17 +494,14 @@ def run_module():
                 name = crypt.generate_luks_name(module.params['device'])
             except ValueError as e:
                 module.fail_json(msg="luks_device error: %s" % e)
-        if not module.check_mode:
-            try:
-                crypt.run_luks_open(module.params['device'],
-                                    module.params['keyfile'],
-                                    name)
-            except ValueError as e:
-                module.fail_json(msg="luks_device error: %s" % e)
+        try:
+            crypt.run_luks_open(module.params['device'],
+                                module.params['keyfile'],
+                                name)
+        except ValueError as e:
+            module.fail_json(msg="luks_device error: %s" % e)
         result['name'] = name
         result['changed'] = True
-        if module.check_mode:
-            module.exit_json(**result)
 
     # luks close
     if conditions.luks_close():
@@ -523,51 +513,39 @@ def run_module():
                 module.fail_json(msg="luks_device error: %s" % e)
         else:
             name = module.params['name']
-        if not module.check_mode:
-            try:
-                crypt.run_luks_close(name)
-            except ValueError as e:
-                module.fail_json(msg="luks_device error: %s" % e)
+        try:
+            crypt.run_luks_close(name)
+        except ValueError as e:
+            module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
-        if module.check_mode:
-            module.exit_json(**result)
 
     # luks add key
     if conditions.luks_add_key():
-        if not module.check_mode:
-            try:
-                crypt.run_luks_add_key(module.params['device'],
-                                       module.params['keyfile'],
-                                       module.params['new_keyfile'])
-            except ValueError as e:
-                module.fail_json(msg="luks_device error: %s" % e)
+        try:
+            crypt.run_luks_add_key(module.params['device'],
+                                   module.params['keyfile'],
+                                   module.params['new_keyfile'])
+        except ValueError as e:
+            module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
-        if module.check_mode:
-            module.exit_json(**result)
 
     # luks remove key
     if conditions.luks_remove_key():
-        if not module.check_mode:
-            try:
-                crypt.run_luks_remove_key(module.params['device'],
-                                          module.params['remove_keyfile'],
-                                          force_remove_last_key=module.params['force_remove_last_key'])
-            except ValueError as e:
-                module.fail_json(msg="luks_device error: %s" % e)
+        try:
+            crypt.run_luks_remove_key(module.params['device'],
+                                      module.params['remove_keyfile'],
+                                      force_remove_last_key=module.params['force_remove_last_key'])
+        except ValueError as e:
+            module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
-        if module.check_mode:
-            module.exit_json(**result)
 
     # luks remove
     if conditions.luks_remove():
-        if not module.check_mode:
-            try:
-                crypt.run_luks_remove(module.params['device'])
-            except ValueError as e:
-                module.fail_json(msg="luks_device error: %s" % e)
+        try:
+            crypt.run_luks_remove(module.params['device'])
+        except ValueError as e:
+            module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
-        if module.check_mode:
-            module.exit_json(**result)
 
     # Success - return result
     module.exit_json(**result)

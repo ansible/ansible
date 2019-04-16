@@ -207,10 +207,6 @@ class AnsibleUndefined(StrictUndefined):
         # Return original Undefined object to preserve the first failure context
         return self
 
-    def __getitem__(self, key):
-        # Return original Undefined object to preserve the first failure context
-        return self
-
     def __repr__(self):
         return 'AnsibleUndefined'
 

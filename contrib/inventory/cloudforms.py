@@ -22,7 +22,7 @@
 
 from __future__ import print_function
 import argparse
-from ansible.module_utils.six.moves import configparser as ConfigParser
+import ConfigParser
 import os
 import re
 from time import time

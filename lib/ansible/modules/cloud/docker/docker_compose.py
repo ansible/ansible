@@ -165,6 +165,7 @@ EXAMPLES = '''
 
 - name: Run using a project directory
   hosts: localhost
+  connection: local
   gather_facts: no
   tasks:
     - docker_compose:
@@ -219,6 +220,7 @@ EXAMPLES = '''
 
 - name: Scale the web service to 2
   hosts: localhost
+  connection: local
   gather_facts: no
   tasks:
     - docker_compose:
@@ -232,6 +234,7 @@ EXAMPLES = '''
 
 - name: Run with inline v2 compose
   hosts: localhost
+  connection: local
   gather_facts: no
   tasks:
     - docker_compose:
@@ -266,6 +269,7 @@ EXAMPLES = '''
 
 - name: Run with inline v1 compose
   hosts: localhost
+  connection: local
   gather_facts: no
   tasks:
     - docker_compose:

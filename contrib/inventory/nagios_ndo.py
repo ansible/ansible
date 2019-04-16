@@ -29,7 +29,11 @@ Configuration is read from `nagios_ndo.ini`.
 import os
 import argparse
 import sys
-from ansible.module_utils.six.moves import configparser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser
+    configparser = ConfigParser
 import json
 
 try:

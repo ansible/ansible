@@ -59,6 +59,7 @@ Changelog:
 ######################################################################
 
 import argparse
+import ConfigParser
 import os
 import re
 from time import time
@@ -66,8 +67,7 @@ import xmlrpclib
 
 import json
 
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import configparser as ConfigParser
+from six import iteritems
 
 # NOTE -- this file assumes Ansible is being accessed FROM the cobbler
 # server, so it does not attempt to login with a username and password.

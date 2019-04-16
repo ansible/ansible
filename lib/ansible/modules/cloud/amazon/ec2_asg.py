@@ -629,13 +629,10 @@ def get_properties(autoscaling_group):
                 instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                    'lifecycle_state': i['LifecycleState'],
                                                    'launch_config_name': i['LaunchConfigurationName']}
-            elif i.get('LaunchTemplate'):
+            else:
                 instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                    'lifecycle_state': i['LifecycleState'],
                                                    'launch_template': i['LaunchTemplate']}
-            else:
-                instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
-                                                   'lifecycle_state': i['LifecycleState']}
             if i['HealthStatus'] == 'Healthy' and i['LifecycleState'] == 'InService':
                 properties['viable_instances'] += 1
             if i['HealthStatus'] == 'Healthy':

@@ -170,7 +170,6 @@ def main():
     mx = module.params['mx']
     state = module.params['state']
     changed = False
-    diff = None
 
     obj = list(ldap_search(
         '(&(objectClass=dNSZone)(zoneName={0}))'.format(zone),

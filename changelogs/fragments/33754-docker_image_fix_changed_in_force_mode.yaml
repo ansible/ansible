@@ -1,0 +1,2 @@
+minor_changes:
+- "docker_image - set ``changed`` to ``false`` when using ``force: yes`` to load or build an image that ends up being identical to one already present on the Docker host."

@@ -1,0 +1,3 @@
+bugfixes:
+- win_domain - Fix when running without credential delegated authentication - https://github.com/ansible/ansible/issues/53182
+- 'win_domain - Do not fail if DC is already promoted but a reboot is required, return ``reboot_required: True``'
