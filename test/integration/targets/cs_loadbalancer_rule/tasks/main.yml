@@ -1,4 +1,26 @@
 ---
+- name: ensure instance is expunged
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-lb"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify ensure instance is expunged
+  assert:
+    that:
+    - instance is successful
+
+- name: ensure network is absent
+  cs_network:
+    name: "{{ cs_resource_prefix }}_net_lb"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: lb_net
+- name: verify ensure network is absent
+  assert:
+    that:
+    - lb_net is successful
+
 - name: test create network for lb
   cs_network:
     name: "{{ cs_resource_prefix }}_net_lb"
@@ -20,6 +42,9 @@
     zone: "{{ cs_common_zone_adv }}"
     network: "{{ cs_resource_prefix }}_net_lb"
   register: instance
+  until: instance is success
+  retries: 20
+  delay: 5
 - name: verify setup instance in lb
   assert:
     that:
