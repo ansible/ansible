@@ -5,7 +5,7 @@
 
 class ModuleDocFragment(object):
 
-    # HWC doc fragment.
+    # HWC doc fragment
     DOCUMENTATION = '''
 options:
     identity_endpoint:
