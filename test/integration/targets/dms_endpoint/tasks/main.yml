@@ -5,15 +5,97 @@
     aws_connection_info: &aws_connection_info
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      #security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
+    resource_prefix: "testbla"
+    dms_identifier: "{{ resource_prefix }}-dms"
   no_log: yes
 
 - block:
-  - name: create endpoints
-    dms_endpoint:
+    - name: create endpoints
+      dms_endpoint:
+          state: present
+          endpointidentifier: "{{ dms_identifier }}"
+          endpointtype: source
+          enginename: aurora
+          username: testing
+          password: testint1234
+          servername: testing.moreira.dom
+          port: 3306
+          databasename: 'testdb'
+          sslmode: none
+          <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result is not failed
+
+    - name: create endpoints no change
+      dms_endpoint:
+          state: present
+          endpointidentifier: "{{ dms_identifier }}"
+          endpointtype: source
+          enginename: aurora
+          username: testing
+          password: testint1234
+          servername: testing.moreira.dom
+          port: 3306
+          databasename: 'testdb'
+          sslmode: none
+          <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+          - result is not failed
+
+    - name: update endpoints
+      dms_endpoint:
         state: present
-        endpointidentifier: 'testsource'
+        endpointidentifier: "{{ dms_identifier }}"
+        endpointtype: source
+        enginename: aurora
+        username: testing
+        password: testint1234
+        servername: testing.moreira.dom
+        port: 3306
+        databasename: 'testdb2'
+        sslmode: none
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result is not failed
+
+    - name: update endpoints no change
+      dms_endpoint:
+        state: present
+        endpointidentifier: "{{ dms_identifier }}"
+        endpointtype: source
+        enginename: aurora
+        username: testing
+        password: testint1234
+        servername: testing.moreira.dom
+        port: 3306
+        databasename: 'testdb2'
+        sslmode: none
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+          - result is not failed
+
+  always:
+    - name: delete endpoints
+      dms_endpoint:
+        state: absent
+        endpointidentifier: "{{ dms_identifier }}"
         endpointtype: source
         enginename: aurora
         username: testing
@@ -22,18 +104,21 @@
         port: 3306
         databasename: 'testdb'
         sslmode: none
+        wait: True
+        timeout: 60
+        retries: 10
         <<: *aws_connection_info
-    register: result
+      register: result
 
-  - assert:
-      that:
-        - result is changed
-        - result is not failed
+    - assert:
+        that:
+          - result is changed
+          - result is not failed
 
-  - name: create endpoints no change
-    dms_endpoint:
-        state: present
-        endpointidentifier: 'testsource'
+    - name: delete endpoints no change
+      dms_endpoint:
+        state: absent
+        endpointidentifier:  "{{ dms_identifier }}"
         endpointtype: source
         enginename: aurora
         username: testing
@@ -42,94 +127,11 @@
         port: 3306
         databasename: 'testdb'
         sslmode: none
+        wait: False
         <<: *aws_connection_info
-    register: result
+      register: result
 
-  - assert:
-      that:
-        - result is not changed
-        - result is not failed
-
-  - name: update endpoints
-    dms_endpoint:
-      state: present
-      endpointidentifier: 'testsource'
-      endpointtype: source
-      enginename: aurora
-      username: testing
-      password: testint1234
-      servername: testing.moreira.dom
-      port: 3306
-      databasename: 'testdb2'
-      sslmode: none
-      <<: *aws_connection_info
-    register: result
-
-  - assert:
-      that:
-        - result is changed
-        - result is not failed
-
-  - name: update endpoints no change
-    dms_endpoint:
-      state: present
-      endpointidentifier: 'testsource'
-      endpointtype: source
-      enginename: aurora
-      username: testing
-      password: testint1234
-      servername: testing.moreira.dom
-      port: 3306
-      databasename: 'testdb2'
-      sslmode: none
-      <<: *aws_connection_info
-    register: result
-
-  - assert:
-      that:
-        - result is not changed
-        - result is not failed
-
-  - name: delete endpoints
-    dms_endpoint:
-      state: absent
-      endpointidentifier: 'testsource'
-      endpointtype: source
-      enginename: aurora
-      username: testing
-      password: testint1234
-      servername: testing.moreira.dom
-      port: 3306
-      databasename: 'testdb'
-      sslmode: none
-      wait: True
-      timeout: 60
-      retries: 10
-      <<: *aws_connection_info
-    register: result
-
-  - assert:
-      that:
-        - result is changed
-        - result is not failed
-
-  - name: delete endpoints no change
-    dms_endpoint:
-      state: absent
-      endpointidentifier: 'testsource'
-      endpointtype: source
-      enginename: aurora
-      username: testing
-      password: testint1234
-      servername: testing.moreira.dom
-      port: 3306
-      databasename: 'testdb'
-      sslmode: none
-      wait: False
-      <<: *aws_connection_info
-    register: result
-
-  - assert:
-      that:
-        - result is not changed
-        - result is not failed
+    - assert:
+        that:
+          - result is not changed
+          - result is not failed
