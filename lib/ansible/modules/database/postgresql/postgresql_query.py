@@ -21,7 +21,7 @@ short_description: Run PostgreSQL queries
 description:
 - Runs arbitraty PostgreSQL queries.
 - Can run queries from SQL script files.
-version_added: "2.8"
+version_added: '2.8'
 options:
   query:
     description:
@@ -56,48 +56,6 @@ options:
     type: str
     aliases:
     - login_db
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    type: str
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s).
-    - If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    aliases: [ ssl_rootcert ]
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -114,6 +72,7 @@ author:
 - Felix Archambault (@archf)
 - Andrew Klychkov (@Andersson007)
 - Will Rouesnel (@wrouesnel)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''

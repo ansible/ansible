@@ -29,7 +29,7 @@ description:
      string from postgresql.auto.conf and reload I(value=default) (for settings with postmaster context restart is required).
    - After change you can see in the ansible output the previous and
      the new parameter value and other information using returned values and M(debug) module.
-version_added: "2.8"
+version_added: '2.8'
 options:
   name:
     description:
@@ -62,48 +62,6 @@ options:
     type: str
     aliases:
     - login_db
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    type: str
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-    default: prefer
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s).
-    - If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    aliases: [ ssl_rootcert ]
 notes:
 - Supported version of PostgreSQL is 9.4 and later.
 - Pay attention, change setting with 'postmaster' context can return changed is true
@@ -125,6 +83,7 @@ notes:
 requirements: [ psycopg2 ]
 author:
 - Andrew Klychkov (@Andersson007)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
