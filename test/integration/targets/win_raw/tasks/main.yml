@@ -71,18 +71,18 @@
       - "unknown_result is failed"
       - "unknown_result is changed"
 
-#- name: run a command that takes longer than 60 seconds
-#  raw: Start-Sleep -s 75
-#  register: sleep_command
-#
-#- name: assert that the sleep command ran
-#  assert:
-#    that:
-#      - "sleep_command.rc == 0"
-#      - "not sleep_command.stdout"
-#      - "not sleep_command.stderr"
-#      - "sleep_command is not failed"
-#      - "sleep_command is changed"
+- name: run a command that takes longer than 60 seconds
+  raw: Start-Sleep -s 75
+  register: sleep_command
+
+- name: assert that the sleep command ran
+  assert:
+    that:
+      - "sleep_command.rc == 0"
+      - "not sleep_command.stdout"
+      - "not sleep_command.stderr"
+      - "sleep_command is not failed"
+      - "sleep_command is changed"
 
 - name: run a raw command with key=value arguments
   raw: echo wwe=raw
