@@ -6,7 +6,6 @@
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       region: "{{ aws_region }}"
-    resource_prefix: "testbla"
     dms_identifier: "{{ resource_prefix }}-dms"
   no_log: yes
 
@@ -19,7 +18,7 @@
           enginename: aurora
           username: testing
           password: testint1234
-          servername: testing.moreira.dom
+          servername: "{{ resource_prefix }}.exampledomain.com"
           port: 3306
           databasename: 'testdb'
           sslmode: none
@@ -39,7 +38,7 @@
           enginename: aurora
           username: testing
           password: testint1234
-          servername: testing.moreira.dom
+          servername: "{{ resource_prefix }}.exampledomain.com"
           port: 3306
           databasename: 'testdb'
           sslmode: none
@@ -59,7 +58,7 @@
         enginename: aurora
         username: testing
         password: testint1234
-        servername: testing.moreira.dom
+        servername: "{{ resource_prefix }}.exampledomain.com"
         port: 3306
         databasename: 'testdb2'
         sslmode: none
@@ -79,7 +78,7 @@
         enginename: aurora
         username: testing
         password: testint1234
-        servername: testing.moreira.dom
+        servername: "{{ resource_prefix }}.exampledomain.com"
         port: 3306
         databasename: 'testdb2'
         sslmode: none
@@ -100,7 +99,7 @@
         enginename: aurora
         username: testing
         password: testint1234
-        servername: testing.moreira.dom
+        servername: "{{ resource_prefix }}.exampledomain.com"
         port: 3306
         databasename: 'testdb'
         sslmode: none
@@ -123,7 +122,7 @@
         enginename: aurora
         username: testing
         password: testint1234
-        servername: testing.moreira.dom
+        servername: "{{ resource_prefix }}.exampledomain.com"
         port: 3306
         databasename: 'testdb'
         sslmode: none
