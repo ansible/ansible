@@ -206,3 +206,96 @@
     that:
         - not dvs_pg_result_0009.changed
         - "'vlan_id range 1-4096 specified is incorrect. The valid vlan_id range is from 0 to 4094.' == '{{ dvs_pg_result_0009.msg }}'"
+
+# Testcase 0010: Update the portgroup port policy settings
+- name: create basic portgroup with all security and policy settings enabled
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic-some-enabled-updates"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+    network_policy:
+      promiscuous: yes
+      forged_transmits: yes
+      mac_changes: no
+    port_policy:
+      vlan_override: yes
+
+- name: update portgroup port policy settings
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic-some-enabled-updates"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+    auto_expand: true
+    network_policy:
+      promiscuous: yes
+      forged_transmits: yes
+      mac_changes: no
+    port_policy:
+      block_override: yes
+      ipfix_override: yes
+      live_port_move: yes
+      network_rp_override: yes
+      port_config_reset_at_disconnect: yes
+      security_override: yes
+      shaping_override: yes
+      traffic_filter_override: yes
+      uplink_teaming_override: yes
+      vendor_config_override: yes
+      vlan_override: yes
+  register: dvs_pg_result_0010
+
+- name: ensure dvs portgroup has updated
+  assert:
+    that:
+        - "{{ dvs_pg_result_0010.changed == true }}"
+
+# Testcase 0011: Update the portgroup port policy settings again
+- name: update portgroup port policy settings again
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic-some-enabled-updates"
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+    auto_expand: true
+    network_policy:
+      promiscuous: yes
+      forged_transmits: yes
+      mac_changes: no
+    port_policy:
+      block_override: yes
+      ipfix_override: yes
+      live_port_move: yes
+      network_rp_override: yes
+      port_config_reset_at_disconnect: yes
+      security_override: yes
+      shaping_override: yes
+      traffic_filter_override: yes
+      uplink_teaming_override: yes
+      vendor_config_override: yes
+      vlan_override: yes
+  register: dvs_pg_result_0011
+
+- name: ensure dvs portgroup has updated
+  assert:
+    that:
+        - "{{ dvs_pg_result_0011.changed == false }}"
