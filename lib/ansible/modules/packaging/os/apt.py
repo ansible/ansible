@@ -1003,7 +1003,7 @@ def get_cache(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'installed', 'latest', 'present', 'removed', 'present', 'fixed']),
+            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed', 'latest', 'present']),
             update_cache=dict(type='bool', aliases=['update-cache']),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
@@ -1067,14 +1067,6 @@ def main():
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     autoclean = p['autoclean']
-
-    # Deal with deprecated aliases
-    if p['state'] == 'installed':
-        module.deprecate("State 'installed' is deprecated. Using state 'present' instead.", version="2.9")
-        p['state'] = 'present'
-    if p['state'] == 'removed':
-        module.deprecate("State 'removed' is deprecated. Using state 'absent' instead.", version="2.9")
-        p['state'] = 'absent'
 
     # Get the cache object
     cache = get_cache(module)
