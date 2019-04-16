@@ -31,8 +31,8 @@ short_description: Get network objects facts on Checkpoint over Web Services API
 description:
   - Get network objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
-version_added: "2.8"
-author: Or Soffer (@Or Soffer)
+version_added: "2.9"
+author: "Or Soffer (@chkp-orso)"
 options:
   name:
     description:
@@ -44,7 +44,7 @@ options:
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of the 
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the
         object to a fully detailed representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
@@ -88,8 +88,8 @@ def main():
         name=dict(type='str'),
         uid=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
-        limit=dict(type=int),
-        offset=dict(type=int),
+        limit=dict(type='int'),
+        offset=dict(type='int'),
         order=dict(type='list'),
         show_membership=dict(type='bool')
     )

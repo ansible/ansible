@@ -30,9 +30,9 @@ from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.connection import Connection
 
 
-checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=True),
-                                policy_package=dict(type='str', default='standard'),
-                                auto_install_policy=dict(type='bool', default=True),
+checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool'),
+                                policy_package=dict(type='str'),
+                                auto_install_policy=dict(type='bool'),
                                 targets=dict(type='list')
                                 )
 

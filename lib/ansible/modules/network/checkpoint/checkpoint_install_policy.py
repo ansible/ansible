@@ -32,8 +32,8 @@ short_description: Install policy on Checkpoint devices over Web Services API
 description:
   - Install policy on Checkpoint devices.
     All operations are performed over Web Services API.
-version_added: "2.8"
-author: Or Soffer (@Or Soffer)
+version_added: "2.9"
+author: "Or Soffer (@chkp-orso)"
 options:
   policy_package:
     description:
@@ -52,7 +52,7 @@ options:
     type: bool
   desktop_security:
     description:
-      - Set to be true in order to install the Desktop Security policy. By default, the value is true if desktop 
+      - Set to be true in order to install the Desktop Security policy. By default, the value is true if desktop
         security policy is enabled on the input policy package, otherwise false.
     type: bool
   qos:
@@ -62,12 +62,12 @@ options:
     type: bool
   threat_prevention:
     description:
-      - Set to be true in order to install the Threat Prevention policy. By default, the value is true if Threat 
+      - Set to be true in order to install the Threat Prevention policy. By default, the value is true if Threat
         Prevention policy is enabled on the input policy package, otherwise false.
     type: bool
   install_on_all_cluster_members_or_fail:
     description:
-      - Relevant for the gateway clusters. If true, the policy is installed on all the cluster members. If the 
+      - Relevant for the gateway clusters. If true, the policy is installed on all the cluster members. If the
         installation on a cluster member fails, don't install on that cluster.
     type: bool
   prepare_only:
