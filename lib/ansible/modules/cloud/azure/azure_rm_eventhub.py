@@ -91,7 +91,6 @@ options:
                             - Provider for capture destination
                         choices:
                             - EventHubArchive.AzureBlockBlob
-                            - EventHubArchive.AzureDataLake
                         required: true
                     storage_account_resource_id:
                         decription:
@@ -160,7 +159,7 @@ storage_destination_spec = dict(
     provider=dict(
         type='str',
         required=True,
-        choices=['EventHubArchive.AzureBlockBlob', 'EventHubArchive.AzureDataLake']
+        choices=['EventHubArchive.AzureBlockBlob']
     ),
     storage_account_resource_id=dict(
         type='str',
@@ -309,9 +308,8 @@ class AzureRMEventHub(AzureRMModuleBase):
         destination_property = None
         capture_property = None
         if self.capture_description.get('enabled'):
-            try:
-                destination = self.capture_description.get('destination')
-            except Exception as exc:
+            destination = self.capture_description.get('destination')
+            if destination is None:
                 self.fail("Destination must be set when enable the capture function")
             destination_property = self.eventhub_models.Destination(name=destination.get('provider'),
                                                                     storage_account_resource_id=destination['storage_account_resource_id'],
@@ -376,25 +374,30 @@ class AzureRMEventHub(AzureRMModuleBase):
         return changed, event_hub
 
     def check_destination(self, changed, destination):
-        if self.capture_description.get('destination').get('provider'):
-            if self.capture_description.get('destination').get('provider') != destination.name:
-                changed = True
-                destination.name = self.capture_description.get('destination').get('provider')
+        destination_settings = self.capture_description.get('destination')
 
-        if self.capture_description.get('destination').get('storage_account_resource_id'):
-            if self.capture_description.get('destination').get('storage_account_resource_id') != destination.storage_account_resource_id:
-                changed = True
-                destination.storage_account_resource_id = self.capture_description.get('destination').get('storage_account_resource_id')
+        if not destination_settings:
+            return changed, destination
 
-        if self.capture_description.get('destination').get('blob_container'):
-            if self.capture_description.get('destination').get('blob_container') != destination.blob_container:
+        if destination_settings.get('provider'):
+            if destination_settings.get('provider') != destination.name:
                 changed = True
-                destination.blob_container = self.capture_description.get('destination').get('blob_container')
+                destination.name = destination_settings.get('provider')
 
-        if self.capture_description.get('destination').get('archive_name_format'):
-            if self.capture_description.get('destination').get('archive_name_format') != destination.archive_name_format:
+        if destination_settings.get('storage_account_resource_id'):
+            if destination_settings.get('storage_account_resource_id') != destination.storage_account_resource_id:
                 changed = True
-                destination.archive_name_format = self.capture_description.get('destination').get('archive_name_format')
+                destination.storage_account_resource_id = destination_settings.get('storage_account_resource_id')
+
+        if destination_settings.get('blob_container'):
+            if destination_settings.get('blob_container') != destination.blob_container:
+                changed = True
+                destination.blob_container = destination_settings.get('blob_container')
+
+        if destination_settings.get('archive_name_format'):
+            if destination_settings.get('archive_name_format') != destination.archive_name_format:
+                changed = True
+                destination.archive_name_format = destination_settings.get('archive_name_format')
 
         return changed, destination
 

@@ -80,7 +80,7 @@ except ImportError:
     pass
 
 
-class AzureRMEventHubFact(AzureRMModuleBase):
+class AzureRMEventHubFacts(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -115,7 +115,7 @@ class AzureRMEventHubFact(AzureRMModuleBase):
         self.show_sas_policies = None
         self.show_consumer_groups = None
 
-        super(AzureRMEventHubFact, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
+        super(AzureRMEventHubFacts, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
     def exec_module(self, **kwargs):
 
@@ -172,7 +172,7 @@ class AzureRMEventHubFact(AzureRMModuleBase):
                                                                             namespace_name=self.namespace,
                                                                             event_hub_name=eventhub)
         except self.eventhub_models.ErrorResponseException as exc:
-            self.fail('Failed to list authorization rules of namespace {0}: {1}'.format(eventhub, str(exc.inner_exception) or exc.message or str(exc)))
+            self.fail('Failed to list authorization rules of eventhub {0}: {1}'.format(eventhub, str(exc.inner_exception) or exc.message or str(exc)))
 
     def list_keys(self, eventhub, rule_name):
         try:
@@ -207,7 +207,8 @@ class AzureRMEventHubFact(AzureRMModuleBase):
             message_retention_in_days=eventhub.message_retention_in_days,
             partition_count=eventhub.partition_count,
             partition_ids=eventhub.partition_ids,
-            status=eventhub.status
+            status=eventhub.status,
+            capture_description=eventhub.capture_description.as_dict() if eventhub.capture_description else None
         )
         return result
 
@@ -215,7 +216,7 @@ class AzureRMEventHubFact(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMEventHubFact()
+    AzureRMEventHubFacts()
 
 
 if __name__ == '__main__':
