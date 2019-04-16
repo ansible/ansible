@@ -271,6 +271,16 @@ def main():
         echo_rx_interval=dict(required=False, type='int'),
         interval=dict(required=False, type='list'),
         slow_timer=dict(required=False, type='int'),
+        startup_timer=dict(required=False, type='int'),
+        ipv4_echo_rx_interval=dict(required=False, type='int'),
+        ipv4_interval=dict(required=False, type='list'),
+        ipv4_slow_timer=dict(required=False, type='int'),
+        ipv6_echo_rx_interval=dict(required=False, type='int'),
+        ipv6_interval=dict(required=False, type='list'),
+        ipv6_slow_timer=dict(required=False, type='int'),
+        fabricpath_interval=dict(required=False, type='list'),
+        fabricpath_slow_timer=dict(required=False, type='int'),
+        fabricpath_vlan=dict(required=False, type='int'),
     )
     argument_spec.update(nxos_argument_spec)
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
