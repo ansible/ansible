@@ -131,7 +131,22 @@ options:
     - Specifies the user (role) connection limit.
     type: int
     version_added: '2.4'
-
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    type: str
+    default: prefer
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
+    version_added: '2.3'
+  ca_cert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
+    aliases: [ ssl_rootcert ]
+    version_added: '2.3'
 notes:
 - The module creates a user (role) with login privilege by default.
   Use NOLOGIN role_attr_flags to change this behaviour.
