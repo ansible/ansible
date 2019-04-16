@@ -1,0 +1,3 @@
+bugfixes:
+- gitlab modules - Update version deprecations to use strings instead of integers
+  so that ``2.10`` isn't converted to ``2.1``. (https://github.com/ansible/ansible/pull/55395)
