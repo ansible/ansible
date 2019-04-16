@@ -29,7 +29,7 @@ from ansible.module_utils.network.common.netconf import remove_namespaces
 from ansible.module_utils.network.iosxr.iosxr import build_xml, etree_find
 from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected
+from ansible.plugins.netconf import ensure_connected, ensure_ncclient
 
 try:
     from ncclient import manager
@@ -87,13 +87,13 @@ class Netconf(NetconfBase):
         return json.dumps(result)
 
     @staticmethod
+    @ensure_ncclient
     def guess_network_os(obj):
         """
         Guess the remote network os name
         :param obj: Netconf connection class object
         :return: Network OS name
         """
-        Netconf.ensure_ncclient()
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
@@ -119,9 +119,9 @@ class Netconf(NetconfBase):
         return guessed_os
 
     # TODO: change .xml to .data_xml, when ncclient supports data_xml on all platforms
+    @ensure_ncclient
     @ensure_connected
     def get(self, filter=None, remove_ns=False):
-        self.ensure_ncclient()
         if isinstance(filter, list):
             filter = tuple(filter)
         try:
@@ -134,9 +134,9 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def get_config(self, source=None, filter=None, remove_ns=False):
-        self.ensure_ncclient()
         if isinstance(filter, list):
             filter = tuple(filter)
         try:
@@ -149,9 +149,9 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None, remove_ns=False):
-        self.ensure_ncclient()
         if config is None:
             raise ValueError('config value must be provided')
         try:
@@ -165,9 +165,9 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def commit(self, confirmed=False, timeout=None, persist=None, remove_ns=False):
-        self.ensure_ncclient()
         try:
             resp = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
             if remove_ns:
@@ -178,9 +178,9 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def validate(self, source="candidate", remove_ns=False):
-        self.ensure_ncclient()
         try:
             resp = self.m.validate(source=source)
             if remove_ns:
@@ -191,9 +191,9 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def discard_changes(self, remove_ns=False):
-        self.ensure_ncclient()
         try:
             resp = self.m.discard_changes()
             if remove_ns:

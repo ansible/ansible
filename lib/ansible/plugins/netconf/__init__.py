@@ -51,6 +51,15 @@ def ensure_connected(func):
     return wrapped
 
 
+def ensure_ncclient(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if not HAS_NCCLIENT:
+            raise AnsibleError("%s: %s" % (missing_required_lib('ncclient'), to_native(NCCLIENT_IMP_ERR)))
+        return func(self, *args, **kwargs)
+    return wrapped
+
+
 class NetconfBase(AnsiblePlugin):
     """
     A base class for implementing Netconf connections
@@ -107,15 +116,11 @@ class NetconfBase(AnsiblePlugin):
     def __init__(self, connection):
         self._connection = connection
 
-    @staticmethod
-    def ensure_ncclient():
-        if not HAS_NCCLIENT:
-            raise AnsibleError("%s: %s" % (missing_required_lib('ncclient'), to_native(NCCLIENT_IMP_ERR)))
-
     @property
     def m(self):
         return self._connection._manager
 
+    @ensure_ncclient
     @ensure_connected
     def rpc(self, name):
         """
@@ -123,7 +128,6 @@ class NetconfBase(AnsiblePlugin):
         :param name: Name of rpc in string format
         :return: Received rpc response from remote host
         """
-        self.ensure_ncclient()
         try:
             obj = to_ele(name)
             resp = self.m.rpc(obj)

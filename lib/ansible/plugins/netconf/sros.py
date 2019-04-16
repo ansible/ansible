@@ -25,6 +25,7 @@ import re
 from ansible.module_utils._text import to_text, to_native
 from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
+from ansible.plugins.netconf import ensure_ncclient
 
 try:
     from ncclient import manager
@@ -42,8 +43,8 @@ class Netconf(NetconfBase):
         except AttributeError:
             pass
 
+    @ensure_ncclient
     def get_device_info(self):
-        self.ensure_ncclient()
         device_info = dict()
         device_info['network_os'] = 'sros'
 
@@ -69,8 +70,8 @@ class Netconf(NetconfBase):
         return json.dumps(result)
 
     @staticmethod
+    @ensure_ncclient
     def guess_network_os(obj):
-        Netconf.ensure_ncclient()
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
