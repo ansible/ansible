@@ -397,11 +397,6 @@ lib/ansible/modules/net_tools/basics/uri.py E323
 lib/ansible/modules/net_tools/basics/uri.py E326
 lib/ansible/modules/network/a10/a10_server_axapi3.py E326
 lib/ansible/modules/network/a10/a10_virtual_server.py E324
-lib/ansible/modules/network/aci/aci_epg_to_domain.py E325
-lib/ansible/modules/network/aci/aci_interface_policy_l2.py E325
-lib/ansible/modules/network/aci/aci_interface_policy_lldp.py E325
-lib/ansible/modules/network/aci/aci_interface_policy_mcp.py E325
-lib/ansible/modules/network/aci/aci_tenant_span_src_group.py E325
 lib/ansible/modules/network/asa/asa_config.py E324
 lib/ansible/modules/network/asa/asa_config.py E335
 lib/ansible/modules/network/bigswitch/bigmon_policy.py E324
