@@ -22,9 +22,8 @@ __metaclass__ = type
 import json
 import re
 
-from ansible import constants as C
 from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
 
@@ -41,12 +40,14 @@ except (ImportError, AttributeError):  # paramiko and gssapi are incompatible an
 class Netconf(NetconfBase):
 
     def get_text(self, ele, tag):
+        self.ensure_ncclient()
         try:
             return to_text(ele.find(tag).text, errors='surrogate_then_replace').strip()
         except AttributeError:
             pass
 
     def get_device_info(self):
+        self.ensure_ncclient()
         device_info = dict()
         device_info['network_os'] = 'ce'
         ele = new_ele('get-software-information')
@@ -73,6 +74,7 @@ class Netconf(NetconfBase):
         :action: Action to be performed (merge, replace, override, update)
         :target: is the name of the configuration datastore being edited
         :config: is the configuration in string format."""
+        self.ensure_ncclient()
         if kwargs.get('config'):
             kwargs['config'] = to_bytes(kwargs['config'], errors='surrogate_or_strict')
             if kwargs.get('format', 'xml') == 'xml':
@@ -97,7 +99,7 @@ class Netconf(NetconfBase):
 
     @staticmethod
     def guess_network_os(obj):
-
+        Netconf.ensure_ncclient()
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
@@ -139,6 +141,7 @@ class Netconf(NetconfBase):
     @ensure_connected
     def execute_action(self, xml_str):
         """huawei execute-action"""
+        self.ensure_ncclient()
         con_obj = None
         try:
             con_obj = self.m.action(action=xml_str)
@@ -158,12 +161,8 @@ class Netconf(NetconfBase):
         return self.m.reboot().data_xml
 
     @ensure_connected
-    def halt(self):
-        """reboot the device"""
-        return self.m.halt().data_xml
-
-    @ensure_connected
     def get(self, *args, **kwargs):
+        self.ensure_ncclient()
         try:
             return self.m.get(*args, **kwargs).data_xml
         except RPCError as exc:
@@ -171,6 +170,7 @@ class Netconf(NetconfBase):
 
     @ensure_connected
     def get_config(self, *args, **kwargs):
+        self.ensure_ncclient()
         try:
             return self.m.get_config(*args, **kwargs).data_xml
         except RPCError as exc:
@@ -178,6 +178,7 @@ class Netconf(NetconfBase):
 
     @ensure_connected
     def edit_config(self, *args, **kwargs):
+        self.ensure_ncclient()
         try:
             return self.m.edit_config(*args, **kwargs).xml
         except RPCError as exc:
@@ -185,6 +186,7 @@ class Netconf(NetconfBase):
 
     @ensure_connected
     def execute_nc_cli(self, *args, **kwargs):
+        self.ensure_ncclient()
         try:
             return self.m.cli(*args, **kwargs).xml
         except RPCError as exc:
@@ -192,6 +194,7 @@ class Netconf(NetconfBase):
 
     @ensure_connected
     def commit(self, *args, **kwargs):
+        self.ensure_ncclient()
         try:
             return self.m.commit(*args, **kwargs).data_xml
         except RPCError as exc:
@@ -204,9 +207,3 @@ class Netconf(NetconfBase):
     @ensure_connected
     def discard_changes(self, *args, **kwargs):
         return self.m.discard_changes(*args, **kwargs).data_xml
-
-    @ensure_connected
-    def execute_rpc(self, name):
-        """RPC to be execute on remote device
-           :name: Name of rpc in string format"""
-        return self.rpc(name)

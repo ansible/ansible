@@ -24,7 +24,8 @@ from functools import wraps
 
 from ansible.errors import AnsibleError
 from ansible.plugins import AnsiblePlugin
-
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import missing_required_lib
 
 try:
     from ncclient.operations import RPCError
@@ -104,12 +105,12 @@ class NetconfBase(AnsiblePlugin):
     __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get']
 
     def __init__(self, connection):
-        if not HAS_NCCLIENT:
-            raise AnsibleError(
-                'The required "ncclient" python library is required to use the netconf connection type: %s.\n'
-                'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
-            )
         self._connection = connection
+
+    @staticmethod
+    def ensure_ncclient():
+        if not HAS_NCCLIENT:
+            raise AnsibleError("%s: %s" % (missing_required_lib('ncclient'), to_native(NCCLIENT_IMP_ERR)))
 
     @property
     def m(self):
@@ -122,6 +123,7 @@ class NetconfBase(AnsiblePlugin):
         :param name: Name of rpc in string format
         :return: Received rpc response from remote host
         """
+        self.ensure_ncclient()
         try:
             obj = to_ele(name)
             resp = self.m.rpc(obj)

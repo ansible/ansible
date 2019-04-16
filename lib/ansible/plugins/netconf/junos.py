@@ -22,9 +22,8 @@ __metaclass__ = type
 import json
 import re
 
-from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.module_utils._text import to_text, to_native
+from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
 
@@ -47,6 +46,7 @@ class Netconf(NetconfBase):
             pass
 
     def get_device_info(self):
+        self.ensure_ncclient()
         device_info = dict()
         device_info['network_os'] = 'junos'
         ele = new_ele('get-software-information')
@@ -79,6 +79,7 @@ class Netconf(NetconfBase):
         :param config: The configuration to be loaded on remote host in string format
         :return: Received rpc response from remote host in string format
         """
+        self.ensure_ncclient()
         if config:
             if format == 'xml':
                 config = to_ele(config)
@@ -108,6 +109,7 @@ class Netconf(NetconfBase):
         :param obj: Netconf connection class object
         :return: Network OS name
         """
+        Netconf.ensure_ncclient()
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
@@ -184,6 +186,7 @@ class Netconf(NetconfBase):
         :param at_time: Time at which to activate configuration changes
         :return: Received rpc response from remote host
         """
+        self.ensure_ncclient()
         obj = new_ele('commit-configuration')
         if confirmed:
             sub_ele(obj, 'confirmed')
