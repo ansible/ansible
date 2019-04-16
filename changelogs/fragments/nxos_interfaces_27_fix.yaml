@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_interface DI delay only when operation state check is requested (https://github.com/ansible/ansible/pull/54862).
