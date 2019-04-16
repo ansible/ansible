@@ -41,11 +41,10 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
                 if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
                     display.vvvv('Replacing ' + msg)
                     warn = 'Invalid characters were found in group names and automatically replaced, use -vvvv to see details'
-            else:
-                if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
-                    display.vvvv('Not replacing %s' % msg)
-                    warn = True
-                    warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
+            elif C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
+                display.vvvv('Not replacing %s' % msg)
+                warn = True
+                warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
 
                 # remove this message after 2.10 AND changing the default to 'always'
                 display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'

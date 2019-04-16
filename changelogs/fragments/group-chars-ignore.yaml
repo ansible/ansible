@@ -1,0 +1,4 @@
+---
+bugfixes:
+- fixed ``ignore`` option to ``TRANSFORM_INVALID_GROUP_CHARS`` to suppress deprecation warnings
+- documented ``ignore`` option for ``TRANSFORM_INVALID_GROUP_CHARS``
