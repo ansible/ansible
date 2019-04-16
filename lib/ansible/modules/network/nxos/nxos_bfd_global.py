@@ -32,57 +32,93 @@ description:
 
 author: Chris Van Heuveln (@chrisvanheuveln)
 notes:
-options:                 # **** To Be updated after initial review *****
+    - Tested against NXOSv 9.2(2)
+    - BFD global will automatically enable 'feature bfd' if it is disabled.
+    - BFD global does not have a 'state' parameter. All of the BFD commands
+      are unique and are defined if 'feature bfd' is enabled.
+options:
   echo_interface:
     description:
-      - does a thing
+      - Loopback interface used for echo frames.
+        Valid values are loopback interface name or an empty string ''.
+      - Not supported on N5K/N6K
     required: false
+    type: str
   echo_rx_interval:
     description:
-      - does a thing
+      - BFD Echo receive interval in milliseconds.
     required: false
+    type: int
   interval:
-    # <state> bfd interval <interval> min_rx <min_rx> multiplier <multiplier>
     description:
-      - does a thing
+      - BFD interval timer values.
+        Valid values are a list of ints defining [interval, min_rx, multiplier]
     required: false
+    type: list
   slow_timer:
     description:
-      - does a thing
+      - BFD slow rate timer in milliseconds.
     required: false
+    type: int
   startup_timer:
     description:
-      - does a thing
+      - BFD delayed startup timer in seconds.
+      - Not supported on N5K/N6K/N7K
     required: false
-  afi specific commands (not available for 5k/6k)
-    ipv4_echo_rx_interval:
-    ipv6_echo_rx_interval:
+    type: int
+
+  # IPv4/IPv6 specific commands
+  ipv4_echo_rx_interval:
     description:
-      - does a thing
+      - BFD IPv4 session echo receive interval in milliseconds.
     required: false
-    ipv4_interval:
-    ipv6_interval:
+    type: int
+  ipv4_interval:
     description:
-      - does a thing
+      - BFD IPv4 interval timer values.
+        Valid values are a list of ints defining [interval, min_rx, multiplier]
     required: false
-    ipv4_slow_timer:
-    ipv6_slow_timer:
+    type: list
+  ipv4_slow_timer:
     description:
-      - does a thing
+      - BFD IPv4 slow rate timer in milliseconds.
     required: false
-  fabricpath-specific commands (only available for 5k/6k/7k)
-    fabricpath_interval:
+    type: int
+  ipv6_echo_rx_interval:
     description:
-      - does a thing
+      - BFD IPv6 session echo receive interval in milliseconds.
     required: false
-    fabricpath_slow_timer:
+    type: int
+  ipv6_interval:
     description:
-      - does a thing
+      - BFD IPv6 interval timer values.
+        Valid values are a list of ints defining [interval, min_rx, multiplier]
     required: false
-    fabricpath_vlan:
+    type: list
+  ipv6_slow_timer:
     description:
-      - does a thing
+      - BFD IPv6 slow rate timer in milliseconds.
     required: false
+    type: int
+
+  # Fabricpath commands
+  fabricpath_interval:
+    description:
+      - BFD fabricpath interval timer values.
+        Valid values are a list of ints defining [interval, min_rx, multiplier]
+    required: false
+    type: list
+  fabricpath_slow_timer:
+    description:
+      - BFD fabricpath slow rate timer in milliseconds.
+    required: false
+    type: int
+  fabricpath_vlan:
+    description:
+      - BFD fabricpath control vlan.
+    required: false
+    type: int
+
 '''
 EXAMPLES = '''
 - nxos_bfd_global:
@@ -146,6 +182,86 @@ slow_timer:
   getval: bfd slow-timer (\d+)$
   setval: bfd slow-timer {0}
   default: 2000
+
+startup_timer:
+  _exclude: ['N5K', 'N6K', 'N7K']
+  kind: int
+  getval: bfd startup-timer (\d+)$
+  setval: bfd startup-timer {0}
+  default: 5
+
+# IPv4/IPv6 specific commands
+ipv4_echo_rx_interval:
+  _exclude: ['N5K', 'N6K']
+  kind: int
+  getval: bfd ipv4 echo-rx-interval (\d+)$
+  setval: bfd ipv4 echo-rx-interval {0}
+  default: 50
+  N3K:
+    default: 250
+
+ipv4_interval:
+  _exclude: ['N5K', 'N6K']
+  kind: list
+  getval: bfd ipv4 interval (\d+) min_rx (\d+) multiplier (\d+)
+  setval: bfd ipv4 interval {0} min_rx {1} multiplier {2}
+  default: [50,50,3]
+  N3K:
+    default: [250,250,3]
+
+ipv4_slow_timer:
+  _exclude: ['N5K', 'N6K']
+  kind: int
+  getval: bfd ipv4 slow-timer (\d+)$
+  setval: bfd ipv4 slow-timer {0}
+  default: 2000
+
+ipv6_echo_rx_interval:
+  _exclude: ['N5K', 'N6K']
+  kind: int
+  getval: bfd ipv6 echo-rx-interval (\d+)$
+  setval: bfd ipv6 echo-rx-interval {0}
+  default: 50
+  N3K:
+    default: 250
+
+ipv6_interval:
+  _exclude: ['N5K', 'N6K']
+  kind: list
+  getval: bfd ipv6 interval (\d+) min_rx (\d+) multiplier (\d+)
+  setval: bfd ipv6 interval {0} min_rx {1} multiplier {2}
+  default: [50,50,3]
+  N3K:
+    default: [250,250,3]
+
+ipv6_slow_timer:
+  _exclude: ['N5K', 'N6K']
+  kind: int
+  getval: bfd ipv6 slow-timer (\d+)$
+  setval: bfd ipv6 slow-timer {0}
+  default: 2000
+
+# Fabricpath Commands
+fabricpath_interval:
+  _exclude: ['N3K', 'N9K']
+  kind: list
+  getval: bfd fabricpath interval (\d+) min_rx (\d+) multiplier (\d+)
+  setval: bfd fabricpath interval {0} min_rx {1} multiplier {2}
+  default: [50,50,3]
+
+fabricpath_slow_timer:
+  _exclude: ['N3K', 'N9K']
+  kind: int
+  getval: bfd fabricpath slow-timer (\d+)$
+  setval: bfd fabricpath slow-timer {0}
+  default: 2000
+
+fabricpath_vlan:
+  _exclude: ['N3K', 'N9K']
+  kind: int
+  getval: bfd fabricpath vlan (\d+)$
+  setval: bfd fabricpath vlan {0}
+  default: 1
 """
 
 

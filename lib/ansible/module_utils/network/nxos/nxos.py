@@ -715,26 +715,44 @@ class NxosCmdRef:
                 ref['_proposed'].append('feature {0}'.format(feature))
 
 
-    def get_platform_defaults(self):
-        """Query device for platform type; update ref with platform specific defaults. """
+    def get_platform_id(self):
+        """Query device for platform type"""
         info = get_capabilities(self._module).get('device_info')
         os_platform = info.get('network_os_platform')
         plat = None
-        if 'N3K' in os_platform:
-            plat = 'N3K'
+
+        # Supported Platform IDs (N35 N3K N5K N6K N7K N9K)
+        m = re.match('([CN][35679][K57])-', os_platform)
+        if not m:
+            return
+        plat = m.group(1)
+
+        # Normalize
+        if re.match('C35', plat):
+            plat = 'N35'
+        if re.match('N77', plat):
+            plat = 'N7K'
+
+        # TBD: Fretta check needs linecard productid
+        return plat
+
+
+    def get_platform_defaults(self):
+        """Update ref with platform specific defaults"""
+        plat = self.get_platform_id()
+        if not plat:
+            return
 
         # Update platform-specific settings for each item in ref
         ref = self._ref
-        if plat:
-            plat_spec_cmds = [k for k in ref['commands'] if plat in ref[k]]
-            for k in plat_spec_cmds:
-                for plat_key in ref[k][plat]:
-                    ref[k][plat_key] = ref[k][plat][plat_key]
-
+        plat_spec_cmds = [k for k in ref['commands'] if plat in ref[k]]
+        for k in plat_spec_cmds:
+            for plat_key in ref[k][plat]:
+                ref[k][plat_key] = ref[k][plat][plat_key]
 
     def execute_show_command(self, command, format):
         """Generic show command helper.
-        'CLI command error' exceptions are caught and must be handled by caller.
+        Warning: 'CLI command error' exceptions are caught, must be handled by caller.
         Return device output as a newline-separated string or None.
         """
         cmds = [{
