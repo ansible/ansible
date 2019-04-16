@@ -643,6 +643,34 @@ but you can still access the original via ``hostvars``::
 This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
 
+.. _scp_protocol_error_filename:
+
+How do I fix 'protocol error: filename does not match request' when fetching a file?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+When using ``scp`` as the file transfer mechanism for SSH, it can fail with the error::
+
+    failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
+
+This is due to a bug in newer releases of OpenSSH in the ``scp`` client that is used on the Ansible controller. These
+releases attempt to validate that the path of the file to fetch matches the requested requested path. This validation
+will fail if the remote filename requires quotes to escape spaces or non-ascii chars in its path. If you come across
+this error there are a few different ways to ignore this validation, such as:
+
+* Don't use the ``scp`` transfer mechanism by
+    * Not setting ``scp_if_ssh``, by default this uses the ``smart`` mechanism which tried SFTP first,
+    * Explicitly setting the host var ``ansible_scp_if_ssh=smart`` or ``ansible_scp_if_ssh=False``,
+    * Setting the environment variable ``ANSIBLE_SCP_IF_SSH`` when running Ansible to either ``smart`` or ``False``, or
+    * Setting ``scp_if_ssh`` to either ``smart`` or ``False`` under the ``[ssh_connection]`` config section in ``ansible.cfg``
+* If SCP is needed then set the ``-T`` arg to tell the SCP client to ignore path validation by
+    * Setting the var ``ansible_scp_extra_args=-T``,
+    * Setting the environment variable ``ANSIBLE_SCP_EXTRA_ARGS=-T`` when running Ansible, or
+    * Settings ``scp_extra_args = -T`` under the ``[ssh_connection]`` config section in ``ansible.cfg``
+
+.. note:: The ``-T`` is a valid argument only for scp clients that do the filename validation. If setting that extra
+  argument results in an invalid argument error then it shouldn't be needed at all for the Ansible controller.
+
+
 .. _i_dont_see_my_question:
 
 I don't see my question here
