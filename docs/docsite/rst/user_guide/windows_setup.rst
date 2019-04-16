@@ -15,7 +15,7 @@ Windows host must meet the following requirements:
 * Ansible's supported Windows versions generally match those under current
   and extended support from Microsoft. Supported desktop OSs include
   Windows 7, 8.1, and 10, and supported server OSs are Windows Server 2008,
-  2008 R2, 2012, 2012 R2, and 2016.
+  2008 R2, 2012, 2012 R2, 2016, and 2019.
 
 * Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be
   installed on the Windows host.
