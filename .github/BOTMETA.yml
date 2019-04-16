@@ -146,7 +146,10 @@ files:
     keywords: [ cloud, huawei, hwc ]
     labels: [ cloud, huawei ]
     maintainers: $team_huawei
-  $modules/cloud/kubevirt/: machacekondra mmazur pkliczewski
+  $modules/cloud/kubevirt/: &kubevirt
+    keywords: [ kubevirt ]
+    labels: [ cloud, kubevirt ]
+    maintainers: $team_kubevirt
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: glitchcrab
@@ -693,6 +696,7 @@ files:
       - k8s
   $module_utils/keycloak.py:
     maintainers: eikef
+  $module_utils/kubevirt.py: *kubevirt
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
   $module_utils/memset.py:
@@ -1364,6 +1368,7 @@ files:
   test/integration/targets/nxos_: *nxos
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
+  test/integration/targets/scaleway_: *scaleway
   test/integration/targets/setup_acme: *crypto
   test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_openssl: *crypto
@@ -1374,9 +1379,6 @@ files:
   test/integration/targets/vultr: *vultr
   test/legacy/:
     notified: mattclay
-  test/legacy/scaleway:
-    <<: *scaleway
-    support: community
   test/runner/:
     notified: mattclay
   test/runner/lib/cloud/acme.py: *crypto
@@ -1447,6 +1449,7 @@ macros:
   team_iosxr: rcarrillocruz gdpak
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
+  team_kubevirt: machacekondra mmazur pkliczewski
   team_linode: InTheCloudDan lwm displague rmcintosh
   team_macos: akasurde dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben

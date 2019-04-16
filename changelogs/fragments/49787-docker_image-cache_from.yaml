@@ -1,2 +1,0 @@
-minor_changes:
-- "docker_image - Add ``build.cache_from`` option."

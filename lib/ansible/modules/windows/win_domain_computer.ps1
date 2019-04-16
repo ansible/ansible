@@ -27,17 +27,17 @@ If (-not $sam_account_name.EndsWith("$")) {
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
 $description = Get-AnsibleParam -obj $params -name "description" -default $null
 $domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
-$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($domain_username -ne $null)
+$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($null -ne $domain_username)
 $domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -ValidateSet "present","absent" -default "present"
 
 $extra_args = @{}
-if ($domain_username -ne $null) {
+if ($null -ne $domain_username) {
     $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
     $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
     $extra_args.Credential = $credential
 }
-if ($domain_server -ne $null) {
+if ($null -ne $domain_server) {
     $extra_args.Server = $domain_server
 }
 

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - Raise AnsibleConnectionError on winrm connnection errors

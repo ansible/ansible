@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "service_facts - provide service state and status information about disabled systemd service units"

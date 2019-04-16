@@ -381,16 +381,16 @@ def main():
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
-        wait_timeout=dict(default=300),
+        wait_timeout=dict(default=300, type='int'),
         private_ip_address=dict(required=False, default=None, type='str')
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_together=[
-            ['device_id', 'private_ip_address'],
-        ],
+        required_by={
+            'private_ip_address': ['device_id'],
+        },
     )
 
     if not HAS_BOTO:

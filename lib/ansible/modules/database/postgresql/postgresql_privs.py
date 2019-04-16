@@ -54,11 +54,11 @@ options:
   objs:
     description:
     - Comma separated list of database objects to set privileges on.
-    - If I(type) is C(table), C(sequence) or C(function), the special value
-      C(ALL_IN_SCHEMA) can be provided instead to specify all database
-      objects of type I(type) in the schema specified via I(schema). (This
-      also works with PostgreSQL < 9.0.) (C(ALL_IN_SCHEMA) is available for
-      C(function) from version 2.8)
+    - If I(type) is C(table), C(partition table), C(sequence) or C(function),
+      the special valueC(ALL_IN_SCHEMA) can be provided instead to specify all
+      database objects of type I(type) in the schema specified via I(schema).
+      (This also works with PostgreSQL < 9.0.) (C(ALL_IN_SCHEMA) is available
+       for C(function) and C(partition table) from version 2.8)
     - If I(type) is C(database), this parameter can be omitted, in which case
       privileges are set for the database specified via I(database).
     - 'If I(type) is I(function), colons (":") in object names will be
@@ -541,7 +541,7 @@ class Connection(object):
         query = """SELECT relacl
                    FROM pg_catalog.pg_class c
                    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-                   WHERE nspname = %s AND relkind = 'r' AND relname = ANY (%s)
+                   WHERE nspname = %s AND relkind in ('r','p') AND relname = ANY (%s)
                    ORDER BY relname"""
         self.cursor.execute(query, (schema, tables))
         return [t[0] for t in self.cursor.fetchall()]

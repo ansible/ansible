@@ -348,8 +348,7 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
         self.log("Deleting the role definition {0}".format(self.name))
         scope = self.build_scope()
         try:
-            response = self._client.role_definitions.delete(name=self.name,
-                                                            scope=scope,
+            response = self._client.role_definitions.delete(scope=scope,
                                                             role_definition_id=role_definition_id)
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)

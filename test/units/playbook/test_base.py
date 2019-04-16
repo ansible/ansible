@@ -367,12 +367,6 @@ class BaseSubClass(base.Base):
     _test_attr_method_missing = FieldAttribute(isa='string', default='some attr with a missing getter',
                                                always_post_validate=True)
 
-    def _preprocess_data_basesubclass(self, ds):
-        return ds
-
-    def preprocess_data(self, ds):
-        return super(BaseSubClass, self).preprocess_data(ds)
-
     def _get_attr_test_attr_method(self):
         return 'foo bar'
 
