@@ -692,7 +692,7 @@ if ($bytes_read -gt 0) {
 
         if force_stop:
             # This is usually not needed because we close the Runspace after our exec and we skip the call to close the
-            # pipeline manually to save on some time. Set to True when running multipl exec calls in the same runspace.
+            # pipeline manually to save on some time. Set to True when running multiple exec calls in the same runspace.
 
             # Current pypsrp versions raise an exception if the current state was not RUNNING. We manually set it so we
             # can call stop without any issues.
