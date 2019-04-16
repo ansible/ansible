@@ -56,6 +56,58 @@ options:
             - disabled
             - send_disabled
             - receive_disabled
+    capture_description:
+        description:
+            - Properties of capture description
+        suboptions:
+            enabled:
+                decription:
+                    - A value that indicates whether capture description is enabled.
+                required: true
+                type: bool
+            encoding:
+                decription:
+                    - Enumerates the possible values for the encoding format of capture description.
+                required: true
+                choices:
+                    - avro
+                    - avro_deflate
+            interval_in_seconds:
+                decription:
+                    - The time window allows you to set the frequency with which the capture to Azure Blobs will happen
+                    - Value should between 60 to 900 seconds
+                type: int
+            size_limit_in_bytes:
+                decription:
+                    - The size window defines the amount of data built up in your Event Hub before an capture operation
+                    - Value should be between 10485760 to 524288000 bytes
+                type: int
+            destination:
+                decription:
+                    - Properties of Destination where capture will be stored. (Storage Account, Blob Names)
+                suboptions:
+                    provider:
+                        decription:
+                            - Provider for capture destination
+                        choices:
+                            - EventHubArchive.AzureBlockBlob
+                            - EventHubArchive.AzureDataLake
+                        required: true
+                    storage_account_resource_id:
+                        decription:
+                            - Resource id of the storage account to be used to create the blobs
+                        required: true
+                    blob_container
+                        decription:
+                            - Blob container Name
+                        required: true
+                    archive_name_format
+                        decription:
+                            - Blob naming convention for archive
+            skip_empty_archives:
+                decription:
+                    - A value that indicates whether to Skip Empty Archives
+                type: bool
 
 extends_documentation_fragment:
     - azure
@@ -94,41 +146,6 @@ id:
     returned: state is present
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/myEventhub"
-name:
-    description:
-        - Name of the event hub.
-    returned: state is present
-    type: str
-    sample: myEventhubNamespace
-message_retention_in_days:
-    description:
-        - Number of days to retain the events for this Event Hub, value should be 1 to 7 days
-    returned: state is present
-    type: int
-    sample: 7
-status:
-    description:
-        - Enumerates the possible values for the status of the Event Hub.
-    returned: state is present
-    type: str
-    sample: Active
-partition_count:
-    description:
-        - Number of partitions created for the Event Hub, allowed values are from 1 to 32 partitions.
-    returned: state is present
-    type: str
-    sample: 4
-partition_ids:
-    description:
-        - Current number of shards on the Event Hub.
-    returned: state is present
-    type: list
-type:
-    description:
-        - Resource type
-    returned: state is present
-    type: str
-    sample: "Microsoft.EventHub/Namespaces/EventHubs"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -139,6 +156,49 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+storage_destination_spec = dict(
+    provider=dict(
+        type='str',
+        required=True,
+        choices=['EventHubArchive.AzureBlockBlob', 'EventHubArchive.AzureDataLake']
+    ),
+    storage_account_resource_id=dict(
+        type='str',
+        required=True
+    ),
+    blob_container=dict(
+        type='str',
+        required=True
+    ),
+    archive_name_format=dict(
+        type='str'
+    )
+)
+
+capture_description_spec = dict(
+    enabled=dict(
+        type='bool',
+        required=True
+    ),
+    encoding=dict(
+        type='str',
+        required=True,
+        choices=['avro', 'avro_deflate']
+    ),
+    interval_in_seconds=dict(
+        type='int'
+    ),
+    size_limit_in_bytes=dict(
+        type='int'
+    ),
+    destination=dict(
+        type='dict',
+        options=storage_destination_spec
+    ),
+    skip_empty_archives=dict(
+        type='bool'
+    )
+)
 
 class AzureRMEventHub(AzureRMModuleBase):
     """Configuration class for an Azure RM Event hub resource"""
@@ -172,6 +232,10 @@ class AzureRMEventHub(AzureRMModuleBase):
             status=dict(
                 type='str',
                 choices=['active', 'disabled', 'send_disabled', 'receive_disabled']
+            ),
+            capture_description=dict(
+                type='dict',
+                options=capture_description_spec
             )
         )
 
@@ -188,6 +252,7 @@ class AzureRMEventHub(AzureRMModuleBase):
         self.message_retention_in_days = None
         self.partition_count = None
         self.status = None
+        self.capture_description = None
 
         super(AzureRMEventHub, self).__init__(self.module_arg_spec, supports_check_mode=True, supports_tags=False)
 
@@ -207,9 +272,13 @@ class AzureRMEventHub(AzureRMModuleBase):
             # TODO: Add support for capture_description
             if not event_hub:
                 changed = True
+                capture_property = None
+                if self.capture_description:
+                    capture_property = self.construct_capture_decription()
                 event_hub_instance = self.eventhub_models.Eventhub(message_retention_in_days=self.message_retention_in_days,
                                                                    partition_count=self.partition_count,
-                                                                   status=self.status)
+                                                                   status=self.status,
+                                                                   capture_description=capture_property)
                 if not self.check_mode:
                     event_hub = self.create_or_update_event_hub(event_hub_instance)
 
@@ -236,6 +305,29 @@ class AzureRMEventHub(AzureRMModuleBase):
             pass
             return None
 
+    def construct_capture_decription(self):
+        destination_property = None
+        capture_property = None
+        if self.capture_description.get('enabled'):
+            try:
+                destination = self.capture_description.get('destination')
+            except Exception as exc:
+                self.fail("Destination must be set when enable the capture function")
+            destination_property = self.eventhub_models.Destination(name=destination.get('provider'),
+                                                                    storage_account_resource_id=destination['storage_account_resource_id'],
+                                                                    blob_container=destination['blob_container'],
+                                                                    archive_name_format=destination.get('archive_name_format'))
+        encoding_type = None
+        if self.capture_description.get('encoding'):
+            encoding_type = self.eventhub_models.EncodingCaptureDescription[self.capture_description.get('encoding')]
+        capture_property = self.eventhub_models.CaptureDescription(enabled=self.capture_description.get('enabled'),
+                                                                   encoding=encoding_type,
+                                                                   interval_in_seconds=self.capture_description.get('interval_in_seconds'),
+                                                                   size_limit_in_bytes=self.capture_description.get('size_limit_in_bytes'),
+                                                                   destination=destination_property,
+                                                                   skip_empty_archives=self.capture_description.get('skip_empty_archives'))
+        return capture_property
+
     def check_status(self, changed, event_hub):
         # Compare message_retention_in_days
         if self.message_retention_in_days and self.message_retention_in_days != event_hub.message_retention_in_days:
@@ -251,7 +343,60 @@ class AzureRMEventHub(AzureRMModuleBase):
         if self.status and self.status != event_hub.status:
             changed = True
             event_hub.status = self.status
+
+        # Compare capture description
+        if self.capture_description:
+            if self.capture_description.get('enabled') != event_hub.capture_description.enabled:
+                changed = True
+                event_hub.capture_description.enabled = self.capture_description.get('enabled')
+            if event_hub.capture_description.enabled:
+                changed, event_hub.capture_description.destination = self.check_destination(changed=changed,
+                                                                                            destination=event_hub.capture_description.destination)
+
+                if self.capture_description.get('encoding') is not None:
+                    encoding_type = self.eventhub_models.EncodingCaptureDescription[self.capture_description.get('encoding')]
+                    if encoding_type != event_hub.capture_description.encoding:
+                        changed = True
+                        event_hub.capture_description.encoding = encoding_type
+
+                if self.capture_description.get('interval_in_seconds') is not None:
+                    if self.capture_description.get('interval_in_seconds') != event_hub.capture_description.interval_in_seconds:
+                        changed = True
+                        event_hub.capture_description.interval_in_seconds = self.capture_description.get('interval_in_seconds')
+
+                if self.capture_description.get('size_limit_in_bytes') is not None:
+                    if self.capture_description.get('size_limit_in_bytes') != event_hub.capture_description.size_limit_in_bytes:
+                        changed = True
+                        event_hub.capture_description.size_limit_in_bytes = self.capture_description.get('size_limit_in_bytes')
+
+                if self.capture_description.get('skip_empty_archives') is not None:
+                    if self.capture_description.get('skip_empty_archives') != event_hub.capture_description.skip_empty_archives:
+                        changed = True
+                        event_hub.capture_description.skip_empty_archives = self.capture_description.get('skip_empty_archives')
         return changed, event_hub
+
+    def check_destination(self, changed, destination):
+        if self.capture_description.get('destination').get('provider'):
+            if self.capture_description.get('destination').get('provider') != destination.name:
+                changed = True
+                destination.name = self.capture_description.get('destination').get('provider')
+
+        if self.capture_description.get('destination').get('storage_account_resource_id'):
+            if self.capture_description.get('destination').get('storage_account_resource_id') != destination.storage_account_resource_id:
+                changed = True
+                destination.storage_account_resource_id = self.capture_description.get('destination').get('storage_account_resource_id')
+
+        if self.capture_description.get('destination').get('blob_container'):
+            if self.capture_description.get('destination').get('blob_container') != destination.blob_container:
+                changed = True
+                destination.blob_container = self.capture_description.get('destination').get('blob_container')
+
+        if self.capture_description.get('destination').get('archive_name_format'):
+            if self.capture_description.get('destination').get('archive_name_format') != destination.archive_name_format:
+                changed = True
+                destination.archive_name_format = self.capture_description.get('destination').get('archive_name_format')
+
+        return changed, destination
 
     def create_or_update_event_hub(self, event_hub):
         try:
