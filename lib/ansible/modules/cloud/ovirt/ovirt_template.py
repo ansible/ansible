@@ -327,7 +327,6 @@ options:
         description:
             - "If I(yes) the C(cloud_init) parameters will be saved for the template and the virtual machine from template won't be started as run-once."
         type: bool
-        version_added: "2.5"
         aliases: [ 'sysprep_persist' ]
         default: 'no'
         version_added: "2.9"
