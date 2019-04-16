@@ -788,9 +788,13 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
 
-    def set_one_time_boot_device(self, bootdevice):
+    def set_one_time_boot_device(self, bootdevice, uefi_target, boot_next):
         result = {}
         key = "Boot"
+
+        if not bootdevice:
+            return {'ret': False,
+                    'msg': "bootdevice option required for SetOneTimeBoot"}
 
         # Search for 'key' entry and extract URI from it
         response = self.get_request(self.root_uri + self.systems_uris[0])
@@ -812,20 +816,50 @@ class RedfishUtils(object):
                         'msg': "Boot device %s not in list of allowable values (%s)" %
                                (bootdevice, allowable_values)}
 
+        # read existing values
         enabled = boot.get('BootSourceOverrideEnabled')
         target = boot.get('BootSourceOverrideTarget')
+        cur_uefi_target = boot.get('UefiTargetBootSourceOverride')
+        cur_boot_next = boot.get('BootNext')
 
-        # If BootSourceOverrideEnabled and BootSourceOverrideTarget are already
-        # set as needed, just return with 'changed' set to False (do not PATCH)
-        if enabled == 'Once' and target == bootdevice:
-            return {'ret': True, 'changed': False}
-
-        payload = {
-            'Boot': {
-                'BootSourceOverrideEnabled': 'Once',
-                'BootSourceOverrideTarget': bootdevice
+        if bootdevice == 'UefiTarget':
+            if not uefi_target:
+                return {'ret': False,
+                        'msg': "uefi_target option required to SetOneTimeBoot for UefiTarget"}
+            if enabled == 'Once' and target == bootdevice and uefi_target == cur_uefi_target:
+                # If properties are already set, no changes needed
+                return {'ret': True, 'changed': False}
+            payload = {
+                'Boot': {
+                    'BootSourceOverrideEnabled': 'Once',
+                    'BootSourceOverrideTarget': bootdevice,
+                    'UefiTargetBootSourceOverride': uefi_target
+                }
             }
-        }
+        elif bootdevice == 'UefiBootNext':
+            if not boot_next:
+                return {'ret': False,
+                        'msg': "boot_next option required to SetOneTimeBoot for UefiBootNext"}
+            if enabled == 'Once' and target == bootdevice and boot_next == cur_boot_next:
+                # If properties are already set, no changes needed
+                return {'ret': True, 'changed': False}
+            payload = {
+                'Boot': {
+                    'BootSourceOverrideEnabled': 'Once',
+                    'BootSourceOverrideTarget': bootdevice,
+                    'BootNext': boot_next
+                }
+            }
+        else:
+            if enabled == 'Once' and target == bootdevice:
+                # If properties are already set, no changes needed
+                return {'ret': True, 'changed': False}
+            payload = {
+                'Boot': {
+                    'BootSourceOverrideEnabled': 'Once',
+                    'BootSourceOverrideTarget': bootdevice
+                }
+            }
 
         response = self.patch_request(self.root_uri + self.systems_uris[0], payload)
         if response['ret'] is False:
