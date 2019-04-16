@@ -76,18 +76,15 @@ options:
       - Publish the current session if changes have been performed
         after task completes.
     type: bool
-    default: 'yes'
   auto_install_policy:
     description:
       - Install the package policy if changes have been performed
         after the task completes.
     type: bool
-    default: 'yes'
   policy_package:
     description:
       - Package policy name to be installed.
     type: bool
-    default: 'standard'
   targets:
     description:
       - Targets to install the package policy on.
