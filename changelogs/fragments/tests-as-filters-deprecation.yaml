@@ -1,0 +1,2 @@
+minor_changes:
+- Jinja tests - Remove deprecated functionality of registering tests as filters (https://github.com/ansible/ansible/issues/55319)
