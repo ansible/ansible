@@ -658,7 +658,7 @@ will fail if the remote filename requires quotes to escape spaces or non-ascii c
 this error there are a few different ways to ignore this validation, such as:
 
 * Don't use the ``scp`` transfer mechanism by
-    * Not setting ``scp_if_ssh``, by default this uses the ``smart`` mechanism which tried SFTP first,
+    * Not setting ``scp_if_ssh``, by default this uses the ``smart`` mechanism which tries SFTP first,
     * Explicitly setting the host var ``ansible_scp_if_ssh=smart`` or ``ansible_scp_if_ssh=False``,
     * Setting the environment variable ``ANSIBLE_SCP_IF_SSH`` when running Ansible to either ``smart`` or ``False``, or
     * Setting ``scp_if_ssh`` to either ``smart`` or ``False`` under the ``[ssh_connection]`` config section in ``ansible.cfg``
