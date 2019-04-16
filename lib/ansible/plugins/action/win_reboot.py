@@ -46,6 +46,14 @@ class ActionModule(RebootActionModule, ActionBase):
     def get_shutdown_command(self, task_vars, distribution):
         return self.DEFAULT_SHUTDOWN_COMMAND
 
+    def run_test_command(self, distribution, **kwargs):
+        # Need to wrap the test_command in our PowerShell encoded wrapper. This is done to align the command input to a
+        # common shell and to allow the psrp connection plugin to report the correct exit code without manually setting
+        # $LASTEXITCODE for just that plugin.
+        test_command = self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND)
+        kwargs['test_command'] = self._connection._shell._encode_script(test_command)
+        super(ActionModule, self).run_test_command(distribution, **kwargs)
+
     def perform_reboot(self, task_vars, distribution):
         shutdown_command = self.get_shutdown_command(task_vars, distribution)
         shutdown_command_args = self.get_shutdown_command_args(distribution)
