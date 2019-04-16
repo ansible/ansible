@@ -472,7 +472,7 @@ def privileges_get(cursor, user, host):
 
     for grant in grants:
         res = re.match(
-            """GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\5)? ?(.*)""", grant[0])
+            """GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\6)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
@@ -496,7 +496,7 @@ def privileges_get_all(cursor):
 
 
 def get_db_version(cursor):
-    cursor.execute("Select @@version")
+    cursor.execute("SELECT @@version")
     output = cursor.fetchall()[0]
     version = output[0].split(".")[0]
     return version
