@@ -280,70 +280,73 @@ EXAMPLES = '''
     tags:
       key1: value1
     application_rule_collections:
-      - name: apprulecoll
-        properties:
+      - properties:
           priority: '110'
-          action: Deny
+          action:
+            type: Deny
           rules:
             - name: rule1
               description: Deny inbound rule
+              source_addresses:
+                - 216.58.216.164
+                - 10.0.0.0/24
               protocols:
                 - protocolType: Https
                   port: '443'
-              targetFqdns:
+              target_fqdns:
                 - www.test.com
-              sourceAddresses:
-                - 216.58.216.164
-                - 10.0.0.0/24
+        name: apprulecoll
     nat_rule_collections:
-      - name: natrulecoll
-        properties:
+      - properties:
           priority: '112'
-          action: Dnat
+          action:
+            type: Dnat
           rules:
             - name: DNAT-HTTPS-traffic
               description: D-NAT all outbound web traffic for inspection
-              sourceAddresses:
+              source_addresses:
                 - '*'
-              destinationAddresses:
+              destination_addresses:
                 - 1.2.3.4
-              destinationPorts:
+              destination_ports:
                 - '443'
               protocols:
                 - TCP
-              translatedAddress: 1.2.3.5
-              translatedPort: '8443'
+              translated_address: 1.2.3.5
+              translated_port: '8443'
+        name: natrulecoll
     network_rule_collections:
-      - name: netrulecoll
-        properties:
+      - properties:
           priority: '112'
-          action: Deny
+          action:
+            type: Deny
           rules:
             - name: L4-traffic
               description: Block traffic based on source IPs and ports
-              sourceAddresses:
-                - 192.168.1.1-192.168.1.12
-                - 10.1.4.12-10.1.4.255
-              destinationPorts:
-                - 443-444
-                - '8443'
-              destinationAddresses:
-                - '*'
               protocols:
                 - TCP
+              source_addresses:
+                - 192.168.1.1-192.168.1.12
+                - 10.1.4.12-10.1.4.255
+              destination_addresses:
+                - '*'
+              destination_ports:
+                - 443-444
+                - '8443'
+        name: netrulecoll
     ip_configurations:
-      - name: azureFirewallIpConfiguration
-        properties:
+      - properties:
           subnet:
             id: >-
               /subscriptions/{{ subscription_id }}/resourceGroups/{{
               resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
               virtual_network_name }}/subnets/{{ subnet_name }}
-          publicIPAddress:
+          public_i_p_address:
             id: >-
               /subscriptions/{{ subscription_id }}/resourceGroups/{{
               resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{
               public_ipaddress_name }}
+        name: azureFirewallIpConfiguration
 - name: Delete Azure Firewall
   azure_rm_azurefirewall:
     resource_group: myResourceGroup
@@ -984,28 +987,35 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         return False
 
     def inflate_parameters(self, spec, body, level):
+        if isinstance(body, list):
+            for i in range(len(body)):
+                self.inflate_parameters(spec, body[i], level)
+            return
+
         for name in spec.keys():
             disposition = spec[name].get('disposition', '*')
-            # do nothing if disposition is *
-            if disposition == '*':
-                continue
-            if level == 0 and not disposition.startswith('/'):
-                continue
-            if disposition == '/':
-                disposition = '/*'
-            # find parameter
             param = body.get(name)
             if not param:
                 continue
-            parts = disposition.split('/')
-            if parts[0] == '':
-                # should fail if level is > 0?
-                parts.pop(0)
-            target_dict = body
-            while len(parts) > 1:
-                target_dict = target_dict.setdefault(parts.pop(0), {})
-            targetName = parts[0] if parts[0] != '*' else name
-            target_dict[targetName] = body.pop(name)
+            if disposition != "*" and not (level == 0 and not disposition.startswith('/')):
+                if disposition == '/':
+                    disposition = '/*'
+                # find parameter
+                param = body.get(name)
+                if not param:
+                    continue
+                parts = disposition.split('/')
+                if parts[0] == '':
+                    # should fail if level is > 0?
+                    parts.pop(0)
+                target_dict = body
+                while len(parts) > 1:
+                    target_dict = target_dict.setdefault(parts.pop(0), {})
+                targetName = parts[0] if parts[0] != '*' else name
+                target_dict[targetName] = body.pop(name)
+            else:
+                target_dict = body
+                targetName = name
             if spec[name].get('options'):
                 self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
 
