@@ -667,7 +667,7 @@ this error there are a few different ways to ignore this validation, such as:
     * Setting the environment variable ``ANSIBLE_SCP_EXTRA_ARGS=-T`` when running Ansible, or
     * Settings ``scp_extra_args = -T`` under the ``[ssh_connection]`` config section in ``ansible.cfg``
 
-.. note:: The ``-T`` is a valid argument only for scp clients that do the filename validation. If setting that extra
+.. note:: ``-T`` is a valid argument only for scp clients that perform the filename validation. If setting that extra
   argument results in an invalid argument error then it shouldn't be needed at all for the Ansible controller.
 
 
