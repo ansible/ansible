@@ -57,8 +57,7 @@ class ShellModule(ShModule):
         super(ShellModule, self).__init__()
         self.sleep0 = "WAIT 0:0:0.0"
         self.executable = 'PIPE'
-        #'PIPE'
-        self.shell = 'PIPE' 
+        self.shell = 'PIPE'
         self.ECHO = 'WRITE SYS$OUTPUT "%s"'
         self._IS_OPENVMS = True
 

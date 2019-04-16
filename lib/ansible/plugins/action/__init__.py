@@ -1031,7 +1031,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 executable = self._play_context.executable
                 # mitigation for SSH race which can drop stdout (https://github.com/ansible/ansible/issues/13876)
                 # only applied for the default executable to avoid interfering with the raw action
-                cmd = self._connection._shell.append_command(cmd, self._connection._shell.sleep0 )
+                cmd = self._connection._shell.append_command(cmd, self._connection._shell.sleep0)
             if executable:
                 cmd = executable + ' -c ' + shlex_quote(cmd)
 
