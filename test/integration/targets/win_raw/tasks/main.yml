@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: run getmac
-  raw: getmac; exit $LASTEXITCODE
+  raw: getmac
   register: getmac_result
 
 - name: assert that getmac ran
@@ -30,7 +30,7 @@
       - "getmac_result is changed"
 
 - name: run ipconfig with /all argument
-  raw: ipconfig /all; exit $LASTEXITCODE
+  raw: ipconfig /all
   register: ipconfig_result
 
 - name: assert that ipconfig ran with /all argument
@@ -44,7 +44,7 @@
       - "ipconfig_result is changed"
 
 - name: run ipconfig with invalid argument
-  raw: ipconfig /badswitch; exit $LASTEXITCODE
+  raw: ipconfig /badswitch
   register: ipconfig_invalid_result
   ignore_errors: true
 
@@ -71,18 +71,18 @@
       - "unknown_result is failed"
       - "unknown_result is changed"
 
-- name: run a command that takes longer than 60 seconds
-  raw: Start-Sleep -s 75
-  register: sleep_command
-
-- name: assert that the sleep command ran
-  assert:
-    that:
-      - "sleep_command.rc == 0"
-      - "not sleep_command.stdout"
-      - "not sleep_command.stderr"
-      - "sleep_command is not failed"
-      - "sleep_command is changed"
+#- name: run a command that takes longer than 60 seconds
+#  raw: Start-Sleep -s 75
+#  register: sleep_command
+#
+#- name: assert that the sleep command ran
+#  assert:
+#    that:
+#      - "sleep_command.rc == 0"
+#      - "not sleep_command.stdout"
+#      - "not sleep_command.stderr"
+#      - "sleep_command is not failed"
+#      - "sleep_command is changed"
 
 - name: run a raw command with key=value arguments
   raw: echo wwe=raw
