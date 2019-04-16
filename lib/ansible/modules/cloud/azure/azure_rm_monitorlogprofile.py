@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_monitorlogprofile
-version_added: "2.8"
+version_added: "2.9"
 short_description: Manage Azure Monitor log profile.
 description:
     - Create, update and delete instance of Azure Monitor log profile.
