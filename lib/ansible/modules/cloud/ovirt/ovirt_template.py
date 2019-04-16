@@ -323,6 +323,14 @@ options:
                     - "NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
                     To manage NICs of the VM in more depth please use M(ovirt_nics) module instead."
         version_added: "2.9"
+    cloud_init_persist:
+        description:
+            - "If I(yes) the C(cloud_init) parameters will be saved for the template and the virtual machine from template won't be started as run-once."
+        type: bool
+        version_added: "2.5"
+        aliases: [ 'sysprep_persist' ]
+        default: 'no'
+        version_added: "2.9"
 extends_documentation_fragment: ovirt
 '''
 
