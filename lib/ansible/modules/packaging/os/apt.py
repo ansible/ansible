@@ -1003,7 +1003,7 @@ def get_cache(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed' 'latest', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed', 'latest', 'present']),
             update_cache=dict(type='bool', aliases=['update-cache']),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
