@@ -1,0 +1,2 @@
+bugfixes:
+- psrp - Fix issues when fetching large files causing a memory leak - https://github.com/ansible/ansible/issues/55239
