@@ -474,22 +474,22 @@ class AzureRMModuleBase(object):
         for i in range(len(pattern_parts)):
             x = re.sub('[{} ]+', '', pattern_parts[i], 2)
             if len(x) < len(pattern_parts[i]):
-            pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
+                pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
 
         if isinstance(value, str):
             value_parts = value.split('/')
             if len(value_parts) == 1:
-            value_dict = {}
-            value_dict['name'] = value
+                value_dict = {}
+                value_dict['name'] = value
             else:  
-            if len(value_parts) != len(pattern_parts):
-                return None
+                if len(value_parts) != len(pattern_parts):
+                    return None
             value_dict = {}
             for i in range(len(value_parts)):
                 if pattern_parts[i].startswith('{'):
-                value_dict[pattern_parts[i][1:-1]] = value_parts[i]
+                    value_dict[pattern_parts[i][1:-1]] = value_parts[i]
                 elif value_parts[i].lower() != pattern_parts[i].lower():
-                return None
+                    return None
         elif isinstance(value, dict):
             value_dict = value
         else:
@@ -502,7 +502,7 @@ class AzureRMModuleBase(object):
 
         for i in range(len(pattern_parts)):
             if pattern_parts[i].startswith('{'):
-            value = value_dict.get(pattern_parts[i][1:-1], None)
+                value = value_dict.get(pattern_parts[i][1:-1], None)
             if not value:
                 return None
             pattern_parts[i] = value
