@@ -61,12 +61,14 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details. See the note below for details.
 
 # Create an instance
-- eh_instance:
+- name: Create an instance
+  eh_instance:
     name: somename
     state: present
 
 # Destroy an instance (poweroff and delete)
-- eh_instance:
+- name: Destroy an instance
+  eh_instance:
     uuid: "51eff35b-b044-4544-b202-f37557d4d932"
     state: absent
     force: true
