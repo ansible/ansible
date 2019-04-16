@@ -283,7 +283,7 @@ HAS_PYPSRP = True
 PYPSRP_IMP_ERR = None
 try:
     import pypsrp
-    from pypsrp.complex_objects import GenericComplexObject, RunspacePoolState
+    from pypsrp.complex_objects import GenericComplexObject, PSInvocationState, RunspacePoolState
     from pypsrp.exceptions import AuthenticationError, WinRMError
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
@@ -502,7 +502,7 @@ class Connection(ConnectionBase):
 
         # setup the file stream with read only mode
         setup_script = '''$ErrorActionPreference = "Stop"
-$path = "%s"
+$path = '%s'
 
 if (Test-Path -Path $path -PathType Leaf) {
     $fs = New-Object -TypeName System.IO.FileStream -ArgumentList @(
@@ -533,7 +533,8 @@ if ($bytes_read -gt 0) {
         # need to run the setup script outside of the local scope so the
         # file stream stays active between fetch operations
         rc, stdout, stderr = self._exec_psrp_script(setup_script,
-                                                    use_local_scope=False)
+                                                    use_local_scope=False,
+                                                    force_stop=True)
         if rc != 0:
             raise AnsibleError("failed to setup file stream for fetch '%s': %s"
                                % (out_path, to_native(stderr)))
@@ -549,8 +550,7 @@ if ($bytes_read -gt 0) {
             while True:
                 display.vvvvv("PSRP FETCH %s to %s (offset=%d" %
                               (in_path, out_path, offset), host=self._psrp_host)
-                rc, stdout, stderr = \
-                    self._exec_psrp_script(read_script % offset)
+                rc, stdout, stderr = self._exec_psrp_script(read_script % offset, force_stop=True)
                 if rc != 0:
                     raise AnsibleError("failed to transfer file to '%s': %s"
                                        % (out_path, to_native(stderr)))
@@ -559,8 +559,9 @@ if ($bytes_read -gt 0) {
                 out_file.write(data)
                 if len(data) < buffer_size:
                     break
+                offset += len(data)
 
-            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()")
+            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()", force_stop=True)
             if rc != 0:
                 display.warning("failed to close remote file stream of file "
                                 "'%s': %s" % (in_path, to_native(stderr)))
@@ -682,12 +683,22 @@ if ($bytes_read -gt 0) {
             option = self.get_option('_extras')['ansible_psrp_%s' % arg]
             self._psrp_conn_kwargs[arg] = option
 
-    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True):
+    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True, force_stop=False):
         ps = PowerShell(self.runspace)
         ps.add_script(script, use_local_scope=use_local_scope)
         ps.invoke(input=input_data)
 
         rc, stdout, stderr = self._parse_pipeline_result(ps)
+
+        if force_stop:
+            # This is usually not needed because we close the Runspace after our exec and we skip the call to close the
+            # pipeline manually to save on some time. Set to True when running multiple exec calls in the same runspace.
+
+            # Current pypsrp versions raise an exception if the current state was not RUNNING. We manually set it so we
+            # can call stop without any issues.
+            ps.state = PSInvocationState.RUNNING
+            ps.stop()
+
         return rc, stdout, stderr
 
     def _parse_pipeline_result(self, pipeline):
