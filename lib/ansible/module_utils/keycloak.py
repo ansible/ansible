@@ -34,11 +34,13 @@ import json
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.keycloak_utils import isDictEquals 
 
 URL_TOKEN = "{url}/realms/{realm}/protocol/openid-connect/token"
 URL_CLIENT = "{url}/admin/realms/{realm}/clients/{id}"
 URL_CLIENTS = "{url}/admin/realms/{realm}/clients"
 URL_CLIENT_ROLES = "{url}/admin/realms/{realm}/clients/{id}/roles"
+URL_CLIENT_SECRET = "{url}/admin/realms/{realm}/clients/{id}/client-secret"
 URL_REALM_ROLES = "{url}/admin/realms/{realm}/roles"
 
 URL_CLIENTTEMPLATE = "{url}/admin/realms/{realm}/client-templates/{id}"
@@ -56,7 +58,7 @@ def keycloak_argument_spec():
     return dict(
         auth_keycloak_url=dict(type='str', aliases=['url'], required=True),
         auth_client_id=dict(type='str', default='admin-cli'),
-        auth_realm=dict(type='str', required=True),
+        auth_realm=dict(type='str', default='master'),
         auth_client_secret=dict(type='str', default=None),
         auth_username=dict(type='str', aliases=['username'], required=True),
         auth_password=dict(type='str', aliases=['password'], required=True, no_log=True),
@@ -141,7 +143,11 @@ class KeycloakAPI(object):
         """
         r = self.get_clients(realm=realm, filter=client_id)
         if len(r) > 0:
-            return r[0]
+            clientrep = r[0]
+            clients_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
+            client_roles_url = URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=clientrep['id'])
+            self.add_client_roles_to_representation(clients_url, client_roles_url, clientrep)
+            return clientrep
         else:
             return None
 
@@ -153,11 +159,46 @@ class KeycloakAPI(object):
         :return: dict of client representation or None if none matching exist
         """
         client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=id)
-
+        clients_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
+        client_roles_url = URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=id)
         try:
-            return json.load(open_url(client_url, method='GET', headers=self.restheaders,
+            clientrep = json.load(open_url(client_url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+            self.add_client_roles_to_representation(clients_url, client_roles_url, clientrep)
+            return clientrep
+        
+        except HTTPError as e:
+            if e.code == 404:
+                return None
+            else:
+                self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
+                                          % (id, realm, str(e)))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain client %s for realm %s: %s'
+                                      % (id, realm, str(e)))
+        except Exception as e:
+            self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
+                                      % (id, realm, str(e)))
 
+    def get_client_secret_by_id(self, id, realm='master'):
+        """ Obtain client representation by id
+
+        :param id: id (not clientId) of client to be queried
+        :param realm: client from this realm
+        :return: dict of client representation or None if none matching exist
+        """
+        client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=id)
+        client_secret_url = URL_CLIENT_SECRET.format(url=self.baseurl, realm=realm, id=id)
+        try:
+            clientrep = json.load(open_url(client_url, method='GET', headers=self.restheaders,
+                                      validate_certs=self.validate_certs))
+            if clientrep[camel('public_client')]:
+                clientsecretrep = None
+            else:
+                clientsecretrep = json.load(open_url(client_secret_url, method='GET', headers=self.restheaders,
+                                      validate_certs=self.validate_certs))
+            return clientsecretrep
+        
         except HTTPError as e:
             if e.code == 404:
                 return None
@@ -192,10 +233,28 @@ class KeycloakAPI(object):
         :return: HTTPResponse object on success
         """
         client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=id)
-
+        roles_url = URL_REALM_ROLES.format(url=self.baseurl, realm=realm)
+        clients_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
+        client_roles_url = URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=id)
+                
         try:
-            return open_url(client_url, method='PUT', headers=self.restheaders,
+            client_roles = None 
+            if camel('client_roles') in clientrep:
+                client_roles = clientrep[camel('client_roles')]
+                del(clientrep[camel('client_roles')])
+            client_protocol_mappers = None 
+            if camel('protocol_mappers') in clientrep:
+                client_protocol_mappers = clientrep[camel('protocol_mappers')]
+                del(clientrep[camel('protocol_mappers')])
+            putResponse = open_url(client_url, method='PUT', headers=self.restheaders,
                             data=json.dumps(clientrep), validate_certs=self.validate_certs)
+            if client_protocol_mappers is not None:
+                clientrep[camel('protocol_mappers')] = client_protocol_mappers
+                self.create_or_update_client_mappers(client_url, clientrep)
+            if client_roles is not None:
+                self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url, clientrep)
+            return putResponse
+
         except Exception as e:
             self.module.fail_json(msg='Could not update client %s in realm %s: %s'
                                       % (id, realm, str(e)))
@@ -206,11 +265,30 @@ class KeycloakAPI(object):
         :param realm: realm for client to be created
         :return: HTTPResponse object on success
         """
-        client_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
-
+        roles_url = URL_REALM_ROLES.format(url=self.baseurl, realm=realm)
+        clients_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
+        
         try:
-            return open_url(client_url, method='POST', headers=self.restheaders,
+            client_roles = None 
+            if camel('client_roles') in clientrep:
+                client_roles = clientrep[camel('client_roles')]
+                del(clientrep[camel('client_roles')])
+            client_protocol_mappers = None 
+            if camel('protocol_mappers') in clientrep:
+                client_protocol_mappers = clientrep[camel('protocol_mappers')]
+                del(clientrep[camel('protocol_mappers')])
+            postResponse = open_url(clients_url, method='POST', headers=self.restheaders,
                             data=json.dumps(clientrep), validate_certs=self.validate_certs)
+            client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=self.get_client_id(clientrep[camel('client_id')], realm))
+            if client_protocol_mappers is not None:
+                clientrep[camel('protocol_mappers')] = client_protocol_mappers
+                self.create_or_update_client_mappers(client_url, clientrep)
+            if client_roles is not None:
+                client_roles_url = URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=self.get_client_id(clientrep[camel('client_id')], realm))
+                self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url, clientrep)
+        
+            return postResponse
+            
         except Exception as e:
             self.module.fail_json(msg='Could not create client %s in realm %s: %s'
                                       % (clientrep['clientId'], realm, str(e)))
@@ -472,3 +550,155 @@ class KeycloakAPI(object):
 
         except Exception as e:
             self.module.fail_json(msg="Unable to delete group %s: %s" % (groupid, str(e)))
+            
+    def add_client_roles_to_representation(self, clientSvcBaseUrl, clientRolesUrl, clientRepresentation):
+        
+        clientRolesRepresentation = json.load(open_url(clientRolesUrl, method='GET', headers=self.restheaders))
+        for clientRole in clientRolesRepresentation:
+            if clientRole["composite"]:
+                clientRole["composites"] = json.load(open_url(clientRolesUrl + '/' + clientRole['name'] +'/composites', method='GET', headers=self.restheaders))
+                
+                for roleComposite in clientRole["composites"]:
+                    if roleComposite['clientRole']:
+                        roleCompositeClient = json.load(open_url(clientSvcBaseUrl + '/' + roleComposite['containerId'], method='GET', headers=self.restheaders))
+                        roleComposite["clientId"] = roleCompositeClient["clientId"]
+        clientRepresentation['clientRoles'] = clientRolesRepresentation
+        
+    def create_or_update_client_roles(self, newClientRoles, roleSvcBaseUrl, clientSvcBaseUrl, clientRolesUrl, clientRepresentation):
+        #changed = False
+        
+        # Manage the roles
+        if newClientRoles is not None:
+            for newClientRole in newClientRoles:
+                changeNeeded = False
+                desiredState = "present"
+                if "state" in newClientRole:
+                    desiredState = newClientRole["state"]
+                    del(newClientRole["state"])
+                if 'composites' in newClientRole and newClientRole['composites'] is not None:
+                    newComposites = newClientRole['composites']
+                    for newComposite in newComposites:
+                        if "id" in newComposite and newComposite["id"] is not None:
+                            keycloakClients=json.load(open_url(clientSvcBaseUrl, method='GET', headers=self.restheaders))
+                            for keycloakClient in keycloakClients:
+                                if keycloakClient['clientId'] == newComposite["id"]:
+                                    roles=json.load(open_url(clientSvcBaseUrl + '/' + keycloakClient['id'] + '/roles', method='GET', headers=self.restheaders))
+                                    for role in roles:
+                                        if role["name"] == newComposite["name"]:
+                                            newComposite['id'] = role['id']
+                                            newComposite['clientRole'] = True
+                                            break
+                        else:
+                            realmRoles=json.load(open_url(roleSvcBaseUrl, method='GET', headers=self.restheaders))
+                            for realmRole in realmRoles:
+                                if realmRole["name"] == newComposite["name"]:
+                                    newComposite['id'] = realmRole['id']
+                                    newComposite['clientRole'] = False
+                                    break;
+                    
+                clientRoleFound = False
+                clientRoles = json.load(open_url(clientRolesUrl, method='GET', headers=self.restheaders))
+                if len(clientRoles) > 0:
+                    # Check if role to be created already exist for the client
+                    for clientRole in clientRoles:
+                        if (clientRole['name'] == newClientRole['name']):
+                            clientRoleFound = True
+                            break
+                    # If we have to create the role because it does not exist and the desired state is present, or it exists and the desired state is absent
+                    if (not clientRoleFound and desiredState != "absent") or (clientRoleFound and desiredState == "absent"):
+                        changeNeeded = True
+                    else:
+                        if "composites" in newClientRole and newClientRole['composites'] is not None:
+                            excludes = []
+                            excludes.append("composites")
+                            if not isDictEquals(newClientRole, clientRole, excludes):
+                                changeNeeded = True
+                            else:
+                                for newComposite in newClientRole['composites']:
+                                    compositeFound = False
+                                    if 'composites' not in clientRole or clientRole['composites'] is None:
+                                        changeNeeded = True
+                                        break
+                                    for existingComposite in clientRole['composites']:
+                                        if isDictEquals(newComposite,existingComposite):
+                                            compositeFound = True
+                                            break
+                                    if not compositeFound:
+                                        changeNeeded = True
+                                        break
+                        else:
+                            if not isDictEquals(newClientRole, clientRole):
+                                changeNeeded = True
+                elif desiredState != "absent":
+                    changeNeeded = True
+                if changeNeeded and desiredState != "absent":
+                    # If role must be modified
+                    newRoleRepresentation = {}
+                    newRoleRepresentation["name"] = newClientRole['name'].decode("utf-8")
+                    newRoleRepresentation["description"] = newClientRole['description'].decode("utf-8")
+                    newRoleRepresentation["composite"] = newClientRole['composite'] if "composite" in newClientRole else False
+                    newRoleRepresentation["clientRole"] = newClientRole['clientRole'] if "clientRole" in newClientRole else True
+                    data=json.dumps(newRoleRepresentation)
+                    if clientRoleFound:
+                        open_url(clientRolesUrl + '/' + newClientRole['name'], method='PUT', headers=self.restheaders, data=data)
+                    else:
+                        open_url(clientRolesUrl, method='POST', headers=self.restheaders, data=data)
+                    changed = True
+                    # Composites role
+                    if 'composites' in newClientRole and newClientRole['composites'] is not None and len(newClientRole['composites']) > 0:
+                        newComposites = newClientRole['composites']
+                        if clientRoleFound and "composites" in clientRole:
+                            rolesToDelete = []
+                            for roleTodelete in clientRole['composites']:
+                                tmprole = {}
+                                tmprole['id'] = roleTodelete['id']
+                                rolesToDelete.append(tmprole)
+                            data=json.dumps(rolesToDelete)
+                            open_url(clientRolesUrl + '/' + newClientRole['name'] + '/composites', method='DELETE', headers=self.restheaders, data=data)
+                        data=json.dumps(newClientRole["composites"])
+                        open_url(clientRolesUrl + '/' + newClientRole['name'] + '/composites', method='POST', headers=self.restheaders, data=data)
+                elif changeNeeded and desiredState == "absent" and clientRoleFound:
+                    open_url(clientRolesUrl + '/' + newClientRole['name'], method='DELETE', headers=self.restheaders)
+                    #changed = True
+        #return changed
+    
+    def create_or_update_client_mappers(self, clientUrl, clientRepresentation):
+        #changed = False
+        if camel('protocol_mappers') in clientRepresentation and clientRepresentation[camel('protocol_mappers')] is not None:
+            newClientProtocolMappers = clientRepresentation[camel('protocol_mappers')]
+            # Get existing mappers from the client
+            clientMappers = json.load(open_url(clientUrl + '/protocol-mappers/models', method='GET', headers=self.restheaders))
+            
+            for newClientProtocolMapper in newClientProtocolMappers:
+                desiredState = "present"
+                if "state" in newClientProtocolMapper:
+                    desiredState = newClientProtocolMapper["state"]
+                    del(newClientProtocolMapper["state"])
+                clientMapperFound = False
+                # Check if mapper already exist for the client
+                for clientMapper in clientMappers:
+                    if (clientMapper['name'] == newClientProtocolMapper['name']):
+                        clientMapperFound = True
+                        break
+                # If mapper exists for the client
+                if clientMapperFound:
+                    if desiredState == "absent":
+                        # Delete the mapper
+                        open_url(clientUrl + '/protocol-mappers/models/' + clientMapper['id'], method='DELETE', headers=self.restheaders)
+                        #changed = True
+                    else:
+                        if not isDictEquals(newClientProtocolMapper, clientMapper):
+                            # If changed has been introduced for the mapper
+                            #changed = True
+                            newClientProtocolMapper["id"] = clientMapper["id"]
+                            data=json.dumps(newClientProtocolMapper)
+                            # Modify the mapper
+                            open_url(clientUrl + '/protocol-mappers/models/' + clientMapper['id'], method='PUT', headers=self.restheaders, data=data)
+                    
+                else: # If mapper does not exist for the client
+                    if desiredState != "absent":
+                        # Create the mapper
+                        data=json.dumps(newClientProtocolMapper)
+                        open_url(clientUrl + '/protocol-mappers/models', method='POST', headers=self.restheaders, data=data)
+                        #changed = True
+        #return changed
