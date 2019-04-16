@@ -1,0 +1,2 @@
+bugfixes:
+- aci modules - Ensure we use native strings for signature
