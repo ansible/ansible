@@ -1,0 +1,2 @@
+bugfixes:
+    - ensure facts are always unsafe objects and don't rely on plugin returns
