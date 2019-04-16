@@ -481,7 +481,7 @@ class AzureRMModuleBase(object):
             if len(value_parts) == 1:
                 value_dict = {}
                 value_dict['name'] = value
-            else:  
+            else:
                 if len(value_parts) != len(pattern_parts):
                     return None
             value_dict = {}
