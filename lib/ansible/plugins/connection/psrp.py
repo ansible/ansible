@@ -723,9 +723,9 @@ if ($bytes_read -gt 0) {
 
             stdout_list.append(output_msg)
 
-        stdout = u"\r\n".join(stdout_list)
         if len(self.host.ui.stdout) > 0:
-            stdout += u"\r\n" + u"".join(self.host.ui.stdout)
+            stdout_list += self.host.ui.stdout
+        stdout = u"\r\n".join(stdout_list)
 
         stderr_list = []
         for error in pipeline.streams.error:
@@ -743,9 +743,9 @@ if ($bytes_read -gt 0) {
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
             stderr_list.append(error_msg)
 
-        stderr = "\r\n".join(stderr_list)
         if len(self.host.ui.stderr) > 0:
-            stderr += "\r\n" + "".join(self.host.ui.stderr)
+            stderr_list += self.host.ui.stderr
+        stderr = "\r\n".join(stderr_list)
 
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
         display.vvvvv("PSRP STDOUT: %s" % stdout, host=self._psrp_host)
