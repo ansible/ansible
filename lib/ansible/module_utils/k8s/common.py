@@ -122,6 +122,7 @@ AUTH_ARG_SPEC = {
         'type': 'path',
         'aliases': ['key_file'],
     },
+    'proxy': {},
 }
 
 
