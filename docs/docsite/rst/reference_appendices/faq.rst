@@ -653,7 +653,7 @@ When using ``scp`` as the file transfer mechanism for SSH, it can fail with the 
     failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
 
 This is due to a bug in newer releases of OpenSSH in the ``scp`` client that is used on the Ansible controller. These
-releases attempt to validate that the path of the file to fetch matches the requested requested path. This validation
+releases attempt to validate that the path of the file to fetch matches the requested path. This validation
 will fail if the remote filename requires quotes to escape spaces or non-ascii chars in its path. If you come across
 this error there are a few different ways to ignore this validation, such as:
 
