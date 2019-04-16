@@ -58,9 +58,9 @@ class ShellModule(ShModule):
         self.sleep0 = "WAIT 0:0:0.0"
         self.executable = 'PIPE'
         #'PIPE'
-	self.shell = 'PIPE' 
-	self.ECHO = 'WRITE SYS$OUTPUT "%s"'
-	self._IS_OPENVMS = True
+        self.shell = 'PIPE' 
+        self.ECHO = 'WRITE SYS$OUTPUT "%s"'
+        self._IS_OPENVMS = True
 
     # can only be done by adding assignment before the command...
     # NOT AFTER IF ... THEN... Quoting will be an issue....
