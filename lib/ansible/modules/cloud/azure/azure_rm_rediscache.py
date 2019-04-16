@@ -131,6 +131,14 @@ options:
                 choices:
                     - primary
                     - secondary
+    wait_for_provisioning:
+        description:
+            - Wait till the Azure Cache for Redis instance provisioning_state is Succeeded.
+            - It takes several minutes for Azure Cache for Redis to be provisioned ready for use after creating/updating/rebooting.
+            - Set this option to true to wait for provisioning_state. Set to false if you don't care about provisioning_state.
+            - Poll wait timeout is 60 minutes.
+        type: bool
+        default: True
     state:
       description:
         - Assert the state of the Azure Cache for Redis.
@@ -210,6 +218,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
     from azure.mgmt.redis import RedisManagementClient
     from azure.mgmt.redis.models import (RedisCreateParameters, RedisUpdateParameters, Sku)
@@ -365,6 +374,10 @@ class AzureRMRedisCaches(AzureRMModuleBase):
             regenerate_key=dict(
                 type='dict',
                 options=regenerate_key_spec
+            ),
+            wait_for_provisioning=dict(
+                type='bool',
+                default='True'
             )
         )
 
@@ -384,6 +397,10 @@ class AzureRMRedisCaches(AzureRMModuleBase):
         self.tenant_settings = None
         self.reboot = None
         self.regenerate_key = None
+
+        self.wait_for_provisioning = None
+        self.wait_for_provisioning_polling_interval_in_seconds = 30
+        self.wait_for_provisioning_polling_times = 120
 
         self.tags = None
 
@@ -561,8 +578,11 @@ class AzureRMRedisCaches(AzureRMModuleBase):
             response = self._client.redis.create(resource_group_name=self.resource_group,
                                                  name=self.name,
                                                  parameters=params)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
+
+            if self.wait_for_provisioning:
+                self.wait_for_redis_running()
 
         except CloudError as exc:
             self.log('Error attempting to create the Azure Cache for Redis instance.')
@@ -597,8 +617,11 @@ class AzureRMRedisCaches(AzureRMModuleBase):
             response = self._client.redis.update(resource_group_name=self.resource_group,
                                                  name=self.name,
                                                  parameters=params)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
+
+            if self.wait_for_provisioning:
+                self.wait_for_redis_running()
 
         except CloudError as exc:
             self.log('Error attempting to update the Azure Cache for Redis instance.')
@@ -658,6 +681,11 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                                                        name=self.name,
                                                        reboot_type=self.reboot['reboot_type'],
                                                        shard_id=self.reboot.get('shard_id'))
+            if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
+                response = self.get_poller_result(response)
+
+            if self.wait_for_provisioning:
+                self.wait_for_redis_running()
         except CloudError as e:
             self.log('Error attempting to force reboot the redis cache instance.')
             self.fail(
@@ -716,6 +744,24 @@ class AzureRMRedisCaches(AzureRMModuleBase):
         else:
             subnet_id = self.subnet
         return subnet_id
+
+    def wait_for_redis_running(self):
+        try:
+            response = self._client.redis.get(resource_group_name=self.resource_group, name=self.name)
+            status = response.provisioning_state
+            polling_times = 0
+
+            while polling_times < self.wait_for_provisioning_polling_times:
+                if status.lower() != "succeeded":
+                    polling_times += 1
+                    time.sleep(self.wait_for_provisioning_polling_interval_in_seconds)
+                    response = self._client.redis.get(resource_group_name=self.resource_group, name=self.name)
+                    status = response.provisioning_state
+                else:
+                    return True
+            self.fail("Azure Cache for Redis is not running after 60 mins.")
+        except CloudError as e:
+            self.fail("Failed to get Azure Cache for Redis: {0}".format(str(e)))
 
 
 def main():

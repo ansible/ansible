@@ -229,6 +229,7 @@ EXAMPLES = '''
 
 - name: "Delete group by its id"
   ec2_group:
+    region: eu-west-1
     group_id: sg-33b4ee5b
     state: absent
 '''

@@ -1,7 +1,7 @@
 - block:
   - name: Install epel repo which is missing on rhel-7 and is needed for rpmfluff
-    package:
-      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    include_role:
+      name: setup_epel
     when:
       - ansible_distribution in ['RedHat']
       - ansible_distribution_major_version is version('7', '==')

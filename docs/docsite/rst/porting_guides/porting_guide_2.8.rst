@@ -233,12 +233,12 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.12. Please update your playbooks accordingly.
 
-* ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
-* ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+* ``foreman`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
+* ``katello`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
-* ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
-* ``gce`` use :ref `gce_compute_instance <gce_compute_instance_module>` instead.
-* ``panos`` use `Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
+* ``digital_ocean`` use :ref:`digital_ocean_droplet <digital_ocean_droplet_module>` instead.
+* ``gce`` use :ref:`gcp_compute_instance <gcp_compute_instance_module>` instead.
+* ``panos`` use the `Palo Alto Networks Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
 
 Noteworthy module changes
@@ -304,6 +304,9 @@ Noteworthy module changes
 * ``vmware_vm_facts`` used to return dict of dict with virtual machine's facts. Ansible 2.8 and onwards will return list of dict with virtual machine's facts.
   Please see module ``vmware_vm_facts`` documentation for example.
 
+* ``vmware_guest_snapshot`` module used to return ``results``. Since Ansible 2.8 and onwards ``results`` is a reserved keyword, it is replaced by ``snapshot_results``.
+  Please see module ``vmware_guest_snapshots`` documentation for example.
+
 * The ``panos`` modules have been deprecated in favor of using the Palo Alto Networks `Ansible Galaxy role
   <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.  Contributions to the role can be made
   `here <https://github.com/PaloAltoNetworks/ansible-pan>`_.
@@ -323,7 +326,7 @@ Noteworthy module changes
   You should use the ``win_service`` module to control the running state of the service. This will be removed in Ansible 2.12.
 
 * The ``status`` module option for ``win_nssm`` has changed its default value to ``present``. Before, the default was ``start``.
-  Consequently, the service is no longer started by default after creation with ``win_nssm``, and you should use 
+  Consequently, the service is no longer started by default after creation with ``win_nssm``, and you should use
   the ``win_service`` module to start it if needed.
 
 * The ``app_parameters`` module option for ``win_nssm`` has been deprecated; use ``argument`` instead. This will be removed in Ansible 2.12.
@@ -333,12 +336,12 @@ Noteworthy module changes
 * The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options
   would be ignored but are now not.
 
-* The ``win_domain_membership`` module will no longer automatically join a host in a domain that already has an account
-  with the same name. Set ``allow_existing_computer_account=yes`` to override this check and go back to the original
-  behaviour.
+* The ``openssl_pkcs12`` module will now regenerate the pkcs12 file if there are differences between the file on disk and the parameters passed to the module.
 
 Plugins
 =======
+
+* Ansible no longer defaults to the ``paramiko`` connection plugin when using macOS as the control node. Ansible will now use the ``ssh`` connection plugin by default on a macOS control node.  Since ``ssh`` supports connection persistence between tasks and playbook runs, it performs better than ``paramiko``. If you are using password authentication, you will need to install ``sshpass`` when using the ``ssh`` connection plugin. Or you can explicitly set the connection type to ``paramiko`` to maintain the pre-2.8 behavior on macOS.
 
 * Connection plugins have been standardized to allow use of ``ansible_<conn-type>_user``
   and ``ansible_<conn-type>_password`` variables.  Variables such as

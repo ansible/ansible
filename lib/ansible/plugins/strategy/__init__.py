@@ -762,7 +762,7 @@ class StrategyBase:
         ti_copy._parent = included_file._task._parent
 
         temp_vars = ti_copy.vars.copy()
-        temp_vars.update(included_file._args)
+        temp_vars.update(included_file._vars)
 
         ti_copy.vars = temp_vars
 
@@ -893,15 +893,12 @@ class StrategyBase:
         # collect the results from the handler run
         host_results = self._wait_on_handler_results(iterator, handler, notified_hosts)
 
-        try:
-            included_files = IncludedFile.process_include_results(
-                host_results,
-                iterator=iterator,
-                loader=self._loader,
-                variable_manager=self._variable_manager
-            )
-        except AnsibleError:
-            return False
+        included_files = IncludedFile.process_include_results(
+            host_results,
+            iterator=iterator,
+            loader=self._loader,
+            variable_manager=self._variable_manager
+        )
 
         result = True
         if len(included_files) > 0:

@@ -1,2 +1,0 @@
-bugfixes:
-- win_power_plan - Fix issue where win_power_plan failed on newer Windows 10 builds - https://github.com/ansible/ansible/issues/43827

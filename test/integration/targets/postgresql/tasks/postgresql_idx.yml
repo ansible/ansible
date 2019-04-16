@@ -59,6 +59,46 @@
 # Do main tests
 #
 
+# Create index in check_mode
+- name: postgresql_idx - create btree index in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    table: test_table
+    columns: id, story
+    idxname: test0_idx
+  check_mode: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == true
+    - result.tblname == ''
+    - result.name == 'test0_idx'
+    - result.state == 'absent'
+    - result.valid != ''
+    - result.tblspace == ''
+    - result.storage_params == []
+    - result.schema == ''
+    - result.query == ''
+
+# Check that actually nothing changed, rowcount must be 0
+- name: postgresql_idx - check nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'test0_idx'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
 # Create btree index if not exists test_idx concurrently covering id and story columns
 - name: postgresql_idx - create btree index concurrently
   become_user: "{{ pg_user }}"
@@ -83,6 +123,20 @@
     - result.storage_params == []
     - result.schema == 'public'
     - result.query == 'CREATE INDEX CONCURRENTLY test0_idx ON public.test_table USING BTREE (id, story)'
+
+# Check that the index exists after the previous step, rowcount must be 1
+- name: postgresql_idx - check the index exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'test0_idx'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
 
 # Check that if index exists that changes nothing
 - name: postgresql_idx - try to create existing index again
@@ -127,6 +181,7 @@
     storage_params: fillfactor=90
   register: result
   ignore_errors: yes
+  when: tablespace.rc == 0
 
 - assert:
     that:
@@ -198,6 +253,48 @@
     - result.schema == 'public'
     - result.query == 'CREATE INDEX CONCURRENTLY test1_idx ON public.test_table USING BTREE (id) WHERE id > 1 AND id != 10'
 
+# Drop index from spacific schema with cascade in check_mode
+- name: postgresql_idx - drop index from specific schema cascade in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    schema: foo
+    name: foo_test_idx
+    cascade: yes
+    state: absent
+    concurrent: no
+  check_mode: yes
+  register: result
+  ignore_errors: yes
+  when: tablespace.rc == 0
+
+- assert:
+    that:
+    - result.changed == true
+    - result.name == 'foo_test_idx'
+    - result.state == 'present'
+    - result.schema == 'foo'
+    - result.query == ''
+  when: tablespace.rc == 0
+
+# Check that the index exists after the previous step, rowcount must be 1
+- name: postgresql_idx - check the index exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'foo_test_idx' AND schemaname = 'foo'"
+  register: result
+  when: tablespace.rc == 0
+
+- assert:
+    that:
+    - result.rowcount == 1
+  when: tablespace.rc == 0
+
 # Drop index from spacific schema with cascade
 - name: postgresql_idx - drop index from specific schema cascade
   become_user: "{{ pg_user }}"
@@ -212,6 +309,7 @@
     concurrent: no
   register: result
   ignore_errors: yes
+  when: tablespace.rc == 0
 
 - assert:
     that:
@@ -220,6 +318,22 @@
     - result.state == 'absent'
     - result.schema == 'foo'
     - result.query == 'DROP INDEX foo.foo_test_idx CASCADE'
+  when: tablespace.rc == 0
+
+# Check that the index doesn't exist after the previous step, rowcount must be 0
+- name: postgresql_idx - check the index doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_indexes WHERE indexname = 'foo_test_idx' and schemaname = 'foo'"
+  register: result
+  when: tablespace.rc == 0
+
+- assert:
+    that:
+    - result.rowcount == 0
   when: tablespace.rc == 0
 
 # Try to drop not existing index

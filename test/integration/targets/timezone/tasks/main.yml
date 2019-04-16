@@ -38,6 +38,12 @@
 #### timezone tests
 ####
 
+- name: make sure the dbus service is started under systemd
+  systemd:
+    name: dbus
+    state: started
+  when: ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora'
+
 - name: set timezone to Etc/UTC
   timezone:
     name: Etc/UTC

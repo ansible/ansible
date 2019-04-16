@@ -5,12 +5,17 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import json
-import re
 from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves import http_client
 from ansible.module_utils.six.moves.urllib.error import URLError, HTTPError
 
-HEADERS = {'content-type': 'application/json'}
+GET_HEADERS = {'accept': 'application/json', 'OData-Version': '4.0'}
+POST_HEADERS = {'content-type': 'application/json', 'accept': 'application/json',
+                'OData-Version': '4.0'}
+PATCH_HEADERS = {'content-type': 'application/json', 'accept': 'application/json',
+                 'OData-Version': '4.0'}
+DELETE_HEADERS = {'accept': 'application/json', 'OData-Version': '4.0'}
 
 
 class RedfishUtils(object):
@@ -25,7 +30,7 @@ class RedfishUtils(object):
     # The following functions are to send GET/POST/PATCH/DELETE requests
     def get_request(self, uri):
         try:
-            resp = open_url(uri, method="GET",
+            resp = open_url(uri, method="GET", headers=GET_HEADERS,
                             url_username=self.creds['user'],
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
@@ -33,71 +38,106 @@ class RedfishUtils(object):
                             use_proxy=False, timeout=self.timeout)
             data = json.loads(resp.read())
         except HTTPError as e:
-            return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
+            msg = self._get_extended_message(e)
+            return {'ret': False,
+                    'msg': "HTTP Error %s on GET request to '%s', extended message: '%s'"
+                           % (e.code, uri, msg)}
         except URLError as e:
-            return {'ret': False, 'msg': "URL Error: %s" % e.reason}
+            return {'ret': False, 'msg': "URL Error on GET request to '%s': '%s'"
+                                         % (uri, e.reason)}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
             return {'ret': False,
-                    'msg': 'Failed GET operation against Redfish API server: %s' % to_text(e)}
+                    'msg': "Failed GET request to '%s': '%s'" % (uri, to_text(e))}
         return {'ret': True, 'data': data}
 
-    def post_request(self, uri, pyld, hdrs):
+    def post_request(self, uri, pyld):
         try:
             resp = open_url(uri, data=json.dumps(pyld),
-                            headers=hdrs, method="POST",
+                            headers=POST_HEADERS, method="POST",
                             url_username=self.creds['user'],
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
-            return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
+            msg = self._get_extended_message(e)
+            return {'ret': False,
+                    'msg': "HTTP Error %s on POST request to '%s', extended message: '%s'"
+                           % (e.code, uri, msg)}
         except URLError as e:
-            return {'ret': False, 'msg': "URL Error: %s" % e.reason}
+            return {'ret': False, 'msg': "URL Error on POST request to '%s': '%s'"
+                                         % (uri, e.reason)}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
             return {'ret': False,
-                    'msg': 'Failed POST operation against Redfish API server: %s' % to_text(e)}
+                    'msg': "Failed POST request to '%s': '%s'" % (uri, to_text(e))}
         return {'ret': True, 'resp': resp}
 
-    def patch_request(self, uri, pyld, hdrs):
+    def patch_request(self, uri, pyld):
         try:
             resp = open_url(uri, data=json.dumps(pyld),
-                            headers=hdrs, method="PATCH",
+                            headers=PATCH_HEADERS, method="PATCH",
                             url_username=self.creds['user'],
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
-            return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
+            msg = self._get_extended_message(e)
+            return {'ret': False,
+                    'msg': "HTTP Error %s on PATCH request to '%s', extended message: '%s'"
+                           % (e.code, uri, msg)}
         except URLError as e:
-            return {'ret': False, 'msg': "URL Error: %s" % e.reason}
+            return {'ret': False, 'msg': "URL Error on PATCH request to '%s': '%s'"
+                                         % (uri, e.reason)}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
             return {'ret': False,
-                    'msg': 'Failed PATCH operation against Redfish API server: %s' % to_text(e)}
+                    'msg': "Failed PATCH request to '%s': '%s'" % (uri, to_text(e))}
         return {'ret': True, 'resp': resp}
 
-    def delete_request(self, uri, pyld, hdrs):
+    def delete_request(self, uri, pyld):
         try:
             resp = open_url(uri, data=json.dumps(pyld),
-                            headers=hdrs, method="DELETE",
+                            headers=DELETE_HEADERS, method="DELETE",
                             url_username=self.creds['user'],
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
-            return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
+            msg = self._get_extended_message(e)
+            return {'ret': False,
+                    'msg': "HTTP Error %s on DELETE request to '%s', extended message: '%s'"
+                           % (e.code, uri, msg)}
         except URLError as e:
-            return {'ret': False, 'msg': "URL Error: %s" % e.reason}
+            return {'ret': False, 'msg': "URL Error on DELETE request to '%s': '%s'"
+                                         % (uri, e.reason)}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
             return {'ret': False,
-                    'msg': 'Failed DELETE operation against Redfish API server: %s' % to_text(e)}
+                    'msg': "Failed DELETE request to '%s': '%s'" % (uri, to_text(e))}
         return {'ret': True, 'resp': resp}
+
+    @staticmethod
+    def _get_extended_message(error):
+        """
+        Get Redfish ExtendedInfo message from response payload if present
+        :param error: an HTTPError exception
+        :type error: HTTPError
+        :return: the ExtendedInfo message if present, else standard HTTP error
+        """
+        msg = http_client.responses.get(error.code, '')
+        if error.code >= 400:
+            try:
+                body = error.read().decode('utf-8')
+                data = json.loads(body)
+                ext_info = data['error']['@Message.ExtendedInfo']
+                msg = ext_info[0]['Message']
+            except Exception:
+                pass
+        return msg
 
     def _init_session(self):
         pass
@@ -267,7 +307,7 @@ class RedfishUtils(object):
             # Check to make sure option is available, otherwise error is ugly
             if "Actions" in _data:
                 if "#LogService.ClearLog" in _data[u"Actions"]:
-                    self.post_request(self.root_uri + _data[u"Actions"]["#LogService.ClearLog"]["target"], {}, HEADERS)
+                    self.post_request(self.root_uri + _data[u"Actions"]["#LogService.ClearLog"]["target"], {})
                     if response['ret'] is False:
                         return response
         return {'ret': True}
@@ -280,7 +320,7 @@ class RedfishUtils(object):
             ret = inventory.pop('ret') and ret
             if 'entries' in inventory:
                 entries.append(({'systems_uri': systems_uri},
-                               inventory['entries']))
+                                inventory['entries']))
         return dict(ret=ret, entries=entries)
 
     def get_storage_controller_inventory(self, systems_uri):
@@ -433,7 +473,7 @@ class RedfishUtils(object):
         action_uri = data[key]["#Manager.Reset"]["target"]
 
         payload = {'ResetType': 'GracefulRestart'}
-        response = self.post_request(self.root_uri + action_uri, payload, HEADERS)
+        response = self.post_request(self.root_uri + action_uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True}
@@ -456,7 +496,7 @@ class RedfishUtils(object):
 
             if command in payloads.keys():
                 payload = {'IndicatorLED': payloads[command]}
-                response = self.patch_request(self.root_uri + chassis_uri, payload, HEADERS)
+                response = self.patch_request(self.root_uri + chassis_uri, payload)
                 if response['ret'] is False:
                     return response
             else:
@@ -499,7 +539,7 @@ class RedfishUtils(object):
         else:
             return {'ret': False, 'msg': 'Invalid Command'}
 
-        response = self.post_request(self.root_uri + action_uri, payload, HEADERS)
+        response = self.post_request(self.root_uri + action_uri, payload)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -545,7 +585,7 @@ class RedfishUtils(object):
         roleid = {'RoleId': user['userrole']}
         enabled = {'Enabled': True}
         for payload in username, pswd, roleid, enabled:
-            response = self.patch_request(uri, payload, HEADERS)
+            response = self.patch_request(uri, payload)
             if response['ret'] is False:
                 return response
         return {'ret': True}
@@ -553,7 +593,7 @@ class RedfishUtils(object):
     def enable_user(self, user):
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'Enabled': True}
-        response = self.patch_request(uri, payload, HEADERS)
+        response = self.patch_request(uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True}
@@ -561,7 +601,7 @@ class RedfishUtils(object):
     def delete_user(self, user):
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'UserName': ""}
-        response = self.patch_request(uri, payload, HEADERS)
+        response = self.patch_request(uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True}
@@ -569,7 +609,7 @@ class RedfishUtils(object):
     def disable_user(self, user):
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'Enabled': False}
-        response = self.patch_request(uri, payload, HEADERS)
+        response = self.patch_request(uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True}
@@ -577,7 +617,7 @@ class RedfishUtils(object):
     def update_user_role(self, user):
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'RoleId': user['userrole']}
-        response = self.patch_request(uri, payload, HEADERS)
+        response = self.patch_request(uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True}
@@ -585,7 +625,7 @@ class RedfishUtils(object):
     def update_user_password(self, user):
         uri = self.root_uri + self.accounts_uri + "/" + user['userid']
         payload = {'Password': user['userpswd']}
-        response = self.patch_request(uri, payload, HEADERS)
+        response = self.patch_request(uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True}
@@ -743,7 +783,7 @@ class RedfishUtils(object):
         data = response['data']
         reset_bios_settings_uri = data["Actions"]["#Bios.ResetBios"]["target"]
 
-        response = self.post_request(self.root_uri + reset_bios_settings_uri, {}, HEADERS)
+        response = self.post_request(self.root_uri + reset_bios_settings_uri, {})
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
@@ -775,7 +815,7 @@ class RedfishUtils(object):
         else:
             payload = {"Boot": {"BootSourceOverrideTarget": bootdevice}}
 
-        response = self.patch_request(self.root_uri + self.systems_uris[0], payload, HEADERS)
+        response = self.patch_request(self.root_uri + self.systems_uris[0], payload)
         if response['ret'] is False:
             return response
         return {'ret': True}
@@ -816,7 +856,7 @@ class RedfishUtils(object):
         # Example: bios_attr = {\"name\":\"value\"}
         bios_attr = "{\"" + attr['bios_attr_name'] + "\":\"" + attr['bios_attr_value'] + "\"}"
         payload = {"Attributes": json.loads(bios_attr)}
-        response = self.patch_request(self.root_uri + set_bios_attr_uri, payload, HEADERS)
+        response = self.patch_request(self.root_uri + set_bios_attr_uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
@@ -902,6 +942,63 @@ class RedfishUtils(object):
 
     def get_multi_cpu_inventory(self):
         return self.aggregate(self.get_cpu_inventory)
+
+    def get_memory_inventory(self, systems_uri):
+        result = {}
+        memory_list = []
+        memory_results = []
+        key = "Memory"
+        # Get these entries, but does not fail if not found
+        properties = ['SerialNumber', 'MemoryDeviceType', 'PartNuber',
+                      'MemoryLocation', 'RankCount', 'CapacityMiB', 'OperatingMemoryModes', 'Status', 'Manufacturer', 'Name']
+
+        # Search for 'key' entry and extract URI from it
+        response = self.get_request(self.root_uri + systems_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        memory_uri = data[key]["@odata.id"]
+
+        # Get a list of all DIMMs and build respective URIs
+        response = self.get_request(self.root_uri + memory_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        for dimm in data[u'Members']:
+            memory_list.append(dimm[u'@odata.id'])
+
+        for m in memory_list:
+            dimm = {}
+            uri = self.root_uri + m
+            response = self.get_request(uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+
+            if "Status" in data:
+                if "State" in data["Status"]:
+                    if data["Status"]["State"] == "Absent":
+                        continue
+            else:
+                continue
+
+            for property in properties:
+                if property in data:
+                    dimm[property] = data[property]
+
+            memory_results.append(dimm)
+        result["entries"] = memory_results
+        return result
+
+    def get_multi_memory_inventory(self):
+        return self.aggregate(self.get_memory_inventory)
 
     def get_nic_inventory(self, resource_uri):
         result = {}

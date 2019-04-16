@@ -57,6 +57,9 @@ DOCUMENTATION = '''
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
             required: True
             type: path
+            env:
+                - name: GCE_CREDENTIALS_FILE_PATH
+                  version_added: "2.8"
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
@@ -120,6 +123,12 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+
+try:
+    import google.auth
+    import requests
+except ImportError:
+    raise AnsibleError('The gcp dynamic inventory plugin requires the requests and google-auth libraries')
 
 
 # Mocking a module to reuse module_utils

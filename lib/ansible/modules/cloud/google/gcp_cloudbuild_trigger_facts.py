@@ -73,7 +73,7 @@ items:
       - Whether the trigger is disabled or not. If true, the trigger will never result
         in a build.
       returned: success
-      type: str
+      type: bool
     createTime:
       description:
       - Time when the trigger was created.
