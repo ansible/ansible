@@ -367,7 +367,13 @@ options:
                       other than by the source of the mappers and its parent class(es). An example is given
                       below. It is easiest to obtain valid config values by dumping an already-existing
                       protocol mapper configuration through check-mode in the I(existing) field.
-
+            state:
+                description:
+                    - Desired state of the protocol mappers. 
+                      If present, the mapper will be added or updated. 
+                      If absent, the mapper will be removed
+                choices: [absent, present]
+                default: present
     attributes:
         description:
             - A dict of further attributes for this client. This can contain various configuration
@@ -473,7 +479,37 @@ options:
                 description:
                     - For OpenID-Connect clients, client certificate for validating JWT issued by
                       client and signed by its key, base64-encoded.
-
+    client_roles:
+        description:
+            - List of roles and their composites for the client. 
+              Client roles can be added, updated or removed depending it's state.
+        aliases: 
+            - clientRoles
+            - roles
+        type: list
+        suboptions:
+            name:
+                description:
+                    - Name of the role
+            description:
+                description:
+                    - Description of the role
+            composite:
+                description:
+                    - Is the role is a composite or not.
+                type: bool
+                default: False if no composites are includes, True if compistes are included
+            composites:
+                description:
+                    - List of composite roles
+                type: list
+                suboptions:
+                    id:
+                        description:
+                            - clientId of the client if the composite is a client role.
+                    name:
+                        description:
+                            - Name of the role. It can be a realm role name or a client role name.
 extends_documentation_fragment:
     - keycloak
 
@@ -574,6 +610,19 @@ EXAMPLES = '''
         name: role list
         protocol: saml
         protocolMapper: saml-role-list-mapper
+      - config: 
+          multivalued: False
+          userinfo.token.claim": True
+          user.attribute: Test2
+          id.token.claim: True
+          access.token.claim: True
+          claim.name: test2
+          jsonType.label: String
+        name: thismappermustbedeleted
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: False
+        state: absent
     attributes:
       saml.authnstatement: True
       saml.client.signature: True
@@ -590,6 +639,20 @@ EXAMPLES = '''
       use.jwks.url: true
       jwks.url: JWKS_URL_FOR_CLIENT_AUTH_JWT
       jwt.credential.certificate: JWT_CREDENTIAL_CERTIFICATE_FOR_CLIENT_AUTH
+    client_roles:
+      - name: role1
+        description: This is the first role
+        composite: False
+      - name: role2
+        description: This is the second role.
+        composite: True
+        composites:
+          - name: realmRole1
+          - id: clientId1
+            name: clientRole1
+      - name: roleToBeDeleted
+        description: This role need to be deleted
+        state: absent
 '''
 
 RETURN = '''
