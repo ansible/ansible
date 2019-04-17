@@ -1,0 +1,2 @@
+minor_changes:
+  - With Python3, we cannot iterate on a dict and modify it at the same time (https://github.com/ansible/ansible/issues/54869).
