@@ -937,6 +937,7 @@
     dns_search_domains:
     - example.org
     - example.com
+    force_kill: yes
   register: dns_search_domains_3
 
 - name: dns_search_domains (changed elements)
@@ -1000,6 +1001,7 @@
     dns_servers:
     - 8.8.8.8
     - 1.1.1.1
+    force_kill: yes
   register: dns_servers_3
 
 - name: dns_servers (changed elements)
