@@ -12,7 +12,7 @@
     state: present
 
 - name: Cleanup Gitlab hook
-  gitlab_hooks:
+  gitlab_hook:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
     login_token: "{{ gitlab_login_token }}"
@@ -21,7 +21,7 @@
     state: absent
 
 - name: Create Gitlab Hook
-  gitlab_hooks:
+  gitlab_hook:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
     login_token: "{{ gitlab_login_token }}"
@@ -37,7 +37,7 @@
 
 
 - name: Create Gitlab Hook ( Idempotency test )
-  gitlab_hooks:
+  gitlab_hook:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
     login_token: "{{ gitlab_login_token }}"
@@ -52,7 +52,7 @@
       - gitlab_hook_state_again is not changed
 
 - name: Remove Gitlab hook
-  gitlab_hooks:
+  gitlab_hook:
     server_url: "{{ gitlab_host }}"
     validate_certs: false
     login_token: "{{ gitlab_login_token }}"
