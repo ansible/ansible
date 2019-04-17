@@ -20,11 +20,11 @@ short_description: Create, drop, or alter a PostgreSQL sequence
 description:
 - Allows to create, drop or change the definition of a sequence generator
   U(https://www.postgresql.org/docs/current/sql-createsequence.html).
-version_added: '2.8'
+version_added: '2.9'
 options:
   sequence:
     description:
-    - The name (optionally schema-qualified) of the sequence.
+    - The name of the sequence.
     required: true
     type: str
     aliases:
@@ -104,7 +104,6 @@ options:
   owner:
     description:
     - Set the owner for the I(sequence).
-    - Works only for existing sequences.
     type: str
   schema:
     description:
@@ -215,6 +214,12 @@ EXAMPLES = r'''
     cycle: yes
     min: 1
     max: 10
+
+- name: Create an ascending bigint sequence called foobar in the default
+        database with owner foobar
+  postgresql_sequence:
+    name: foobar
+    owner: foobar
 
 - name: Rename an existing sequence named foo to bar
   postgresql_sequence:
@@ -654,8 +659,6 @@ def main():
             module.fail_json(msg="Sequence '%s' does not exist, nothing to rename" % sequence)
         if newschema:
             module.fail_json(msg="Sequence '%s' does not exist, change of schema not possible" % sequence)
-        if owner:
-            module.fail_json(msg="Sequence '%s' does not exist, owner can't be set during creation" % sequence)
 
         changed = sequence_obj.create(data_type=data_type, increment=increment,
                                       minimum_value=minvalue,

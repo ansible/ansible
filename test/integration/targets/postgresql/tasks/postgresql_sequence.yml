@@ -23,6 +23,18 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
 
+- name: Create a user to be owner of a sequence
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: LOGIN
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
 - name: postgresql_sequence - create a schema
   become_user: "{{ pg_user }}"
   become: yes
@@ -352,6 +364,62 @@
   assert:
     that:
       - result.rowcount == 0
+
+####################
+# Test: create sequence with owner
+- name: postgresql_sequence - create a new seqeunce with name "foobar2" with owner "{{ db_user2 }}"
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: foobar2
+    owner: "{{ db_user2 }}"
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'foobar2'
+      - result.queries == ["CREATE SEQUENCE \"foobar2\"", "ALTER SEQUENCE \"foobar2\" OWNER TO \"ansible_db_user2\""]
+
+# Real SQL check
+- name: postgresql_sequence - check that the new seqeunce "foobar2" exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'foobar2'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 1
+
+- name: postgresql_sequence - check that the seqeunce "foobar2" has owner "{{ db_user2 }}"
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT c.relname,a.rolname,n.nspname
+            FROM pg_class as c
+            JOIN pg_authid as a on (c.relowner = a.oid)
+            JOIN pg_namespace as n on (c.relnamespace = n.oid)
+            WHERE c.relkind = 'S' and
+            c.relname = 'foobar2' and
+            n.nspname = 'public' and
+            a.rolname = '{{ db_user2 }}'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 1
 
 # Cleanup
 - name: postgresql_sequence - destroy DB
