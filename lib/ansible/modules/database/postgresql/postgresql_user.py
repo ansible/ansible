@@ -70,30 +70,6 @@ options:
     type: bool
     aliases:
     - fail_on_role
-  port:
-    description:
-    - Database port to connect to.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - Password for U(login_user) used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
   priv:
     description:
     - "Slash-separated PostgreSQL privileges string: C(priv1/priv2), where
@@ -150,30 +126,27 @@ options:
     default: 'no'
     type: bool
     version_added: '2.0'
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-    version_added: '2.3'
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s). If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    version_added: '2.3'
-    aliases: [ ssl_rootcert ]
   conn_limit:
     description:
     - Specifies the user (role) connection limit.
     type: int
     version_added: '2.4'
-
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    type: str
+    default: prefer
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
+    version_added: '2.3'
+  ca_cert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
+    aliases: [ ssl_rootcert ]
+    version_added: '2.3'
 notes:
 - The module creates a user (role) with login privilege by default.
   Use NOLOGIN role_attr_flags to change this behaviour.
@@ -194,6 +167,7 @@ requirements:
 
 author:
 - Ansible Core Team
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
