@@ -113,6 +113,13 @@ ansible_ssh_pass: xtrm_pass
 
 # cat playbook.yml
 
+---
+- hosts: all
+  tasks:
+  - name: Retrieve EXOS OS version
+    exos_command:
+      commands: show version
+    when: ansible_network_os == 'exos'
 
 
 
