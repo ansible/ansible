@@ -26,8 +26,8 @@ options:
         required: true
     domain:
         description:
-            - The name of the Domain to scope to (Identity v3, currently only
-              domain names are supported, and not domain IDs).
+            - The name of the Domain to scope to (Identity v3).
+              (currently only domain names are supported, and not domain IDs).
         type: str
         required: true
     project:
