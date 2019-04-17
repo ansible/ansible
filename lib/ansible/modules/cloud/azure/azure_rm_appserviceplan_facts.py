@@ -46,7 +46,7 @@ EXAMPLES = '''
     - name: Get facts for app service plan by name
       azure_rm_appserviceplan_facts:
         resource_group: myResourceGroup
-        name: winwebapp1
+        name: myAppServicePlan
 
     - name: Get azure_rm_appserviceplan_facts for app service plan in resource group
       azure_rm_webapp_facts:

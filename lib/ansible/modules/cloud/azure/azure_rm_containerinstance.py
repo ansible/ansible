@@ -148,11 +148,11 @@ EXAMPLES = '''
   - name: Create sample container group
     azure_rm_containerinstance:
       resource_group: myResourceGroup
-      name: mynewcontainergroup
+      name: myContainerInstanceGroup
       os_type: linux
       ip_address: public
       containers:
-        - name: mycontainer1
+        - name: myContainer1
           image: httpd
           memory: 1.5
           ports:

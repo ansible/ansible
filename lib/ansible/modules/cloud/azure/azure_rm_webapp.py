@@ -189,21 +189,21 @@ author:
 EXAMPLES = '''
     - name: Create a windows web app with non-exist app service plan
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mywinwebapp
+        resource_group: myResourceGroup
+        name: myWinWebapp
         plan:
-          resource_group: myappserviceplan_rg
-          name: myappserviceplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
           is_linux: false
           sku: S1
 
     - name: Create a docker web app with some app settings, with docker image
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mydockerwebapp
+        resource_group: myResourceGroup
+        name: myDockerWebapp
         plan:
-          resource_group: appserviceplan_test
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
           is_linux: true
           sku: S1
           number_of_workers: 2
@@ -215,9 +215,9 @@ EXAMPLES = '''
 
     - name: Create a docker web app with private acr registry
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mydockerwebapp
-        plan: myappplan
+        resource_group: myResourceGroup
+        name: myDockerWebapp
+        plan: myAppServicePlan
         app_settings:
           testkey: testvalue
         container_settings:
@@ -228,11 +228,11 @@ EXAMPLES = '''
 
     - name: Create a linux web app with Node 6.6 framework
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mylinuxwebapp
+        resource_group: myResourceGroup
+        name: myLinuxWebapp
         plan:
-          resource_group: appserviceplan_test
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
         app_settings:
           testkey: testvalue
         frameworks:
@@ -241,11 +241,11 @@ EXAMPLES = '''
 
     - name: Create a windows web app with node, php
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mywinwebapp
+        resource_group: myResourceGroup
+        name: myWinWebapp
         plan:
-          resource_group: appserviceplan_test
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
         app_settings:
           testkey: testvalue
         frameworks:
@@ -256,21 +256,21 @@ EXAMPLES = '''
 
     - name: Create a stage deployment slot for an existing web app
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mywebapp/slots/stage
+        resource_group: myResourceGroup
+        name: myWebapp/slots/stage
         plan:
-          resource_group: myresourcegroup
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
         app_settings:
           testkey:testvalue
 
     - name: Create a linux web app with java framework
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mylinuxwebapp
+        resource_group: myResourceGroup
+        name: myLinuxWebapp
         plan:
-          resource_group: appserviceplan_test
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
         app_settings:
           testkey: testvalue
         frameworks:
@@ -287,7 +287,7 @@ azure_webapp:
     returned: always
     type: dict
     sample: {
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/ansiblewindowsaaa"
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp"
     }
 '''
 
