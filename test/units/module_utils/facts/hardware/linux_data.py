@@ -536,4 +536,17 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_vcpus': 48
         },
     },
+    {
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/sparc-t5-debian-ldom-24vcpu')).readlines(),
+        'architecture': 'sparc64',
+        'expected_result': {
+            'processor': [
+                'UltraSparc T5 (Niagara5)',
+            ],
+            'processor_cores': 1,
+            'processor_count': 24,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 24
+        },
+    },
 ]
