@@ -10,6 +10,8 @@ class ModuleDocFragment(object):
 notes:
 - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
 - Some of the options are likely only used for developers within Meraki.
+- As of Ansible 2.9, the Meraki modules output snake case keys in return data. If you need to retain camel case, set the C(ANSIBLE_MERAKI_FORMAT) environment variable to C(camelcase).
+- Ansible's Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
 options:
     auth_key:
         description:
