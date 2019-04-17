@@ -70,13 +70,13 @@ author:
 EXAMPLES = '''
     - name: Create an availability set with default options
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
         resource_group: myResourceGroup
 
     - name: Create an availability set with advanced options
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
         resource_group: myResourceGroup
         platform_update_domain_count: 5
@@ -85,7 +85,7 @@ EXAMPLES = '''
 
     - name: Delete an availability set
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
         resource_group: myResourceGroup
         state: absent
