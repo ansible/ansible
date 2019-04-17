@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_host_info - ``network_filters`` needs docker-py 2.0.2, ``disk_usage`` needs docker-py 2.2.0."

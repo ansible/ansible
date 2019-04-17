@@ -228,7 +228,7 @@
 - name: Archive image
   docker_image:
     name: "hello-world:latest"
-    archive_path: image.tar
+    archive_path: "{{ output_dir }}/image.tar"
     source: pull
   register: archive_image
 
@@ -241,14 +241,14 @@
 - name: load image (changed)
   docker_image:
     name: "hello-world:latest"
-    load_path: image.tar
+    load_path: "{{ output_dir }}/image.tar"
     source: load
   register: load_image
 
 - name: load image (idempotency)
   docker_image:
     name: "hello-world:latest"
-    load_path: image.tar
+    load_path: "{{ output_dir }}/image.tar"
     source: load
   register: load_image_1
 

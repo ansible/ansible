@@ -23,6 +23,7 @@
   - name: Create a Swarm cluster
     docker_swarm:
       state: present
+      advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
     register: output
 
   - name: assert changed when create a new swarm cluster
@@ -135,6 +136,7 @@
     docker_swarm_info:
       unlock_key: yes
     register: output
+    ignore_errors: yes
 
   - name: assert reading swarm facts and non existing swarm unlock key
     assert:
@@ -143,17 +145,26 @@
         - 'output.can_talk_to_docker == true'
         - 'output.docker_swarm_active == true'
         - 'output.docker_swarm_manager == true'
+    when: docker_py_version is version('2.7.0', '>=')
+  - assert:
+      that:
+        - output is failed
+        - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.7.0') in output.msg"
+    when: docker_py_version is version('2.7.0', '<')
 
   - name: Update swarm cluster to be locked
     docker_swarm:
       state: present
+      advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
       autolock_managers: true
     register: autolock_managers_update_output
+    ignore_errors: yes
 
   - name: Try to get docker_swarm_info and swarm_unlock_key
     docker_swarm_info:
       unlock_key: yes
     register: output
+    ignore_errors: yes
 
   - name: assert reading swarm facts and swarm unlock key
     assert:
@@ -163,6 +174,12 @@
         - 'output.can_talk_to_docker == true'
         - 'output.docker_swarm_active == true'
         - 'output.docker_swarm_manager == true'
+    when: docker_py_version is version('2.7.0', '>=')
+  - assert:
+      that:
+        - output is failed
+        - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.7.0') in output.msg"
+    when: docker_py_version is version('2.7.0', '<')
 
   always:
   - name: Cleanup

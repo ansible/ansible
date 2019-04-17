@@ -276,12 +276,12 @@
       - rollback_config_order_1 is changed
       - rollback_config_order_2 is not changed
       - rollback_config_order_3 is changed
-  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('2.7.0', '>=')
+  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('3.5.0', '>=')
 - assert:
     that:
       - rollback_config_order_1 is failed
       - "'Minimum version required' in rollback_config_order_1.msg"
-  when: docker_api_version is version('1.29', '<') or docker_py_version is version('2.7.0', '<')
+  when: docker_api_version is version('1.29', '<') or docker_py_version is version('3.5.0', '<')
 
 ###################################################################
 ## rollback_config.parallelism ######################################
@@ -331,9 +331,9 @@
       - rollback_config_parallelism_1 is changed
       - rollback_config_parallelism_2 is not changed
       - rollback_config_parallelism_3 is changed
-  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('2.7.0', '>=')
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('3.5.0', '>=')
 - assert:
     that:
       - rollback_config_parallelism_1 is failed
       - "'Minimum version required' in rollback_config_parallelism_1.msg"
-  when: docker_api_version is version('1.28', '<') or docker_py_version is version('2.7.0', '<')
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('3.5.0', '<')
