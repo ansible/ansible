@@ -126,27 +126,35 @@ class JobsModule(BaseModule):
 
 def attach_steps(module, entity_id, jobs_service):
     # Attach NICs to VM, if specified:
+    changed = False
     steps_service = jobs_service.job_service(entity_id).steps_service()
     if module.params.get('steps'):
         for step in module.params.get('steps'):
             step_entity = get_entity(steps_service, step.get('description')) 
+            step_state = step.get('state')
             if step_entity is None:
-     #           if not self._module.check_mode:
-                    steps_service.add(
-                        otypes.Step(
-                            description=step.get('description'),
-                            type=otypes.StepEnum.UNKNOWN,
-                            job=otypes.Job(
-                                id=entity_id
-                            ),
-                            status=otypes.StepStatus.STARTED,
-                            external=True,
+                if step_state == 'present' or step_state == 'started' or step_state is None:
+                     if not module.check_mode:
+                        steps_service.add(
+                            otypes.Step(
+                                description=step.get('description'),
+                                type=otypes.StepEnum.UNKNOWN,
+                                job=otypes.Job(
+                                    id=entity_id
+                                ),
+                                status=otypes.StepStatus.STARTED,
+                                external=True,
+                            )
                         )
-                    )
-    #            self.changed = True
-            elif step.get('state') == 'absent':
-                steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED,succeeded=True)
-
+                     changed = True
+            else:
+                if step_state == 'absent' or step_state == 'finished':
+                     steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED,succeeded=True)
+                     changed = True
+                elif step_state == 'failed':
+                     steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED,succeeded=False)
+                     changed = True
+    return changed
 
 def get_entity(jobs_service, description):
     all_jobs = jobs_service.list()
@@ -158,13 +166,11 @@ def get_entity(jobs_service, description):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent'],
+            choices=['present', 'absent', 'started', 'finished', 'failed'],
             default='present',
         ),
         description=dict(default=None),
-        status=dict(default=None),
         steps=dict(default=None, type='list'),
-        
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -185,16 +191,26 @@ def main():
 
         state = module.params['state']
         job = get_entity(jobs_service, module.params['description'])
-        if state == 'present':
+        if state in ['present', 'started']:
             ret = jobs_module.create(entity=job)
-            attach_steps(module,ret.get('job').get('id'),jobs_service)
-        elif state == 'absent':
-            jobs_service.job_service(job.id).end(status=otypes.JobStatus.FINISHED)
+            ret['changed'] = attach_steps(module,ret.get('job').get('id'),jobs_service)
+
+        elif state in ['absent', 'finished']:
+            jobs_service.job_service(job.id).end(status=otypes.JobStatus.FINISHED, succeeded=True)
+            jobs_service.job_service(job.id).clear()
+
             ret ={
                 'changed': True,
                 'id': getattr(job, 'id', None),
             }
+        elif state == 'failed':
+            jobs_service.job_service(job.id).end(status=otypes.JobStatus.FINISHED, succeeded=False)
+            jobs_service.job_service(job.id).clear()
 
+            ret ={
+                'changed': True,
+                'id': getattr(job, 'id', None),
+            }
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
