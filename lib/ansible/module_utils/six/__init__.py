@@ -919,7 +919,6 @@ def ensure_text(s, encoding='utf-8', errors='strict'):
         raise TypeError("not expecting type '%s'" % type(s))
 
 
-
 def python_2_unicode_compatible(klass):
     """
     A decorator that defines __unicode__ and __str__ methods under Python 2.
