@@ -407,7 +407,7 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
-        args = [SUBMAN_CMD, 'unregister']
+        args = [SUBMAN_CMD, 'remove', '--all']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
         self.update_plugin_conf('rhnplugin', False)
         self.update_plugin_conf('subscription-manager', False)
