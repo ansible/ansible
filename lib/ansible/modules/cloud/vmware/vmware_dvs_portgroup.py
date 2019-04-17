@@ -59,7 +59,6 @@ options:
     auto_expand:
         description:
             - If set to true, the the distributed vSwitch will ignore the limit on the c(num_ports) in the portgroup.
-        required: False
         default: True
         version_added: '2.9'
     portgroup_type:
@@ -94,7 +93,6 @@ options:
             - '- C(promiscuous) (bool): indicates whether promiscuous mode is allowed. (default: false)'
             - '- C(forged_transmits) (bool): indicates whether forged transmits are allowed. (default: false)'
             - '- C(mac_changes) (bool): indicates whether mac changes are allowed. (default: false)'
-        required: False
         version_added: '2.5'
         default: {
             promiscuous: False,
@@ -156,17 +154,29 @@ options:
         description:
             - Dictionary which configures the MAC management policy settings for the portgroup (requires DVS version >= 6.6.0).
             - 'Valid attributes are:'
-            - '- (allow_promiscuous) (bool): indicates whether promiscuous mode is allowed. (default: None)'
-            - '- (forged_transmits) (bool): indicates whether forged transmits are allowed. (default: None)'
-            - '- (mac_changes) (bool): indicates whether mac changes are allowed. (default: None)'
-            - '- (mac_learning_policy (dict): (default: dict)'
-                - '- (allow_unicast_flooding) (bool): indicates whether to allow flooding of unlearned MAC for ingress traffic (default: None)'
-                - '- (enabled) (bool): indicates if source MAC address learning is allowed (default: False)'
-                - '- (limit) (int): The maximum number of MAC addresses that can be learned.  (default: None)'
-                - '- (limit_policy) (str): The default switching policy after MAC limit is exceeded. (default: None):
-                    - '   - choices: ['allow', 'drop', None]'
-        required: False
+            - '- C(allow_promiscuous) (bool): indicates whether promiscuous mode is allowed. (default: None)'
+            - '- C(forged_transmits) (bool): indicates whether forged transmits are allowed. (default: None)'
+            - '- C(mac_changes) (bool): indicates whether mac changes are allowed. (default: None)'
+            - '- C(mac_learning_policy): (dict): dictionary of MAC learning plicy settings. (Default: { enabled: False })'
+            - '- Valid attributes are:'
+            - '    - C(allow_unicast_flooding) (bool): indicates whether to allow flooding of unlearned MAC for ingress traffic (default: None)'
+            - '    - C(enabled) (bool): indicates if source MAC address learning is allowed (default: False)'
+            - '    - C(limit) (int): The maximum number of MAC addresses that can be learned.  (default: None)'
+            - '    - C(limit_policy) (string): The default switching policy after MAC limit is exceeded. (default: None)'
+            - '        - choices: [allow, drop, None]'
+        require: False
         version_added: '2.9'
+        default: {
+            'allow_promiscuous':,
+            'forged_transmits':,
+            'mac_changes':,
+            'mac_learning_policy': {
+                'allow_unicast_flooding':,
+                'enabled': False,
+                'limit':,
+                'limit_policy':
+            }
+        }
         type: dict
 
 extends_documentation_fragment: vmware.documentation
@@ -177,13 +187,13 @@ result:
     description:
     - result of the changes
     returned: success
-    type: string
+    type: str
 updates:
     description:
     - dictionary of changes
     returned: on update
     type: dict
-    sample: { "port_policy": [ "traffic_filter_override does not equal False", ] }
+    sample: { "port_policy": "traffic_filter_override does not equal False" }
 '''
 
 EXAMPLES = '''
@@ -288,23 +298,23 @@ class VMwareDvsPortgroup(PyVmomi):
         self.vlan_ids = dict()
         try:
             for vlan_range in self.module.params['vlan_id'].split(','):
-                rx = re.match(r'^\s*(\d+)\s*(?:-\s*(\d+))?\s*$', vlan_range)
+                rx = re.match(r'^\s*(P<start>\d+)\s*(?:-\s*(P<end>\d+))?\s*$', vlan_range)
                 if not rx:
-                    raise ValueError("Range {} does not have valid format".format(vlan_range))
+                    raise ValueError("Range {0} does not have valid format".format(vlan_range))
 
-                start = end = int(rx.groups()[0])
+                start = end = int(rx.groups()['start'])
                 if rx.groups()[1]:
-                    end = int(rx.groups()[1])
+                    end = int(rx.groups()['end'])
 
                 if end < start:
-                    raise ValueError("Range {} start of range is greater than end".format(vlan_range))
+                    raise ValueError("Range {0} start of range is greater than end".format(vlan_range))
 
                 if start not in range(0, 4095) or end not in range(0, 4095):
                     self.module.fail_json(msg="vlan_id range %s specified is incorrect. The valid vlan_id range is from 0 to 4094.".format(vlan_range))
 
                 self.vlan_ids[start] = end
         except ValueError as e:
-            self.module.fail_json(msg="ValueError parsing vlan_ids: {}".format(to_native(e)))
+            self.module.fail_json(msg="ValueError parsing vlan_ids: {0}".format(to_native(e)))
 
     def process_state(self):
         dvspg_states = {
@@ -358,8 +368,7 @@ class VMwareDvsPortgroup(PyVmomi):
         config.policy = self._pg_policy_spec()
 
         task = self.dv_switch.AddDVPortgroup_Task([config])
-        changed, result = wait_for_task(task)
-        return changed, result
+        return wait_for_task(task)
 
     def state_destroy_dvspg(self):
         changed = True
@@ -425,15 +434,14 @@ class VMwareDvsPortgroup(PyVmomi):
         if self.module.params['mac_management_policy']['mac_learning_policy']['enabled'] and self.dv_switch.config.productInfo.forwardingClass != 'cswitch':
             self.module.fail_json(
                 msg="The distributed virtual switch does not support MAC management policy."
-                + "Minimum DVS version is 6.6.0 (current version is {})".format(self.dv_switch.config.productInfo.version)
+                + "Minimum DVS version is 6.6.0 (current version is {0})".format(self.dv_switch.config.productInfo.version)
             )
 
         self.dvs_portgroup = find_dvspg_by_name(self.dv_switch, self.module.params['portgroup_name'])
 
-        if self.dvs_portgroup is None:
-            return 'absent'
-        else:
+        if self.dvs_portgroup:
             return self.check_dvspg_settings()
+        return 'absent'
 
     def check_dvspg_settings(self):
         state = 'present'
@@ -509,7 +517,7 @@ class VMwareDvsPortgroup(PyVmomi):
 
             if desired != v:
                 state = 'update'
-                self.updates[k] = "Desired '{}' does not equal current '{}'".format(desired, v)
+                self.updates[k] = "Desired '{0}' does not equal current '{1}'".format(desired, v)
 
         return state
 
