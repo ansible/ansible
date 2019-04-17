@@ -31,6 +31,7 @@ options:
     name:
         decription:
             - Name of the eventhub alias.
+        required: true
     state:
         description:
             - Assert the state of the alias. Use C(present) to create or update an event hub and C(absent) to delete it.
@@ -38,6 +39,22 @@ options:
         choices:
             - absent
             - present
+    partner_namespace:
+        description:
+            - ARM Id of the Primary/Secondary eventhub namespace name, which is part of GEO DR pairing
+    alternate_name:
+        description:
+            - Alternate name specified when alias and namespace names are same.
+    break_pairing:
+        description:
+            - Disables the Disaster Recovery and stops replicating changes from primary to secondary namespaces.
+            - Only be valid for the primary namespace.
+        type: bool
+    fail_over:
+        description:
+            - Invokes GEO DR failover and reconfigure the alias to point to the secondary namespace.
+            - Only be valid for the secondary namespace.
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -47,9 +64,43 @@ author:
 '''
 
 EXAMPLES = '''
+    - name: Create event hub alias with default
+      azure_rm_eventhubgeorecovery:
+        namespace: myeventhubnamespace
+        resource_group: myResourceGroup
+        name: myaliastesting
+        partner_namespace: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/myeventhubnamespace02"
+
+    - name: Disable the disaster recovery
+      azure_rm_eventhubgeorecovery:
+        namespace: myeventhubnamespace
+        resource_group: myResourceGroup
+        name: myaliastesting
+        break_pairing: true
+
+    - name: Invokes GEO DR failover and reconfigure the alias to point to the secondary namespace
+      azure_rm_eventhubgeorecovery:
+        namespace: myeventhubnamespace02
+        resource_group: myResourceGroup
+        name: myaliastesting
+        fail_over: true
+
+    - name: Delete event hub alias
+      azure_rm_eventhubgeorecovery:
+        namespace: myeventhubnamespace
+        resource_group: myResourceGroup
+        name: myaliastesting
+        state: absent
 '''
 
 RETURN = '''
+id:
+    description:
+        - Resource ID of the event hub.
+    returned: state is present
+    type: str
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx/resourceGroups/
+            myResourceGroup/providers/Microsoft.EventHub/namespaces/myeventhubnamespace/disasterRecoveryConfigs/myaliastesting"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -98,7 +149,7 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            state=dict()
+            id=str
         )
 
 
@@ -135,7 +186,7 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
 
                 if changed and not self.check_mode:
                     alias = self.create_or_update_alias()
-            results = self.to_dict(alias) if alias else None
+            results = self.to_dict(alias)['id'] if alias else None
             if self.break_pairing and not self.check_mode:
                 changed = True
                 self.do_break_pairing()
@@ -148,7 +199,7 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
                 self.delete_alias()
 
         self.results['changed'] = changed
-        self.results['state'] = results
+        self.results['id'] = results
         return self.results
 
     def do_break_pairing(self):
