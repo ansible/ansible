@@ -77,13 +77,13 @@ EXAMPLES = '''
 RETURN = r'''
 instance:
     cpu: 500,
-    disk: "1da3a8ff-5bb4-4c6f-9413-4fbab7a5dba1",
-    ip: "5.152.176.139",
-    name: "machine19",
-    persistent: "true",
-    status: "active",
-    type: "container",
-    uuid: "51eff35b-b044-4544-b202-f37557d4d932"
+    disk: 1da3a8ff-5bb4-4c6f-9413-4fbab7a5dba1,
+    ip: 5.152.176.139,
+    name: machine19,
+    persistent: true,
+    status: active,
+    type: container,
+    uuid: 51eff35b-b044-4544-b202-f37557d4d932
 '''
 
 # Imports
