@@ -483,8 +483,6 @@ EXAMPLES = '''
     name: mytemplate
     cluster: Default
     memory: 1GiB
-    high_availability: true
-    high_availability_priority: 50  # Available from Ansible 2.5
     cloud_init:
       nic_boot_protocol: static
       nic_ip_address: 10.34.60.86
@@ -531,7 +529,6 @@ EXAMPLES = '''
     name: windows2012R2_AD
     cluster: Default
     memory: 3GiB
-    high_availability: true
     sysprep:
       host_name: windowsad.example.com
       user_name: Administrator
