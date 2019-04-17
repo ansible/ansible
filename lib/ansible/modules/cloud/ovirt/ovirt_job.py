@@ -163,7 +163,7 @@ def attach_steps(module, entity_id, jobs_service):
                     steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED, succeeded=True)
                     changed = True
                 elif step_state == 'failed':
-                    steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED, succeeded=False)
+                    steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FAILED, succeeded=False)
                     changed = True
     return changed
 
@@ -211,7 +211,7 @@ def main():
                 changed = True
 
             elif state == 'failed':
-                jobs_service.job_service(job.id).end(status=otypes.JobStatus.FINISHED, succeeded=False)
+                jobs_service.job_service(job.id).end(status=otypes.JobStatus.FAILED, succeeded=False)
                 changed = True
 
         ret = {
