@@ -1315,6 +1315,10 @@ DISPLAY_ARGS_TO_STDOUT:
   - {key: display_args_to_stdout, section: defaults}
   type: boolean
   version_added: "2.1"
+  deprecated:
+    why: This can lead to involuntary security disclosures
+    version: "2.12"
+    alternatives: Instead of capturing this data at task start, use the return data's 'invocation' field, which is properly sanatized
 DISPLAY_SKIPPED_HOSTS:
   name: Show skipped results
   default: True
