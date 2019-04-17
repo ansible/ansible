@@ -97,14 +97,14 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: ID of the tag which is managed
-    returned: On success if tag is found.
+    description: ID of the job which is managed
+    returned: On success if job is found.
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 job:
-    description: "Dictionary of all the tag attributes. Job attributes can be found on your oVirt/RHV instance
+    description: "Dictionary of all the job attributes. Job attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/job."
-    returned: On success if tag is found.
+    returned: On success if job is found.
     type: dict
 '''
 
