@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql_idx - removed useless rows that remained after the previous refactoring
