@@ -29,7 +29,7 @@ options:
   template:
     description:
     - The name of the template.
-    type: list
+    type: str
     required: yes
   externalepg:
     description:
@@ -43,7 +43,7 @@ options:
   vrf:
     description:
     - The VRF associated to this ANP.
-    type: str
+    type: dict
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -113,7 +113,7 @@ def main():
     argument_spec.update(
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True),
-        externalepg=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
+        externalepg=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         display_name=dict(type='str'),
         vrf=dict(type='dict', options=mso_reference_spec()),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),

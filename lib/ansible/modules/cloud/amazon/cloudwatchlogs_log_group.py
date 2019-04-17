@@ -242,14 +242,14 @@ def main():
 
     if state == 'present':
         if found_log_group and module.params['overwrite'] is True:
-                changed = True
-                delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
-                found_log_group = create_log_group(client=logs,
-                                                   log_group_name=module.params['log_group_name'],
-                                                   kms_key_id=module.params['kms_key_id'],
-                                                   tags=module.params['tags'],
-                                                   retention=module.params['retention'],
-                                                   module=module)
+            changed = True
+            delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
+            found_log_group = create_log_group(client=logs,
+                                               log_group_name=module.params['log_group_name'],
+                                               kms_key_id=module.params['kms_key_id'],
+                                               tags=module.params['tags'],
+                                               retention=module.params['retention'],
+                                               module=module)
         elif not found_log_group:
             changed = True
             found_log_group = create_log_group(client=logs,

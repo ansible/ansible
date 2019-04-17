@@ -22,4 +22,9 @@
     state: absent
     path: '{{ output_dir }}/privatekey4'
 
+- name: Generate privatekey5 - standard
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey5'
+  register: publickey_gen
+
 - import_tasks: ../tests/validate.yml

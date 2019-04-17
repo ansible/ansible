@@ -22,10 +22,9 @@ DOCUMENTATION = """
       remote_user:
         description:
             - The user to execute as inside the container
-        default: The set user as per docker's configuration
         vars:
             - name: ansible_user
-            - name: ansible_docker4_user
+            - name: ansible_docker_user
       docker_extra_args:
         description:
             - Extra arguments to pass to the docker command line

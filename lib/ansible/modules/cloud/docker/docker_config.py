@@ -30,7 +30,6 @@ options:
   data:
     description:
       - The value of the config. Required when state is C(present).
-    required: false
     type: str
   data_is_b64:
     description:
@@ -38,29 +37,28 @@ options:
         decoded before being used.
       - To use binary C(data), it is better to keep it Base64 encoded and let it
         be decoded by this option.
-    default: false
     type: bool
+    default: no
   labels:
     description:
       - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
       - If new meta data is provided, or existing meta data is modified, the config will be updated by removing it and creating it again.
-    required: false
     type: dict
   force:
     description:
       - Use with state C(present) to always remove and recreate an existing config.
       - If I(true), an existing config will be replaced, even if it has not been changed.
-    default: false
     type: bool
+    default: no
   name:
     description:
       - The name of the config.
-    required: true
     type: str
+    required: yes
   state:
     description:
       - Set to C(present), if the config should exist, and C(absent), if it should not.
-    required: false
+    type: str
     default: present
     choices:
       - absent
@@ -71,7 +69,7 @@ extends_documentation_fragment:
   - docker.docker_py_2_documentation
 
 requirements:
-  - "docker >= 2.6.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.6.0"
   - "Docker API >= 1.30"
 
 author:
@@ -87,7 +85,7 @@ EXAMPLES = '''
     # If the file is JSON or binary, Ansible might modify it (because
     # it is first decoded and later re-encoded). Base64-encoding the
     # file directly after reading it prevents this to happen.
-    data: "{{ lookup('file', '/path/to/config/file') | base64 }}"
+    data: "{{ lookup('file', '/path/to/config/file') | b64encode }}"
     data_is_b64: true
     state: present
 
@@ -158,7 +156,7 @@ import hashlib
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic
@@ -264,7 +262,7 @@ class ConfigManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', choices=['absent', 'present'], default='present'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         data=dict(type='str'),
         data_is_b64=dict(type='bool', default=False),
         labels=dict(type='dict'),

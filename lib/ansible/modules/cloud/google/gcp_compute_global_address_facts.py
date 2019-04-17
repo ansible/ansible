@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a global address facts
+- name: " a global address facts"
   gcp_compute_global_address_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -77,7 +78,6 @@ items:
     description:
       description:
       - An optional description of this resource.
-      - Provide this property when you create the resource.
       returned: success
       type: str
     id:
@@ -98,8 +98,8 @@ items:
       type: str
     ipVersion:
       description:
-      - The IP Version that will be used by this address. Valid options are IPV4 or
-        IPV6. The default value is IPV4.
+      - The IP Version that will be used by this address. Valid options are `IPV4`
+        or `IPV6`. The default value is `IPV4`.
       returned: success
       type: str
     region:

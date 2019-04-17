@@ -47,8 +47,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the zone. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the zone. Use C(present) to create or update and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -86,13 +86,12 @@ EXAMPLES = '''
 
 - name: Create a DNS zone
   azure_rm_dnszone:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: example.com
-    state: present
 
 - name: Delete a DNS zone
   azure_rm_dnszone:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: example.com
     state: absent
 
@@ -104,7 +103,7 @@ state:
     returned: always
     type: dict
     sample: {
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup",
         "location": "global",
         "name": "Testing",
         "name_servers": [
@@ -115,7 +114,7 @@ state:
         ],
         "number_of_record_sets": 2,
         "type": "private",
-        "resolution_virtual_networks": ["/subscriptions/XXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/foo"]
+        "resolution_virtual_networks": ["/subscriptions/XXXX/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/foo"]
     }
 
 '''

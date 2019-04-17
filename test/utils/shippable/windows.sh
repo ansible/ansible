@@ -1,6 +1,6 @@
-#!/bin/bash -eux
+#!/usr/bin/env bash
 
-set -o pipefail
+set -o pipefail -eux
 
 declare -a args
 IFS='/:' read -ra args <<< "$1"
@@ -20,6 +20,7 @@ python_versions=(
     3.5
     3.6
     3.7
+    3.8
     2.7
 )
 

@@ -84,7 +84,7 @@ options:
   policy_package:
     description:
       - Package policy name to be installed.
-    type: bool
+    type: str
   targets:
     description:
       - Targets to install the package policy on.
@@ -225,6 +225,8 @@ def main():
         if code == 200:
             if needs_update(module, response):
                 code, response = update_access_rule(module, connection)
+                if code != 200:
+                    module.fail_json(msg=response)
                 if module.params['auto_publish_session']:
                     publish(connection)
 
@@ -237,7 +239,8 @@ def main():
                 pass
         elif code == 404:
             code, response = create_access_rule(module, connection)
-
+            if code != 200:
+                module.fail_json(msg=response)
             if module.params['auto_publish_session']:
                 publish(connection)
 
@@ -249,7 +252,8 @@ def main():
     else:
         if code == 200:
             code, response = delete_access_rule(module, connection)
-
+            if code != 200:
+                module.fail_json(msg=response)
             if module.params['auto_publish_session']:
                 publish(connection)
 
@@ -257,6 +261,7 @@ def main():
                     install_policy(connection, module.params['policy_package'], module.params['targets'])
 
             result['changed'] = True
+            result['checkpoint_access_rules'] = response
         elif code == 404:
             pass
 

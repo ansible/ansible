@@ -29,6 +29,8 @@ DOCUMENTATION = '''
 ---
 module: fmgr_ha
 version_added: "2.8"
+notes:
+    - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
@@ -37,59 +39,56 @@ short_description: Manages the High-Availability State of FortiManager Clusters 
 description: Change HA state or settings of FortiManager nodes (Standalone/Master/Slave).
 
 options:
-  host:
-    description:
-      - The FortiManager's address.
-    required: true
-  username:
-    description:
-      - The username to log into the FortiManager.
-    required: true
-  password:
-    description:
-      - The password associated with the username account.
-    required: false
   fmgr_ha_mode:
     description:
       - Sets the role of the FortiManager host for HA.
     required: false
     choices: ["standalone", "master", "slave"]
+
   fmgr_ha_peer_ipv4:
     description:
       - Sets the IPv4 address of a HA peer.
     required: false
+
   fmgr_ha_peer_ipv6:
     description:
       - Sets the IPv6 address of a HA peer.
     required: false
+
   fmgr_ha_peer_sn:
     description:
       - Sets the HA Peer Serial Number.
     required: false
+
   fmgr_ha_peer_status:
     description:
       - Sets the peer status to enable or disable.
     required: false
     choices: ["enable", "disable"]
+
   fmgr_ha_cluster_pw:
     description:
       - Sets the password for the HA cluster. Only required once. System remembers between HA mode switches.
     required: false
+
   fmgr_ha_cluster_id:
     description:
       - Sets the ID number of the HA cluster. Defaults to 1.
     required: false
     default: 1
+
   fmgr_ha_hb_threshold:
     description:
       - Sets heartbeat lost threshold (1-255).
     required: false
     default: 3
+
   fmgr_ha_hb_interval:
     description:
       - Sets the heartbeat interval (1-255).
     required: false
     default: 5
+
   fmgr_ha_file_quota:
     description:
       - Sets the File quota in MB (2048-20480).
@@ -101,39 +100,28 @@ options:
 EXAMPLES = '''
 - name: SET FORTIMANAGER HA NODE TO MASTER
   fmgr_ha:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     fmgr_ha_mode: "master"
+    fmgr_ha_cluster_pw: "fortinet"
+    fmgr_ha_cluster_id: "1"
 
 - name: SET FORTIMANAGER HA NODE TO SLAVE
   fmgr_ha:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     fmgr_ha_mode: "slave"
+    fmgr_ha_cluster_pw: "fortinet"
+    fmgr_ha_cluster_id: "1"
 
 - name: SET FORTIMANAGER HA NODE TO STANDALONE
   fmgr_ha:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     fmgr_ha_mode: "standalone"
 
 - name: ADD FORTIMANAGER HA PEER
   fmgr_ha:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     fmgr_ha_peer_ipv4: "192.168.1.254"
     fmgr_ha_peer_sn: "FMG-VM1234567890"
     fmgr_ha_peer_status: "enable"
 
 - name: CREATE CLUSTER ON MASTER
   fmgr_ha:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     fmgr_ha_mode: "master"
     fmgr_ha_cluster_pw: "fortinet"
     fmgr_ha_cluster_id: "1"
@@ -148,23 +136,31 @@ api_result:
   type: str
 """
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortimanager.fortimanager import FortiManagerHandler
+from ansible.module_utils.network.fortimanager.common import FMGBaseException
+from ansible.module_utils.network.fortimanager.common import FMGRCommon
+from ansible.module_utils.network.fortimanager.common import FMGRMethods
+from ansible.module_utils.network.fortimanager.common import DEFAULT_RESULT_OBJ
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-# Check for pyFMG lib
-try:
-    from pyFMG.fortimgr import FortiManager
-    HAS_PYFMGR = True
-except ImportError:
-    HAS_PYFMGR = False
 
-
-def fmgr_set_ha_mode(fmg, paramgram):
+def fmgr_set_ha_mode(fmgr, paramgram):
     """
-    This method is used set the HA mode of a FortiManager Node
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
+    # INIT A BASIC OBJECTS
+    response = DEFAULT_RESULT_OBJ
+    url = ""
+    datagram = {}
 
-    if paramgram["fmgr_ha_cluster_pw"] is not None and str.lower(paramgram["fmgr_ha_mode"]) != "standalone":
+    if paramgram["fmgr_ha_cluster_pw"] is not None and str(paramgram["fmgr_ha_mode"].lower()) != "standalone":
         datagram = {
             "mode": paramgram["fmgr_ha_mode"],
             "file-quota": paramgram["fmgr_ha_file_quota"],
@@ -173,7 +169,7 @@ def fmgr_set_ha_mode(fmg, paramgram):
             "password": paramgram["fmgr_ha_cluster_pw"],
             "clusterid": paramgram["fmgr_ha_cluster_id"]
         }
-    elif str.lower(paramgram["fmgr_ha_mode"]) == "standalone":
+    elif str(paramgram["fmgr_ha_mode"].lower()) == "standalone":
         datagram = {
             "mode": paramgram["fmgr_ha_mode"],
             "file-quota": paramgram["fmgr_ha_file_quota"],
@@ -183,27 +179,38 @@ def fmgr_set_ha_mode(fmg, paramgram):
         }
 
     url = '/cli/global/system/ha'
-    response = fmg.set(url, datagram)
+    response = fmgr.process_request(url, datagram, FMGRMethods.SET)
     return response
 
 
-def fmgr_get_ha_peer_list(fmg):
+def fmgr_get_ha_peer_list(fmgr):
     """
-    This method is used GET the HA PEERS of a FortiManager Node
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
+    # INIT A BASIC OBJECTS
+    response = DEFAULT_RESULT_OBJ
 
-    datagram = {
-        "method": "get"
-    }
+    datagram = {}
+    paramgram = {}
 
     url = '/cli/global/system/ha/peer/'
-    response = fmg.get(url, datagram)
+    response = fmgr.process_request(url, datagram, FMGRMethods.GET)
     return response
 
 
-def fmgr_set_ha_peer(fmg, paramgram):
+def fmgr_set_ha_peer(fmgr, paramgram):
     """
-    This method is used GET the HA PEERS of a FortiManager Node
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
 
     datagram = {
@@ -215,52 +222,12 @@ def fmgr_set_ha_peer(fmg, paramgram):
     }
 
     url = '/cli/global/system/ha/peer/'
-    response = fmg.set(url, datagram)
+    response = fmgr.process_request(url, datagram, FMGRMethods.SET)
     return response
-
-
-# ADDITIONAL COMMON FUNCTIONS
-# FUNCTION/METHOD FOR LOGGING OUT AND ANALYZING ERROR CODES
-def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_fail=True, logout_on_success=False):
-    """
-    THIS METHOD CONTROLS THE LOGOUT AND ERROR REPORTING AFTER AN METHOD OR FUNCTION RUNS
-    """
-
-    # VALIDATION ERROR (NO RESULTS, JUST AN EXIT)
-    if msg != "NULL" and len(results) == 0:
-        try:
-            fmg.logout()
-        except Exception:
-            pass
-        module.fail_json(msg=msg)
-
-    # SUBMISSION ERROR
-    if len(results) > 0:
-        if msg == "NULL":
-            try:
-                msg = results[1]['status']['message']
-            except Exception:
-                msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
-
-            if results[0] not in good_codes:
-                if logout_on_fail:
-                    fmg.logout()
-                    module.fail_json(msg=msg, **results[1])
-                else:
-                    return
-            else:
-                if logout_on_success:
-                    fmg.logout()
-                    module.exit_json(msg=msg, **results[1])
-                else:
-                    return
 
 
 def main():
     argument_spec = dict(
-        host=dict(required=True, type="str"),
-        password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
         fmgr_ha_mode=dict(required=False, type="str", choices=["standalone", "master", "slave"]),
         fmgr_ha_cluster_pw=dict(required=False, type="str", no_log=True),
         fmgr_ha_peer_status=dict(required=False, type="str", choices=["enable", "disable"]),
@@ -273,9 +240,14 @@ def main():
         fmgr_ha_cluster_id=dict(required=False, type="int", default=1)
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True,)
+    required_if = [
+        ['fmgr_ha_peer_ipv4', 'present', ['fmgr_ha_peer_sn', 'fmgr_ha_peer_status']],
+        ['fmgr_ha_peer_ipv6', 'present', ['fmgr_ha_peer_sn', 'fmgr_ha_peer_status']],
+        ['fmgr_ha_mode', 'master', ['fmgr_ha_cluster_pw', 'fmgr_ha_cluster_id']],
+        ['fmgr_ha_mode', 'slave', ['fmgr_ha_cluster_pw', 'fmgr_ha_cluster_id']],
+    ]
 
-    # VALIDATE PARAMS BEFORE ATTEMPTING TO CONNECT
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, required_if=required_if)
     paramgram = {
         "fmgr_ha_mode": module.params["fmgr_ha_mode"],
         "fmgr_ha_cluster_pw": module.params["fmgr_ha_cluster_pw"],
@@ -288,68 +260,45 @@ def main():
         "fmgr_ha_file_quota": module.params["fmgr_ha_file_quota"],
         "fmgr_ha_cluster_id": module.params["fmgr_ha_cluster_id"],
     }
+    module.paramgram = paramgram
+    fmgr = None
+    if module._socket_path:
+        connection = Connection(module._socket_path)
+        fmgr = FortiManagerHandler(connection, module)
+        fmgr.tools = FMGRCommon()
+    else:
+        module.fail_json(**FAIL_SOCKET_MSG)
+
     # INIT FLAGS AND COUNTERS
     get_ha_peers = 0
-    # validate required arguments are passed; not used in argument_spec to allow params to be called from provider
-    # check if params are set
-    if module.params["host"] is None or module.params["username"] is None:
-        module.fail_json(msg="Host and username are required for connection")
-    # CHECK IF LOGIN FAILED
-    fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"],)
-    response = fmg.login()
-    if response[1]['status']['code'] != 0:
-        module.fail_json(msg="Connection to FortiManager Failed")
-    else:
-        # START SESSION LOGIC
-        # IF THE PEER SN DEFINED, BUT THE IPS ARE NOT, THEN QUIT
-        if paramgram["fmgr_ha_peer_sn"] is not None:
-            # CHANGE GET_HA_PEERS TO SHOW INTENT TO EDIT PEERS
+    results = DEFAULT_RESULT_OBJ
+    try:
+        if any(v is not None for v in (paramgram["fmgr_ha_peer_sn"], paramgram["fmgr_ha_peer_ipv4"],
+                                       paramgram["fmgr_ha_peer_ipv6"], paramgram["fmgr_ha_peer_status"])):
             get_ha_peers = 1
-            # DOUBLE CHECK THAT THE REST OF THE NEEDED PARAMETERS ARE THERE
-            if paramgram["fmgr_ha_peer_ipv4"] is None and paramgram["fmgr_ha_peer_ipv6"] is None:
-                fmgr_logout(fmg, module, msg="HA Peer Serial Number is defined but the "
-                                             "IPv4 and IPv6 fields are empty."
-                                             " Fill in the IPv4 or v6 parameters in the playbook")
-
-        # IF THE PEER IPS ARE DEFINED, BUT NOT THE SERIAL NUMBER, THEN QUIT
-        if paramgram["fmgr_ha_peer_ipv4"] is not None or paramgram["fmgr_ha_peer_ipv6"] is not None:
-            # CHANGE GET_HA_PEERS TO SHOW INTENT TO EDIT PEERS
-            get_ha_peers = 1
-            # DOUBLE CHECK THAT THE REST OF THE NEEDED PARAMETERS ARE THERE
-            if paramgram["fmgr_ha_peer_sn"] is None:
-                fmgr_logout(fmg, module, msg="HA Peer IP Address is defined, but not the Peer Serial Number. "
-                                             "Fill in the SN parameter in the playbook.")
-
-        # IF THE PEER STATUS IS SET, BUT THE SERIAL NUMBER OR IP FIELDS AREN'T THERE, THEN EXIT
-        if paramgram["fmgr_ha_peer_status"] is not None:
-            # CHANGE GET_HA_PEERS TO SHOW INTENT TO EDIT PEERS
-            get_ha_peers = 1
-            # DOUBLE CHECK THAT THE REST OF THE NEEDED PARAMETERS ARE THERE
-            if paramgram["fmgr_ha_peer_ipv4"] is None and paramgram["fmgr_ha_peer_sn"] is None:
-                if paramgram["fmgr_ha_peer_sn"] is None and paramgram["fmgr_ha_peer_ipv6"] is None:
-                    fmgr_logout(fmg, module, msg="HA Peer Status was defined, but nothing "
-                                                 "to identify the peer was set. "
-                                                 "Fill in one of"
-                                                 " three parameters peer_ipv4 or v6 or serial_num")
-
+    except Exception as err:
+        raise FMGBaseException(err)
+    try:
         # IF HA MODE IS NOT NULL, SWITCH THAT
         if paramgram["fmgr_ha_mode"] is not None:
             if (str.lower(paramgram["fmgr_ha_mode"]) != "standalone" and paramgram["fmgr_ha_cluster_pw"] is not None)\
                     or str.lower(paramgram["fmgr_ha_mode"]) == "standalone":
-                results = fmgr_set_ha_mode(fmg, paramgram)
-                if results[0] != 0:
-                    fmgr_logout(fmg, module, results=results, good_codes=[0],
-                                msg="Failed to edit HA configuration the HA Peer")
-            elif str.lower(paramgram["fmgr_ha_mode"]) != "standalone" and \
-                    paramgram["fmgr_ha_mode"] is not None and paramgram["fmgr_ha_cluster_pw"] is None:
-                fmgr_logout(fmg, module, msg="If setting HA Mode of MASTER or SLAVE, "
-                                             "you must specify a cluster password")
+                results = fmgr_set_ha_mode(fmgr, paramgram)
+                fmgr.govern_response(module=module, results=results, stop_on_success=False,
+                                     ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
 
+            elif str.lower(paramgram["fmgr_ha_mode"]) != "standalone" and\
+                    paramgram["fmgr_ha_mode"] is not None and\
+                    paramgram["fmgr_ha_cluster_pw"] is None:
+                module.exit_json(msg="If setting HA Mode of MASTER or SLAVE, you must specify a cluster password")
+
+    except Exception as err:
+        raise FMGBaseException(err)
         # IF GET_HA_PEERS IS ENABLED, LETS PROCESS THE PEERS
-
+    try:
         if get_ha_peers == 1:
             # GET THE CURRENT LIST OF PEERS FROM THE NODE
-            peers = fmgr_get_ha_peer_list(fmg)
+            peers = fmgr_get_ha_peer_list(fmgr)
             # GET LENGTH OF RETURNED PEERS LIST AND ADD ONE FOR THE NEXT ID
             paramgram["next_peer_id"] = len(peers[1]) + 1
             # SET THE ACTUAL NUMBER OF PEERS
@@ -374,8 +323,8 @@ def main():
                         if sn_compare == paramgram["fmgr_ha_peer_sn"]:
                             paramgram["peer_id"] = peer_loopcount
                             paramgram["next_peer_id"] = paramgram["peer_id"]
-                    except Exception:
-                        pass
+                    except Exception as err:
+                        raise FMGBaseException(err)
                     # ADVANCE THE LOOP AND REPEAT UNTIL DONE
                     peer_loopcount += 1
 
@@ -385,19 +334,22 @@ def main():
 
             # IF THE PEER STATUS IS ENABLE, USE THE next_peer_id IN THE API CALL FOR THE ID
             if paramgram["fmgr_ha_peer_status"] == "enable":
-                results = fmgr_set_ha_peer(fmg, paramgram)
-                if results[0] != 0:
-                    fmgr_logout(fmg, module, results=results, good_codes=[0], msg="Failed to Enable the HA Peer")
+                results = fmgr_set_ha_peer(fmgr, paramgram)
+                fmgr.govern_response(module=module, results=results, stop_on_success=True,
+                                     ansible_facts=fmgr.construct_ansible_facts(results,
+                                                                                module.params, paramgram))
 
             # IF THE PEER STATUS IS DISABLE, WE HAVE TO HANDLE THAT A BIT DIFFERENTLY
             # JUST USING TWO DIFFERENT peer_id 's HERE
             if paramgram["fmgr_ha_peer_status"] == "disable":
-                results = fmgr_set_ha_peer(fmg, paramgram)
-                if results[0] != 0:
-                    fmgr_logout(fmg, module, results=results, good_codes=[0], msg="Failed to Disable the HA Peer")
+                results = fmgr_set_ha_peer(fmgr, paramgram)
+                fmgr.govern_response(module=module, results=results, stop_on_success=True,
+                                     ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
 
-        fmg.logout()
-        return module.exit_json(**results[1])
+    except Exception as err:
+        raise FMGBaseException(err)
+
+    return module.exit_json(**results[1])
 
 
 if __name__ == "__main__":

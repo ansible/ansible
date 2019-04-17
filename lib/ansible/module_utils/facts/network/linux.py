@@ -220,7 +220,7 @@ class LinuxNetwork(Network):
                             default_ipv4['broadcast'] = broadcast
                             default_ipv4['netmask'] = netmask
                             default_ipv4['network'] = network
-                            # NOTE: macadress is ref from outside scope
+                            # NOTE: macaddress is ref from outside scope
                             default_ipv4['macaddress'] = macaddress
                             default_ipv4['mtu'] = interfaces[device]['mtu']
                             default_ipv4['type'] = interfaces[device].get("type", "unknown")

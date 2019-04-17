@@ -18,7 +18,6 @@ Whereas classically ansible will execute tasks in its host loop against multiple
 In your playbook steps we'll typically be using the following pattern for provisioning steps::
 
     - hosts: localhost
-      connection: local
       gather_facts: False
       tasks:
         - ...
@@ -68,7 +67,6 @@ instance.::
     # demo_setup.yml
 
     - hosts: localhost
-      connection: local
       gather_facts: False
 
       tasks:
@@ -94,7 +92,6 @@ From this, we'll use the add_host module to dynamically create a host group cons
     # demo_setup.yml
 
     - hosts: localhost
-      connection: local
       gather_facts: False
 
       tasks:

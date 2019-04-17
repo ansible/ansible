@@ -31,7 +31,7 @@ import re
 import traceback
 
 from ansible.module_utils.ansible_release import __version__
-from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.basic import missing_required_lib, env_fallback
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.six import string_types, binary_type, text_type
@@ -117,7 +117,8 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError as e:
         module.fail_json(msg="Couldn't connect to AWS: %s" % to_native(e))
-    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError, botocore.exceptions.NoCredentialsError) as e:
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError,
+            botocore.exceptions.NoCredentialsError, botocore.exceptions.ConfigParseError) as e:
         module.fail_json(msg=to_native(e))
     except botocore.exceptions.NoRegionError as e:
         module.fail_json(msg="The %s module requires a region and none was found in configuration, "
@@ -176,6 +177,7 @@ def boto_exception(err):
 
 def aws_common_argument_spec():
     return dict(
+        debug_botocore_endpoint_logs=dict(fallback=(env_fallback, ['ANSIBLE_DEBUG_BOTOCORE_LOGS']), default=False, type='bool'),
         ec2_url=dict(),
         aws_secret_key=dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
         aws_access_key=dict(aliases=['ec2_access_key', 'access_key']),
@@ -559,10 +561,11 @@ def _hashable_policy(policy, policy_list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
     elif isinstance(policy, string_types) or isinstance(policy, binary_type):
+        policy = to_text(policy)
         # convert root account ARNs to just account IDs
         if policy.startswith('arn:aws:iam::') and policy.endswith(':root'):
             policy = policy.split(':')[4]
-        return [(to_text(policy))]
+        return [policy]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
         sorted_keys.sort()

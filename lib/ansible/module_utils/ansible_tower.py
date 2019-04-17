@@ -47,7 +47,7 @@ def tower_auth_config(module):
     '''tower_auth_config attempts to load the tower-cli.cfg file
     specified from the `tower_config_file` parameter. If found,
     if returns the contents of the file as a dictionary, else
-    it will attempt to fetch values from the module pararms and
+    it will attempt to fetch values from the module params and
     only pass those values that have been set.
     '''
     config_file = module.params.pop('tower_config_file', None)
@@ -70,7 +70,7 @@ def tower_auth_config(module):
         password = module.params.pop('tower_password', None)
         if password:
             auth_config['password'] = password
-        verify_ssl = module.params.pop('tower_verify_ssl', None)
+        verify_ssl = module.params.pop('validate_certs', None)
         if verify_ssl is not None:
             auth_config['verify_ssl'] = verify_ssl
         return auth_config
@@ -92,7 +92,7 @@ class TowerModule(AnsibleModule):
             tower_host=dict(),
             tower_username=dict(),
             tower_password=dict(no_log=True),
-            tower_verify_ssl=dict(type='bool', default=True),
+            validate_certs=dict(type='bool', aliases=['tower_verify_ssl']),
             tower_config_file=dict(type='path'),
         )
         args.update(argument_spec)
@@ -102,7 +102,7 @@ class TowerModule(AnsibleModule):
             ('tower_config_file', 'tower_host'),
             ('tower_config_file', 'tower_username'),
             ('tower_config_file', 'tower_password'),
-            ('tower_config_file', 'tower_verify_ssl'),
+            ('tower_config_file', 'validate_certs'),
         ))
 
         super(TowerModule, self).__init__(argument_spec=args, **kwargs)

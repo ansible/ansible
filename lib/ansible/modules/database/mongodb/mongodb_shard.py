@@ -190,7 +190,7 @@ def shard_find(client, shard):
     else:
         s = shard
     for shard in client["config"].shards.find({"_id": s}):
-                return shard
+        return shard
     return False
 
 
@@ -289,7 +289,7 @@ def main():
         try:
             client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
         except Exception as excep:
-            if "not authorized on" in str(excep):
+            if "not authorized on" in str(excep) or "command listDatabases requires authentication" in str(excep):
                 if login_user is not None and login_password is not None:
                     client.admin.authenticate(login_user, login_password, source=login_database)
                 else:

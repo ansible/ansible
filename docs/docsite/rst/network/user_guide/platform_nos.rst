@@ -5,7 +5,7 @@ NOS Platform Options
 ***************************************
 
 Extreme NOS Ansible modules only support CLI connections today. ``httpapi`` modules may be added in future.
-This page offers details on how to use ``network_cli`` on NOS in Ansible >= 2.7.
+This page offers details on how to use ``network_cli`` on NOS in Ansible.
 
 .. contents:: Topics
 
@@ -36,8 +36,8 @@ Connections Available
 
 NOS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 
-Using CLI in Ansible >= 2.7
-================================================================================
+Using CLI in Ansible
+====================
 
 Example CLI ``group_vars/nos.yml``
 ----------------------------------

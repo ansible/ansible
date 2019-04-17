@@ -40,8 +40,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the network interface. Use 'present' to create or update an interface and
-              'absent' to delete an interface.
+            - Assert the state of the network interface. Use C(present) to create or update an interface and
+              C(absent) to delete an interface.
         default: present
         choices:
             - absent
@@ -158,6 +158,11 @@ options:
                     - Whether the ip configuration is the primary one in the list.
                 type: bool
                 default: 'no'
+            application_security_groups:
+                description:
+                    - List of application security groups in which the IP configuration is included.
+                    - Element of the list could be a resource id of application security group, or dict of C(resource_group) and C(name).
+                version_added: 2.8
         version_added: 2.5
     enable_accelerated_networking:
         description:
@@ -167,7 +172,8 @@ options:
         default: False
     create_with_security_group:
         description:
-            - Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
+            - Specifies whether a security group should be be created with the NIC.
+            - If this flag set to C(True) and no C(security_group) set, a default security group will be created.
         type: bool
         version_added: 2.6
         default: True
@@ -214,7 +220,7 @@ EXAMPLES = '''
     - name: Create a network interface with minimal parameters
       azure_rm_networkinterface:
         name: nic001
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_network: vnet001
         subnet_name: subnet001
         ip_configurations:
@@ -225,7 +231,7 @@ EXAMPLES = '''
     - name: Create a network interface with private IP address only (no Public IP)
       azure_rm_networkinterface:
         name: nic001
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_network: vnet001
         subnet_name: subnet001
         create_with_security_group: False
@@ -236,12 +242,13 @@ EXAMPLES = '''
     - name: Create a network interface for use in a Windows host (opens RDP port) with custom RDP port
       azure_rm_networkinterface:
         name: nic002
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_network: vnet001
         subnet_name: subnet001
         os_type: Windows
         rdp_port: 3399
-        security_group: "/subscriptions/XXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/nsg001"
+        security_group: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurit
+                         yGroups/nsg001"
         ip_configurations:
           - name: ipconfig1
             public_ip_address_name: publicip001
@@ -250,7 +257,7 @@ EXAMPLES = '''
     - name: Create a network interface using existing security group and public IP
       azure_rm_networkinterface:
         name: nic003
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_network: vnet001
         subnet_name: subnet001
         security_group: secgroup001
@@ -262,7 +269,7 @@ EXAMPLES = '''
     - name: Create a network with mutilple ip configurations
       azure_rm_networkinterface:
         name: nic004
-        resource_group: Testing
+        resource_group: myResourceGroup
         subnet_name: subnet001
         virtual_network: vnet001
         security_group:
@@ -281,7 +288,7 @@ EXAMPLES = '''
     - name: Create a network interface in accelerated networking mode
       azure_rm_networkinterface:
         name: nic005
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_network_name: vnet001
         subnet_name: subnet001
         enable_accelerated_networking: True
@@ -289,7 +296,7 @@ EXAMPLES = '''
     - name: Create a network interface with IP forwarding
       azure_rm_networkinterface:
         name: nic001
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_network: vnet001
         subnet_name: subnet001
         ip_forwarding: True
@@ -301,7 +308,7 @@ EXAMPLES = '''
     - name: Create a network interface with dns servers
       azure_rm_networkinterface:
         name: nic009
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_network: vnet001
         subnet_name: subnet001
         dns_servers:
@@ -309,7 +316,7 @@ EXAMPLES = '''
 
     - name: Delete network interface
       azure_rm_networkinterface:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: nic003
         state: absent
 '''
@@ -328,13 +335,14 @@ state:
         },
         "enable_ip_forwarding": false,
         "etag": 'W/"be115a43-2148-4545-a324-f33ad444c926"',
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic003",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nic003",
         "ip_configurations": [{
             "name": "default",
             "private_ip_address": "10.1.0.10",
             "private_ip_allocation_method": "Static",
             "public_ip_address": {
-                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/publicip001",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresse
+                       s/publicip001",
                 "name": "publicip001"
             },
             "subnet": {},
@@ -344,7 +352,7 @@ state:
         "mac_address": null,
         "name": "nic003",
         "network_security_group": {
-            "id": "/subscriptions//XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/nsg001",
+            "id": "/subscriptions//xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/nsg001",
             "name": "nsg001"
         },
         "primary": null,
@@ -355,13 +363,13 @@ state:
 '''
 
 try:
-    from msrestazure.tools import parse_resource_id, resource_id
+    from msrestazure.tools import parse_resource_id, resource_id, is_valid_resource_id
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name, format_resource_id
 from ansible.module_utils._text import to_native
 
 
@@ -389,7 +397,9 @@ def nic_to_dict(nic):
                 id=config.public_ip_address.id,
                 name=azure_id_to_dict(config.public_ip_address.id).get('publicIPAddresses'),
                 public_ip_allocation_method=config.public_ip_address.public_ip_allocation_method
-            ) if config.public_ip_address else None
+            ) if config.public_ip_address else None,
+            application_security_groups=([asg.id for asg in config.application_security_groups]
+                                         if config.application_security_groups else None)
         ) for config in nic.ip_configurations
     ]
     return dict(
@@ -426,7 +436,8 @@ ip_configuration_spec = dict(
     public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
     public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
     load_balancer_backend_address_pools=dict(type='list'),
-    primary=dict(type='bool', default=False)
+    primary=dict(type='bool', default=False),
+    application_security_groups=dict(type='list', elements='raw')
 )
 
 
@@ -511,6 +522,25 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         # if not set the security group name, use nic name for default
         self.security_group = self.parse_resource_to_dict(self.security_group or self.name)
+
+        # if application security groups set, convert to resource id format
+        if self.ip_configurations:
+            for config in self.ip_configurations:
+                if config.get('application_security_groups'):
+                    asgs = []
+                    for asg in config['application_security_groups']:
+                        asg_resource_id = asg
+                        if isinstance(asg, str) and (not is_valid_resource_id(asg)):
+                            asg = self.parse_resource_to_dict(asg)
+                        if isinstance(asg, dict):
+                            asg_resource_id = format_resource_id(val=asg['name'],
+                                                                 subscription_id=self.subscription_id,
+                                                                 namespace='Microsoft.Network',
+                                                                 types='applicationSecurityGroups',
+                                                                 resource_group=asg['resource_group'])
+                        asgs.append(asg_resource_id)
+                    if len(asgs) > 0:
+                        config['application_security_groups'] = asgs
 
         if self.state == 'present' and not self.ip_configurations:
             # construct the ip_configurations array for compatible
@@ -631,7 +661,10 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         load_balancer_backend_address_pools=([self.network_models.BackendAddressPool(id=self.backend_addr_pool_id(bap_id))
                                                               for bap_id in ip_config.get('load_balancer_backend_address_pools')]
                                                              if ip_config.get('load_balancer_backend_address_pools') else None),
-                        primary=ip_config.get('primary')
+                        primary=ip_config.get('primary'),
+                        application_security_groups=([self.network_models.ApplicationSecurityGroup(id=asg_id)
+                                                      for asg_id in ip_config.get('application_security_groups')]
+                                                     if ip_config.get('application_security_groups') else None)
                     ) for ip_config in self.ip_configurations
                 ]
 
@@ -736,6 +769,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             load_balancer_backend_address_pools=(set([to_native(self.backend_addr_pool_id(id))
                                                       for id in item.get('load_balancer_backend_address_pools')])
                                                  if item.get('load_balancer_backend_address_pools') else None),
+            application_security_groups=(set([to_native(asg_id) for asg_id in item.get('application_security_groups')])
+                                         if item.get('application_security_groups') else None),
             name=to_native(item.get('name'))
         )) for item in raw]
         return set(configurations)

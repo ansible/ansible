@@ -53,14 +53,15 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a instance group manager facts
+- name: " a instance group manager facts"
   gcp_compute_instance_group_manager_facts:
-      zone: us-west1-a
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    zone: us-west1-a
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -161,14 +162,14 @@ items:
       description:
       - The instance group being managed.
       returned: success
-      type: str
+      type: dict
     instanceTemplate:
       description:
       - The instance template that is specified for this managed instance group. The
         group uses this template to create all new instances in the managed instance
         group.
       returned: success
-      type: str
+      type: dict
     name:
       description:
       - The name of the managed instance group. The name must be 1-63 characters long,

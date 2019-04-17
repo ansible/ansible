@@ -44,7 +44,11 @@ options:
     type: str
     choices: [ trusted, untrusted ]
 notes:
-  - The PowerShellGet module (version 1.6.0 or newer) and the NuGet package provider (version 2.8.5.201 or newer) are required.
+  - PowerShell modules needed
+      - PowerShellGet >= 1.6.0
+      - PackageManagement >= 1.1.7
+  - PowerShell package provider needed
+      - NuGet >= 2.8.5.201
   - See the examples on how to update the NuGet package provider.
   - You can not use C(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
 seealso:
@@ -53,10 +57,10 @@ author:
 - Wojciech Sciesinski (@it-praktyk)
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 ---
 - name: Ensure the required NuGet package provider version is installed
-  win_shell: Install-PackageProvider -Name NuGet -RequiredVersion 2.8.5.201 -Force
+  win_shell: Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force
 
 - name: Add a PowerShell module and register a repository
   win_psrepository:
@@ -70,5 +74,5 @@ EXAMPLES = r'''
     state: absent
 '''
 
-RETURN = r'''
+RETURN = '''
 '''

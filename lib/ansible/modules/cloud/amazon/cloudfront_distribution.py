@@ -1411,7 +1411,7 @@ class CloudFrontValidationManager(object):
                                                                           Comment=comment))
             oai = client.create_cloud_front_origin_access_identity(**cfoai_config)['CloudFrontOriginAccessIdentity']['Id']
         except Exception as e:
-                self.module.fail_json_aws(e, msg="Couldn't create Origin Access Identity for id %s" % origin['id'])
+            self.module.fail_json_aws(e, msg="Couldn't create Origin Access Identity for id %s" % origin['id'])
         return "origin-access-identity/cloudfront/%s" % oai
 
     def validate_origin(self, client, existing_config, origin, default_origin_path):

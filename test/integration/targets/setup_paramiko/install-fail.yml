@@ -1,0 +1,7 @@
+- name: Install Paramiko
+  fail:
+    msg: "Install of Paramiko on distribution '{{ ansible_distribution }}' with major version '{{ ansible_distribution_major_version }}'
+    with package manager '{{ ansible_pkg_mgr }}' on Python {{ ansible_python.version.major }} has not been implemented.
+    Use native OS packages if available, otherwise use pip.
+    Be sure to uninstall automatically installed dependencies when possible.
+    Do not implement a generic fallback to pip, as that would allow distributions not yet configured to go undetected."

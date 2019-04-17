@@ -201,14 +201,8 @@ import re
 import sys
 import inspect
 
-try:
-    # python2
-    import ConfigParser as cp
-except ImportError:
-    # python3
-    import configparser as cp
-
 from os.path import expanduser
+from ansible.module_utils.six.moves import configparser as cp
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 HAS_AZURE = True
@@ -354,13 +348,13 @@ class AzureRM(object):
                 self.credentials.get('client_id') is not None and \
                 self.credentials.get('tenant') is not None:
 
-                self.azure_credentials = self.acquire_token_with_username_password(
-                    self._adfs_authority_url,
-                    self._resource,
-                    self.credentials['ad_user'],
-                    self.credentials['password'],
-                    self.credentials['client_id'],
-                    self.credentials['tenant'])
+            self.azure_credentials = self.acquire_token_with_username_password(
+                self._adfs_authority_url,
+                self._resource,
+                self.credentials['ad_user'],
+                self.credentials['password'],
+                self.credentials['client_id'],
+                self.credentials['tenant'])
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
@@ -813,7 +807,7 @@ class AzureInventory(object):
             sys.exit("Error: fetching instanceview for host {0} - {1}".format(name, str(exc)))
 
         return next((s.code.replace('PowerState/', '')
-                    for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
+                     for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
 
     def _add_host(self, vars):
 

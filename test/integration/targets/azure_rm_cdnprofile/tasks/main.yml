@@ -143,6 +143,25 @@
       - output.changed
       - output.id
 
+- name: Get facts of a Azure CDN endpoint
+  azure_rm_cdnendpoint_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ endpointname }}"
+      profile_name: "{{ cdnprofilename }}"
+  register: facts
+
+- name: Assert facts output
+  assert:
+    that:
+      - facts['cdnendpoints'] | length == 1
+      - facts['cdnendpoints'][0]['id']
+      - facts['cdnendpoints'][0]['name']
+      - facts['cdnendpoints'][0]['profile_name']
+      - facts['cdnendpoints'][0]['origin']
+      - facts['cdnendpoints'][0]['location']
+      - facts['cdnendpoints'][0]['provisioning_state']
+      - facts['cdnendpoints'][0]['resource_state']
+
 - name: Create a Azure CDN endpoint(idempotent)
   azure_rm_cdnendpoint:
       resource_group: "{{ resource_group }}"

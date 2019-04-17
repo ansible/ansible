@@ -428,27 +428,27 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a dataset
   gcp_bigquery_dataset:
-      name: example_dataset
-      dataset_reference:
-        dataset_id: example_dataset
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: example_dataset
+    dataset_reference:
+      dataset_id: example_dataset
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: dataset
 
 - name: create a table
   gcp_bigquery_table:
-      name: example_table
-      dataset: example_dataset
-      table_reference:
-        dataset_id: example_dataset
-        project_id: "test_project"
-        table_id: example_table
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: example_table
+    dataset: example_dataset
+    table_reference:
+      dataset_id: example_dataset
+      project_id: test_project
+      table_id: example_table
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -1254,22 +1254,10 @@ class TableStreamingbuffer(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {
-                u'estimatedBytes': self.request.get('estimated_bytes'),
-                u'estimatedRows': self.request.get('estimated_rows'),
-                u'oldestEntryTime': self.request.get('oldest_entry_time'),
-            }
-        )
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {
-                u'estimatedBytes': self.request.get(u'estimatedBytes'),
-                u'estimatedRows': self.request.get(u'estimatedRows'),
-                u'oldestEntryTime': self.request.get(u'oldestEntryTime'),
-            }
-        )
+        return remove_nones_from_dict({})
 
 
 class TableSchema(object):

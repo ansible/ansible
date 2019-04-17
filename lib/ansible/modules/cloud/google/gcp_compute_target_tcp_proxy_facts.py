@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a target tcp proxy facts
+- name: " a target tcp proxy facts"
   gcp_compute_target_tcp_proxy_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -99,7 +100,7 @@ items:
       description:
       - A reference to the BackendService resource.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################

@@ -114,6 +114,10 @@ class CallbackModule(CallbackBase):
                                   'variable.')
 
     def send_msg(self, attachments):
+        headers = {
+            'Content-type': 'application/json',
+        }
+
         payload = {
             'channel': self.channel,
             'username': self.username,
@@ -127,7 +131,8 @@ class CallbackModule(CallbackBase):
         self._display.debug(data)
         self._display.debug(self.webhook_url)
         try:
-            response = open_url(self.webhook_url, data=data, validate_certs=self.validate_certs)
+            response = open_url(self.webhook_url, data=data, validate_certs=self.validate_certs,
+                                headers=headers)
             return response.read()
         except Exception as e:
             self._display.warning(u'Could not submit message to Slack: %s' %
@@ -202,7 +207,7 @@ class CallbackModule(CallbackBase):
         hosts = sorted(stats.processed.keys())
 
         t = prettytable.PrettyTable(['Host', 'Ok', 'Changed', 'Unreachable',
-                                     'Failures'])
+                                     'Failures', 'Rescued', 'Ignored'])
 
         failures = False
         unreachable = False
@@ -216,7 +221,7 @@ class CallbackModule(CallbackBase):
                 unreachable = True
 
             t.add_row([h] + [s[k] for k in ['ok', 'changed', 'unreachable',
-                                            'failures']])
+                                            'failures', 'rescued', 'ignored']])
 
         attachments = []
         msg_items = [

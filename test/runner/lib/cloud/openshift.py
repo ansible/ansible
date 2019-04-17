@@ -9,6 +9,7 @@ import time
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -179,7 +180,6 @@ class OpenShiftCloudProvider(CloudProvider):
             return
 
         client = HttpClient(self.args, always=True, insecure=True)
-        endpoint = endpoint
 
         for dummy in range(1, 30):
             display.info('Waiting for OpenShift service: %s' % endpoint, verbosity=1)
@@ -212,13 +212,14 @@ class OpenShiftCloudProvider(CloudProvider):
 
 class OpenShiftCloudEnvironment(CloudEnvironment):
     """OpenShift cloud environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        changes = dict(
+        env_vars = dict(
             K8S_AUTH_KUBECONFIG=self.config_path,
         )
 
-        env.update(changes)
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+        )

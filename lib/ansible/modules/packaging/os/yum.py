@@ -197,6 +197,12 @@ options:
     type: bool
     default: "yes"
     version_added: "2.8"
+  download_dir:
+    description:
+      - Specifies an alternate directory to store packages.
+      - Has an effect only if I(download_only) is specified.
+    type: str
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -703,7 +709,6 @@ class YumModule(YumDnf):
         # setting system proxy environment and saving old, if exists
         my = self.yum_base()
         namepass = ""
-        proxy_url = ""
         scheme = ["http", "https"]
         old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
         try:
@@ -726,10 +731,7 @@ class YumModule(YumDnf):
                         )
                 else:
                     for item in scheme:
-                        os.environ[item + "_proxy"] = re.sub(
-                            r"(http://)",
-                            r"\g<1>", proxy_url
-                        )
+                        os.environ[item + "_proxy"] = my.conf.proxy
             yield
         except yum.Errors.YumBaseError:
             raise
@@ -812,6 +814,8 @@ class YumModule(YumDnf):
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
+        else:
+            res['changes'] = dict(installed=pkgs)
 
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
@@ -1047,6 +1051,8 @@ class YumModule(YumDnf):
         if pkgs:
             if self.module.check_mode:
                 self.module.exit_json(changed=True, results=res['results'], changes=dict(removed=pkgs))
+            else:
+                res['changes'] = dict(removed=pkgs)
 
             # run an actual yum transaction
             if self.autoremove:
@@ -1277,38 +1283,38 @@ class YumModule(YumDnf):
                     self.module.fail_json(**res)
 
         # check_mode output
-        if self.module.check_mode:
-            to_update = []
-            for w in will_update:
-                if w.startswith('@'):
-                    to_update.append((w, None))
-                elif w not in updates:
-                    other_pkg = will_update_from_other_package[w]
-                    to_update.append(
-                        (
-                            w,
-                            'because of (at least) %s-%s.%s from %s' % (
-                                other_pkg,
-                                updates[other_pkg]['version'],
-                                updates[other_pkg]['dist'],
-                                updates[other_pkg]['repo']
-                            )
+        to_update = []
+        for w in will_update:
+            if w.startswith('@'):
+                to_update.append((w, None))
+            elif w not in updates:
+                other_pkg = will_update_from_other_package[w]
+                to_update.append(
+                    (
+                        w,
+                        'because of (at least) %s-%s.%s from %s' % (
+                            other_pkg,
+                            updates[other_pkg]['version'],
+                            updates[other_pkg]['dist'],
+                            updates[other_pkg]['repo']
                         )
                     )
-                else:
-                    to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
-
-            if self.update_only:
-                res['changes'] = dict(installed=[], updated=to_update)
+                )
             else:
-                res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+                to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
+        if self.update_only:
+            res['changes'] = dict(installed=[], updated=to_update)
+        else:
+            res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+
+        if obsoletes:
+            res['obsoletes'] = obsoletes
+
+        # return results before we actually execute stuff
+        if self.module.check_mode:
             if will_update or pkgs['install']:
                 res['changed'] = True
-
-            if obsoletes:
-                res['obsoletes'] = obsoletes
-
             return res
 
         # run commands
@@ -1343,9 +1349,6 @@ class YumModule(YumDnf):
 
         if rc:
             res['failed'] = True
-
-        if obsoletes:
-            res['obsoletes'] = obsoletes
 
         return res
 
@@ -1387,6 +1390,9 @@ class YumModule(YumDnf):
 
         if self.download_only:
             self.yum_basecmd.extend(['--downloadonly'])
+
+            if self.download_dir:
+                self.yum_basecmd.extend(['--downloaddir=%s' % self.download_dir])
 
         if self.installroot != '/':
             # do not setup installroot by default, because of error
@@ -1548,6 +1554,23 @@ class YumModule(YumDnf):
                         repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
                         if self.installroot != '/':
                             repoquery.extend(['--installroot', self.installroot])
+
+                        if self.disable_excludes:
+                            # repoquery does not support --disableexcludes,
+                            # so make a temp copy of yum.conf and get rid of the 'exclude=' line there
+                            try:
+                                with open('/etc/yum.conf', 'r') as f:
+                                    content = f.readlines()
+
+                                tmp_conf_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, delete=False)
+                                self.module.add_cleanup_file(tmp_conf_file.name)
+
+                                tmp_conf_file.writelines([c for c in content if not c.startswith("exclude=")])
+                                tmp_conf_file.close()
+                            except Exception as e:
+                                self.module.fail_json(msg="Failure setting up repoquery: %s" % to_native(e))
+
+                            repoquery.extend(['-c', tmp_conf_file.name])
 
             results = self.ensure(repoquery)
             if repoquery:

@@ -1,11 +1,12 @@
 #!/usr/bin/python
-#
-# (c) Quentin Stafford-Fraser 2015, with contributions gratefully acknowledged from:
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Quentin Stafford-Fraser, with contributions gratefully acknowledged from:
 #     * Andy Baker
 #     * Federico Tarantini
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
+
 # Create a Webfaction application using Ansible and the Webfaction API
 #
 # Valid application types can be found by looking here:
@@ -183,7 +184,7 @@ def main():
             )
 
     else:
-        module.fail_json(msg="Unknown state specified: {}".format(app_state))
+        module.fail_json(msg="Unknown state specified: {0}".format(app_state))
 
     module.exit_json(
         changed=True,

@@ -27,7 +27,8 @@ from units.compat import mock
 
 from ansible.module_utils.network.ftd.common import FtdServerError, HTTPMethod, ResponseParams, FtdConfigurationError
 from ansible.module_utils.network.ftd.configuration import DUPLICATE_NAME_ERROR_MESSAGE, UNPROCESSABLE_ENTITY_STATUS, \
-    MULTIPLE_DUPLICATES_FOUND_ERROR, BaseConfigurationResource, FtdInvalidOperationNameError, QueryParams
+    MULTIPLE_DUPLICATES_FOUND_ERROR, BaseConfigurationResource, FtdInvalidOperationNameError, QueryParams, \
+    ADD_OPERATION_NOT_SUPPORTED_ERROR, ParamName
 from ansible.module_utils.network.ftd.fdm_swagger_client import ValidationError
 
 ADD_RESPONSE = {'status': 'Object added'}
@@ -39,8 +40,8 @@ ARBITRARY_RESPONSE = {'status': 'Arbitrary request sent'}
 
 class TestUpsertOperationUnitTests(unittest.TestCase):
     def setUp(self):
-        conn = mock.MagicMock()
-        self._resource = BaseConfigurationResource(conn)
+        self._conn = mock.MagicMock()
+        self._resource = BaseConfigurationResource(self._conn)
 
     def test_get_operation_name(self):
         operation_a = mock.MagicMock()
@@ -59,11 +60,7 @@ class TestUpsertOperationUnitTests(unittest.TestCase):
 
         assert operation_a == self._resource._get_operation_name(checker_wrapper(operation_a), operations)
         assert operation_b == self._resource._get_operation_name(checker_wrapper(operation_b), operations)
-
-        self.assertRaises(
-            FtdConfigurationError,
-            self._resource._get_operation_name, checker_wrapper(None), operations
-        )
+        assert self._resource._get_operation_name(checker_wrapper(None), operations) is None
 
     @mock.patch.object(BaseConfigurationResource, "_get_operation_name")
     @mock.patch.object(BaseConfigurationResource, "add_object")
@@ -78,6 +75,19 @@ class TestUpsertOperationUnitTests(unittest.TestCase):
             self._resource._operation_checker.is_add_operation,
             model_operations)
         add_object_mock.assert_called_once_with(add_op_name, params)
+
+    @mock.patch.object(BaseConfigurationResource, "_get_operation_name")
+    @mock.patch.object(BaseConfigurationResource, "add_object")
+    def test_add_upserted_object_with_no_add_operation(self, add_object_mock, get_operation_mock):
+        model_operations = mock.MagicMock()
+        get_operation_mock.return_value = None
+
+        with pytest.raises(FtdConfigurationError) as exc_info:
+            self._resource._add_upserted_object(model_operations, mock.MagicMock())
+        assert ADD_OPERATION_NOT_SUPPORTED_ERROR in str(exc_info.value)
+
+        get_operation_mock.assert_called_once_with(self._resource._operation_checker.is_add_operation, model_operations)
+        add_object_mock.assert_not_called()
 
     @mock.patch.object(BaseConfigurationResource, "_get_operation_name")
     @mock.patch.object(BaseConfigurationResource, "edit_object")
@@ -112,139 +122,175 @@ class TestUpsertOperationUnitTests(unittest.TestCase):
             params
         )
 
-    @mock.patch.object(BaseConfigurationResource, "get_operation_specs_by_model_name")
     @mock.patch("ansible.module_utils.network.ftd.configuration.OperationChecker.is_upsert_operation_supported")
-    @mock.patch("ansible.module_utils.network.ftd.configuration._extract_model_from_upsert_operation")
-    def test_is_upsert_operation_supported(self, extract_model_mock, is_upsert_supported_mock, get_operation_spec_mock):
-        op_name = mock.MagicMock()
-
-        result = self._resource.is_upsert_operation_supported(op_name)
-
-        assert result == is_upsert_supported_mock.return_value
-        extract_model_mock.assert_called_once_with(op_name)
-        get_operation_spec_mock.assert_called_once_with(extract_model_mock.return_value)
-        is_upsert_supported_mock.assert_called_once_with(get_operation_spec_mock.return_value)
-
-    @mock.patch.object(BaseConfigurationResource, "is_upsert_operation_supported")
     @mock.patch.object(BaseConfigurationResource, "get_operation_specs_by_model_name")
+    @mock.patch.object(BaseConfigurationResource, "_find_object_matching_params")
     @mock.patch.object(BaseConfigurationResource, "_add_upserted_object")
     @mock.patch.object(BaseConfigurationResource, "_edit_upserted_object")
-    @mock.patch("ansible.module_utils.network.ftd.configuration._extract_model_from_upsert_operation")
-    def test_upsert_object_succesfully_added(self, extract_model_mock, edit_mock, add_mock, get_operation_mock,
-                                             is_upsert_supported_mock):
-        op_name = mock.MagicMock()
+    def test_upsert_object_successfully_added(self, edit_mock, add_mock, find_object, get_operation_mock,
+                                              is_upsert_supported_mock):
         params = mock.MagicMock()
 
         is_upsert_supported_mock.return_value = True
+        find_object.return_value = None
 
-        result = self._resource.upsert_object(op_name, params)
+        result = self._resource.upsert_object('upsertFoo', params)
 
         assert result == add_mock.return_value
-        is_upsert_supported_mock.assert_called_once_with(op_name)
-        extract_model_mock.assert_called_once_with(op_name)
-        get_operation_mock.assert_called_once_with(extract_model_mock.return_value)
+        self._conn.get_model_spec.assert_called_once_with('Foo')
+        is_upsert_supported_mock.assert_called_once_with(get_operation_mock.return_value)
+        get_operation_mock.assert_called_once_with('Foo')
+        find_object.assert_called_once_with('Foo', params)
         add_mock.assert_called_once_with(get_operation_mock.return_value, params)
         edit_mock.assert_not_called()
 
-    @mock.patch.object(BaseConfigurationResource, "is_upsert_operation_supported")
+    @mock.patch("ansible.module_utils.network.ftd.configuration.equal_objects")
+    @mock.patch("ansible.module_utils.network.ftd.configuration.OperationChecker.is_upsert_operation_supported")
     @mock.patch.object(BaseConfigurationResource, "get_operation_specs_by_model_name")
+    @mock.patch.object(BaseConfigurationResource, "_find_object_matching_params")
     @mock.patch.object(BaseConfigurationResource, "_add_upserted_object")
     @mock.patch.object(BaseConfigurationResource, "_edit_upserted_object")
-    @mock.patch("ansible.module_utils.network.ftd.configuration._extract_model_from_upsert_operation")
-    def test_upsert_object_succesfully_edited(self, extract_model_mock, edit_mock, add_mock, get_operation_mock,
-                                              is_upsert_supported_mock):
-        op_name = mock.MagicMock()
+    def test_upsert_object_successfully_edited(self, edit_mock, add_mock, find_object, get_operation_mock,
+                                               is_upsert_supported_mock, equal_objects_mock):
         params = mock.MagicMock()
+        existing_obj = mock.MagicMock()
 
         is_upsert_supported_mock.return_value = True
-        error = FtdConfigurationError("Obj duplication error")
-        error.obj = mock.MagicMock()
+        find_object.return_value = existing_obj
+        equal_objects_mock.return_value = False
 
-        add_mock.side_effect = error
-
-        result = self._resource.upsert_object(op_name, params)
+        result = self._resource.upsert_object('upsertFoo', params)
 
         assert result == edit_mock.return_value
-        is_upsert_supported_mock.assert_called_once_with(op_name)
-        extract_model_mock.assert_called_once_with(op_name)
-        get_operation_mock.assert_called_once_with(extract_model_mock.return_value)
-        add_mock.assert_called_once_with(get_operation_mock.return_value, params)
-        edit_mock.assert_called_once_with(get_operation_mock.return_value, error.obj, params)
+        self._conn.get_model_spec.assert_called_once_with('Foo')
+        get_operation_mock.assert_called_once_with('Foo')
+        is_upsert_supported_mock.assert_called_once_with(get_operation_mock.return_value)
+        add_mock.assert_not_called()
+        equal_objects_mock.assert_called_once_with(existing_obj, params[ParamName.DATA])
+        edit_mock.assert_called_once_with(get_operation_mock.return_value, existing_obj, params)
 
-    @mock.patch.object(BaseConfigurationResource, "is_upsert_operation_supported")
+    @mock.patch("ansible.module_utils.network.ftd.configuration.equal_objects")
+    @mock.patch("ansible.module_utils.network.ftd.configuration.OperationChecker.is_upsert_operation_supported")
     @mock.patch.object(BaseConfigurationResource, "get_operation_specs_by_model_name")
+    @mock.patch.object(BaseConfigurationResource, "_find_object_matching_params")
     @mock.patch.object(BaseConfigurationResource, "_add_upserted_object")
     @mock.patch.object(BaseConfigurationResource, "_edit_upserted_object")
-    @mock.patch("ansible.module_utils.network.ftd.configuration._extract_model_from_upsert_operation")
-    def test_upsert_object_not_supported(self, extract_model_mock, edit_mock, add_mock, get_operation_mock,
+    def test_upsert_object_returned_without_modifications(self, edit_mock, add_mock, find_object, get_operation_mock,
+                                                          is_upsert_supported_mock, equal_objects_mock):
+        params = mock.MagicMock()
+        existing_obj = mock.MagicMock()
+
+        is_upsert_supported_mock.return_value = True
+        find_object.return_value = existing_obj
+        equal_objects_mock.return_value = True
+
+        result = self._resource.upsert_object('upsertFoo', params)
+
+        assert result == existing_obj
+        self._conn.get_model_spec.assert_called_once_with('Foo')
+        get_operation_mock.assert_called_once_with('Foo')
+        is_upsert_supported_mock.assert_called_once_with(get_operation_mock.return_value)
+        add_mock.assert_not_called()
+        equal_objects_mock.assert_called_once_with(existing_obj, params[ParamName.DATA])
+        edit_mock.assert_not_called()
+
+    @mock.patch("ansible.module_utils.network.ftd.configuration.OperationChecker.is_upsert_operation_supported")
+    @mock.patch.object(BaseConfigurationResource, "get_operation_specs_by_model_name")
+    @mock.patch.object(BaseConfigurationResource, "_find_object_matching_params")
+    @mock.patch.object(BaseConfigurationResource, "_add_upserted_object")
+    @mock.patch.object(BaseConfigurationResource, "_edit_upserted_object")
+    def test_upsert_object_not_supported(self, edit_mock, add_mock, find_object, get_operation_mock,
                                          is_upsert_supported_mock):
-        op_name = mock.MagicMock()
         params = mock.MagicMock()
 
         is_upsert_supported_mock.return_value = False
 
         self.assertRaises(
             FtdInvalidOperationNameError,
-            self._resource.upsert_object, op_name, params
+            self._resource.upsert_object, 'upsertFoo', params
         )
 
-        is_upsert_supported_mock.assert_called_once_with(op_name)
-        extract_model_mock.assert_not_called()
-        get_operation_mock.assert_not_called()
+        self._conn.get_model_spec.assert_called_once_with('Foo')
+        get_operation_mock.assert_called_once_with('Foo')
+        is_upsert_supported_mock.assert_called_once_with(get_operation_mock.return_value)
+        find_object.assert_not_called()
         add_mock.assert_not_called()
         edit_mock.assert_not_called()
 
-    @mock.patch.object(BaseConfigurationResource, "is_upsert_operation_supported")
+    @mock.patch("ansible.module_utils.network.ftd.configuration.OperationChecker.is_upsert_operation_supported")
     @mock.patch.object(BaseConfigurationResource, "get_operation_specs_by_model_name")
+    @mock.patch.object(BaseConfigurationResource, "_find_object_matching_params")
     @mock.patch.object(BaseConfigurationResource, "_add_upserted_object")
     @mock.patch.object(BaseConfigurationResource, "_edit_upserted_object")
-    @mock.patch("ansible.module_utils.network.ftd.configuration._extract_model_from_upsert_operation")
-    def test_upsert_object_neither_added_nor_edited(self, extract_model_mock, edit_mock, add_mock, get_operation_mock,
+    def test_upsert_object_when_model_not_supported(self, edit_mock, add_mock, find_object, get_operation_mock,
                                                     is_upsert_supported_mock):
-        op_name = mock.MagicMock()
         params = mock.MagicMock()
+        self._conn.get_model_spec.return_value = None
+
+        self.assertRaises(
+            FtdInvalidOperationNameError,
+            self._resource.upsert_object, 'upsertNonExisting', params
+        )
+
+        self._conn.get_model_spec.assert_called_once_with('NonExisting')
+        get_operation_mock.assert_not_called()
+        is_upsert_supported_mock.assert_not_called()
+        find_object.assert_not_called()
+        add_mock.assert_not_called()
+        edit_mock.assert_not_called()
+
+    @mock.patch("ansible.module_utils.network.ftd.configuration.equal_objects")
+    @mock.patch("ansible.module_utils.network.ftd.configuration.OperationChecker.is_upsert_operation_supported")
+    @mock.patch.object(BaseConfigurationResource, "get_operation_specs_by_model_name")
+    @mock.patch.object(BaseConfigurationResource, "_find_object_matching_params")
+    @mock.patch.object(BaseConfigurationResource, "_add_upserted_object")
+    @mock.patch.object(BaseConfigurationResource, "_edit_upserted_object")
+    def test_upsert_object_with_fatal_error_during_edit(self, edit_mock, add_mock, find_object, get_operation_mock,
+                                                        is_upsert_supported_mock, equal_objects_mock):
+        params = mock.MagicMock()
+        existing_obj = mock.MagicMock()
 
         is_upsert_supported_mock.return_value = True
-        error = FtdConfigurationError("Obj duplication error")
-        error.obj = mock.MagicMock()
-
-        add_mock.side_effect = error
+        find_object.return_value = existing_obj
+        equal_objects_mock.return_value = False
         edit_mock.side_effect = FtdConfigurationError("Some object edit error")
 
         self.assertRaises(
             FtdConfigurationError,
-            self._resource.upsert_object, op_name, params
+            self._resource.upsert_object, 'upsertFoo', params
         )
 
-        is_upsert_supported_mock.assert_called_once_with(op_name)
-        extract_model_mock.assert_called_once_with(op_name)
-        get_operation_mock.assert_called_once_with(extract_model_mock.return_value)
-        add_mock.assert_called_once_with(get_operation_mock.return_value, params)
-        edit_mock.assert_called_once_with(get_operation_mock.return_value, error.obj, params)
+        is_upsert_supported_mock.assert_called_once_with(get_operation_mock.return_value)
+        self._conn.get_model_spec.assert_called_once_with('Foo')
+        get_operation_mock.assert_called_once_with('Foo')
+        find_object.assert_called_once_with('Foo', params)
+        add_mock.assert_not_called()
+        edit_mock.assert_called_once_with(get_operation_mock.return_value, existing_obj, params)
 
-    @mock.patch.object(BaseConfigurationResource, "is_upsert_operation_supported")
+    @mock.patch("ansible.module_utils.network.ftd.configuration.OperationChecker.is_upsert_operation_supported")
     @mock.patch.object(BaseConfigurationResource, "get_operation_specs_by_model_name")
+    @mock.patch.object(BaseConfigurationResource, "_find_object_matching_params")
     @mock.patch.object(BaseConfigurationResource, "_add_upserted_object")
     @mock.patch.object(BaseConfigurationResource, "_edit_upserted_object")
-    @mock.patch("ansible.module_utils.network.ftd.configuration._extract_model_from_upsert_operation")
-    def test_upsert_object_with_fatal_error_during_add(self, extract_model_mock, edit_mock, add_mock,
-                                                       get_operation_mock, is_upsert_supported_mock):
-        op_name = mock.MagicMock()
+    def test_upsert_object_with_fatal_error_during_add(self, edit_mock, add_mock, find_object, get_operation_mock,
+                                                       is_upsert_supported_mock):
         params = mock.MagicMock()
 
         is_upsert_supported_mock.return_value = True
+        find_object.return_value = None
 
         error = FtdConfigurationError("Obj duplication error")
         add_mock.side_effect = error
 
         self.assertRaises(
             FtdConfigurationError,
-            self._resource.upsert_object, op_name, params
+            self._resource.upsert_object, 'upsertFoo', params
         )
 
-        is_upsert_supported_mock.assert_called_once_with(op_name)
-        extract_model_mock.assert_called_once_with(op_name)
-        get_operation_mock.assert_called_once_with(extract_model_mock.return_value)
+        is_upsert_supported_mock.assert_called_once_with(get_operation_mock.return_value)
+        self._conn.get_model_spec.assert_called_once_with('Foo')
+        get_operation_mock.assert_called_once_with('Foo')
+        find_object.assert_called_once_with('Foo', params)
         add_mock.assert_called_once_with(get_operation_mock.return_value, params)
         edit_mock.assert_not_called()
 
@@ -289,13 +335,28 @@ class TestUpsertOperationFunctionalTests(object):
         def get_operation_spec(name):
             return operations[name]
 
+        def request_handler(url_path=None, http_method=None, body_params=None, path_params=None, query_params=None):
+            if http_method == HTTPMethod.POST:
+                assert url_path == url
+                assert body_params == params['data']
+                assert query_params == {}
+                assert path_params == params['path_params']
+                return {
+                    ResponseParams.SUCCESS: True,
+                    ResponseParams.RESPONSE: ADD_RESPONSE
+                }
+            elif http_method == HTTPMethod.GET:
+                return {
+                    ResponseParams.SUCCESS: True,
+                    ResponseParams.RESPONSE: {'items': []}
+                }
+            else:
+                assert False
+
         connection_mock.get_operation_spec = get_operation_spec
 
         connection_mock.get_operation_specs_by_model_name.return_value = operations
-        connection_mock.send_request.return_value = {
-            ResponseParams.SUCCESS: True,
-            ResponseParams.RESPONSE: ADD_RESPONSE
-        }
+        connection_mock.send_request = request_handler
         params = {
             'operation': 'upsertObject',
             'data': {'id': '123', 'name': 'testObject', 'type': 'object'},
@@ -305,12 +366,61 @@ class TestUpsertOperationFunctionalTests(object):
 
         result = self._resource_execute_operation(params, connection=connection_mock)
 
-        connection_mock.send_request.assert_called_once_with(url_path=url,
-                                                             http_method=HTTPMethod.POST,
-                                                             path_params=params['path_params'],
-                                                             query_params={},
-                                                             body_params=params['data'])
         assert ADD_RESPONSE == result
+
+    def test_module_should_fail_when_no_model(self, connection_mock):
+        connection_mock.get_model_spec.return_value = None
+        params = {
+            'operation': 'upsertObject',
+            'data': {'id': '123', 'name': 'testObject', 'type': 'object'},
+            'path_params': {'objId': '123'},
+            'register_as': 'test_var'
+        }
+
+        with pytest.raises(FtdInvalidOperationNameError) as exc_info:
+            self._resource_execute_operation(params, connection=connection_mock)
+        assert 'upsertObject' == exc_info.value.operation_name
+
+    def test_module_should_fail_when_no_add_operation_and_no_object(self, connection_mock):
+        url = '/test'
+
+        operations = {
+            'getObjectList': {
+                'method': HTTPMethod.GET,
+                'url': url,
+                'modelName': 'Object',
+                'returnMultipleItems': True},
+            'editObject': {
+                'method': HTTPMethod.PUT,
+                'modelName': 'Object',
+                'url': '/test/{objId}'},
+            'otherObjectOperation': {
+                'method': HTTPMethod.GET,
+                'modelName': 'Object',
+                'url': '/test/{objId}',
+                'returnMultipleItems': False
+            }}
+
+        def get_operation_spec(name):
+            return operations[name]
+
+        connection_mock.get_operation_spec = get_operation_spec
+
+        connection_mock.get_operation_specs_by_model_name.return_value = operations
+        connection_mock.send_request.return_value = {
+            ResponseParams.SUCCESS: True,
+            ResponseParams.RESPONSE: {'items': []}
+        }
+        params = {
+            'operation': 'upsertObject',
+            'data': {'id': '123', 'name': 'testObject', 'type': 'object'},
+            'path_params': {'objId': '123'},
+            'register_as': 'test_var'
+        }
+
+        with pytest.raises(FtdConfigurationError) as exc_info:
+            self._resource_execute_operation(params, connection=connection_mock)
+        assert ADD_OPERATION_NOT_SUPPORTED_ERROR in str(exc_info.value)
 
     # test when object exists but with different fields(except id)
     def test_module_should_update_object_when_upsert_operation_and_object_exists(self, connection_mock):

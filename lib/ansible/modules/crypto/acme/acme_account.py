@@ -21,7 +21,7 @@ version_added: "2.6"
 short_description: Create, modify or delete ACME accounts
 description:
    - "Allows to create, modify or delete accounts with a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
+      L(ACME protocol,https://tools.ietf.org/html/rfc8555),
       such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module only works with the ACME v2 protocol."
 notes:
@@ -31,9 +31,9 @@ notes:
       M(acme_certificate)."
 seealso:
   - name: Automatic Certificate Management Environment (ACME)
-    description: The current draft specification of the ACME protocol.
-    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
-  - module: acme_account_facts
+    description: The specification of the ACME protocol (RFC 8555).
+    link: https://tools.ietf.org/html/rfc8555
+  - module: acme_account_info
     description: Retrieves facts about an ACME account.
   - module: openssl_privatekey
     description: Can be used to create a private account key.
@@ -49,6 +49,7 @@ options:
          deactivated."
       - "If the state is C(changed_key), the account must exist. The account
          key will be changed; no other information will be touched."
+    type: str
     required: true
     choices:
     - present
@@ -57,35 +58,38 @@ options:
   allow_creation:
     description:
       - "Whether account creation is allowed (when state is C(present))."
-    default: yes
     type: bool
+    default: yes
   contact:
     description:
       - "A list of contact URLs."
       - "Email addresses must be prefixed with C(mailto:)."
-      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.1.2
+      - "See U(https://tools.ietf.org/html/rfc8555#section-7.3)
          for what is allowed."
       - "Must be specified when state is C(present). Will be ignored
          if state is C(absent) or C(changed_key)."
+    type: list
     default: []
   terms_agreed:
     description:
       - "Boolean indicating whether you agree to the terms of service document."
       - "ACME servers can require this to be true."
-    default: no
     type: bool
+    default: no
   new_account_key_src:
     description:
       - "Path to a file containing the ACME account RSA or Elliptic Curve key to change to."
       - "Same restrictions apply as to C(account_key_src)."
       - "Mutually exclusive with C(new_account_key_content)."
       - "Required if C(new_account_key_content) is not used and state is C(changed_key)."
+    type: path
   new_account_key_content:
     description:
       - "Content of the ACME account RSA or Elliptic Curve key to change to."
       - "Same restrictions apply as to C(account_key_content)."
       - "Mutually exclusive with C(new_account_key_src)."
       - "Required if C(new_account_key_src) is not used and state is C(changed_key)."
+    type: str
 '''
 
 EXAMPLES = '''
@@ -137,17 +141,17 @@ def main():
         argument_spec=dict(
             account_key_src=dict(type='path', aliases=['account_key']),
             account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(required=False, type='str'),
-            acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
-            validate_certs=dict(required=False, default=True, type='bool'),
-            terms_agreed=dict(required=False, default=False, type='bool'),
-            state=dict(required=True, choices=['absent', 'present', 'changed_key'], type='str'),
-            allow_creation=dict(required=False, default=True, type='bool'),
-            contact=dict(required=False, type='list', elements='str', default=[]),
+            account_uri=dict(type='str'),
+            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
+            acme_version=dict(type='int', default=1, choices=[1, 2]),
+            validate_certs=dict(type='bool', default=True),
+            terms_agreed=dict(type='bool', default=False),
+            state=dict(type='str', required=True, choices=['absent', 'present', 'changed_key']),
+            allow_creation=dict(type='bool', default=True),
+            contact=dict(type='list', elements='str', default=[]),
             new_account_key_src=dict(type='path'),
             new_account_key_content=dict(type='str', no_log=True),
-            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
+            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -238,7 +242,7 @@ def main():
             # Now we can start the account key rollover
             if not module.check_mode:
                 # Compose inner signed message
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.5
+                # https://tools.ietf.org/html/rfc8555#section-7.3.5
                 url = account.directory['keyChange']
                 protected = {
                     "alg": new_key_data['alg'],

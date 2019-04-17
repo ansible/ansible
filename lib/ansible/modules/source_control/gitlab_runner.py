@@ -26,9 +26,8 @@ description:
     To create shared runners, you need to ask your administrator to give you this token.
     It can be found at U(https://$GITLAB_URL/admin/runners/).
 notes:
-  - Instead of the private_token parameter, the GITLAB_PRIVATE_TOKEN environment variable can be used.
-  - To create a new runner at least the C(private_token), C(registration_token), C(name) and C(url) options are required.
-  - Runners need to have unique names.
+  - To create a new runner at least the C(api_token), C(description) and C(url) options are required.
+  - Runners need to have unique descriptions.
 version_added: 2.8
 author:
   - Samy Coenen (@SamyCoenen)
@@ -289,13 +288,13 @@ class GitLabRunner(object):
 def deprecation_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        url=dict(type='str', required=True, removed_in_version=2.10),
+        url=dict(type='str', required=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["private_token"]),
         description=dict(type='str', required=True, aliases=["name"]),
         active=dict(type='bool', default=True),

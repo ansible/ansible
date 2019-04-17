@@ -52,8 +52,14 @@ options:
      choices: ['first', 'last']
    uuid:
      description:
-     - UUID of the instance to manage if known, this is VMware's unique identifier.
-     - This is required parameter, if C(name) is not supplied.
+     - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
+     - This is required if C(name) parameter is not supplied.
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -127,7 +133,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: snap1
@@ -140,7 +146,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: absent
       snapshot_name: snap1
@@ -152,7 +158,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: revert
       snapshot_name: snap1
@@ -164,7 +170,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: remove_all
     delegate_to: localhost
@@ -175,7 +181,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: dummy_vm_snap_0001
@@ -189,7 +195,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: absent
       remove_children: yes
@@ -202,7 +208,7 @@ EXAMPLES = '''
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       datacenter: "{{ datacenter_name }}"
-      folder: /"{{ datacenter_name }}"/vm/
+      folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
       state: present
       snapshot_name: current_snap_name
@@ -212,11 +218,35 @@ EXAMPLES = '''
 '''
 
 RETURN = """
-instance:
-    description: metadata about the new virtual machine snapshot
+snapshot_results:
+    description: metadata about the virtual machine snapshots
     returned: always
     type: dict
-    sample: None
+    sample: {
+      "current_snapshot": {
+          "creation_time": "2019-04-09T14:40:26.617427+00:00",
+          "description": "Snapshot 4 example",
+          "id": 4,
+          "name": "snapshot4",
+          "state": "poweredOff"
+      },
+      "snapshots": [
+          {
+              "creation_time": "2019-04-09T14:38:24.667543+00:00",
+              "description": "Snapshot 3 example",
+              "id": 3,
+              "name": "snapshot3",
+              "state": "poweredOff"
+          },
+          {
+              "creation_time": "2019-04-09T14:40:26.617427+00:00",
+              "description": "Snapshot 4 example",
+              "id": 4,
+              "name": "snapshot4",
+              "state": "poweredOff"
+          }
+      ]
+    }
 """
 
 import time
@@ -355,7 +385,7 @@ class PyVmomiHelper(PyVmomi):
             if task.info.state == 'error':
                 result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
             else:
-                result = {'changed': True, 'failed': False, 'results': list_snapshots(vm)}
+                result = {'changed': True, 'failed': False, 'snapshot_results': list_snapshots(vm)}
 
         return result
 
@@ -367,6 +397,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
         snapshot_name=dict(type='str'),

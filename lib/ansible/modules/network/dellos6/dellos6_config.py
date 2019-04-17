@@ -319,14 +319,14 @@ def main():
     if module.params['save']:
         result['changed'] = True
         if not module.check_mode:
-                cmd = {'command': 'copy running-config startup-config',
-                       'prompt': r'\(y/n\)\s?$', 'answer': 'y'}
-                run_commands(module, [cmd])
-                result['saved'] = True
+            cmd = {'command': 'copy running-config startup-config',
+                   'prompt': r'\(y/n\)\s?$', 'answer': 'y'}
+            run_commands(module, [cmd])
+            result['saved'] = True
         else:
-                    module.warn('Skipping command `copy running-config startup-config`'
-                                'due to check_mode.  Configuration not copied to '
-                                'non-volatile storage')
+            module.warn('Skipping command `copy running-config startup-config`'
+                        'due to check_mode.  Configuration not copied to '
+                        'non-volatile storage')
 
     module.exit_json(**result)
 

@@ -41,21 +41,21 @@ The only requirement for using an inventory plugin after it is enabled is to pro
 Ansible will try to use the list of enabled inventory plugins, in order, against each inventory source provided.
 Once an inventory plugin succeeds at parsing a source, any remaining inventory plugins will be skipped for that source.
 
-To start using an inventory plugin with a YAML configuration source, create a file with the accepted filename schema for the plugin in question, then add ``plugin: plugin_name``. Each plugin documents any naming restrictions. For example, the aws_ec2 inventory plugin:
+To start using an inventory plugin with a YAML configuration source, create a file with the accepted filename schema for the plugin in question, then add ``plugin: plugin_name``. Each plugin documents any naming restrictions. For example, the aws_ec2 inventory plugin has to end with ``aws_ec2.(yml|yaml)``
 
 .. code-block:: yaml
 
     # demo.aws_ec2.yml
     plugin: aws_ec2
 
-Or for the openstack plugin:
+Or for the openstack plugin the file has to be called ``clouds.yml`` or ``openstack.(yml|yaml)``:
 
 .. code-block:: yaml
 
-    # clouds.yml
+    # clouds.yml or openstack.(yml|yaml)
     plugin: openstack
 
-The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:
+The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options, you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:
 
 .. code-block:: text
 
@@ -109,6 +109,31 @@ Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``:
       |--@ungrouped
 
 If a host does not have the variables in the configuration above (i.e. ``tags.Name``, ``tags``, ``private_ip_address``), the host will not be added to groups other than those that the inventory plugin creates and the ``ansible_host`` host variable will not be modified.
+
+If an inventory plugin supports caching, you can enable and set caching options for an individual YAML configuration source or for multiple inventory sources using environment variables or Ansible configuration files. If you enable caching for an inventory plugin without providing inventory-specific caching options, the inventory plugin will use fact-caching options. Here is an example of enabling caching for an individual YAML configuration file:
+
+.. code-block:: yaml
+
+    # demo.aws_ec2.yml
+    plugin: aws_ec2
+    cache: yes
+    cache_plugin: jsonfile
+    cache_timeout: 7200
+    cache_connection: /tmp/aws_inventory
+    cache_prefix: aws_ec2
+
+Here is an example of setting inventory caching with some fact caching defaults for the cache plugin used and the timeout in an ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [defaults]
+   fact_caching = json
+   fact_caching_connection = /tmp/ansible_facts
+   cache_timeout = 3600
+
+   [inventory]
+   cache = yes
+   cache_connection = /tmp/ansible_inventory
 
 .. _inventory_plugin_list:
 

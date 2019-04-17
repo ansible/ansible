@@ -1,0 +1,16 @@
+- name: "Test that the vaulted file with UTF-8 in filename decrypts correctly"
+  gather_facts: false
+  hosts: testhost
+  vars:
+    expected: "my_secret"
+  vars_files:
+    - vault-café.yml
+  tasks:
+    - name: decrypt vaulted file with utf8 in filename and show it in debug
+      debug:
+         var: vault_string
+
+    - name: assert decrypted value matches expected
+      assert:
+        that:
+          - "vault_string == expected"

@@ -384,7 +384,7 @@ class Migrations:
                 cluster_keys[cluster_key] = 1
             else:
                 cluster_keys[cluster_key] += 1
-        if len(cluster_keys.keys()) is 1 and \
+        if len(cluster_keys.keys()) == 1 and \
                 self._start_cluster_key in cluster_keys:
             return True
         return False

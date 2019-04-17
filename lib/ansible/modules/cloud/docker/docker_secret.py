@@ -21,7 +21,7 @@ short_description: Manage docker secrets.
 version_added: "2.4"
 
 description:
-     - Create and remove Docker secrets in a Swarm environment. Similar to `docker secret create` and `docker secret rm`.
+     - Create and remove Docker secrets in a Swarm environment. Similar to C(docker secret create) and C(docker secret rm).
      - Adds to the metadata of new secrets 'ansible_key', an encrypted hash representation of the data, which is then used
        in future runs to test if a secret has changed. If 'ansible_key is not present, then a secret will not be updated
        unless the C(force) option is set.
@@ -30,7 +30,6 @@ options:
   data:
     description:
       - The value of the secret. Required when state is C(present).
-    required: false
     type: str
   data_is_b64:
     description:
@@ -38,30 +37,29 @@ options:
         decoded before being used.
       - To use binary C(data), it is better to keep it Base64 encoded and let it
         be decoded by this option.
-    default: false
     type: bool
+    default: no
     version_added: "2.8"
   labels:
     description:
       - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
       - If new meta data is provided, or existing meta data is modified, the secret will be updated by removing it and creating it again.
-    required: false
     type: dict
   force:
     description:
       - Use with state C(present) to always remove and recreate an existing secret.
       - If I(true), an existing secret will be replaced, even if it has not changed.
-    default: false
     type: bool
+    default: no
   name:
     description:
       - The name of the secret.
-    required: true
     type: str
+    required: yes
   state:
     description:
       - Set to C(present), if the secret should exist, and C(absent), if it should not.
-    required: false
+    type: str
     default: present
     choices:
       - absent
@@ -72,7 +70,7 @@ extends_documentation_fragment:
   - docker.docker_py_2_documentation
 
 requirements:
-  - "docker >= 2.1.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.1.0"
   - "Docker API >= 1.25"
 
 author:
@@ -87,7 +85,7 @@ EXAMPLES = '''
     # If the file is JSON or binary, Ansible might modify it (because
     # it is first decoded and later re-encoded). Base64-encoding the
     # file directly after reading it prevents this to happen.
-    data: "{{ lookup('file', '/path/to/secret/file') | base64 }}"
+    data: "{{ lookup('file', '/path/to/secret/file') | b64encode }}"
     data_is_b64: true
     state: present
 
@@ -158,7 +156,7 @@ import hashlib
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic
@@ -264,7 +262,7 @@ class SecretManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', choices=['absent', 'present'], default='present'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         data=dict(type='str', no_log=True),
         data_is_b64=dict(type='bool', default=False),
         labels=dict(type='dict'),

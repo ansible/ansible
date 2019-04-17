@@ -38,10 +38,9 @@ import ssl
 import sys
 import time
 
-from six import integer_types, text_type, string_types
-from six.moves import configparser
-
 from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.six import integer_types, text_type, string_types
+from ansible.module_utils.six.moves import configparser
 
 # Disable logging message trigged by pSphere/suds.
 try:

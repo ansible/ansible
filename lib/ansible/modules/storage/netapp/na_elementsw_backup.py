@@ -136,7 +136,8 @@ class ElementSWBackup(object):
         """
             Setup Ansible parameters and SolidFire connection
         """
-        self.argument_spec = {}
+        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+
         self.argument_spec.update(dict(
 
             src_hostname=dict(aliases=['hostname'], required=True, type='str'),

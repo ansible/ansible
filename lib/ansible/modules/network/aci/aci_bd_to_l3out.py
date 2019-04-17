@@ -16,17 +16,6 @@ module: aci_bd_to_l3out
 short_description: Bind Bridge Domain to L3 Out (fv:RsBDToOut)
 description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
-notes:
-- The C(bd) and C(l3out) parameters should exist before using this module.
-  The M(aci_bd) and C(aci_l3out) can be used for these.
-seealso:
-- module: aci_bd
-- module: aci_l3out
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:RsBDToOut).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   bd:
@@ -51,6 +40,17 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(bd) and C(l3out) parameters should exist before using this module.
+  The M(aci_bd) and C(aci_l3out) can be used for these.
+seealso:
+- module: aci_bd
+- module: aci_l3out
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:RsBDToOut).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r''' # '''
@@ -160,11 +160,15 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip='querier', unspecified='')
-
-
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
+
+SUBNET_CONTROL_MAPPING = dict(
+    nd_ra='nd',
+    no_gw='no-default-gateway',
+    querier_ip='querier',
+    unspecified='',
+)
 
 
 def main():
@@ -172,8 +176,8 @@ def main():
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),  # Not required for querying all objects
         l3out=dict(type='str'),  # Not required for querying all objects
-        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
     module = AnsibleModule(

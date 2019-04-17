@@ -1,38 +1,43 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2017 René Moser <mail@renemoser.net>
+
+# Copyright: (c) 2017, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard exoscale documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
   api_key:
     description:
       - API key of the Exoscale DNS API.
       - Since 2.4, the ENV variable C(CLOUDSTACK_KEY) is used as default, when defined.
+    type: str
   api_secret:
     description:
       - Secret key of the Exoscale DNS API.
       - Since 2.4, the ENV variable C(CLOUDSTACK_SECRET) is used as default, when defined.
+    type: str
   api_timeout:
     description:
       - HTTP timeout to Exoscale DNS API.
       - Since 2.4, the ENV variable C(CLOUDSTACK_TIMEOUT) is used as default, when defined.
+    type: int
     default: 10
   api_region:
     description:
       - Name of the ini section in the C(cloustack.ini) file.
       - Since 2.4, the ENV variable C(CLOUDSTACK_REGION) is used as default, when defined.
+    type: str
     default: cloudstack
   validate_certs:
     description:
       - Validate SSL certs of the Exoscale DNS API.
-    default: true
     type: bool
+    default: yes
 requirements:
-  - "python >= 2.6"
+  - python >= 2.6
 notes:
   - As Exoscale DNS uses the same API key and secret for all services, we reuse the config used for Exscale Compute based on CloudStack.
     The config is read from several locations, in the following order.

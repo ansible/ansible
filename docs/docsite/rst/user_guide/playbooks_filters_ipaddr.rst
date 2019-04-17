@@ -368,6 +368,13 @@ integers into IP addresses::
 
     # {{ test_list | ipaddr('address') | ipaddr('int') }}
     [3222798849, 1, '3232243712/24', '338288524927261089654018896841347694848/10', '42540766412265424405338506004571095040/64']
+    
+You can convert IPv4 address to `Hexadecimal notation <https://en.wikipedia.org/wiki/Hexadecimal>`_ with optional delimiter::
+
+    # {{ '192.168.1.5' | ip4_hex }}
+    c0a80105
+    # {{ '192.168.1.5' | ip4_hex(':') }}
+    c0:a8:01:05
 
 You can convert IP addresses to PTR records::
 
@@ -397,6 +404,34 @@ be automatically converted to a router address (with a ``::1/48`` host address):
     2002:c100:0200::1/48
 
 .. _6to4: https://en.wikipedia.org/wiki/6to4
+
+Finding IP addresses within a range
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To find usable IP addresses within an IP range, try these ``ipaddr`` filters:
+
+To find the next usable IP address in a range, use ``next_usable`` ::
+
+    # {{ '192.168.122.1/24' | ipaddr('next_usable') }}
+    192.168.122.2
+
+To find the last usable IP address from a range, use ``last_usable``::
+
+    # {{ '192.168.122.1/24' | ipaddr('last_usable') }}
+    192.168.122.254
+
+To find the available range of IP addresses from the given network address, use ``range_usable``::
+
+    # {{ '192.168.122.1/24' | ipaddr('range_usable') }}
+    192.168.122.1-192.168.122.254
+
+To find the next nth usable IP address within a range, use ``next_nth_usable``::
+
+    # {{ '192.168.122.1/24' | next_nth_usable(2) }}
+    192.168.122.3
+
+In this example, ``next_nth_usable`` returns the second usable IP address for the given IP range.
+
 
 IP Math
 ^^^^^^^
@@ -472,7 +507,7 @@ the first argument, the ``ipsubnet()`` filter will instead return the biggest su
 contains that given IP address::
 
     # {{ address | ipsubnet(20) }}
-    192.168.128.0/20
+    192.168.144.0/20
 
 By specifying an index number as a second argument, you can select smaller and
 smaller subnets::

@@ -89,6 +89,15 @@ options:
       of sizeGb must not be less than the size of the sourceImage or the size of the
       snapshot.
     required: false
+  physical_block_size_bytes:
+    description:
+    - Physical block size of the persistent disk, in bytes. If not present in a request,
+      a default value is used. Currently supported sizes are 4096 and 16384, other
+      sizes may be added in the future.
+    - If an unsupported value is requested, the error message will list the supported
+      values for the caller's project.
+    required: false
+    version_added: 2.8
   type:
     description:
     - URL of the disk type resource describing which disk type to use to create the
@@ -124,11 +133,6 @@ options:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
-        description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
-        required: false
       kms_key_name:
         description:
         - The name of the encryption key that is stored in Google Cloud KMS.
@@ -150,11 +154,6 @@ options:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
-        description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
-        required: false
       kms_key_name:
         description:
         - The name of the encryption key that is stored in Google Cloud KMS.
@@ -164,9 +163,10 @@ options:
     - The source snapshot used to create this disk. You can provide this as a partial
       or full URL to the resource.
     - 'This field represents a link to a Snapshot resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_snapshot
-      task and then set this source_snapshot field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_snapshot task and then set this source_snapshot field to "{{
+      name-of-resource }}"'
     required: false
   source_snapshot_encryption_key:
     description:
@@ -183,29 +183,24 @@ options:
         description:
         - The name of the encryption key that is stored in Google Cloud KMS.
         required: false
-      sha256:
-        description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
-        required: false
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/disks)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/disks)'
 - 'Adding a persistent disk: U(https://cloud.google.com/compute/docs/disks/add-persistent-disk)'
 '''
 
 EXAMPLES = '''
 - name: create a disk
   gcp_compute_disk:
-      name: "test_object"
-      size_gb: 50
-      disk_encryption_key:
-        raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
-      zone: us-central1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    size_gb: 50
+    disk_encryption_key:
+      raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
+    zone: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -277,6 +272,15 @@ users:
     .'
   returned: success
   type: list
+physicalBlockSizeBytes:
+  description:
+  - Physical block size of the persistent disk, in bytes. If not present in a request,
+    a default value is used. Currently supported sizes are 4096 and 16384, other sizes
+    may be added in the future.
+  - If an unsupported value is requested, the error message will list the supported
+    values for the caller's project.
+  returned: success
+  type: int
 type:
   description:
   - URL of the disk type resource describing which disk type to use to create the
@@ -371,7 +375,7 @@ sourceSnapshot:
   - The source snapshot used to create this disk. You can provide this as a partial
     or full URL to the resource.
   returned: success
-  type: str
+  type: dict
 sourceSnapshotEncryptionKey:
   description:
   - The customer-supplied encryption key of the source snapshot. Required if the source
@@ -432,13 +436,14 @@ def main():
             licenses=dict(type='list', elements='str'),
             name=dict(required=True, type='str'),
             size_gb=dict(type='int'),
+            physical_block_size_bytes=dict(type='int'),
             type=dict(type='str'),
             source_image=dict(type='str'),
             zone=dict(required=True, type='str'),
-            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'), kms_key_name=dict(type='str'))),
-            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'), kms_key_name=dict(type='str'))),
-            source_snapshot=dict(),
-            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'), sha256=dict(type='str'))),
+            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
+            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
+            source_snapshot=dict(type='dict'),
+            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
         )
     )
 
@@ -522,6 +527,7 @@ def resource_to_request(module):
         u'licenses': module.params.get('licenses'),
         u'name': module.params.get('name'),
         u'sizeGb': module.params.get('size_gb'),
+        u'physicalBlockSizeBytes': module.params.get('physical_block_size_bytes'),
         u'type': disk_type_selflink(module.params.get('type'), module.params),
         u'sourceImage': module.params.get('source_image'),
     }
@@ -600,6 +606,7 @@ def response_to_hash(module, response):
         u'name': module.params.get('name'),
         u'sizeGb': response.get(u'sizeGb'),
         u'users': response.get(u'users'),
+        u'physicalBlockSizeBytes': response.get(u'physicalBlockSizeBytes'),
         u'type': response.get(u'type'),
         u'sourceImage': module.params.get('source_image'),
     }
@@ -658,14 +665,10 @@ class DiskSourceimageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class DiskDiskencryptionkey(object):
@@ -677,14 +680,10 @@ class DiskDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class DiskSourcesnapshotencryptionkey(object):
@@ -696,14 +695,10 @@ class DiskSourcesnapshotencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name'), u'sha256': self.request.get('sha256')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName'), u'sha256': self.request.get(u'sha256')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 if __name__ == '__main__':

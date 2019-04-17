@@ -26,27 +26,34 @@ options:
     state:
         description:
         - Specifies whether SNMP information should be queried or modified.
-        choices: ['absent', 'query', 'present']
+        type: str
+        choices: [ absent, query, present ]
         default: present
     number:
         description:
         - SSID number within network.
+        type: int
         aliases: [ssid_number]
     name:
         description:
         - Name of SSID.
+        type: str
     org_name:
         description:
         - Name of organization.
+        type: str
     org_id:
         description:
         - ID of organization.
+        type: int
     net_name:
         description:
         - Name of network.
+        type: str
     net_id:
         description:
         - ID of network.
+        type: str
     enabled:
         description:
         - Enable or disable SSID network.
@@ -54,22 +61,27 @@ options:
     auth_mode:
         description:
         - Set authentication mode of network.
+        type: str
         choices: [open, psk, open-with-radius, 8021x-meraki, 8021x-radius]
     encryption_mode:
         description:
         - Set encryption mode of network.
+        type: str
         choices: [wpa, eap, wpa-eap]
     psk:
         description:
         - Password for wireless network.
         - Requires auth_mode to be set to psk.
+        type: str
     wpa_encryption_mode:
         description:
         - Encryption mode within WPA2 specification.
+        type: str
         choices: [WPA1 and WPA2, WPA2 only]
     splash_page:
         description:
         - Set to enable splash page and specify type of splash.
+        type: str
         choices: ['None',
                   'Click-through splash page',
                   'Billing',
@@ -85,16 +97,20 @@ options:
     radius_servers:
         description:
         - List of RADIUS servers.
+        type: list
         suboptions:
             host:
                 description:
                 - IP address or hostname of RADIUS server.
+                type: str
             port:
                 description:
                 - Port number RADIUS server is listening to.
+                type: int
             secret:
                 description:
                 - RADIUS password.
+                type: str
     radius_coa_enabled:
         description:
         - Enable or disable RADIUS CoA (Change of Authorization) on SSID.
@@ -102,10 +118,12 @@ options:
     radius_failover_policy:
         description:
         - Set client access policy in case RADIUS servers aren't available.
+        type: str
         choices: [Deny access, Allow access]
     radius_load_balancing_policy:
         description:
         - Set load balancing policy when multiple RADIUS servers are specified.
+        type: str
         choices: [Strict priority order, Round robin]
     radius_accounting_enabled:
         description:
@@ -114,19 +132,24 @@ options:
     radius_accounting_servers:
         description:
         - List of RADIUS servers for RADIUS accounting.
+        type: list
         suboptions:
             host:
                 description:
                 - IP address or hostname of RADIUS server.
+                type: str
             port:
                 description:
                 - Port number RADIUS server is listening to.
+                type: int
             secret:
                 description:
                 - RADIUS password.
+                type: str
     ip_assignment_mode:
         description:
         - Method of which SSID uses to assign IP addresses.
+        type: str
         choices: ['NAT mode',
                   'Bridge mode',
                   'Layer 3 roaming',
@@ -139,19 +162,24 @@ options:
     default_vlan_id:
         description:
         - Default VLAN ID.
+        type: str
     vlan_id:
         description:
         - ID number of VLAN on SSID.
+        type: int
     ap_tags_vlan_ids:
         description:
         - List of VLAN tags.
+        type: list
         suboptions:
             tags:
                 description:
                 - List of AP tags.
+                type: list
             vlan_id:
                 description:
                 - Numerical identifier that is assigned to the VLAN.
+                type: int
     walled_garden_enabled:
         description:
         - Enable or disable walled garden functionality.
@@ -159,23 +187,29 @@ options:
     walled_garden_ranges:
         description:
         - List of walled garden ranges.
+        type: list
     min_bitrate:
         description:
         - Minimum bitrate (Mbps) allowed on SSID.
+        type: float
         choices: [1, 2, 5.5, 6, 9, 11, 12, 18, 24, 36, 48, 54]
     band_selection:
         description:
         - Set band selection mode.
+        type: str
         choices: ['Dual band operation', '5 GHz band only', 'Dual band operation with Band Steering']
     per_client_bandwidth_limit_up:
         description:
         - Maximum bandwidth in Mbps devices on SSID can upload.
+        type: int
     per_client_bandwidth_limit_down:
         description:
         - Maximum bandwidth in Mbps devices on SSID can download.
+        type: int
     concentrator_network_id:
         description:
         - The concentrator to use for 'Layer 3 roaming with a concentrator' or 'VPN'.
+        type: str
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -186,13 +220,82 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data:
-    description: Information about queried or updated object.
-    type: list
-    returned: info
-    sample:
-      "data": {
-
-      }
+    description: List of wireless SSIDs.
+    returned: success
+    type: complex
+    contains:
+        number:
+            description: Zero-based index number for SSIDs.
+            returned: success
+            type: int
+            sample: 0
+        name:
+            description:
+              - Name of wireless SSID.
+              - This value is what is broadcasted.
+            returned: success
+            type: str
+            sample: CorpWireless
+        enabled:
+            description: Enabled state of wireless network.
+            returned: success
+            type: bool
+            sample: true
+        splashPage:
+            description: Splash page to show when user authenticates.
+            returned: success
+            type: str
+            sample: Click-through splash page
+        ssidAdminAccessible:
+            description: Whether SSID is administratively accessible.
+            returned: success
+            type: bool
+            sample: true
+        authMode:
+            description: Authentication method.
+            returned: success
+            type: str
+            sample: psk
+        psk:
+            description: Secret wireless password.
+            returned: success
+            type: str
+            sample: SecretWiFiPass
+        encryptionMode:
+            description: Wireless traffic encryption method.
+            returned: success
+            type: str
+            sample: wpa
+        wpaEncryptionMode:
+            description: Enabled WPA versions.
+            returned: success
+            type: str
+            sample: WPA2 only
+        ipAssignmentMode:
+            description: Wireless client IP assignment method.
+            returned: success
+            type: str
+            sample: NAT mode
+        minBitrate:
+            description: Minimum bitrate a wireless client can connect at.
+            returned: success
+            type: int
+            sample: 11
+        bandSelection:
+            description: Wireless RF frequency wireless network will be broadcast on.
+            returned: success
+            type: str
+            sample: 5 GHz band only
+        perClientBandwidthLimitUp:
+            description: Maximum upload bandwidth a client can use.
+            returned: success
+            type: int
+            sample: 1000
+        perClientBandwidthLimitDown:
+            description: Maximum download bandwidth a client can use.
+            returned: success
+            type: int
+            sample: 0
 '''
 
 import os
@@ -341,8 +444,8 @@ def main():
     meraki.params['follow_redirects'] = 'all'
 
     query_urls = {'ssid': '/networks/{net_id}/ssids'}
-    query_url = {'ssid': 'networks/{net_id}/ssids/'}
-    update_url = {'ssid': 'networks/{net_id}/ssids/'}
+    query_url = {'ssid': '/networks/{net_id}/ssids/'}
+    update_url = {'ssid': '/networks/{net_id}/ssids/'}
 
     meraki.url_catalog['get_all'].update(query_urls)
     meraki.url_catalog['get_one'].update(query_url)
@@ -400,8 +503,10 @@ def main():
             if meraki.params[v] is not None:
                 payload[k] = meraki.params[v]
         ssids = get_ssids(meraki, net_id)
-        original = ssids[get_ssid_number(meraki.params['name'], ssids)]
-        # meraki.fail_json(msg=meraki.is_update_required(original, payload), original=original, payload=payload)
+        number = meraki.params['number']
+        if number is None:
+            number = get_ssid_number(meraki.params['name'], ssids)
+        original = ssids[number]
         if meraki.is_update_required(original, payload):
             ssid_id = meraki.params['number']
             if ssid_id is None:  # Name should be used to lookup number

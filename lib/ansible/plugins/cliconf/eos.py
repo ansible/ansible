@@ -43,6 +43,7 @@ options:
 
 import json
 import time
+import re
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
@@ -69,7 +70,7 @@ class Cliconf(CliconfBase):
             raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show %s ' % lookup[source]
-        if format and format is not 'text':
+        if format and format != 'text':
             cmd += '| %s ' % format
 
         cmd += ' '.join(to_list(flags))
@@ -245,6 +246,11 @@ class Cliconf(CliconfBase):
         data = json.loads(reply)
 
         device_info['network_os_hostname'] = data['hostname']
+
+        reply = self.get('bash timeout 5 cat /mnt/flash/boot-config')
+        match = re.search(r'SWI=(.+)$', reply, re.M)
+        if match:
+            device_info['network_os_image'] = match.group(1)
 
         return device_info
 

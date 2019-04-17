@@ -100,11 +100,9 @@ class CallbackModule(CallbackBase):
             self._display.display("%s (via handler)... " % self.task_display_name)
 
     def v2_playbook_on_play_start(self, play):
-        # TODO display name of play and list of play hosts
-        # TODO don't display play name if no hosts in play
         name = play.get_name().strip()
-        if name:
-            msg = u"\n- %s -" % name
+        if name and play.hosts:
+            msg = u"\n- %s on hosts: %s -" % (name, ",".join(play.hosts))
         else:
             msg = u"---"
 
@@ -173,21 +171,25 @@ class CallbackModule(CallbackBase):
             # TODO how else can we display these?
             t = stats.summarize(h)
 
-            self._display.display(u"  %s : %s %s %s %s" % (
+            self._display.display(u"  %s : %s %s %s %s %s %s" % (
                 hostcolor(h, t),
                 colorize(u'ok', t['ok'], C.COLOR_OK),
                 colorize(u'changed', t['changed'], C.COLOR_CHANGED),
                 colorize(u'unreachable', t['unreachable'], C.COLOR_UNREACHABLE),
-                colorize(u'failed', t['failures'], C.COLOR_ERROR)),
+                colorize(u'failed', t['failures'], C.COLOR_ERROR),
+                colorize(u'rescued', t['rescued'], C.COLOR_OK),
+                colorize(u'ignored', t['ignored'], C.COLOR_WARN)),
                 screen_only=True
             )
 
-            self._display.display(u"  %s : %s %s %s %s" % (
+            self._display.display(u"  %s : %s %s %s %s %s %s" % (
                 hostcolor(h, t, False),
                 colorize(u'ok', t['ok'], None),
                 colorize(u'changed', t['changed'], None),
                 colorize(u'unreachable', t['unreachable'], None),
-                colorize(u'failed', t['failures'], None)),
+                colorize(u'failed', t['failures'], None),
+                colorize(u'rescued', t['rescued'], None),
+                colorize(u'ignored', t['ignored'], None)),
                 log_only=True
             )
 

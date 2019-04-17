@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_swarm_service - fixing falsely reporting ``publish`` as changed when ``publish.mode`` is not set."

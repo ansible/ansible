@@ -26,6 +26,7 @@ options:
               back slashes are accepted.
         type: path
         required: yes
+        aliases: [ dest, name ]
     get_md5:
         description:
             - Whether to return the checksum sum of the file. Between Ansible 1.9
@@ -62,7 +63,9 @@ options:
         version_added: "2.8"
 seealso:
 - module: stat
+- module: win_acl
 - module: win_file
+- module: win_owner
 author:
 - Chris Church (@cchurch)
 '''

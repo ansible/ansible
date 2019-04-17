@@ -330,6 +330,18 @@ class ConfigManager(object):
                     pvars.append(var_entry['name'])
         return pvars
 
+    def get_configuration_definition(self, name, plugin_type=None, plugin_name=None):
+
+        ret = {}
+        if plugin_type is None:
+            ret = self._base_defs.get(name, None)
+        elif plugin_name is None:
+            ret = self._plugins.get(plugin_type, {}).get(name, None)
+        else:
+            ret = self._plugins.get(plugin_type, {}).get(plugin_name, {}).get(name, None)
+
+        return ret
+
     def get_configuration_definitions(self, plugin_type=None, name=None):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
 
@@ -370,7 +382,7 @@ class ConfigManager(object):
         except AnsibleError:
             raise
         except Exception as e:
-            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config), orig_exc=e)
+            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
@@ -387,8 +399,14 @@ class ConfigManager(object):
         if config in defs:
 
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
+            direct_aliases = []
+            if direct:
+                direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
             if direct and config in direct:
                 value = direct[config]
+                origin = 'Direct'
+            elif direct and direct_aliases:
+                value = direct_aliases[0]
                 origin = 'Direct'
 
             else:

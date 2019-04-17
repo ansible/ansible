@@ -79,7 +79,7 @@ def sensu_subscription(module, path, name, state='present', backup=False):
     try:
         config = json.load(open(path))
     except IOError as e:
-        if e.errno is 2:  # File not found, non-fatal
+        if e.errno == 2:  # File not found, non-fatal
             if state == 'absent':
                 reasons.append('file did not exist and state is `absent\'')
                 return changed, reasons

@@ -32,7 +32,7 @@ display = Display()
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w@+\-\.:\/\[\]]+[>#%] ?$"),
+        re.compile(br"({primary:node\d+})?[\r\n]?[\w@+\-\.:\/\[\]]+[>#%] ?$"),
     ]
 
     terminal_stderr_re = [

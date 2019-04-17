@@ -8,6 +8,7 @@ __metaclass__ = type
 import fcntl
 import os
 import shlex
+
 from abc import abstractmethod, abstractproperty
 from functools import wraps
 
@@ -83,7 +84,8 @@ class ConnectionBase(AnsiblePlugin):
 
         # we always must have shell
         if not self._shell:
-            self._shell = get_shell_plugin(shell_type=getattr(self, '_shell_type', None), executable=self._play_context.executable)
+            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
+            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
 
         self.become = None
 

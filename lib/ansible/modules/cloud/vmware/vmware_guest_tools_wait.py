@@ -56,6 +56,12 @@ options:
      description:
      - UUID of the VM  for which to wait until the tools become available, if known. This is VMware's unique identifier.
      - This is required, if C(name) is not supplied.
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -67,7 +73,7 @@ EXAMPLES = '''
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     name: "{{ vm_name }}"
   delegate_to: localhost
   register: vm_facts
@@ -90,7 +96,7 @@ EXAMPLES = '''
     password: "{{ vcenter_password }}"
     validate_certs: no
     name: test-vm
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
   delegate_to: localhost
   register: facts
 '''
@@ -146,6 +152,7 @@ def main():
         name_match=dict(type='str', default='first', choices=['first', 'last']),
         folder=dict(type='str'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

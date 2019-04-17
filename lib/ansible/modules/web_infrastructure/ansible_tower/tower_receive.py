@@ -164,7 +164,7 @@ def main():
             result['assets'] = receiver.export_assets(all=export_all, asset_input=assets_to_export)
             module.exit_json(**result)
         except TowerCLIError as e:
-            result['message'] = e
+            result['message'] = e.message
             module.fail_json(msg='Receive Failed', **result)
 
 

@@ -34,7 +34,7 @@
 - name: check that the service was started
   shell: 'cat /proc/$(cat /var/run/ansible_test_service.pid)/cmdline'
   register: cmdline
-  failed_when: cmdline is failed or not cmdline.stdout.startswith('python\0/usr/sbin/ansible_test_service\0')
+  failed_when: cmdline is failed or '\0/usr/sbin/ansible_test_service\0' not in cmdline.stdout
 
 - name: find the service with a pattern
   service: name=ansible_test pattern="ansible_test_ser" state=started
@@ -72,7 +72,7 @@
 - name: check that service is started
   command: 'cat /proc/{{ pid_after_restart.stdout }}/cmdline'
   register: cmdline
-  failed_when: cmdline is failed or not cmdline.stdout.startswith('python\0/usr/sbin/ansible_test_service\0')
+  failed_when: cmdline is failed or '\0/usr/sbin/ansible_test_service\0' not in cmdline.stdout
 
 - name: restart the ansible test service with a sleep
   service: name=ansible_test state=restarted sleep=2
@@ -116,7 +116,7 @@
 - name: check that service is started
   command: 'cat /proc/{{ ansible_test_pid.stdout }}/cmdline'
   register: cmdline
-  failed_when: cmdline is failed or not cmdline.stdout.startswith('python\0/usr/sbin/ansible_test_service\0')
+  failed_when: cmdline is failed or '\0/usr/sbin/ansible_test_service\0' not in cmdline.stdout
 
 - name: stop the ansible test service
   service: name=ansible_test state=stopped
@@ -125,7 +125,7 @@
 - name: check that the service is stopped
   command: 'cat /proc/{{ ansible_test_pid.stdout }}/cmdline'
   register: cmdline
-  failed_when: cmdline is not failed or cmdline.stdout.startswith('python\0/usr/sbin/ansible_test_service\0')
+  failed_when: cmdline is not failed or '\0/usr/sbin/ansible_test_service\0' in cmdline.stdout
 
 - name: assert that the service was stopped
   assert:

@@ -21,7 +21,7 @@ version_added: "2.8"
 short_description: Send direct requests to an ACME server
 description:
    - "Allows to send direct requests to an ACME server with the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
+      L(ACME protocol,https://tools.ietf.org/html/rfc8555),
       which is supported by CAs such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module can be used to debug failed certificate request attempts,
       for example when M(acme_certificate) fails or encounters a problem which
@@ -41,8 +41,8 @@ notes:
       url=https://acme-v02.api.letsencrypt.org/acme/acct/1\")"
 seealso:
   - name: Automatic Certificate Management Environment (ACME)
-    description: The current draft specification of the ACME protocol.
-    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
+    description: The specification of the ACME protocol (RFC 8555).
+    link: https://tools.ietf.org/html/rfc8555
   - name: ACME TLS ALPN Challenge Extension
     description: The current draft specification of the C(tls-alpn-01) challenge.
     link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
@@ -63,11 +63,12 @@ options:
          and a regular GET request for ACME v1."
       - "The value C(directory-only) only retrieves the directory, without doing
          a request."
+    type: str
+    default: get
     choices:
     - get
     - post
     - directory-only
-    default: get
   content:
     description:
       - "An encoded JSON object which will be sent as the content if I(method)
@@ -123,7 +124,7 @@ EXAMPLES = r'''
   vars:
     account_info:
       # For valid values, see
-      # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
+      # https://tools.ietf.org/html/rfc8555#section-7.3
       contact:
       - mailto:me@example.com
 
@@ -259,15 +260,15 @@ def main():
         argument_spec=dict(
             account_key_src=dict(type='path', aliases=['account_key']),
             account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(required=False, type='str'),
-            acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
-            validate_certs=dict(required=False, default=True, type='bool'),
-            url=dict(required=False, type='str'),
-            method=dict(required=False, type='str', choices=['get', 'post', 'directory-only'], default='get'),
-            content=dict(required=False, type='str'),
-            fail_on_acme_error=dict(required=False, type='bool', default=True),
-            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
+            account_uri=dict(type='str'),
+            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
+            acme_version=dict(type='int', default=1, choices=[1, 2]),
+            validate_certs=dict(type='bool', default=True),
+            url=dict(type='str'),
+            method=dict(type='str', choices=['get', 'post', 'directory-only'], default='get'),
+            content=dict(type='str'),
+            fail_on_acme_error=dict(type='bool', default=True),
+            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
         ),
         mutually_exclusive=(
             ['account_key_src', 'account_key_content'],

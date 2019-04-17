@@ -41,7 +41,7 @@ options:
             - 'premium'
     premium_data_disks:
         description:
-            - "Allow creation of C(premium) data disks."
+            - "Allow creation of premium data disks."
         type: bool
     state:
       description:
@@ -64,7 +64,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) DevTest Lab
     azure_rm_devtestlab:
-      resource_group: testrg
+      resource_group: myResourceGroup
       name: mylab
       storage_type: standard
 '''
@@ -75,7 +75,7 @@ id:
         - The identifier of the resource.
     returned: always
     type: str
-    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/testrg/providers/microsoft.devtestlab/labs/mylab
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/mylab
 '''
 
 import time

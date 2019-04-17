@@ -16,16 +16,6 @@ module: aci_bd
 short_description: Manage Bridge Domains (BD) objects (fv:BD)
 description:
 - Manages Bridge Domains (BD) on Cisco ACI fabrics.
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
-seealso:
-- module: aci_tenant
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:BD).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   arp_flooding:
@@ -144,6 +134,16 @@ options:
     type: str
     aliases: [ vrf_name ]
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:BD).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -326,8 +326,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():

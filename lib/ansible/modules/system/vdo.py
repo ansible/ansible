@@ -1,14 +1,10 @@
 #!/usr/bin/python
 
-#
-# Copyright (c) 2018 Red Hat, Inc.
-#
+# Copyright: (c) 2018, Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -131,6 +127,7 @@ options:
               volumes will maintain their previously configured
               setting unless a different value is specified in the
               playbook.
+            - The read cache feature is available in VDO 6.1 and older.
         type: str
         choices: [ disabled, enabled ]
     readcachesize:
@@ -146,6 +143,7 @@ options:
               Existing volumes will maintain their previously
               configured setting unless a different value is specified
               in the playbook.
+            - The read cache feature is available in VDO 6.1 and older.
         type: str
     emulate512:
         description:
@@ -214,6 +212,7 @@ options:
               is only available when creating a new volume, and cannot
               be changed for an existing volume.
         type: str
+        choices: [ dense, sparse ]
     ackthreads:
         description:
             - Specifies the number of threads to use for
