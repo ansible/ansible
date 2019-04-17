@@ -788,7 +788,7 @@ class AaaServerHost(object):
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
             root = ElementTree.fromstring(xml_str)
-            local_user_info = root.findall("data/aaa/lam/users/user")
+            local_user_info = root.findall("aaa/lam/users/user")
             if local_user_info:
                 for tmp in local_user_info:
                     tmp_dict = dict()
@@ -1042,7 +1042,7 @@ class AaaServerHost(object):
 
             root = ElementTree.fromstring(xml_str)
             radius_server_ip_v4 = root.findall(
-                "data/radius/rdsTemplates/rdsTemplate/rdsServerIPV4s/rdsServerIPV4")
+                "radius/rdsTemplates/rdsTemplate/rdsServerIPV4s/rdsServerIPV4")
             if radius_server_ip_v4:
                 for tmp in radius_server_ip_v4:
                     tmp_dict = dict()
@@ -1053,43 +1053,42 @@ class AaaServerHost(object):
                     result["radius_server_ip_v4"].append(tmp_dict)
 
             if result["radius_server_ip_v4"]:
-                for tmp in result["radius_server_ip_v4"]:
-                    if "serverType" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverType"] != radius_server_type:
-                                need_cfg = True
-                        else:
-                            if tmp["serverType"] == radius_server_type:
-                                need_cfg = True
-                    if "serverIPAddress" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverIPAddress"] != radius_server_ip:
-                                need_cfg = True
-                        else:
-                            if tmp["serverIPAddress"] == radius_server_ip:
-                                need_cfg = True
-                    if "serverPort" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverPort"] != radius_server_port:
-                                need_cfg = True
-                        else:
-                            if tmp["serverPort"] == radius_server_port:
-                                need_cfg = True
-                    if "serverMode" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverMode"] != radius_server_mode:
-                                need_cfg = True
-                        else:
-                            if tmp["serverMode"] == radius_server_mode:
-                                need_cfg = True
-                    if "vpnName" in tmp.keys():
-                        if state == "present":
-                            if tmp["vpnName"] != radius_vpn_name:
-                                need_cfg = True
-                        else:
-                            if tmp["vpnName"] == radius_vpn_name:
-                                need_cfg = True
+                cfg = dict()
+                config_list = list()
+                if radius_server_type:
+                    cfg["serverType"] = radius_server_type.lower()
+                if radius_server_ip:
+                    cfg["serverIPAddress"] = radius_server_ip.lower()
+                if radius_server_port:
+                    cfg["serverPort"] = radius_server_port.lower()
+                if radius_server_mode:
+                    cfg["serverMode"] = radius_server_mode.lower()
+                if radius_vpn_name:
+                    cfg["vpnName"] = radius_vpn_name.lower()
 
+                for tmp in result["radius_server_ip_v4"]:
+                    exist_cfg = dict()
+                    if radius_server_type:
+                        exist_cfg["serverType"] = tmp.get("serverType").lower()
+                    if radius_server_ip:
+                        exist_cfg["serverIPAddress"] = tmp.get("serverIPAddress").lower()
+                    if radius_server_port:
+                        exist_cfg["serverPort"] = tmp.get("serverPort").lower()
+                    if radius_server_mode:
+                        exist_cfg["serverMode"] = tmp.get("serverMode").lower()
+                    if radius_vpn_name:
+                        exist_cfg["vpnName"] = tmp.get("vpnName").lower()
+                    config_list.append(exist_cfg)
+                if cfg in config_list:
+                    if state == "present":
+                        need_cfg = False
+                    else:
+                        need_cfg = True
+                else:
+                    if state == "present":
+                        need_cfg = True
+                    else:
+                        need_cfg = False
         result["need_cfg"] = need_cfg
         return result
 
@@ -1221,7 +1220,7 @@ class AaaServerHost(object):
 
             root = ElementTree.fromstring(xml_str)
             radius_server_ip_v6 = root.findall(
-                "data/radius/rdsTemplates/rdsTemplate/rdsServerIPV6s/rdsServerIPV6")
+                "radius/rdsTemplates/rdsTemplate/rdsServerIPV6s/rdsServerIPV6")
             if radius_server_ip_v6:
                 for tmp in radius_server_ip_v6:
                     tmp_dict = dict()
@@ -1232,35 +1231,38 @@ class AaaServerHost(object):
                     result["radius_server_ip_v6"].append(tmp_dict)
 
             if result["radius_server_ip_v6"]:
+                cfg = dict()
+                config_list = list()
+                if radius_server_type:
+                    cfg["serverType"] = radius_server_type.lower()
+                if radius_server_ipv6:
+                    cfg["serverIPAddress"] = radius_server_ipv6.lower()
+                if radius_server_port:
+                    cfg["serverPort"] = radius_server_port.lower()
+                if radius_server_mode:
+                    cfg["serverMode"] = radius_server_mode.lower()
+
                 for tmp in result["radius_server_ip_v6"]:
-                    if "serverType" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverType"] != radius_server_type:
-                                need_cfg = True
-                        else:
-                            if tmp["serverType"] == radius_server_type:
-                                need_cfg = True
-                    if "serverIPAddress" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverIPAddress"] != radius_server_ipv6:
-                                need_cfg = True
-                        else:
-                            if tmp["serverIPAddress"] == radius_server_ipv6:
-                                need_cfg = True
-                    if "serverPort" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverPort"] != radius_server_port:
-                                need_cfg = True
-                        else:
-                            if tmp["serverPort"] == radius_server_port:
-                                need_cfg = True
-                    if "serverMode" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverMode"] != radius_server_mode:
-                                need_cfg = True
-                        else:
-                            if tmp["serverMode"] == radius_server_mode:
-                                need_cfg = True
+                    exist_cfg = dict()
+                    if radius_server_type:
+                        exist_cfg["serverType"] = tmp.get("serverType").lower()
+                    if radius_server_ipv6:
+                        exist_cfg["serverIPAddress"] = tmp.get("serverIPAddress").lower()
+                    if radius_server_port:
+                        exist_cfg["serverPort"] = tmp.get("serverPort").lower()
+                    if radius_server_mode:
+                        exist_cfg["serverMode"] = tmp.get("serverMode").lower()
+                    config_list.append(exist_cfg)
+                if cfg in config_list:
+                    if state == "present":
+                        need_cfg = False
+                    else:
+                        need_cfg = True
+                else:
+                    if state == "present":
+                        need_cfg = True
+                    else:
+                        need_cfg = False
 
         result["need_cfg"] = need_cfg
         return result
@@ -1380,7 +1382,7 @@ class AaaServerHost(object):
 
             root = ElementTree.fromstring(xml_str)
             radius_server_name_cfg = root.findall(
-                "data/radius/rdsTemplates/rdsTemplate/rdsServerNames/rdsServerName")
+                "radius/rdsTemplates/rdsTemplate/rdsServerNames/rdsServerName")
             if radius_server_name_cfg:
                 for tmp in radius_server_name_cfg:
                     tmp_dict = dict()
@@ -1391,43 +1393,42 @@ class AaaServerHost(object):
                     result["radius_server_name_cfg"].append(tmp_dict)
 
             if result["radius_server_name_cfg"]:
-                for tmp in result["radius_server_name_cfg"]:
-                    if "serverType" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverType"] != radius_server_type:
-                                need_cfg = True
-                        else:
-                            if tmp["serverType"] == radius_server_type:
-                                need_cfg = True
-                    if "serverName" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverName"] != radius_server_name:
-                                need_cfg = True
-                        else:
-                            if tmp["serverName"] == radius_server_name:
-                                need_cfg = True
-                    if "serverPort" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverPort"] != radius_server_port:
-                                need_cfg = True
-                        else:
-                            if tmp["serverPort"] == radius_server_port:
-                                need_cfg = True
-                    if "serverMode" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverMode"] != radius_server_mode:
-                                need_cfg = True
-                        else:
-                            if tmp["serverMode"] == radius_server_mode:
-                                need_cfg = True
-                    if "vpnName" in tmp.keys():
-                        if state == "present":
-                            if tmp["vpnName"] != radius_vpn_name:
-                                need_cfg = True
-                        else:
-                            if tmp["vpnName"] == radius_vpn_name:
-                                need_cfg = True
+                cfg = dict()
+                config_list = list()
+                if radius_server_type:
+                    cfg["serverType"] = radius_server_type.lower()
+                if radius_server_name:
+                    cfg["serverName"] = radius_server_name.lower()
+                if radius_server_port:
+                    cfg["serverPort"] = radius_server_port.lower()
+                if radius_server_mode:
+                    cfg["serverMode"] = radius_server_mode.lower()
+                if radius_vpn_name:
+                    cfg["vpnName"] = radius_vpn_name.lower()
 
+                for tmp in result["radius_server_name_cfg"]:
+                    exist_cfg = dict()
+                    if radius_server_type:
+                        exist_cfg["serverType"] = tmp.get("serverType").lower()
+                    if radius_server_name:
+                        exist_cfg["serverName"] = tmp.get("serverName").lower()
+                    if radius_server_port:
+                        exist_cfg["serverPort"] = tmp.get("serverPort").lower()
+                    if radius_server_mode:
+                        exist_cfg["serverMode"] = tmp.get("serverMode").lower()
+                    if radius_vpn_name:
+                        exist_cfg["vpnName"] = tmp.get("vpnName").lower()
+                    config_list.append(exist_cfg)
+                if cfg in config_list:
+                    if state == "present":
+                        need_cfg = False
+                    else:
+                        need_cfg = True
+                else:
+                    if state == "present":
+                        need_cfg = True
+                    else:
+                        need_cfg = False
         result["need_cfg"] = need_cfg
         return result
 
@@ -1559,7 +1560,7 @@ class AaaServerHost(object):
 
             root = ElementTree.fromstring(xml_str)
             hwtacacs_server_cfg_ipv4 = root.findall(
-                "data/hwtacacs/hwTacTempCfgs/hwTacTempCfg/hwTacSrvCfgs/hwTacSrvCfg")
+                "hwtacacs/hwTacTempCfgs/hwTacTempCfg/hwTacSrvCfgs/hwTacSrvCfg")
             if hwtacacs_server_cfg_ipv4:
                 for tmp in hwtacacs_server_cfg_ipv4:
                     tmp_dict = dict()
@@ -1570,43 +1571,43 @@ class AaaServerHost(object):
                     result["hwtacacs_server_cfg_ipv4"].append(tmp_dict)
 
             if result["hwtacacs_server_cfg_ipv4"]:
-                for tmp in result["hwtacacs_server_cfg_ipv4"]:
-                    if "serverIpAddress" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverIpAddress"] != hwtacacs_server_ip:
-                                need_cfg = True
-                        else:
-                            if tmp["serverIpAddress"] == hwtacacs_server_ip:
-                                need_cfg = True
-                    if "serverType" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverType"] != hwtacacs_server_type:
-                                need_cfg = True
-                        else:
-                            if tmp["serverType"] == hwtacacs_server_type:
-                                need_cfg = True
-                    if "isSecondaryServer" in tmp.keys():
-                        if state == "present":
-                            if tmp["isSecondaryServer"] != str(hwtacacs_is_secondary_server).lower():
-                                need_cfg = True
-                        else:
-                            if tmp["isSecondaryServer"] == str(hwtacacs_is_secondary_server).lower():
-                                need_cfg = True
-                    if "isPublicNet" in tmp.keys():
-                        if state == "present":
-                            if tmp["isPublicNet"] != str(hwtacacs_is_public_net).lower():
-                                need_cfg = True
-                        else:
-                            if tmp["isPublicNet"] == str(hwtacacs_is_public_net).lower():
-                                need_cfg = True
-                    if "vpnName" in tmp.keys():
-                        if state == "present":
-                            if tmp["vpnName"] != hwtacacs_vpn_name:
-                                need_cfg = True
-                        else:
-                            if tmp["vpnName"] == hwtacacs_vpn_name:
-                                need_cfg = True
+                cfg = dict()
+                config_list = list()
 
+                if hwtacacs_server_ip:
+                    cfg["serverIpAddress"] = hwtacacs_server_ip.lower()
+                if hwtacacs_server_type:
+                    cfg["serverType"] = hwtacacs_server_type.lower()
+                if hwtacacs_is_secondary_server:
+                    cfg["isSecondaryServer"] = str(hwtacacs_is_secondary_server).lower()
+                if hwtacacs_is_public_net:
+                    cfg["isPublicNet"] = str(hwtacacs_is_public_net).lower()
+                if hwtacacs_vpn_name:
+                    cfg["vpnName"] = hwtacacs_vpn_name.lower()
+
+                for tmp in result["hwtacacs_server_cfg_ipv4"]:
+                    exist_cfg = dict()
+                    if hwtacacs_server_ip:
+                        exist_cfg["serverIpAddress"] = tmp.get("serverIpAddress").lower()
+                    if hwtacacs_server_type:
+                        exist_cfg["serverType"] = tmp.get("serverType").lower()
+                    if hwtacacs_is_secondary_server:
+                        exist_cfg["isSecondaryServer"] = tmp.get("isSecondaryServer").lower()
+                    if hwtacacs_is_public_net:
+                        exist_cfg["isPublicNet"] = tmp.get("isPublicNet").lower()
+                    if hwtacacs_vpn_name:
+                        exist_cfg["vpnName"] = tmp.get("vpnName").lower()
+                    config_list.append(exist_cfg)
+                if cfg in config_list:
+                    if state == "present":
+                        need_cfg = False
+                    else:
+                        need_cfg = True
+                else:
+                    if state == "present":
+                        need_cfg = True
+                    else:
+                        need_cfg = False
         result["need_cfg"] = need_cfg
         return result
 
@@ -1775,7 +1776,7 @@ class AaaServerHost(object):
 
             root = ElementTree.fromstring(xml_str)
             hwtacacs_server_cfg_ipv6 = root.findall(
-                "data/hwtacacs/hwTacTempCfgs/hwTacTempCfg/hwTacIpv6SrvCfgs/hwTacIpv6SrvCfg")
+                "hwtacacs/hwTacTempCfgs/hwTacTempCfg/hwTacIpv6SrvCfgs/hwTacIpv6SrvCfg")
             if hwtacacs_server_cfg_ipv6:
                 for tmp in hwtacacs_server_cfg_ipv6:
                     tmp_dict = dict()
@@ -1786,36 +1787,39 @@ class AaaServerHost(object):
                     result["hwtacacs_server_cfg_ipv6"].append(tmp_dict)
 
             if result["hwtacacs_server_cfg_ipv6"]:
-                for tmp in result["hwtacacs_server_cfg_ipv6"]:
-                    if "serverIpAddress" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverIpAddress"] != hwtacacs_server_ipv6:
-                                need_cfg = True
-                        else:
-                            if tmp["serverIpAddress"] == hwtacacs_server_ipv6:
-                                need_cfg = True
-                    if "serverType" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverType"] != hwtacacs_server_type:
-                                need_cfg = True
-                        else:
-                            if tmp["serverType"] == hwtacacs_server_type:
-                                need_cfg = True
-                    if "isSecondaryServer" in tmp.keys():
-                        if state == "present":
-                            if tmp["isSecondaryServer"] != str(hwtacacs_is_secondary_server).lower():
-                                need_cfg = True
-                        else:
-                            if tmp["isSecondaryServer"] == str(hwtacacs_is_secondary_server).lower():
-                                need_cfg = True
-                    if "vpnName" in tmp.keys():
-                        if state == "present":
-                            if tmp["vpnName"] != hwtacacs_vpn_name:
-                                need_cfg = True
-                        else:
-                            if tmp["vpnName"] == hwtacacs_vpn_name:
-                                need_cfg = True
+                cfg = dict()
+                config_list = list()
 
+                if hwtacacs_server_ipv6:
+                    cfg["serverIpAddress"] = hwtacacs_server_ipv6.lower()
+                if hwtacacs_server_type:
+                    cfg["serverType"] = hwtacacs_server_type.lower()
+                if hwtacacs_is_secondary_server:
+                    cfg["isSecondaryServer"] = str(hwtacacs_is_secondary_server).lower()
+                if hwtacacs_vpn_name:
+                    cfg["vpnName"] = hwtacacs_vpn_name.lower()
+
+                for tmp in result["hwtacacs_server_cfg_ipv6"]:
+                    exist_cfg = dict()
+                    if hwtacacs_server_ipv6:
+                        exist_cfg["serverIpAddress"] = tmp.get("serverIpAddress").lower()
+                    if hwtacacs_server_type:
+                        exist_cfg["serverType"] = tmp.get("serverType").lower()
+                    if hwtacacs_is_secondary_server:
+                        exist_cfg["isSecondaryServer"] = tmp.get("isSecondaryServer").lower()
+                    if hwtacacs_vpn_name:
+                        exist_cfg["vpnName"] = tmp.get("vpnName").lower()
+                    config_list.append(exist_cfg)
+                if cfg in config_list:
+                    if state == "present":
+                        need_cfg = False
+                    else:
+                        need_cfg = True
+                else:
+                    if state == "present":
+                        need_cfg = True
+                    else:
+                        need_cfg = False
         result["need_cfg"] = need_cfg
         return result
 
@@ -1967,7 +1971,7 @@ class AaaServerHost(object):
 
             root = ElementTree.fromstring(xml_str)
             hwtacacs_server_name_cfg = root.findall(
-                "data/hwtacacs/hwTacTempCfgs/hwTacTempCfg/hwTacHostSrvCfgs/hwTacHostSrvCfg")
+                "hwtacacs/hwTacTempCfgs/hwTacTempCfg/hwTacHostSrvCfgs/hwTacHostSrvCfg")
             if hwtacacs_server_name_cfg:
                 for tmp in hwtacacs_server_name_cfg:
                     tmp_dict = dict()
@@ -1978,43 +1982,43 @@ class AaaServerHost(object):
                     result["hwtacacs_server_name_cfg"].append(tmp_dict)
 
             if result["hwtacacs_server_name_cfg"]:
-                for tmp in result["hwtacacs_server_name_cfg"]:
-                    if "serverHostName" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverHostName"] != hwtacacs_server_host_name:
-                                need_cfg = True
-                        else:
-                            if tmp["serverHostName"] == hwtacacs_server_host_name:
-                                need_cfg = True
-                    if "serverType" in tmp.keys():
-                        if state == "present":
-                            if tmp["serverType"] != hwtacacs_server_type:
-                                need_cfg = True
-                        else:
-                            if tmp["serverType"] == hwtacacs_server_type:
-                                need_cfg = True
-                    if "isSecondaryServer" in tmp.keys():
-                        if state == "present":
-                            if tmp["isSecondaryServer"] != str(hwtacacs_is_secondary_server).lower():
-                                need_cfg = True
-                        else:
-                            if tmp["isSecondaryServer"] == str(hwtacacs_is_secondary_server).lower():
-                                need_cfg = True
-                    if "isPublicNet" in tmp.keys():
-                        if state == "present":
-                            if tmp["isPublicNet"] != str(hwtacacs_is_public_net).lower():
-                                need_cfg = True
-                        else:
-                            if tmp["isPublicNet"] == str(hwtacacs_is_public_net).lower():
-                                need_cfg = True
-                    if "vpnName" in tmp.keys():
-                        if state == "present":
-                            if tmp["vpnName"] != hwtacacs_vpn_name:
-                                need_cfg = True
-                        else:
-                            if tmp["vpnName"] == hwtacacs_vpn_name:
-                                need_cfg = True
+                cfg = dict()
+                config_list = list()
 
+                if hwtacacs_server_host_name:
+                    cfg["serverHostName"] = hwtacacs_server_host_name.lower()
+                if hwtacacs_server_type:
+                    cfg["serverType"] = hwtacacs_server_type.lower()
+                if hwtacacs_is_secondary_server:
+                    cfg["isSecondaryServer"] = str(hwtacacs_is_secondary_server).lower()
+                if hwtacacs_is_public_net:
+                    cfg["isPublicNet"] = str(hwtacacs_is_public_net).lower()
+                if hwtacacs_vpn_name:
+                    cfg["vpnName"] = hwtacacs_vpn_name.lower()
+
+                for tmp in result["hwtacacs_server_name_cfg"]:
+                    exist_cfg = dict()
+                    if hwtacacs_server_host_name:
+                        exist_cfg["serverHostName"] = tmp.get("serverHostName").lower()
+                    if hwtacacs_server_type:
+                        exist_cfg["serverType"] = tmp.get("serverType").lower()
+                    if hwtacacs_is_secondary_server:
+                        exist_cfg["isSecondaryServer"] = tmp.get("isSecondaryServer").lower()
+                    if hwtacacs_is_public_net:
+                        exist_cfg["isPublicNet"] = tmp.get("isPublicNet").lower()
+                    if hwtacacs_vpn_name:
+                        exist_cfg["vpnName"] = tmp.get("vpnName").lower()
+                    config_list.append(exist_cfg)
+                if cfg in config_list:
+                    if state == "present":
+                        need_cfg = False
+                    else:
+                        need_cfg = True
+                else:
+                    if state == "present":
+                        need_cfg = True
+                    else:
+                        need_cfg = False
         result["need_cfg"] = need_cfg
         return result
 
