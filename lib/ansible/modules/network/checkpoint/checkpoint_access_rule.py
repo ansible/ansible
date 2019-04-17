@@ -32,7 +32,7 @@ short_description: Manages access rules on Checkpoint over Web Services API
 description:
   - Manages access rules on Checkpoint devices including creating, updating, removing access rules objects,
     All operations are performed over Web Services API.
-version_added: "2.8"
+version_added: "2.9"
 author: "Ansible by Red Hat (@rcarrillocruz)"
 options:
   name:
@@ -76,18 +76,15 @@ options:
       - Publish the current session if changes have been performed
         after task completes.
     type: bool
-    default: 'yes'
   auto_install_policy:
     description:
       - Install the package policy if changes have been performed
         after the task completes.
     type: bool
-    default: 'yes'
   policy_package:
     description:
       - Package policy name to be installed.
     type: str
-    default: 'standard'
   targets:
     description:
       - Targets to install the package policy on.
