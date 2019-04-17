@@ -47,7 +47,6 @@ def meraki_argument_spec():
                 timeout=dict(type='int', default=30),
                 org_name=dict(type='str', aliases=['organization']),
                 org_id=dict(type='str'),
-                output_version=dict(type='str', choices=['old', 'new'], default='new'),
                 )
 
 
@@ -138,11 +137,11 @@ class MerakiModule(object):
             items = {}
             for k, v in data.items():
                 try:
-                    new = { self.key_map[k]: data[k] }
+                    new = {self.key_map[k]: data[k]}
                     items[self.key_map[k]] = self.sanitize_keys(data[k])
                 except KeyError:
                     snake_k = re.sub('([a-z0-9])([A-Z])', r'\1_\2', k).lower()
-                    new = { snake_k: data[k] }
+                    new = {snake_k: data[k]}
                     items[snake_k] = self.sanitize_keys(data[k])
             return items
         elif isinstance(data, list):
