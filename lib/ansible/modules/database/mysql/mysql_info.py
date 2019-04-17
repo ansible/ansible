@@ -30,7 +30,7 @@ options:
     - By default, collects all subsets.
     - You can use '!' before value (for example, C(!settings)) to exclude it from the information.
     - If you pass including and excluding values to the filter, for example, I(filter=!settings,version),
-      the excluding values will be ignored.
+      the excluding values, C(!settings) in this case, will be ignored.
     type: list
   login_db:
     description:
@@ -129,7 +129,7 @@ databases:
       description: Database size in bytes.
       returned: always
       type: dict
-      sample: 656594
+      sample: { 'size': 656594 }
 settings:
   description: Global settings (variables) information.
   returned: always
@@ -360,9 +360,12 @@ def main():
         login_db=dict(type='str', aliases=['db', 'database']),
         filter=dict(type='list'),
     )
+
+    # The module doesn't support check_mode
+    # because of it doesn't change anything
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
     db = module.params['login_db']
@@ -385,14 +388,12 @@ def main():
                            config_file, ssl_cert, ssl_key, ssl_ca, db,
                            connect_timeout=connect_timeout, cursor_class='DictCursor')
 
-    changed = False
-
     ###############################
     # Create object and do main job
 
     mysql = MySQL_Info(module, cursor)
 
-    module.exit_json(changed=changed, **mysql.get_info(filter_))
+    module.exit_json(changed=False, **mysql.get_info(filter_))
 
 
 if __name__ == '__main__':
