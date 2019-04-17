@@ -844,6 +844,7 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
         self.device_helper = PyVmomiDeviceHelper(self.module)
         self.configspec = None
+        self.relospec = None
         self.change_detected = False  # a change was detected and needs to be applied through reconfiguration
         self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.customspec = None
@@ -1397,6 +1398,7 @@ class PyVmomiHelper(PyVmomi):
                 nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
                 nic.device.backing.opaqueNetworkId = network_id
                 nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
+                nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -1413,7 +1415,13 @@ class PyVmomiHelper(PyVmomi):
                     nic_change_detected = True
 
             if nic_change_detected:
-                self.configspec.deviceChange.append(nic)
+                # Change to fix the issue found while configuring opaque network
+                # VMs cloned from a template with opaque network will get disconnected
+                # Replacing deprecated config parameter with relocation Spec
+                if isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
+                    self.relospec.deviceChange.append(nic)
+                else:
+                    self.configspec.deviceChange.append(nic)
                 self.change_detected = True
 
     def configure_vapp_properties(self, vm_obj):
@@ -2143,6 +2151,9 @@ class PyVmomiHelper(PyVmomi):
 
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
+        # create the relocation spec
+        self.relospec = vim.vm.RelocateSpec()
+        self.relospec.deviceChange = []
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
@@ -2167,13 +2178,10 @@ class PyVmomiHelper(PyVmomi):
         clone_method = None
         try:
             if self.params['template']:
-                # create the relocation spec
-                relospec = vim.vm.RelocateSpec()
-
                 # Only select specific host when ESXi hostname is provided
                 if self.params['esxi_hostname']:
-                    relospec.host = self.select_host()
-                relospec.datastore = datastore
+                    self.relospec.host = self.select_host()
+                self.relospec.datastore = datastore
 
                 # Convert disk present in template if is set
                 if self.params['convert']:
@@ -2189,22 +2197,22 @@ class PyVmomiHelper(PyVmomi):
                                 disk_locator.diskBackingInfo.diskMode = "persistent"
                             disk_locator.diskId = device.key
                             disk_locator.datastore = datastore
-                            relospec.disk.append(disk_locator)
+                            self.relospec.disk.append(disk_locator)
 
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
-                relospec.pool = resource_pool
+                self.relospec.pool = resource_pool
 
                 linked_clone = self.params.get('linked_clone')
                 snapshot_src = self.params.get('snapshot_src', None)
                 if linked_clone:
                     if snapshot_src is not None:
-                        relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+                        self.relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
                     else:
                         self.module.fail_json(msg="Parameter 'linked_src' and 'snapshot_src' are"
                                                   " required together for linked clone operation.")
 
-                clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
+                clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=self.relospec)
                 if self.customspec:
                     clonespec.customization = self.customspec
 
@@ -2314,7 +2322,9 @@ class PyVmomiHelper(PyVmomi):
     def reconfigure_vm(self):
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
-
+        # create the relocation spec
+        self.relospec = vim.vm.RelocateSpec()
+        self.relospec.deviceChange = []
         self.configure_guestid(vm_obj=self.current_vm_obj)
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
         self.configure_hardware_params(vm_obj=self.current_vm_obj)
@@ -2329,12 +2339,11 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.annotation = str(self.params['annotation'])
             self.change_detected = True
 
-        relospec = vim.vm.RelocateSpec()
         if self.params['resource_pool']:
-            relospec.pool = self.get_resource_pool()
+            self.relospec.pool = self.get_resource_pool()
 
-            if relospec.pool != self.current_vm_obj.resourcePool:
-                task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
+            if self.relospec.pool != self.current_vm_obj.resourcePool:
+                task = self.current_vm_obj.RelocateVM_Task(spec=self.relospec)
                 self.wait_for_task(task)
                 if task.info.state == 'error':
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'relocate'}
