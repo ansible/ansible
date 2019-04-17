@@ -325,10 +325,48 @@ options:
         version_added: "2.9"
     cloud_init_persist:
         description:
-            - "If I(yes) the C(cloud_init) parameters will be saved for the template and the virtual machine from template won't be started as run-once."
+            - "If I(yes) the C(cloud_init) or C(sysprep) parameters will be saved for the template and the virtual machine from template won't be started as run-once."
         type: bool
         aliases: [ 'sysprep_persist' ]
         default: 'no'
+        version_added: "2.9"
+    sysprep:
+        description:
+            - Dictionary with values for Windows Virtual Machine initialization using sysprep.
+        suboptions:
+            host_name:
+                description:
+                    - Hostname to be set to Virtual Machine when deployed.
+            active_directory_ou:
+                description:
+                    - Active Directory Organizational Unit, to be used for login of user.
+            org_name:
+                description:
+                    - Organization name to be set to Windows Virtual Machine.
+            domain:
+                description:
+                    - Domain to be set to Windows Virtual Machine.
+            timezone:
+                description:
+                    - Timezone to be set to Windows Virtual Machine.
+            ui_language:
+                description:
+                    - UI language of the Windows Virtual Machine.
+            system_locale:
+                description:
+                    - System localization of the Windows Virtual Machine.
+            input_locale:
+                description:
+                    - Input localization of the Windows Virtual Machine.
+            windows_license_key:
+                description:
+                    - License key to be set to Windows Virtual Machine.
+            user_name:
+                description:
+                    - Username to be used for set password to Windows Virtual Machine.
+            root_password:
+                description:
+                    - Password to be set for username to Windows Virtual Machine.
         version_added: "2.9"
 extends_documentation_fragment: ovirt
 '''
@@ -489,6 +527,17 @@ EXAMPLES = '''
     memory_max: 2Gib
     nics:
       - name: nic1
+
+- name: Template with sysprep
+  ovirt_vm:
+    name: windows2012R2_AD
+    cluster: Default
+    memory: 3GiB
+    high_availability: true
+    sysprep:
+      host_name: windowsad.example.com
+      user_name: Administrator
+      root_password: SuperPassword123
 '''
 
 RETURN = '''
@@ -661,6 +710,7 @@ class TemplatesModule(BaseModule):
         if self._initialization is not None:
             return self._initialization
 
+        sysprep = self.param('sysprep')
         cloud_init = self.param('cloud_init')
         cloud_init_nics = self.param('cloud_init_nics') or []
         if cloud_init is not None:
@@ -695,6 +745,10 @@ class TemplatesModule(BaseModule):
                     )
                 ] if cloud_init_nics else None,
                 **cloud_init
+            )
+        elif sysprep:
+            self._initialization = otypes.Initialization(
+                **sysprep
             )
         return self._initialization
 
@@ -875,6 +929,7 @@ def main():
         cloud_init=dict(type='dict'),
         cloud_init_nics=dict(type='list', default=[]),
         cloud_init_persist=dict(type='bool', default=False, aliases=['sysprep_persist']),
+        sysprep=dict(type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
