@@ -32,7 +32,7 @@ short_description: Manages access rules on Checkpoint over Web Services API
 description:
   - Manages access rules on Checkpoint devices including creating, updating, removing access rules objects,
     All operations are performed over Web Services API.
-version_added: "2.8"
+version_added: "2.9"
 author: "Ansible by Red Hat (@rcarrillocruz)"
 options:
   name:
