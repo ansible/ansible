@@ -463,7 +463,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             loader.set_basedir(basedir)
             add_all_plugin_dirs(basedir)
         else:
-            paths = [os.path.dirname(p) for p in context.CLIARGS['args'] if p]
+            paths = [os.path.dirname(p) for p in context.CLIARGS['args'] if os.path.exists(p)]
             if paths:
                 loader.set_basedir(paths[0])
                 for playbook_path in paths:
