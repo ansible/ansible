@@ -29,7 +29,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import wrap_var
+from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
 
 display = Display()
@@ -203,11 +203,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                             environment=final_environment)
                 break
             except InterpreterDiscoveryRequiredError as idre:
-                self._discovered_interpreter = discover_interpreter(
+                self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
                     action=self,
                     interpreter_name=idre.interpreter_name,
                     discovery_mode=idre.discovery_mode,
-                    task_vars=task_vars)
+                    task_vars=task_vars))
 
                 # update the local task_vars with the discovered interpreter (which might be None);
                 # we'll propagate back to the controller in the task result
