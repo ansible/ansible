@@ -215,7 +215,7 @@ class CobblerInventory(object):
                 for (iname, ivalue) in iteritems(interfaces):
                     if ivalue['management'] or not ivalue['static']:
                         this_dns_name = ivalue.get('dns_name', None)
-                        if this_dns_name is not None and this_dns_name is not "":
+                        if this_dns_name not in (None, ""):
                             dns_name = this_dns_name
 
             if dns_name == '' or dns_name is None:
