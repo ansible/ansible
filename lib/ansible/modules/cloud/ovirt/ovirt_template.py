@@ -320,8 +320,6 @@ options:
             mac_address:
                 description:
                     - Custom MAC address of the network interface, by default it's obtained from MAC pool.
-                    - "NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
-                    To manage NICs of the VM in more depth please use M(ovirt_nics) module instead."
         version_added: "2.9"
     cloud_init_persist:
         description:
