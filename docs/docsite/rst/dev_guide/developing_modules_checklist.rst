@@ -5,7 +5,9 @@
 Contributing your module to Ansible
 ***********************************
 
-If you want to contribute a module to Ansible, you must meet our objective and subjective requirements. Modules accepted into the `main project repo <https://github.com/ansible/ansible>`_ ship with every Ansible installation. However, contributing to the main project isn't the only way to distribute a module - you can embed modules in roles on Galaxy or simply share copies of your module code for :ref:`local use <developing_locally>`.
+If you want to contribute a module to Ansible, you must meet our objective and subjective requirements. Please read the details below, and also review our :ref:`tips for module development <developing_modules_best_practices>`.
+
+Modules accepted into the `main project repo <https://github.com/ansible/ansible>`_ ship with every Ansible installation. However, contributing to the main project isn't the only way to distribute a module - you can embed modules in roles on Galaxy or simply share copies of your module code for :ref:`local use <developing_locally>`.
 
 Contributing to Ansible: objective requirements
 ===============================================
@@ -37,5 +39,6 @@ If your module meets our objective requirements, we'll review your code to see i
 Other checklists
 ================
 
+* :ref:`Tips for module development <developing_modules_best_practices>`.
 * `Amazon development checklist <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_.
 * :ref:`Windows development checklist <developing_modules_general_windows>`.
