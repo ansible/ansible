@@ -101,13 +101,15 @@ class PslintTest(SanitySingleVersion):
             'Information',
             'Warning',
             'Error',
+            'ParseError',
         ]
 
         cwd = os.getcwd() + '/'
 
-        # replace unicode smart quotes with ascii versions
+        # replace unicode smart quotes and ellipsis with ascii versions
         stdout = re.sub(u'[\u2018\u2019]', "'", stdout)
         stdout = re.sub(u'[\u201c\u201d]', '"', stdout)
+        stdout = re.sub(u'[\u2026]', '...', stdout)
 
         messages = json.loads(stdout)
 

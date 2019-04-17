@@ -180,7 +180,7 @@ def main():
         if "<data/>" in response:
             end_state["result"] = "<data/>"
         else:
-            tmp1 = response.xml.split(r"<data>")
+            tmp1 = response.split(r"<data>")
             tmp2 = tmp1[1].split(r"</data>")
             result = tmp2[0].split("\n")
 
