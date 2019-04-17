@@ -213,7 +213,7 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=None, k
     start = time.time()
     while 1:
         join += to_native(irc.recv(1024))
-        if re.search(r'^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
+        if re.search(r'^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M | re.I):
             break
         elif time.time() - start > timeout:
             raise Exception('Timeout waiting for IRC JOIN response')
