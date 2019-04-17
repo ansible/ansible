@@ -95,7 +95,8 @@ RETURN = '''
                 returned: success
             next_hop:
                 description:
-                    - the next hop of a route.
+                    - the next hop of a route. If the route type is peering,
+                      it will provide VPC peering connection ID.
                 type: str
                 returned: success
     enable_shared_snat:
