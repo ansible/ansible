@@ -169,3 +169,27 @@ Example EXOS-API Task
 In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module used in the task.
 
 .. include:: shared_snippets/SSH_warning.txt
+
+
+### Installing Ansible
+
+1. Run the below commands to install the required files/packages:
+
+```sh
+root@NetworkAutomation-1:~# apt-get update
+root@NetworkAutomation-1:~# apt-get install git
+root@NetworkAutomation-1:~# git clone https://github.com/ansible/ansible.git --recursive
+```
+2. Run ```ls``` to make sure that ansible folder is successfully cloned. Sample command and its output is below:
+
+```sh
+root@NetworkAutomation-1:~# ls
+ansible
+```
+
+3. One can periodically pull the latest developments from Ansible's Github Repository by running the below commands:
+
+```sh
+root@NetworkAutomation-1:~# cd ansible
+root@NetworkAutomation-1:~# git pull
+```
