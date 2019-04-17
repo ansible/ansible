@@ -21,7 +21,7 @@
     - name: Ensure firewalld is installed
       package:
         name: firewalld
-        state: installed
+        state: present
       # This doesn't work for CentOS 6 because firewalld doesn't exist in CentOS6
 
     - name: Check to make sure the firewalld python module is available.
