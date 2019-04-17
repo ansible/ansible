@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
-# Copyright: (c) 2017-2018, Ansible Project
 # Copyright: (c) 2019, VMware Inc.
+# Copyright: (c) 2017-2018, Ansible Project
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -193,6 +193,7 @@ updates:
     - dictionary of changes
     returned: on update
     type: dict
+    version_added: '2.9'
     sample: { "port_policy": "traffic_filter_override does not equal False" }
 '''
 
@@ -450,18 +451,25 @@ class VMwareDvsPortgroup(PyVmomi):
         # Map config into something we can compare
         config_map = dict(
             portgroup_type=config.type,
-            network_policy=dict(
+            network_policy={},
+            teaming_policy={},
+            port_policy={}
+        )
+        if pconfig.securityPolicy:
+            config_map['network_policy'] = dict(
                 promiscuous=pconfig.securityPolicy.allowPromiscuous.value,
                 forged_transmits=pconfig.securityPolicy.forgedTransmits.value,
                 mac_changes=pconfig.securityPolicy.macChanges.value,
-            ),
-            teaming_policy=dict(
+            )
+        if pconfig.uplinkTeamingPolicy:
+            config_map['teaming_policy']=dict(
                 inbound_policy=pconfig.uplinkTeamingPolicy.reversePolicy.value,
                 notify_switches=pconfig.uplinkTeamingPolicy.notifySwitches.value,
                 rolling_order=pconfig.uplinkTeamingPolicy.rollingOrder.value,
                 load_balance_policy=pconfig.uplinkTeamingPolicy.policy.value,
-            ),
-            port_policy=dict(
+            )
+        if config.policy:
+            config_map['port_policy']=dict(
                 block_override=config.policy.blockOverrideAllowed,
                 ipfix_override=config.policy.ipfixOverrideAllowed,
                 live_port_move=config.policy.livePortMovingAllowed,
@@ -473,8 +481,7 @@ class VMwareDvsPortgroup(PyVmomi):
                 uplink_teaming_override=config.policy.uplinkTeamingOverrideAllowed,
                 vendor_config_override=config.policy.vendorConfigOverrideAllowed,
                 vlan_override=config.policy.vlanOverrideAllowed,
-            ),
-        )
+            )
 
         # If the portgroup is ephemeral then auto_exand and num_ports are ignored
         if config_map['portgroup_type'] != 'ephemeral':
@@ -679,7 +686,17 @@ def main():
                         default=dict(allow_unicast_flooding=None, enabled=False, limit=None, limit_policy=None),
                     ),
                 ),
-                default=dict(),
+                default=dict(
+                    allow_promiscuous=None,
+                    forged_transmits=None,
+                    mac_changes=None,
+                    mac_learning_policy=dict(
+                        allow_unicast_flooding=None,
+                        enabled=False,
+                        limit=None,
+                        limit_policy=None,
+                    ),
+                ),
             ),
         )
     )
