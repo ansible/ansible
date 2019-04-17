@@ -137,11 +137,8 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 	 :Deprecated detail: {{ini_map['deprecated']['why']}}
 	 :Deprecated alternatives: {{ini_map['deprecated']['alternatives']}}
 {% endif %}
-{% endfor %}
-{% endif %}
-{% if config.get('env', False) %}
-:Environment:
-{% for env_var_map in config['env']|sort(attribute='name') %}
+   - :Section: {{ini_map['section']}}
+     :Key: {{ini_map['key']}}
     {% if config['env']|length > 1 %}- {% endif%}:envvar:`{{env_var_map['name']}}`
 {% if env_var_map.get('deprecated') %}
 	  :Deprecated in: {{env_var_map['deprecated']['version']}}
@@ -162,6 +159,12 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {% endfor %}
 {% endif %}
 {% if config.get('deprecated') %}
+=======
+    - :envvar:`{{env_var_map['name']}}`
+{% endfor %}
+{% endif %}
+{% if config['deprecated'] %}
+>>>>>>> fix choices for transform
 :Deprecated in: {{config['deprecated']['version']}}
 :Deprecated detail: {{config['deprecated']['why']}}
 :Deprecated alternatives: {{config['deprecated']['alternatives']}}
