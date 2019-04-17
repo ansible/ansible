@@ -82,6 +82,7 @@ options:
       There might however be some use cases where you would want to have this, like when you are
       packaging your own flatpaks.
     default: false
+    version_added: 2.9
   remote:
     description:
     - The flatpak remote (repository) to install the flatpak from.
