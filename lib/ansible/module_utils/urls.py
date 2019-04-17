@@ -170,7 +170,7 @@ if not HAS_MATCH_HOSTNAME:
         # Divergence: Python-3.7+'s _ssl has this exception type but older Pythons do not
         from _ssl import SSLCertVerificationError
         CertificateError = SSLCertVerificationError
-    except:
+    except ImportError:
         class CertificateError(ValueError):
             pass
 
@@ -226,7 +226,6 @@ if not HAS_MATCH_HOSTNAME:
             return False
         return dn_remainder.lower() == hostname_remainder.lower()
 
-
     def _inet_paton(ipname):
         """Try to convert an IP address to packed binary form
 
@@ -248,19 +247,19 @@ if not HAS_MATCH_HOSTNAME:
 
         if n_ipname.count('.') == 3:
             try:
-                return _socket.inet_aton(n_ipname)
+                return socket.inet_aton(n_ipname)
             # Divergence: OSError on late python3.  socket.error earlier.
             # Null bytes generate ValueError on python3(we want to raise
             # ValueError anyway), TypeError # earlier
-            except (OSError, _socket.error, TypeError):
+            except (OSError, socket.error, TypeError):
                 pass
 
         try:
-            return _socket.inet_pton(_socket.AF_INET6, n_ipname)
+            return socket.inet_pton(socket.AF_INET6, n_ipname)
         # Divergence: OSError on late python3.  socket.error earlier.
         # Null bytes generate ValueError on python3(we want to raise
         # ValueError anyway), TypeError # earlier
-        except (OSError, _socket.error, TypeError):
+        except (OSError, socket.error, TypeError):
             # Divergence .format() to percent formatting for Python < 2.6
             raise ValueError("%s is neither an IPv4 nor an IP6 "
                              "address." % repr(ipname))
@@ -271,7 +270,6 @@ if not HAS_MATCH_HOSTNAME:
         # Divergence .format() to percent formatting for Python < 2.6
         raise ValueError("%s is not an IPv4 address." % repr(ipname))
 
-
     def _ipaddress_match(ipname, host_ip):
         """Exact matching of IP addresses.
 
@@ -281,7 +279,6 @@ if not HAS_MATCH_HOSTNAME:
         # OpenSSL may add a trailing newline to a subjectAltName's IP address
         ip = _inet_paton(ipname.rstrip())
         return ip == host_ip
-
 
     def match_hostname(cert, hostname):
         """Verify that *cert* (in decoded format as returned by
@@ -303,13 +300,13 @@ if not HAS_MATCH_HOSTNAME:
         try:
             # Divergence: Deal with hostname as bytes
             host_ip = _inet_paton(to_text(hostname, errors='strict'))
-        except ValueError:
-            # Not an IP address (common case)
-            host_ip = None
         except UnicodeError:
             # Divergence: Deal with hostname as byte strings.
             # IP addresses should be all ascii, so we consider it not
             # an IP address if this fails
+            host_ip = None
+        except ValueError:
+            # Not an IP address (common case)
             host_ip = None
         dnsnames = []
         san = cert.get('subjectAltName', ())
@@ -334,16 +331,11 @@ if not HAS_MATCH_HOSTNAME:
                             return
                         dnsnames.append(value)
         if len(dnsnames) > 1:
-            raise CertificateError("hostname %r "
-                "doesn't match either of %s"
-                % (hostname, ', '.join(map(repr, dnsnames))))
+            raise CertificateError("hostname %r doesn't match either of %s" % (hostname, ', '.join(map(repr, dnsnames))))
         elif len(dnsnames) == 1:
-            raise CertificateError("hostname %r "
-                "doesn't match %r"
-                % (hostname, dnsnames[0]))
+            raise CertificateError("hostname %r doesn't match %r" % (hostname, dnsnames[0]))
         else:
-            raise CertificateError("no appropriate commonName or "
-                "subjectAltName fields were found")
+            raise CertificateError("no appropriate commonName or subjectAltName fields were found")
 
     # End of Python Software Foundation Licensed code
 
