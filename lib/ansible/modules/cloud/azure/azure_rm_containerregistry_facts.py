@@ -50,7 +50,7 @@ EXAMPLES = '''
   - name: Get instance of Registry
     azure_rm_containerregistry_facts:
       resource_group: myResourceGroup
-      name: sampleregistry
+      name: myRegistry
 
   - name: List instances of Registry
     azure_rm_containerregistry_facts:
