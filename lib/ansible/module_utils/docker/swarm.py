@@ -268,13 +268,7 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
         except APIError as exc:
             if exc.status_code == 503:
                 self.fail("Cannot inspect service: To inspect service execute module on Swarm Manager")
-            if exc.status_code == 404:
-                if skip_missing is False:
-                    self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
-                else:
-                    return None
-            else:
-                self.fail("Error inspecting swarm service: %s" % exc)
+            self.fail("Error inspecting swarm service: %s" % exc)
         except Exception as exc:
             self.fail("Error inspecting swarm service: %s" % exc)
 
