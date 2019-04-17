@@ -70,6 +70,7 @@ Complete Steps for the above Example CLI Task
 
 1.Ensure hosts are configured for inventory file and hosts files on the host OS :
 
+```sh
 # cat ~/playbooks/hosts
 [all_exos]
 S2
@@ -78,9 +79,9 @@ S1
 # cat /etc/hosts
 192.168.75.110  S1
 192.168.75.105  S2
-
+```
 2.Ensure the ansible.cfg is configured for the inventory path
-
+```sh
 # cat ansible.cfg
 
 [defaults]
@@ -90,24 +91,20 @@ ansible_python_interpreter = ~/ansible/venv/bin/python
 host_key_checking = False
 
 inventory = ~/playbooks/hosts
-
+```
 3. Create the group_vars/exos.yaml file
-
+```sh
 # cat playbooks/group_vars/exos.yaml
-
-
 
 ---
 ansible_network_os: exos
 ansible_connection: network_cli
 ansible_user: xtrm_user
 ansible_ssh_pass: xtrm_pass
-
+```
 4. Create a playbook.yaml
-
+```sh
 # cat playbook.yml
-
-.. code-block:: yaml
 
 ---
 - hosts: all
@@ -116,15 +113,13 @@ ansible_ssh_pass: xtrm_pass
     exos_command:
       commands: show version
     when: ansible_network_os == 'exos'
-
+```
 
 5. Run the playbook using ansible-playbook
 
-
+```sh
 # ansible-playbook playbook.yml
-
-
-
+```
 
 Using EXOS-API in Ansible
 =========================
