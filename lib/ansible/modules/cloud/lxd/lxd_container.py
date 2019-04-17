@@ -181,6 +181,30 @@ EXAMPLES = '''
       raw: apt-get install -y python
       when: python_install_check.rc == 1
 
+# An example for creating an Ubuntu 14.04 container using an image fingerprint.
+# This requires changing 'server' and 'protocol' key values, replacing the
+# 'alias' key with with 'fingerprint' and supplying an appropriate value that
+# matches the container image you wish to use.
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a started container
+      lxd_container:
+        name: mycontainer
+        state: started
+        source:
+          type: image
+          mode: pull
+          # Provides current (and older) Ubuntu images with listed fingerprints
+          server: https://cloud-images.ubuntu.com/releases
+          # Protocol used by 'ubuntu' remote (as shown by 'lxc remote list')
+          protocol: simplestreams
+          # This provides an Ubuntu 14.04 LTS amd64 image from 20150814.
+          fingerprint: e9a8bdfab6dc
+        profiles: ["default"]
+        wait_for_ipv4_addresses: true
+        timeout: 600
+
 # An example for deleting a container
 - hosts: localhost
   connection: local
