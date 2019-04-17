@@ -521,6 +521,11 @@ class ConfigManager(object):
                     raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
                                               (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
 
+            # ensure choice is valid
+            if value is not None and defs[config].get('choices'):
+                if value not in defs[config].get('choices'):
+                    raise AnsibleError('Provided value (%s) for "%s" was not a valid choice.' % (value, config))
+
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
                 self.DEPRECATED.append((config, defs[config].get('deprecated')))
