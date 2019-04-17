@@ -437,7 +437,10 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
         if communicate:
             encoding = 'utf-8'
-            data_bytes = data.encode(encoding, 'surrogateescape') if data else None
+            if data is None or isinstance(data, bytes):
+                data_bytes = data
+            else:
+                data_bytes = data.encode(encoding, 'surrogateescape')
             stdout_bytes, stderr_bytes = process.communicate(data_bytes)
             stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
             stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
