@@ -70,7 +70,6 @@ Complete Steps for the above Example CLI Task
 
 1.Ensure hosts are configured for inventory file and hosts files on the host OS :
 
-```sh
 
 # cat ~/playbooks/hosts
 [all_exos]
@@ -81,11 +80,9 @@ S1
 192.168.75.110  S1
 192.168.75.105  S2
 
-```
 
 2.Ensure the ansible.cfg is configured for the inventory path
 
-```sh
 
 # cat ansible.cfg
 
@@ -97,11 +94,9 @@ host_key_checking = False
 
 inventory = ~/playbooks/hosts
 
-```
 
 3. Create the group_vars/exos.yaml file
 
-```sh
 
 # cat playbooks/group_vars/exos.yaml
 
@@ -111,11 +106,10 @@ ansible_connection: network_cli
 ansible_user: xtrm_user
 ansible_ssh_pass: xtrm_pass
 
-```
+
 
 4. Create a playbook.yaml
 
-```sh
 
 # cat playbook.yml
 
@@ -127,15 +121,12 @@ ansible_ssh_pass: xtrm_pass
       commands: show version
     when: ansible_network_os == 'exos'
 
-```
 
 5. Run the playbook using ansible-playbook
 
-```sh
 
 # ansible-playbook playbook.yml
 
-```
 
 Using EXOS-API in Ansible
 =========================
@@ -169,27 +160,3 @@ Example EXOS-API Task
 In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module used in the task.
 
 .. include:: shared_snippets/SSH_warning.txt
-
-
-### Installing Ansible
-
-1. Run the below commands to install the required files/packages:
-
-```sh
-root@NetworkAutomation-1:~# apt-get update
-root@NetworkAutomation-1:~# apt-get install git
-root@NetworkAutomation-1:~# git clone https://github.com/ansible/ansible.git --recursive
-```
-2. Run ```ls``` to make sure that ansible folder is successfully cloned. Sample command and its output is below:
-
-```sh
-root@NetworkAutomation-1:~# ls
-ansible
-```
-
-3. One can periodically pull the latest developments from Ansible's Github Repository by running the below commands:
-
-```sh
-root@NetworkAutomation-1:~# cd ansible
-root@NetworkAutomation-1:~# git pull
-```
