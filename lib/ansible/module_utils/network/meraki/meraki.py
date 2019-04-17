@@ -355,16 +355,13 @@ class MerakiModule(object):
         if self.params['output_level'] == 'debug':
             self.result['method'] = self.method
             self.result['url'] = self.url
-
         self.result.update(**kwargs)
         try:
             if os.environ['ANSIBLE_MERAKI_FORMAT'] == 'camelcase':
                 self.module.deprecate("Ansible's Meraki modules will stop supporting camel case output in Ansible 2.12. Please update your playbooks.")
-                self.result['data'] = self.result['data']
-            else:
-                self.result['data'] = self.sanitize_keys(self.result['data'])
+                # self.result['data'] = self.result['data']
         except KeyError:
-            pass
+            self.result['data'] = self.sanitize_keys(self.result['data'])
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):
