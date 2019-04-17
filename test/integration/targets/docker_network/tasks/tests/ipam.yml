@@ -221,6 +221,7 @@
     ipam_driver_options:
       a: b
   register: network_1
+  ignore_errors: yes
 - name: Create network with IPAM driver options (idempotence)
   docker_network:
     name: "{{ nname_ipam_3 }}"
@@ -229,6 +230,7 @@
       a: b
   diff: yes
   register: network_2
+  ignore_errors: yes
 - name: Create network with IPAM driver options (change)
   docker_network:
     name: "{{ nname_ipam_3 }}"
@@ -237,6 +239,7 @@
       a: c
   diff: yes
   register: network_3
+  ignore_errors: yes
 - name: Cleanup network
   docker_network:
     name: "{{ nname_ipam_3 }}"
@@ -247,3 +250,9 @@
       - network_1 is changed
       - network_2 is not changed
       - network_3 is changed
+  when: docker_py_version is version('2.0.0', '>=')
+- assert:
+    that:
+      - network_1 is failed
+      - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in network_1.msg"
+  when: docker_py_version is version('2.0.0', '<')

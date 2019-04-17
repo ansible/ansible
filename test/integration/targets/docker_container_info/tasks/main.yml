@@ -27,7 +27,6 @@
       image: alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       state: started
-      auto_remove: yes
       force_kill: yes
 
   - name: Inspect a present container
@@ -45,18 +44,19 @@
   - name: Dump docker inspect result
     debug: var=docker_inspect_result
 
-  - name: Cleanup
-    docker_container:
-      name: "{{ cname }}"
-      state: absent
-      force_kill: yes
-
   - assert:
       that:
       - result.exists
       - "'container' in result"
       - "result.container"
       - "result.container == docker_inspect_result[0]"
+
+  always:
+  - name: Cleanup
+    docker_container:
+      name: "{{ cname }}"
+      state: absent
+      force_kill: yes
 
   when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
 

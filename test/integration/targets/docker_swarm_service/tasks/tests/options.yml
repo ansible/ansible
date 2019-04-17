@@ -919,8 +919,8 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     groups:
-      - 1234
-      - 5678
+      - "1234"
+      - "5678"
   register: groups_1
   ignore_errors: yes
 
@@ -931,8 +931,8 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     groups:
-      - 1234
-      - 5678
+      - "1234"
+      - "5678"
   register: groups_2
   ignore_errors: yes
 
@@ -943,7 +943,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     groups:
-      - 1234
+      - "1234"
   register: groups_3
   ignore_errors: yes
 
@@ -1001,7 +1001,7 @@
       test:
         - CMD
         - sleep
-        - 1
+        - "1"
       timeout: 2s
       interval: 0h0m2s3ms4us
       retries: 2
@@ -1035,7 +1035,7 @@
       test:
         - CMD
         - sleep
-        - 1
+        - "1"
       timeout: 3s
       interval: 0h1m2s3ms4us
       retries: 3
@@ -1855,6 +1855,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     resolve_image: true
   register: resolve_image_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -1872,7 +1873,8 @@
     that:
       - resolve_image_1 is changed
       - resolve_image_2 is not changed
-      - resolve_image_3 is not changed
+      - resolve_image_3 is failed
+      - "('version is ' ~ docker_py_version ~'. Minimum version required is 3.2.0') in resolve_image_3.msg"
   when: docker_api_version is version('1.30', '<') or docker_py_version is version('3.2.0', '<')
 
 ####################################################################

@@ -17,7 +17,7 @@
   - name: Make sure images are there
     docker_image:
       name: "{{ item }}"
-      pull: yes
+      source: pull
       state: present
     loop:
     - "hello-world:latest"
