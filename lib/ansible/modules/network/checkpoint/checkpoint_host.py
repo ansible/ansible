@@ -62,7 +62,7 @@ options:
   policy_package:
     description:
       - Package policy name to be installed.
-    type: bool
+    type: str
   targets:
     description:
       - Targets to install the package policy on.
