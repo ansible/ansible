@@ -95,7 +95,7 @@ def mysql_connect(module, login_user=None, login_password=None,
 
 def mysql_common_argument_spec():
     return dict(
-        login_user=dict(type='str', default='root'),
+        login_user=dict(type='str', default=None),
         login_password=dict(type='str', no_log=True),
         login_host=dict(type='str', default='localhost'),
         login_port=dict(type='int', default=3306),

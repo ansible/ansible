@@ -237,13 +237,13 @@ class MySQL_Info(object):
             return self.info
 
     def __collect(self):
-            self.__get_databases()
-            self.__get_global_variables()
-            self.__get_engines()
-            self.__get_users()
-            self.__get_master_status()
-            self.__get_slave_status()
-            self.__get_slaves()
+        self.__get_databases()
+        self.__get_global_variables()
+        self.__get_engines()
+        self.__get_users()
+        self.__get_master_status()
+        self.__get_slave_status()
+        self.__get_slaves()
 
     def __get_engines(self):
         res = self.__exec_sql('SHOW ENGINES')

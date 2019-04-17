@@ -13,6 +13,7 @@
     password: '{{ user_pass }}'
     state: present
     priv: '*.*:ALL'
+    login_unix_socket: '{{ mysql_socket }}'
 
 # Create default MySQL config file with credentials
 - name: mysql_info - create default config file
