@@ -179,7 +179,8 @@ class CallbackModule(CallbackBase):
                     'messages': {
                         'message': json.dumps(msg)
                     },
-                    'level': level
+                    'level': level,
+                    'reporter': 'ansible'
                 }
             })
         return logs
