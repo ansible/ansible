@@ -1567,16 +1567,18 @@ TRANSFORM_INVALID_GROUP_CHARS:
   name: Transform invalid characters in group names
   default: 'never'
   description:
-    - Make ansible transform invalid characters in group names supplied by inventory sources.
-    - If 'never' it will allow for the group name but warn about the issue.
-    - When 'ignore', it does the same as 'never', without issuing a warning.
-    - When 'always' it will replace any invalid characters with '_' (underscore) and warn the user
-    - When 'silently', it does the same as 'always', without issuing a warning.
+    - Control how Ansible transforms invalid characters in group names supplied by inventory sources.
+    - Some characters are usable for the most part, but will produce error when used in certain ways.
+      Since some users are willing to avoid those features, we allow them to toggle using invalid characters.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
   - {key: force_valid_group_names, section: defaults}
   type: string
-  choices: ['always', 'never', 'ignore', 'silently']
+  choices:
+    never: Allow for the group name but warn about the issue.
+    always: Replace any invalid charachters with '_' (underscore) and warn the user.
+    silently: Same as 'always' sans the warnings.
+    ignore: Same as 'never' sans the warnings.
   version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings

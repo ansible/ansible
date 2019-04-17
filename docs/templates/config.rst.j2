@@ -103,25 +103,43 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {{config_option}}
 {{ '-' * config_len }}
 
-{% if config['description'] and config['description'] != [''] %}
-{% if config['description'] != ['TODO: write it'] %}
+{% if config.get('description', '') not in ('', ['TODO: write it']) %}
 :Description: {{' '.join(config['description'])}}
-{% endif %}
 {% endif %}
 {% if config['type'] %}
 :Type: {{config['type']}}
 {% endif %}
+{% if 'default' in config %}
 :Default: {{config['default']}}
+{% endif %}
+{% if config.get('choices', False) %}
+:Choices:
+{% if config['choices'] is mapping %}
+{% for key in config['choices'].keys() %}
+    - :{{key}}: {{ config['choices'][key] }}
+{% endfor %}
+{% else %}
+{% for key in config['choices'] %}
+    - :{{key}}:
+{% endfor %}
+{% endif %}
+{% endif %}
 {% if config['version_added'] %}
 :Version Added: {{config['version_added']}}
 {% endif %}
+{% if config.get('ini', False) %}
+:Ini:
 {% for ini_map in config['ini']|sort(attribute='section') %}
-:Ini Section: {{ini_map['section']}}
-:Ini Key: {{ini_map['key']}}
+   - :Section: {{ini_map['section']}}
+     :Key: {{ini_map['key']}}
 {% endfor %}
+{% endif %}
+{% if config.get('env', False) %}
+:Environment:
 {% for env_var_map in config['env']|sort(attribute='name') %}
-:Environment: :envvar:`{{env_var_map['name']}}`
+    - :envvar:`{{env_var_map['name']}}`
 {% endfor %}
+{% endif %}
 {% if config['deprecated'] %}
 :Deprecated in: {{config['deprecated']['version']}}
 :Deprecated detail: {{config['deprecated']['why']}}
