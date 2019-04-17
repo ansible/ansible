@@ -138,6 +138,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            required_together=[['name', 'folder']],
                            required_one_of=[['name', 'uuid']],
+                           supports_check_mode=True,
                            )
 
     if module.params['folder']:
