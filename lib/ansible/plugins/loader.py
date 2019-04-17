@@ -13,7 +13,6 @@ import os
 import os.path
 import pkgutil
 import sys
-import traceback
 import warnings
 
 from collections import defaultdict
@@ -47,7 +46,10 @@ def add_all_plugin_dirs(path):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
         for name, obj in get_all_plugin_loaders():
-            obj.add_directory(path, with_subdir=True)
+            if obj.subdir:
+                plugin_path = os.path.join(b_path, to_bytes(obj.subdir))
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(to_text(plugin_path))
     else:
         display.warning("Ignoring invalid path provided to plugin path: %s is not a directory" % to_native(path))
 
@@ -83,6 +85,13 @@ def get_shell_plugin(shell_type=None, executable=None):
         setattr(shell, 'executable', executable)
 
     return shell
+
+
+def add_dirs_to_loader(which_loader, paths):
+
+    loader = getattr(sys.modules[__name__], '%s_loader' % which_loader)
+    for path in paths:
+        loader.add_directory(path, with_subdir=True)
 
 
 class PluginLoader:
@@ -188,19 +197,19 @@ class PluginLoader:
         ret = []
         for i in paths:
             if i not in ret:
-                ret.append(to_text(i))
+                ret.append(i)
         return os.pathsep.join(ret)
 
     def print_paths(self):
         return self.format_paths(self._get_paths(subdirs=False))
 
-    def _all_directories(self, mydir):
+    def _all_directories(self, dir):
         results = []
-        results.append(mydir)
-        for root, subdirs, files in os.walk(mydir, followlinks=True):
-            if b'__init__.py' in files:
+        results.append(dir)
+        for root, subdirs, files in os.walk(dir, followlinks=True):
+            if '__init__.py' in files:
                 for x in subdirs:
-                    results.append(to_text(os.path.join(root, x)))
+                    results.append(os.path.join(root, x))
         return results
 
     def _get_package_paths(self, subdirs=True):
@@ -213,7 +222,7 @@ class PluginLoader:
             parts = self.package.split('.')[1:]
             for parent_mod in parts:
                 m = getattr(m, parent_mod)
-            self.package_path = to_text(os.path.dirname(m.__file__))
+            self.package_path = os.path.dirname(m.__file__)
         if subdirs:
             return self._all_directories(self.package_path)
         return [self.package_path]
@@ -232,15 +241,12 @@ class PluginLoader:
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
             for path in self.config:
-                b_path = os.path.realpath(os.path.expanduser(to_bytes(path)))
+                path = os.path.realpath(os.path.expanduser(path))
                 if subdirs:
-                    contents = glob.glob(b"%s/*" % b_path) + glob.glob(b"%s/*/*" % b_path)
+                    contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
                     for c in contents:
-                        tc = to_text(c)
-                        if os.path.isdir(c) and tc not in ret:
-                            ret.append(tc)
-
-                path = to_text(b_path)
+                        if os.path.isdir(c) and c not in ret:
+                            ret.append(c)
                 if path not in ret:
                     ret.append(path)
 
@@ -295,16 +301,16 @@ class PluginLoader:
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
 
-        directory = os.path.realpath(to_bytes(directory))
+        directory = os.path.realpath(directory)
 
         if directory is not None:
             if with_subdir:
-                directory = to_text(os.path.join(directory, to_bytes(self.subdir)))
+                directory = os.path.join(directory, self.subdir)
             if directory not in self._extra_dirs:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
                 self._clear_caches()
-                display.debug('Added %s to loader search path' % (to_text(directory)))
+                display.debug('Added %s to loader search path' % (directory))
 
     def _find_fq_plugin(self, fq_name, extension):
         fq_name = to_native(fq_name)
@@ -376,7 +382,7 @@ class PluginLoader:
             return None
 
         if mod_type:
-            suffix = to_text(mod_type)
+            suffix = mod_type
         elif self.class_name:
             # Ansible plugins that run in the controller process (most plugins)
             suffix = '.py'
@@ -436,15 +442,14 @@ class PluginLoader:
         #       looks like _get_paths() never forces a cache refresh so if we expect
         #       additional directories to be added later, it is buggy.
         for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
-            display.debug('trying %s' % to_text(path))
-            b_path = to_bytes(path)
+            display.debug('trying %s' % path)
             try:
-                full_paths = (os.path.join(b_path, f) for f in os.listdir(b_path))
+                full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
                 display.warning("Error accessing plugin paths: %s" % to_text(e))
 
-            for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith(b'__init__.py')):
-                full_name = to_text(os.path.basename(full_path))
+            for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
+                full_name = os.path.basename(full_path)
 
                 # HACK: We have no way of executing python byte compiled files as ansible modules so specifically exclude them
                 # FIXME: I believe this is only correct for modules and module_utils.
@@ -646,12 +651,12 @@ class PluginLoader:
         found_in_cache = True
 
         for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, b"*.py")))
+            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
 
         loaded_modules = set()
         for path in sorted(all_matches, key=os.path.basename):
-            name = to_text(os.path.splitext(path)[0])
-            basename = to_text(os.path.basename(name))
+            name = os.path.splitext(path)[0]
+            basename = os.path.basename(name)
 
             if basename == '__init__' or basename in _PLUGIN_FILTERS[self.package]:
                 continue
@@ -670,17 +675,14 @@ class PluginLoader:
                     self._load_config_defs(basename, module, path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
-                    display.vvv(traceback.format_exc())
                     continue
-
                 self._module_cache[path] = module
                 found_in_cache = False
 
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
             except AttributeError as e:
-                display.warning("Could not load plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
-                display.vvv(traceback.format_exc())
+                display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 continue
 
             if self.base_class:
