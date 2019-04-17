@@ -159,8 +159,8 @@ options:
             - '- C(mac_changes) (bool): indicates whether mac changes are allowed. (default: None)'
             - '- C(mac_learning_policy): (dict): dictionary of MAC learning plicy settings. (Default: { enabled: False })'
             - '- Valid attributes are:'
-            - '    - C(allow_unicast_flooding) (bool): indicates whether to allow flooding of unlearned MAC for ingress traffic (default: None)'
-            - '    - C(enabled) (bool): indicates if source MAC address learning is allowed (default: False)'
+            - '    - C(allow_unicast_flooding) (bool): indicates whether to allow flooding of unlearned MAC for ingress traffic. (default: None)'
+            - '    - C(enabled) (bool): indicates if source MAC address learning is allowed. (default: False)'
             - '    - C(limit) (int): The maximum number of MAC addresses that can be learned.  (default: None)'
             - '    - C(limit_policy) (string): The default switching policy after MAC limit is exceeded. (default: None)'
             - '        - choices: [allow, drop, None]'
@@ -318,6 +318,9 @@ class VMwareDvsPortgroup(PyVmomi):
             self.module.fail_json(msg="ValueError parsing vlan_ids: {0}".format(to_native(e)))
 
     def process_state(self):
+        """
+        Manage state of distributed virtual switch portgroup.
+        """
         dvspg_states = {
             'absent': {
                 'present': self.state_destroy_dvspg,
@@ -339,6 +342,9 @@ class VMwareDvsPortgroup(PyVmomi):
             self.module.fail_json(msg=to_native(e))
 
     def create_port_group(self):
+        """
+        Create the portgroup on the distributed virtual switch.
+        """
         config = vim.dvs.DistributedVirtualPortgroup.ConfigSpec()
 
         # Basic config
@@ -372,6 +378,9 @@ class VMwareDvsPortgroup(PyVmomi):
         return wait_for_task(task)
 
     def state_destroy_dvspg(self):
+        """
+        Remove the portgroup from the distributed virtual switch.
+        """
         changed = True
         result = None
 
@@ -381,9 +390,15 @@ class VMwareDvsPortgroup(PyVmomi):
         self.module.exit_json(changed=changed, result=str(result))
 
     def state_exit_unchanged(self):
+        """
+        Declare exit as unchanged.
+        """
         self.module.exit_json(changed=False)
 
     def state_update_dvspg(self):
+        """
+        Update settings on portgroup that have diverged from desired state.
+        """
         changed = True
         result = None
 
@@ -420,6 +435,9 @@ class VMwareDvsPortgroup(PyVmomi):
         self.module.exit_json(changed=changed, result=str(result), updates=self.updates)
 
     def state_create_dvspg(self):
+        """
+        Create portgroup and exit with changed status.
+        """
         changed = True
         result = None
 
@@ -428,6 +446,11 @@ class VMwareDvsPortgroup(PyVmomi):
         self.module.exit_json(changed=changed, result=str(result))
 
     def check_dvspg_state(self):
+        """
+        Check for presence of portgroup by name.
+
+        If portgroup exists also check configuration. Returns 'present', 'absent', or 'update' based on state.
+        """
         self.dv_switch = find_dvs_by_name(self.content, self.module.params['switch_name'])
 
         if self.dv_switch is None:
@@ -445,6 +468,11 @@ class VMwareDvsPortgroup(PyVmomi):
         return 'absent'
 
     def check_dvspg_settings(self):
+        """
+        Compare portgroup current configuration versus desired configuration.
+
+        Changes are captured to self.updates. Returns 'present' or 'update' based on state.
+        """
         state = 'present'
         config = self.dvs_portgroup.config
         pconfig = config.defaultPortConfig
@@ -453,7 +481,8 @@ class VMwareDvsPortgroup(PyVmomi):
             portgroup_type=config.type,
             network_policy={},
             teaming_policy={},
-            port_policy={}
+            port_policy={},
+            vlan_id={},
         )
         if pconfig.securityPolicy:
             config_map['network_policy'] = dict(
@@ -462,14 +491,14 @@ class VMwareDvsPortgroup(PyVmomi):
                 mac_changes=pconfig.securityPolicy.macChanges.value,
             )
         if pconfig.uplinkTeamingPolicy:
-            config_map['teaming_policy']=dict(
+            config_map['teaming_policy'] = dict(
                 inbound_policy=pconfig.uplinkTeamingPolicy.reversePolicy.value,
                 notify_switches=pconfig.uplinkTeamingPolicy.notifySwitches.value,
                 rolling_order=pconfig.uplinkTeamingPolicy.rollingOrder.value,
                 load_balance_policy=pconfig.uplinkTeamingPolicy.policy.value,
             )
         if config.policy:
-            config_map['port_policy']=dict(
+            config_map['port_policy'] = dict(
                 block_override=config.policy.blockOverrideAllowed,
                 ipfix_override=config.policy.ipfixOverrideAllowed,
                 live_port_move=config.policy.livePortMovingAllowed,
@@ -496,7 +525,7 @@ class VMwareDvsPortgroup(PyVmomi):
             config_map['vlan_id'] = dict()
             for vlan_range in pconfig.vlan.vlanId:
                 config_map['vlan_id'][vlan_range.start] = vlan_range.end
-        else:
+        elif pconfig.vlan:
             config_map['vlan_trunk'] = False
             config_map['vlan_id'] = {pconfig.vlan.vlanId: pconfig.vlan.vlanId}
 
@@ -529,6 +558,11 @@ class VMwareDvsPortgroup(PyVmomi):
         return state
 
     def _vlan_spec(self):
+        """
+        Returns configuration spec for vlan.
+
+        If using VLAN trunking this will return TrunkVlanSpec, otherwise VlanIdSpec.
+        """
         vlan = None
         if self.module.params['vlan_trunk']:
             vlan_id_list = list()
@@ -544,6 +578,9 @@ class VMwareDvsPortgroup(PyVmomi):
         return vlan
 
     def _security_policy_spec(self):
+        """
+        Returns configuration spec for SecurityPolicy.
+        """
         security_policy = vim.dvs.VmwareDistributedVirtualSwitch.SecurityPolicy()
         security_policy.allowPromiscuous = vim.BoolPolicy(value=self.module.params['network_policy']['promiscuous'])
         security_policy.forgedTransmits = vim.BoolPolicy(value=self.module.params['network_policy']['forged_transmits'])
@@ -552,7 +589,9 @@ class VMwareDvsPortgroup(PyVmomi):
         return security_policy
 
     def _teaming_policy_spec(self):
-
+        """
+        Returns the configuration spec for UplinkPortTeamingPolicy.
+        """
         teaming_policy = vim.dvs.VmwareDistributedVirtualSwitch.UplinkPortTeamingPolicy()
         teaming_policy.policy = vim.StringPolicy(value=self.module.params['teaming_policy']['load_balance_policy'])
         teaming_policy.reversePolicy = vim.BoolPolicy(value=self.module.params['teaming_policy']['inbound_policy'])
@@ -562,6 +601,9 @@ class VMwareDvsPortgroup(PyVmomi):
         return teaming_policy
 
     def _pg_policy_spec(self):
+        """
+        Returns the configuration spec for VMwarePortgroupPolicy.
+        """
         pg_policy = vim.dvs.VmwareDistributedVirtualSwitch.VMwarePortgroupPolicy()
         pg_policy.blockOverrideAllowed = self.module.params['port_policy']['block_override']
         pg_policy.ipfixOverrideAllowed = self.module.params['port_policy']['ipfix_override']
@@ -578,6 +620,9 @@ class VMwareDvsPortgroup(PyVmomi):
         return pg_policy
 
     def _mac_management_policy_spec(self):
+        """
+        Returns the configuration spec for MacManagementPolicy.
+        """
         mm_policy = vim.dvs.VmwareDistributedVirtualSwitch.MacManagementPolicy()
         mm_policy.allowPromiscuous = self.module.params['mac_management_policy']['allow_promiscuous']
         mm_policy.forgedTransmits = self.module.params['mac_management_policy']['forged_transmits']
