@@ -105,7 +105,7 @@ class LookupModule(LookupBase):
                 vars = deepcopy(variables)
                 vars.update(generate_ansible_template_vars(lookupfile))
                 vars.update(lookup_template_vars)
-                self._templar.set_available_variables(vars)
+                self._templar.available_variables = vars
 
                 # do the templating
                 res = self._templar.template(template_data, preserve_trailing_newlines=True,
