@@ -110,19 +110,27 @@ from ansible.module_utils.ovirt import (
     equal,
     get_id_by_name,
     ovirt_full_argument_spec,
+    get_dict_of_struct,
 )
 
+def build_job(module):
+    return otypes.Job(
+            description=module.params['description'],
+            status=otypes.JobStatus.STARTED,
+            external=True,
+            auto_cleared=True
+    )
 
-class JobsModule(BaseModule):
-
-    def build_entity(self):
-        return otypes.Job(
-                description=self._module.params['description'],
-                status=otypes.JobStatus.STARTED,
-                external=True,
-                auto_cleared=True
-                #steps=[otypes.Step(type=otypes.StepStatus.UNKNOWN) for step in self._module.params('steps') ] if self._module.params('steps') is not None else None
-            )
+def build_step(step, entity_id):
+    return otypes.Step(
+            description=step.get('description'),
+            type=otypes.StepEnum.UNKNOWN,
+            job=otypes.Job(
+                id=entity_id
+            ),
+            status=otypes.StepStatus.STARTED,
+            external=True,
+    )
 
 def attach_steps(module, entity_id, jobs_service):
     # Attach NICs to VM, if specified:
@@ -131,37 +139,26 @@ def attach_steps(module, entity_id, jobs_service):
     if module.params.get('steps'):
         for step in module.params.get('steps'):
             step_entity = get_entity(steps_service, step.get('description')) 
-            step_state = step.get('state')
-            if step_entity is None:
-                if step_state == 'present' or step_state == 'started' or step_state is None:
-                     if not module.check_mode:
-                        steps_service.add(
-                            otypes.Step(
-                                description=step.get('description'),
-                                type=otypes.StepEnum.UNKNOWN,
-                                job=otypes.Job(
-                                    id=entity_id
-                                ),
-                                status=otypes.StepStatus.STARTED,
-                                external=True,
-                            )
-                        )
-                     changed = True
-            else:
-                if step_state == 'absent' or step_state == 'finished':
-                     steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED,succeeded=True)
-                     changed = True
-                elif step_state == 'failed':
-                     steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED,succeeded=False)
-                     changed = True
+            step_state = step.get('state','present')
+            if not module.check_mode:
+                if step_state == 'present' or step_state == 'started':
+                    if step_entity is None:
+                        steps_service.add(build_step(step, entity_id))
+                        changed = True
+                if step_entity is not None and step_entity.status != otypes.StepStatus.FINISHED:
+                    if step_state == 'absent' or step_state == 'finished':
+                        steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED, succeeded=True)
+                        changed = True
+                    elif step_state == 'failed':
+                        steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED, succeeded=False)
+                        changed = True
     return changed
 
-def get_entity(jobs_service, description):
-    all_jobs = jobs_service.list()
-    for job in all_jobs:
-        if job.description == description and job.status != "finished":
-            return job
-    
+def get_entity(service, description):
+    all_entities = service.list()
+    for entity in all_entities:
+        if entity.description == description:
+            return entity
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -183,34 +180,35 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         jobs_service = connection.system_service().jobs_service()
-        jobs_module = JobsModule(
-            connection=connection,
-            module=module,
-            service=jobs_service,
-        )
 
         state = module.params['state']
         job = get_entity(jobs_service, module.params['description'])
+        changed = False 
         if state in ['present', 'started']:
-            ret = jobs_module.create(entity=job)
-            ret['changed'] = attach_steps(module,ret.get('job').get('id'),jobs_service)
+            if job is None:
+                job = jobs_service.add(build_job(module))
+                changed = True
+            changed = changed or attach_steps(module, job.id, jobs_service)
 
         elif state in ['absent', 'finished']:
             jobs_service.job_service(job.id).end(status=otypes.JobStatus.FINISHED, succeeded=True)
-            jobs_service.job_service(job.id).clear()
+            changed = True
 
-            ret ={
-                'changed': True,
-                'id': getattr(job, 'id', None),
-            }
         elif state == 'failed':
             jobs_service.job_service(job.id).end(status=otypes.JobStatus.FINISHED, succeeded=False)
-            jobs_service.job_service(job.id).clear()
+            changed = True
 
-            ret ={
-                'changed': True,
-                'id': getattr(job, 'id', None),
-            }
+        ret ={
+            'changed': changed,
+            'id': getattr(job, 'id', None),
+            type(job).__name__.lower(): get_dict_of_struct(
+                struct=job,
+                connection=connection,
+                fetch_nested=module.params.get('fetch_nested'),
+                attributes=module.params.get('nested_attributes'),
+            ),
+        }
+
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
