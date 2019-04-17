@@ -164,7 +164,7 @@ options:
             - '    - C(limit) (int): The maximum number of MAC addresses that can be learned.  (default: None)'
             - '    - C(limit_policy) (string): The default switching policy after MAC limit is exceeded. (default: None)'
             - '        - choices: [allow, drop, None]'
-        require: False
+        required: False
         version_added: '2.9'
         default: {
             'allow_promiscuous':,
@@ -298,19 +298,19 @@ class VMwareDvsPortgroup(PyVmomi):
         self.vlan_ids = dict()
         try:
             for vlan_range in self.module.params['vlan_id'].split(','):
-                rx = re.match(r'^\s*(P<start>\d+)\s*(?:-\s*(P<end>\d+))?\s*$', vlan_range)
+                rx = re.match(r'^\s*(?P<start>\d+)\s*(?:-\s*(?P<end>\d+))?\s*$', vlan_range)
                 if not rx:
                     raise ValueError("Range {0} does not have valid format".format(vlan_range))
 
-                start = end = int(rx.groups()['start'])
-                if rx.groups()[1]:
-                    end = int(rx.groups()['end'])
+                start = end = int(rx.group('start'))
+                if rx.group('end'):
+                    end = int(rx.group('end'))
 
                 if end < start:
                     raise ValueError("Range {0} start of range is greater than end".format(vlan_range))
 
                 if start not in range(0, 4095) or end not in range(0, 4095):
-                    self.module.fail_json(msg="vlan_id range %s specified is incorrect. The valid vlan_id range is from 0 to 4094.".format(vlan_range))
+                    self.module.fail_json(msg="vlan_id range {0} specified is incorrect. The valid vlan_id range is from 0 to 4094.".format(vlan_range))
 
                 self.vlan_ids[start] = end
         except ValueError as e:
