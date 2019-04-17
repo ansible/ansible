@@ -186,12 +186,12 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 self.batch_account[key] = kwargs[key]
 
         resource_group = self.get_resource_group(self.resource_group)
-        if not self.location:
-            self.location = resource_group.location
-        self.location = normalize_location_name(self.location)
-        self.batch_account['auto_storage_account'] = self.normalize_resource_id(
-            self.batch_account['auto_storage_account'],
-            '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/sample-acct')
+        if self.batch_account.get('location') is None:
+            self.batch_account['location'] = resource_group.location
+        if self.batch_account.get('auto_storage_account') is not None:
+            self.batch_account['auto_storage_account'] = self.normalize_resource_id(
+                self.batch_account['auto_storage_account'],
+                '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/sample-acct')
         self.batch_account['pool_allocation_mode'] = _snake_to_camel(self.batch_account['pool_allocation_mode'], True)
 
         response = None
@@ -255,14 +255,14 @@ class AzureRMBatchAccount(AzureRMModuleBase):
         try:
             if self.to_do == Actions.Create:
                 response = self.mgmt_client.batch_account.create(resource_group_name=self.resource_group,
-                                                                 name=self.name,
+                                                                 account_name=self.name,
                                                                  parameters=self.batch_account)
             else:
                 response = self.mgmt_client.batch_account.update(resource_group_name=self.resource_group,
-                                                                 name=self.name,
+                                                                 account_name=self.name,
                                                                  tags=self.tags,
                                                                  auto_storage=self.auto_storage)
-            if isinstance(response, LROPoller) or isinstance(response.AzureOperationPoller):
+            if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
         except CloudError as exc:
             self.log('Error attempting to create the Batch Account instance.')
@@ -278,7 +278,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
         self.log("Deleting the Batch Account instance {0}".format(self.name))
         try:
             response = self.mgmt_client.batch_account.delete(resource_group_name=self.resource_group,
-                                                             name=self.name)
+                                                             account_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the Batch Account instance.')
             self.fail("Error deleting the Batch Account instance: {0}".format(str(e)))
@@ -296,7 +296,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
         found = False
         try:
             response = self.mgmt_client.batch_account.get(resource_group_name=self.resource_group,
-                                                          name=self.name)
+                                                          account_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Batch Account instance : {0} found".format(response.name))
