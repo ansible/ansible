@@ -19,7 +19,7 @@ short_description: Gather facts about ec2 spot pricing history in AWS
 description:
   - Gather historical facts on the spot prices of different instance types
 version_added: "2.8"
-requirements: [ boto3 ]
+requirements: [ boto3>=1.9.0 ]
 author: "Dani Hodovic (@danihodovic)"
 options:
   availability_zone:
@@ -93,7 +93,7 @@ EXAMPLES = """
     spot_price: "{{ ec2_spot_pricing_history[0].spot_price }}"
     vpc_subnet_id: "subnet-07b18fbad727f2444"
     image: "ami-00035f41c82244dab"
-    instance_type: "t3.medium"
+    instance_types: "t3.medium"
     group: "my-security-group"
     wait: true
     instance_tags:
@@ -123,7 +123,7 @@ ec2_spot_pricing_history:
     {
       "availability_zone": "eu-west-1a",
       "spot_price": 0.71,
-      "instance_type": "t3.medium",
+      "instance_types": "t3.medium",
       "product_description": "Linux/UNIX",
       "timestamp": "2019-02-12T13:47:13+00:00"
     }
@@ -139,6 +139,7 @@ from ansible.module_utils.ec2 import (
     get_aws_connection_info,
     camel_dict_to_snake_dict,
 )
+from botocore.exceptions import BotoCoreError, ClientError
 
 
 def parse_date(module, key):
@@ -180,37 +181,28 @@ def main():
         )
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec, check_boto3=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
     if not module.boto3_at_least("1.9.0"):
         module.fail_json(msg="ec2_spot_price_history_facts requires boto3 > 1.9.0")
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if not region:
-        module.fail_json(msg="region must be specified")
-
-    ec2_client = boto3_conn(
-        module,
-        conn_type="client",
-        resource="ec2",
-        region=region,
-        endpoint=ec2_url,
-        **aws_connect_params
-    )
+    ec2_client = module.client('ec2')
 
     start_time = parse_date(module, "start_time")
     end_time = parse_date(module, "end_time")
 
-    spot_price_history_response = ec2_client.describe_spot_price_history(
-        AvailabilityZone=module.params.get("availability_zone"),
-        ProductDescriptions=module.params.get("product_descriptions"),
-        InstanceTypes=module.params.get("instance_types"),
-        Filters=module.params.get("filters"),
-        StartTime=start_time,
-        EndTime=end_time,
-        MaxResults=module.params.get("max_results"),
-    )
+    try:
+        spot_price_history_response = ec2_client.describe_spot_price_history(
+            AvailabilityZone=module.params.get("availability_zone"),
+            ProductDescriptions=module.params.get("product_descriptions"),
+            InstanceTypes=module.params.get("instance_types"),
+            Filters=module.params.get("filters"),
+            StartTime=start_time,
+            EndTime=end_time,
+            MaxResults=module.params.get("max_results"),
+        )
+    except (BotoCoreError, ClientError) as exception:
+        module.fail_json_aws(exception)
 
     snaked_history = []
     for spot_price_history in spot_price_history_response["SpotPriceHistory"]:
@@ -218,7 +210,7 @@ def main():
         snaked["spot_price"] = float(snaked["spot_price"])
         snaked_history.append(snaked)
 
-    result = dict(ansible_facts=dict(ec2_spot_pricing_history=snaked_history))
+    result = dict(ec2_spot_pricing_history=snaked_history)
     module.exit_json(**result)
 
 

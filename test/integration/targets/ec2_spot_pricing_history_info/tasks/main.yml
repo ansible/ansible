@@ -21,7 +21,8 @@
       {{ "%Y-%m-%dT%H:%M:%SZ" | strftime((ansible_date_time.epoch | int ) - 86400 ) }}
 
 - name: Gather spot_pricing facts
-  ec2_spot_pricing_history_facts:
+  register: result
+  ec2_spot_pricing_history_info:
     <<: *aws_connection_info
     availability_zone: "{{ az }}"
     instance_types: ["t3.medium"]
@@ -33,19 +34,19 @@
 - name: Format check
   assert:
     that:
-      - "ec2_spot_pricing_history | length                == 2"
-      - "ec2_spot_pricing_history[0].availability_zone    == az"
-      - "ec2_spot_pricing_history[0].instance_type        == 't3.medium'"
-      - "ec2_spot_pricing_history[0].product_description  == 'Linux/UNIX'"
-      - "ec2_spot_pricing_history[0].spot_price           is defined"
-      - "ec2_spot_pricing_history[0].timestamp            is defined"
+      - "result.ec2_spot_pricing_history | length                == 2"
+      - "result.ec2_spot_pricing_history[0].availability_zone    == az"
+      - "result.ec2_spot_pricing_history[0].instance_type        == 't3.medium'"
+      - "result.ec2_spot_pricing_history[0].product_description  == 'Linux/UNIX'"
+      - "result.ec2_spot_pricing_history[0].spot_price           is defined"
+      - "result.ec2_spot_pricing_history[0].timestamp            is defined"
 
 # ============================================================
 # Invalid date test
 - name: Invalid date test
   register: invalid_start_date
   failed_when: invalid_start_date is not failed
-  ec2_spot_pricing_history_facts:
+  ec2_spot_pricing_history_info:
     <<: *aws_connection_info
     start_time: "foo"
 
