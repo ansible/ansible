@@ -41,7 +41,7 @@ options:
         description:
             - "Should the job be present/absent/failed."
             - "Present have alias started and absent have alias finished, you can use both."
-            - "Note when finished it will finish all steps."
+            - "Note when C(finished)/C(failed) it will finish/fail all steps."
         choices: ['present', 'absent', 'created', 'finished', 'failed']
         default: present
     steps:
@@ -154,12 +154,12 @@ def attach_steps(module, entity_id, jobs_service):
         for step in module.params.get('steps'):
             step_entity = get_entity(steps_service, step.get('description'))
             step_state = step.get('state', 'present')
-            if step_state == 'present' or step_state == 'started':
+            if step_state in ['present', 'started']:
                 if step_entity is None:
                     steps_service.add(build_step(step, entity_id))
                     changed = True
             if step_entity is not None and step_entity.status not in [otypes.StepStatus.FINISHED, otypes.StepStatus.FAILED]:
-                if step_state == 'absent' or step_state == 'finished':
+                if step_state in ['absent', 'finished']:
                     steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED, succeeded=True)
                     changed = True
                 elif step_state == 'failed':
