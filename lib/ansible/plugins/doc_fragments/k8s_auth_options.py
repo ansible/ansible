@@ -67,6 +67,11 @@ options:
       environment variable.
     type: bool
     aliases: [ verify_ssl ]
+  proxy:
+    description:
+    - The URL of an HTTP proxy to use for the connection. Can also be specified via K8S_AUTH_PROXY environment variable.
+    - Please note that this module does not pick up typical proxy settings from the environment (e.g. HTTP_PROXY).
+    version_added: "2.9"
 notes:
   - "The OpenShift Python client wraps the K8s Python client, providing full access to
     all of the APIS and models available on both platforms. For API version details and
