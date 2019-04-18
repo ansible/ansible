@@ -27,7 +27,7 @@ description:
        the command through a shell (C(dcl)) on the remote node.
      - For Windows targets, use the M(win_shell) module instead.
      - For OpenVMS there M(dcl) is an attempt.
-version_added: "0.1"
+version_added: "2.9"
 options:
   free_form:
     description:
@@ -44,35 +44,35 @@ options:
     description:
       - A filename, when it does not exist, this step will B(not) be run.
     type: path
-    version_added: "0.1"
+    version_added: "2.9"
   chdir:
     description:
       - Change into this directory before running the command.
     type: path
-    version_added: "0.1"
+    version_added: "2.9"
   executable:
     description:
       - Change the shell used to execute the command.
       - This expects an absolute path to the executable.
     type: path
-    version_added: "0.1"
+    version_added: "2.9"
   warn:
     description:
       - Whether to enable task warnings.
     type: bool
     default: yes
-    version_added: "0.1"
+    version_added: "2.9"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
     type: str
-    version_added: "0.1"
+    version_added: "2.9"
   stdin_add_newline:
     description:
       - Whether to append a newline to stdin data.
     type: bool
     default: yes
-    version_added: "0.1"
+    version_added: "2.9"
 notes:
   - If you want to execute a command securely and predictably, it may be
     better to use the M(command) module instead. Best practices when writing
