@@ -347,9 +347,6 @@ def main():
         set=dict(type='dict'),
         rename_to=dict(type='str'),
         db=dict(type='str', aliases=['login_db']),
-        port=dict(type='int', default=5432, aliases=['login_port']),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
         session_role=dict(type='str'),
     )
 
