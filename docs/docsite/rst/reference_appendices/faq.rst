@@ -658,16 +658,16 @@ fails if the remote filename requires quotes to escape spaces or non-ascii chara
 
 * Use SFTP instead of SCP by setting ``scp_if_ssh`` to ``smart`` (which tries SFTP first) or to ``False``. You can do this in one of four ways:
     * Rely on the default setting, which is ``smart`` - this works if ``scp_if_ssh`` is not explicitly set anywhere
-    * Set a host variable in the ``all`` group (``ansible_scp_if_ssh=smart`` or ``ansible_scp_if_ssh=False``)
-    * Set an environment variable: ``ANSIBLE_SCP_IF_SSH=smart`` or ``ANSIBLE_SCP_IF_SSH=False``
-    * Modify your ``ansible.cfg`` file: add ``scp_if_ssh=smart`` or ``scp_if_ssh=False`` to the ``[ssh_connection]`` section
+    * Set a :ref:`host variable <host_variables>` or :ref:`group variable <group_variables>` in inventory: ``ansible_scp_if_ssh: False``
+    * Set an environment variable on your control node: ``export ANSIBLE_SCP_IF_SSH=False``
+    * Pass an environment variable when you run Ansible: ``ANSIBLE_SCP_IF_SSH=smart ansible-playbook``
+    * Modify your ``ansible.cfg`` file: add ``scp_if_ssh=False`` to the ``[ssh_connection]`` section
 * If you must use SCP, set the ``-T`` arg to tell the SCP client to ignore path validation. You can do this in one of three ways:
-    * Set a host variable in the ``all`` group: ``ansible_scp_extra_args=-T``,
-    * Set an environment variable: ``ANSIBLE_SCP_EXTRA_ARGS=-T``
-    * Modify your ``ansible.cfg`` file: add ``scp_extra_args = -T`` to the ``[ssh_connection]`` section
+    * Set a :ref:`host variable <host_variables>` or :ref:`group variable <group_variables>`: ``ansible_scp_extra_args=-T``,
+    * Export or pass an environment variable: ``ANSIBLE_SCP_EXTRA_ARGS=-T``
+    * Modify your ``ansible.cfg`` file: add ``scp_extra_args=-T`` to the ``[ssh_connection]`` section
 
-.. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation, you don't need to set ``-T`` on your Ansible controller.
-
+.. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation and will not trigger this error.
 
 .. _i_dont_see_my_question:
 
