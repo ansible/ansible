@@ -1,0 +1,2 @@
+minor_changes:
+  - cosmetic change, simplify FC WWN facts gathering on Solaris
