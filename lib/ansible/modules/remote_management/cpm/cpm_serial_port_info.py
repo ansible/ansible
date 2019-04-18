@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: cpm_serial_port_info
-version_added: "2.8"
+version_added: "2.9"
 author: "Western Telematic Inc. (@wtinetworkgear)"
 short_description: Get Serial port parameters in WTI OOB and PDU devices
 description:
@@ -67,12 +67,15 @@ options:
   port:
     description:
       - This is the serial port number that is getting retrieved. It can include a single port
-      - number, multiple port numbers separated by commas or an '*' character for all ports.
+        number, multiple port numbers separated by commas, a list of port numbers, or an '*' character for all ports.
     required: true
+    type: list
+    default: ['*']
+notes:
+  - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.)
 """
 
 EXAMPLES = """
-# Get Parameters for one Serial Port
 - name: Get the Serial Port Parameters for port 2 of a WTI device
   cpm_serial_port_info:
     cpm_url: "nonexist.wti.com"
@@ -80,9 +83,8 @@ EXAMPLES = """
     cpm_password: "super"
     use_https: true
     validate_certs: false
-    port: "2"
+    port: 2
 
-# Get Parameters for multiple Serial Ports
 - name: Get the Serial Port Parameters for ports 2 and 4 of a WTI device
   cpm_serial_port_info:
     cpm_url: "nonexist.wti.com"
@@ -90,9 +92,8 @@ EXAMPLES = """
     cpm_password: "super"
     use_https: true
     validate_certs: false
-    port: "2,4"
+    port: 2,4
 
-# Get Parameters for All Serial Ports
 - name: Get the Serial Port Parameters for all ports of a WTI device
   cpm_serial_port_info:
     cpm_url: "nonexist.wti.com"
@@ -105,9 +106,44 @@ EXAMPLES = """
 
 RETURN = """
 data:
-    description: The output JSON returned from the commands sent
-    returned: always
-    type: str
+  description: The output JSON returned from the commands sent
+  returned: always
+  type: complex
+  contains:
+    serialports:
+      description: List of data for each serial port
+      returned: success
+      type: list
+      sample:
+        - baud: 4
+          break: 1
+          cmd: 1
+          connstatus: Free
+          echo: 1
+          handshake: 2
+          logoff: '^X'
+          mode: 1
+          parity: 3
+          port: 2
+          portname: switch
+          seq: 2
+          stopbits: 1
+          tout: 0
+
+        - baud: 3
+          break: 1
+          cmd: 1
+          connstatus: Free
+          echo: 1
+          handshake: 2
+          logoff: '^X'
+          mode: 1
+          parity: 1
+          port: 4
+          portname: router
+          seq: 2
+          stopbits: 1
+          tout: 1
 """
 
 import base64
@@ -126,7 +162,7 @@ def run_module():
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
-        port=dict(type='list', required=True),
+        port=dict(type='list', default=['*']),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
         use_proxy=dict(type='bool', default=False)
