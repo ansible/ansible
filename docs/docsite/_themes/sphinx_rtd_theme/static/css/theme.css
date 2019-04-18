@@ -1758,7 +1758,7 @@ footer span.commit code,footer span.commit .rst-content tt,.rst-content footer s
 .rst-content .sidebar p,.rst-content .sidebar ul,.rst-content .sidebar dl{font-size:90%}
 .rst-content .sidebar .last{margin-bottom:0}
 .rst-content .sidebar .sidebar-title{display:block;font-family:"Roboto Slab","ff-tisa-web-pro","Georgia",Arial,sans-serif;font-weight:bold;background:#e1e4e5;padding:6px 12px;margin:-24px;margin-bottom:24px;font-size:100%}
-.rst-content .highlighted{background:#F1C40F;display:inline-block;font-weight:bold;padding:0 6px}
+.rst-content .highlighted{background:#F1C40F;display:inline-block;font-weight:bold;}
 .rst-content .footnote-reference,.rst-content .citation-reference{vertical-align:baseline;position:relative;top:-0.4em;line-height:0;font-size:90%}
 .rst-content table.docutils.citation,.rst-content table.docutils.footnote{background:none;border:none;color:gray}
 .rst-content table.docutils.citation td,.rst-content table.docutils.citation tr,.rst-content table.docutils.footnote td,.rst-content table.docutils.footnote tr{border:none;background-color:transparent !important;white-space:normal}
