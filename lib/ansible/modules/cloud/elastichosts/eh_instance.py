@@ -62,7 +62,8 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Note: These examples do not set authentication details. See the note below for details.
+# Note: These examples do not set authentication details.
+# See the module notes for details.
 
 # Create an instance
 - name: Create an instance
@@ -77,7 +78,8 @@ EXAMPLES = '''
     state: absent
     force: true
 
-# A minimal playbook which: creates an instance, runs a task on it, destroys the instance
+# A minimal playbook which: creates an instance,
+# runs a task on it, and destroys the instance
 - name: Create instance
   hosts: localhost
   tasks:
