@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vexata_ig
-version_added: 2.8
+version_added: 2.9
 short_description: Manage initiator groups on Vexata VX100 storage arrays
 description:
     - Create, deletes or modify initiator groups on a Vexata VX100 array.
