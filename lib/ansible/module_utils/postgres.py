@@ -34,6 +34,8 @@ try:
 except ImportError:
     HAS_PSYCOPG2 = False
 
+from ansible.module_utils._text import to_native
+
 
 class LibraryError(Exception):
     pass
@@ -59,3 +61,30 @@ def postgres_common_argument_spec():
         ssl_mode=dict(default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ca_cert=dict(aliases=['ssl_rootcert']),
     )
+
+
+def connect_to_db(module, kw, autocommit=False):
+    try:
+        db_connection = psycopg2.connect(**kw)
+        if autocommit:
+            if psycopg2.__version__ >= '2.4.2':
+                db_connection.set_session(autocommit=True)
+            else:
+                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least '
+                                 'version 8.4 to support sslrootcert')
+
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+
+    return db_connection
+
+
+def get_pg_version(cursor):
+    cursor.execute("select current_setting('server_version_num')")
+    return int(cursor.fetchone()[0])
