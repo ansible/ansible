@@ -39,7 +39,7 @@ given as the ``src`` argument to the :ref:`copy <copy_module>`, :ref:`template <
 Variable-level encryption
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As of version 2.3, Ansible supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details :ref:`below <encrypt_string_for_use_in_yaml>`.
+Ansible also supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more detail :ref:`below <encrypt_string_for_use_in_yaml>`.
 
 .. note::
     The advantage of variable-level encryption is that files are still easily legible even if they mix plaintext and encrypted variables.
