@@ -15,7 +15,7 @@ The behaviour of asynchronous mode depends on the value of `poll`.
 Avoid connection timeouts: poll > 0
 -----------------------------------
 
-When `poll` is a positive value, the playbook will *still* block on the task until it either completes, fails or times out.
+When ``poll`` is a positive value, the playbook will *still* block on the task until it either completes, fails or times out.
 
 In this case, however, `async` explicitly sets the timeout you wish to apply to this task rather than being limited by the connection method timeout.
 
