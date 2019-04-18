@@ -162,7 +162,7 @@ def update_pg(module, array, pg):
     add_port_ids = new_port_ids.difference(curr_port_ids)
     rm_port_ids = curr_port_ids.difference(new_port_ids)
     if len(rm_port_ids) == len(add_port_ids) == 0:
-        msg='No update to port group {0} required'.format(pg_name)
+        msg = 'No update to port group {0} required'.format(pg_name)
         module.log(msg=msg)
         module.exit_json(msg=msg, changed=False)
 
