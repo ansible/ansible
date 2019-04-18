@@ -324,7 +324,6 @@ def main():
                          categories=dict(type='bool'),
                          )
 
-
     # seed the result dict in the object
     # we primarily care about changed and state
     # change is if this module effectively modified the target
@@ -337,7 +336,7 @@ def main():
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
     # supports check mode
-    module = AnsibleModule(argument_spec=argument_spec,                       
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            )
     meraki = MerakiModule(module, function='mx_l7_firewall')

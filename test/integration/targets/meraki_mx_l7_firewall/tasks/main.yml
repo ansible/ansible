@@ -330,4 +330,3 @@
       that:
         - multiple_rules.data.rules | length == 3
         - multiple_rules is changed
-
