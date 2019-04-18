@@ -55,11 +55,11 @@ EXAMPLES = '''
     greynoise_api_key: "API_KEY"
 '''
 
-RETURN = r'''
+RETURN = '''
 json:
   description: The JSON response from the GreyNoise API
   returned: always
-  type: complex
+  type: str
 msg:
   description: The HTTP message from the request
   returned: always
