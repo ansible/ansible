@@ -91,7 +91,6 @@ EXAMPLES = '''
       hostname: instance
       ansible_host: "{{ instance_info.instance.ip }}"
       ansible_user: root
-
 - name: Work on instance
   hosts: instance
   gather_facts: no
@@ -103,7 +102,6 @@ EXAMPLES = '''
     register: p
   - debug:
       var: p
-
 - name: Destroy instance
   hosts: localhost
   tasks:
