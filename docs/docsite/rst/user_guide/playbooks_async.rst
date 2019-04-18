@@ -57,7 +57,7 @@ The playbook run will end without checking back on async tasks.
 
 The async tasks will run until they either complete, fail or timeout according to their `async` value.
 
-If you need a synchronization point with a task, register it to obtain its job ID and use the `async_status` module to observe it.
+If you need a synchronization point with a task, register it to obtain its job ID and use the :ref:`async_status <async_status_module>` module to observe it.
 
 You may run a task asynchronously by specifying a poll value of 0::
 
