@@ -21,44 +21,37 @@ options:
     description:
       - Graylog endoint. (i.e. graylog.mydomain.com).
     required: false
-    default: None
   graylog_user:
     description:
       - Graylog privileged user username.
     required: false
-    default: None
   graylog_password:
     description:
       - Graylog privileged user password.
     required: false
-    default: None
   action:
     description:
       - Action to take against index API.
     required: false
     default: list
     choices: [ create, update, list, delete, query_index_sets ]
-  id:
+  index_set_id:
     description:
       - Index id.
     required: false
-    default: None
   title:
     description:
       - Title.
     required: false
-    default: None
   description:
     description:
       - Description.
     required: false
-    default: None
   index_prefix:
     description:
       - A unique prefix used in Elasticsearch indices belonging to this index set. The prefix must start
         with a letter or number, and can only contain letters, numbers, '_', '-' and '+'.
     required: false
-    default: None
   index_analyzer:
     description:
       - Elasticsearch analyzer for this index set.
@@ -89,12 +82,12 @@ options:
       - Graylog uses multiple indices to store documents in. You can configure the strategy it uses to determine
          when to rotate the currently active write index.
     required: false
-    default: dict(type='org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategyConfig', rotation_period='P1D')
+    default: {'type': 'org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategyConfig', 'rotation_period': 'P1D'}
   retention_strategy:
     description:
       - Graylog uses a retention strategy to clean up old indices.
     required: false
-    default: dict(type='org.graylog2.indexer.retention.strategies.DeletionRetentionStrategyConfig', max_number_of_indices=14)
+    default: {'type': 'org.graylog2.indexer.retention.strategies.DeletionRetentionStrategyConfig', 'max_number_of_indices': 14}
   index_optimization_max_num_segments:
     description:
       - Maximum number of segments per Elasticsearch index after optimization (force merge).
@@ -140,7 +133,6 @@ EXAMPLES = '''
          let dns_query_intel = threat_intel_lookup_domain(to_string($message.dns_query), "dns_query");
          set_fields(dns_query_intel);
       end
-
 '''
 
 RETURN = '''
@@ -170,8 +162,8 @@ url:
 import json
 import datetime
 import base64
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, to_text
 
 
 def create(module, base_url, api_token, title, description, index_prefix, index_analyzer, shards, replicas,
@@ -382,14 +374,14 @@ def get_token(module, endpoint, username, password):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            endpoint=dict(type='str', default=None),
-            graylog_user=dict(type='str', default=None),
+            endpoint=dict(type='str'),
+            graylog_user=dict(type='str'),
             graylog_password=dict(type='str', no_log=True),
             action=dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'query_index_sets']),
-            title=dict(type='str', default=None),
-            description=dict(type='str', default=None),
-            index_set_id=dict(type='str', default=None),
-            index_prefix=dict(type='str', default=None),
+            title=dict(type='str'),
+            description=dict(type='str'),
+            index_set_id=dict(type='str'),
+            index_prefix=dict(type='str'),
             index_analyzer=dict(type='str', default="standard"),
             shards=dict(type='int', default=4),
             replicas=dict(type='int', default=1),
@@ -454,7 +446,7 @@ def main():
 
     try:
         js = json.loads(content)
-    except ValueError, e:
+    except ValueError:
         js = ""
 
     uresp['json'] = js
