@@ -134,7 +134,7 @@ def remove_initiator(module, array, ini):
             module.log(msg='Initiator {0} removed.'.format(ini_id))
             changed = True
         else:
-            module.fail_json(msg='Initiator remove failed.'.format(ini_id))
+            module.fail_json(msg='Initiator {0} remove failed.'.format(ini_id))
     except Exception:
         pass
     module.exit_json(changed=changed)
