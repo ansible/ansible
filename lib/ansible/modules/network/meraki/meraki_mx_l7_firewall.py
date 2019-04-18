@@ -324,6 +324,7 @@ def main():
                          categories=dict(type='bool'),
                          )
 
+
     # seed the result dict in the object
     # we primarily care about changed and state
     # change is if this module effectively modified the target
@@ -336,10 +337,26 @@ def main():
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
     # supports check mode
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec,                       
                            supports_check_mode=True,
                            )
     meraki = MerakiModule(module, function='mx_l7_firewall')
+
+    # check for argument completeness
+    if meraki.params['rules']:
+        for rule in meraki.params['rules']:
+            if rule['type'] == 'application' and rule['application'] is None:
+                meraki.fail_json(msg="application argument is required when type is application.")
+            elif rule['type'] == 'application_category' and rule['application'] is None:
+                meraki.fail_json(msg="application argument is required when type is application_category.")
+            elif rule['type'] == 'blacklisted_countries' and rule['countries'] is None:
+                meraki.fail_json(msg="countries argument is required when type is blacklisted_countries.")
+            elif rule['type'] == 'host' and rule['host'] is None:
+                meraki.fail_json(msg="host argument is required when type is host.")
+            elif rule['type'] == 'port' and rule['port'] is None:
+                meraki.fail_json(msg="port argument is required when type is port.")
+            elif rule['whitelisted_countries'] == 'port' and rule['countries'] is None:
+                meraki.fail_json(msg="countries argument is required when type is whitelisted_countries.")
 
     meraki.params['follow_redirects'] = 'all'
 
