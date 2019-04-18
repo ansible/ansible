@@ -19,7 +19,35 @@ description:
 - Create storage-volume with verification of existence
 author:
 - Hiroyuki Wakabayashi (@hwakabh)
-options: {}
+options:
+    vplex_ip_address:
+        description:
+            - IP Address of VPLEX management server to create storage-volume
+        required: true
+    vplex_username:
+        description:
+            - Username of VPLEX management server to create storage-volume
+        required: true
+    vplex_password:
+        description:
+            - Password of VPLEX management server to create storage-volume
+        required: true
+    vplex_serialnum:
+        description:
+            - S/N of VPLEX to create storage-volume
+        required: true
+    volume_name:
+        description:
+            - Name of LUN to encapsulate in VPLEX
+        required: true
+    vpd_id:
+        description:
+            - WWN of LUN to encapsulate in VPLEX
+        required: true
+    array_name:
+        description:
+            - Name of backend storage-array with the name exposed from VPLEX
+        required: true
 '''
 
 EXAMPLES = r'''
