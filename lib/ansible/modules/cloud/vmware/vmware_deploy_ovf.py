@@ -370,6 +370,8 @@ class VMwareDeployOvf:
 
         if self.params['folder']:
             folder = self.si.searchIndex.FindByInventoryPath(self.params['folder'])
+            if not folder:
+                self.module.fail_json(msg="Unable to find the specified folder %(folder)s" % self.params)
         else:
             folder = datacenter.vmFolder
 
