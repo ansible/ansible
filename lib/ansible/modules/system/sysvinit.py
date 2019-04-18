@@ -336,6 +336,8 @@ def main():
             result['changed'] = True
             result['status'][module.params['state']]['changed'] = True
             if not module.check_mode:
+                if action == 'reload':
+                    action = 'start'
                 rc, out, err = runme(action)
 
         if not module.check_mode and result['status'][module.params['state']]['changed']:
