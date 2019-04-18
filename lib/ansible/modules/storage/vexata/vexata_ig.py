@@ -147,9 +147,9 @@ def create_ig(module, array):
             module.log(msg='Created initiator group {0}'.format(ig_name))
             changed = True
         else:
-            module.fail_json(msg='Initiator group {0} create failed.'.format(ig_name))
+            raise Exception
     except Exception:
-        pass
+        module.fail_json(msg='Initiator group {0} create failed.'.format(ig_name))
     module.exit_json(changed=changed)
 
 
@@ -166,8 +166,9 @@ def update_ig(module, array, ig):
     add_ini_ids = new_ini_ids.difference(curr_ini_ids)
     rm_ini_ids = curr_ini_ids.difference(new_ini_ids)
     if len(rm_ini_ids) == len(add_ini_ids) == 0:
-        module.log(msg='No update to initiator group {0} required'.format(ig_name))
-        module.exit_json(changed=False)
+        msg = 'No update to initiator group {0} required'.format(ig_name)
+        module.log(msg=msg)
+        module.exit_json(msg=msg, changed=False)
 
     if module.check_mode:
         module.exit_json(changed=changed)
@@ -183,9 +184,9 @@ def update_ig(module, array, ig):
             module.log(msg='Modified initiator group {0}'.format(ig_name))
             changed = True
         else:
-            module.fail_json(msg='Initiator group create failed.')
+            raise Exception
     except Exception:
-        pass
+        module.fail_json(msg='Initiator group {0} modify failed.'.format(ig_name))
     module.exit_json(changed=changed)
 
 
