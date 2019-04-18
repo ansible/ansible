@@ -49,13 +49,13 @@ EXAMPLES = '''
 - greynoise:
     action: query_ip
     ip: "8.8.8.8"
-    greynoise_api_key: "<API_KEY>"
+    greynoise_api_key: "API_KEY"
 
 # Query all IPs that have a given tag
 - greynoise:
     action: query_tag
     ip: "SHODAN"
-    greynoise_api_key: "<API_KEY>"
+    greynoise_api_key: "API_KEY"
 '''
 
 RETURN = r'''
@@ -165,7 +165,7 @@ def main():
 
     try:
         js = json.loads(content)
-    except ValueError, e:
+    except ValueError:
         js = ""
 
     uresp['status'] = status
@@ -178,9 +178,8 @@ def main():
 
 # import module snippets
 import json
-import base64
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, to_text
 
 
 if __name__ == '__main__':
