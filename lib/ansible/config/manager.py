@@ -529,7 +529,7 @@ class ConfigManager(object):
                         choices = ', '.join(choices.keys())
                     else:
                         choices = ', '.join(choices)
-                    raise AnsibleError("Invalid %s value '%s': valid values are %s" % (value, config, choices))
+                    raise AnsibleError("Invalid value '%s' for '%s': choices are %s" % (value, config, choices))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
