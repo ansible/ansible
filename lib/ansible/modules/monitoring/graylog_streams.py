@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -14,24 +14,21 @@ module: graylog_streams
 short_description: Communicate with the Graylog API to manage streams
 description:
     - The Graylog streams module manages Graylog streams
-version_added: "1.0"
+version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
   endpoint:
     description:
       - Graylog endoint. (i.e. graylog.mydomain.com).
     required: false
-    default: None
   graylog_user:
     description:
       - Graylog privileged user username.
     required: false
-    default: None
   graylog_password:
     description:
       - Graylog privileged user password.
     required: false
-    default: None
   action:
     description:
       - Action to take against stream API.
@@ -42,22 +39,26 @@ options:
     description:
       - Stream title.
     required: false
-    default: None
   description:
     description:
       - Stream description.
     required: false
-    default: None
+  stream_id:
+    description:
+      - Stream ID.
+    required: false
+  rule_id:
+    description:
+      - Rule ID.
+    required: false
   index_set_id:
     description:
       - Index set ID.
     required: false
-    default: None
   matching_type:
     description:
       - Matching type for the stream rules.
     required: false
-    default: None
   remove_matches_from_default_stream:
     description:
       - Remove matches from default stream, true or false.
@@ -67,27 +68,28 @@ options:
     description:
       - Stream name to use with the query_streams action.
     required: false
-    default: None
   field:
     description:
       - Field name for the stream rule to check.
     required: false
-    default: None
   type:
     description:
       - Rule type for the stream rule, 1-7.
     required: false
-    default: None
+    default: 1
   value:
     description:
       - Value to check rule against.
     required: false
-    default: None
   inverted:
     description:
       - Invert rule (must not match value).
     required: false
     default: False
+  rules:
+    description:
+      - List of rules associated with a stream.
+    required: false
 '''
 
 EXAMPLES = '''
@@ -144,7 +146,7 @@ EXAMPLES = '''
     stream_id: "{{ stream.json.id }}"
     description: "Windows Security Logs"
     field: "winlogbeat_log_name"
-    type: "1"
+    type: 1
     value: "Security"
     inverted: False
 
@@ -192,11 +194,11 @@ EXAMPLES = '''
     stream_id: "{{ stream.json.id }}"
 '''
 
-RETURN = r'''
+RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: complex
+  type: str
 msg:
   description: The HTTP message from the request
   returned: always
@@ -213,6 +215,13 @@ url:
   type: str
   sample: https://www.ansible.com/
 '''
+
+
+# import module snippets
+import json
+import base64
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, to_text
 
 
 def create(module, base_url, api_token, title, description, remove_matches_from_default_stream, matching_type, rules, index_set_id):
@@ -574,24 +583,24 @@ def get_token(module, endpoint, username, password):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            endpoint=dict(type='str', default=None),
-            graylog_user=dict(type='str', default=None),
+            endpoint=dict(type='str'),
+            graylog_user=dict(type='str'),
             graylog_password=dict(type='str', no_log=True),
             action=dict(type='str', required=False, default='list', choices=['create', 'create_rule', 'start', 'pause',
                         'update', 'update_rule', 'delete', 'delete_rule', 'list', 'query_streams']),
-            stream_id=dict(type='str', default=None),
-            stream_name=dict(type='str', default=None),
-            rule_id=dict(type='str', default=None),
-            title=dict(type='str', default=None),
-            field=dict(type='str', default=None),
+            stream_id=dict(type='str'),
+            stream_name=dict(type='str'),
+            rule_id=dict(type='str'),
+            title=dict(type='str'),
+            field=dict(type='str'),
             type=dict(type='int', default=1),
-            value=dict(type='str', default=None),
-            index_set_id=dict(type='str', default=None),
+            value=dict(type='str'),
+            index_set_id=dict(type='str'),
             inverted=dict(type='bool', default=False),
-            description=dict(type='str', default=None),
+            description=dict(type='str'),
             remove_matches_from_default_stream=dict(type='bool', default=False),
-            matching_type=dict(type='str', default=None),
-            rules=dict(type='list', default=None)
+            matching_type=dict(type='str'),
+            rules=dict(type='list')
         )
     )
 
@@ -648,7 +657,7 @@ def main():
 
     try:
         js = json.loads(content)
-    except ValueError, e:
+    except ValueError:
         js = ""
 
     uresp['json'] = js
@@ -657,13 +666,6 @@ def main():
     uresp['url'] = url
 
     module.exit_json(**uresp)
-
-
-# import module snippets
-import json
-import base64
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 
 if __name__ == '__main__':
