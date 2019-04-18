@@ -165,6 +165,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             # Set the cache if it is enabled or if the cache was refreshed
             if self.use_cache or self.get_option('cache'):
                 self._cache[self.cache_key][url] = results
+            else:
+                return results
 
         return self._cache[self.cache_key][url]
 
