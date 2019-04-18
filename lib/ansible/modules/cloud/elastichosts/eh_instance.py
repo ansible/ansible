@@ -218,9 +218,7 @@ def main():
         if instance['persistent'] == 'true':
             client.delete_instance(uuid)
         client.delete_disk(instance['disk'])
-        instance['active'] = 'false'
         result.update(
-            instance=instance,
             changed=True
         )
         module.exit_json(**result)
