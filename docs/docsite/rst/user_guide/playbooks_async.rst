@@ -49,7 +49,7 @@ poll value is 10 seconds if you do not specify a value for `poll`::
 Concurrent tasks: poll = 0
 --------------------------
 
-When `poll` is 0, Ansible will start the task and immediately move on to the next one without waiting for a result.
+When ``poll`` is 0, Ansible will start the task and immediately move on to the next one without waiting for a result.
 
 From the point of view of sequencing this is asynchronous programming: tasks may now run concurrently.
 
