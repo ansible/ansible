@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vexata_fcinitiator
-version_added: 2.8
+version_added: 2.9
 short_description: Manage Fibre Channel initiators on Vexata VX100 storage arrays
 description:
     - Adds or removes Fibre Channel (FC) initiators on a Vexata VX100 array.
