@@ -34,7 +34,6 @@ class VPLEX:
     # Common Unitilities
     def https_get(self, urlsuffix):
         url = 'https://' + str(self.ip_address) + urlsuffix
-        logger.info('Connect to : ' + url)
         try:
             request_body = open_url(url=url, url_username=self.username, url_password=self.password, force_basic_auth=False)
         except Exception:
@@ -45,8 +44,6 @@ class VPLEX:
 
     def https_post(self, urlsuffix, data):
         url = 'https://' + str(self.ip_address) + urlsuffix
-        logger.info('Connect to : ' + url)
-        logger.info('POST Data : ' + data)
         try:
             time.sleep(3)
             request_body = open_url(url=url, url_username=self.username, url_password=self.password, force_basic_auth=False, data=data)
