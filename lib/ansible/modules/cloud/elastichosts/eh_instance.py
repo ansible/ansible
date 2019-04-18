@@ -36,7 +36,7 @@ options:
     name:
         description:
             - Name of the instance to be created
-            - Required for C(state=present)
+            - Required for I(state=present)
         type: string
     state:
         description:
@@ -44,13 +44,13 @@ options:
             - If C(state=absent) and instance exists, it will be removed (along with its drives).
             - If C(state=absent) and instance does not exist, the module returns successfully with no changes.
         choices:
-          - present
-          - absent
+            - present
+            - absent
         default: present
     uuid:
-      description:
-          - The UUID of the instance to destroy.
-          - Required when C(state=absent).
+        description:
+            - The UUID of the instance to destroy.
+            - Required when I(state=absent).
       type: string
 notes:
     - If not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) will be used for authentication, where the C(EHUSER) is the user id, and C(EHPASS) is the API key.
@@ -135,7 +135,6 @@ import time
 
 # Prerequisites
 try:
-    #import pyeh
     from pyeh.main import Client
     HAS_PYEH = True
 except Exception:
@@ -159,8 +158,7 @@ def main():
                 required=False,
                 choices=[
                     'present',
-                    'absent',
-                    'restarted'
+                    'absent'
                 ],
                 default='present'
             ),
@@ -205,7 +203,7 @@ def main():
     if state == 'present':
         # Create instance
         instance.update(
-          name=module.params['name']
+            name=module.params['name']
         )
         if module.check_mode:
             result.update(
@@ -215,8 +213,8 @@ def main():
             module.exit_json(**result)
         instance = client.create_instance(instance)
         result.update(
-          instance=instance,
-          changed=True
+            instance=instance,
+            changed=True
         )
         module.exit_json(**result)
     elif state == 'absent':
