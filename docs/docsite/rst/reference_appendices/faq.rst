@@ -666,7 +666,7 @@ fails if the remote filename requires quotes to escape spaces or non-ascii chara
     * Set an environment variable: ``ANSIBLE_SCP_EXTRA_ARGS=-T``
     * Modify your ``ansible.cfg`` file: add ``scp_extra_args = -T`` to the ``[ssh_connection]`` section
 
-.. note:: ``-T`` is a valid argument only for scp clients that perform the filename validation. If you see an ``invalid argument`` error when you set it, you don't need it on your Ansible controller.
+.. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation, you don't need to set ``-T`` on your Ansible controller.
 
 
 .. _i_dont_see_my_question:
