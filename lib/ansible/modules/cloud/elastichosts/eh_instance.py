@@ -178,7 +178,6 @@ def main():
     # Check pyeh library
     if not HAS_PYEH:
         module.fail_json(msg='pyeh Python library required for this module')
-
     # Params
     debug = False
     username = module.params['username']
@@ -188,9 +187,7 @@ def main():
         module.fail_json(msg='Password was not specified')
     if username is None:
         module.fail_json(msg='Username was not specified')
-
     result = { 'failed': False, 'changed': False }
-
     # Create EH client
     client = Client(
         zone='lon-b',
@@ -198,7 +195,6 @@ def main():
         pwd=password,
         debug=debug
     )
-
     instance = {}
     if state == 'present':
         # Create instance
@@ -225,7 +221,6 @@ def main():
             # Check
             result.update(changed=True)
             module.exit_json(**result)
-
         # Get instance
         uuid = module.params['uuid']
         instance = client.get_instance(uuid)
@@ -247,7 +242,6 @@ def main():
                     'Instance is active, cannot delete. '
                     'Use force=true to force.'
                 ))
-
         if instance['persistent'] == 'true':
             client.delete_instance(uuid)
         client.delete_disk(instance['disk'])
