@@ -91,7 +91,7 @@ EXAMPLES = '''
       hostname: instance
       ansible_host: "{{ instance_info.instance.ip }}"
       ansible_user: root
-- name: Work on instance
+- name: Run a test task on the instance
   hosts: instance
   gather_facts: no
   tasks:
