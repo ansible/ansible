@@ -6,7 +6,7 @@ import json
 from time import sleep
 
 try:
-    from docker.errors import APIError, NotFound
+    from docker.errors import APIError
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -259,16 +259,15 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             Single service information structure
         """
         try:
-            service_info = self.inspect_service(service_id)
-        except NotFound as exc:
-            if skip_missing is False:
-                self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
-            else:
-                return None
+            service_info = self.inspect_service(service=service_id)
         except APIError as exc:
             if exc.status_code == 503:
                 self.fail("Cannot inspect service: To inspect service execute module on Swarm Manager")
-            self.fail("Error inspecting swarm service: %s" % exc)
+            if exc.status_code == 404:
+                if skip_missing is False:
+                    self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
+                else:
+                    return None
         except Exception as exc:
             self.fail("Error inspecting swarm service: %s" % exc)
 

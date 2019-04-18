@@ -46,24 +46,21 @@
 
 - name: Tag image with alias
   docker_image:
-    source: local
     name: "hello-world:latest"
     repository: "hello-world:alias"
   register: tag_1
 
 - name: Tag image with alias (idempotent)
   docker_image:
-    source: local
     name: "hello-world:latest"
     repository: "hello-world:alias"
   register: tag_2
 
 - name: Tag image with alias (force, still idempotent)
   docker_image:
-    source: local
     name: "hello-world:latest"
     repository: "hello-world:alias"
-    force_tag: yes
+    force: yes
   register: tag_3
 
 - assert:
@@ -108,8 +105,7 @@
     name: "hello-world:latest"
     repository: "{{ registry_address }}/test/hello-world"
     push: yes
-    source: local
-    force_tag: yes
+    force: yes
   register: push_3
 
 - assert:
