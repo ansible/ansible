@@ -167,7 +167,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, get_pg_version, postgres_common_argument_spec
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -271,21 +271,6 @@ def param_set(cursor, module, name, value, context):
     return True
 
 
-def connect_to_db(module, kw, autocommit=False):
-    try:
-        db_connection = psycopg2.connect(**kw)
-        if autocommit:
-            db_connection.set_session(autocommit=True)
-
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-
-    return db_connection
-
 # ===========================================
 # Module execution.
 #
@@ -357,8 +342,7 @@ def main():
     cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # Check server version (needs 9.4 or later):
-    cursor.execute("select current_setting('server_version_num')")
-    ver = int(cursor.fetchone()[0])
+    ver = get_pg_version(cursor)
     if ver < PG_REQ_VER:
         module.warn("PostgreSQL is %s version but %s or later is required" % (ver, PG_REQ_VER))
         kw = dict(
