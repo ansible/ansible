@@ -119,7 +119,7 @@ EXAMPLES = '''
 RETURN = r'''
 instance:
     description: Properties of the new instance
-    returned: when state == present
+    returned: when I(state=present)
     type: complex
     contains:
         cpu:
