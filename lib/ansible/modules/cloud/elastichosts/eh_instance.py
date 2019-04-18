@@ -118,14 +118,50 @@ EXAMPLES = '''
 
 RETURN = r'''
 instance:
-    cpu: 500,
-    disk: 09876543-a123-1234-1234-123456789012
-    ip: 1.2.3.4,
-    name: instancename,
-    persistent: true,
-    status: active,
-    type: container,
-    uuid: 1234567b-a123-1234-1234-123456789012
+    description: Properties of the new instance
+    returned: when state == present
+    type: complex
+    contains:
+        cpu:
+            description: CPU speed in MHz
+            returned: always
+            type: int
+            sample: 500
+        disk:
+            description: UUID of the disk.
+            returned: always
+            type: string
+            sample: 09876543-a123-1234-1234-123456789012
+        ip:
+            description: IP address of the instance.
+            returned: always
+            type: string
+            sample: 1.2.3.4
+        name:
+            description: Name of the instance.
+            returned: always
+            type: string
+            sample: instancename
+        persistent:
+            description: Whether the instance is retained after poweroff.
+            returned: always
+            type: string
+            sample: true
+        status:
+            description: Current status of the instance.
+            returned: always
+            type: string
+            sample: active
+        type:
+            description: Instance type, e.g. C(container) or a C(vm).
+            returned: always
+            type: string
+            sample: container
+        uuid:
+            description: UUID of the instance.
+            returned: always
+            type: string
+            sample: 1234567b-a123-1234-1234-123456789012
 '''
 
 # Imports
@@ -148,9 +184,9 @@ def main():
                 type='bool',
                 default=False,
             ),
-            name=dict(type='str'),
+            name=dict(type='string'),
             password = dict(
-                type='str',
+                type='string',
                 no_log=True,
                 default=os.environ.get('EHPASS'),
             ),
@@ -163,11 +199,11 @@ def main():
                 default='present'
             ),
             username = dict(
-                type='str',
+                type='string',
                 default=os.environ.get('EHUSER'),
                 no_log=True,
             ),
-            uuid = dict(type='str'),
+            uuid = dict(type='string'),
         ),
         required_one_of=[
             ['name', 'uuid']
