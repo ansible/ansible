@@ -594,18 +594,13 @@
     - win_service_path_again is not changed
     - win_service_path_again.path == 'C:\\temp\\test.exe'
 
-- name: create test environment variable
-  win_environment:
-    name: TEST_SERVICE_PATH
-    value: C:\temp
-    level: machine
-    state: present
-
 - name: set service path with quotes and env var
   win_service:
     name: "{{test_win_service_name}}"
     path: '"%TEST_SERVICE_PATH%\test.exe"'
   register: win_service_env_quote_path
+  environment:
+    TEST_SERVICE_PATH: C:\temp
 
 - name: check that the quoted service path has been changed
   assert:
@@ -618,6 +613,8 @@
     name: "{{test_win_service_name}}"
     path: '"%TEST_SERVICE_PATH%\test.exe"'
   register: win_service_env_quote_path_again
+  environment:
+    TEST_SERVICE_PATH: C:\temp
 
 - name: check that the quoted service path has been changed again
   assert:
