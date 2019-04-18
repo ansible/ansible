@@ -136,7 +136,7 @@ html_short_title = 'Ansible Documentation'
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
     'collapse_navigation' : "True",
-    'navigation_depth' : 2
+    'navigation_depth' : 3
 }
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
