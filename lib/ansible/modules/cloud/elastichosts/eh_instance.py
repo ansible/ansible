@@ -28,16 +28,13 @@ options:
     username:
         description:
             - User name used for API authentication (user UUID).
-        type: string
     password:
         description:
             - Password used for API authentication (API key).
-        type: string
     name:
         description:
             - Name of the instance to be created.
             - Required if I(state=present).
-        type: string
     state:
         description:
             - Specify whether instance should be in.
@@ -51,7 +48,6 @@ options:
         description:
             - The UUID of the instance to destroy.
             - Required if I(state=absent).
-        type: string
 notes:
     - If not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) will be used for authentication, where the C(EHUSER) is the user id, and C(EHPASS) is the API key.
     - Supply auth via environment variables with, for example, C(export EHUSER=123-456-789) and C(export EHPASS=abcdef).
