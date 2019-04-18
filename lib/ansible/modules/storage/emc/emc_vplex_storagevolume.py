@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 # Copyright: (c) 2019, Hiroyuki Wakabayashi <hiroyuki.wakabayashi@emc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: emc_vplex_storagevolume
-version_added: '2.7'
+version_added: '2.9'
 short_description: Create storage-volume on EMC VPLEX Storage Array
 description:
 - Create storage-volume with verification of existence
@@ -36,7 +36,8 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.storage.emc_vplex import VPLEX
+from ansible.module_utils.storage.emc.emc_vplex import VPLEX
+from requests.exceptions import RequestException
 
 import logging
 import os
@@ -99,8 +100,7 @@ def main():
         "volume_name": dict(type="str", required=True),
         "vpd_id": dict(type="str", required=True),
         "array_name": dict(type="str", required=True),
-        "volume_name": dict(type="str", required=True)
-        }
+        "volume_name": dict(type="str", required=True)}
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
@@ -111,8 +111,7 @@ def main():
     vplex = VPLEX(
         ip_address=module.params["vplex_ip_address"],
         username=module.params["vplex_username"],
-        password=module.params["vplex_password"]
-        )
+        password=module.params["vplex_password"])
 
     # --- if S/N differs from expected, exit the program
     if not vplex.confirm_vplex_serial_number(expect_serial_number=serial_number):
@@ -132,7 +131,7 @@ def main():
         logger.info('------- Execute array Re-discovery')
         try:
             rediscover_storage_array(vplex=vplex, array_name=array_name)
-        except:
+        except requests.exceptions.RequestException:
             logger.error('Failed to array re-discover...')
             module.exit_json(changed=False)
 
@@ -144,7 +143,7 @@ def main():
     else:
         try:
             claim_storage_volume(vplex=vplex, volume_name=volume_name, vpd_id=vpd_id)
-        except:
+        except requests.exceptions.RequestException:
             logger.error('Failed to claim storage-volumes. Retry playbook after checking backend volumes and masking on FC-Switches.')
             module.exit_json(changed=False)
         else:

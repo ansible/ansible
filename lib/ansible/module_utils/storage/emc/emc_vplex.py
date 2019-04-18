@@ -6,7 +6,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
-# HTTP Response handling
+
 def convert_to_json(body):
     js = ''
     try:
@@ -18,6 +18,7 @@ def convert_to_json(body):
             logger.info('>>> Some Error occurred when converting from String to JSON. Errors :')
             logger.info(e.args)
     return js
+
 
 class VPLEX:
     def __init__(self, ip_address, username, password):
@@ -38,7 +39,7 @@ class VPLEX:
         except ValueError:
             logger.error('>>> Error occurred during parsing json. VPLEX returned not a JSON value.')
             traceback.print_exc()
-        except:
+        except requests.exceptions.RequestException:
             logger.error('>>> URLError occurred. Please check the address or suffix you specified.')
             traceback.print_exc()
         else:
@@ -54,7 +55,7 @@ class VPLEX:
         except ValueError:
             logger.error('>>> Error occurred during parsing json. VPLEX returned not a JSON value.')
             traceback.print_exc()
-        except:
+        except requests.exceptions.RequestException:
             logger.error('>>> URLError occurred. Please check the address or suffix you specified.')
             traceback.print_exc()
         else:
@@ -115,20 +116,20 @@ class VPLEX:
 
         return response
 
-    # extents
     @staticmethod
     def set_extent_name(volume_name):
-        return 'extent_' + volume_name + '_1'
+        e_name = 'extent_' + volume_name + '_1'
+        return e_name
  
-    # local-devices
     @staticmethod
     def set_local_device_name(volume_name):
-        return 'device_' + volume_name + '_1'
+        ld_name = 'device_' + volume_name + '_1'
+        return ld_name
 
-    # virtual-volumes
     @staticmethod
     def set_virtual_volume_name(volume_name):
-        return 'device_' + volume_name + '_1_vol'
+        vv_name = 'device_' + volume_name + '_1_vol'
+        return vv_name
 
     @staticmethod
     def check_vplex_context(object_name):
