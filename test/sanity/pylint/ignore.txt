@@ -3,7 +3,6 @@ lib/ansible/cli/console.py blacklisted-name
 lib/ansible/compat/selectors/_selectors2.py blacklisted-name
 lib/ansible/executor/playbook_executor.py blacklisted-name
 lib/ansible/executor/task_queue_manager.py blacklisted-name
-lib/ansible/module_utils/acme.py blacklisted-name
 lib/ansible/module_utils/facts/network/linux.py blacklisted-name
 lib/ansible/module_utils/network/edgeswitch/edgeswitch_interface.py duplicate-string-formatting-argument
 lib/ansible/module_utils/urls.py blacklisted-name
