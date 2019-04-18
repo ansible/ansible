@@ -61,50 +61,50 @@ options:
             - Properties of capture description
         suboptions:
             enabled:
-                decription:
+                description:
                     - A value that indicates whether capture description is enabled.
                 required: true
                 type: bool
             encoding:
-                decription:
+                description:
                     - Enumerates the possible values for the encoding format of capture description.
                 required: true
                 choices:
                     - avro
                     - avro_deflate
             interval_in_seconds:
-                decription:
+                description:
                     - The time window allows you to set the frequency with which the capture to Azure Blobs will happen
                     - Value should between 60 to 900 seconds
                 type: int
             size_limit_in_bytes:
-                decription:
+                description:
                     - The size window defines the amount of data built up in your Event Hub before an capture operation
                     - Value should be between 10485760 to 524288000 bytes
                 type: int
             destination:
-                decription:
+                description:
                     - Properties of Destination where capture will be stored. (Storage Account, Blob Names)
                 suboptions:
                     provider:
-                        decription:
+                        description:
                             - Provider for capture destination
                         choices:
                             - EventHubArchive.AzureBlockBlob
                         required: true
                     storage_account_resource_id:
-                        decription:
+                        description:
                             - Resource id of the storage account to be used to create the blobs
                         required: true
-                    blob_container
-                        decription:
+                    blob_container:
+                        description:
                             - Blob container Name
                         required: true
-                    archive_name_format
-                        decription:
+                    archive_name_format:
+                        description:
                             - Blob naming convention for archive
             skip_empty_archives:
-                decription:
+                description:
                     - A value that indicates whether to Skip Empty Archives
                 type: bool
 
@@ -198,6 +198,7 @@ capture_description_spec = dict(
         type='bool'
     )
 )
+
 
 class AzureRMEventHub(AzureRMModuleBase):
     """Configuration class for an Azure RM Event hub resource"""
