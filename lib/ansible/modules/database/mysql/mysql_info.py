@@ -365,7 +365,7 @@ def main():
     # because of it doesn't change anything
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False
+        supports_check_mode=True,
     )
 
     db = module.params['login_db']

@@ -83,9 +83,7 @@ def mysql_connect(module, login_user=None, login_password=None,
         db_connection = mysql_driver.connect(**config)
 
     except Exception as e:
-        module.fail_json(msg="unable to connect to database, check login_user and "
-                             "login_password are correct or %s has the credentials. "
-                             "Exception message: %s" % (config_file, to_native(e)))
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
 
     if cursor_class is not None:
         return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor})
