@@ -194,21 +194,24 @@ class CallbackModule(CallbackBase):
                 self._print_task_banner(task)
 
     def _print_task_banner(self, task):
-        # args can be specified as no_log in several places: in the task or in
-        # the argument spec.  We can check whether the task is no_log but the
-        # argument spec can't be because that is only run on the target
-        # machine and we haven't run it thereyet at this time.
+        # The task options can be specified as no_log in module (argument spec)
+        # You can also set no_log for the whole task/block/play/etc
+        # We can check whether the task is no_log but not the argument spec
+        # because that is only run on the target machine and would appear in 'results'
+        # this normally executes BEFORE that happens.
         #
         # So we give people a config option to affect display of the args so
         # that they can secure this if they feel that their stdout is insecure
         # (shoulder surfing, logging stdout straight to a file, etc).
-        args = u' '
+        # we still try to censor fields that 'look like secrets'.
+        args = [u' ']
         if not task.no_log and C.DISPLAY_ARGS_TO_STDOUT:
             for k, v in task.args.items():
                 if PASSWORD_MATCH.search(k):
-                    args += u'%s=%s' % (k, '[CENSORED]: POSSIBLE SECRET FIELD')
+                    args.append(u'%s=%s' % (k, '[CENSORED]: POSSIBLE SECRET FIELD'))
                 else:
-                    args += u'%s=%s' % (k, v)
+                    args.append(u'%s=%s' % (k, v))
+        args = ', '.join(args)
 
         prefix = self._task_type_cache.get(task._uuid, 'TASK')
 
