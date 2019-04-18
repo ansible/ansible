@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-# Copyright: (c) 2019, Ansible Project
+# Copyright: (c) 2019, Konrad D. Pisarczyk
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -27,14 +28,16 @@ options:
     username:
         description:
             - User name used for API authentication (user UUID).
-        type: str
+        type: string
     password:
         description:
             - Password used for API authentication (API key).
+        type: string
     name:
         description:
             - Name of the instance to be created
             - Required for C(state=present)
+        type: string
     state:
         description:
             - Specify whether instance should be in.
@@ -48,9 +51,10 @@ options:
       description:
           - The UUID of the instance to destroy.
           - Required when C(state=absent).
-      type: str
+      type: string
 notes:
-    - If not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) will be used for authentication.
+    - If not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) will be used for authentication, where the C(EHUSER) is the user id, and C(EHPASS) is the API key.
+    - Supply auth via environment variables with, for example, C(export EHUSER=123-456-789) and C(export EHPASS=abcdef).
     - See U(https://gitlab.com/konradp/pyeh) and U(https://pypi.org/project/pyeh/) for the C(pyeh) module.
     - See U(https://www.elastichosts.com/api/docs/) for ElasticHosts API reference.
 requirements:
@@ -72,6 +76,9 @@ EXAMPLES = '''
     uuid: "51eff35b-b044-4544-b202-f37557d4d932"
     state: absent
     force: true
+
+# A minimal playbook which: creates an instance, runs a task on it, destroys the instance
+
 '''
 
 RETURN = r'''
@@ -159,26 +166,26 @@ def main():
         debug=debug
     )
 
-    node = {}
+    instance = {}
     if state == 'present':
-        # Create node
-        node.update(
+        # Create instance
+        instance.update(
           name=module.params['name']
         )
         if module.check_mode:
             result.update(
                 changed=True,
-                node=node
+                instance=instance
             )
             module.exit_json(**result)
-        node = client.create_node(node)
+        instance = client.create_instance(instance)
         result.update(
-          node=node,
+          instance=instance,
           changed=True
         )
         module.exit_json(**result)
     elif state == 'absent':
-        # Destroy node
+        # Destroy instance
         if module.params['uuid'] is None:
             module.fail_json(msg='uuid is not set')
         if module.check_mode:
@@ -186,32 +193,36 @@ def main():
             result.update(changed=True)
             module.exit_json(**result)
 
-        # Get node
+        # Get instance
         uuid = module.params['uuid']
-        node = client.get_node(uuid)
-        if node is None:
+        instance = client.get_instance(uuid)
+        if instance is None:
             # Already absent, no change
             result.update(changed=False)
             module.exit_json(**result)
-        if node['status'] == 'active':
+        if instance['status'] == 'active':
             # Active
             if module.params['force']:
-                if node['persistent'] == 'false':
-                    client.stop_node(uuid, graceful=True)
+                if instance['persistent'] == 'false':
+                    client.stop_instance(uuid, graceful=True)
                 else:
                     # Persistent, graceful shutdown
-                    if not client.stop_node(uuid, graceful=True):
-                        module.fail_json(msg=('Could not shutdown node'))
+                    if not client.stop_instance(uuid, graceful=True):
+                        module.fail_json(msg=('Could not shutdown instance'))
             else:
                 module.fail_json(msg=(
-                    'Node is active, cannot delete. '
+                    'Instance is active, cannot delete. '
                     'Use force=true to force.'
                 ))
 
-        if node['persistent'] == 'true':
-            client.delete_node(uuid)
-        client.delete_disk(node['disk'])
-        result.update(changed=True)
+        if instance['persistent'] == 'true':
+            client.delete_instance(uuid)
+        client.delete_disk(instance['disk'])
+        instance['active'] = 'false'
+        result.update(
+            instance=instance,
+            changed=True
+        )
         module.exit_json(**result)
 
 if __name__ == '__main__':
