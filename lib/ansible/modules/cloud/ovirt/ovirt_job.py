@@ -39,10 +39,10 @@ options:
         required: true
     state:
         description:
-            - "Should the job be present/absent/failed."
-            - "Present have alias started and absent have alias finished, you can use both."
+            - "Should the job be C(present)/C(absent)/C(failed)."
+            - "C(started) is alias for C(present). C(finished) is alias for C(absent). Same in the steps."
             - "Note when C(finished)/C(failed) it will finish/fail all steps."
-        choices: ['present', 'absent', 'created', 'finished', 'failed']
+        choices: ['present', 'absent', 'started', 'finished', 'failed']
         default: present
     steps:
         description:
@@ -54,11 +54,10 @@ options:
                 required: true
             state:
                 description:
-                    - "Should the setp be present/absent/failed."
-                    - "C(present) have alias C(started) and C(absent) have alias C(finished), you can use both."
+                    - "Should the step be present/absent/failed."
                     - "Note when one step fail whole job will fail"
                     - "Note when all steps are finished it will finish job."
-                choices: ['present', 'absent', 'created', 'finished', 'failed']
+                choices: ['present', 'absent', 'started', 'finished', 'failed']
                 default: present
         type: list
 extends_documentation_fragment: ovirt
@@ -126,37 +125,37 @@ from ansible.module_utils.ovirt import (
 )
 
 
-def build_job(module):
+def build_job(description):
     return otypes.Job(
-        description=module.params['description'],
+        description=description,
         status=otypes.JobStatus.STARTED,
         external=True,
         auto_cleared=True
     )
 
 
-def build_step(step, entity_id):
+def build_step(description, job_id):
     return otypes.Step(
-        description=step.get('description'),
+        description=description,
         type=otypes.StepEnum.UNKNOWN,
         job=otypes.Job(
-            id=entity_id
+            id=job_id
         ),
         status=otypes.StepStatus.STARTED,
         external=True,
     )
 
 
-def attach_steps(module, entity_id, jobs_service):
+def attach_steps(module, job_id, jobs_service):
     changed = False
-    steps_service = jobs_service.job_service(entity_id).steps_service()
+    steps_service = jobs_service.job_service(job_id).steps_service()
     if module.params.get('steps'):
         for step in module.params.get('steps'):
             step_entity = get_entity(steps_service, step.get('description'))
             step_state = step.get('state', 'present')
             if step_state in ['present', 'started']:
                 if step_entity is None:
-                    steps_service.add(build_step(step, entity_id))
+                    steps_service.add(build_step(step.get('description'), job_id))
                     changed = True
             if step_entity is not None and step_entity.status not in [otypes.StepStatus.FINISHED, otypes.StepStatus.FAILED]:
                 if step_state in ['absent', 'finished']:
@@ -201,7 +200,7 @@ def main():
         changed = False
         if state in ['present', 'started']:
             if job is None:
-                job = jobs_service.add(build_job(module))
+                job = jobs_service.add(build_job(module.params['description']))
                 changed = True
             changed = attach_steps(module, job.id, jobs_service) or changed
 
@@ -217,10 +216,10 @@ def main():
         ret = {
             'changed': changed,
             'id': getattr(job, 'id', None),
-            type(job).__name__.lower(): get_dict_of_struct(
+            'job': get_dict_of_struct(
                 struct=job,
                 connection=connection,
-                fetch_nested=module.params.get('fetch_nested'),
+                fetch_nested=True,
                 attributes=module.params.get('nested_attributes'),
             ),
         }
