@@ -125,7 +125,7 @@ def get_port_ids(module, array):
     found_port_ids = frozenset(port['id'] for port in found_ports)
     missing_port_ids = list(port_ids.difference(found_port_ids))
     if len(missing_port_ids) > 0:
-        module.fail_json(msg='The following port ids were not found:'
+        module.fail_json(msg='The following port ids were not found: '
                              '{0}'.format(missing_port_ids))
     # all present
     return list(found_port_ids)
@@ -148,9 +148,9 @@ def create_pg(module, array):
             module.log(msg='Created port group {0}'.format(pg_name))
             changed = True
         else:
-            module.fail_json(msg='Port group {0} create failed.'.format(pg_name))
+            raise Exception
     except Exception as e:
-        pass
+        module.fail_json(msg='Port group {0} create failed.'.format(pg_name))
     module.exit_json(changed=changed)
 
 
@@ -162,8 +162,9 @@ def update_pg(module, array, pg):
     add_port_ids = new_port_ids.difference(curr_port_ids)
     rm_port_ids = curr_port_ids.difference(new_port_ids)
     if len(rm_port_ids) == len(add_port_ids) == 0:
-        module.log(msg='No update to port group {0} required'.format(pg_name))
-        module.exit_json(changed=False)
+        msg='No update to port group {0} required'.format(pg_name)
+        module.log(msg=msg)
+        module.exit_json(msg=msg, changed=False)
 
     if module.check_mode:
         module.exit_json(changed=changed)
@@ -179,9 +180,9 @@ def update_pg(module, array, pg):
             module.log(msg='Modified port group {0}'.format(pg_name))
             changed = True
         else:
-            module.fail_json(msg='Port group create failed.')
+            raise Exception
     except Exception:
-        pass
+        module.fail_json(msg='Port group {0} modify failed.'.format(pg_name))
     module.exit_json(changed=changed)
 
 
