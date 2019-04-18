@@ -1,0 +1,2 @@
+bugfixes:
+- win_region - Fix the check for ``format`` when running on the ``psrp`` connection plugin
