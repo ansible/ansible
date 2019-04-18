@@ -52,7 +52,7 @@ Vault IDs and Multiple Vault Passwords
 ``````````````````````````````````````
 
 
-A vault ID is an identifier for one or more vault secrets. Since Ansible 2.4,
+A vault ID is an identifier for one or more vault secrets;
 Ansible supports multiple vault passwords.
 
 Vault IDs provide labels to distinguish between individual vault passwords.
