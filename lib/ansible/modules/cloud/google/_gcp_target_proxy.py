@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -26,6 +26,10 @@ requirements:
   - "google-api-python-client >= 1.6.2"
   - "google-auth >= 0.9.0"
   - "google-auth-httplib2 >= 0.0.2"
+deprecated:
+    removed_in: "2.12"
+    why: Updated modules released with increased functionality
+    alternative: Use M(gcp_compute_target_proxy) instead.
 notes:
   - Currently only supports global HTTP proxy.
 author:
