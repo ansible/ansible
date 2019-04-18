@@ -26,6 +26,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import absolute_import, division, print_function
+from ansible.modules.identity.keycloak.keycloak_realm import realm
 
 __metaclass__ = type
 
@@ -35,6 +36,7 @@ from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.keycloak_utils import isDictEquals 
+from ansible.module_utils.keycloak_utils import keycloak2ansibleClientRoles
 
 URL_TOKEN = "{url}/realms/{realm}/protocol/openid-connect/token"
 URL_CLIENT = "{url}/admin/realms/{realm}/clients/{id}"
@@ -47,6 +49,11 @@ URL_CLIENTTEMPLATE = "{url}/admin/realms/{realm}/client-templates/{id}"
 URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
 URL_GROUPS = "{url}/admin/realms/{realm}/groups"
 URL_GROUP = "{url}/admin/realms/{realm}/groups/{groupid}"
+URL_GROUP_CLIENT_ROLE_MAPPING = "{url}/admin/realms/{realm}/groups/{groupid}/role-mappings/clients/{clientid}"
+URL_GROUP_REALM_ROLE_MAPPING = "{url}/admin/realms/{realm}/groups/{groupid}/role-mappings/realm"
+
+URL_COMPONENTS = "{url}/admin/realms/{realm}/components"
+URL_USER_STORAGE = "{url}/admin/realms/{realm}/user-storage"
 
 
 def keycloak_argument_spec():
@@ -179,17 +186,9 @@ class KeycloakAPI(object):
         except Exception as e:
             self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
                                       % (id, realm, str(e)))
-<<<<<<< HEAD
 
     def get_client_secret_by_id(self, id, realm='master'):
         """ Obtain client representation by id
-
-=======
-
-    def get_client_secret_by_id(self, id, realm='master'):
-        """ Obtain client representation by id
-
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
         :param id: id (not clientId) of client to be queried
         :param realm: client from this realm
         :return: dict of client representation or None if none matching exist
@@ -259,15 +258,7 @@ class KeycloakAPI(object):
                 clientrep[camel('protocol_mappers')] = client_protocol_mappers
                 self.create_or_update_client_mappers(client_url, clientrep)
             if client_roles is not None:
-<<<<<<< HEAD
-<<<<<<< HEAD
                 self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url)
-=======
-                self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url, clientrep)
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
-                self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url)
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
             return putResponse
 
         except Exception as e:
@@ -300,15 +291,7 @@ class KeycloakAPI(object):
                 self.create_or_update_client_mappers(client_url, clientrep)
             if client_roles is not None:
                 client_roles_url = URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=self.get_client_id(clientrep[camel('client_id')], realm))
-<<<<<<< HEAD
-<<<<<<< HEAD
                 self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url)
-=======
-                self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url, clientrep)
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
-                self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url)
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
         
             return postResponse
             
@@ -453,8 +436,9 @@ class KeycloakAPI(object):
         """
         groups_url = URL_GROUPS.format(url=self.baseurl, realm=realm)
         try:
-            return json.load(open_url(groups_url, method="GET", headers=self.restheaders,
+            grouprep = json.load(open_url(groups_url, method="GET", headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+            return grouprep
         except Exception as e:
             self.module.fail_json(msg="Could not fetch list of groups in realm %s: %s"
                                       % (realm, str(e)))
@@ -470,9 +454,13 @@ class KeycloakAPI(object):
         """
         groups_url = URL_GROUP.format(url=self.baseurl, realm=realm, groupid=gid)
         try:
-            return json.load(open_url(groups_url, method="GET", headers=self.restheaders,
+            grouprep = json.load(open_url(groups_url, method="GET", headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+            if "clientRoles" in grouprep:
+                tmpClientRoles = grouprep["clientRoles"]
+                grouprep["clientRoles"] = keycloak2ansibleClientRoles(tmpClientRoles)
 
+            return grouprep
         except HTTPError as e:
             if e.code == 404:
                 return None
@@ -516,8 +504,17 @@ class KeycloakAPI(object):
         """
         groups_url = URL_GROUPS.format(url=self.baseurl, realm=realm)
         try:
+            # Remove roles because they are not supported by the POST method of the Keycloak endpoint.
+            groupreptocreate = grouprep.copy()
+            if "realmRoles" in groupreptocreate:
+                del(groupreptocreate['realmRoles'])
+            if "clientRoles" in groupreptocreate:
+                del(groupreptocreate['clientRoles'])
+            # Remove the id if it is defined. This can happen when force is true.
+            if "id" in groupreptocreate:
+                del(groupreptocreate['id'])
             return open_url(groups_url, method='POST', headers=self.restheaders,
-                            data=json.dumps(grouprep), validate_certs=self.validate_certs)
+                            data=json.dumps(groupreptocreate), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg="Could not create group %s in realm %s: %s"
                                       % (grouprep['name'], realm, str(e)))
@@ -531,8 +528,14 @@ class KeycloakAPI(object):
         group_url = URL_GROUP.format(url=self.baseurl, realm=realm, groupid=grouprep['id'])
 
         try:
+            # remove roles because they are not supported by the PUT method of the Keycloak endpoint.
+            groupreptoupdate = grouprep.copy()
+            if "realmRoles" in groupreptoupdate:
+                del(groupreptoupdate['realmRoles'])
+            if "clientRoles" in groupreptoupdate:
+                del(groupreptoupdate['clientRoles'])
             return open_url(group_url, method='PUT', headers=self.restheaders,
-                            data=json.dumps(grouprep), validate_certs=self.validate_certs)
+                            data=json.dumps(groupreptoupdate), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not update group %s in realm %s: %s'
                                       % (grouprep['name'], realm, str(e)))
@@ -575,10 +578,6 @@ class KeycloakAPI(object):
             self.module.fail_json(msg="Unable to delete group %s: %s" % (groupid, str(e)))
             
     def add_client_roles_to_representation(self, clientSvcBaseUrl, clientRolesUrl, clientRepresentation):
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
         """ Add client roles and their composites to the client representation in order to return this information to the user
 
         :param clientSvcBaseUrl: url of the client
@@ -586,12 +585,6 @@ class KeycloakAPI(object):
         :param clientRepresentation: actual representation of the client
         :return: nothing, the roles representation is added to the client representation as clientRoles key
         """
-<<<<<<< HEAD
-=======
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
-        
         clientRolesRepresentation = json.load(open_url(clientRolesUrl, method='GET', headers=self.restheaders))
         for clientRole in clientRolesRepresentation:
             if clientRole["composite"]:
@@ -603,10 +596,6 @@ class KeycloakAPI(object):
                         roleComposite["clientId"] = roleCompositeClient["clientId"]
         clientRepresentation['clientRoles'] = clientRolesRepresentation
         
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
     def create_or_update_client_roles(self, newClientRoles, roleSvcBaseUrl, clientSvcBaseUrl, clientRolesUrl):
         """ Create or update client roles. Client roles can be added, updated or removed depending of the state.
 
@@ -617,27 +606,12 @@ class KeycloakAPI(object):
         :return: True if the client roles have changed, False otherwise
         """
         changed = False
-<<<<<<< HEAD
-=======
-    def create_or_update_client_roles(self, newClientRoles, roleSvcBaseUrl, clientSvcBaseUrl, clientRolesUrl, clientRepresentation):
-        #changed = False
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
-        
         # Manage the roles
         if newClientRoles is not None:
             for newClientRole in newClientRoles:
                 changeNeeded = False
                 desiredState = "present"
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # If state key is included in the client role representation, save its value and remove the key from the representation.
-=======
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
-                # If state key is included in the client role representation, save its value and remove the key from the representation.
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
                 if "state" in newClientRole:
                     desiredState = newClientRole["state"]
                     del(newClientRole["state"])
@@ -725,8 +699,6 @@ class KeycloakAPI(object):
                         open_url(clientRolesUrl + '/' + newClientRole['name'] + '/composites', method='POST', headers=self.restheaders, data=data)
                 elif changeNeeded and desiredState == "absent" and clientRoleFound:
                     open_url(clientRolesUrl + '/' + newClientRole['name'], method='DELETE', headers=self.restheaders)
-<<<<<<< HEAD
-<<<<<<< HEAD
                     changed = True
         return changed
     
@@ -738,26 +710,6 @@ class KeycloakAPI(object):
         :return: True if the client roles have changed, False otherwise
         """
         changed = False
-=======
-                    #changed = True
-        #return changed
-    
-    def create_or_update_client_mappers(self, clientUrl, clientRepresentation):
-        #changed = False
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
-                    changed = True
-        return changed
-    
-    def create_or_update_client_mappers(self, clientUrl, clientRepresentation):
-        """ Create or update client protocol mappers. Mappers can be added, updated or removed depending of the state.
-
-        :param clientUrl: Keycloak API url of the client
-        :param clientRepresentation: Desired representation of the client including protocolMappers list
-        :return: True if the client roles have changed, False otherwise
-        """
-        changed = False
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
         if camel('protocol_mappers') in clientRepresentation and clientRepresentation[camel('protocol_mappers')] is not None:
             newClientProtocolMappers = clientRepresentation[camel('protocol_mappers')]
             # Get existing mappers from the client
@@ -765,14 +717,7 @@ class KeycloakAPI(object):
             
             for newClientProtocolMapper in newClientProtocolMappers:
                 desiredState = "present"
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # If state key is included in the mapper representation, save its value and remove the key from the representation.
-=======
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
-                # If state key is included in the mapper representation, save its value and remove the key from the representation.
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
                 if "state" in newClientProtocolMapper:
                     desiredState = newClientProtocolMapper["state"]
                     del(newClientProtocolMapper["state"])
@@ -787,27 +732,11 @@ class KeycloakAPI(object):
                     if desiredState == "absent":
                         # Delete the mapper
                         open_url(clientUrl + '/protocol-mappers/models/' + clientMapper['id'], method='DELETE', headers=self.restheaders)
-<<<<<<< HEAD
-<<<<<<< HEAD
                         changed = True
                     else:
                         if not isDictEquals(newClientProtocolMapper, clientMapper):
                             # If changed has been introduced for the mapper
                             changed = True
-=======
-                        #changed = True
-                    else:
-                        if not isDictEquals(newClientProtocolMapper, clientMapper):
-                            # If changed has been introduced for the mapper
-                            #changed = True
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
-                        changed = True
-                    else:
-                        if not isDictEquals(newClientProtocolMapper, clientMapper):
-                            # If changed has been introduced for the mapper
-                            changed = True
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
                             newClientProtocolMapper["id"] = clientMapper["id"]
                             data=json.dumps(newClientProtocolMapper)
                             # Modify the mapper
@@ -818,15 +747,94 @@ class KeycloakAPI(object):
                         # Create the mapper
                         data=json.dumps(newClientProtocolMapper)
                         open_url(clientUrl + '/protocol-mappers/models', method='POST', headers=self.restheaders, data=data)
-<<<<<<< HEAD
-<<<<<<< HEAD
                         changed = True
         return changed
-=======
-                        #changed = True
-        #return changed
->>>>>>> SX5-868 Manage client roles (add, delete update), remove protocolMappers
-=======
+
+    def add_attributes_list_to_attributes_dict(self, AttributesList, AttributesDict):
+        if AttributesList is not None:
+            if AttributesDict is None:
+                AttributesDict = {}
+            for attr in AttributesList:
+                if "name" in attr and attr["name"] is not None and "value" in attr:
+                    AttributesDict[attr["name"]] = attr["value"]
+                    
+    def assing_roles_to_group(self, groupRepresentation, groupRealmRoles, groupClientRoles, realm='master'):
+        roleSvcBaseUrl = URL_REALM_ROLES.format(url=self.baseurl, realm=realm)
+        clientSvcBaseUrl = URL_CLIENTS.format(url=self.baseurl, realm=realm)
+        # Get the id of the group
+        if 'id' in groupRepresentation:
+            gid = groupRepresentation['id']
+        else:
+            gid = self.get_group_by_name(name=groupRepresentation['name'], realm=realm)['id']
+        changed = False
+        # Assing Realm Roles
+        realmRolesRepresentation = []
+        if groupRealmRoles is not None:
+            for realmRole in groupRealmRoles:
+                # Look for existing role into group representation
+                if not "realmRoles" in groupRepresentation or not realmRole in groupRepresentation["realmRoles"]:
+                    roleid = None
+                    # Get all realm roles
+                    realmRoles = json.load(open_url(roleSvcBaseUrl, method='GET', headers=self.restheaders))
+                    # Find the role id
+                    for role in realmRoles:
+                        if role["name"] == realmRole:
+                            roleid = role["id"]
+                            break
+                    if roleid is not None:
+                        realmRoleRepresentation = {}
+                        realmRoleRepresentation["id"] = roleid
+                        realmRoleRepresentation["name"] = realmRole
+                        realmRolesRepresentation.append(realmRoleRepresentation)
+            if len(realmRolesRepresentation) > 0 :
+                data=json.dumps(realmRolesRepresentation)
+                # Assing Role
+                open_url(URL_GROUP_REALM_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid), method='POST', headers=self.restheaders, data=data)
+                changed = True
+
+        if groupClientRoles is not None:
+            # If there is change to do for client roles
+            if not "clientRoles" in groupRepresentation or not isDictEquals(groupClientRoles, groupRepresentation["clientRoles"]):
+                # Assing clients roles            
+                for clientRolesToAssing in groupClientRoles:    
+                    rolesToAssing = []
+                    clientIdOfClientRole = clientRolesToAssing['clientid']
+                    # Get the id of the client
+                    clients = json.load(open_url(clientSvcBaseUrl + '?clientId=' + clientIdOfClientRole, method='GET', headers=self.restheaders))
+                    if len(clients) > 0 and "id" in clients[0]:
+                        clientId = clients[0]["id"]
+                        # Get the client roles
+                        clientRoles = json.load(open_url(URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=clientId), method='GET', headers=self.restheaders))
+                        for clientRoleToAssing in clientRolesToAssing["roles"]:
+                            # Find his Id
+                            for clientRole in clientRoles:
+                                if clientRole["name"] == clientRoleToAssing:
+                                    newRole = {}
+                                    newRole["id"] = clientRole["id"]
+                                    newRole["name"] = clientRole["name"]
+                                    rolesToAssing.append(newRole)
+                                    break
+                    if len(rolesToAssing) > 0:
+                        # Delete exiting client Roles
+                        open_url(URL_GROUP_CLIENT_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid, clientid=clientId), method='DELETE', headers=self.restheaders)
+                        data=json.dumps(rolesToAssing)
+                        # Assing Role
+                        open_url(URL_GROUP_CLIENT_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid, clientid=clientId), method='POST', headers=self.restheaders, data=data)
                         changed = True
+                
         return changed
->>>>>>> Sx5-868 Update the keycloak_client module documentation for support of
+    
+    def sync_ldap_groups(self, syncLdapMappers, realm='master'):
+        LDAPUserStorageProviderType = "org.keycloak.storage.UserStorageProvider"
+        componentSvcBaseUrl = URL_COMPONENTS.format(url=self.baseurl, realm=realm)
+        userStorageBaseUrl = URL_USER_STORAGE.format(url=self.baseurl, realm=realm)
+        # Get all components of type org.keycloak.storage.UserStorageProvider
+        components = json.load(open_url(componentSvcBaseUrl + '?type=' + LDAPUserStorageProviderType, method='GET', headers=self.restheaders))
+        for component in components:
+            # Get all sub components of type group-ldap-mapper
+            subComponents = json.load(open_url(componentSvcBaseUrl, method='GET', headers=self.restheaders, params={"parent": component["id"], "providerId": "group-ldap-mapper"}))
+            # For each group mappers
+            for subComponent in subComponents:
+                if subComponent["providerId"] == 'group-ldap-mapper':
+                    # Sync groups
+                    open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync", method='POST', headers=self.restheaders, params={"direction": syncLdapMappers}) 
