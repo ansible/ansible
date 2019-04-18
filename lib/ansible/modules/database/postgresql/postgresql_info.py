@@ -473,7 +473,7 @@ try:
 except ImportError:
     HAS_PSYCOPG2 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
@@ -922,10 +922,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         db=dict(type='str', aliases=['login_db']),
-        port=dict(type='int', default=5432, aliases=['login_port']),
         filter=dict(type='list'),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
         session_role=dict(type='str'),
     )
     module = AnsibleModule(
@@ -934,7 +931,7 @@ def main():
     )
 
     if not HAS_PSYCOPG2:
-        module.fail_json(msg="The python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib('psycopg2'))
 
     filter_ = module.params["filter"]
     sslrootcert = module.params["ca_cert"]
