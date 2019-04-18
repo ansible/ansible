@@ -16,7 +16,7 @@ description:
     - Create or remove a container or a VM on ElasticHosts platfom.
     - Supports C(check_mode).
 version_added: "2.7"
-author: "Konrad Pisarczyk (@nickyfow)"
+author: "Konrad D. Pisarczyk (@nickyfow)"
 options:
     force:
         description:
