@@ -27,7 +27,7 @@ AZURE_COMMON_ARGS = dict(
         choices=['auto', 'cli', 'env', 'credential_file', 'msi']
     ),
     profile=dict(type='str'),
-    subscription_id=dict(type='str', no_log=True),
+    subscription_id=dict(type='str'),
     client_id=dict(type='str', no_log=True),
     secret=dict(type='str', no_log=True),
     tenant=dict(type='str', no_log=True),
