@@ -67,14 +67,11 @@ This switch is available for all Ansible commands that can interact with vaults:
 
 Vault-encrypted content can specify which vault ID it was encrypted with.
 
-Prior to Ansible 2.4, only one vault password could be used at a time, So any
-vault files or vars that needed to be decrypted all had to use the same password.
-
-Since Ansible 2.4, vault files or vars that are encrypted with different
-passwords can be used at the same time.
-
 For example, a playbook can now include a vars file encrypted with a 'dev' vault
 ID and a 'prod' vault ID.
+
+.. note:
+    Older versions of Ansible, before 2.4, only supported using one single vault password at a time.
 
 
 .. _creating_files:
