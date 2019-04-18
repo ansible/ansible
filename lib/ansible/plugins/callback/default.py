@@ -20,6 +20,7 @@ DOCUMENTATION = '''
 
 from ansible import constants as C
 from ansible import context
+from ansible.module_utils.basic import PASSWORD_MATCH
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
@@ -201,10 +202,13 @@ class CallbackModule(CallbackBase):
         # So we give people a config option to affect display of the args so
         # that they can secure this if they feel that their stdout is insecure
         # (shoulder surfing, logging stdout straight to a file, etc).
-        args = ''
+        args = u' '
         if not task.no_log and C.DISPLAY_ARGS_TO_STDOUT:
-            args = u', '.join(u'%s=%s' % a for a in task.args.items())
-            args = u' %s' % args
+            for k, v in task.args.items():
+                if PASSWORD_MATCH.search(k):
+                    args += u'%s=%s' % (k, '[CENSORED]: POSSIBLE SECRET FIELD')
+                else:
+                    args += u'%s=%s' % (k, v)
 
         prefix = self._task_type_cache.get(task._uuid, 'TASK')
 
