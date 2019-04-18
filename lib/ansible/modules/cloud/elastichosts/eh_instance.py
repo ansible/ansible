@@ -180,9 +180,9 @@ def main():
                 type='bool',
                 default=False,
             ),
-            name=dict(type='string'),
+            name=dict(type='str'),
             password = dict(
-                type='string',
+                type='str',
                 no_log=True,
                 default=os.environ.get('EHPASS'),
             ),
@@ -195,11 +195,11 @@ def main():
                 default='present'
             ),
             username = dict(
-                type='string',
+                type='str',
                 default=os.environ.get('EHUSER'),
                 no_log=True,
             ),
-            uuid = dict(type='string'),
+            uuid = dict(type='str'),
         ),
         required_one_of=[
             ['name', 'uuid']
