@@ -36,7 +36,10 @@ from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.keycloak_utils import isDictEquals 
+<<<<<<< HEAD
 from ansible.module_utils.keycloak_utils import keycloak2ansibleClientRoles
+=======
+>>>>>>> branch 'inspq-devel' of https://github.com/inspq/ansible.git
 
 URL_TOKEN = "{url}/realms/{realm}/protocol/openid-connect/token"
 URL_CLIENT = "{url}/admin/realms/{realm}/clients/{id}"
@@ -752,6 +755,7 @@ class KeycloakAPI(object):
                         open_url(clientUrl + '/protocol-mappers/models', method='POST', headers=self.restheaders, data=data)
                         changed = True
         return changed
+<<<<<<< HEAD
 
     def add_attributes_list_to_attributes_dict(self, AttributesList, AttributesDict):
         if AttributesList is not None:
@@ -841,3 +845,5 @@ class KeycloakAPI(object):
                 if subComponent["providerId"] == 'group-ldap-mapper':
                     # Sync groups
                     open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync", method='POST', headers=self.restheaders, params={"direction": syncLdapMappers}) 
+=======
+>>>>>>> branch 'inspq-devel' of https://github.com/inspq/ansible.git
