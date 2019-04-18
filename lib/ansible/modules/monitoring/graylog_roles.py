@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -14,24 +14,21 @@ module: graylog_roles
 short_description: Communicate with the Graylog API to manage roles
 description:
     - The Graylog roles module manages Graylog roles
-version_added: "1.0"
+version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
   endpoint:
     description:
       - Graylog endoint. (i.e. graylog.mydomain.com).
     required: false
-    default: None
   graylog_user:
     description:
       - Graylog privileged user username.
     required: false
-    default: None
   graylog_password:
     description:
       - Graylog privileged user password.
     required: false
-    default: None
   action:
     description:
       - Action to take against role API.
@@ -42,17 +39,14 @@ options:
     description:
       - Role name.
     required: false
-    default: None
   description:
     description:
       - Role description.
     required: false
-    default: None
   permissions:
     description:
       - Permissions list for role.
     required: false
-    default: None
   read_only:
     description:
       - Read only, true or false.
@@ -101,11 +95,11 @@ EXAMPLES = '''
     name: "admins"
 '''
 
-RETURN = r'''
+RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: complex
+  type: str
 msg:
   description: The HTTP message from the request
   returned: always
@@ -122,6 +116,13 @@ url:
   type: str
   sample: https://www.ansible.com/
 '''
+
+
+# import module snippets
+import json
+import base64
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, to_text
 
 
 def create(module, base_url, api_token, name, description, permissions, read_only):
@@ -252,13 +253,13 @@ def get_token(module, endpoint, username, password):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            endpoint=dict(type='str', default=None),
-            graylog_user=dict(type='str', default=None),
+            endpoint=dict(type='str'),
+            graylog_user=dict(type='str'),
             graylog_password=dict(type='str', no_log=True),
             action=dict(type='str', default='list', choices=['create', 'update', 'delete', 'list']),
-            name=dict(type='str', default=None),
-            description=dict(type='str', default=None),
-            permissions=dict(type='list', default=None),
+            name=dict(type='str'),
+            description=dict(type='str'),
+            permissions=dict(type='list'),
             read_only=dict(type='str', default="false")
         )
     )
@@ -290,7 +291,7 @@ def main():
 
     try:
         js = json.loads(content)
-    except ValueError, e:
+    except ValueError:
         js = ""
 
     uresp['json'] = js
@@ -299,13 +300,6 @@ def main():
     uresp['url'] = url
 
     module.exit_json(**uresp)
-
-
-# import module snippets
-import json
-import base64
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 
 if __name__ == '__main__':
