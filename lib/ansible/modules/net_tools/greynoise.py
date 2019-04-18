@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -14,7 +14,7 @@ module: greynoise
 short_description: Communicate with the GreyNoise API
 description:
     - The GreyNoise module queries the GreyNoise API
-version_added: "1.0"
+version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
   action:
@@ -81,6 +81,12 @@ url:
 '''
 
 
+# import module snippets
+import json
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, to_text
+
+
 def list_tags(module, base_url):
 
     url = base_url + "list"
@@ -140,9 +146,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             action=dict(type='str', required=False, default='list_tags', choices=['query_ip', 'query_tag', 'list_tags']),
-            ip=dict(type='str', default=None),
-            tag=dict(type='str', default=None),
-            greynoise_api_key=dict(type='str', default=None, no_log=True)
+            ip=dict(type='str'),
+            tag=dict(type='str'),
+            greynoise_api_key=dict(type='str', no_log=True)
         )
     )
 
@@ -174,12 +180,6 @@ def main():
     uresp['url'] = url
 
     module.exit_json(**uresp)
-
-
-# import module snippets
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url, to_text
 
 
 if __name__ == '__main__':
