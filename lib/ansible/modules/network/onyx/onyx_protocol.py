@@ -112,7 +112,7 @@ class OnyxProtocolModule(BaseOnyxModule):
         ospf=dict(name="ospf", enable="protocol ospf",
                   disable="no protocol ospf"),
         nve=dict(name="nve", enable="protocol nve",
-                  disable="no protocol nve"),
+                 disable="no protocol nve"),
     )
 
     @classmethod
