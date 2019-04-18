@@ -823,7 +823,7 @@ class RedfishUtils(object):
         result = {}
         key = "Bios"
 
-        # Search for 'key' entry asend extract URI from it
+        # Search for 'key' entry and extract URI from it
         response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
