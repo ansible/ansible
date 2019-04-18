@@ -58,6 +58,10 @@ DOCUMENTATION = '''
         description: Toggle, if true the inventory will retrieve 'all_parameters' information as host vars
         type: boolean
         default: False
+      use_config_groups:
+        description: Toggle, if true the inventory will use Foreman config groups to set Ansible groups
+        type: boolean
+        default: False
 '''
 
 EXAMPLES = '''
@@ -194,6 +198,17 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise ValueError("More than one set of facts returned for '%s'" % host)
         return facts
 
+    def _get_enc_by_id(self, hid):
+        url = "%s/api/v2/hosts/%s/enc" % (self.foreman_url, hid)
+        return self._get_json(url)
+
+    def _get_config_groups(self, host):
+        """Fetch all config groups of the host"""
+
+        ret = self._get_enc_by_id(host['id'])
+        config_groups = ret["data"]["parameters"]["foreman_config_groups"]
+        return config_groups
+
     def _populate(self):
 
         for host in self._get_hosts():
@@ -231,6 +246,14 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 # set host vars from facts
                 if self.get_option('want_facts'):
                     self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))
+
+                # set Ansible groups from Foreman config groups
+                if self.get_option('use_config_groups'):
+                    config_groups = self._get_config_groups(host)
+                    for config_group in config_groups:
+                        config_group = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), config_group.lower().replace(" ", "")))
+                        config_group = self.inventory.add_group(config_group)
+                        self.inventory.add_child(config_group, host['name'])
 
     def parse(self, inventory, loader, path, cache=True):
 
