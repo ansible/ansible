@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -14,7 +14,7 @@ module: graylog_index_sets
 short_description: Communicate with the Graylog API to manage index sets
 description:
     - The Graylog index sets module manages Graylog index sets
-version_added: "1.0"
+version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
   endpoint:
@@ -143,11 +143,11 @@ EXAMPLES = '''
 
 '''
 
-RETURN = r'''
+RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: complex
+  type: str
 msg:
   description: The HTTP message from the request
   returned: always
@@ -164,6 +164,14 @@ url:
   type: str
   sample: https://www.ansible.com/
 '''
+
+
+# import module snippets
+import json
+import datetime
+import base64
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 
 def create(module, base_url, api_token, title, description, index_prefix, index_analyzer, shards, replicas,
@@ -455,14 +463,6 @@ def main():
     uresp['url'] = url
 
     module.exit_json(**uresp)
-
-
-# import module snippets
-import json
-import datetime
-import base64
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 
 if __name__ == '__main__':
