@@ -122,7 +122,7 @@ def get_ini_ids(module, array):
     found_names = frozenset(ini['name'] for ini in found_inis)
     missing_names = list(ini_names.difference(found_names))
     if len(missing_names) > 0:
-        module.fail_json(msg='The following initiator names were not found:'
+        module.fail_json(msg='The following initiator names were not found: '
                              '{0}'.format(missing_names))
     # all present
     return [ini['id'] for ini in found_inis]
