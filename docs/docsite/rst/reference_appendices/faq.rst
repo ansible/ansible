@@ -231,11 +231,11 @@ There are a few common errors that one might run into when trying to execute Ans
 
   To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
 
-* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with 
+* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
 
   .. error::
       SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
-  
+
   To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
 
 * Python interpret cannot be found in default location ``/usr/bin/python`` on target host.
@@ -648,27 +648,25 @@ This works for all overriden connection variables, like ``ansible_user``, ``ansi
 How do I fix 'protocol error: filename does not match request' when fetching a file?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-When using ``scp`` as the file transfer mechanism for SSH, it can fail with the error::
+Newer releases of OpenSSH have a bug in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
 
     failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
 
-This is due to a bug in newer releases of OpenSSH in the ``scp`` client that is used on the Ansible controller. These
-releases attempt to validate that the path of the file to fetch matches the requested path. This validation
-will fail if the remote filename requires quotes to escape spaces or non-ascii chars in its path. If you come across
-this error there are a few different ways to ignore this validation, such as:
+In these releases, SCP tries to validate that the path of the file to fetch matches the requested path.
+The validation
+fails if the remote filename requires quotes to escape spaces or non-ascii characters in its path. To avoid this error:
 
-* Don't use the ``scp`` transfer mechanism by
-    * Not setting ``scp_if_ssh``, by default this uses the ``smart`` mechanism which tries SFTP first,
-    * Explicitly setting the host var ``ansible_scp_if_ssh=smart`` or ``ansible_scp_if_ssh=False``,
-    * Setting the environment variable ``ANSIBLE_SCP_IF_SSH`` when running Ansible to either ``smart`` or ``False``, or
-    * Setting ``scp_if_ssh`` to either ``smart`` or ``False`` under the ``[ssh_connection]`` config section in ``ansible.cfg``
-* If SCP is needed then set the ``-T`` arg to tell the SCP client to ignore path validation by
-    * Setting the var ``ansible_scp_extra_args=-T``,
-    * Setting the environment variable ``ANSIBLE_SCP_EXTRA_ARGS=-T`` when running Ansible, or
-    * Settings ``scp_extra_args = -T`` under the ``[ssh_connection]`` config section in ``ansible.cfg``
+* Use SFTP instead of SCP by setting ``scp_if_ssh`` to ``smart`` (which tries SFTP first) or to ``False``. You can do this in one of four ways:
+    * Rely on the default setting, which is ``smart`` - this works if ``scp_if_ssh`` is not explicitly set anywhere
+    * Set a host variable in the ``all`` group (``ansible_scp_if_ssh=smart`` or ``ansible_scp_if_ssh=False``)
+    * Set an environment variable: ``ANSIBLE_SCP_IF_SSH=smart`` or ``ANSIBLE_SCP_IF_SSH=False``
+    * Modify your ``ansible.cfg`` file: add ``scp_if_ssh=smart`` or ``scp_if_ssh=False`` to the ``[ssh_connection]`` section
+* If you must use SCP, set the ``-T`` arg to tell the SCP client to ignore path validation. You can do this in one of three ways:
+    * Set a host variable in the ``all`` group: ``ansible_scp_extra_args=-T``,
+    * Set an environment variable: ``ANSIBLE_SCP_EXTRA_ARGS=-T``
+    * Modify your ``ansible.cfg`` file: add ``scp_extra_args = -T`` to the ``[ssh_connection]`` section
 
-.. note:: ``-T`` is a valid argument only for scp clients that perform the filename validation. If setting that extra
-  argument results in an invalid argument error then it shouldn't be needed at all for the Ansible controller.
+.. note:: ``-T`` is a valid argument only for scp clients that perform the filename validation. If you see an ``invalid argument`` error when you set it, you don't need it on your Ansible controller.
 
 
 .. _i_dont_see_my_question:
