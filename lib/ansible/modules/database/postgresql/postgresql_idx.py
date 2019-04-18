@@ -241,7 +241,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -485,22 +485,8 @@ def main():
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
-    try:
-        db_connection = psycopg2.connect(**kw)
-        if concurrent:
-            if psycopg2.__version__ >= '2.4.2':
-                db_connection.set_session(autocommit=True)
-            else:
-                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-
-        module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
-    except Exception as e:
-        module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
+    db_connection = connect_to_db(module, kw, autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     if session_role:
         try:
