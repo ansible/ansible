@@ -1249,7 +1249,7 @@ class RedfishUtils(object):
             ret = inventory.pop('ret') and ret
             if 'entries' in inventory:
                 entries.append(({'resource_uri': resource_uri},
-                               inventory['entries']))
+                                inventory['entries']))
         return dict(ret=ret, entries=entries)
 
     def get_psu_inventory(self):
