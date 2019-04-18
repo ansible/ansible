@@ -462,12 +462,6 @@ class CLI(with_metaclass(ABCMeta, object)):
         if basedir:
             loader.set_basedir(basedir)
             add_all_plugin_dirs(basedir)
-        else:
-            paths = [os.path.dirname(p) for p in context.CLIARGS['args'] if os.path.exists(p)]
-            if paths:
-                loader.set_basedir(paths[0])
-                for playbook_path in paths:
-                    add_all_plugin_dirs(playbook_path)
 
         vault_ids = list(options['vault_ids'])
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
