@@ -128,7 +128,6 @@ commands:
     - router bgp 320 vrf default neighbor 10.3.3.5 remote-as 322
     - router bgp 320 vrf default network 172.16.1.0 /24
 """
-import collections
 import re
 from ansible.module_utils.six import iteritems
 
@@ -169,7 +168,6 @@ class OnyxBgpModule(BaseOnyxModule):
     _purge = False
 
     EVPN_PEER_GROUP_ATTR = "evpn_peer_group"
-    EVPN_SEND_COMMUNITY_ATTR = "evpn_send_community"
     EVPN_SEND_COMMUNITY_EXTENDED_ATTR = "evpn_send_community_extended"
     EVPN_NEXT_HOP_UNCHANGED_ATTR = "evpn_next_hop_unchanged"
     EVPN_ACTIVATE_ATTR = "evpn_activate"
@@ -181,14 +179,20 @@ class OnyxBgpModule(BaseOnyxModule):
     EVPN_ACTIVATE_CMD = "router bgp %s vrf %s address-family l2vpn-evpn neighbor evpn activate"
     EVPN_AUTO_CREATE_CMD = "router bgp %s vrf %s address-family l2vpn-evpn auto-create"
 
-    EVPN_COMMANDS_REGEX_MAPPER = collections.OrderedDict()
-    EVPN_COMMANDS_REGEX_MAPPER[EVPN_PEER_GROUP_ATTR] = (EVPN_PEER_GROUP_REGEX, EVPN_PEER_GROUP_CMD)
-    EVPN_COMMANDS_REGEX_MAPPER[EVPN_SEND_COMMUNITY_EXTENDED_ATTR] = (EVPN_SEND_COMMUNITY_EXTENDED_REGEX,
-                                                                     EVPN_SEND_COMMUNITY_EXTENDED_CMD)
-    EVPN_COMMANDS_REGEX_MAPPER[EVPN_NEXT_HOP_UNCHANGED_ATTR] = (EVPN_NEXT_HOP_UNCHANGED_REGEX,
-                                                                EVPN_NEXT_HOP_UNCHANGED_CMD)
-    EVPN_COMMANDS_REGEX_MAPPER[EVPN_ACTIVATE_ATTR] = (EVPN_ACTIVATE_REGEX, EVPN_ACTIVATE_CMD)
-    EVPN_COMMANDS_REGEX_MAPPER[EVPN_AUTO_CREATE_ATTR] = (EVPN_AUTO_CREATE_REGEX, EVPN_AUTO_CREATE_CMD)
+    EVPN_ENABLE_ATTRS = [EVPN_PEER_GROUP_ATTR, EVPN_SEND_COMMUNITY_EXTENDED_ATTR,
+                         EVPN_NEXT_HOP_UNCHANGED_ATTR, EVPN_ACTIVATE_ATTR, EVPN_AUTO_CREATE_ATTR]
+
+    EVPN_DISABLE_ATTRS = [EVPN_PEER_GROUP_ATTR, EVPN_AUTO_CREATE_ATTR]
+
+    EVPN_COMMANDS_REGEX_MAPPER = {
+        EVPN_PEER_GROUP_ATTR: (EVPN_PEER_GROUP_REGEX, EVPN_PEER_GROUP_CMD),
+        EVPN_SEND_COMMUNITY_EXTENDED_ATTR: (EVPN_SEND_COMMUNITY_EXTENDED_REGEX,
+                                            EVPN_SEND_COMMUNITY_EXTENDED_CMD),
+        EVPN_NEXT_HOP_UNCHANGED_ATTR: (EVPN_NEXT_HOP_UNCHANGED_REGEX,
+                                       EVPN_NEXT_HOP_UNCHANGED_CMD),
+        EVPN_ACTIVATE_ATTR: (EVPN_ACTIVATE_REGEX, EVPN_ACTIVATE_CMD),
+        EVPN_AUTO_CREATE_ATTR: (EVPN_AUTO_CREATE_REGEX, EVPN_AUTO_CREATE_CMD)
+    }
 
     def init_module(self):
         """ initialize module
@@ -431,17 +435,15 @@ class OnyxBgpModule(BaseOnyxModule):
 
     def _generate_evpn_cmds(self, evpn, as_number, vrf):
         if evpn:
-            for key, value in iteritems(self.EVPN_COMMANDS_REGEX_MAPPER):
-                curr_attr = self._current_config.get(key)
+            for attr in self.EVPN_ENABLE_ATTRS:
+                curr_attr = self._current_config.get(attr)
                 if curr_attr is not True:
-                    self._commands.append(value[1] % (as_number, vrf))
+                    self._commands.append(self.EVPN_COMMANDS_REGEX_MAPPER.get(attr)[1] % (as_number, vrf))
         elif not evpn:
-            curr_attr = self._current_config.get(self.EVPN_PEER_GROUP_ATTR)
-            if curr_attr is not False:
-                self._commands.append("no " + self.EVPN_PEER_GROUP_CMD % (as_number, vrf))
-            curr_attr = self._current_config.get(self.EVPN_AUTO_CREATE_ATTR)
-            if curr_attr is not False:
-                self._commands.append("no " + self.EVPN_AUTO_CREATE_CMD % (as_number, vrf))
+            for attr in self.EVPN_DISABLE_ATTRS:
+                curr_attr = self._current_config.get(attr)
+                if curr_attr is not False:
+                    self._commands.append("no " + self.EVPN_COMMANDS_REGEX_MAPPER.get(attr)[1] % (as_number, vrf))
 
 
 def main():
