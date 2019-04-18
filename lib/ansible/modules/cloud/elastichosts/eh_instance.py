@@ -36,7 +36,7 @@ options:
     name:
         description:
             - Name of the instance to be created.
-            - Required for I(state=present).
+            - Required if I(state=present).
         type: string
     state:
         description:
@@ -50,7 +50,7 @@ options:
     uuid:
         description:
             - The UUID of the instance to destroy.
-            - Required when I(state=absent).
+            - Required if I(state=absent).
         type: string
 notes:
     - If not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) will be used for authentication, where the C(EHUSER) is the user id, and C(EHPASS) is the API key.
