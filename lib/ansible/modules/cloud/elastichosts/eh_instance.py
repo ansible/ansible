@@ -35,14 +35,14 @@ options:
         type: string
     name:
         description:
-            - Name of the instance to be created
-            - Required for I(state=present)
+            - Name of the instance to be created.
+            - Required for I(state=present).
         type: string
     state:
         description:
             - Specify whether instance should be in.
-            - If C(state=absent) and instance exists, it will be removed (along with its drives).
-            - If C(state=absent) and instance does not exist, the module returns successfully with no changes.
+            - If I(state=absent) and instance exists, it will be removed (along with its drives).
+            - If I(state=absent) and instance does not exist, the module returns successfully with no changes.
         choices:
             - present
             - absent
@@ -51,7 +51,7 @@ options:
         description:
             - The UUID of the instance to destroy.
             - Required when I(state=absent).
-      type: string
+        type: string
 notes:
     - If not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) will be used for authentication, where the C(EHUSER) is the user id, and C(EHPASS) is the API key.
     - Supply auth via environment variables with, for example, C(export EHUSER=123-456-789) and C(export EHPASS=abcdef).
