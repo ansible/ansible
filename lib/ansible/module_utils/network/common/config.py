@@ -40,10 +40,12 @@ DEFAULT_IGNORE_LINES_RE = set([
     re.compile(r"Current configuration : \d+ bytes")
 ])
 
+
 try:
     Pattern = re._pattern_type
 except AttributeError:
     Pattern = re.Pattern
+
 
 class ConfigLine(object):
 
