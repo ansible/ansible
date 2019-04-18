@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION ='''
 ---
 module: eh_instance
-short_description: Create or remove ElasticHosts instances (container or VM)
+short_description: Create or remove ElasticHosts container or VM instances
 description:
     - Create or remove a container or a VM on ElasticHosts platfom.
     - Supports C(check_mode).
