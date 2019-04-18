@@ -13,7 +13,7 @@ __metaclass__ = type
 ################################################################################
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -28,6 +28,10 @@ author: "William Albert (@walbert947)"
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.19.0"
+deprecated:
+    removed_in: "2.12"
+    why: Updated modules released with increased functionality
+    alternative: Use M(gcp_dns_resource_record_set) instead.
 options:
     state:
         description:

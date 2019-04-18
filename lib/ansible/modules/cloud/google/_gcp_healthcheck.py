@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -37,6 +37,12 @@ requirements:
   - "google-auth-httplib2 >= 0.0.2"
 notes:
   - Only supports HTTP and HTTPS Healthchecks currently.
+deprecated:
+    removed_in: "2.12"
+    why: Updated modules released with increased functionality
+    alternative: >
+      Use M(gcp_compute_healthcheck), M(gcp_compute_http_healthcheck) or
+      M(gcp_compute_https_healthcheck) instead.
 author:
   - "Tom Melendez (@supertom) <tom@supertom.com>"
 options:

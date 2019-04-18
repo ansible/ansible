@@ -13,7 +13,7 @@ __metaclass__ = type
 ################################################################################
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -27,6 +27,10 @@ version_added: "2.2"
 author: "William Albert (@walbert947)"
 requirements:
     - "apache-libcloud >= 0.19.0"
+deprecated:
+    removed_in: "2.12"
+    why: Updated modules released with increased functionality
+    alternative: Use M(gcp_dns_managed_zone) instead.
 options:
     state:
         description:
