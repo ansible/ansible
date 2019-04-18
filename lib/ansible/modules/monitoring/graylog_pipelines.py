@@ -440,9 +440,9 @@ def list(module, pipeline_url, api_token, pipeline_id, query):
 
     headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
 
-    if pipeline_id is not None and pipeline_id is not "":
+    if pipeline_id != None and pipeline_id != "":
         url = pipeline_url + "/%s" % (pipeline_id)
-    elif query == "yes" and pipeline_id is "":
+    elif query == "yes" and pipeline_id == "":
         url = pipeline_url + "/0"
     else:
         url = pipeline_url
@@ -464,9 +464,9 @@ def list_rules(module, rule_url, api_token, rule_id, query):
 
     headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
 
-    if rule_id is not None and rule_id is not "":
+    if rule_id != None and rule_id != "":
         url = rule_url + "/%s" % (rule_id)
-    elif query == "yes" and rule_id is "":
+    elif query == "yes" and rule_id == "":
         url = rule_url + "/0"
     else:
         url = rule_url
