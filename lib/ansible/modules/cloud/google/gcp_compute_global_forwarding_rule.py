@@ -97,10 +97,10 @@ options:
     - This is used for internal load balancing.
     - "(not used for external load balancing) ."
     - 'This field represents a link to a BackendService resource in GCP. It can be
-      specified in two ways. First, you can place in the selfLink of the resource
-      here as a string Alternatively, you can add `register: name-of-resource` to
-      a gcp_compute_backend_service task and then set this backend_service field to
-      "{{ name-of-resource }}"'
+      specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_backend_service task and then set this backend_service
+      field to "{{ name-of-resource }}"'
     required: false
   ip_version:
     description:
@@ -137,9 +137,10 @@ options:
       specified, the default network will be used.
     - This field is not used for external load balancing.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: false
   port_range:
     description:
@@ -172,9 +173,10 @@ options:
       if the network is in custom subnet mode, a subnetwork must be specified.
     - This field is not used for external load balancing.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_subnetwork task and then set this subnetwork field to "{{ name-of-resource
+      }}"'
     required: false
   target:
     description:
@@ -188,81 +190,81 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a global address
   gcp_compute_global_address:
-      name: "globaladdress-globalforwardingrule"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: globaladdress-globalforwardingrule
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: globaladdress
 
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "instancegroup-globalforwardingrule"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instancegroup-globalforwardingrule
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancegroup
 
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: "httphealthcheck-globalforwardingrule"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: httphealthcheck-globalforwardingrule
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "backendservice-globalforwardingrule"
-      backends:
-      - group: "{{ instancegroup }}"
-      health_checks:
-      - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: backendservice-globalforwardingrule
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: backendservice
 
 - name: create a url map
   gcp_compute_url_map:
-      name: "urlmap-globalforwardingrule"
-      default_service: "{{ backendservice }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: urlmap-globalforwardingrule
+    default_service: "{{ backendservice }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: urlmap
 
 - name: create a target http proxy
   gcp_compute_target_http_proxy:
-      name: "targethttpproxy-globalforwardingrule"
-      url_map: "{{ urlmap }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: targethttpproxy-globalforwardingrule
+    url_map: "{{ urlmap }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: httpproxy
 
 - name: create a global forwarding rule
   gcp_compute_global_forwarding_rule:
-      name: "test_object"
-      ip_address: "{{ globaladdress.address }}"
-      ip_protocol: TCP
-      port_range: 80-80
-      target: "{{ httpproxy.selfLink }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    ip_address: "{{ globaladdress.address }}"
+    ip_protocol: TCP
+    port_range: 80-80
+    target: "{{ httpproxy.selfLink }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -318,7 +320,7 @@ backendService:
   - This is used for internal load balancing.
   - "(not used for external load balancing) ."
   returned: success
-  type: str
+  type: dict
 ipVersion:
   description:
   - The IP Version that will be used by this forwarding rule. Valid options are IPV4
@@ -351,7 +353,7 @@ network:
     the default network will be used.
   - This field is not used for external load balancing.
   returned: success
-  type: str
+  type: dict
 portRange:
   description:
   - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -384,7 +386,7 @@ subnetwork:
     if the network is in custom subnet mode, a subnetwork must be specified.
   - This field is not used for external load balancing.
   returned: success
-  type: str
+  type: dict
 region:
   description:
   - A reference to the region where the regional forwarding rule resides.
@@ -422,14 +424,14 @@ def main():
             description=dict(type='str'),
             ip_address=dict(type='str'),
             ip_protocol=dict(type='str', choices=['TCP', 'UDP', 'ESP', 'AH', 'SCTP', 'ICMP']),
-            backend_service=dict(),
+            backend_service=dict(type='dict'),
             ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
             load_balancing_scheme=dict(type='str', choices=['INTERNAL', 'EXTERNAL']),
             name=dict(required=True, type='str'),
-            network=dict(),
+            network=dict(type='dict'),
             port_range=dict(type='str'),
             ports=dict(type='list', elements='str'),
-            subnetwork=dict(),
+            subnetwork=dict(type='dict'),
             target=dict(type='str'),
         )
     )

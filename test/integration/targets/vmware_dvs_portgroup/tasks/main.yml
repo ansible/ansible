@@ -17,12 +17,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -104,7 +98,7 @@
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
     portgroup_name: "basic-trunk"
-    vlan_id: 1-4096
+    vlan_id: 1-4094
     vlan_trunk: True
     num_ports: 32
     portgroup_type: earlyBinding
@@ -237,3 +231,26 @@
   assert:
     that:
         - "{{ dvs_pg_result_0008.changed == false }}"
+
+# Testcase 0009: Check valid VLAN id range in DVS Portgroup
+- name: Check valid VLAN id range in DVS Portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    portgroup_name: "basic_trunk_0001"
+    vlan_id: 1-4096
+    vlan_trunk: True
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: present
+  register: dvs_pg_result_0009
+  ignore_errors: True
+
+- name: Ensure module fails for invalid VLAN id
+  assert:
+    that:
+        - not dvs_pg_result_0009.changed
+        - "'vlan_id range 1-4096 specified is incorrect. The valid vlan_id range is from 0 to 4094.' == '{{ dvs_pg_result_0009.msg }}'"

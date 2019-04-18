@@ -151,9 +151,9 @@ import sys
 import argparse
 import warnings
 import collections
-import ConfigParser
 
-from six import iteritems
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import configparser as ConfigParser
 
 import json
 

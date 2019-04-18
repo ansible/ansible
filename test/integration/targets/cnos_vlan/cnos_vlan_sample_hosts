@@ -10,5 +10,5 @@
 # Following you should specify IP Addresses details 
 # Please change <username> and <password> with appropriate value for your switch.
 
-[cnos]
+[cnos_vlan_sample]
 10.241.107.39   ansible_network_os=cnos ansible_ssh_user=<username> ansible_ssh_pass=<password> 

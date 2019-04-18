@@ -17,13 +17,6 @@ module: aci_switch_policy_leaf_profile
 short_description: Manage switch policy leaf profiles (infra:NodeP)
 description:
 - Manage switch policy leaf profiles on Cisco ACI fabrics.
-seealso:
-- module: aci_switch_policy_leaf_profile
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(infra:NodeP).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   leaf_profile:
@@ -44,6 +37,13 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- module: aci_switch_policy_leaf_profile
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:NodeP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -182,8 +182,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():

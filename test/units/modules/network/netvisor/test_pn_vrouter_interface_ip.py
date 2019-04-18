@@ -51,7 +51,7 @@ class TestVrouterInterfaceIpModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vrouter_name': 'foo-vrouter',
                          'pn_ip': '2620:0:1651:1::30', 'pn_netmask': '127', 'pn_nic': 'eth0.4092', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-interface-ip-add vrouter-name foo-vrouter  nic eth0.4092 '
+        expected_cmd = ' switch sw01 vrouter-interface-ip-add vrouter-name foo-vrouter  nic eth0.4092 '
         expected_cmd += 'ip 2620:0:1651:1::30  netmask 127'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
@@ -59,6 +59,6 @@ class TestVrouterInterfaceIpModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vrouter_name': 'foo-vrouter',
                          'pn_ip': '2620:0:1651:1::30', 'pn_nic': 'eth0.4092', 'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-interface-ip-remove vrouter-name foo-vrouter  nic eth0.4092  '
+        expected_cmd = ' switch sw01 vrouter-interface-ip-remove vrouter-name foo-vrouter  nic eth0.4092  '
         expected_cmd += 'ip 2620:0:1651:1::30 '
         self.assertEqual(result['cli_cmd'], expected_cmd)

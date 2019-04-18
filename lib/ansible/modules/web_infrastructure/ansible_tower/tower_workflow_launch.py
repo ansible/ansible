@@ -51,7 +51,7 @@ tower_version:
     type: str
     sample: '3.4.0'
 job_info:
-    description: dictionnary containing information about the workflow executed
+    description: dictionary containing information about the workflow executed
     returned: If workflow launched
     type: dict
 '''

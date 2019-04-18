@@ -3,15 +3,19 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import json
+from time import sleep
 
 try:
-    from docker.errors import APIError
+    from docker.errors import APIError, NotFound
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.docker.common import AnsibleDockerClient
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    LooseVersion,
+)
 
 
 class AnsibleDockerSwarmClient(AnsibleDockerClient):
@@ -62,6 +66,8 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
                 swarm_info = json.loads(json_str)
                 if swarm_info['Swarm']['NodeID']:
                     return True
+                if swarm_info['Swarm']['LocalNodeState'] in ('active', 'pending', 'locked'):
+                    return True
             return False
         else:
             try:
@@ -106,23 +112,30 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             return True
         return False
 
-    def check_if_swarm_node_is_down(self, node_id=None):
+    def check_if_swarm_node_is_down(self, node_id=None, repeat_check=1):
         """
         Checks if node status on Swarm manager is 'down'. If node_id is provided it query manager about
         node specified in parameter, otherwise it query manager itself. If run on Swarm Worker node or
         host that is not part of Swarm it will fail the playbook
 
+        :param repeat_check: number of check attempts with 5 seconds delay between them, by default check only once
         :param node_id: node ID or name, if None then method will try to get node_id of host module run on
         :return:
             True if node is part of swarm but its state is down, False otherwise
         """
 
+        if repeat_check < 1:
+            repeat_check = 1
+
         if node_id is None:
             node_id = self.get_swarm_node_id()
 
-        node_info = self.get_node_inspect(node_id=node_id)
-        if node_info['Status']['State'] == 'down':
-            return True
+        for retry in range(0, repeat_check):
+            if retry > 0:
+                sleep(5)
+            node_info = self.get_node_inspect(node_id=node_id)
+            if node_info['Status']['State'] == 'down':
+                return True
         return False
 
     def get_node_inspect(self, node_id=None, skip_missing=False):
@@ -156,6 +169,17 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
 
         json_str = json.dumps(node_info, ensure_ascii=False)
         node_info = json.loads(json_str)
+
+        if 'ManagerStatus' in node_info:
+            if node_info['ManagerStatus'].get('Leader'):
+                # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
+                # Check moby/moby#35437 for details
+                count_colons = node_info['ManagerStatus']['Addr'].count(":")
+                if count_colons == 1:
+                    swarm_leader_ip = node_info['ManagerStatus']['Addr'].split(":", 1)[0] or node_info['Status']['Addr']
+                else:
+                    swarm_leader_ip = node_info['Status']['Addr']
+                node_info['Status']['Addr'] = swarm_leader_ip
         return node_info
 
     def get_all_nodes_inspect(self):
@@ -219,3 +243,35 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
 
     def get_node_name_by_id(self, nodeid):
         return self.get_node_inspect(nodeid)['Description']['Hostname']
+
+    def get_unlock_key(self):
+        if self.docker_py_version < LooseVersion('2.7.0'):
+            return None
+        return super(AnsibleDockerSwarmClient, self).get_unlock_key()
+
+    def get_service_inspect(self, service_id, skip_missing=False):
+        """
+        Returns Swarm service info as in 'docker service inspect' command about single service
+
+        :param service_id: service ID or name
+        :param skip_missing: if True then function will return None instead of failing the task
+        :return:
+            Single service information structure
+        """
+        try:
+            service_info = self.inspect_service(service_id)
+        except NotFound as exc:
+            if skip_missing is False:
+                self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
+            else:
+                return None
+        except APIError as exc:
+            if exc.status_code == 503:
+                self.fail("Cannot inspect service: To inspect service execute module on Swarm Manager")
+            self.fail("Error inspecting swarm service: %s" % exc)
+        except Exception as exc:
+            self.fail("Error inspecting swarm service: %s" % exc)
+
+        json_str = json.dumps(service_info, ensure_ascii=False)
+        service_info = json.loads(json_str)
+        return service_info

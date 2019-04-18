@@ -197,6 +197,12 @@ options:
     type: bool
     default: "yes"
     version_added: "2.8"
+  download_dir:
+    description:
+      - Specifies an alternate directory to store packages.
+      - Has an effect only if I(download_only) is specified.
+    type: str
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -1385,6 +1391,9 @@ class YumModule(YumDnf):
         if self.download_only:
             self.yum_basecmd.extend(['--downloadonly'])
 
+            if self.download_dir:
+                self.yum_basecmd.extend(['--downloaddir=%s' % self.download_dir])
+
         if self.installroot != '/':
             # do not setup installroot by default, because of error
             # CRITICAL:yum.cli:Config Error: Error accessing file for config file:////etc/yum.conf
@@ -1545,6 +1554,23 @@ class YumModule(YumDnf):
                         repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
                         if self.installroot != '/':
                             repoquery.extend(['--installroot', self.installroot])
+
+                        if self.disable_excludes:
+                            # repoquery does not support --disableexcludes,
+                            # so make a temp copy of yum.conf and get rid of the 'exclude=' line there
+                            try:
+                                with open('/etc/yum.conf', 'r') as f:
+                                    content = f.readlines()
+
+                                tmp_conf_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, delete=False)
+                                self.module.add_cleanup_file(tmp_conf_file.name)
+
+                                tmp_conf_file.writelines([c for c in content if not c.startswith("exclude=")])
+                                tmp_conf_file.close()
+                            except Exception as e:
+                                self.module.fail_json(msg="Failure setting up repoquery: %s" % to_native(e))
+
+                            repoquery.extend(['-c', tmp_conf_file.name])
 
             results = self.ensure(repoquery)
             if repoquery:

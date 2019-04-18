@@ -157,8 +157,8 @@ EXAMPLES = '''
       name: restoreddb
       location: eastus
       create_mode: restore
-      restorable_dropped_database_id: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/s
-                                      ervers/testsvr/restorableDroppedDatabases/testdb2,131444841315030000"
+      restorable_dropped_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/s
+                                       ervers/testsvr/restorableDroppedDatabases/testdb2,131444841315030000"
 
   - name: Create SQL Database in Copy Mode
     azure_rm_sqldatabase:
@@ -168,7 +168,7 @@ EXAMPLES = '''
       location: eastus
       create_mode: copy
       source_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/tests
-                          vr/databases/testdb"
+                           vr/databases/testdb"
 
 '''
 
@@ -211,7 +211,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMDatabases(AzureRMModuleBase):
+class AzureRMSqlDatabase(AzureRMModuleBase):
     """Configuration class for an Azure RM SQL Database resource"""
 
     def __init__(self):
@@ -308,9 +308,9 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                               supports_check_mode=True,
-                                               supports_tags=True)
+        super(AzureRMSqlDatabase, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                 supports_check_mode=True,
+                                                 supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -495,7 +495,7 @@ def _snake_to_camel(snake, capitalize_first=False):
 
 def main():
     """Main execution"""
-    AzureRMDatabases()
+    AzureRMSqlDatabase()
 
 
 if __name__ == '__main__':

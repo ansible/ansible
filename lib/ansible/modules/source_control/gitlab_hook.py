@@ -95,11 +95,12 @@ options:
       - Trigger hook on wiki events
     type: bool
     default: no
-  enable_ssl_verification:
+  hook_validate_certs:
     description:
       - Whether GitLab will do SSL verification when triggering the hook
     type: bool
     default: no
+    aliases: [ enable_ssl_verification ]
   token:
     description:
       - Secret token to validate hook messages at the receiver.
@@ -119,7 +120,7 @@ EXAMPLES = '''
     state: present
     push_events: yes
     tag_push_events: yes
-    enable_ssl_verification: no
+    hook_validate_certs: no
     token: "my-super-secret-token-that-my-ci-server-will-check"
 
 - name: "Delete the previous hook"
@@ -297,7 +298,7 @@ class GitLabHook(object):
 def deprecation_warning(module):
     deprecated_aliases = ['private_token', 'access_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
 
 
 def main():
@@ -315,7 +316,7 @@ def main():
         job_events=dict(type='bool', default=False),
         pipeline_events=dict(type='bool', default=False),
         wiki_page_events=dict(type='bool', default=False),
-        enable_ssl_verification=dict(type='bool', default=False),
+        hook_validate_certs=dict(type='bool', default=False, aliases=['enable_ssl_verification']),
         token=dict(type='str', no_log=True),
     ))
 
@@ -353,7 +354,7 @@ def main():
     job_events = module.params['job_events']
     pipeline_events = module.params['pipeline_events']
     wiki_page_events = module.params['wiki_page_events']
-    enable_ssl_verification = module.params['enable_ssl_verification']
+    enable_ssl_verification = module.params['hook_validate_certs']
     hook_token = module.params['token']
 
     if not HAS_GITLAB_PACKAGE:

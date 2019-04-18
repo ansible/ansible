@@ -477,7 +477,7 @@ def tags_action(client, stream_name, tags, action='create', check_mode=False):
                 client.add_tags_to_stream(**params)
                 success = True
             elif action == 'delete':
-                params['TagKeys'] = tags.keys()
+                params['TagKeys'] = list(tags)
                 client.remove_tags_from_stream(**params)
                 success = True
             else:
@@ -1029,11 +1029,6 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                 check_mode=check_mode
             )
         )
-
-    if stream_found and not check_mode:
-        if current_stream['ShardsCount'] != number_of_shards:
-            err_msg = 'Can not change the number of shards in a Kinesis Stream'
-            return success, changed, err_msg, results
 
     if stream_found and current_stream.get('StreamStatus') != 'DELETING':
         success, changed, err_msg = update(

@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - fix idempotency check for published_ports in some special cases."

@@ -3,8 +3,10 @@
 from __future__ import absolute_import, print_function
 
 import contextlib
+import json
 import os
 import shutil
+import stat
 import tempfile
 
 from lib.target import (
@@ -22,11 +24,43 @@ from lib.util import (
     ApplicationError,
     display,
     make_dirs,
+    named_temporary_file,
+    COVERAGE_CONFIG_PATH,
+    COVERAGE_OUTPUT_PATH,
+    MODE_DIRECTORY,
+    MODE_DIRECTORY_WRITE,
+    MODE_FILE,
 )
 
 from lib.cache import (
     CommonCache,
 )
+
+from lib.cloud import (
+    CloudEnvironmentConfig,
+)
+
+
+def setup_common_temp_dir(args, path):
+    """
+    :type args: IntegrationConfig
+    :type path: str
+    """
+    if args.explain:
+        return
+
+    os.mkdir(path)
+    os.chmod(path, MODE_DIRECTORY)
+
+    coverage_config_path = os.path.join(path, COVERAGE_CONFIG_PATH)
+
+    shutil.copy(COVERAGE_CONFIG_PATH, coverage_config_path)
+    os.chmod(coverage_config_path, MODE_FILE)
+
+    coverage_output_path = os.path.join(path, COVERAGE_OUTPUT_PATH)
+
+    os.mkdir(coverage_output_path)
+    os.chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
 
 
 def generate_dependency_map(integration_targets):
@@ -91,15 +125,12 @@ def integration_test_environment(args, target, inventory_path):
     if args.no_temp_workdir or 'no/temp_workdir/' in target.aliases:
         display.warning('Disabling the temp work dir is a temporary debugging feature that may be removed in the future without notice.')
 
-        integration_dir = 'test/integration'
+        integration_dir = os.path.abspath('test/integration')
+        inventory_path = os.path.abspath(inventory_path)
         ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
+        vars_file = os.path.join(integration_dir, vars_file)
 
-        inventory_name = os.path.relpath(inventory_path, integration_dir)
-
-        if '/' in inventory_name:
-            inventory_name = inventory_path
-
-        yield IntegrationEnvironment(integration_dir, inventory_name, ansible_config, vars_file)
+        yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
         return
 
     root_temp_dir = os.path.expanduser('~/.ansible/test/tmp')
@@ -182,10 +213,43 @@ def integration_test_environment(args, target, inventory_path):
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        yield IntegrationEnvironment(integration_dir, inventory_name, ansible_config, vars_file)
+        inventory_path = os.path.join(integration_dir, inventory_name)
+        vars_file = os.path.join(integration_dir, vars_file)
+
+        yield IntegrationEnvironment(integration_dir, inventory_path, ansible_config, vars_file)
     finally:
         if not args.explain:
             shutil.rmtree(temp_dir)
+
+
+@contextlib.contextmanager
+def integration_test_config_file(args, env_config, integration_dir):
+    """
+    :type args: IntegrationConfig
+    :type env_config: CloudEnvironmentConfig
+    :type integration_dir: str
+    """
+    if not env_config:
+        yield None
+        return
+
+    config_vars = (env_config.ansible_vars or {}).copy()
+
+    config_vars.update(dict(
+        ansible_test=dict(
+            environment=env_config.env_vars,
+            module_defaults=env_config.module_defaults,
+        )
+    ))
+
+    config_file = json.dumps(config_vars, indent=4, sort_keys=True)
+
+    with named_temporary_file(args, 'config-file-', '.json', integration_dir, config_file) as path:
+        filename = os.path.relpath(path, integration_dir)
+
+        display.info('>>> Config File: %s\n%s' % (filename, config_file), verbosity=3)
+
+        yield path
 
 
 class IntegrationEnvironment(object):

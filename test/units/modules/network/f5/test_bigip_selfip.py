@@ -149,9 +149,11 @@ class TestManager(unittest.TestCase):
             state='present',
             traffic_group='traffic-group-local-only',
             vlan='net1',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -183,9 +185,11 @@ class TestManager(unittest.TestCase):
             state='present',
             traffic_group='traffic-group-local-only',
             vlan='net1',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_tm_net_self.json'))

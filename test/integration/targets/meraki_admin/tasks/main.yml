@@ -57,7 +57,8 @@
       orgAccess: none
       tags:
         - { "tag": "production", "access": "read-only" }
-        - { "tag": "beta", "access": "full" }
+        - tag: beta
+          access: full
     delegate_to: localhost
     register: create_tags
 

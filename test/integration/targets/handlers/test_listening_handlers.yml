@@ -2,7 +2,6 @@
 - name: verify listening handlers
   hosts: A
   gather_facts: False
-  connection: local
   tasks:
     - name: notify some handlers
       command: echo foo

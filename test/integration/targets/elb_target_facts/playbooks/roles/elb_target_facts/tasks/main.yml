@@ -368,7 +368,7 @@
              flatten |
              list |
              length) == 2
-      msg: "reregistration completed successfully"
+        msg: "reregistration completed successfully"
 
     always:
 

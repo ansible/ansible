@@ -147,7 +147,7 @@ class NetAppONTAPasup(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def set_playbook_zapi_key_map(self):
         self.na_helper.zapi_string_keys = {

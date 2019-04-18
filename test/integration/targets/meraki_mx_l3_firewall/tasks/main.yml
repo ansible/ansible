@@ -110,6 +110,20 @@
       that:
         - create_one_idempotent.changed == False
 
+  - name: Create syslog in network
+    meraki_syslog:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      servers:
+        - host: 192.0.2.10
+          port: 514
+          roles:
+            - Appliance event log
+            - Flows
+    delegate_to: localhost
+
   - name: Enable syslog for default rule
     meraki_mx_l3_firewall:
       auth_key: '{{ auth_key }}'

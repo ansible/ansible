@@ -15,6 +15,11 @@ class ModuleDocFragment(object):
         default: yes
         env:
           - name: DISPLAY_SKIPPED_HOSTS
+            deprecated:
+              why: environment variables without "ANSIBLE_" prefix are deprecated
+              version: "2.12"
+              alternatives: the "ANSIBLE_DISPLAY_SKIPPED_HOSTS" environment variable
+          - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
         ini:
           - key: display_skipped_hosts
             section: defaults
@@ -50,4 +55,15 @@ class ModuleDocFragment(object):
         ini:
           - key: show_custom_stats
             section: defaults
+      show_per_host_start:
+        name: Show per host task start
+        description: 'This adds output that shows when a task is started to execute for each host'
+        type: bool
+        default: no
+        env:
+          - name: ANSIBLE_SHOW_PER_HOST_START
+        ini:
+          - key: show_per_host_start
+            section: defaults
+        version_added: '2.9'
 '''

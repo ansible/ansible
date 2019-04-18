@@ -215,6 +215,14 @@ CACHE_PLUGIN_TIMEOUT:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
+COLLECTIONS_PATHS:
+  name: ordered list of root paths for loading installed Ansible collections content
+  default: ~/.ansible/collections:/usr/share/ansible/collections
+  type: pathspec
+  env:
+  - {name: ANSIBLE_COLLECTIONS_PATHS}
+  ini:
+  - {key: collections_paths, section: defaults}
 COLOR_CHANGED:
   name: Color for 'changed' task status
   default: yellow
@@ -319,14 +327,14 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
-CONDITINAL_BARE_VARS:
+CONDITIONAL_BARE_VARS:
   name: Allow bare variable evaluation in conditionals
   default: True
   type: boolean
   description:
-    - With this setting on (True), runing conditional evaluation 'var' is treated differently 'var.subkey' as the first is evaluted
-      directly while the second goes though the Jinja2 parser. But 'false' strings in 'var' get evaluated as booleans.
-    - With this settting off they both evalutate the same but in cases in which 'var' was 'false' (a string) it won't get evaluated as a boolean anymore.
+    - With this setting on (True), running conditional evaluation 'var' is treated differently than 'var.subkey' as the first is evaluated
+      directly while the second goes through the Jinja2 parser. But 'false' strings in 'var' get evaluated as booleans.
+    - With this setting off they both evaluate the same but in cases in which 'var' was 'false' (a string) it won't get evaluated as a boolean anymore.
     - Currently this setting defaults to 'True' but will soon change to 'False' and the setting itself will be removed in the future.
     - Expect the default to change in version 2.10 and that this setting eventually will be deprecated after 2.12
   env: [{name: ANSIBLE_CONDITIONAL_BARE_VARS}]
@@ -482,14 +490,15 @@ DEFAULT_BECOME_FLAGS:
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
   - {key: become_flags, section: privilege_escalation}
-DEFAULT_BECOME_PLUGIN_PATH:
+BECOME_PLUGIN_PATH:
   name: Become plugins path
-  default: ~/.ansible/plugins/become:/usr/share/ansible/become
+  default: ~/.ansible/plugins/become:/usr/share/ansible/plugins/become
   description: Colon separated paths in which Ansible will search for Become Plugins.
   env: [{name: ANSIBLE_BECOME_PLUGINS}]
   ini:
   - {key: become_plugins, section: defaults}
   type: pathspec
+  version_added: "2.8"
 DEFAULT_BECOME_USER:
   # FIXME: should really be blank and make -u passing optional depending on it
   name: Set the user you 'become' via privilege escalation
@@ -761,7 +770,13 @@ DEFAULT_LIBVIRT_LXC_NOSECLABEL:
   description:
     - "This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
       This is necessary when running on systems which do not have SELinux."
-  env: [{name: LIBVIRT_LXC_NOSECLABEL}]
+  env:
+  - name: LIBVIRT_LXC_NOSECLABEL
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_LIBVIRT_LXC_NOSECLABEL" environment variable
+  - name: ANSIBLE_LIBVIRT_LXC_NOSECLABEL
   ini:
   - {key: libvirt_lxc_noseclabel, section: selinux}
   type: boolean
@@ -1304,10 +1319,24 @@ DISPLAY_SKIPPED_HOSTS:
   name: Show skipped results
   default: True
   description: "Toggle to control displaying skipped task/host entries in a task in the default callback"
-  env: [{name: DISPLAY_SKIPPED_HOSTS}]
+  env:
+  - name: DISPLAY_SKIPPED_HOSTS
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_DISPLAY_SKIPPED_HOSTS" environment variable
+  - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
   ini:
   - {key: display_skipped_hosts, section: defaults}
   type: boolean
+DOCSITE_ROOT_URL:
+  name: Root docsite URL
+  default: https://docs.ansible.com/ansible/
+  description: Root docsite URL used to generate docs URLs in warning/error text;
+               must be an absolute URL with valid scheme and trailing slash.
+  ini:
+  - {key: docsite_root_url, section: defaults}
+  version_added: "2.8"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
   default: True
@@ -1316,6 +1345,32 @@ ERROR_ON_MISSING_HANDLER:
   ini:
   - {key: error_on_missing_handler, section: defaults}
   type: boolean
+CONNECTION_FACTS_MODULES:
+  name: Map of connections to fact modules
+  default:
+    eos: eos_facts
+    frr: frr_facts
+    ios: ios_facts
+    iosxr: iosxr_facts
+    junos: junos_facts
+    nxos: nxos_facts
+    vyos: vyos_facts
+  description: "Which modules to run during a play's fact gathering stage based on connection"
+  env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
+  ini:
+    - {key: connection_facts_modules, section: defaults}
+  type: dict
+FACTS_MODULES:
+  name: Gather Facts Modules
+  default:
+    - smart
+  description: "Which modules to run during a play's fact gathering stage, using the default of 'smart' will try to figure it out based on connection type."
+  env: [{name: ANSIBLE_FACTS_MODULES}]
+  ini:
+    - {key: facts_modules, section: defaults}
+  type: list
+  vars:
+    - name: ansible_facts_modules
 GALAXY_IGNORE_CERTS:
   name: Galaxy validate certs
   default: False
@@ -1382,6 +1437,69 @@ HOST_PATTERN_MISMATCH:
   - {key: host_pattern_mismatch, section: inventory}
   choices: ['warning', 'error', 'ignore']
   version_added: "2.8"
+INTERPRETER_PYTHON:
+  name: Python interpreter path (or automatic discovery behavior) used for module execution
+  default: auto_legacy
+  env: [{name: ANSIBLE_PYTHON_INTERPRETER}]
+  ini:
+  - {key: interpreter_python, section: defaults}
+  vars:
+  - {name: ansible_python_interpreter}
+  version_added: "2.8"
+  description:
+  - Path to the Python interpreter to be used for module execution on remote targets, or an automatic discovery mode.
+    Supported discovery modes are ``auto``, ``auto_silent``, and ``auto_legacy`` (the default). All discovery modes
+    employ a lookup table to use the included system Python (on distributions known to include one), falling back to a
+    fixed ordered list of well-known Python interpreter locations if a platform-specific default is not available. The
+    fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters installed
+    later may change which one is used). This warning behavior can be disabled by setting ``auto_silent``. The default
+    value of ``auto_legacy`` provides all the same behavior, but for backwards-compatibility with older Ansible releases
+    that always defaulted to ``/usr/bin/python``, will use that interpreter if present (and issue a warning that the
+    default behavior will change to that of ``auto`` in a future Ansible release.
+INTERPRETER_PYTHON_DISTRO_MAP:
+  name: Mapping of known included platform pythons for various Linux distros
+  default:
+    centos: &rhelish
+      '6': /usr/bin/python
+      '8': /usr/libexec/platform-python
+    fedora:
+      '23': /usr/bin/python3
+    redhat: *rhelish
+    rhel: *rhelish
+    ubuntu:
+      '14': /usr/bin/python
+      '16': /usr/bin/python3
+  version_added: "2.8"
+  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
+  # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
+INTERPRETER_PYTHON_FALLBACK:
+  name: Ordered list of Python interpreters to check for in discovery
+  default:
+  - /usr/bin/python
+  - python3.7
+  - python3.6
+  - python3.5
+  - python2.7
+  - python2.6
+  - /usr/libexec/platform-python
+  - /usr/bin/python3
+  - python
+  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
+  version_added: "2.8"
+TRANSFORM_INVALID_GROUP_CHARS:
+  name: Transform invalid characters in group names
+  default: 'never'
+  description:
+    - Make ansible transform invalid characters in group names supplied by inventory sources.
+    - If 'never' it will allow for the group name but warn about the issue.
+    - When 'always' it will replace any invalid charachters with '_' (underscore) and warn the user
+    - When 'silently', it does the same as 'always' sans the warnings.
+  env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
+  ini:
+  - {key: force_valid_group_names, section: defaults}
+  type: string
+  choices: ['always', 'never', 'silently']
+  version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
   default: True
@@ -1496,7 +1614,13 @@ NETWORK_GROUP_MODULES:
   name: Network module families
   default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
   description: 'TODO: write it'
-  env: [{name: NETWORK_GROUP_MODULES}]
+  env:
+  - name: NETWORK_GROUP_MODULES
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_NETWORK_GROUP_MODULES" environment variable
+  - name: ANSIBLE_NETWORK_GROUP_MODULES
   ini:
   - {key: network_group_modules, section: defaults}
   type: list
@@ -1511,6 +1635,14 @@ INJECT_FACTS_AS_VARS:
   - {key: inject_facts_as_vars, section: defaults}
   type: boolean
   version_added: "2.5"
+OLD_PLUGIN_CACHE_CLEARING:
+  description: Previouslly Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in prevoius plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour.
+  env: [{name: ANSIBLE_OLD_PLUGIN_CACHE_CLEAR}]
+  ini:
+  - {key: old_plugin_cache_clear, section: defaults}
+  type: boolean
+  default: False
+  version_added: "2.8"
 PARAMIKO_HOST_KEY_AUTO_ADD:
   # TODO: move to plugin
   default: False
@@ -1606,7 +1738,7 @@ PYTHON_MODULE_RLIMIT_NOFILE:
   version_added: '2.8'
 RETRY_FILES_ENABLED:
   name: Retry files
-  default: True
+  default: False
   description: This controls whether a failed Ansible playbook should create a .retry file.
   env: [{name: ANSIBLE_RETRY_FILES_ENABLED}]
   ini:
@@ -1704,4 +1836,30 @@ NETCONF_SSH_CONFIG:
   - {key: ssh_config, section: netconf_connection}
   yaml: {key: netconf_connection.ssh_config}
   default: null
+STRING_CONVERSION_ACTION:
+  version_added: '2.8'
+  description:
+    - Action to take when a module parameter value is converted to a string (this does not affect variables).
+      For string parameters, values such as '1.00', "['a', 'b',]", and 'yes', 'y', etc.
+      will be converted by the YAML parser unless fully quoted.
+    - Valid options are 'error', 'warn', and 'ignore'.
+    - Since 2.8, this option defaults to 'warn' but will change to 'error' in 2.12.
+  default: 'warn'
+  env:
+    - name: ANSIBLE_STRING_CONVERSION_ACTION
+  ini:
+    - section: defaults
+      key: string_conversion_action
+  type: string
+VERBOSE_TO_STDERR:
+  version_added: '2.8'
+  description:
+    - Force 'verbose' option to use stderr instead of stdout
+  default: False
+  env:
+    - name: ANSIBLE_VERBOSE_TO_STDERR
+  ini:
+    - section: defaults
+      key: verbose_to_stderr
+  type: bool
 ...

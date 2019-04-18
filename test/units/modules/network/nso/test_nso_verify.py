@@ -101,7 +101,8 @@ class TestNsoVerify(nso_module.TestNsoModule):
         data = nso_module.load_fixture('verify_violation_data.json')
         set_module_args({
             'username': 'user', 'password': 'password',
-            'url': 'http://localhost:8080/jsonrpc', 'data': data
+            'url': 'http://localhost:8080/jsonrpc', 'data': data,
+            'validate_certs': False
         })
         self.execute_module(changed=False)
 

@@ -25,4 +25,10 @@ options:
     type: int
     default: 300
     version_added: "2.6"
+  validate_certs:
+    description: When set to true, validates the SSL certificate of NSO when
+                 using SSL
+    type: bool
+    required: false
+    default: false
 '''

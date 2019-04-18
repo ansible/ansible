@@ -118,6 +118,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli, booleanArgs
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -130,7 +131,7 @@ def check_cli(module, cli):
     role_name = module.params['pn_name']
 
     cli += ' role-show format name no-show-headers'
-    out = module.run_command(cli.split(), use_unsafe_shell=True)[1]
+    out = run_commands(module, cli)[1]
 
     out = out.split()
 

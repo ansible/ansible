@@ -1,0 +1,54 @@
+---
+- block:
+  - name: Make sure image is not there
+    docker_image:
+      name: alpine:3.7
+      state: absent
+
+  - name: Inspect a non-available image
+    docker_image_info:
+      name: alpine:3.7
+    register: result
+
+  - assert:
+      that:
+      - "result.images|length == 0"
+
+  - name: Make sure images are there
+    docker_image:
+      name: "{{ item }}"
+      source: pull
+      state: present
+    loop:
+    - "hello-world:latest"
+    - "alpine:3.8"
+
+  - name: Inspect an available image
+    docker_image_info:
+      name: hello-world:latest
+    register: result
+
+  - assert:
+      that:
+      - "result.images|length == 1"
+      - "'hello-world:latest' in result.images[0].RepoTags"
+
+  - name: Inspect multiple images
+    docker_image_info:
+      name:
+      - "hello-world:latest"
+      - "alpine:3.8"
+    register: result
+
+  - debug: var=result
+
+  - assert:
+      that:
+      - "result.images|length == 2"
+      - "'hello-world:latest' in result.images[0].RepoTags"
+      - "'alpine:3.8' in result.images[1].RepoTags"
+
+  when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_image_info tests!"
+  when: not(docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

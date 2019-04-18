@@ -13,6 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 module: reboot
 short_description: Reboot a machine
+notes:
+  - C(PATH) is ignored on the remote node when searching for the C(shutdown) command. Use C(search_paths)
+    to specify locations to search if the default paths do not work.
 description:
     - Reboot a machine, wait for it to go down, come back up, and respond to commands.
     - For Windows targets, use the M(win_reboot) module instead.
@@ -54,6 +57,14 @@ options:
       - Message to display to users before reboot.
     type: str
     default: Reboot initiated by Ansible
+
+  search_paths:
+    description:
+      - Paths to search on the remote machine for the C(shutdown) command.
+      - I(Only) these paths will be searched for the C(shutdown) command. C(PATH) is ignored in the remote node when searching for the C(shutdown) command.
+    type: list
+    default: ['/sbin', '/usr/sbin', '/usr/local/sbin']
+    version_added: '2.8'
 seealso:
 - module: win_reboot
 author:

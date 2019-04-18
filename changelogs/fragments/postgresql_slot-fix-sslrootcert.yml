@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql_slot - fixed sslrootcert mapping to psycopg2 connection string

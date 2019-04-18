@@ -288,13 +288,13 @@ class GitLabRunner(object):
 def deprecation_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        url=dict(type='str', required=True, removed_in_version=2.10),
+        url=dict(type='str', required=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["private_token"]),
         description=dict(type='str', required=True, aliases=["name"]),
         active=dict(type='bool', default=True),

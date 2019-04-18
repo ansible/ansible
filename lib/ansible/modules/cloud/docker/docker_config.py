@@ -69,7 +69,7 @@ extends_documentation_fragment:
   - docker.docker_py_2_documentation
 
 requirements:
-  - "docker >= 2.6.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.6.0"
   - "Docker API >= 1.30"
 
 author:
@@ -85,7 +85,7 @@ EXAMPLES = '''
     # If the file is JSON or binary, Ansible might modify it (because
     # it is first decoded and later re-encoded). Base64-encoding the
     # file directly after reading it prevents this to happen.
-    data: "{{ lookup('file', '/path/to/config/file') | base64 }}"
+    data: "{{ lookup('file', '/path/to/config/file') | b64encode }}"
     data_is_b64: true
     state: present
 
@@ -156,7 +156,7 @@ import hashlib
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic

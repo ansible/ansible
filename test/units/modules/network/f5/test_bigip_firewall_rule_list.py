@@ -88,9 +88,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             description='this is a description',
             rules=['rule1', 'rule2', 'rule3'],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

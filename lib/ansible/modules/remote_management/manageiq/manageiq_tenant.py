@@ -35,7 +35,8 @@ version_added: '2.8'
 author: Evert Mulder (@evertmulder)
 description:
   - The manageiq_tenant module supports adding, updating and deleting tenants in ManageIQ.
-
+requirements:
+- manageiq-client
 options:
   state:
     description:
@@ -86,7 +87,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Create a tenant in ManageIQ
   manageiq_tenant:
@@ -97,7 +98,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete a tenant in ManageIQ
   manageiq_tenant:
@@ -108,7 +109,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Set tenant quota for cpu_allocated, mem_allocated, remove quota for vms_allocated
   manageiq_tenant:
@@ -122,7 +123,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 
 - name: Delete a tenant in ManageIQ using a token
@@ -133,7 +134,7 @@ EXAMPLES = '''
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       token: 'sometoken'
-      verify_ssl: False
+      validate_certs: False
 '''
 
 RETURN = '''
@@ -263,6 +264,9 @@ class ManageIQTenant(object):
             result = self.client.post(url, action='delete')
         except Exception as e:
             self.module.fail_json(msg="failed to delete tenant %s: %s" % (tenant['name'], str(e)))
+
+        if result['success'] is False:
+            self.module.fail_json(msg=result['message'])
 
         return dict(changed=True, msg=result['message'])
 
@@ -513,9 +517,14 @@ def main():
             res_args = manageiq_tenant.delete_tenant(tenant)
         # if we do not have a tenant, nothing to do
         else:
+            if parent_id:
+                msg = "tenant '%s' with parent_id %i does not exist in manageiq" % (name, parent_id)
+            else:
+                msg = "tenant '%s' with parent '%s' does not exist in manageiq" % (name, parent)
+
             res_args = dict(
                 changed=False,
-                msg="tenant %s: with parent: %i does not exist in manageiq" % (name, parent_id))
+                msg=msg)
 
     # tenant should exist
     if state == "present":
