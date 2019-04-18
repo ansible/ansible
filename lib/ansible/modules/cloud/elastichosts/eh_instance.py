@@ -21,8 +21,8 @@ options:
     force:
         description:
             - Ignore warnings and complete actions.
-            - If C(yes) is used with C(state=absent), the instance will be destroyed even if it is powered on.
-            - If C(no) is used with C(state=absent), the modle will fail on powered-on instances.
+            - If C(yes) is used with I(state=absent), the instance will be destroyed even if it is powered on.
+            - If C(no) is used with I(state=absent), the modle will fail on powered-on instances.
         type: bool
         default: no
     username:
@@ -55,7 +55,7 @@ options:
 notes:
     - If not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) will be used for authentication, where the C(EHUSER) is the user id, and C(EHPASS) is the API key.
     - Supply auth via environment variables with, for example, C(export EHUSER=123-456-789) and C(export EHPASS=abcdef).
-    - See U(https://gitlab.com/konradp/pyeh) and U(https://pypi.org/project/pyeh/) for the C(pyeh) module.
+    - See U(https://gitlab.com/konradp/pyeh) and U(https://pypi.org/project/pyeh/) for the I(pyeh) module.
     - See U(https://www.elastichosts.com/api/docs/) for ElasticHosts API reference.
 requirements:
     - pyeh
