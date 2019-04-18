@@ -218,19 +218,11 @@ def schema_matches(cursor, schema, owner):
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        login_user=dict(type="str", default="postgres"),
-        login_password=dict(type="str", default="", no_log=True),
-        login_host=dict(type="str", default=""),
-        login_unix_socket=dict(type="str", default=""),
-        port=dict(type="int", default=5432, aliases=["login_port"]),
         schema=dict(type="str", required=True, aliases=['name']),
         owner=dict(type="str", default=""),
         database=dict(type="str", default="postgres", aliases=["db", "login_db"]),
         cascade_drop=dict(type="bool", default=False),
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        ssl_mode=dict(type="str", default='prefer', choices=[
-                      'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type="str", default=None, aliases=['ssl_rootcert']),
         session_role=dict(type="str"),
     )
 

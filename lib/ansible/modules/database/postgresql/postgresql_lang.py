@@ -174,10 +174,10 @@ import traceback
 PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
-    postgresqldb_found = True
+    HAS_PSYCOPG2 = True
 except ImportError:
     PSYCOPG2_IMP_ERR = traceback.format_exc()
-    postgresqldb_found = False
+    HAS_PSYCOPG2 = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.postgres import postgres_common_argument_spec
@@ -267,7 +267,7 @@ def main():
     sslrootcert = module.params["ca_cert"]
     session_role = module.params["session_role"]
 
-    if not postgresqldb_found:
+    if not HAS_PSYCOPG2:
         module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     # To use defaults values, keyword arguments must be absent, so
