@@ -30,6 +30,8 @@ EXAMPLES = r'''
     vplex_password: password
     vplex_serialnum: CKM00120900782
     volume_name: lun_name_backend
+    vpd_id: VPD83T3:600601603a20310031ff7e125e33e911
+    array_name: EMC-CLARiiON-CKM00121900536
 '''
 
 RETURN = r'''
@@ -46,7 +48,6 @@ logger = logging.getLogger(__name__)
 
 # storage-volumes
 def rediscover_storage_array(vplex, array_name):
-    logger.info('--- array re-discover of ' + array_name)
     uri = '/vplex/array+re-discover'
     data = '{\"args\":\"--cluster cluster-1 --array ' + array_name + ' --force\"}'
     response = vplex.https_post(urlsuffix=uri, data=data)
@@ -98,8 +99,7 @@ def main():
         "vplex_serialnum": dict(type="str", required=True),
         "volume_name": dict(type="str", required=True),
         "vpd_id": dict(type="str", required=True),
-        "array_name": dict(type="str", required=True),
-        "volume_name": dict(type="str", required=True)}
+        "array_name": dict(type="str", required=True)}
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
@@ -136,7 +136,7 @@ def main():
 
     # Check provided storage-volume name exists
     if volume_name in storage_volumes:
-        logger.error('Name duplication occured. Provided storage-volume name [ ' + volume_name + ' ] have already configured on VPLEX.')
+        logger.error('Name duplication occured. Provided storage-volume name have already configured on VPLEX.')
         logger.error('Please specify another storage-volume name in group_vars/all.yml and retry playbooks.')
         module.exit_json(changed=False)
     else:

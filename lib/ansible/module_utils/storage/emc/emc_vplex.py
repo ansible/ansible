@@ -115,7 +115,7 @@ class VPLEX:
     def set_extent_name(volume_name):
         e_name = 'extent_' + volume_name + '_1'
         return e_name
- 
+
     @staticmethod
     def set_local_device_name(volume_name):
         ld_name = 'device_' + volume_name + '_1'
