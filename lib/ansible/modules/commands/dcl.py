@@ -22,15 +22,16 @@ DOCUMENTATION = r'''
 module: dcl
 short_description: Execute shell commands on targets
 description:
-     - The C(shell) module takes the command name followed by a list of space-delimited arguments.
+     - The C(dcl) module takes the command name followed by a list of space-delimited arguments.
      - It is almost exactly like the M(command) module but runs
-       the command through a shell (C(/bin/sh)) on the remote node.
+       the command through a shell (C(dcl)) on the remote node.
      - For Windows targets, use the M(win_shell) module instead.
-version_added: "0.2"
+     - For OpenVMS there M(dcl) is an attempt.
+version_added: "0.1"
 options:
   free_form:
     description:
-      - The shell module takes a free form command to run, as a string.
+      - The dcl shell module takes a free form command to run, as a string.
       - There is no actual parameter named 'free form'.
       - See the examples on how to use this module.
     required: yes
@@ -43,35 +44,35 @@ options:
     description:
       - A filename, when it does not exist, this step will B(not) be run.
     type: path
-    version_added: "0.8"
+    version_added: "0.1"
   chdir:
     description:
       - Change into this directory before running the command.
     type: path
-    version_added: "0.6"
+    version_added: "0.1"
   executable:
     description:
       - Change the shell used to execute the command.
       - This expects an absolute path to the executable.
     type: path
-    version_added: "0.9"
+    version_added: "0.1"
   warn:
     description:
       - Whether to enable task warnings.
     type: bool
     default: yes
-    version_added: "1.8"
+    version_added: "0.1"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
     type: str
-    version_added: "2.4"
+    version_added: "0.1"
   stdin_add_newline:
     description:
       - Whether to append a newline to stdin data.
     type: bool
     default: yes
-    version_added: "2.8"
+    version_added: "0.1"
 notes:
   - If you want to execute a command securely and predictably, it may be
     better to use the M(command) module instead. Best practices when writing
