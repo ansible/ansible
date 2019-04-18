@@ -242,7 +242,7 @@ def create(module, base_url, api_token, title, description, remove_matches_from_
         payload['matching_type'] = matching_type
     if rules is not None:
         payload['rules'] = rules
-    if index_set_id is not "":
+    if index_set_id != "":
         payload['index_set_id'] = index_set_id
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
