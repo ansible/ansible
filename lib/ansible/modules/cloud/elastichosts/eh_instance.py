@@ -73,7 +73,7 @@ EXAMPLES = '''
 # Destroy an instance (poweroff and delete)
 - name: Destroy an instance
   eh_instance:
-    uuid: "51eff35b-b044-4544-b202-f37557d4d932"
+    uuid: "1da3a8ff-5bb4-4c6f-9413-4fbab7a5dba1"
     state: absent
     force: true
 
@@ -84,13 +84,13 @@ EXAMPLES = '''
 RETURN = r'''
 instance:
     cpu: 500,
-    disk: 1da3a8ff-5bb4-4c6f-9413-4fbab7a5dba1,
-    ip: 5.152.176.139,
-    name: machine19,
+    disk: 09876543-a123-1234-1234-123456789012
+    ip: 1.2.3.4,
+    name: instancename,
     persistent: true,
     status: active,
     type: container,
-    uuid: 51eff35b-b044-4544-b202-f37557d4d932
+    uuid: 1234567b-a123-1234-1234-123456789012
 '''
 
 # Imports
