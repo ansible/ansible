@@ -129,6 +129,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get boot override information
+    redfish_facts:
+      category: Systems
+      command: GetBootOverride
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in the Manager category
     redfish_facts:
       category: Manager
