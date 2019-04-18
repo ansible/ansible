@@ -78,7 +78,42 @@ EXAMPLES = '''
     force: true
 
 # A minimal playbook which: creates an instance, runs a task on it, destroys the instance
+- name: Create instance
+  hosts: localhost
+  tasks:
+  - name: Create instance
+    eh_instance:
+      name: machine19
+    register: instance_info
+  - debug:
+      var: instance_info
+  - add_host:
+      hostname: instance
+      ansible_host: "{{ instance_info.instance.ip }}"
+      ansible_user: root
 
+- name: Work on instance
+  hosts: instance
+  gather_facts: no
+  tasks:
+  - wait_for_connection:
+      timeout: 20
+  - setup:
+  - command: uname -a
+    register: p
+  - debug:
+      var: p
+
+- name: Destroy instance
+  hosts: localhost
+  tasks:
+  - debug:
+      var: instance_info
+  - name: Destroy instance
+    eh_instance:
+      uuid: "{{ instance_info.instance.uuid }}"
+      state: absent
+      force: true
 '''
 
 RETURN = r'''
