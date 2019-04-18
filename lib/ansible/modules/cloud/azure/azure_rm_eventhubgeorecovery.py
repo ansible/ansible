@@ -152,6 +152,9 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
             id=str
         )
 
+        mutually_exclusive = [
+            ['break_pairing', 'fail_over']
+        ]
 
         self.resource_group = None
         self.namespace = None
@@ -162,7 +165,10 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
         self.break_pairing = None
         self.fail_over = None
 
-        super(AzureRMEventHubGeoRecovery, self).__init__(self.module_arg_spec, supports_check_mode=True, supports_tags=False)
+        super(AzureRMEventHubGeoRecovery, self).__init__(self.module_arg_spec,
+                                                         supports_check_mode=True,
+                                                         supports_tags=False,
+                                                         mutually_exclusive=mutually_exclusive)
     
     def exec_module(self, **kwargs):
 
