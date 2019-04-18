@@ -1,6 +1,7 @@
+from ansible.module_utils.urls import open_url
+
 import logging
 import json
-import requests
 import traceback
 import time
 
@@ -35,12 +36,9 @@ class VPLEX:
         url = 'https://' + str(self.ip_address) + urlsuffix
         logger.info('Connect to : ' + url)
         try:
-            request_body = requests.get(url, auth=(self.username, self.password), verify=False)
-        except ValueError:
+            request_body = open_url(url=url, url_username=self.username, url_password=self.password, force_basic_auth=False)
+        except Exception:
             logger.error('>>> Error occurred during parsing json. VPLEX returned not a JSON value.')
-            traceback.print_exc()
-        except requests.exceptions.RequestException:
-            logger.error('>>> URLError occurred. Please check the address or suffix you specified.')
             traceback.print_exc()
         else:
             return convert_to_json(body=request_body.text)
@@ -51,12 +49,9 @@ class VPLEX:
         logger.info('POST Data : ' + data)
         try:
             time.sleep(3)
-            request_body = requests.post(url, auth=(self.username, self.password), verify=False, data=data)
-        except ValueError:
+            request_body = open_url(url=url, url_username=self.username, url_password=self.password, force_basic_auth=False, data=data)
+        except Exception:
             logger.error('>>> Error occurred during parsing json. VPLEX returned not a JSON value.')
-            traceback.print_exc()
-        except requests.exceptions.RequestException:
-            logger.error('>>> URLError occurred. Please check the address or suffix you specified.')
             traceback.print_exc()
         else:
             return convert_to_json(body=request_body.text)

@@ -37,7 +37,6 @@ RETURN = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.storage.emc.emc_vplex import VPLEX
-from requests.exceptions import RequestException
 
 import logging
 import os
@@ -114,7 +113,7 @@ def main():
         password=module.params["vplex_password"])
 
     # --- if S/N differs from expected, exit the program
-    if not vplex.confirm_vplex_serial_number(expect_serial_number=serial_number):
+    if not vplex.confirm_vplex_serial_number(expect_serial_number=module.params["vplex_serialnum"]):
         logger.error('Target system S/N and expected ones are different. Exit the module wihtout any operations.')
         module.exit_json(changed=False)
     # --- if same as expected, proceed to play
@@ -131,7 +130,7 @@ def main():
         logger.info('------- Execute array Re-discovery')
         try:
             rediscover_storage_array(vplex=vplex, array_name=array_name)
-        except requests.exceptions.RequestException:
+        except Exception:
             logger.error('Failed to array re-discover...')
             module.exit_json(changed=False)
 
@@ -143,7 +142,7 @@ def main():
     else:
         try:
             claim_storage_volume(vplex=vplex, volume_name=volume_name, vpd_id=vpd_id)
-        except requests.exceptions.RequestException:
+        except Exception:
             logger.error('Failed to claim storage-volumes. Retry playbook after checking backend volumes and masking on FC-Switches.')
             module.exit_json(changed=False)
         else:
