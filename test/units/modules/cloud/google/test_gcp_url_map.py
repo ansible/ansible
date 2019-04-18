@@ -1,6 +1,6 @@
 import unittest
 
-from ansible.modules.cloud.google.gcp_url_map import _build_path_matchers, _build_url_map_dict
+from ansible.modules.cloud.google._gcp_url_map import _build_path_matchers, _build_url_map_dict
 
 
 class TestGCPUrlMap(unittest.TestCase):

@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -31,6 +31,10 @@ notes:
   - Url_Map tests are not currently supported.
 author:
   - "Tom Melendez (@supertom) <tom@supertom.com>"
+deprecated:
+    removed_in: "2.12"
+    why: Updated modules released with increased functionality
+    alternative: Use M(gcp_compute_url_map) instead.
 options:
   url_map_name:
     description:

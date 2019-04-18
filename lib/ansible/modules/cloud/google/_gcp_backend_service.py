@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 DOCUMENTATION = '''
 module: gcp_backend_service
@@ -25,6 +25,10 @@ notes:
   - Update is not currently supported.
   - Only global backend services are currently supported. Regional backends not currently supported.
   - Internal load balancing not currently supported.
+deprecated:
+    removed_in: "2.12"
+    why: Updated modules released with increased functionality
+    alternative: Use M(gcp_compute_backend_service) instead.
 author:
   - "Tom Melendez (@supertom) <tom@supertom.com>"
 options:

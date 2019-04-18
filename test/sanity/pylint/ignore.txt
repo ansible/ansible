@@ -24,8 +24,8 @@ lib/ansible/modules/cloud/google/gce_net.py blacklisted-name
 lib/ansible/modules/cloud/google/gce_pd.py blacklisted-name
 lib/ansible/modules/cloud/google/gce_snapshot.py blacklisted-name
 lib/ansible/modules/cloud/google/gce_tag.py blacklisted-name
-lib/ansible/modules/cloud/google/gcp_backend_service.py blacklisted-name
-lib/ansible/modules/cloud/google/gcp_healthcheck.py blacklisted-name
+lib/ansible/modules/cloud/google/_gcp_backend_service.py blacklisted-name
+lib/ansible/modules/cloud/google/_gcp_healthcheck.py blacklisted-name
 lib/ansible/modules/cloud/lxc/lxc_container.py blacklisted-name
 lib/ansible/modules/files/copy.py blacklisted-name
 lib/ansible/modules/files/patch.py blacklisted-name
