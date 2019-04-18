@@ -170,6 +170,8 @@ def _run_module(wrapped_cmd, jid, job_path):
 
         if stderr:
             result['stderr'] = stderr
+        if 'finished' not in result:
+            result['finished'] = 1
         jobfile.write(json.dumps(result))
 
     except (OSError, IOError):
@@ -179,7 +181,8 @@ def _run_module(wrapped_cmd, jid, job_path):
             "cmd": wrapped_cmd,
             "msg": to_text(e),
             "outdata": outdata,  # temporary notice only
-            "stderr": stderr
+            "stderr": stderr,
+            "finished": 1
         }
         result['ansible_job_id'] = jid
         jobfile.write(json.dumps(result))
@@ -190,7 +193,8 @@ def _run_module(wrapped_cmd, jid, job_path):
             "cmd": wrapped_cmd,
             "data": outdata,  # temporary notice only
             "stderr": stderr,
-            "msg": traceback.format_exc()
+            "msg": traceback.format_exc(),
+            "finished": 1
         }
         result['ansible_job_id'] = jid
         jobfile.write(json.dumps(result))
