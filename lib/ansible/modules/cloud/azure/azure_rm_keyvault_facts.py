@@ -41,29 +41,134 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create instance of Key Vault
-    azure_rm_keyvault:
+  - name: Get Key Vault by name
+    azure_rm_keyvault_facts:
       resource_group: myResourceGroup
-      vault_name: samplekeyvault
-      enabled_for_deployment: yes
-      vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
-      sku:
-        name: standard
-      access_policies:
-        - tenant_id: 72f98888-8666-4144-9199-2d7cd0111111
-          object_id: 99998888-8666-4144-9199-2d7cd0111111
-          keys:
-            - get
-            - list
+      name: myVault
+
+  - name: List Key Vault in specific resource group
+    azure_rm_keyvault_facts:
+      resource_group: myResourceGroup
+
+  - name: List Key Vault in current subscription
+    azure_rm_keyvault_facts:
 '''
 
 RETURN = '''
-id:
-    description:
-        - The Azure Resource Manager resource ID for the key vault.
+keyvaults:
+    description: List of Azure Key Vaults.
     returned: always
-    type: str
-    sample: id
+    type: complex
+    contains:
+        name:
+            description:
+                - Name of the vault.
+            returned: always
+            type: str
+            sample: myVault
+        id:
+            description:
+                - Resource Id of the vault.
+            returned: always
+            type: str
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVault
+        vault_uri:
+            description:
+                - Vault uri.
+            returned: always
+            type: str
+            sample: https://myVault.vault.azure.net/
+        location:
+            description:
+                - Location of the vault.
+            returned: always
+            type: str
+            sample: eastus
+        enabled_for_deployments:
+            description:
+                - Whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault.
+            returned: always
+            type: bool
+            sample: False
+        enabled_for_disk_encryption:
+            description:
+                - Whether Azure Disk Encryption is permitted to retrieve secrets from the vault and unwrap keys.
+            returned: always
+            type: bool
+            sample: False
+        enabled_for_template_deployment:
+            description:
+                - Whether Azure Resource Manager is permitted to retrieve secrets from the key vault.
+            returned: always
+            type: bool
+            sample: False
+        tags:
+            description:
+                - List of tags.
+            type: list
+            sample:
+                - foo
+        sku:
+            description:
+                - Sku of the vault.
+            returned: always
+            type: dict
+            contains:
+                family:
+                    description: Sku family name.
+                    type: str
+                    returned: always
+                    sample: A
+                name:
+                    description: Sku name.
+                    type: str
+                    returned: always
+                    sample: standard
+        access_policies:
+            description:
+                - Location of the vault.
+            returned: always
+            type: list
+            contains:
+                object_id:
+                    description: The object if of a user, service principal or security group in AAD for the vault.
+                    type: str
+                    returned: always
+                    sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+                tenant_id:
+                    description: The AAD tenant iD that should be used for authenticating requests to the key vault.
+                    type: str
+                    returned: always
+                    sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+                permissions:
+                    description: Permissions the identity has for keys, secrets and certificates.
+                    type: complex
+                    returned: always
+                    contains:
+                        keys:
+                            description:
+                                Permissions to keys.
+                            type: list
+                            returned: always
+                            sample:
+                                - Get
+                                - Create
+                        secrets:
+                            description:
+                                Permissions to secrets.
+                            type: list
+                            returned: always
+                            sample:
+                                - List
+                                - Set
+                        certificates:
+                            description:
+                                Permissions to secrets.
+                            type: list
+                            returned: always
+                            sample:
+                                - Get
+                                - Import
 '''
 
 
