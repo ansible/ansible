@@ -27,17 +27,14 @@ options:
     description:
       - IP to query.
     required: true
-    default: None
   tag:
     description:
       - Tag to query.
     required: true
-    default: None
   greynoise_api_key:
     description:
       - GreyNoise API key
     required: false
-    default: None
 '''
 
 EXAMPLES = '''
