@@ -15,8 +15,8 @@ def convert_to_json(body):
         if js is None:
             pass
         else:
-            logger.info('>>> Some Error occurred when converting from String to JSON.')
-            logger.info('Errors : ', e.args)
+            logger.info('>>> Some Error occurred when converting from String to JSON. Errors :')
+            logger.info(e.args)
     return js
 
 class VPLEX:
@@ -68,13 +68,13 @@ class VPLEX:
             return True
         else:
             return False
-    
+
     def get_geosynchrony_version(self):
         geosync_version = self.https_post(urlsuffix='/vplex/version', data='{\"args\":\"\"}')['response']['custom-data']
         for line in geosync_version.splitlines():
             if 'Product Version' in line:
                 return line.split()[2]
-    
+
     def set_vplex_model(self):
         geosync_version = self.get_geosynchrony_version()
         if geosync_version.split('.')[0] == '6':
@@ -119,7 +119,7 @@ class VPLEX:
     @staticmethod
     def set_extent_name(volume_name):
         return 'extent_' + volume_name + '_1'
-    
+ 
     # local-devices
     @staticmethod
     def set_local_device_name(volume_name):
@@ -129,9 +129,9 @@ class VPLEX:
     @staticmethod
     def set_virtual_volume_name(volume_name):
         return 'device_' + volume_name + '_1_vol'
-        
+
     @staticmethod
-    def check_vplex_context(object_name):        
+    def check_vplex_context(object_name):
         if (object_name[:7] == 'device_') and (object_name[-6:] == '_1_vol'):
             return 'virtual-volumes'
         elif (object_name[:7] == 'device_') and (object_name[-2:] == '_1'):

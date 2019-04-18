@@ -3,6 +3,9 @@
 # Copyright: (c) 2019, Hiroyuki Wakabayashi <hiroyuki.wakabayashi@emc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -93,9 +96,9 @@ def main():
         "vplex_username": dict(type="str", required=True),
         "vplex_password": dict(type="str", required=True),
         "vplex_serialnum": dict(type="str", required=True),
-        "volume_name": dict(type="str", required=True)
-        "vpd_id": dict(type="str", required=True)
-        "array_name": dict(type="str", required=True)
+        "volume_name": dict(type="str", required=True),
+        "vpd_id": dict(type="str", required=True),
+        "array_name": dict(type="str", required=True),
         "volume_name": dict(type="str", required=True)
         }
 
