@@ -157,9 +157,9 @@ def create_eg(module, array):
             module.log(msg='Created export group {0}'.format(eg_name))
             changed = True
         else:
-            module.fail_json(msg='Export group {0} create failed.'.format(eg_name))
+            raise Exception
     except Exception:
-        pass
+        module.fail_json(msg='Export group {0} create failed.'.format(eg_name))
     module.exit_json(changed=changed)
 
 
