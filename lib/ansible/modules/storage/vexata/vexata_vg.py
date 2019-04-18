@@ -116,7 +116,7 @@ def get_vol_ids(module, array):
     found_names = frozenset(vol['name'] for vol in found_vols)
     missing_names = list(vol_names.difference(found_names))
     if len(missing_names) > 0:
-        module.fail_json(msg='The following volume names were not found:'
+        module.fail_json(msg='The following volume names were not found: '
                              '{0}'.format(missing_names))
     # all present
     return [vol['id'] for vol in found_vols]
@@ -139,9 +139,9 @@ def create_vg(module, array):
             module.log(msg='Created volume group {0}'.format(vg_name))
             changed = True
         else:
-            module.fail_json(msg='Volume group {0} create failed.'.format(vg_name))
+            raise Exception
     except Exception:
-        pass
+        module.fail_json(msg='Volume group {0} create failed.'.format(vg_name))
     module.exit_json(changed=changed)
 
 
@@ -153,8 +153,9 @@ def update_vg(module, array, vg):
     add_vol_ids = new_vol_ids.difference(curr_vol_ids)
     rm_vol_ids = curr_vol_ids.difference(new_vol_ids)
     if len(rm_vol_ids) == len(add_vol_ids) == 0:
-        module.log(msg='No update to volume group {0} required'.format(vg_name))
-        module.exit_json(changed=False)
+        msg = 'No update to volume group {0} required'.format(vg_name)
+        module.log(msg=msg)
+        module.exit_json(msg=msg, changed=False)
 
     if module.check_mode:
         module.exit_json(changed=changed)
@@ -170,9 +171,9 @@ def update_vg(module, array, vg):
             module.log(msg='Modified volume group {0}'.format(vg_name))
             changed = True
         else:
-            module.fail_json(msg='volume group create failed.')
+            raise Exception
     except Exception:
-        pass
+        module.fail_json(msg='Volume group {0} modify failed.'.format(vg_name))
     module.exit_json(changed=changed)
 
 
