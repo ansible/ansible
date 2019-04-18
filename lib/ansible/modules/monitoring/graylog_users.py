@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -14,24 +14,21 @@ module: graylog_users
 short_description: Communicate with the Graylog API to manage users
 description:
     - The Graylog user module manages Graylog users
-version_added: "1.0"
+version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
   endpoint:
     description:
       - Graylog endpoint. (i.e. graylog.mydomain.com:9000).
     required: false
-    default: None
   graylog_user:
     description:
       - Graylog privileged user username, used to auth with Graylog API.
     required: false
-    default: None
   graylog_password:
     description:
       - Graylog privileged user password, used to auth with Graylog API.
     required: false
-    default: None
   action:
     description:
       - Action to take against user API.
@@ -42,32 +39,31 @@ options:
     description:
       - Username.
     required: false
-    default: None
   password:
     description:
       - Password.
     required: false
-    default: None
   full_name:
     description:
       - Display name.
     required: false
-    default: None
   email:
     description:
       - Email.
     required: false
-    default: None
   roles:
     description:
       - List of role names to add the user to.
     required: false
-    default: None
   permissions:
     description:
       - List of permission names to add the user to.
     required: false
-    default: None
+  timezone:
+    description:
+      - Timezone.
+    required: false
+    default: 'UTC'
 '''
 
 EXAMPLES = '''
@@ -139,11 +135,11 @@ EXAMPLES = '''
     username: "whitney"
 '''
 
-RETURN = r'''
+RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: complex
+  type: str
 msg:
   description: The HTTP message from the request
   returned: always
@@ -160,6 +156,13 @@ url:
   type: str
   sample: https://www.ansible.com/
 '''
+
+
+# import module snippets
+import json
+import base64
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, to_text
 
 
 def create(module, base_url, api_token, username, password, email, full_name, roles, permissions, timezone):
@@ -302,16 +305,16 @@ def get_token(module, endpoint, username, password):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            endpoint=dict(type='str', default=None),
-            graylog_user=dict(type='str', default=None),
+            endpoint=dict(type='str'),
+            graylog_user=dict(type='str'),
             graylog_password=dict(type='str', no_log=True),
             action=dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list']),
-            username=dict(type='str', default=None),
-            password=dict(type='str', default=None, no_log=True),
-            full_name=dict(type='str', default=None),
-            email=dict(type='str', default=None),
+            username=dict(type='str'),
+            password=dict(type='str', no_log=True),
+            full_name=dict(type='str'),
+            email=dict(type='str'),
             timezone=dict(type='str', default='UTC'),
-            roles=dict(type='list', default=None),
+            roles=dict(type='list'),
             permissions=dict(type='list', default=[])
         )
     )
@@ -346,7 +349,7 @@ def main():
 
     try:
         js = json.loads(content)
-    except ValueError, e:
+    except ValueError:
         js = ""
 
     uresp['json'] = js
@@ -355,13 +358,6 @@ def main():
     uresp['url'] = url
 
     module.exit_json(**uresp)
-
-
-# import module snippets
-import json
-import base64
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 
 if __name__ == '__main__':
