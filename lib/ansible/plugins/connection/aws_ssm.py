@@ -287,7 +287,7 @@ class Connection(ConnectionBase):
             region_name,
             "StartSession",
             profile_name,
-            json.dumps(ssm_parameters),
+            json.dumps({"Target": self.instance_id}),
             client.meta.endpoint_url
         ]
 
@@ -337,7 +337,6 @@ class Connection(ConnectionBase):
         # Handle the back-end throttling
         for c in cmd:
             session.stdin.write(c.encode('utf-8'))
-            time.sleep(15 / 1000.0)
 
         # Read stdout between the markers
         stdout = ''
