@@ -115,9 +115,9 @@ def add_initiator(module, array):
             module.log(msg='Added initiator {0}'.format(ini['id']))
             changed = True
         else:
-            module.fail_json(msg='Initiator add failed.')
+            raise Exception
     except Exception:
-        pass
+        module.fail_json(msg='Initiator {0} add failed.'.format(wwn))
     module.exit_json(changed=changed)
 
 
@@ -127,13 +127,14 @@ def remove_initiator(module, array, ini):
         module.exit_json(changed=changed)
 
     try:
+        ini_id = ini['id']
         ok = array.remove_initiator(
-            ini['id'])
+            ini_id)
         if ok:
-            module.log(msg='Initiator removed.')
+            module.log(msg='Initiator {0} removed.'.format(ini_id))
             changed = True
         else:
-            module.fail_json(msg='Initiator remove failed.')
+            module.fail_json(msg='Initiator remove failed.'.format(ini_id))
     except Exception:
         pass
     module.exit_json(changed=changed)
