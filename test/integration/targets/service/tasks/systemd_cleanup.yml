@@ -1,19 +1,16 @@
 - name: remove the systemd unit file
-  file: path=/usr/lib/systemd/system/ansible_test.service state=absent
+  file:
+    path: '/etc/systemd/system/{{ item }}'
+    state: absent
+  loop:
+    - ansible_test.service
+    - ansible_test_broken.service
   register: remove_systemd_result
 
-- name: remove the systemd unit file
-  file: path=/usr/lib/systemd/system/ansible_test_broken.service state=absent
-  register: remove_systemd_broken_result
-
-- debug: var=remove_systemd_broken_result
-- name: assert that the systemd unit file was removed
+- name: assert that the systemd unit files were removed
   assert:
     that:
-    - "remove_systemd_result.path == '/usr/lib/systemd/system/ansible_test.service'"
-    - "remove_systemd_result.state == 'absent'"
-    - "remove_systemd_broken_result.path == '/usr/lib/systemd/system/ansible_test_broken.service'"
-    - "remove_systemd_broken_result.state == 'absent'"
+      - remove_systemd_result is changed
 
 - name: make sure systemd is reloaded
   shell: systemctl daemon-reload
