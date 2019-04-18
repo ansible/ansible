@@ -51,7 +51,6 @@ Ansible also supports encrypting single values inside a YAML file, using the `!v
 Vault IDs and Multiple Vault Passwords
 ``````````````````````````````````````
 
-*Available since Ansible 2.4*
 
 A vault ID is an identifier for one or more vault secrets. Since Ansible 2.4,
 Ansible supports multiple vault passwords.
