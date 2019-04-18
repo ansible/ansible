@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_eventhubsaspolicy
-version_added: "2.8"
+version_added: "2.9"
 short_description: Manage Azure Eventhub Namespace SAS policy.
 description:
     - Create, update and delete an Azure Eventhub Namespace SAS policy.
