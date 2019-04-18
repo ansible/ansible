@@ -142,7 +142,8 @@
 
   - assert:
       that:
-        bind_id_idempotent.changed == False
+        - bind_id_idempotent.changed == False
+        - bind_id_idempotent.data is defined
 
   - name: Unbind a template to a network via id
     meraki_config_template:

@@ -58,6 +58,7 @@
   - assert:
       that:
         - single_allowed_idempotent.changed == False
+        - single_allowed_idempotent.data is defined
 
   - name: Set single blocked URL pattern
     meraki_content_filtering:

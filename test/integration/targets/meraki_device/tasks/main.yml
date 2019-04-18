@@ -192,6 +192,7 @@
   - assert:
       that:
         - update_device_idempotent.changed == False
+        - update_device_idempotent.data is defined
 
   always:
   - name: Remove a device from a network

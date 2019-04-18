@@ -3,21 +3,21 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
-- name: Test an API key is provided
-  fail:
-    msg: Please define an API key
-  when: auth_key is not defined
+# - name: Test an API key is provided
+#   fail:
+#     msg: Please define an API key
+#   when: auth_key is not defined
   
-- name: Use an invalid domain
-  meraki_switchport:
-    auth_key: '{{ auth_key }}'
-    host: marrrraki.com
-    state: query
-    serial: Q2HP-2C6E-GTLD
-    org_name: IntTestOrg
-  delegate_to: localhost
-  register: invaliddomain
-  ignore_errors: yes
+# - name: Use an invalid domain
+#   meraki_switchport:
+#     auth_key: '{{ auth_key }}'
+#     host: marrrraki.com
+#     state: query
+#     serial: Q2HP-2C6E-GTLD
+#     org_name: IntTestOrg
+#   delegate_to: localhost
+#   register: invaliddomain
+#   ignore_errors: yes
   
 - name: Disable HTTP
   meraki_switchport:
@@ -218,6 +218,7 @@
 - assert:
     that:
       - update_port_access_idempotent.changed == False
+      - update_port_access_idempotent.data is defined
 
 - name: Configure trunk port
   meraki_switchport:
@@ -321,3 +322,4 @@
 - assert:
     that:
       - update_trunk_idempotent.changed == False
+      - update_trunk_idempotent.data is defined

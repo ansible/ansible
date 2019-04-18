@@ -109,6 +109,7 @@
   - assert:
       that:
         - create_one_idempotent.changed == False
+        - create_one_idempotent.data is defined
 
   - name: Create syslog in network
     meraki_syslog:
