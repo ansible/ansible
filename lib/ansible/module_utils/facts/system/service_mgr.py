@@ -19,6 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import stat
 import platform
 import re
 
@@ -50,6 +51,16 @@ class ServiceMgrFactCollector(BaseFactCollector):
             for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
                 if os.path.exists(canary):
                     return True
+        return False
+
+    @staticmethod
+    def is_dbus_running(module):
+        # ensure dbus installed
+        if module.get_bin_path('dbus-daemon'):
+            # Check if socket file exists
+            # https://www.freedesktop.org/wiki/IntroductionToDBus/
+            if stat.S_ISSOCK(os.stat("/var/run/dbus/system_bus_socket").st_mode):
+                return True
         return False
 
     def collect(self, module=None, collected_facts=None):
