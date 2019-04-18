@@ -66,7 +66,7 @@ options:
       - Configure evpn peer-group.
     type: bool
     version_added: 2.9
-  Vrf:
+  vrf:
     description:
       - vrf name.
     version_added: 2.9
@@ -128,10 +128,9 @@ commands:
     - router bgp 320 vrf default neighbor 10.3.3.5 remote-as 322
     - router bgp 320 vrf default network 172.16.1.0 /24
 """
-
+import collections
 import re
-from six import iteritems
-from collections import OrderedDict
+from ansible.module_utils.six import iteritems
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.onyx.onyx import get_bgp_summary
@@ -182,7 +181,7 @@ class OnyxBgpModule(BaseOnyxModule):
     EVPN_ACTIVATE_CMD = "router bgp %s vrf %s address-family l2vpn-evpn neighbor evpn activate"
     EVPN_AUTO_CREATE_CMD = "router bgp %s vrf %s address-family l2vpn-evpn auto-create"
 
-    EVPN_COMMANDS_REGEX_MAPPER = OrderedDict()
+    EVPN_COMMANDS_REGEX_MAPPER = collections.OrderedDict()
     EVPN_COMMANDS_REGEX_MAPPER[EVPN_PEER_GROUP_ATTR] = (EVPN_PEER_GROUP_REGEX, EVPN_PEER_GROUP_CMD)
     EVPN_COMMANDS_REGEX_MAPPER[EVPN_SEND_COMMUNITY_EXTENDED_ATTR] = (EVPN_SEND_COMMUNITY_EXTENDED_REGEX,
                                                                      EVPN_SEND_COMMUNITY_EXTENDED_CMD)
