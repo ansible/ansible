@@ -38,15 +38,31 @@
     - name: setup test service script
       include_tasks: '{{ service_type }}_setup.yml'
 
+    - name: install a sysV init file
+      copy:
+        src: ansible_reload.sysv
+        dest: /etc/init.d/ansible_test_reload
+        mode: 0755
+      when: service_type in ['sysv', 'systemd']
+
     - name: execute tests
       import_tasks: tests.yml
 
   always:
     - name: disable and stop ansible test service
       service:
-        name: ansible_test
+        name: '{{ item }}'
         state: stopped
         enabled: false
+      loop:
+        - ansible_test
+        - ansible_test_reload
 
     # cleaning up changes made by this playbook
     - include_tasks: '{{ service_type }}_cleanup.yml'
+
+    - name: remove the sysV init file
+      file:
+        path: '/etc/init.d/ansible_test_reload'
+        state: absent
+      when: service_type in ['sysv', 'systemd']

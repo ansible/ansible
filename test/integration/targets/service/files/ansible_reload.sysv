@@ -1,0 +1,21 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          ansible_test_reload
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: ansible_test_reload service (fail when reloaded)
+### END INIT INFO
+
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+case "$1" in
+    reload|force-reload)
+        exit 1
+        ;;
+    *)
+        exit 0
+        ;;
+esac

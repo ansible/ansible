@@ -98,6 +98,26 @@
       - "reload_result is changed"
   when: service_type != "systemd"
 
+- name: Ensure sysvinit start stopped service when reloaded is used
+  when: service_type in ["sysv", "systemd"]
+  block:
+    - name: Ensure ansible_test_reload is stopped
+      sysvinit:
+        name: ansible_test_reload
+        state: stopped
+
+    - name: "Ensure 'start' is used instead of 'reload'"
+      sysvinit:
+        name: ansible_test_reload
+        state: reloaded
+      register: reload_result
+
+    - name: Check results
+      assert:
+        that:
+          - reload_result is success
+          - reload_result is changed
+
 - name: "test for #42786 (sysvinit)"
   when: service_type == "sysv"
   block:
