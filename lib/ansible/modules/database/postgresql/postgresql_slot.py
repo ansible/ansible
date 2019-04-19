@@ -254,20 +254,12 @@ def main():
     state = module.params["state"]
     ssl_rootcert = module.params["ca_cert"]
     output_plugin = module.params["output_plugin"]
-    session_role = module.params["session_role"]
 
     if immediately_reserve and slot_type == 'logical':
         module.fail_json(msg="Module parameters immediately_reserve and slot_type=logical are mutually exclusive")
 
     db_connection = connect_to_db(module, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
-
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
 
     ##################################
     # Create an object and do main job

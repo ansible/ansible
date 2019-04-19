@@ -431,7 +431,6 @@ def main():
     idxtype = module.params["idxtype"]
     columns = module.params["columns"]
     cond = module.params["cond"]
-    session_role = module.params["session_role"]
     tablespace = module.params["tablespace"]
     storage_params = module.params["storage_params"]
     cascade = module.params["cascade"]
@@ -456,12 +455,6 @@ def main():
 
     db_connection = connect_to_db(module, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
 
     # Set defaults:
     changed = False

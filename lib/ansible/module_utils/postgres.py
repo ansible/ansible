@@ -103,7 +103,16 @@ def connect_to_db(module, autocommit=False):
             if psycopg2.__version__ >= '2.4.2':
                 db_connection.set_session(autocommit=True)
             else:
-                db_connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+        # Switch role, if specified:
+        cursor = db_connection.cursor(cursor_factory=DictCursor)
+        if module.params.get('session_role'):
+            try:
+                cursor.execute('SET ROLE %s' % module.params['session_role'])
+            except Exception as e:
+                module.fail_json(msg="Could not switch role: %s" % to_native(e))
+        cursor.close()
 
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:

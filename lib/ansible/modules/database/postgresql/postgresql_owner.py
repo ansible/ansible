@@ -375,17 +375,9 @@ def main():
     obj_type = module.params['obj_type']
     reassign_owned_by = module.params['reassign_owned_by']
     fail_on_role = module.params['fail_on_role']
-    session_role = module.params['session_role']
 
     db_connection = connect_to_db(module, autocommit=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
-
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
 
     ##############
     # Create the object and do main job:

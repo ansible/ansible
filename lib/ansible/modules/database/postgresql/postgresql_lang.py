@@ -253,16 +253,9 @@ def main():
     force_trust = module.params["force_trust"]
     cascade = module.params["cascade"]
     fail_on_drop = module.params["fail_on_drop"]
-    session_role = module.params["session_role"]
 
     db_connection = connect_to_db(module, autocommit=False)
     cursor = db_connection.cursor()
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
     changed = False
     kw = {'db': db, 'lang': lang, 'trust': trust}

@@ -177,7 +177,6 @@ def main():
     query = module.params["query"]
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
-    session_role = module.params["session_role"]
     path_to_script = module.params["path_to_script"]
 
     if positional_args and named_args:
@@ -195,17 +194,10 @@ def main():
     db_connection = connect_to_db(module, autocommit=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
-
     # Prepare args:
-    if module.params["positional_args"]:
+    if module.params.get("positional_args"):
         arguments = module.params["positional_args"]
-    elif module.params["named_args"]:
+    elif module.params.get("named_args"):
         arguments = module.params["named_args"]
     else:
         arguments = None

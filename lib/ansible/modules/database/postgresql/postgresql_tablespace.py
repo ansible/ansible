@@ -173,7 +173,7 @@ try:
     from psycopg2 import __version__ as PSYCOPG2_VERSION
     from psycopg2.extras import DictCursor
     from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT as AUTOCOMMIT
-    from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED as READ_COMMITED
+    from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED as READ_COMMITTED
 except Exception:
     # psycopg2 is checked by connect_to_db()
     # from ansible.module_utils.postgres
@@ -341,7 +341,6 @@ def main():
     owner = module.params["owner"]
     rename_to = module.params["rename_to"]
     settings = module.params["set"]
-    session_role = module.params["session_role"]
 
     if state == 'absent' and (location or owner or rename_to or settings):
         module.fail_json(msg="state=absent is mutually exclusive location, "
@@ -349,13 +348,6 @@ def main():
 
     db_connection = connect_to_db(module, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
-
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
 
     # Change autocommit to False if check_mode:
     if module.check_mode:

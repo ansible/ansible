@@ -292,7 +292,6 @@ def main():
     name = module.params["name"]
     value = module.params["value"]
     reset = module.params["reset"]
-    session_role = module.params["session_role"]
 
     # Allow to pass values like 1mb instead of 1MB, etc:
     if value:
@@ -325,13 +324,6 @@ def main():
         kw['name'] = name
         db_connection.close()
         module.exit_json(**kw)
-
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
 
     # Set default returned values:
     restart_required = False

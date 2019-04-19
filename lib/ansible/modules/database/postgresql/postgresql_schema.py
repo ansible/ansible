@@ -119,6 +119,8 @@ queries:
   sample: ["CREATE SCHEMA \"acme\""]
 '''
 
+import traceback
+
 try:
     from psycopg2.extras import DictCursor
 except Exception:
@@ -230,17 +232,10 @@ def main():
     owner = module.params["owner"]
     state = module.params["state"]
     cascade_drop = module.params["cascade_drop"]
-    session_role = module.params["session_role"]
     changed = False
 
     db_connection = connect_to_db(module, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:
