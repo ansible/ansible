@@ -16,11 +16,11 @@ DOCUMENTATION = '''
 ---
 module: jenkins_build
 short_description: Build jenkins jobs
-version_added: "2.6"
+version_added: "2.8"
 description:
   - "Build Jenkins jobs by using Jenkins REST API."
 requirements:
-  - "python-jenkins >= 0.4.12"
+  - "python-jenkins >= 1.4.0"
 options:
   name:
     description:
@@ -73,7 +73,12 @@ options:
       - The request timeout in seconds
     required: false
     default: 10
-author: "Vladislav Gorbunov (@vadikgo), Sergio Millan Rodriguez (@sermilrod)"
+  fail:
+    description:
+      - Fail job if result != 'SUCCESS'
+    required: false
+    default: false
+author: "Vladislav Gorbunov (@vadikso), Sergio Millan Rodriguez (@sermilrod)"
 notes:
     - Since the build can do anything this does not report on changes.
       Knowing the build is being run it's important to set changed_when
@@ -82,7 +87,7 @@ notes:
 
 EXAMPLES = '''
 # Build a parameterized job using basic authentication
-- jenkins_job:
+- jenkins_build:
     params:
         'param1': 'test value 1'
         'param2': 'test value 2'
@@ -92,7 +97,7 @@ EXAMPLES = '''
     user: admin
 
 # Build a parameterized job using the token
-- jenkins_job:
+- jenkins_build:
     params:
         'param1': 'test value 1'
         'param2': 'test value 2'
@@ -102,14 +107,14 @@ EXAMPLES = '''
     user: admin
 
 # Build a jenkins job using basic authentication
-- jenkins_job:
+- jenkins_build:
     name: test
     password: admin
     url: http://localhost:8080
     user: admin
 
 # Build a jenkins job using basic authentication, don't wait job end
-- jenkins_job:
+- jenkins_build:
     name: test
     password: admin
     url: http://localhost:8080
@@ -117,7 +122,7 @@ EXAMPLES = '''
     wait_build: false
 
 # Build a jenkins job anonymously with job token
-- jenkins_job:
+- jenkins_build:
     name: test
     url: http://localhost:8080
     build_token: token_eDahX3ve
@@ -169,12 +174,16 @@ class JenkinsBuild:
         self.build_number = 1
         self.timeout = module.params.get('timeout')
         self.console_output = module.params.get('console_output')
+        self.fail = module.params.get('fail')
 
         self.server = self.get_jenkins_connection()
 
         self.result = {
             'build_info': {}
         }
+
+    def is_fail(self):
+        return self.fail
 
     def get_jenkins_connection(self):
         try:
@@ -198,7 +207,7 @@ class JenkinsBuild:
                                   self.jenkins_url), exception=traceback.format_exc())
 
     def wait_job_build(self):
-        for dummy in range(1, self.wait_build_timeout):
+        for _ in range(1, self.wait_build_timeout):
             if self.server.get_build_info(self.name, self.build_number)['building']:
                 time.sleep(1)
             else:
@@ -211,8 +220,20 @@ class JenkinsBuild:
         result = self.result
         if not self.module.check_mode and self.job_exists():
             try:
-                self.build_number = self.server.get_job_info(self.name)['nextBuildNumber']
-                self.server.build_job(self.name, self.params, self.build_token)
+                try:
+                    self.build_number = self.server.get_job_info(self.name)['nextBuildNumber']
+                except Exception as e:
+                    self.module.fail_json(msg='Fail to get nextBuildNumber: %s' % str(e))
+                queue_id = self.server.build_job(self.name, self.params, self.build_token)
+                for _ in range(1, self.wait_build_timeout):
+                    queue_item = self.server.get_queue_item(queue_id)
+                    if (queue_item is not None) \
+                       and ('executable' in queue_item) \
+                       and (queue_item['executable'] is not None) \
+                       and ('number' in queue_item['executable']):
+                        self.build_number = queue_item['executable']['number']
+                        break
+                    time.sleep(1)
             except Exception as e:
                 if str(e) == 'Error in request. Possibly authentication failed [500]: Server Error':
                     self.module.fail_json(msg="Error in request. Possibly call job that can't handle "
@@ -223,7 +244,7 @@ class JenkinsBuild:
                     self.params = {uuid.uuid4(): uuid.uuid4()}
                     self.build_job()
                 else:
-                    self.module.fail_json(msg=str(e), exception=traceback.format_exc())
+                    self.module.fail_json(msg='Runtime error in module jenkins_build: %s' % traceback.format_exc())
             if self.wait_build:
                 self.wait_job_build()
             result['build_info'] = self.server.get_build_info(self.name, self.build_number)
@@ -231,13 +252,12 @@ class JenkinsBuild:
             if self.console_output:
                 result['build_info']['console_output'] = self.server.get_build_console_output(
                     self.name, number=self.build_number)
-        result['changed'] = True
         return result
 
 
 def test_dependencies(module):
     if not python_jenkins_installed:
-        module.fail_json(msg="python-jenkins required for this module. "
+        module.fail_json(msg="python-jenkins >= 1.4.0 required for this module. "
                          "see http://python-jenkins.readthedocs.io/en/latest/install.html")
 
 
@@ -254,7 +274,8 @@ def main():
             wait_build_timeout=dict(required=False, default=600, type='int'),
             build_token=dict(required=False, default=None, no_log=True),
             timeout=dict(required=False, type="int", default=10),
-            console_output=dict(required=False, default=False, type='bool')
+            console_output=dict(required=False, default=False, type='bool'),
+            fail=dict(required=False, default=False, type='bool')
         ),
         mutually_exclusive=[
             ['password', 'token'],
@@ -263,10 +284,14 @@ def main():
     )
 
     test_dependencies(module)
-    jenkins_job = JenkinsBuild(module)
+    jenkins_build = JenkinsBuild(module)
 
-    result = jenkins_job.build_job()
-    module.exit_json(**result)
+    result = jenkins_build.build_job()
+    if jenkins_build.is_fail() and result['build_info']['result'] != 'SUCCESS':
+        result['msg'] = "Jenkins job build failed"
+        module.fail_json(**result)
+    else:
+        module.exit_json(**result)
 
 
 if __name__ == '__main__':
