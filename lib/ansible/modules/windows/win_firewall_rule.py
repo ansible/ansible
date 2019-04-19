@@ -37,7 +37,7 @@ options:
   group:
     description:
       - The group name for the rule.
-    version_added: '2.8'
+    version_added: '2.9'
     type: str
     required: yes
   direction:
