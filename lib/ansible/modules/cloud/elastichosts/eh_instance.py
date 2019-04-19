@@ -8,10 +8,9 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'
-}
+                    'supported_by': 'community'}
 
-DOCUMENTATION ='''
+DOCUMENTATION = '''
 ---
 module: eh_instance
 short_description: Create or remove ElasticHosts container or VM instances
@@ -33,7 +32,7 @@ options:
             - User name used for API authentication (user UUID).
     password:
         description:
-            - Password used for API authentication (API key).
+            - Password used for API authentication (secret API key).
     name:
         description:
             - Name of the instance to be created.
@@ -52,7 +51,7 @@ options:
             - The UUID of the instance to destroy.
             - Required if I(state=absent).
 notes:
-    - If not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) will be used for authentication, where the C(EHUSER) is the user id, and C(EHPASS) is the API key.
+    - If C(username) and C(password) are not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) are used for authentication.
     - Supply auth via environment variables with, for example, C(export EHUSER=123-456-789) and C(export EHPASS=abcdef).
     - See U(https://gitlab.com/konradp/pyeh) and U(https://pypi.org/project/pyeh/) for the I(pyeh) module.
     - See U(https://www.elastichosts.com/api/docs/) for ElasticHosts API reference.
@@ -178,37 +177,19 @@ except Exception:
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            force = dict(
-                type='bool',
-                default=False,
-            ),
+        argument_spec=dict(
+            force=dict(type='bool', default=False),
             name=dict(type='str'),
-            password = dict(
-                type='str',
-                no_log=True,
-                default=os.environ.get('EHPASS'),
-            ),
-            state=dict(
-                required=False,
-                choices=[
-                    'present',
-                    'absent'
-                ],
-                default='present'
-            ),
-            username = dict(
-                type='str',
-                default=os.environ.get('EHUSER'),
-                no_log=True,
-            ),
-            uuid = dict(type='str'),
+            password=dict(type='str', no_log=True, default=os.environ.get('EHPASS')),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            username=dict(type='str', default=os.environ.get('EHUSER'), no_log=True),
+            uuid=dict(type='str'),
         ),
         required_one_of=[
             ['name', 'uuid']
         ],
         supports_check_mode=True
-    ) # Module
+    )  # Module
 
     # Check pyeh library
     if not HAS_PYEH:
@@ -222,7 +203,7 @@ def main():
         module.fail_json(msg='Password was not specified')
     if username is None:
         module.fail_json(msg='Username was not specified')
-    result = { 'failed': False, 'changed': False }
+    result = {'failed': False, 'changed': False}
     # Create EH client
     client = Client(
         zone='lon-b',
@@ -284,6 +265,7 @@ def main():
             changed=True
         )
         module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
