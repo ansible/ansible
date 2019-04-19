@@ -250,7 +250,7 @@ def delete(module, base_url, headers, username):
     return info['status'], info['msg'], content, url
 
 
-def list(module, base_url, api_token):
+def list(module, base_url, headers):
 
     url = base_url
 
