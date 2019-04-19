@@ -19,7 +19,7 @@ options:
     type: str
   login_host:
     description:
-      - Host running the database. Default values taken by mysqlclient (localhost or from e.g. ~/my.cnf)
+      - Host running the database. Default inherited from client library
     type: str
   login_port:
     description:
