@@ -290,7 +290,7 @@ def update(module, pipeline_url, headers):
 
     payload = {}
 
-    if pipeline_id is not None:
+    if module.params['pipeline_id'] is not None:
         url = "/".join([pipeline_url, pipeline_id])
     else:
         url = pipeline_url
@@ -312,7 +312,7 @@ def update(module, pipeline_url, headers):
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
-    if source is None:
+    if module.params['source'] is None:
         payload['source'] = payload_current['source']
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
@@ -353,7 +353,7 @@ def update_connection(module, connection_url, headers):
 
 def update_rule(module, rule_url, headers):
 
-    url = "/".join([rule_url, rule_id])
+    url = "/".join([rule_url, module.params['rule_id']])
 
     payload = {}
 
@@ -582,19 +582,19 @@ def main():
                 "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
-        status, message, content, url = create(module, pipeline_url, headers, title, description, source)
+        status, message, content, url = create(module, pipeline_url, headers)
     elif action == "parse_rule":
-        status, message, content, url = parse_rule(module, rule_url, headers, source)
+        status, message, content, url = parse_rule(module, rule_url, headers)
     elif action == "create_rule":
-        status, message, content, url = create_rule(module, rule_url, headers, title, description, source)
+        status, message, content, url = create_rule(module, rule_url, headers)
     elif action == "create_connection":
-        status, message, content, url = create_connection(module, connection_url, headers, pipeline_id, stream_ids)
+        status, message, content, url = create_connection(module, connection_url, headers)
     elif action == "update":
-        status, message, content, url = update(module, pipeline_url, headers, pipeline_id, title, description, source)
+        status, message, content, url = update(module, pipeline_url, headers)
     elif action == "update_connection":
-        status, message, content, url = update_connection(module, connection_url, headers, pipeline_id, stream_ids)
+        status, message, content, url = update_connection(module, connection_url, headers)
     elif action == "update_rule":
-        status, message, content, url = update_rule(module, rule_url, headers, rule_id, title, description, source)
+        status, message, content, url = update_rule(module, rule_url, headers)
     elif action == "delete":
         status, message, content, url = delete(module, pipeline_url, headers, pipeline_id)
     elif action == "delete_rule":
