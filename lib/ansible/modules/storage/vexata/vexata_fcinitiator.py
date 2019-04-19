@@ -75,10 +75,10 @@ from ansible.module_utils.vexata import (
 WWN_RE = re.compile(r'(?:[0-9a-f]{2}:){7}[0-9a-f]{2}')
 
 
-def validate_wwn(module, err_msg):
+def validate_wwn(module):
     wwn = module.params.get('wwn', False)
     if not wwn:
-        module.fail_json(msg=err_msg)
+        module.fail_json(msg='wwn is required for adding initiator.')
     wwn = wwn.strip().lower()
     if not WWN_RE.match(wwn):
         module.fail_json(msg='wwn should have 01:23:45:67:89:ab:cd:ef format')
@@ -102,23 +102,25 @@ def get_initiator(module, array):
 def add_initiator(module, array):
     """"Add a host FC initiator."""
     changed = False
-    wwn = validate_wwn(module, 'wwn is required for adding initiator.')
+    wwn = validate_wwn(module)
     if module.check_mode:
         module.exit_json(changed=changed)
 
+    msg = ''
     try:
         ini = array.add_initiator(
             module.params['name'],
             'Ansible FC initiator',
             wwn)
         if ini:
-            module.log(msg='Added initiator {0}'.format(ini['id']))
+            msg = 'Added initiator {0}'.format(ini['id'])
+            module.log(msg=msg)
             changed = True
         else:
             raise Exception
     except Exception:
         module.fail_json(msg='Initiator {0} add failed.'.format(wwn))
-    module.exit_json(changed=changed)
+    module.exit_json(msg=msg, changed=changed)
 
 
 def remove_initiator(module, array, ini):
@@ -126,18 +128,20 @@ def remove_initiator(module, array, ini):
     if module.check_mode:
         module.exit_json(changed=changed)
 
+    msg = ''
     try:
         ini_id = ini['id']
         ok = array.remove_initiator(
             ini_id)
         if ok:
-            module.log(msg='Initiator {0} removed.'.format(ini_id))
+            msg = 'Initiator {0} removed.'.format(ini_id)
+            module.log(msg=msg)
             changed = True
         else:
-            module.fail_json(msg='Initiator {0} remove failed.'.format(ini_id))
+            raise Exception
     except Exception:
-        pass
-    module.exit_json(changed=changed)
+        module.fail_json(msg='Initiator {0} remove failed.'.format(ini_id))
+    module.exit_json(msg=msg, changed=changed)
 
 
 def main():
