@@ -695,7 +695,8 @@ output to structured data that is normalized and conforms to standard, OS-agnost
     This release does not include the functionality to utilize custom parsers. The supported parsers are whatever
     is included in the release of Genie that the user has installed on the Ansible control machine.
 
-To convert the output of a network device CLI command output, use the ``parse_genie`` filter as shown in this example:
+To convert the output of a network device CLI command output, use the ``parse_genie`` filter as shown in this example
+(do not use abbreviated CLI commands).
 
 The CLI output of the ``show version`` command from a Cisco IOS-XE device::
 
