@@ -291,7 +291,7 @@ def update(module, pipeline_url, headers):
     payload = {}
 
     if module.params['pipeline_id'] is not None:
-        url = "/".join([pipeline_url, pipeline_id])
+        url = "/".join([pipeline_url, module.params['pipeline_id']])
     else:
         url = pipeline_url
 
@@ -306,7 +306,7 @@ def update(module, pipeline_url, headers):
     except AttributeError:
         content = info.pop('body', '')
 
-    url = "/".join([pipeline_url, pipeline_id])
+    url = "/".join([pipeline_url, module.params['pipeline_id']])
 
     for key in ['pipeline_id', 'title', 'description', 'source']:
         if module.params[key] is not None:
