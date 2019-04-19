@@ -149,7 +149,7 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            id=str
+            id=dict()
         )
 
         mutually_exclusive = [
@@ -192,13 +192,13 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
 
                 if changed and not self.check_mode:
                     alias = self.create_or_update_alias()
-            results = self.to_dict(alias)['id'] if alias else None
             if self.break_pairing and not self.check_mode:
                 changed = True
                 self.do_break_pairing()
             if self.fail_over and not self.check_mode:
                 changed = True
                 self.do_fail_over()
+            results = self.to_dict(alias) if alias else None
         elif alias:
             changed = True
             if not self.check_mode:
