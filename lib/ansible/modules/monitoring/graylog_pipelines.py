@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
+# Copyright: (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 module: graylog_pipelines
 short_description: Communicate with the Graylog API to manage pipelines
 description:
-    - The Graylog pipelines module manages Graylog pipelines
+    - The Graylog pipelines module manages Graylog pipelines.
 version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
@@ -21,10 +21,12 @@ options:
     description:
       - Graylog endoint. (i.e. graylog.mydomain.com).
     required: false
+    type: str
   graylog_user:
     description:
       - Graylog privileged user username.
     required: false
+    type: str
   graylog_password:
     description:
       - Graylog privileged user password.
@@ -192,18 +194,15 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, pipeline_url, headers, title, description, source):
+def create(module, pipeline_url, headers):
 
     url = pipeline_url
 
     payload = {}
 
-    if title is not None:
-        payload['title'] = title
-    if description is not None:
-        payload['description'] = description
-    if source is not None:
-        payload['source'] = source
+    for key in ['title', 'description', 'source']
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -211,23 +210,22 @@ def create(module, pipeline_url, headers, title, description, source):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def create_connection(module, connection_url, headers, pipeline_id, stream_ids):
+def create_connection(module, connection_url, headers):
 
-    url = connection_url + "/to_pipeline"
+    url = "/".join([connection_url, "/to_pipeline"])
 
     payload = {}
 
-    if pipeline_id is not None:
-        payload['pipeline_id'] = pipeline_id
-    if stream_ids is not None:
-        payload['stream_ids'] = stream_ids
+    for key in ['pipeline_id', 'stream_ids']
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -235,21 +233,22 @@ def create_connection(module, connection_url, headers, pipeline_id, stream_ids):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def parse_rule(module, rule_url, headers, source):
+def parse_rule(module, rule_url, headers):
 
-    url = rule_url + "/parse"
+    url = "/".join([rule_url, "/parse"])
 
     payload = {}
 
-    if source is not None:
-        payload['source'] = source
+    for key in ['source']
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -257,25 +256,22 @@ def parse_rule(module, rule_url, headers, source):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def create_rule(module, rule_url, headers, title, description, source):
+def create_rule(module, rule_url, headers):
 
     url = rule_url
 
     payload = {}
 
-    if title is not None:
-        payload['title'] = title
-    if description is not None:
-        payload['description'] = description
-    if source is not None:
-        payload['source'] = source
+    for key in ['title', 'description', 'source']
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -283,19 +279,19 @@ def create_rule(module, rule_url, headers, title, description, source):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def update(module, pipeline_url, headers, pipeline_id, title, description, source):
+def update(module, pipeline_url, headers):
 
     payload = {}
 
     if pipeline_id is not None:
-        url = pipeline_url + "/%s" % (pipeline_id)
+        url = "/".join([pipeline_url, pipeline_id])
     else:
         url = pipeline_url
 
@@ -305,20 +301,18 @@ def update(module, pipeline_url, headers, pipeline_id, title, description, sourc
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         payload_current = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
 
-    url = pipeline_url + "/%s" % (pipeline_id)
+    url = "/".join([pipeline_url, pipeline_id])
 
-    if title is not None:
-        payload['title'] = title
-    if description is not None:
-        payload['description'] = description
-    if source is not None:
-        payload['source'] = source
-    else:
+    for key in ['pipeline_id', 'title', 'description', 'source']
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
+
+    if source is None:
         payload['source'] = payload_current['source']
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
@@ -327,23 +321,22 @@ def update(module, pipeline_url, headers, pipeline_id, title, description, sourc
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def update_connection(module, connection_url, headers, pipeline_id, stream_ids):
+def update_connection(module, connection_url, headers):
 
-    url = connection_url + "/to_pipeline"
+    url = "/".join([connection_url, "/to_pipeline"])
 
     payload = {}
 
-    if pipeline_id is not None:
-        payload['pipeline_id'] = pipeline_id
-    if stream_ids is not None:
-        payload['stream_ids'] = stream_ids
+    for key in ['pipeline_id', 'stream_ids']
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -351,25 +344,22 @@ def update_connection(module, connection_url, headers, pipeline_id, stream_ids):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def update_rule(module, rule_url, headers, rule_id, title, description, source):
+def update_rule(module, rule_url, headers):
 
-    url = rule_url + "/%s" % (rule_id)
+    url = "/".join([rule_url, rule_id])
 
     payload = {}
 
-    if title is not None:
-        payload['title'] = title
-    if description is not None:
-        payload['description'] = description
-    if source is not None:
-        payload['source'] = source
+    for key in ['title', 'description', 'source']
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
 
@@ -377,7 +367,7 @@ def update_rule(module, rule_url, headers, rule_id, title, description, source):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -386,7 +376,7 @@ def update_rule(module, rule_url, headers, rule_id, title, description, source):
 
 def delete(module, pipeline_url, headers, pipeline_id):
 
-    url = pipeline_url + "/%s" % (pipeline_id)
+    url = "/".join([pipeline_url, pipeline_id])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
@@ -394,7 +384,7 @@ def delete(module, pipeline_url, headers, pipeline_id):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -403,7 +393,7 @@ def delete(module, pipeline_url, headers, pipeline_id):
 
 def delete_rule(module, rule_url, headers, rule_id):
 
-    url = rule_url + "/%s" % (rule_id)
+    url = "/".join([rule_url, rule_id])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
@@ -411,7 +401,7 @@ def delete_rule(module, rule_url, headers, rule_id):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -421,9 +411,9 @@ def delete_rule(module, rule_url, headers, rule_id):
 def list(module, pipeline_url, headers, pipeline_id, query):
 
     if pipeline_id is not None and pipeline_id != "":
-        url = pipeline_url + "/%s" % (pipeline_id)
+        url = "/".join([pipeline_url, pipeline_id])
     elif query == "yes" and pipeline_id == "":
-        url = pipeline_url + "/0"
+        url = "/".join([pipeline_url, "0"])
     else:
         url = pipeline_url
 
@@ -433,7 +423,7 @@ def list(module, pipeline_url, headers, pipeline_id, query):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -443,9 +433,9 @@ def list(module, pipeline_url, headers, pipeline_id, query):
 def list_rules(module, rule_url, headers, rule_id, query):
 
     if rule_id is not None and rule_id != "":
-        url = rule_url + "/%s" % (rule_id)
+        url = "/".join([rule_url, rule_id])
     elif query == "yes" and rule_id == "":
-        url = rule_url + "/0"
+        url = "/".join([rule_url, "0"])
     else:
         url = rule_url
 
@@ -455,7 +445,7 @@ def list_rules(module, rule_url, headers, rule_id, query):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -472,7 +462,7 @@ def query_pipelines(module, pipeline_url, headers, pipeline_name):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         pipelines = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
@@ -501,7 +491,7 @@ def query_rules(module, rule_url, headers, rule_name):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         rules = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
@@ -526,10 +516,11 @@ def get_token(module, endpoint, username, password):
 
     url = "https://%s/api/system/sessions" % (endpoint)
 
-    payload = {}
-    payload['username'] = username
-    payload['password'] = password
-    payload['host'] = endpoint
+    payload = {
+        'username': username,
+        'password': password,
+        'host': endpoint
+    }
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -537,7 +528,7 @@ def get_token(module, endpoint, username, password):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         session = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
