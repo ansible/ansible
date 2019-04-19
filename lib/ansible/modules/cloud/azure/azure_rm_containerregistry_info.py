@@ -34,12 +34,10 @@ options:
             - Retrieve credentials for container registry.
         type: bool
         default: no
-    tags:
-        description:
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
+    - azure_info_tags
 
 author:
     - Zim Kalinowski (@zikalino)
