@@ -281,7 +281,7 @@ def delete(module, base_url, headers, index_set_id):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
