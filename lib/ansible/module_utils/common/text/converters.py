@@ -8,6 +8,7 @@ __metaclass__ = type
 import datetime
 import json
 
+from decimal import Decimal
 from itertools import repeat
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -25,6 +26,8 @@ def _json_encode_fallback(obj):
         return list(obj)
     elif isinstance(obj, datetime.datetime):
         return obj.isoformat()
+    elif isinstance(obj, Decimal):
+        return float(obj)
     raise TypeError("Cannot json serialize %s" % to_native(obj))
 
 

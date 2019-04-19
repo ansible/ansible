@@ -8,6 +8,7 @@ __metaclass__ = type
 import json
 
 from datetime import date, datetime
+from decimal import Decimal
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
@@ -63,6 +64,9 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         elif isinstance(o, (date, datetime)):
             # date object
             value = o.isoformat()
+        elif isinstance(o, Decimal):
+            # decimal.Decimal object
+            value = float(o)
         else:
             # use default encoder
             value = super(AnsibleJSONEncoder, self).default(o)

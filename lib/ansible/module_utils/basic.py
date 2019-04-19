@@ -55,6 +55,7 @@ import traceback
 import types
 
 from collections import deque
+from decimal import Decimal
 from itertools import chain, repeat
 
 try:
@@ -387,7 +388,7 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
         deferred_removals.append((value, new_value))
         value = new_value
 
-    elif isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+    elif isinstance(value, tuple(chain(integer_types, (float, bool, Decimal, NoneType)))):
         stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
         if stringy_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
