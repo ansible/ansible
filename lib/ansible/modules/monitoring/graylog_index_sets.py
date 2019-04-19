@@ -336,7 +336,7 @@ def query_index_sets(module, base_url, headers, title):
 
 def get_token(module, endpoint, username, password):
 
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic ' + api_token.decode() + '" }'
+    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json" }'
 
     url = "https://%s/api/system/sessions" % (endpoint)
 
