@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 module: graylog_index_sets
 short_description: Communicate with the Graylog API to manage index sets
 description:
-    - The Graylog index sets module manages Graylog index sets
+    - The Graylog index sets module manages Graylog index sets.
 version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
