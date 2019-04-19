@@ -166,11 +166,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, api_token, title, description, index_prefix, index_analyzer, shards, replicas,
+def create(module, base_url, headers, title, description, index_prefix, index_analyzer, shards, replicas,
            rotation_strategy_class, retention_strategy_class, rotation_strategy, retention_strategy,
            index_optimization_max_num_segments, index_optimization_disabled, creation_date, writable, default):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
 
     url = base_url
 
@@ -220,11 +218,9 @@ def create(module, base_url, api_token, title, description, index_prefix, index_
     return info['status'], info['msg'], content, url
 
 
-def update(module, base_url, api_token, index_set_id, title, description, index_prefix, index_analyzer, shards, replicas,
+def update(module, base_url, headers, index_set_id, title, description, index_prefix, index_analyzer, shards, replicas,
            rotation_strategy_class, retention_strategy_class, rotation_strategy, retention_strategy, index_optimization_max_num_segments,
            index_optimization_disabled, writable, default):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
 
     url = base_url + "/%s" % (index_set_id)
 
@@ -272,9 +268,7 @@ def update(module, base_url, api_token, index_set_id, title, description, index_
     return info['status'], info['msg'], content, url
 
 
-def delete(module, base_url, api_token, index_set_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def delete(module, base_url, headers, index_set_id):
 
     url = base_url + "/%s" % (index_set_id)
 
@@ -291,9 +285,7 @@ def delete(module, base_url, api_token, index_set_id):
     return info['status'], info['msg'], content, url
 
 
-def list(module, base_url, api_token, index_set_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def list(module, base_url, headers, index_set_id):
 
     if index_set_id is not None:
         url = base_url + "/%s" % (index_set_id)
@@ -313,9 +305,7 @@ def list(module, base_url, api_token, index_set_id):
     return info['status'], info['msg'], content, url
 
 
-def query_index_sets(module, base_url, api_token, title):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def query_index_sets(module, base_url, headers, title):
 
     url = base_url
 
@@ -346,7 +336,7 @@ def query_index_sets(module, base_url, api_token, title):
 
 def get_token(module, endpoint, username, password):
 
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json" }'
+    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic ' + api_token.decode() + '" }'
 
     url = "https://%s/api/system/sessions" % (endpoint)
 
@@ -366,7 +356,9 @@ def get_token(module, endpoint, username, password):
     except AttributeError:
         content = info.pop('body', '')
 
-    session_token = base64.b64encode(session['session_id'] + ":session")
+    session_string = session['session_id'] + ":session"
+    session_bytes = session_string.encode('utf-8')
+    session_token = base64.b64encode(session_bytes)
 
     return session_token
 
@@ -423,23 +415,25 @@ def main():
     base_url = "https://%s/api/system/indices/index_sets" % (endpoint)
 
     api_token = get_token(module, endpoint, graylog_user, graylog_password)
+    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", \
+                "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
-        status, message, content, url = create(module, base_url, api_token, title, description, index_prefix,
+        status, message, content, url = create(module, base_url, headers, title, description, index_prefix,
                                                index_analyzer, shards, replicas, rotation_strategy_class, retention_strategy_class, rotation_strategy,
                                                retention_strategy, index_optimization_max_num_segments, index_optimization_disabled, creation_date,
                                                writable, default)
     elif action == "update":
-        status, message, content, url = update(module, base_url, api_token, index_set_id, title, description, index_prefix, index_analyzer,
+        status, message, content, url = update(module, base_url, headers, index_set_id, title, description, index_prefix, index_analyzer,
                                                shards, replicas, rotation_strategy_class, retention_strategy_class, rotation_strategy, retention_strategy,
                                                index_optimization_max_num_segments, index_optimization_disabled, writable, default)
     elif action == "delete":
-        status, message, content, url = delete(module, base_url, api_token, index_set_id)
+        status, message, content, url = delete(module, base_url, headers, index_set_id)
     elif action == "list":
-        status, message, content, url = list(module, base_url, api_token, index_set_id)
+        status, message, content, url = list(module, base_url, headers, index_set_id)
     elif action == "query_index_sets":
-        index_set_id = query_index_sets(module, base_url, api_token, title)
-        status, message, content, url = list(module, base_url, api_token, index_set_id)
+        index_set_id = query_index_sets(module, base_url, headers, title)
+        status, message, content, url = list(module, base_url, headers, index_set_id)
 
     uresp = {}
     content = to_text(content, encoding='UTF-8')
