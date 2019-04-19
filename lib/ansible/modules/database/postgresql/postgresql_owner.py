@@ -163,6 +163,14 @@ from ansible.module_utils._text import to_native
 
 
 class PgOwnership(object):
+    """
+    If you want to add handling of a new type of database objects:
+    1. Add a specific method for this like self.__set_db_owner(), etc.
+    2. Add a condition with a check of ownership for new type objects to self.__is_owner()
+    3. Add a condition with invocation of the specific method to self.set_owner()
+    4. Add the information to the module documentation
+    That's all.
+    """
     def __init__(self, module, cursor, role):
         self.module = module
         self.cursor = cursor
