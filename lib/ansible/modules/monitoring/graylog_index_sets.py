@@ -346,7 +346,11 @@ def get_token(module, endpoint, username, password):
 
     url = "https://%s/api/system/sessions" % (endpoint)
 
-    payload = {}
+    payload = {
+      'username': username,
+      'password': password,
+      'host': endpoint
+    }
     payload['username'] = username
     payload['password'] = password
     payload['host'] = endpoint
