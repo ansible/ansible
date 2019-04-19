@@ -101,6 +101,7 @@ options:
       - Disable Elasticsearch index optimization (force merge) after rotation.
     required: false
     default: False
+    type: bool
   writable:
     description:
       - Writable, true or false.
