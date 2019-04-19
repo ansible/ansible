@@ -228,7 +228,7 @@ def update(module, base_url, headers, index_set_id, title, description, index_pr
            rotation_strategy_class, retention_strategy_class, rotation_strategy, retention_strategy, index_optimization_max_num_segments,
            index_optimization_disabled, writable, default):
 
-    url = base_url + "/%s" % (index_set_id)
+    url = "/".join([base_url, index_set_id])
 
     payload = {}
 
