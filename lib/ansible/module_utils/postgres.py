@@ -29,7 +29,7 @@
 
 try:
     import psycopg2
-    import psycopg2.extras
+    from psycopg2.extras import DictCursor
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
@@ -69,6 +69,9 @@ def connect_to_db(module, autocommit=False):
     # check which values are empty and don't include in the **kw
     # dictionary
     sslrootcert = module.params['ca_cert']
+
+    ensure_libs(sslrootcert)
+
     params_map = {
         "login_host": "host",
         "login_user": "user",
@@ -94,17 +97,13 @@ def connect_to_db(module, autocommit=False):
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
-    if psycopg2.__version__ < '2.4.3' and sslrootcert:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 '
-                             'in order to user the ssl_rootcert parameter')
-
     try:
         db_connection = psycopg2.connect(**kw)
         if autocommit:
             if psycopg2.__version__ >= '2.4.2':
                 db_connection.set_session(autocommit=True)
             else:
-                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+                db_connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:

@@ -155,21 +155,21 @@ context:
   sample: user
 '''
 
-PG_REQ_VER = 90400
+try:
+    from psycopg2.extras import DictCursor
+except Exception:
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
 from copy import deepcopy
 
-try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
-except ImportError:
-    HAS_PSYCOPG2 = False
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.postgres import connect_to_db, get_pg_version, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 
+PG_REQ_VER = 90400
 
 # To allow to set value like 1mb instead of 1MB, etc:
 POSSIBLE_SIZE_UNITS = ("mb", "gb", "tb")
@@ -289,9 +289,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
     name = module.params["name"]
     value = module.params["value"]
     reset = module.params["reset"]
@@ -310,7 +307,7 @@ def main():
         module.fail_json(msg="%s: at least one of value or reset param must be specified" % name)
 
     db_connection = connect_to_db(module, autocommit=True)
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Check server version (needs 9.4 or later):
     ver = get_pg_version(cursor)
@@ -411,7 +408,7 @@ def main():
     # Reconnect and recheck current value:
     if context in ('sighup', 'superuser-backend', 'backend', 'superuser', 'user'):
         db_connection = connect_to_db(module, autocommit=True)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = db_connection.cursor(cursor_factory=DictCursor)
 
         res = param_get(cursor, module, name)
         # f_ means 'final'

@@ -136,16 +136,17 @@ rowcount:
     sample: 5
 '''
 
-import os
-
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2 import ProgrammingError as Psycopg2ProgrammingError
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # it is needed for checking 'no result to fetch' in main(),
+    # psycopg2 availability will be checked by connect_to_db() into
+    # ansible.module_utils.postgres
+    pass
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
@@ -173,9 +174,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
     query = module.params["query"]
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
@@ -195,7 +193,7 @@ def main():
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
     db_connection = connect_to_db(module, autocommit=False)
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Switch role, if specified:
     if session_role:
@@ -228,7 +226,7 @@ def main():
 
     try:
         query_result = [dict(row) for row in cursor.fetchall()]
-    except psycopg2.ProgrammingError as e:
+    except Psycopg2ProgrammingError as e:
         if to_native(e) == 'no results to fetch':
             query_result = {}
 
