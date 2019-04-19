@@ -170,7 +170,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, headers, title, description, index_prefix, index_analyzer, shards, replicas,
+def create(module, base_url, headers):
            rotation_strategy_class, retention_strategy_class, rotation_strategy, retention_strategy,
            index_optimization_max_num_segments, index_optimization_disabled, creation_date, writable, default):
 
