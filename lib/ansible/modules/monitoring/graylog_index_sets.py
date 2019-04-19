@@ -318,7 +318,7 @@ def query_index_sets(module, base_url, headers, title):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         index_sets = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
