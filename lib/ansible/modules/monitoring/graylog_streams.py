@@ -509,7 +509,7 @@ def query_streams(module, base_url, headers, stream_name):
     return stream_id
 
 
-def default_index_set(module, endpoint, base_url, api_token):
+def default_index_set(module, endpoint, base_url, headers):
 
     url = "https://%s/api/system/indices/index_sets?skip=0&limit=0&stats=false" % (endpoint)
 
