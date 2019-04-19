@@ -171,45 +171,17 @@ from ansible.module_utils.urls import fetch_url, to_text
 
 
 def create(module, base_url, headers):
-           rotation_strategy_class, retention_strategy_class, rotation_strategy, retention_strategy,
-           index_optimization_max_num_segments, index_optimization_disabled, creation_date, writable, default):
 
     url = base_url
 
     payload = {}
 
-    for key in ['title', 'description', 'index_prefix', 'creation_date', 'writable', 'default', 'index_analyzer', 'shards', 'replicas', ]
+    for key in ['title', 'description', 'index_prefix', 'creation_date', 'writable', 'default',
+                'index_analyzer', 'shards', 'replicas', 'rotation_strategy_class', 'retention_strategy_class',
+                'rotation_strategy', 'retention_strategy', 'index_optimization_max_num_segments',
+                'index_optimization_disabled']
         if module.params[key] is not None:
             payload[key] = module.params[key]
-        payload['title'] = title
-    if description is not None:
-        payload['description'] = description
-    if index_prefix is not None:
-        payload['index_prefix'] = index_prefix
-    if creation_date is not None:
-        payload['creation_date'] = creation_date
-    if writable is not None:
-        payload['writable'] = writable
-    if default is not None:
-        payload['default'] = default
-    if index_analyzer is not None:
-        payload['index_analyzer'] = index_analyzer
-    if shards is not None:
-        payload['shards'] = shards
-    if replicas is not None:
-        payload['replicas'] = replicas
-    if rotation_strategy_class is not None:
-        payload['rotation_strategy_class'] = rotation_strategy_class
-    if retention_strategy_class is not None:
-        payload['retention_strategy_class'] = retention_strategy_class
-    if rotation_strategy is not None:
-        payload['rotation_strategy'] = rotation_strategy
-    if retention_strategy is not None:
-        payload['retention_strategy'] = retention_strategy
-    if index_optimization_max_num_segments is not None:
-        payload['index_optimization_max_num_segments'] = index_optimization_max_num_segments
-    if index_optimization_disabled is not None:
-        payload['index_optimization_disabled'] = index_optimization_disabled
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -224,42 +196,18 @@ def create(module, base_url, headers):
     return info['status'], info['msg'], content, url
 
 
-def update(module, base_url, headers, index_set_id, title, description, index_prefix, index_analyzer, shards, replicas,
-           rotation_strategy_class, retention_strategy_class, rotation_strategy, retention_strategy, index_optimization_max_num_segments,
-           index_optimization_disabled, writable, default):
+def update(module, base_url, headers):
 
     url = "/".join([base_url, index_set_id])
 
     payload = {}
 
-    if title is not None:
-        payload['title'] = title
-    if description is not None:
-        payload['description'] = description
-    if index_prefix is not None:
-        payload['index_prefix'] = index_prefix
-    if writable is not None:
-        payload['writable'] = writable
-    if default is not None:
-        payload['default'] = default
-    if index_analyzer is not None:
-        payload['index_analyzer'] = index_analyzer
-    if shards is not None:
-        payload['shards'] = shards
-    if replicas is not None:
-        payload['replicas'] = replicas
-    if rotation_strategy_class is not None:
-        payload['rotation_strategy_class'] = rotation_strategy_class
-    if retention_strategy_class is not None:
-        payload['retention_strategy_class'] = retention_strategy_class
-    if rotation_strategy is not None:
-        payload['rotation_strategy'] = rotation_strategy
-    if retention_strategy is not None:
-        payload['retention_strategy'] = retention_strategy
-    if index_optimization_max_num_segments is not None:
-        payload['index_optimization_max_num_segments'] = index_optimization_max_num_segments
-    if index_optimization_disabled is not None:
-        payload['index_optimization_disabled'] = index_optimization_disabled
+    for key in ['title', 'description', 'index_prefix', 'writable', 'default',
+                'index_analyzer', 'shards', 'replicas', 'rotation_strategy_class', 'retention_strategy_class',
+                'rotation_strategy', 'retention_strategy', 'index_optimization_max_num_segments',
+                'index_optimization_disabled']
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
 
@@ -351,9 +299,6 @@ def get_token(module, endpoint, username, password):
       'password': password,
       'host': endpoint
     }
-    payload['username'] = username
-    payload['password'] = password
-    payload['host'] = endpoint
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
