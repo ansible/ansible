@@ -200,7 +200,7 @@ def create(module, pipeline_url, headers):
 
     payload = {}
 
-    for key in ['title', 'description', 'source']
+    for key in ['title', 'description', 'source']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
@@ -223,7 +223,7 @@ def create_connection(module, connection_url, headers):
 
     payload = {}
 
-    for key in ['pipeline_id', 'stream_ids']
+    for key in ['pipeline_id', 'stream_ids']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
@@ -246,7 +246,7 @@ def parse_rule(module, rule_url, headers):
 
     payload = {}
 
-    for key in ['source']
+    for key in ['source']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
@@ -269,7 +269,7 @@ def create_rule(module, rule_url, headers):
 
     payload = {}
 
-    for key in ['title', 'description', 'source']
+    for key in ['title', 'description', 'source']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
@@ -308,7 +308,7 @@ def update(module, pipeline_url, headers):
 
     url = "/".join([pipeline_url, pipeline_id])
 
-    for key in ['pipeline_id', 'title', 'description', 'source']
+    for key in ['pipeline_id', 'title', 'description', 'source']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
@@ -334,7 +334,7 @@ def update_connection(module, connection_url, headers):
 
     payload = {}
 
-    for key in ['pipeline_id', 'stream_ids']
+    for key in ['pipeline_id', 'stream_ids']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
@@ -357,7 +357,7 @@ def update_rule(module, rule_url, headers):
 
     payload = {}
 
-    for key in ['title', 'description', 'source']
+    for key in ['title', 'description', 'source']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
