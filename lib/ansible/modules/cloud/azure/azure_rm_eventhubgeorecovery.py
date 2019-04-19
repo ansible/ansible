@@ -107,9 +107,13 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
+    import time
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+AZURE_SUCCESS_STATE = "Succeeded"
+
 
 class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
 
@@ -194,10 +198,10 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
                     alias = self.create_or_update_alias()
             if self.break_pairing and not self.check_mode:
                 changed = True
-                self.do_break_pairing()
+                alias = self.do_break_pairing()
             if self.fail_over and not self.check_mode:
                 changed = True
-                self.do_fail_over()
+                alias = self.do_fail_over()
             results = self.to_dict(alias) if alias else None
         elif alias:
             changed = True
@@ -208,12 +212,30 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
         self.results['id'] = results
         return self.results
 
+    def wait_provision_succeeded(self, wait=5, max_wait=600):
+        try:
+            delay = wait
+            alias = self.get_alias()
+            total_delay = 0
+            while not alias.provisioning_state.value == AZURE_SUCCESS_STATE and total_delay < max_wait:
+                self.log("Waiting for {0} sec".format(delay))
+                time.sleep(delay)
+                total_delay += delay
+                alias = self.get_alias()
+
+            if total_delay >= max_wait:
+                self.fail('Fail to check the provision state due to timeout')
+            return alias
+        except Exception as exc:
+            self.fail('Fail to check the provision state {0}'.format(str(exc)))
+
     def do_break_pairing(self):
         try:
             self.log("Disabling the disaster recovery")
             self.eventhub_client.disaster_recovery_configs.break_pairing(resource_group_name=self.resource_group,
                                                                          namespace_name=self.namespace,
                                                                          alias=self.name)
+            return self.wait_provision_succeeded()
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Fail to disable the disaster recovery {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
@@ -223,6 +245,7 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
             self.eventhub_client.disaster_recovery_configs.fail_over(resource_group_name=self.resource_group,
                                                                      namespace_name=self.namespace,
                                                                      alias=self.name)
+            return self.wait_provision_succeeded()
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Fail to invoke the disaster recovery {0} failover: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
     def get_alias(self):
@@ -248,11 +271,13 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
     def create_or_update_alias(self):
         try:
             self.log("Creating or updating the Alias(Disaster Recovery configuration)")
-            return self.eventhub_client.disaster_recovery_configs.create_or_update(resource_group_name=self.resource_group,
-                                                                                   namespace_name=self.namespace,
-                                                                                   alias=self.name,
-                                                                                   partner_namespace=self.partner_namespace,
-                                                                                   alternate_name=self.alternate_name)
+            alias = self.eventhub_client.disaster_recovery_configs.create_or_update(resource_group_name=self.resource_group,
+                                                                                    namespace_name=self.namespace,
+                                                                                    alias=self.name,
+                                                                                    partner_namespace=self.partner_namespace,
+                                                                                    alternate_name=self.alternate_name)
+            alias = self.wait_provision_succeeded()
+            return alias
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Error creating or updating Alias {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
