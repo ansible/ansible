@@ -178,7 +178,9 @@ def create(module, base_url, headers):
 
     payload = {}
 
-    if title is not None:
+    for key in ['title', 'description', 'index_prefix', 'creation_date', 'writable', 'default', 'index_analyzer', 'shards', 'replicas', ]
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
         payload['title'] = title
     if description is not None:
         payload['description'] = description
