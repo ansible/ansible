@@ -165,9 +165,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, api_token, username, password, email, full_name, roles, permissions, timezone):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def create(module, base_url, headers, username, password, email, full_name, roles, permissions, timezone):
 
     url = base_url
 
@@ -201,9 +199,7 @@ def create(module, base_url, api_token, username, password, email, full_name, ro
     return info['status'], info['msg'], content, url
 
 
-def update(module, base_url, api_token, username, password, email, full_name, roles, permissions, timezone):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def update(module, base_url, headers, username, password, email, full_name, roles, permissions, timezone):
 
     url = base_url + "/%s" % (username)
 
@@ -237,9 +233,7 @@ def update(module, base_url, api_token, username, password, email, full_name, ro
     return info['status'], info['msg'], content, url
 
 
-def delete(module, base_url, api_token, username):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json" , "Authorization": "Basic %s"}' % (api_token)
+def delete(module, base_url, headers, username):
 
     url = base_url + "/%s" % (username)
 
@@ -257,8 +251,6 @@ def delete(module, base_url, api_token, username):
 
 
 def list(module, base_url, api_token):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
 
     url = base_url
 
@@ -297,7 +289,9 @@ def get_token(module, endpoint, username, password):
     except AttributeError:
         content = info.pop('body', '')
 
-    session_token = base64.b64encode(session['session_id'] + ":session")
+    session_string = session['session_id'] + ":session"
+    session_bytes = session_string.encode('utf-8')
+    session_token = base64.b64encode(session_bytes)
 
     return session_token
 
@@ -334,13 +328,15 @@ def main():
     base_url = "https://%s/api/users" % (endpoint)
 
     api_token = get_token(module, endpoint, graylog_user, graylog_password)
+    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", \
+                "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
-        status, message, content, url = create(module, base_url, api_token, username, password, email, full_name, roles, permissions, timezone)
+        status, message, content, url = create(module, base_url, headers, username, password, email, full_name, roles, permissions, timezone)
     elif action == "update":
-        status, message, content, url = update(module, base_url, api_token, username, password, email, full_name, roles, permissions, timezone)
+        status, message, content, url = update(module, base_url, headers, username, password, email, full_name, roles, permissions, timezone)
     elif action == "delete":
-        status, message, content, url = delete(module, base_url, api_token, username)
+        status, message, content, url = delete(module, base_url, headers, username)
     elif action == "list":
         status, message, content, url = list(module, base_url, api_token)
 
