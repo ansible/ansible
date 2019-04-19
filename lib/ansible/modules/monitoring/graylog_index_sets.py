@@ -198,7 +198,7 @@ def create(module, base_url, headers):
 
 def update(module, base_url, headers):
 
-    url = "/".join([base_url, index_set_id])
+    url = "/".join([base_url, module.params['index_set_id']])
 
     payload = {}
 
@@ -374,14 +374,9 @@ def main():
                 "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
-        status, message, content, url = create(module, base_url, headers, title, description, index_prefix,
-                                               index_analyzer, shards, replicas, rotation_strategy_class, retention_strategy_class, rotation_strategy,
-                                               retention_strategy, index_optimization_max_num_segments, index_optimization_disabled, creation_date,
-                                               writable, default)
+        status, message, content, url = create(module, base_url, headers)
     elif action == "update":
-        status, message, content, url = update(module, base_url, headers, index_set_id, title, description, index_prefix, index_analyzer,
-                                               shards, replicas, rotation_strategy_class, retention_strategy_class, rotation_strategy, retention_strategy,
-                                               index_optimization_max_num_segments, index_optimization_disabled, writable, default)
+        status, message, content, url = update(module, base_url, headers)
     elif action == "delete":
         status, message, content, url = delete(module, base_url, headers, index_set_id)
     elif action == "list":
