@@ -26,6 +26,7 @@ options:
     description:
       - Graylog privileged user username.
     required: false
+    type: str
   graylog_password:
     description:
       - Graylog privileged user password.
