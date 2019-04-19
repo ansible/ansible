@@ -224,9 +224,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, api_token, title, description, remove_matches_from_default_stream, matching_type, rules, index_set_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def create(module, base_url, headers, title, description, remove_matches_from_default_stream, matching_type, rules, index_set_id):
 
     url = base_url
 
@@ -258,9 +256,7 @@ def create(module, base_url, api_token, title, description, remove_matches_from_
     return info['status'], info['msg'], content, url
 
 
-def create_rule(module, base_url, api_token, stream_id, field, type, value, inverted, description):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def create_rule(module, base_url, headers, stream_id, field, type, value, inverted, description):
 
     url = base_url + "/%s/rules" % (stream_id)
 
@@ -290,9 +286,7 @@ def create_rule(module, base_url, api_token, stream_id, field, type, value, inve
     return info['status'], info['msg'], content, url
 
 
-def update(module, base_url, api_token, stream_id, title, description, remove_matches_from_default_stream, matching_type, rules, index_set_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def update(module, base_url, headers, stream_id, title, description, remove_matches_from_default_stream, matching_type, rules, index_set_id):
 
     url = base_url + "/%s" % (stream_id)
 
@@ -347,9 +341,7 @@ def update(module, base_url, api_token, stream_id, title, description, remove_ma
     return info['status'], info['msg'], content, url
 
 
-def update_rule(module, base_url, api_token, stream_id, rule_id, field, type, value, inverted, description):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def update_rule(module, base_url, headers, stream_id, rule_id, field, type, value, inverted, description):
 
     payload = {}
 
@@ -400,9 +392,7 @@ def update_rule(module, base_url, api_token, stream_id, rule_id, field, type, va
     return info['status'], info['msg'], content, url
 
 
-def delete(module, base_url, api_token, stream_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def delete(module, base_url, headers, stream_id):
 
     url = base_url + "/%s" % (stream_id)
 
@@ -419,9 +409,7 @@ def delete(module, base_url, api_token, stream_id):
     return info['status'], info['msg'], content, url
 
 
-def delete_rule(module, base_url, api_token, stream_id, rule_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def delete_rule(module, base_url, headers, stream_id, rule_id):
 
     url = base_url + "/%s/rules/%s" % (stream_id, rule_id)
 
@@ -438,9 +426,7 @@ def delete_rule(module, base_url, api_token, stream_id, rule_id):
     return info['status'], info['msg'], content, url
 
 
-def start(module, base_url, api_token, stream_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def start(module, base_url, headers, stream_id):
 
     url = base_url + "/%s/resume" % (stream_id)
 
@@ -457,9 +443,7 @@ def start(module, base_url, api_token, stream_id):
     return info['status'], info['msg'], content, url
 
 
-def pause(module, base_url, api_token, stream_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def pause(module, base_url, headers, stream_id):
 
     url = base_url + "/%s/pause" % (stream_id)
 
@@ -476,9 +460,7 @@ def pause(module, base_url, api_token, stream_id):
     return info['status'], info['msg'], content, url
 
 
-def list(module, base_url, api_token, stream_id):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def list(module, base_url, headers, stream_id):
 
     if stream_id is not None:
         url = base_url + "/%s" % (stream_id)
@@ -498,9 +480,7 @@ def list(module, base_url, api_token, stream_id):
     return info['status'], info['msg'], content, url
 
 
-def query_streams(module, base_url, api_token, stream_name):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
+def query_streams(module, base_url, headers, stream_name):
 
     url = base_url
 
@@ -530,8 +510,6 @@ def query_streams(module, base_url, api_token, stream_name):
 
 
 def default_index_set(module, endpoint, base_url, api_token):
-
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic %s" }' % (api_token)
 
     url = "https://%s/api/system/indices/index_sets?skip=0&limit=0&stats=false" % (endpoint)
 
@@ -575,7 +553,9 @@ def get_token(module, endpoint, username, password):
     except AttributeError:
         content = info.pop('body', '')
 
-    session_token = base64.b64encode(session['session_id'] + ":session")
+    session_string = session['session_id'] + ":session"
+    session_bytes = session_string.encode('utf-8')
+    session_token = base64.b64encode(session_bytes)
 
     return session_token
 
@@ -625,32 +605,34 @@ def main():
     base_url = "https://%s/api/streams" % (endpoint)
 
     api_token = get_token(module, endpoint, graylog_user, graylog_password)
+    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", \
+                "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
         if index_set_id is None:
             index_set_id = default_index_set(module, endpoint, base_url, api_token)
-        status, message, content, url = create(module, base_url, api_token, title, description, remove_matches_from_default_stream,
+        status, message, content, url = create(module, base_url, headers, title, description, remove_matches_from_default_stream,
                                                matching_type, rules, index_set_id)
     elif action == "create_rule":
-        status, message, content, url = create_rule(module, base_url, api_token, stream_id, field, type, value, inverted, description)
+        status, message, content, url = create_rule(module, base_url, headers, stream_id, field, type, value, inverted, description)
     elif action == "update":
-        status, message, content, url = update(module, base_url, api_token, stream_id, title, description, remove_matches_from_default_stream,
+        status, message, content, url = update(module, base_url, headers, stream_id, title, description, remove_matches_from_default_stream,
                                                matching_type, rules, index_set_id)
     elif action == "update_rule":
-        status, message, content, url = update_rule(module, base_url, api_token, stream_id, rule_id, field, type, value, inverted, description)
+        status, message, content, url = update_rule(module, base_url, headers, stream_id, rule_id, field, type, value, inverted, description)
     elif action == "delete":
-        status, message, content, url = delete(module, base_url, api_token, stream_id)
+        status, message, content, url = delete(module, base_url, headers, stream_id)
     elif action == "delete_rule":
-        status, message, content, url = delete_rule(module, base_url, api_token, stream_id, rule_id)
+        status, message, content, url = delete_rule(module, base_url, headers, stream_id, rule_id)
     elif action == "start":
-        status, message, content, url = start(module, base_url, api_token, stream_id)
+        status, message, content, url = start(module, base_url, headers, stream_id)
     elif action == "pause":
-        status, message, content, url = pause(module, base_url, api_token, stream_id)
+        status, message, content, url = pause(module, base_url, headers, stream_id)
     elif action == "list":
-        status, message, content, url = list(module, base_url, api_token, stream_id)
+        status, message, content, url = list(module, base_url, headers, stream_id)
     elif action == "query_streams":
-        stream_id = query_streams(module, base_url, api_token, stream_name)
-        status, message, content, url = list(module, base_url, api_token, stream_id)
+        stream_id = query_streams(module, base_url, headers, stream_name)
+        status, message, content, url = list(module, base_url, headers, stream_id)
 
     uresp = {}
     content = to_text(content, encoding='UTF-8')
