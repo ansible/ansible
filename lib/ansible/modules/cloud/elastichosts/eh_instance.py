@@ -3,6 +3,9 @@
 # Copyright: (c) 2019, Konrad D. Pisarczyk
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'
@@ -15,7 +18,7 @@ short_description: Create or remove ElasticHosts container or VM instances
 description:
     - Create or remove a container or a VM on ElasticHosts platfom.
     - Supports C(check_mode).
-version_added: "2.7"
+version_added: "2.9"
 author: "Konrad D. Pisarczyk (@nickyfow)"
 options:
     force:
