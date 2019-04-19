@@ -157,6 +157,10 @@ AZURE_TAG_ARGS = dict(
     append_tags=dict(type='bool', default=True),
 )
 
+AZURE_INFO_TAG_ARGS = dict(
+    tags=dict(type='list')
+)
+
 AZURE_COMMON_REQUIRED_IF = [
     ('log_mode', 'file', ['log_path'])
 ]
@@ -345,8 +349,11 @@ class AzureRMModuleBase(object):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(AZURE_COMMON_ARGS)
-        if supports_tags:
+        if supports_tags and not facts_module:
             merged_arg_spec.update(AZURE_TAG_ARGS)
+
+        if supports_tags and facts_module:
+            merged_arg_spec.update(AZURE_INFO_TAG_ARGS)
 
         if derived_arg_spec:
             merged_arg_spec.update(derived_arg_spec)
@@ -472,6 +479,9 @@ class AzureRMModuleBase(object):
             for key, value in tags.items():
                 if not isinstance(value, str):
                     self.fail("Tags values must be strings. Found {0}:{1}".format(str(key), str(value)))
+        else:
+            if not isinstance(tags, list) and not isinstance(tags, dict):
+                self.fail("Tags must be a dictionary of string:string values or list of string values in info modules")
 
     def update_tags(self, tags):
         '''
