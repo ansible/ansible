@@ -42,7 +42,7 @@ DOCUMENTATION = """
       env:
         - name: VAULT_SECRET_ID
     role:
-      description: Role name for vault Kubernetes auth
+      description: Role name for vault Kubernetes auth.
       env:
         - name: VAULT_ROLE
     auth_method:
