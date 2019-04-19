@@ -179,7 +179,7 @@ def create(module, base_url, headers):
     for key in ['title', 'description', 'index_prefix', 'creation_date', 'writable', 'default',
                 'index_analyzer', 'shards', 'replicas', 'rotation_strategy_class', 'retention_strategy_class',
                 'rotation_strategy', 'retention_strategy', 'index_optimization_max_num_segments',
-                'index_optimization_disabled']
+                'index_optimization_disabled']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
@@ -205,7 +205,7 @@ def update(module, base_url, headers):
     for key in ['title', 'description', 'index_prefix', 'writable', 'default',
                 'index_analyzer', 'shards', 'replicas', 'rotation_strategy_class', 'retention_strategy_class',
                 'rotation_strategy', 'retention_strategy', 'index_optimization_max_num_segments',
-                'index_optimization_disabled']
+                'index_optimization_disabled']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
