@@ -587,7 +587,8 @@ def main():
     connection_url = "https://%s/api/system/pipelines/connections" % (endpoint)
 
     api_token = get_token(module, endpoint, graylog_user, graylog_password)
-    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json", "Authorization": "Basic ' + api_token.decode() + '" }'
+    headers = '{ "Content-Type": "application/json", "X-Requested-By": "Graylog API", "Accept": "application/json",
+                "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
         status, message, content, url = create(module, pipeline_url, headers, title, description, source)
