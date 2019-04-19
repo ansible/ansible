@@ -295,9 +295,9 @@ def get_token(module, endpoint, username, password):
     url = "https://%s/api/system/sessions" % (endpoint)
 
     payload = {
-      'username': username,
-      'password': password,
-      'host': endpoint
+        'username': username,
+        'password': password,
+        'host': endpoint
     }
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
