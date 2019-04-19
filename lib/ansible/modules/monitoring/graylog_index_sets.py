@@ -68,6 +68,7 @@ options:
       - Number of Elasticsearch replicas used per index in this index set.
     required: false
     default: 1
+    type: int
   rotation_strategy_class:
     description:
       - Rotation strategy class, ex. org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategy
