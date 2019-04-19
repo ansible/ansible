@@ -146,7 +146,6 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
-from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.database import pg_quote_identifier
 
@@ -221,34 +220,10 @@ def main():
     schema = module.params["schema"]
     state = module.params["state"]
     cascade = module.params["cascade"]
-    sslrootcert = module.params["ca_cert"]
     session_role = module.params["session_role"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
-
-    db_connection = connect_to_db(module, kw, autocommit=True)
+    db_connection = connect_to_db(module, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     if session_role:
@@ -269,11 +244,11 @@ def main():
 
             elif state == "present":
                 changed = ext_create(cursor, ext, schema, cascade)
-    except NotSupportedError as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
+    db_connection.close()
     module.exit_json(changed=changed, db=db, ext=ext, queries=executed_queries)
 
 

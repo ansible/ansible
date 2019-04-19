@@ -35,6 +35,7 @@ except ImportError:
     HAS_PSYCOPG2 = False
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
 
 class LibraryError(Exception):
@@ -63,7 +64,40 @@ def postgres_common_argument_spec():
     )
 
 
-def connect_to_db(module, kw, autocommit=False):
+def connect_to_db(module, autocommit=False):
+    # To use defaults values, keyword arguments must be absent, so
+    # check which values are empty and don't include in the **kw
+    # dictionary
+    sslrootcert = module.params['ca_cert']
+    params_map = {
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "ssl_mode": "sslmode",
+        "ca_cert": "sslrootcert"
+    }
+
+    # Might be different in the modules:
+    if module.params.get('db'):
+        params_map['db'] = 'database'
+    elif module.params.get('database'):
+        params_map['database'] = 'database'
+    elif module.params.get('login_db'):
+        params_map['login_db'] = 'database'
+
+    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
+              if k in params_map and v != '' and v is not None)
+
+    # If a login_unix_socket is specified, incorporate it here.
+    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
+    if is_localhost and module.params["login_unix_socket"] != "":
+        kw["host"] = module.params["login_unix_socket"]
+
+    if psycopg2.__version__ < '2.4.3' and sslrootcert:
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 '
+                             'in order to user the ssl_rootcert parameter')
+
     try:
         db_connection = psycopg2.connect(**kw)
         if autocommit:

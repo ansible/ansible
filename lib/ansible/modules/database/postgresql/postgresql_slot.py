@@ -263,30 +263,7 @@ def main():
     if immediately_reserve and slot_type == 'logical':
         module.fail_json(msg="Module parameters immediately_reserve and slot_type=logical are mutually exclusive")
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "db": "database",
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "sslmode": "ssl_mode",
-        "ca_cert": "ssl_rootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != '')
-
-    # if a login_unix_socket is specified, incorporate it here
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and ssl_rootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
-
-    db_connection = connect_to_db(module, kw, autocommit=True)
+    db_connection = connect_to_db(module, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # Switch role, if specified:
@@ -321,6 +298,7 @@ def main():
 
         changed = pg_slot.changed
 
+    db_connection.close()
     module.exit_json(changed=changed, name=name, queries=pg_slot.executed_queries)
 
 
