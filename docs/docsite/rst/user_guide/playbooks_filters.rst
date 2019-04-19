@@ -682,23 +682,23 @@ Network Genie filters
 
 .. versionadded:: 2.9
 
-The network genie filter can take unstructured network CLI command output from all
-Cisco network operating systems, and output structured JSON. While similar to other
+The network genie filter takes unstructured network CLI command output from all
+Cisco Systems network operating systems, and outputs structured data. While similar to other
 network CLI parsers already available (parse_cli, parse_cli_textfsm), this parser is
-powered by a very mature and robust library written by Cisco Systems called Genie (and underlying framework
-called pyATS). This provides over 500 parsers that transform configuration and CLI
+powered by a very mature and robust library written by Cisco Systems called Genie (and underlying framework pyATS).
+This provides over 500 parsers that transform configuration and CLI
 output to structured data that is normalized and conforms to standard, OS-agnostic data models.
 
 .. note:: The Genie library can also serve as an engine to parse tabular and non-tabular free-form text
-    using much less code than traditional screen-scrape parsing requires. This means that it can be used to
-    parse any vendor output; not just that of Cisco devices. That would involve writing custom parsers.
+    using much less code than traditional parsing requires. Therefore, it can be used to
+    parse any vendor output; not just that of Cisco devices. However, that would involve writing custom parsers.
     This release does not include the functionality to utilize custom parsers. The supported parsers are whatever
     is included in the release of Genie that the user has installed on the Ansible control machine.
 
-To convert the output of a network device CLI command output, use the ``parse_genie`` filter as shown in this example
+To convert the output of a network device CLI command, use the ``parse_genie`` filter as shown in this example
 (do not use abbreviated CLI commands).
 
-The CLI output of the ``show version`` command from a Cisco IOS-XE device::
+Converting CLI output of the ``show version`` command from a Cisco IOS-XE device to structured data::
 
     {{ cli_output | parse_genie(command='show version', os='iosxe') }}
 
@@ -750,9 +750,9 @@ The above example would yield the following:
     }
 
 
-.. note:: The list of supported operating systems and commands is available from Cisco at the link below, as well
+.. note:: The list of supported operating systems and commands, as well
     as the data's schema definitions (data models) which describe exactly what fields and
-    data types will be returned for any given command.
+    data types will be returned for any given command, is available from Cisco Systems at the link below.
 
     https://pubhub.devnetcloud.com/media/pyats-packages/docs/genie/genie_libs/#/parsers
 
