@@ -96,6 +96,7 @@ nginx_status_facts.data:
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 
 
 class NginxStatusFacts(object):
@@ -121,7 +122,7 @@ class NginxStatusFacts(object):
         if not response:
             module.fail_json(msg="No valid or no response from url %s within %s seconds (timeout)" % (self.url, self.timeout))
 
-        data = response.read()
+        data = to_text(response.read(), errors='surrogate_or_strict')
         if not data:
             return result
 

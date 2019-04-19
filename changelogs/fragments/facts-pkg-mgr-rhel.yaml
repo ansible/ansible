@@ -1,2 +1,0 @@
-bugfixes:
-  - facts - ensure that the default package manager for RHEL < 8 is yum, and dnf for newer

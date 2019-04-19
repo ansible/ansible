@@ -1241,7 +1241,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             hosts=hosts,
             gather_facts=gather_facts,
             vars_files=[
-                test_env.vars_file,
+                os.path.relpath(test_env.vars_file, test_env.integration_dir),
             ],
             roles=[
                 target.name,
@@ -1262,7 +1262,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
             display.info('>>> Playbook: %s\n%s' % (filename, playbook.strip()), verbosity=3)
 
-            cmd = ['ansible-playbook', filename, '-i', test_env.inventory_path]
+            cmd = ['ansible-playbook', filename, '-i', os.path.relpath(test_env.inventory_path, test_env.integration_dir)]
 
             if start_at_task:
                 cmd += ['--start-at-task', start_at_task]

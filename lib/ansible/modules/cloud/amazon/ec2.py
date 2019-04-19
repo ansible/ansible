@@ -431,7 +431,6 @@ EXAMPLES = '''
 
 - name: Terminate instances
   hosts: localhost
-  connection: local
   tasks:
     - name: Terminate instances that were previously launched
       ec2:
@@ -444,7 +443,6 @@ EXAMPLES = '''
 - name: Start sandbox instances
   hosts: localhost
   gather_facts: false
-  connection: local
   vars:
     instance_ids:
       - 'i-xxxxxx'
@@ -467,7 +465,6 @@ EXAMPLES = '''
 - name: Stop sandbox instances
   hosts: localhost
   gather_facts: false
-  connection: local
   vars:
     instance_ids:
       - 'i-xxxxxx'
@@ -1642,7 +1639,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
             instance_initiated_shutdown_behavior=dict(default='stop', choices=['stop', 'terminate']),
             exact_count=dict(type='int', default=None),
-            count_tag=dict(),
+            count_tag=dict(type='raw'),
             volumes=dict(type='list'),
             ebs_optimized=dict(type='bool', default=False),
             tenancy=dict(default='default', choices=['default', 'dedicated']),

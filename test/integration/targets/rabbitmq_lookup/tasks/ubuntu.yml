@@ -75,9 +75,9 @@
     password: guest
     force_basic_auth: yes
     return_content: yes
-    register: post_data
     headers:
       Content-Type: "application/json"
+  register: post_data
 
 
 - name: Post test message to the exchange (json)
@@ -89,9 +89,9 @@
     password: guest
     force_basic_auth: yes
     return_content: yes
-    register: post_data_json
     headers:
       Content-Type: "application/json"
+  register: post_data_json
 
 - name: Test retrieve messages
   set_fact:

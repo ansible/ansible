@@ -86,18 +86,6 @@ options:
     type: str
     aliases:
     - login_db
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
   session_role:
     description:
     - Switch to session_role after connecting.
@@ -105,35 +93,6 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s). If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    aliases:
-    - ssl_rootcert
 notes:
 - If you do not pass db parameter, tables will be created in the database
   named postgres.
@@ -153,6 +112,7 @@ notes:
 requirements: [ psycopg2 ]
 author:
 - Andrew Klychkov (@Andersson007)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -258,7 +218,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -484,9 +444,6 @@ def main():
         table=dict(type='str', required=True, aliases=['name']),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         db=dict(type='str', default='', aliases=['login_db']),
-        port=dict(type='int', default=5432, aliases=['login_port']),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
         tablespace=dict(type='str'),
         owner=dict(type='str'),
         unlogged=dict(type='bool'),
@@ -568,15 +525,8 @@ def main():
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
-    try:
-        db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+    db_connection = connect_to_db(module, kw, autocommit=False)
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     if session_role:
         try:

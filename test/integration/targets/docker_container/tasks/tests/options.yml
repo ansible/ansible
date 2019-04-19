@@ -937,6 +937,7 @@
     dns_search_domains:
     - example.org
     - example.com
+    force_kill: yes
   register: dns_search_domains_3
 
 - name: dns_search_domains (changed elements)
@@ -1000,6 +1001,7 @@
     dns_servers:
     - 8.8.8.8
     - 1.1.1.1
+    force_kill: yes
   register: dns_servers_3
 
 - name: dns_servers (changed elements)
@@ -2125,6 +2127,7 @@
     log_options:
       labels: production_status
       env: os,customer
+      max-file: 5
   register: log_options_1
 
 - name: log_options (idempotency)
@@ -2137,6 +2140,7 @@
     log_options:
       env: os,customer
       labels: production_status
+      max-file: 5
   register: log_options_2
 
 - name: log_options (less log options)
@@ -2159,7 +2163,7 @@
     log_driver: json-file
     log_options:
       labels: production_status
-      max-file: 1
+      max-size: 10m
     force_kill: yes
   register: log_options_4
 
@@ -2174,6 +2178,8 @@
     that:
     - log_options_1 is changed
     - log_options_2 is not changed
+    - "'Non-string value found for log_options option \\'max-file\\'. The value is automatically converted to \\'5\\'. If this is not correct, or you want to
+avoid such warnings, please quote the value.' in log_options_2.warnings"
     - log_options_3 is not changed
     - log_options_4 is changed
 

@@ -1,2 +1,0 @@
-bugfixes:
-- callbacks - Do not filter out exception, warnings, deprecations on failure when using debug (https://github.com/ansible/ansible/issues/47576)

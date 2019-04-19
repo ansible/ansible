@@ -1,2 +1,0 @@
-minor_changes:
-  - yum/dnf - Add download_dir param (https://github.com/ansible/ansible/issues/24004)

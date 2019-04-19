@@ -377,7 +377,7 @@ EXAMPLES = '''
 - name: Create instance of Application Gateway
   azure_rm_appgateway:
     resource_group: myResourceGroup
-    name: myappgateway
+    name: myAppGateway
     sku:
       name: standard_small
       tier: standard

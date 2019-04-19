@@ -1,0 +1,51 @@
+{
+    "status_code": 200,
+    "data": {
+        "Stacks": [
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-rollback/914046e0-3a0f-11e9-94bf-0a9edf17d014",
+                "StackName": "ansible-test-on-create-failure-rollback",
+                "CreationTime": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 43,
+                    "second": 34,
+                    "microsecond": 740000
+                },
+                "DeletionTime": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 43,
+                    "second": 39,
+                    "microsecond": 920000
+                },
+                "RollbackConfiguration": {},
+                "StackStatus": "ROLLBACK_COMPLETE",
+                "DisableRollback": false,
+                "NotificationARNs": [],
+                "Tags": [],
+                "EnableTerminationProtection": false,
+                "DriftInformation": {
+                    "StackDriftStatus": "NOT_CHECKED"
+                }
+            }
+        ],
+        "ResponseMetadata": {
+            "RequestId": "98016814-3a0f-11e9-b938-97983b40cabe",
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "x-amzn-requestid": "98016814-3a0f-11e9-b938-97983b40cabe",
+                "content-type": "text/xml",
+                "content-length": "1044",
+                "date": "Tue, 26 Feb 2019 21:43:45 GMT"
+            },
+            "RetryAttempts": 0
+        }
+    }
+}

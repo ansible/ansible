@@ -178,32 +178,16 @@ def _count_newlines_from_end(in_str):
         return i
 
 
-def tests_as_filters_warning(name, func):
-    '''
-    Closure to enable displaying a deprecation warning when tests are used as a filter
-
-    This closure is only used when registering ansible provided tests as filters
-
-    This function should be removed in 2.9 along with registering ansible provided tests as filters
-    in Templar._get_filters
-    '''
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        display.deprecated(
-            'Using tests as filters is deprecated. Instead of using `result|%(name)s` use '
-            '`result is %(name)s`' % dict(name=name),
-            version='2.9'
-        )
-        return func(*args, **kwargs)
-    return wrapper
-
-
 class AnsibleUndefined(StrictUndefined):
     '''
     A custom Undefined class, which returns further Undefined objects on access,
     rather than throwing an exception.
     '''
     def __getattr__(self, name):
+        # Return original Undefined object to preserve the first failure context
+        return self
+
+    def __getitem__(self, key):
         # Return original Undefined object to preserve the first failure context
         return self
 
@@ -417,13 +401,6 @@ class Templar:
             return self._filters.copy()
 
         self._filters = dict()
-
-        # TODO: Remove registering tests as filters in 2.9
-        for name, func in self._get_tests().items():
-            if name in builtin_filters:
-                # If we have a custom test named the same as a builtin filter, don't register as a filter
-                continue
-            self._filters[name] = tests_as_filters_warning(name, func)
 
         for fp in self._filter_loader.all():
             self._filters.update(fp.filters())

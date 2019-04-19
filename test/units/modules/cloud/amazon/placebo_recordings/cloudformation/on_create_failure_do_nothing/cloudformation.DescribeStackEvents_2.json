@@ -1,0 +1,121 @@
+{
+    "status_code": 200,
+    "data": {
+        "StackEvents": [
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-do-nothing/a39dd0a0-3a0f-11e9-96ca-02f46dd00950",
+                "EventId": "a6c32c80-3a0f-11e9-ac5e-06deb474fa52",
+                "StackName": "ansible-test-on-create-failure-do-nothing",
+                "LogicalResourceId": "ansible-test-on-create-failure-do-nothing",
+                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-do-nothing/a39dd0a0-3a0f-11e9-96ca-02f46dd00950",
+                "ResourceType": "AWS::CloudFormation::Stack",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 44,
+                    "second": 10,
+                    "microsecond": 804000
+                },
+                "ResourceStatus": "CREATE_FAILED",
+                "ResourceStatusReason": "The following resource(s) failed to create: [ECRRepo]. "
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-do-nothing/a39dd0a0-3a0f-11e9-96ca-02f46dd00950",
+                "EventId": "ECRRepo-CREATE_FAILED-2019-02-26T21:44:09.905Z",
+                "StackName": "ansible-test-on-create-failure-do-nothing",
+                "LogicalResourceId": "ECRRepo",
+                "PhysicalResourceId": "ansib-ecrre-a8g0mh5il4t5",
+                "ResourceType": "AWS::ECR::Repository",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 44,
+                    "second": 9,
+                    "microsecond": 905000
+                },
+                "ResourceStatus": "CREATE_FAILED",
+                "ResourceStatusReason": "Invalid parameter at 'PolicyText' failed to satisfy constraint: 'Invalid repository policy provided' (Service: AmazonECR; Status Code: 400; Error Code: InvalidParameterException; Request ID: a62a6f71-3a0f-11e9-9164-457e0a3a5e1b)",
+                "ResourceProperties": "{\"RepositoryPolicyText\":{\"Version\":\"3000-10-17\",\"Statement\":[{\"Action\":[\"ecr:*\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"}}]}}"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-do-nothing/a39dd0a0-3a0f-11e9-96ca-02f46dd00950",
+                "EventId": "ECRRepo-CREATE_IN_PROGRESS-2019-02-26T21:44:09.497Z",
+                "StackName": "ansible-test-on-create-failure-do-nothing",
+                "LogicalResourceId": "ECRRepo",
+                "PhysicalResourceId": "ansib-ecrre-a8g0mh5il4t5",
+                "ResourceType": "AWS::ECR::Repository",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 44,
+                    "second": 9,
+                    "microsecond": 497000
+                },
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceStatusReason": "Resource creation Initiated",
+                "ResourceProperties": "{\"RepositoryPolicyText\":{\"Version\":\"3000-10-17\",\"Statement\":[{\"Action\":[\"ecr:*\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"}}]}}"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-do-nothing/a39dd0a0-3a0f-11e9-96ca-02f46dd00950",
+                "EventId": "ECRRepo-CREATE_IN_PROGRESS-2019-02-26T21:44:09.076Z",
+                "StackName": "ansible-test-on-create-failure-do-nothing",
+                "LogicalResourceId": "ECRRepo",
+                "PhysicalResourceId": "",
+                "ResourceType": "AWS::ECR::Repository",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 44,
+                    "second": 9,
+                    "microsecond": 76000
+                },
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceProperties": "{\"RepositoryPolicyText\":{\"Version\":\"3000-10-17\",\"Statement\":[{\"Action\":[\"ecr:*\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"}}]}}"
+            },
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-do-nothing/a39dd0a0-3a0f-11e9-96ca-02f46dd00950",
+                "EventId": "a39e6ce0-3a0f-11e9-96ca-02f46dd00950",
+                "StackName": "ansible-test-on-create-failure-do-nothing",
+                "LogicalResourceId": "ansible-test-on-create-failure-do-nothing",
+                "PhysicalResourceId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-do-nothing/a39dd0a0-3a0f-11e9-96ca-02f46dd00950",
+                "ResourceType": "AWS::CloudFormation::Stack",
+                "Timestamp": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 44,
+                    "second": 5,
+                    "microsecond": 553000
+                },
+                "ResourceStatus": "CREATE_IN_PROGRESS",
+                "ResourceStatusReason": "User Initiated"
+            }
+        ],
+        "ResponseMetadata": {
+            "RequestId": "a75fbad0-3a0f-11e9-b7db-3fe3824c73cb",
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "x-amzn-requestid": "a75fbad0-3a0f-11e9-b7db-3fe3824c73cb",
+                "content-type": "text/xml",
+                "content-length": "5231",
+                "vary": "Accept-Encoding",
+                "date": "Tue, 26 Feb 2019 21:44:11 GMT"
+            },
+            "RetryAttempts": 0
+        }
+    }
+}

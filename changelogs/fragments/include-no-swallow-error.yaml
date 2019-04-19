@@ -1,2 +1,0 @@
-bugfixes:
-- include_role - Don't swallow errors when processing included files/roles (https://github.com/ansible/ansible/issues/54786)

@@ -235,6 +235,7 @@ from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
@@ -243,7 +244,6 @@ PYOPENSSL_IMP_ERR = None
 try:
     import OpenSSL
     from OpenSSL import crypto
-    import ipaddress
     PYOPENSSL_VERSION = LooseVersion(OpenSSL.__version__)
     if OpenSSL.SSL.OPENSSL_VERSION_NUMBER >= 0x10100000:
         # OpenSSL 1.1.0 or newer
@@ -425,18 +425,18 @@ class CertificateInfoCryptography(CertificateInfo):
         super(CertificateInfoCryptography, self).__init__(module, 'cryptography')
 
     def _get_signature_algorithm(self):
-        return crypto_utils.crpytography_oid_to_name(self.cert.signature_algorithm_oid)
+        return crypto_utils.cryptography_oid_to_name(self.cert.signature_algorithm_oid)
 
     def _get_subject(self):
         result = dict()
         for attribute in self.cert.subject:
-            result[crypto_utils.crpytography_oid_to_name(attribute.oid)] = attribute.value
+            result[crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
         return result
 
     def _get_issuer(self):
         result = dict()
         for attribute in self.cert.issuer:
-            result[crypto_utils.crpytography_oid_to_name(attribute.oid)] = attribute.value
+            result[crypto_utils.cryptography_oid_to_name(attribute.oid)] = attribute.value
         return result
 
     def _get_version(self):
@@ -488,7 +488,7 @@ class CertificateInfoCryptography(CertificateInfo):
         try:
             ext_keyusage_ext = self.cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
             return sorted([
-                crypto_utils.crpytography_oid_to_name(eku) for eku in ext_keyusage_ext.value
+                crypto_utils.cryptography_oid_to_name(eku) for eku in ext_keyusage_ext.value
             ]), ext_keyusage_ext.critical
         except cryptography.x509.ExtensionNotFound:
             return None, False
@@ -609,7 +609,7 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
         if san.startswith('IP Address:'):
             san = 'IP:' + san[len('IP Address:'):]
         if san.startswith('IP:'):
-            ip = ipaddress.ip_address(san[3:])
+            ip = compat_ipaddress.ip_address(san[3:])
             san = 'IP:{0}'.format(ip.compressed)
         return san
 

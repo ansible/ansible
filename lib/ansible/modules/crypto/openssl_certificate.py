@@ -1437,14 +1437,14 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
             return self.cert.signature_algorithm_oid._name
 
     def _validate_subject(self):
-        expected_subject = Name([NameAttribute(oid=crypto_utils.cryptography_get_name_oid(sub[0]), value=to_text(sub[1]))
+        expected_subject = Name([NameAttribute(oid=crypto_utils.cryptography_name_to_oid(sub[0]), value=to_text(sub[1]))
                                  for sub in self.subject])
         cert_subject = self.cert.subject
         if not compare_sets(expected_subject, cert_subject, self.subject_strict):
             return expected_subject, cert_subject
 
     def _validate_issuer(self):
-        expected_issuer = Name([NameAttribute(oid=crypto_utils.cryptography_get_name_oid(iss[0]), value=to_text(iss[1]))
+        expected_issuer = Name([NameAttribute(oid=crypto_utils.cryptography_name_to_oid(iss[0]), value=to_text(iss[1]))
                                 for iss in self.issuer])
         cert_issuer = self.cert.issuer
         if not compare_sets(expected_issuer, cert_issuer, self.issuer_strict):
@@ -1494,7 +1494,7 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
     def _validate_extended_key_usage(self):
         try:
             current_ext_keyusage = self.cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value
-            usages = [crypto_utils.cryptography_get_ext_keyusage(usage) for usage in self.extended_key_usage]
+            usages = [crypto_utils.cryptography_name_to_oid(usage) for usage in self.extended_key_usage]
             expected_ext_keyusage = x509.ExtendedKeyUsage(usages)
             if not compare_sets(expected_ext_keyusage, current_ext_keyusage, self.extended_key_usage_strict):
                 return [eku.value for eku in expected_ext_keyusage], [eku.value for eku in current_ext_keyusage]

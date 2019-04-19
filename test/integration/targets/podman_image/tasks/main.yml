@@ -1,0 +1,144 @@
+- name: Test podman_image
+  when:
+    - ansible_facts.virtualization_type != 'docker'
+    - ansible_facts.distribution == 'RedHat'
+  block:
+    - name: Pull image
+      podman_image:
+        name: quay.io/coreos/alpine-sh
+      register: pull1
+
+    - name: Pull image again
+      podman_image:
+        name: quay.io/coreos/alpine-sh
+      register: pull2
+
+    - name: List images
+      command: podman image ls
+      register: images
+
+    - name: Ensure image was pulled properly
+      assert:
+        that:
+          - pull1 is changed
+          - pull2 is not changed
+          - "'alpine-sh' in images.stdout"
+
+    - name: Remove image
+      podman_image:
+        name: quay.io/coreos/alpine-sh
+        state: absent
+      register: rmi1
+
+    - name: Remove image again
+      podman_image:
+        name: quay.io/coreos/alpine-sh
+        state: absent
+      register: rmi2
+
+    - name: List images
+      command: podman image ls
+      register: images
+
+    - name: Ensure image was removed properly
+      assert:
+        that:
+          - rmi1 is changed
+          - rmi2 is not changed
+          - "'alpine-sh' not in images.stdout"
+
+    - name: Pull a specific version of an image
+      podman_image:
+        name: quay.io/coreos/etcd
+        tag: v3.3.11
+      register: specific_image1
+
+    - name: Pull a specific version of an image again
+      podman_image:
+        name: quay.io/coreos/etcd
+        tag: v3.3.11
+      register: specific_image2
+
+    - name: List images
+      command: podman image ls
+      register: images
+
+    - name: Ensure specific image was pulled properly
+      assert:
+        that:
+          - specific_image1 is changed
+          - specific_image2 is not changed
+          - "'v3.3.11' in images.stdout"
+
+    - name: Create a build dir
+      file:
+        path: /var/tmp/build
+        state: directory
+
+    - name: Copy Containerfile
+      copy:
+        src: Containerfile
+        dest: /var/tmp/build/Dockerfile
+
+    - name: Build OCI image
+      podman_image:
+        name: testimage
+        path: /var/tmp/build
+      register: oci_build1
+
+    - name: Build OCI image again
+      podman_image:
+        name: testimage
+        path: /var/tmp/build
+      register: oci_build2
+
+    - name: Inspect build image
+      podman_image_info:
+        name: testimage
+      register: testimage_info
+
+    - name: Ensure OCI image was built properly
+      assert:
+        that:
+          - oci_build1 is changed
+          - oci_build2 is not changed
+          - "'localhost/testimage:latest' in testimage_info.images[0]['RepoTags'][0]"
+
+    - name: Build Docker image
+      podman_image:
+        name: dockerimage
+        path: /var/tmp/build
+        build:
+          format: docker
+      register: docker_build1
+
+    - name: Build Docker image again
+      podman_image:
+        name: dockerimage
+        path: /var/tmp/build
+        build:
+          format: docker
+      register: docker_build2
+
+    - name: Inspect build image
+      podman_image_info:
+        name: dockerimage
+      register: dockerimage_info
+
+    - name: Ensure Docker image was built properly
+      assert:
+        that:
+          - docker_build1 is changed
+          - docker_build2 is not changed
+          - "'localhost/dockerimage:latest' in dockerimage_info.images[0]['RepoTags'][0]"
+
+  always:
+    - name: Cleanup images
+      podman_image:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - quay.io/coreos/alpine-sh
+        - quay.io/coreos/etcd:v3.3.11
+        - localhost/testimage
+        - localhost/dockerimage

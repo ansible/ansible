@@ -218,11 +218,35 @@ EXAMPLES = '''
 '''
 
 RETURN = """
-instance:
-    description: metadata about the new virtual machine snapshot
+snapshot_results:
+    description: metadata about the virtual machine snapshots
     returned: always
     type: dict
-    sample: None
+    sample: {
+      "current_snapshot": {
+          "creation_time": "2019-04-09T14:40:26.617427+00:00",
+          "description": "Snapshot 4 example",
+          "id": 4,
+          "name": "snapshot4",
+          "state": "poweredOff"
+      },
+      "snapshots": [
+          {
+              "creation_time": "2019-04-09T14:38:24.667543+00:00",
+              "description": "Snapshot 3 example",
+              "id": 3,
+              "name": "snapshot3",
+              "state": "poweredOff"
+          },
+          {
+              "creation_time": "2019-04-09T14:40:26.617427+00:00",
+              "description": "Snapshot 4 example",
+              "id": 4,
+              "name": "snapshot4",
+              "state": "poweredOff"
+          }
+      ]
+    }
 """
 
 import time
@@ -361,7 +385,7 @@ class PyVmomiHelper(PyVmomi):
             if task.info.state == 'error':
                 result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
             else:
-                result = {'changed': True, 'failed': False, 'results': list_snapshots(vm)}
+                result = {'changed': True, 'failed': False, 'snapshot_results': list_snapshots(vm)}
 
         return result
 
