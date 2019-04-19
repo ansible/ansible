@@ -21,6 +21,7 @@ options:
     description:
       - Graylog endoint. (i.e. graylog.mydomain.com).
     required: false
+    type: str
   graylog_user:
     description:
       - Graylog privileged user username.
