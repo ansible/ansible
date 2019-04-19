@@ -98,16 +98,14 @@ status:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, AWSRetry
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
 import traceback
 from time import sleep
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # will be captured by imported HAS_BOTO3
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
@@ -121,14 +119,13 @@ def ssm_list_command_invocations(conn, **kwargs):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         wait=dict(default=True, type='bool'),
         comment=dict(),
         instance_ids=dict(required=True, type='list'),
         parameters=dict(default={}, type='dict')
-    ))
+    )
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=False
@@ -141,26 +138,11 @@ def main():
     instance_ids = module.params.get('instance_ids')
     parameters = module.params.get('parameters')
 
-    if not HAS_BOTO3:
-        module.fail_json(
-            msg='Python module "boto3" is missing, please install it')
-
     if not (document_name and instance_ids):
         module.fail_json(
             msg="Must provide SSM document name and at least one instance id.")
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
-        module, boto3=HAS_BOTO3)
-    if not region:
-        module.fail_json(msg="The AWS region must be specified as an "
-                         "environment variable or in the AWS credentials "
-                         "profile.")
-
-    try:
-        conn = boto3_conn(module, conn_type='client', resource='ssm',
-                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json_aws(e, msg="Failure connecting boto3 to AWS")
+    conn = module.client('ssm')
 
     invoke_params = {}
 
