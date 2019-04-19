@@ -50,6 +50,11 @@ options:
         description:
             - The UUID of the instance to destroy.
             - Required if I(state=absent).
+    zone:
+        description:
+            - The ElasticHosts zone to connect to.
+            - For example C(lon-b), C(lon-p), C(ams-e), C(mmi-a) etc.
+        default: lon-b
 notes:
     - If C(username) and C(password) are not supplied to the module, the environment variables C(EHUSER) and C(EHPASS) are used for authentication.
     - Supply auth via environment variables with, for example, C(export EHUSER=123-456-789) and C(export EHPASS=abcdef).
@@ -184,6 +189,7 @@ def main():
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             username=dict(type='str', default=os.environ.get('EHUSER'), no_log=True),
             uuid=dict(type='str'),
+            zone=dict(type='str', default='lon-b'),
         ),
         required_one_of=[
             ['name', 'uuid']
@@ -199,6 +205,7 @@ def main():
     username = module.params['username']
     password = module.params['password']
     state = module.params['state']
+    zone = module.params['zone']
     if password is None:
         module.fail_json(msg='Password was not specified')
     if username is None:
@@ -206,7 +213,7 @@ def main():
     result = {'failed': False, 'changed': False}
     # Create EH client
     client = Client(
-        zone='lon-b',
+        zone=zone,
         user=username,
         pwd=password,
         debug=debug
