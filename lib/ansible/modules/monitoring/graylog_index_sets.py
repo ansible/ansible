@@ -53,6 +53,7 @@ options:
     description:
       - Description.
     required: false
+    type: str
   index_prefix:
     description:
       - A unique prefix used in Elasticsearch indices belonging to this index set. The prefix must start
