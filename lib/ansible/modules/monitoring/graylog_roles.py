@@ -173,7 +173,7 @@ def update(module, base_url, headers):
     return info['status'], info['msg'], content, url
 
 
-def delete(module, base_url, headers, name):
+def delete(module, base_url, headers):
 
     url = "/".join([base_url, module.params['name']])
 
@@ -267,11 +267,11 @@ def main():
                 "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
-        status, message, content, url = create(module, base_url, headers, name, description, permissions, read_only)
+        status, message, content, url = create(module, base_url, headers)
     elif action == "update":
-        status, message, content, url = update(module, base_url, headers, name, description, permissions, read_only)
+        status, message, content, url = update(module, base_url, headers)
     elif action == "delete":
-        status, message, content, url = delete(module, base_url, headers, name)
+        status, message, content, url = delete(module, base_url, headers)
     elif action == "list":
         status, message, content, url = list(module, base_url, api_token)
 
