@@ -193,7 +193,7 @@ def create(module, base_url, headers):
 
 def update(module, base_url, headers):
 
-    url = "/".join([base_url, username])
+    url = "/".join([base_url, , module.params['username']])
 
     payload = {}
 
@@ -214,9 +214,9 @@ def update(module, base_url, headers):
     return info['status'], info['msg'], content, url
 
 
-def delete(module, base_url, headers, username):
+def delete(module, base_url, headers):
 
-    url = "/".join([base_url, username])
+    url = "/".join([base_url, module.params['username']])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
@@ -317,7 +317,7 @@ def main():
     elif action == "update":
         status, message, content, url = update(module, base_url, headers)
     elif action == "delete":
-        status, message, content, url = delete(module, base_url, headers, username)
+        status, message, content, url = delete(module, base_url, headers)
     elif action == "list":
         status, message, content, url = list(module, base_url, api_token)
 
