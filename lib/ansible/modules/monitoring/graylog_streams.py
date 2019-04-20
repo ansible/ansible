@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
+# Copyright: (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 module: graylog_streams
 short_description: Communicate with the Graylog API to manage streams
 description:
-    - The Graylog streams module manages Graylog streams
+    - The Graylog streams module manages Graylog streams.
 version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
@@ -21,10 +21,12 @@ options:
     description:
       - Graylog endoint. (i.e. graylog.mydomain.com).
     required: false
+    type: str
   graylog_user:
     description:
       - Graylog privileged user username.
     required: false
+    type: str
   graylog_password:
     description:
       - Graylog privileged user password.
@@ -64,6 +66,7 @@ options:
       - Remove matches from default stream, true or false.
     required: false
     default: False
+    type: bool
   stream_name:
     description:
       - Stream name to use with the query_streams action.
@@ -77,6 +80,7 @@ options:
       - Rule type for the stream rule, 1-7.
     required: false
     default: 1
+    type: int
   value:
     description:
       - Value to check rule against.
@@ -86,6 +90,7 @@ options:
       - Invert rule (must not match value).
     required: false
     default: False
+    type: bool
   rules:
     description:
       - List of rules associated with a stream.
@@ -224,24 +229,15 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, headers, title, description, remove_matches_from_default_stream, matching_type, rules, index_set_id):
+def create(module, base_url, headers):
 
     url = base_url
 
     payload = {}
 
-    if title is not None:
-        payload['title'] = title
-    if description is not None:
-        payload['description'] = description
-    if remove_matches_from_default_stream is not None:
-        payload['remove_matches_from_default_stream'] = remove_matches_from_default_stream
-    if matching_type is not None:
-        payload['matching_type'] = matching_type
-    if rules is not None:
-        payload['rules'] = rules
-    if index_set_id != "":
-        payload['index_set_id'] = index_set_id
+    for key in ['title', 'description', 'remove_matches_from_default_stream', 'matching_type', 'rules', 'index_set_id']:
+        if module.params[key] is not None and module.params[key] != "":
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -249,29 +245,22 @@ def create(module, base_url, headers, title, description, remove_matches_from_de
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def create_rule(module, base_url, headers, stream_id, field, type, value, inverted, description):
+def create_rule(module, base_url, headers):
 
-    url = base_url + "/%s/rules" % (stream_id)
+    url = "/".join([base_url, stream_id, "rules"])
 
     payload = {}
 
-    if field is not None:
-        payload['field'] = field
-    if type is not None:
-        payload['type'] = type
-    if value is not None:
-        payload['value'] = value
-    if inverted is not None:
-        payload['inverted'] = inverted
-    if description is not None:
-        payload['description'] = description
+    for key in ['field', 'type', 'value', 'inverted', 'description']:
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -279,7 +268,7 @@ def create_rule(module, base_url, headers, stream_id, field, type, value, invert
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -288,7 +277,7 @@ def create_rule(module, base_url, headers, stream_id, field, type, value, invert
 
 def update(module, base_url, headers, stream_id, title, description, remove_matches_from_default_stream, matching_type, rules, index_set_id):
 
-    url = base_url + "/%s" % (stream_id)
+    url = "/".join([base_url, stream_id])
 
     payload = {}
 
@@ -298,7 +287,7 @@ def update(module, base_url, headers, stream_id, title, description, remove_matc
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         payload_current = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
@@ -334,7 +323,7 @@ def update(module, base_url, headers, stream_id, title, description, remove_matc
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -345,7 +334,7 @@ def update_rule(module, base_url, headers, stream_id, rule_id, field, type, valu
 
     payload = {}
 
-    url = base_url + "/%s/rules/%s" % (stream_id, rule_id)
+    url = "/".join([base_url, stream_id, "rules", rule_id])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='GET')
 
@@ -353,7 +342,7 @@ def update_rule(module, base_url, headers, stream_id, rule_id, field, type, valu
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         payload_current = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
@@ -385,7 +374,7 @@ def update_rule(module, base_url, headers, stream_id, rule_id, field, type, valu
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -394,7 +383,7 @@ def update_rule(module, base_url, headers, stream_id, rule_id, field, type, valu
 
 def delete(module, base_url, headers, stream_id):
 
-    url = base_url + "/%s" % (stream_id)
+    url = "/".join([base_url, stream_id])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
@@ -402,7 +391,7 @@ def delete(module, base_url, headers, stream_id):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -411,7 +400,7 @@ def delete(module, base_url, headers, stream_id):
 
 def delete_rule(module, base_url, headers, stream_id, rule_id):
 
-    url = base_url + "/%s/rules/%s" % (stream_id, rule_id)
+    url = "/".join([base_url, stream_id, "rules", rule_id])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
@@ -419,7 +408,7 @@ def delete_rule(module, base_url, headers, stream_id, rule_id):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -428,7 +417,7 @@ def delete_rule(module, base_url, headers, stream_id, rule_id):
 
 def start(module, base_url, headers, stream_id):
 
-    url = base_url + "/%s/resume" % (stream_id)
+    url = "/".join([base_url, stream_id, "resume"])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
 
@@ -436,7 +425,7 @@ def start(module, base_url, headers, stream_id):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -445,7 +434,7 @@ def start(module, base_url, headers, stream_id):
 
 def pause(module, base_url, headers, stream_id):
 
-    url = base_url + "/%s/pause" % (stream_id)
+    url = "/".join([base_url, stream_id, "pause"])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST')
 
@@ -453,7 +442,7 @@ def pause(module, base_url, headers, stream_id):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -463,7 +452,7 @@ def pause(module, base_url, headers, stream_id):
 def list(module, base_url, headers, stream_id):
 
     if stream_id is not None:
-        url = base_url + "/%s" % (stream_id)
+        url = "/".join([base_url, stream_id])
     else:
         url = base_url
 
@@ -473,7 +462,7 @@ def list(module, base_url, headers, stream_id):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -490,7 +479,7 @@ def query_streams(module, base_url, headers, stream_name):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         streams = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
@@ -519,7 +508,7 @@ def default_index_set(module, endpoint, base_url, headers):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         indices = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
@@ -537,10 +526,11 @@ def get_token(module, endpoint, username, password):
 
     url = "https://%s/api/system/sessions" % (endpoint)
 
-    payload = {}
-    payload['username'] = username
-    payload['password'] = password
-    payload['host'] = endpoint
+    payload = {
+        'username': username,
+        'password': password,
+        'host': endpoint
+    }
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -548,7 +538,7 @@ def get_token(module, endpoint, username, password):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         session = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
