@@ -136,7 +136,7 @@ class KubernetesAnsibleScaleModule(KubernetesRawModule):
             return_obj = self._read_stream(resource, w, stream, name, replicas)
 
         if not return_obj:
-            return_obj = self._wait_for_response(name, namespace)
+            return_obj = self._wait_for_response(resource, name, namespace)
 
         return return_obj
 
