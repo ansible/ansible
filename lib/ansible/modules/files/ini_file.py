@@ -331,7 +331,8 @@ def main():
     create = module.params['create']
     space_wrap_assignment_operator = module.params['space_wrap_assignment_operator']
 
-    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create, allow_no_value, space_wrap_assignment_operator)
+    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, 
+                                               no_extra_spaces, create, allow_no_value, space_wrap_assignment_operator)
 
     if not module.check_mode and os.path.exists(path):
         file_args = module.load_file_common_arguments(module.params)
