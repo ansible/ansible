@@ -254,7 +254,7 @@ def create(module, base_url, headers):
 
 def create_rule(module, base_url, headers):
 
-    url = "/".join([base_url, stream_id, "rules"])
+    url = "/".join([base_url, module.params['stream_id'], "rules"])
 
     payload = {}
 
