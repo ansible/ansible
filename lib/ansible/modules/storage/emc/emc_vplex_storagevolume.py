@@ -167,7 +167,7 @@ def main():
 
     # Check provided storage-volume name exists
     if volume_name in storage_volumes:
-        module.fail_json(msg='Name duplication occured, provided storage-volume name have already configured on VPLEX. Please specifiy another name on backend storage-array.')
+        module.fail_json(msg='Provided name of storage-volume have already configured on VPLEX. Please specifiy another name.')
     else:
         try:
             claim_storage_volume(vplex=vplex, volume_name=volume_name, vpd_id=vpd_id)
