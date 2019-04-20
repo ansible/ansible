@@ -108,6 +108,7 @@ options:
       - Maximum number of segments per Elasticsearch index after optimization (force merge).
     required: false
     default: 1
+    type: int
   index_optimization_disabled:
     description:
       - Disable Elasticsearch index optimization (force merge) after rotation.
