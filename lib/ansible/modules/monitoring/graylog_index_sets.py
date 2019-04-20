@@ -65,6 +65,7 @@ options:
       - Elasticsearch analyzer for this index set.
     required: false
     default: "standard"
+    type: str
   shards:
     description:
       - Number of Elasticsearch shards used per index in this index set.
