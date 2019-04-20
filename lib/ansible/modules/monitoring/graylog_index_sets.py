@@ -102,6 +102,7 @@ options:
       - Graylog uses a retention strategy to clean up old indices.
     required: false
     default: {'type': 'org.graylog2.indexer.retention.strategies.DeletionRetentionStrategyConfig', 'max_number_of_indices': 14}
+    type: dict
   index_optimization_max_num_segments:
     description:
       - Maximum number of segments per Elasticsearch index after optimization (force merge).
