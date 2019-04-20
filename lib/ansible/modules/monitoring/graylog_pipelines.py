@@ -219,7 +219,7 @@ def create(module, pipeline_url, headers):
 
 def create_connection(module, connection_url, headers):
 
-    url = "/".join([connection_url, "/to_pipeline"])
+    url = "/".join([connection_url, "to_pipeline"])
 
     payload = {}
 
@@ -242,7 +242,7 @@ def create_connection(module, connection_url, headers):
 
 def parse_rule(module, rule_url, headers):
 
-    url = "/".join([rule_url, "/parse"])
+    url = "/".join([rule_url, "parse"])
 
     payload = {}
 
@@ -330,7 +330,7 @@ def update(module, pipeline_url, headers):
 
 def update_connection(module, connection_url, headers):
 
-    url = "/".join([connection_url, "/to_pipeline"])
+    url = "/".join([connection_url, "to_pipeline"])
 
     payload = {}
 
