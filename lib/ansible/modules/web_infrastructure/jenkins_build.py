@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: jenkins_build
 short_description: Build jenkins jobs
-version_added: "2.8"
+version_added: "2.9"
 description:
   - "Build Jenkins jobs by using Jenkins REST API."
 requirements:
