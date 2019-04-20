@@ -890,7 +890,7 @@ class NetAppOntapVolume(object):
                 return None
             self.module.fail_json(msg='Error fetching job info: %s' % to_native(error),
                                   exception=traceback.format_exc())
-        results = dict()
+
         job_info = result.get_child_by_name('attributes').get_child_by_name('job-info')
         results = {
             'job-progress': job_info['job-progress'],
