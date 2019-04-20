@@ -193,7 +193,7 @@ def create(module, base_url, headers):
 
 def update(module, base_url, headers):
 
-    url = "/".join([base_url, , module.params['username']])
+    url = "/".join([base_url, module.params['username']])
 
     payload = {}
 
