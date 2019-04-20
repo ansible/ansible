@@ -37,6 +37,7 @@ options:
     required: false
     default: list
     choices: [ create, update, list, delete, query_index_sets ]
+    type: str
   index_set_id:
     description:
       - Index id.
