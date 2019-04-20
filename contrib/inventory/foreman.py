@@ -86,6 +86,10 @@ class ForemanInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError) as e:
             print("Error parsing configuration: %s" % e, file=sys.stderr)
             return False
+        try:
+            self.foreman_page_size = config.getint('foreman', 'page_size')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.foreman_page_size = 250
 
         # Ansible related
         try:
@@ -96,14 +100,38 @@ class ForemanInventory(object):
         self.group_patterns = json.loads(group_patterns)
 
         try:
+            self.group_patterns_preserve_case = config.getboolean('ansible', 'group_patterns_preserve_case')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.group_patterns_preserve_case = True
+
+        try:
+            group_vars = config.get('ansible', 'group_vars')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            group_vars = "{}"
+
+        self.group_vars = json.loads(group_vars)
+
+        try:
             self.group_prefix = config.get('ansible', 'group_prefix')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            self.group_prefix = "foreman_"
+            self.group_prefix = "foreman/"
 
         try:
             self.want_facts = config.getboolean('ansible', 'want_facts')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_facts = True
+
+        try:
+            self.preserve_case = config.getboolean('ansible', 'preserve_case')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.preserve_case = False
+
+        try:
+            group_facts = config.get('ansible', 'group_facts')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            group_facts = "[]"
+
+        self.group_facts = json.loads(group_facts)
 
         try:
             self.want_hostcollections = config.getboolean('ansible', 'want_hostcollections')
@@ -114,6 +142,16 @@ class ForemanInventory(object):
             self.want_ansible_ssh_host = config.getboolean('ansible', 'want_ansible_ssh_host')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_ansible_ssh_host = False
+
+        try:
+            self.want_generated_parents = config.getboolean('ansible', 'want_generated_parents')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_generated_parents = False
+
+        try:
+            self.group_case = config.get('ansible', 'group_case')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.group_case = 'snake_case'
 
         # Do we want parameters to be interpreted if possible as JSON? (no by default)
         try:
@@ -168,7 +206,7 @@ class ForemanInventory(object):
     def _get_json(self, url, ignore_errors=None, params=None):
         if params is None:
             params = {}
-        params['per_page'] = 250
+        params['per_page'] = self.foreman_page_size
 
         page = 1
         results = []
@@ -259,21 +297,54 @@ class ForemanInventory(object):
         self.write_to_cache(self.facts, self.cache_path_facts)
         self.write_to_cache(self.hostcollections, self.cache_path_hostcollections)
 
+    def case_camel(self, word):
+        word = re.sub(r"([0-9])_([0-9])", r"\1v\2", word)
+        words = word.split("_")
+        for i in range(1, len(words)):
+            words[i] = words[i].capitalize()
+        return "".join(words)
+
+    def case_pascal(self, word):
+        return self.case_camel(word).capitalize()
+
     def to_safe(self, word):
         '''Converts 'bad' characters in a string to underscores
-        so they can be used as Ansible groups
+        so they can be used as Ansible groups. Honors these case styles:
+           snake_case
+           Up_case
+           camelCase
+           PascalCase
 
         >>> ForemanInventory.to_safe("foo-bar baz")
         'foo_barbaz'
         '''
         regex = r"[^A-Za-z0-9\_]"
-        return re.sub(regex, "_", word.replace(" ", ""))
+        if self.group_case == "Up_case":
+            return re.sub(regex, "_", "/".join(map(lambda x: x.capitalize(), word.replace(" ", "").split("/"))))
+        elif self.group_case == "camelCase":
+            return "_".join(map(self.case_camel, map(lambda x: re.sub(regex, "_", x), word.replace(" ", "").split("/"))))
+        elif self.group_case == "PascalCase":
+            return "_".join(map(self.case_pascal, map(lambda x: re.sub(regex, "_", x), word.replace(" ", "").split("/"))))
+        else:
+            return re.sub(regex, "_", word.replace(" ", ""))
+
+    def stash_parents(self, word):
+        '''Takes a slash-delimited string, breaks it up by "/", and
+        stores the parents in self.parents. returns nothing.
+        '''
+        words = word.split("/")
+        while len(words) > 1:
+            child = self.to_safe("/".join(words))
+            words.pop()
+            parent = self.to_safe("/".join(words))
+            self.parents[child] = parent
 
     def update_cache(self, scan_only_new_hosts=False):
         """Make calls to foreman and save the output in a cache"""
 
         self.groups = dict()
         self.hosts = dict()
+        self.parents = dict()
 
         for host in self._get_hosts():
             if host['name'] in self.cache.keys() and scan_only_new_hosts:
@@ -287,32 +358,38 @@ class ForemanInventory(object):
             group = 'hostgroup'
             val = host.get('%s_title' % group) or host.get('%s_name' % group)
             if val:
-                safe_key = self.to_safe('%s%s_%s' % (
+                vstr = '%s%s/%s' % (
                     to_text(self.group_prefix),
                     group,
-                    to_text(val).lower()
-                ))
+                    to_text(val) if self.preserve_case else to_text(val).lower()
+                )
+                self.stash_parents(vstr)
+                safe_key = self.to_safe(vstr)
                 self.inventory[safe_key].append(dns_name)
 
             # Create ansible groups for environment, location and organization
             for group in ['environment', 'location', 'organization']:
                 val = host.get('%s_name' % group)
                 if val:
-                    safe_key = self.to_safe('%s%s_%s' % (
+                    vstr = '%s%s/%s' % (
                         to_text(self.group_prefix),
                         group,
-                        to_text(val).lower()
-                    ))
+                        to_text(val) if self.preserve_case else to_text(val).lower()
+                    )
+                    self.stash_parents(vstr)
+                    safe_key = self.to_safe(vstr)
                     self.inventory[safe_key].append(dns_name)
 
             for group in ['lifecycle_environment', 'content_view']:
                 val = host.get('content_facet_attributes', {}).get('%s_name' % group)
                 if val:
-                    safe_key = self.to_safe('%s%s_%s' % (
+                    vstr = '%s%s/%s' % (
                         to_text(self.group_prefix),
                         group,
-                        to_text(val).lower()
-                    ))
+                        to_text(val) if self.preserve_case else to_text(val).lower()
+                    )
+                    self.stash_parents(vstr)
+                    safe_key = self.to_safe(vstr)
                     self.inventory[safe_key].append(dns_name)
 
             params = self._resolve_params(host_params)
@@ -321,13 +398,16 @@ class ForemanInventory(object):
             # attributes.
             groupby = dict()
             for k, v in params.items():
-                groupby[k] = self.to_safe(to_text(v))
+                fixed_key = to_text(v) if self.group_patterns_preserve_case else to_text(v).lower()
+                groupby[k] = self.to_safe(fixed_key)
 
             # The name of the ansible groups is given by group_patterns:
             for pattern in self.group_patterns:
                 try:
-                    key = pattern.format(**groupby)
-                    self.inventory[key].append(dns_name)
+                    groupname_with_slashes = pattern.format(**groupby)
+                    self.stash_parents(groupname_with_slashes)
+                    safe_groupname = self.to_safe(groupname_with_slashes)
+                    self.inventory[safe_groupname].append(dns_name)
                 except KeyError:
                     pass  # Host not part of this group
 
@@ -337,7 +417,12 @@ class ForemanInventory(object):
                 if hostcollections:
                     # Create Ansible groups for host collections
                     for hostcollection in hostcollections:
-                        safe_key = self.to_safe('%shostcollection_%s' % (self.group_prefix, hostcollection['name'].lower()))
+                        hcstr = '%shostcollection/%s' % (
+                            self.group_prefix,
+                            hostcollection['name'] if self.preserve_case else hostcollection['name'].lower()
+                        )
+                        self.stash_parents(hcstr)
+                        safe_key = self.to_safe(hcstr)
                         self.inventory[safe_key].append(dns_name)
 
                 self.hostcollections[dns_name] = hostcollections
@@ -345,7 +430,44 @@ class ForemanInventory(object):
             self.cache[dns_name] = host
             self.params[dns_name] = params
             self.facts[dns_name] = self._get_facts(host)
+
+            for group in self.group_facts:
+                val = self.facts[dns_name].get(group)
+                if val:
+                    vstr = '%s%s/%s' % (
+                        self.group_prefix,
+                        group,
+                        to_text(val) if self.preserve_case else to_text(val).lower()
+                    )
+                    self.stash_parents(vstr)
+                    safe_key = self.to_safe(vstr)
+                    self.inventory[safe_key].append(dns_name)
+
             self.inventory['all'].append(dns_name)
+
+        for hostgroup in self.inventory.keys():
+            tmp = self.inventory[hostgroup]
+            self.inventory[hostgroup] = {"hosts": tmp}
+
+        if self.want_generated_parents:
+            for child, parent in self.parents.items():
+                if parent in self.inventory:
+                    if 'children' in self.inventory[parent]:
+                        if child not in self.inventory[parent]['children']:
+                            self.inventory[parent]['children'].append(child)
+                    else:
+                        self.inventory[parent]['children'] = [child]
+                else:
+                    self.inventory[parent] = {'children': [child]}
+
+        for hostgroup in self.inventory.keys():
+            for pat, val in self.group_vars.items():
+                if re.search(pat, hostgroup) is not None:
+                    if 'vars' not in self.inventory[hostgroup]:
+                        self.inventory[hostgroup]['vars'] = {}
+                    for k, v in val.items():
+                        self.inventory[hostgroup]['vars'][k] = copy.deepcopy(v)
+
         self._write_cache()
 
     def is_cache_valid(self):
