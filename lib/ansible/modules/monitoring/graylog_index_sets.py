@@ -59,6 +59,7 @@ options:
       - A unique prefix used in Elasticsearch indices belonging to this index set. The prefix must start
         with a letter or number, and can only contain letters, numbers, '_', '-' and '+'.
     required: false
+    type: str
   index_analyzer:
     description:
       - Elasticsearch analyzer for this index set.
