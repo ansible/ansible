@@ -45,8 +45,6 @@ ADD_OPERATION_NOT_SUPPORTED_ERROR = (
 
 PATH_PARAMS_FOR_DEFAULT_OBJ = {'objId': 'default'}
 
-PATH_PARAMS_FOR_DEFAULT_OBJ = {'objId': 'default'}
-
 
 class OperationNamePrefix:
     ADD = 'add'
