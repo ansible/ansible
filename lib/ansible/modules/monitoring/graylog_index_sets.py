@@ -43,6 +43,7 @@ options:
     description:
       - Index id.
     required: false
+    type: str
   title:
     description:
       - Title.
