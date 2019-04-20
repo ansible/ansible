@@ -93,7 +93,7 @@ options:
       - Whether the '=' symbol should be wrapped in spaces or not.
     type: bool
     default: yes
-    version_added: "2.8"
+    version_added: "2.9"
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes no sense.
    - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
