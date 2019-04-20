@@ -125,6 +125,7 @@ options:
       - Default index set, true or false.
     required: false
     default: False
+    type: bool
 '''
 
 EXAMPLES = '''
