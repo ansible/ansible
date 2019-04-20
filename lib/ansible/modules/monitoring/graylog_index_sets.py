@@ -70,6 +70,7 @@ options:
       - Number of Elasticsearch shards used per index in this index set.
     required: false
     default: 4
+    type: int
   replicas:
     description:
       - Number of Elasticsearch replicas used per index in this index set.
