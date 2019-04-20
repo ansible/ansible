@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
+# Copyright: (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 module: graylog_users
 short_description: Communicate with the Graylog API to manage users
 description:
-    - The Graylog user module manages Graylog users
+    - The Graylog user module manages Graylog users.
 version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
@@ -21,10 +21,12 @@ options:
     description:
       - Graylog endpoint. (i.e. graylog.mydomain.com:9000).
     required: false
+    type: str
   graylog_user:
     description:
       - Graylog privileged user username, used to auth with Graylog API.
     required: false
+    type: str
   graylog_password:
     description:
       - Graylog privileged user password, used to auth with Graylog API.
@@ -39,6 +41,7 @@ options:
     description:
       - Username.
     required: false
+    type: str
   password:
     description:
       - Password.
@@ -165,26 +168,15 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, headers, username, password, email, full_name, roles, permissions, timezone):
+def create(module, base_url, headers):
 
     url = base_url
 
     payload = {}
 
-    if full_name is not None:
-        payload['full_name'] = full_name
-    if email is not None:
-        payload['email'] = email
-    if username is not None:
-        payload['username'] = username
-    if password is not None:
-        payload['password'] = password
-    if roles is not None:
-        payload['roles'] = roles
-    if permissions is not None:
-        payload['permissions'] = permissions
-    if timezone is not None:
-        payload['timezone'] = timezone
+    for key in ['full_name', 'email', 'username', 'password', 'roles', 'permissions', 'timezone']:
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -192,33 +184,22 @@ def create(module, base_url, headers, username, password, email, full_name, role
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def update(module, base_url, headers, username, password, email, full_name, roles, permissions, timezone):
+def update(module, base_url, headers):
 
-    url = base_url + "/%s" % (username)
+    url = "/".join([base_url, username])
 
     payload = {}
 
-    if full_name is not None:
-        payload['full_name'] = full_name
-    if email is not None:
-        payload['email'] = email
-    if username is not None:
-        payload['username'] = username
-    if password is not None:
-        payload['password'] = password
-    if roles is not None:
-        payload['roles'] = roles
-    if permissions is not None:
-        payload['permissions'] = permissions
-    if timezone is not None:
-        payload['timezone'] = timezone
+    for key in ['full_name', 'email', 'username', 'password', 'roles', 'permissions', 'timezone']:
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
 
@@ -226,7 +207,7 @@ def update(module, base_url, headers, username, password, email, full_name, role
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -235,7 +216,7 @@ def update(module, base_url, headers, username, password, email, full_name, role
 
 def delete(module, base_url, headers, username):
 
-    url = base_url + "/%s" % (username)
+    url = "/".join([base_url, username])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
@@ -243,7 +224,7 @@ def delete(module, base_url, headers, username):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -260,7 +241,7 @@ def list(module, base_url, headers):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -284,7 +265,7 @@ def get_token(module, endpoint, username, password):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         session = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
@@ -332,9 +313,9 @@ def main():
                 "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
-        status, message, content, url = create(module, base_url, headers, username, password, email, full_name, roles, permissions, timezone)
+        status, message, content, url = create(module, base_url, headers)
     elif action == "update":
-        status, message, content, url = update(module, base_url, headers, username, password, email, full_name, roles, permissions, timezone)
+        status, message, content, url = update(module, base_url, headers)
     elif action == "delete":
         status, message, content, url = delete(module, base_url, headers, username)
     elif action == "list":
