@@ -120,6 +120,7 @@ options:
       - Writable, true or false.
     required: false
     default: True
+    type: bool
   default:
     description:
       - Default index set, true or false.
