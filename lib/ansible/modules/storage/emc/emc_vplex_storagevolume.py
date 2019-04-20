@@ -20,6 +20,10 @@ description:
 author:
 - Hiroyuki Wakabayashi (@hwakabh)
 options:
+    ansible_module_logpath:
+        description:
+            - Path of emc_vplex_storagevolume module log
+        required: true
     vplex_ip_address:
         description:
             - IP Address of VPLEX management server to create storage-volume
@@ -100,7 +104,19 @@ def claim_storage_volume(vplex, volume_name, vpd_id):
 
 
 def main():
-    log_directory = "./logs"
+    argument_spec = {
+        "ansible_module_logpath": dict(type="str", required=True),
+        "vplex_ip_address": dict(type="str", required=True),
+        "vplex_username": dict(type="str", required=True),
+        "vplex_password": dict(type="str", required=True),
+        "vplex_serialnum": dict(type="str", required=True),
+        "volume_name": dict(type="str", required=True),
+        "vpd_id": dict(type="str", required=True),
+        "array_name": dict(type="str", required=True)}
+
+    module = AnsibleModule(argument_spec, supports_check_mode=True)
+
+    log_directory = module.params["ansible_module_logpath"]
     if not os.path.exists(log_directory):
         os.makedirs(log_directory)
 
@@ -120,17 +136,6 @@ def main():
     logger = logging.getLogger(__name__)
     logging.getLogger(__name__).addHandler(console)
 
-    argument_spec = {
-        "vplex_ip_address": dict(type="str", required=True),
-        "vplex_username": dict(type="str", required=True),
-        "vplex_password": dict(type="str", required=True),
-        "vplex_serialnum": dict(type="str", required=True),
-        "volume_name": dict(type="str", required=True),
-        "vpd_id": dict(type="str", required=True),
-        "array_name": dict(type="str", required=True)}
-
-    module = AnsibleModule(argument_spec, supports_check_mode=True)
-
     volume_name = module.params["volume_name"]
     array_name = module.params['array_name']
     vpd_id = module.params["vpd_id"]
@@ -142,8 +147,7 @@ def main():
 
     # --- if S/N differs from expected, exit the program
     if not vplex.confirm_vplex_serial_number(expect_serial_number=module.params["vplex_serialnum"]):
-        logger.error('Target system S/N and expected ones are different. Exit the module wihtout any operations.')
-        module.exit_json(changed=False)
+        module.fail_json(msg='Target system S/N and expected ones are different. Exit the module wihtout any operations.')
     # --- if same as expected, proceed to play
 
     # Check LUN on backend storage-array are exposed to VPLEX or not
@@ -159,20 +163,16 @@ def main():
         try:
             rediscover_storage_array(vplex=vplex, array_name=array_name)
         except Exception:
-            logger.error('Failed to array re-discover...')
-            module.exit_json(changed=False)
+            module.fail_json(msg='Failed to array re-discover')
 
     # Check provided storage-volume name exists
     if volume_name in storage_volumes:
-        logger.error('Name duplication occured. Provided storage-volume name have already configured on VPLEX.')
-        logger.error('Please specify another storage-volume name in group_vars/all.yml and retry playbooks.')
-        module.exit_json(changed=False)
+        module.fail_json(msg='Name duplication occured, provided storage-volume name have already configured on VPLEX. Please specifiy another name on backend storage-array.')
     else:
         try:
             claim_storage_volume(vplex=vplex, volume_name=volume_name, vpd_id=vpd_id)
         except Exception:
-            logger.error('Failed to claim storage-volumes. Retry playbook after checking backend volumes and masking on FC-Switches.')
-            module.exit_json(changed=False)
+            module.fail_json(msg='Failed to claim storage-volumes. Retry playbook after checking backend volumes and masking on FC-Switches.')
         else:
             logger.info('Successfully claim storage-volumes.')
             get_storage_volume_info(vplex=vplex, name=volume_name, is_all=False)
