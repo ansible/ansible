@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
+# Copyright: (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 module: graylog_roles
 short_description: Communicate with the Graylog API to manage roles
 description:
-    - The Graylog roles module manages Graylog roles
+    - The Graylog roles module manages Graylog roles.
 version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
@@ -21,10 +21,12 @@ options:
     description:
       - Graylog endoint. (i.e. graylog.mydomain.com).
     required: false
+    type: str
   graylog_user:
     description:
       - Graylog privileged user username.
     required: false
+    type: str
   graylog_password:
     description:
       - Graylog privileged user password.
@@ -125,20 +127,15 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, headers, name, description, permissions, read_only):
+def create(module, base_url, headers):
 
     url = base_url
 
     payload = {}
 
-    if name is not None:
-        payload['name'] = name
-    if description is not None:
-        payload['description'] = description
-    if permissions is not None:
-        payload['permissions'] = permissions
-    if read_only is not None:
-        payload['read_only'] = read_only
+    for key in ['name', 'description', 'permissions', 'read_only']:
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -146,27 +143,22 @@ def create(module, base_url, headers, name, description, permissions, read_only)
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
     return info['status'], info['msg'], content, url
 
 
-def update(module, base_url, headers, name, description, permissions, read_only):
+def update(module, base_url, headers):
 
-    url = base_url + "/%s" % (name)
+    url = "/".join([base_url, module.params['name']])
 
     payload = {}
 
-    if name is not None:
-        payload['name'] = name
-    if description is not None:
-        payload['description'] = description
-    if permissions is not None:
-        payload['permissions'] = permissions
-    if read_only is not None:
-        payload['read_only'] = read_only
+    for key in ['name', 'description', 'permissions', 'read_only']:
+        if module.params[key] is not None:
+            payload[key] = module.params[key]
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='PUT', data=module.jsonify(payload))
 
@@ -174,7 +166,7 @@ def update(module, base_url, headers, name, description, permissions, read_only)
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -183,7 +175,7 @@ def update(module, base_url, headers, name, description, permissions, read_only)
 
 def delete(module, base_url, headers, name):
 
-    url = base_url + "/%s" % (name)
+    url = "/".join([base_url, module.params['name']])
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
@@ -191,7 +183,7 @@ def delete(module, base_url, headers, name):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -208,7 +200,7 @@ def list(module, base_url, headers):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -221,10 +213,11 @@ def get_token(module, endpoint, username, password):
 
     url = "https://%s/api/system/sessions" % (endpoint)
 
-    payload = {}
-    payload['username'] = username
-    payload['password'] = password
-    payload['host'] = endpoint
+    payload = {
+        'username': username,
+        'password': password,
+        'host': endpoint
+    }
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -232,7 +225,7 @@ def get_token(module, endpoint, username, password):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
         session = json.loads(content)
     except AttributeError:
         content = info.pop('body', '')
