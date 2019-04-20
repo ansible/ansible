@@ -47,6 +47,7 @@ options:
     description:
       - Title.
     required: false
+    type: str
   description:
     description:
       - Description.
