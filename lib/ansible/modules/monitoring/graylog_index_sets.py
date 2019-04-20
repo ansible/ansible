@@ -89,6 +89,7 @@ options:
       - Retention strategy class, ex. org.graylog2.indexer.retention.strategies.DeletionRetentionStrategy
     required: false
     default: "org.graylog2.indexer.retention.strategies.DeletionRetentionStrategy"
+    type: str
   rotation_strategy:
     description:
       - Graylog uses multiple indices to store documents in. You can configure the strategy it uses to determine
