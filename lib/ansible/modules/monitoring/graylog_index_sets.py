@@ -83,6 +83,7 @@ options:
       - Rotation strategy class, ex. org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategy
     required: false
     default: "org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategy"
+    type: str
   retention_strategy_class:
     description:
       - Retention strategy class, ex. org.graylog2.indexer.retention.strategies.DeletionRetentionStrategy
