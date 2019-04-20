@@ -71,7 +71,7 @@ options:
     default: present
   no_extra_spaces:
     description:
-      - Do not insert spaces before and after '=' symbol.
+      - Do not insert spaces before and after '=' symbol. This option is deprecated. Users should use space_wrap_assignment_operator.
     type: bool
     default: no
     version_added: "2.1"
@@ -88,6 +88,12 @@ options:
     type: bool
     default: no
     version_added: "2.6"
+  space_wrap_assignment_operator:
+    description:
+      - Whether the '=' symbol should be wrapped in spaces or not.
+    type: bool
+    default: yes
+    version_added: "2.8"
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes no sense.
    - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
@@ -138,7 +144,7 @@ def match_active_opt(option, line):
 
 def do_ini(module, filename, section=None, option=None, value=None,
            state='present', backup=False, no_extra_spaces=False, create=True,
-           allow_no_value=False):
+           allow_no_value=False, space_wrap_assignment_operator=True):
 
     diff = dict(
         before='',
@@ -194,7 +200,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
     within_section = not section
     section_start = 0
     msg = 'OK'
-    if no_extra_spaces:
+    if no_extra_spaces or not space_wrap_assignment_operator:
         assignment_format = '%s=%s\n'
     else:
         assignment_format = '%s = %s\n'
@@ -307,6 +313,7 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
             no_extra_spaces=dict(type='bool', default=False),
             allow_no_value=dict(type='bool', default=False),
+            space_wrap_assignment_operator=dict(type='bool', default=True),
             create=dict(type='bool', default=True)
         ),
         add_file_common_args=True,
@@ -322,8 +329,9 @@ def main():
     no_extra_spaces = module.params['no_extra_spaces']
     allow_no_value = module.params['allow_no_value']
     create = module.params['create']
+    space_wrap_assignment_operator = module.params['space_wrap_assignment_operator']
 
-    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create, allow_no_value)
+    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create, allow_no_value, space_wrap_assignment_operator)
 
     if not module.check_mode and os.path.exists(path):
         file_args = module.load_file_common_arguments(module.params)
