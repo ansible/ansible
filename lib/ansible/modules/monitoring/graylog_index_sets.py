@@ -96,6 +96,7 @@ options:
          when to rotate the currently active write index.
     required: false
     default: {'type': 'org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategyConfig', 'rotation_period': 'P1D'}
+    type: dict
   retention_strategy:
     description:
       - Graylog uses a retention strategy to clean up old indices.
