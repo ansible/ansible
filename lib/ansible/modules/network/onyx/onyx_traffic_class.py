@@ -180,7 +180,8 @@ class OnyxTrafficClassModule(BaseOnyxModule):
                 break
         return if_type, if_id
 
-    def _set_interface_congestion_control_config(self, interface_congestion_control_config, interface, if_type, if_id):
+    def _set_interface_congestion_control_config(self, interface_congestion_control_config,
+                                                 interface, if_type, if_id):
         tc = self._required_config.get("tc")
         interface_dcb_ets = self._show_interface_dcb_ets(if_type, if_id)[0].get(interface)
         ets_per_tc = interface_dcb_ets[2].get("ETS per TC")
