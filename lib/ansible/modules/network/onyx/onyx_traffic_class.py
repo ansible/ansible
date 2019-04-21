@@ -33,7 +33,6 @@ options:
     description:
       - traffic class, range 0-7.
     required: true
-    type: int
   congestion_control:
     description:
       - configure congestion control on interface.
