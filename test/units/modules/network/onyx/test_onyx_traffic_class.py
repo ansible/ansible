@@ -48,7 +48,8 @@ class TestOnyxTrafficClassModule(TestOnyxModule):
 
     def test_configure_congestion_control_disabled_with_change(self):
         set_module_args(dict(interfaces=["Eth1/1"], tc=1,
-                             congestion_control=dict(control="ecn", min_absolute=500, max_absolute=1500)))
+                             congestion_control=dict(control="ecn", threshold_mode="absolute",
+                                                     min_threshold=500, max_threshold=1500)))
         commands = [
             "interface ethernet 1/1 traffic-class 1 congestion-control ecn minimum-absolute 500 maximum-absolute 1500"
         ]
@@ -61,7 +62,8 @@ class TestOnyxTrafficClassModule(TestOnyxModule):
 
     def test_configure_congestion_control_with_change(self):
         set_module_args(dict(interfaces=["Eth1/1"], tc=2,
-                             congestion_control=dict(control="ecn", min_relative=9, max_relative=88)))
+                             congestion_control=dict(control="ecn", threshold_mode="relative",
+                                                     min_threshold=9, max_threshold=88)))
         commands = [
             "interface ethernet 1/1 traffic-class 2 congestion-control ecn minimum-relative 9 maximum-relative 88"
         ]
@@ -69,7 +71,8 @@ class TestOnyxTrafficClassModule(TestOnyxModule):
 
     def test_configure_congestion_control_absolute_with_change(self):
         set_module_args(dict(interfaces=["Eth1/1"], tc=3,
-                             congestion_control=dict(control="ecn", min_absolute=500, max_absolute=1500)))
+                             congestion_control=dict(control="ecn", threshold_mode="absolute",
+                                                     min_threshold=500, max_threshold=1500)))
         commands = [
             "interface ethernet 1/1 traffic-class 3 congestion-control ecn minimum-absolute 500 maximum-absolute 1500"
         ]
@@ -77,7 +80,8 @@ class TestOnyxTrafficClassModule(TestOnyxModule):
 
     def test_configure_congestion_control_with_no_change(self):
         set_module_args(dict(interfaces=["Eth1/1"], tc=3,
-                             congestion_control=dict(control="ecn", min_absolute=500, max_absolute=1550)))
+                             congestion_control=dict(control="ecn", threshold_mode="absolute",
+                                                     min_threshold=500, max_threshold=1550)))
         self.execute_module(changed=False)
 
     def test_configure_dcb_mode_with_no_change(self):

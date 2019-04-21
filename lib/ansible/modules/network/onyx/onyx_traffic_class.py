@@ -29,6 +29,7 @@ options:
     description:
       - list of interfaces name.
     required: true
+    type: int
   tc:
     description:
       - traffic class, range 0-7.
@@ -42,18 +43,21 @@ options:
           - congestion control type.
         choices: ['red', 'ecn', 'both']
         required: true
-      min_absolute:
+      threshold_mode:
         description:
-          - Set minimum-absolute value (in KBs) for marking traffic-class queue.
-      max_absolute:
+          - congestion control threshold mode.
+        choices: ['absolute', 'relative']
+        required: true
+      min_threshold:
         description:
-          - Set maximum-absolute value (in KBs) for marking traffic-class queue.
-      min_relative:
+          - Set minimum-threshold value (in KBs) for marking traffic-class queue.
+        required: true
+        type: int
+      max_threshold:
         description:
-          - Set minimum- relative value (in KBs) for marking traffic-class queue.
-      max_relative:
-        description:
-          - Set maximum- relative value (in KBs) for marking traffic-class queue.
+          - Set maximum-threshold value (in KBs) for marking traffic-class queue.
+        required: true
+        type: int
   dcb:
     description:
       - configure dcb control on interface.
@@ -78,8 +82,9 @@ EXAMPLES = """
     tc: 3
     congestion_control:
       control: ecn
-      min_absolute: 500
-      max_absolute: 1500
+      threshold_mode: absolute
+      min_threshold: 500
+      max_threshold: 1500
     dcb:
       mode: strict
 """
@@ -127,10 +132,9 @@ class OnyxTrafficClassModule(BaseOnyxModule):
         """ initialize module
         """
         congestion_control_spec = dict(control=dict(choices=['red', 'ecn', 'both'], required=True),
-                                       min_absolute=dict(type=int),
-                                       max_absolute=dict(type=int),
-                                       min_relative=dict(type=int),
-                                       max_relative=dict(type=int))
+                                       threshold_mode=dict(choices=['absolute', 'relative'], required=True),
+                                       min_threshold=dict(type=int, required=True),
+                                       max_threshold=dict(type=int, required=True))
 
         dcb_spec = dict(mode=dict(choices=['strict', 'wrr'], required=True),
                         weight=dict(type=int))
@@ -158,21 +162,6 @@ class OnyxTrafficClassModule(BaseOnyxModule):
             self._module.fail_json(msg='tc value must be between 0 and 7')
 
     def validate_param_values(self, obj, param=None):
-        congestion_control = obj.get("congestion_control")
-        if congestion_control is not None:
-            min_absolute = congestion_control.get("min_absolute")
-            max_absolute = congestion_control.get("max_absolute")
-            min_relative = congestion_control.get("min_relative")
-            max_relative = congestion_control.get("max_relative")
-            if (min_absolute and min_relative and max_absolute and max_relative) is not None:
-                self._module.fail_json(msg='User can specify absolute or relative not both')
-            elif min_absolute is None and min_relative is None and max_absolute is None and max_relative is None:
-                self._module.fail_json(msg='User can not send both absolute and relative empty')
-            elif (min_absolute is not None and max_absolute is None) or (min_absolute is None and max_absolute is not None):
-                self._module.fail_json(msg='User should send both mix_absolute and min_absolute')
-            elif (min_relative is not None and max_relative is None) or (min_relative is None and max_relative is not None):
-                self._module.fail_json(msg='User should send both max_relative and min_relative')
-
         dcb = obj.get("dcb")
         if dcb is not None:
             dcb_mode = dcb.get("mode")
@@ -214,11 +203,13 @@ class OnyxTrafficClassModule(BaseOnyxModule):
         if threshold_mode == "absolute":
             min_absolute = int(min_threshold.split(" ")[0])
             max_absolute = int(max_threshold.split(" ")[0])
-            congestion_control = dict(control=mode.lower(), min_absolute=min_absolute, max_absolute=max_absolute)
+            congestion_control = dict(control=mode.lower(), threshold_mode=threshold_mode,
+                                      min_threshold=min_absolute, max_threshold=max_absolute)
         elif threshold_mode == "relative":
             min_relative = int(min_threshold.split("%")[0])
             max_relative = int(max_threshold.split("%")[0])
-            congestion_control = dict(control=mode.lower(), min_relative=min_relative, max_relative=max_relative)
+            congestion_control = dict(control=mode.lower(), threshold_mode=threshold_mode,
+                                      min_threshold=min_relative, max_threshold=max_relative)
 
         self._current_config[interface] = dict(state="enabled", congestion_control=congestion_control,
                                                dcb=dcb, if_type=if_type, if_id=if_id)
@@ -264,36 +255,30 @@ class OnyxTrafficClassModule(BaseOnyxModule):
             congestion_control = self._required_config.get("congestion_control")
 
             if congestion_control is not None:
-                min_absolute = congestion_control.get("min_absolute")
                 control = congestion_control.get("control")
                 current_congestion_control = current_interface.get("congestion_control")
-                current_control = None
-                if current_congestion_control is not None:
-                    current_control = current_congestion_control.get("control")
-
-                if min_absolute is not None:
-                    max_absolute = congestion_control.get("max_absolute")
-                    if current_control is None or control != current_control:
-                        self._generate_congestion_control_absolute_cmds(if_type, if_id, tc,
-                                                                        control, min_absolute, max_absolute)
-                    else:
-                        current_min_absolute = current_congestion_control.get("min_absolute")
-                        current_max_absolute = current_congestion_control.get("max_absolute")
-                        if min_absolute != current_min_absolute or max_absolute != current_max_absolute:
-                            self._generate_congestion_control_absolute_cmds(if_type, if_id, tc,
-                                                                            control, min_absolute, max_absolute)
+                threshold_mode = congestion_control.get("threshold_mode")
+                min_threshold = congestion_control.get("min_threshold")
+                max_threshold = congestion_control.get("max_threshold")
+                if current_congestion_control is None:
+                    self._threshold_mode_generate_cmds_mappers(threshold_mode, if_type, if_id, tc,
+                                                               control, min_threshold, max_threshold)
                 else:
-                    min_relative = congestion_control.get("min_relative")
-                    max_relative = congestion_control.get("max_relative")
-                    if current_control is None or control != current_control:
-                        self._generate_congestion_control_relative_cmds(if_type, if_id, tc, control,
-                                                                        min_relative, max_relative)
+                    current_control = current_congestion_control.get("control")
+                    curr_threshold_mode = current_congestion_control.get("threshold_mode")
+                    curr_min_threshold = current_congestion_control.get("min_threshold")
+                    curr_max_threshold = current_congestion_control.get("max_threshold")
+
+                    if control != current_control:
+                        self._threshold_mode_generate_cmds_mappers(threshold_mode, if_type, if_id, tc,
+                                                                   control, min_threshold, max_threshold)
                     else:
-                        current_min_relative = current_congestion_control.get("min_relative")
-                        current_max_relative = current_congestion_control.get("max_relative")
-                        if min_relative != current_min_relative or max_relative != current_max_relative:
-                            self._generate_congestion_control_relative_cmds(if_type, if_id, tc, control,
-                                                                            min_relative, max_relative)
+                        if threshold_mode != curr_threshold_mode:
+                            self._threshold_mode_generate_cmds_mappers(threshold_mode, if_type, if_id, tc,
+                                                                       control, min_threshold, max_threshold)
+                        elif min_threshold != curr_min_threshold or max_threshold != curr_max_threshold:
+                            self._threshold_mode_generate_cmds_mappers(threshold_mode, if_type, if_id, tc,
+                                                                       control, min_threshold, max_threshold)
 
             dcb = self._required_config.get("dcb")
             if dcb is not None:
@@ -312,6 +297,15 @@ class OnyxTrafficClassModule(BaseOnyxModule):
                     elif weight != current_weight:
                         self._commands.append('interface {0} {1} traffic-class {2} '
                                               'dcb ets {3} {4}'.format(if_type, if_id, tc, dcb_mode, weight))
+
+    def _threshold_mode_generate_cmds_mappers(self, threshold_mode, if_type, if_id, tc, control,
+                                              min_threshold, max_threshold):
+        if threshold_mode == 'absolute':
+            self._generate_congestion_control_absolute_cmds(if_type, if_id, tc,
+                                                            control, min_threshold, max_threshold)
+        else:
+            self._generate_congestion_control_relative_cmds(if_type, if_id, tc,
+                                                            control, min_threshold, max_threshold)
 
     def _generate_congestion_control_absolute_cmds(self, if_type, if_id, tc, control,
                                                    min_absolute, max_absolute):
