@@ -71,10 +71,21 @@
   assert:
     that:
     - test_script_with_large_args_result.rc == 0
-    - test_script_with_large_args_result.stdout == long_string + "\r\n"
     - not test_script_with_large_args_result.stderr
     - test_script_with_large_args_result is not failed
     - test_script_with_large_args_result is changed
+
+- name: check that script ran and received arguments correctly with winrm output
+  assert:
+    that:
+    - test_script_with_large_args_result.stdout == long_string + "\r\n"
+  when: ansible_connection != 'psrp'
+
+- name: check that script ran and received arguments correctly with psrp output
+  assert:
+    that:
+    - test_script_with_large_args_result.stdout == long_string
+  when: ansible_connection == 'psrp'
 
 - name: run test script that takes parameters passed via splatting
   script: test_script_with_splatting.ps1 @{ This = 'this'; That = '{{ test_win_script_value }}'; Other = 'other'}

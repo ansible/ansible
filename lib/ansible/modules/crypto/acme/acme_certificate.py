@@ -395,6 +395,7 @@ from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 
 def get_cert_days(module, cert_file):
@@ -550,26 +551,10 @@ class ACMEClient(object):
             elif challenge_type == 'tls-alpn-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3
                 if identifier_type == 'ip':
-                    if ':' in identifier:
-                        # IPv6 address: use reverse IP6.ARPA mapping (RFC3596)
-                        i = identifier.find('::')
-                        if i >= 0:
-                            nibbles = [nibble for nibble in identifier[:i].split(':') if nibble]
-                            suffix = [nibble for nibble in identifier[i + 1:].split(':') if nibble]
-                            if len(nibbles) + len(suffix) < 8:
-                                nibbles.extend(['0'] * (8 - len(nibbles) - len(suffix)))
-                            nibbles.extend(suffix)
-                        else:
-                            nibbles = identifier.split(':')
-                        resource = []
-                        for nibble in reversed(nibbles):
-                            nibble = '0' * (4 - len(nibble)) + nibble.lower()
-                            for octet in reversed(nibble):
-                                resource.append(octet)
-                        resource = '.'.join(resource) + '.ip6.arpa.'
-                    else:
-                        # IPv4 address: use reverse IN-ADDR.ARPA mapping (RFC1034)
-                        resource = '.'.join(reversed(identifier.split('.'))) + '.in-addr.arpa.'
+                    # IPv4/IPv6 address: use reverse mapping (RFC1034, RFC3596)
+                    resource = compat_ipaddress.ip_address(identifier).reverse_pointer
+                    if not resource.endswith('.'):
+                        resource += '.'
                 else:
                     resource = identifier
                 value = base64.b64encode(hashlib.sha256(to_bytes(keyauthorization)).digest())

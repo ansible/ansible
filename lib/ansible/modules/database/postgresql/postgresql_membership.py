@@ -28,7 +28,7 @@ description:
 - 2) grant them desired privileges by M(postgresql_privs) module
   U(https://docs.ansible.com/ansible/latest/modules/postgresql_privs_module.html)
 - 3) add desired PostgreSQL users to the new group (groups) by this module
-version_added: "2.8"
+version_added: '2.8'
 options:
   groups:
     description:
@@ -67,18 +67,6 @@ options:
     type: str
     aliases:
     - login_db
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
   session_role:
     description:
     - Switch to session_role after connecting.
@@ -86,34 +74,6 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    type: str
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ca_cert:
-    description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
-      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
-    type: str
-    aliases: [ ssl_rootcert ]
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -128,6 +88,7 @@ notes:
 requirements: [ psycopg2 ]
 author:
 - Andrew Klychkov (@Andersson007)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -182,31 +143,9 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
-
-
-def connect_to_db(module, kw, autocommit=False):
-    try:
-        db_connection = psycopg2.connect(**kw)
-        if autocommit:
-            if psycopg2.__version__ >= '2.4.2':
-                db_connection.set_session(autocommit=True)
-            else:
-                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least '
-                                 'version 8.4 to support sslrootcert')
-
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-
-    return db_connection
 
 
 class PgMembership(object):

@@ -73,26 +73,6 @@ options:
     - Only used when C(state=absent).
     type: bool
     default: 'no'
-  port:
-    description:
-    - Database port to connect to.
-    default: 5432
-    type: int
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User to authenticate with PostgreSQL.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL (must match C(login_user)).
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL where you want to execute the actions.
-    type: str
   session_role:
     version_added: '2.8'
     description:
@@ -108,29 +88,25 @@ options:
     choices: [ absent, present ]
   login_unix_socket:
     description:
-    - Path to a Unix domain socket for local connections.
+      - Path to a Unix domain socket for local connections.
     type: str
     version_added: '2.8'
   ssl_mode:
     description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
     type: str
     default: prefer
     choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
     version_added: '2.8'
   ca_cert:
     description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s). If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
     type: str
-    version_added: '2.8'
     aliases: [ ssl_rootcert ]
-
+    version_added: '2.8'
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -145,6 +121,7 @@ requirements: [ psycopg2 ]
 author:
 - Jens Depuydt (@jensdepuydt)
 - Thomas O'Donnell (@andytom)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -197,13 +174,13 @@ import traceback
 PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
-    postgresqldb_found = True
+    HAS_PSYCOPG2 = True
 except ImportError:
     PSYCOPG2_IMP_ERR = traceback.format_exc()
-    postgresqldb_found = False
+    HAS_PSYCOPG2 = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.database import pg_quote_identifier
@@ -290,7 +267,7 @@ def main():
     sslrootcert = module.params["ca_cert"]
     session_role = module.params["session_role"]
 
-    if not postgresqldb_found:
+    if not HAS_PSYCOPG2:
         module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     # To use defaults values, keyword arguments must be absent, so
@@ -316,17 +293,8 @@ def main():
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
-    try:
-        db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor()
-
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+    db_connection = connect_to_db(module, kw, autocommit=False)
+    cursor = db_connection.cursor()
 
     if session_role:
         try:

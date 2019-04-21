@@ -411,15 +411,15 @@ class GitLabUser(object):
 def deprecation_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version=2.10),
-        login_user=dict(type='str', no_log=True, removed_in_version=2.10),
-        login_password=dict(type='str', no_log=True, removed_in_version=2.10),
+        server_url=dict(type='str', required=True, removed_in_version="2.10"),
+        login_user=dict(type='str', no_log=True, removed_in_version="2.10"),
+        login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
         name=dict(type='str', required=True),
         state=dict(type='str', default="present", choices=["absent", "present"]),

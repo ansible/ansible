@@ -25,7 +25,28 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.ComponentModel;
 
-namespace Ansible {
+namespace Ansible.WinRegion {
+
+    public class NativeMethods
+    {
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern int GetLocaleInfoEx(
+            String lpLocaleName,
+            UInt32 LCType,
+            StringBuilder lpLCData,
+            int cchData);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern int GetSystemDefaultLocaleName(
+            IntPtr lpLocaleName,
+            int cchLocaleName);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern int GetUserDefaultLocaleName(
+            IntPtr lpLocaleName,
+            int cchLocaleName);
+    }
+
     public class LocaleHelper {
         private String Locale;
 
@@ -33,12 +54,9 @@ namespace Ansible {
             Locale = locale;
         }
 
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern int GetLocaleInfoEx(String lpLocaleName, UInt32 LCType, StringBuilder lpLCData, int cchData);
-
         public String GetValueFromType(UInt32 LCType) {
             StringBuilder data = new StringBuilder(500);
-            int result = GetLocaleInfoEx(Locale, LCType, data, 500);
+            int result = NativeMethods.GetLocaleInfoEx(Locale, LCType, data, 500);
             if (result == 0)
                 throw new Exception(String.Format("Error getting locale info with legacy method: {0}", new Win32Exception(Marshal.GetLastWin32Error()).Message));
 
@@ -47,6 +65,59 @@ namespace Ansible {
     }
 }
 "@
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
+Add-Type -TypeDefinition $lctype_util
+$env:TMP = $original_tmp
+
+Function Get-LastWin32ExceptionMessage {
+    param([int]$ErrorCode)
+    $exp = New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $ErrorCode
+    $exp_msg = "{0} (Win32 ErrorCode {1} - 0x{1:X8})" -f $exp.Message, $ErrorCode
+    return $exp_msg
+}
+
+Function Get-SystemLocaleName {
+    $max_length = 85  # LOCALE_NAME_MAX_LENGTH
+    $ptr = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($max_length)
+
+    try {
+        $res = [Ansible.WinRegion.NativeMethods]::GetSystemDefaultLocaleName($ptr, $max_length)
+
+        if ($res -eq 0) {
+            $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+            $msg = Get-LastWin32ExceptionMessage -Error $err_code
+            Fail-Json -obj $result -message "Failed to get system locale: $msg"
+        }
+
+        $system_locale = [System.Runtime.InteropServices.Marshal]::PtrToStringUni($ptr)
+    } finally {
+        [System.Runtime.InteropServices.Marshal]::FreeHGlobal($ptr)
+    }
+
+    return $system_locale
+}
+
+Function Get-UserLocaleName {
+    $max_length = 85  # LOCALE_NAME_MAX_LENGTH
+    $ptr = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($max_length)
+
+    try {
+        $res = [Ansible.WinRegion.NativeMethods]::GetUserDefaultLocaleName($ptr, $max_length)
+
+        if ($res -eq 0) {
+            $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+            $msg = Get-LastWin32ExceptionMessage -Error $err_code
+            Fail-Json -obj $result -message "Failed to get user locale: $msg"
+        }
+
+        $user_locale = [System.Runtime.InteropServices.Marshal]::PtrToStringUni($ptr)
+    } finally {
+        [System.Runtime.InteropServices.Marshal]::FreeHGlobal($ptr)
+    }
+
+    return $user_locale
+}
 
 Function Get-ValidGeoIds($cultures) {
    $geo_ids = @()
@@ -79,20 +150,10 @@ Function Copy-RegistryKey($source, $target) {
     }
 }
 
-# With the legacy options (needed for OS < Windows 8 and Server 2012) we need to check multiple reg
-# keys and modify them if they need changing. This is because Microsoft only made changing these
-# values with the newer versions of Windows and didn't backport these features to the older ones,
-# thanks a bunch there Microsoft :(
-Function Set-CultureLegacy($culture) {
-    # For when Set-Culture is not available (Pre Windows 8 and Server 2012)
+Function Set-UserLocale($culture) {
     $reg_key = 'HKCU:\Control Panel\International'
 
-    $original_tmp = $env:TMP
-    $env:TMP = $_remote_tmp
-    Add-Type -TypeDefinition $lctype_util
-    $env:TMP = $original_tmp
-
-    $lookup = New-Object Ansible.LocaleHelper($culture)
+    $lookup = New-Object Ansible.WinRegion.LocaleHelper($culture)
     # hex values are from http://www.pinvoke.net/default.aspx/kernel32/GetLocaleInfoEx.html
     $wanted_values = @{
         Locale = '{0:x8}' -f ([System.Globalization.CultureInfo]$culture).LCID
@@ -257,16 +318,10 @@ if ($null -ne $location) {
 }
 
 if ($null -ne $format) {
-    $current_format = (Get-Culture).Name
+    # Cannot use Get/Set-Culture as that fails to get and set the culture when running in the PSRP runspace.
+    $current_format = Get-UserLocaleName
     if ($current_format -ne $format) {
-        # Set-Culture was only added in Server 2012 and above, use legacy option if older
-        if (Get-Command 'Set-Culture' -ErrorAction SilentlyContinue) {
-            if (-not $check_mode) {
-                Set-Culture -CultureInfo $format
-            }
-        } else {
-            Set-CultureLegacy -culture $format
-        }
+        Set-UserLocale -culture $format
         $result.changed = $true
     }
 }
@@ -274,7 +329,7 @@ if ($null -ne $format) {
 if ($null -ne $unicode_language) {
     # Get/Set-WinSystemLocale was only added in Server 2012 and above, use legacy option if older
     if (Get-Command 'Get-WinSystemLocale' -ErrorAction SilentlyContinue) {
-        $current_unicode_language = (Get-WinSystemLocale).Name
+        $current_unicode_language = Get-SystemLocaleName
         if ($current_unicode_language -ne $unicode_language) {
             if (-not $check_mode) {
                 Set-WinSystemLocale -SystemLocale $unicode_language
