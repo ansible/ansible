@@ -1,0 +1,2 @@
+minor_changes:
+  - Add variable type for performance_insights_retention_period (https://github.com/ansible/ansible/issues/49904).
