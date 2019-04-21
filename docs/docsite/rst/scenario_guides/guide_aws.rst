@@ -138,7 +138,7 @@ Security Groups
 ```````````````
 
 Security groups on AWS are stateful. The response of a request from your instance is allowed to flow in regardless of inbound security group rules and vice-versa.
-In case you only want allow traffic with AWS S3 service, you need to fetch the current IP ranges of AWS S3 for one region and apply them as an egress rule.
+In case you only want allow traffic with AWS S3 service, you need to fetch the current IP ranges of AWS S3 for one region and apply them as an egress rule.::
 
     - name: fetch raw ip ranges for aws s3
       set_fact:
@@ -162,7 +162,6 @@ In case you only want allow traffic with AWS S3 service, you need to fetch the c
         rules_egress: "{{ s3_ranges }}"
         tags:
           Name: aws_s3_ip_ranges
-
 
 .. _aws_host_inventory:
 
