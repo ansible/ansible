@@ -295,14 +295,14 @@ class OnyxTrafficClassModule(BaseOnyxModule):
                         self._commands.append('interface {0} {1} traffic-class {2} '
                                               'dcb ets {3} {4}'.format(if_type, if_id, tc, dcb_mode, weight))
 
-    def _threshold_mode_generate_cmds_mappers(self, threshold_mode, if_type, if_id, tc, control,
-                                              min_threshold, max_threshold):
+    def _threshold_mode_generate_cmds_mappers(self, threshold_mode, if_type, if_id, tc,
+                                              control, min_threshold, max_threshold):
         if threshold_mode == 'absolute':
-            self._generate_congestion_control_absolute_cmds(if_type, if_id, tc,
-                                                            control, min_threshold, max_threshold)
+            self._generate_congestion_control_absolute_cmds(if_type, if_id, tc, control,
+                                                            min_threshold, max_threshold)
         else:
-            self._generate_congestion_control_relative_cmds(if_type, if_id, tc,
-                                                            control, min_threshold, max_threshold)
+            self._generate_congestion_control_relative_cmds(if_type, if_id, tc, control,
+                                                            min_threshold, max_threshold)
 
     def _generate_congestion_control_absolute_cmds(self, if_type, if_id, tc, control,
                                                    min_absolute, max_absolute):
