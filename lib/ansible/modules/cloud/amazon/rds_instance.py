@@ -1050,7 +1050,7 @@ def main():
         new_db_instance_identifier=dict(aliases=['new_instance_id', 'new_id']),
         option_group_name=dict(),
         performance_insights_kms_key_id=dict(),
-        performance_insights_retention_period=dict(),
+        performance_insights_retention_period=dict(type='int'),
         port=dict(type='int'),
         preferred_backup_window=dict(aliases=['backup_window']),
         preferred_maintenance_window=dict(aliases=['maintenance_window']),
