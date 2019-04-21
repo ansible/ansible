@@ -95,10 +95,10 @@ commands:
     - interface ethernet 1/16 traffic-class 3 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
     - interface mlag-port-channel 7 traffic-class 3 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
     - interface port-channel 1 traffic-class 3 congestion-control ecn minimum-absolute 150 maximum-absolute 1500
-    - interface ethernet 1/15 traffic-class 6 dcb ets strict
-    - interface ethernet 1/16 traffic-class 6 dcb ets strict
-    - interface mlag-port-channel 7 traffic-class 6 dcb ets strict
-    - interface port-channel 1 traffic-class 6 dcb ets strict
+    - interface ethernet 1/15 traffic-class 3 dcb ets strict
+    - interface ethernet 1/16 traffic-class 3 dcb ets strict
+    - interface mlag-port-channel 7 traffic-class 3 dcb ets strict
+    - interface port-channel 1 traffic-class 3 dcb ets strict
 """
 
 import re
