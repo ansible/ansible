@@ -321,7 +321,7 @@ class Dldp(object):
 
         # get global DLDP info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("data/dldp/dldpSys")
+        topo = root.find("dldp/dldpSys")
         if not topo:
             self.module.fail_json(
                 msg="Error: Get current DLDP configration failed.")

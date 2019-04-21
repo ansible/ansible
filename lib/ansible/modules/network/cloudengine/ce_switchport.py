@@ -415,12 +415,23 @@ class SwitchPort(object):
                              trunkVlans="")
             if intf_info["l2Enable"] == "enable":
                 attr = re.findall(
-                    r'.*<linkType>(.*)</linkType>.*.*\s*<pvid>(.*)'
-                    r'</pvid>.*\s*<trunkVlans>(.*)</trunkVlans>.*', rcv_xml)
+                    r'.*<linkType>(.*)</linkType>.*\s*<pvid>(.*)</pvid>.*', rcv_xml)
                 if attr:
                     intf_info["linkType"] = attr[0][0]
-                    intf_info["pvid"] = attr[0][1]
-                    intf_info["trunkVlans"] = attr[0][2]
+                    if intf_info["linkType"] == "trunk":
+                        intf_info["trunk_pvid"] = attr[0][1]
+                        intf_info["access_pvid"] = ""
+                    else:
+                        intf_info["trunk_pvid"] = ""
+                        intf_info["access_pvid"] = attr[0][1]
+
+                if " <trunkVlans/>" in rcv_xml:
+                    intf_info["trunkVlans"] = ""
+                else:
+                    attr = re.findall(
+                        r'.*<trunkVlans>(.*)</trunkVlans>.*', rcv_xml)
+                    if attr:
+                        intf_info["trunkVlans"] = attr[0]
 
         return intf_info
 
@@ -434,10 +445,11 @@ class SwitchPort(object):
 
         change = False
         conf_str = ""
+
         self.updates_cmd.append("interface %s" % ifname)
         if self.state == "present":
             if self.intf_info["linkType"] == "access":
-                if access_vlan and self.intf_info["pvid"] != access_vlan:
+                if access_vlan and self.intf_info["access_pvid"] != access_vlan:
                     self.updates_cmd.append(
                         "port default vlan %s" % access_vlan)
                     conf_str = CE_NC_SET_ACCESS_PORT % (ifname, access_vlan)
@@ -453,7 +465,7 @@ class SwitchPort(object):
                 change = True
         elif self.state == "absent":
             if self.intf_info["linkType"] == "access":
-                if access_vlan and self.intf_info["pvid"] == access_vlan and access_vlan != "1":
+                if access_vlan and self.intf_info["access_pvid"] == access_vlan and access_vlan != "1":
                     self.updates_cmd.append(
                         "undo port default vlan %s" % access_vlan)
                     conf_str = CE_NC_SET_ACCESS_PORT % (ifname, "1")
@@ -483,7 +495,7 @@ class SwitchPort(object):
 
         if self.state == "present":
             if self.intf_info["linkType"] == "trunk":
-                if native_vlan and self.intf_info["pvid"] != native_vlan:
+                if native_vlan and self.intf_info["trunk_pvid"] != native_vlan:
                     self.updates_cmd.append(
                         "port trunk pvid vlan %s" % native_vlan)
                     xmlstr += CE_NC_SET_TRUNK_PORT_PVID % (ifname, native_vlan)
@@ -517,7 +529,7 @@ class SwitchPort(object):
                         "undo port trunk allow-pass vlan 1")
         elif self.state == "absent":
             if self.intf_info["linkType"] == "trunk":
-                if native_vlan and self.intf_info["pvid"] == native_vlan and native_vlan != '1':
+                if native_vlan and self.intf_info["trunk_pvid"] == native_vlan and native_vlan != '1':
                     self.updates_cmd.append(
                         "undo port trunk pvid vlan %s" % native_vlan)
                     xmlstr += CE_NC_SET_TRUNK_PORT_PVID % (ifname, 1)
@@ -626,7 +638,7 @@ class SwitchPort(object):
             if tagged_vlans <= 0 or tagged_vlans > 4094:
                 self.module.fail_json(
                     msg='Error: Vlan id is not in the range from 1 to 4094.')
-            j = tagged_vlans / 4
+            j = tagged_vlans // 4
             bit_int[j] |= 0x8 >> (tagged_vlans % 4)
             vlan_bit[j] = hex(bit_int[j])[2]
 
@@ -732,8 +744,8 @@ class SwitchPort(object):
             self.existing["interface"] = self.intf_info["ifName"]
             self.existing["mode"] = self.intf_info["linkType"]
             self.existing["switchport"] = self.intf_info["l2Enable"]
-            self.existing['access_vlan'] = self.intf_info["pvid"]
-            self.existing['native_vlan'] = self.intf_info["pvid"]
+            self.existing['access_vlan'] = self.intf_info["access_pvid"]
+            self.existing['native_vlan'] = self.intf_info["trunk_pvid"]
             self.existing['trunk_vlans'] = self.intf_info["trunkVlans"]
 
     def get_end_state(self):
@@ -745,8 +757,8 @@ class SwitchPort(object):
                 self.end_state["interface"] = end_info["ifName"]
                 self.end_state["mode"] = end_info["linkType"]
                 self.end_state["switchport"] = end_info["l2Enable"]
-                self.end_state['access_vlan'] = end_info["pvid"]
-                self.end_state['native_vlan'] = end_info["pvid"]
+                self.end_state['access_vlan'] = end_info["access_pvid"]
+                self.end_state['native_vlan'] = end_info["trunk_pvid"]
                 self.end_state['trunk_vlans'] = end_info["trunkVlans"]
 
     def work(self):

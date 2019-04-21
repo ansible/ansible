@@ -169,7 +169,7 @@ changed:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config, ce_argument_spec
 
 
 def is_config_exist(cmp_cfg, test_cfg):
@@ -224,6 +224,22 @@ class EvpnBgpRr(object):
         if not self.module.check_mode:
             load_config(self.module, commands)
 
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
+
     def is_bgp_view_exist(self):
         """Judge whether BGP view has existed"""
 
@@ -269,7 +285,7 @@ class EvpnBgpRr(object):
                 exp += " bgp %s" % self.as_number
 
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
 
         return config
 
@@ -358,15 +374,17 @@ class EvpnBgpRr(object):
     def show_result(self):
         """Show result"""
 
-        self.results['changed'] = self.changed
         self.results['proposed'] = self.proposed
         self.results['existing'] = self.existing
         self.results['end_state'] = self.end_state
+        if self.end_state == self.existing:
+            self.changed = False
         if self.changed:
             self.results['updates'] = self.updates_cmd
         else:
             self.results['updates'] = list()
 
+        self.results['changed'] = self.changed
         self.module.exit_json(**self.results)
 
     def judge_if_config_exist(self):

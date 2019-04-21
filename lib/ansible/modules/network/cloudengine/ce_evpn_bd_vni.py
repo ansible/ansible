@@ -260,7 +260,7 @@ CE_NC_GET_VNI_BD = """
     <nvo3Vni2Bds>
       <nvo3Vni2Bd>
         <vniId></vniId>
-        <bdId>%s</bdId>
+        <bdId></bdId>
       </nvo3Vni2Bd>
     </nvo3Vni2Bds>
   </nvo3>
@@ -552,7 +552,7 @@ class EvpnBd(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
         root = ElementTree.fromstring(xml_str)
-        evpn_inst = root.find("data/evpn/evpnInstances/evpnInstance")
+        evpn_inst = root.find("evpn/evpnInstances/evpnInstance")
         if evpn_inst:
             for eles in evpn_inst:
                 if eles.tag in ["evpnAutoRD", "evpnRD", "evpnRTs", "evpnAutoRTs"]:
@@ -1006,8 +1006,9 @@ class EvpnBd(object):
     def check_vni_bd(self):
         """Check whether vxlan vni is configured in BD view"""
 
-        xml_str = CE_NC_GET_VNI_BD % self.bridge_domain_id
+        xml_str = CE_NC_GET_VNI_BD
         xml_str = get_nc_config(self.module, xml_str)
+
         if "<data/>" in xml_str:
             self.module.fail_json(
                 msg='Error: The vxlan vni is not configured or the bridge domain id is invalid.')
