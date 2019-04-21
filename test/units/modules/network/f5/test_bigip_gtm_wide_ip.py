@@ -159,6 +159,7 @@ class TestUntypedManager(unittest.TestCase):
         tm = UntypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=False)
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -210,6 +211,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=False)
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -244,6 +246,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=False)
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -278,6 +281,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=False)
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -318,6 +322,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=False)
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -359,6 +364,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module, params=module.params)
         tm.exists = Mock(return_value=True)
         tm.read_current_from_device = Mock(return_value=current)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -402,6 +408,7 @@ class TestTypedManager(unittest.TestCase):
         tm.exists = Mock(return_value=True)
         tm.read_current_from_device = Mock(return_value=current)
         tm.update_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)

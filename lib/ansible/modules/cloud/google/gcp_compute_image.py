@@ -153,9 +153,10 @@ options:
     - You must provide either this property or the rawDisk.source property but not
       both to create an image.
     - 'This field represents a link to a Disk resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_disk
-      task and then set this source_disk field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_disk task and then set this source_disk field to "{{ name-of-resource
+      }}"'
     required: false
   source_disk_encryption_key:
     description:
@@ -384,7 +385,7 @@ sourceDisk:
   - You must provide either this property or the rawDisk.source property but not both
     to create an image.
   returned: success
-  type: str
+  type: dict
 sourceDiskEncryptionKey:
   description:
   - The customer-supplied encryption key of the source disk. Required if the source
@@ -451,7 +452,7 @@ def main():
                 type='dict',
                 options=dict(container_type=dict(type='str', choices=['TAR']), sha1_checksum=dict(type='str'), source=dict(required=True, type='str')),
             ),
-            source_disk=dict(),
+            source_disk=dict(type='dict'),
             source_disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
             source_disk_id=dict(type='str'),
             source_type=dict(type='str', choices=['RAW']),
@@ -730,10 +731,10 @@ class ImageImageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey')})
 
 
 class ImageRawdisk(object):
@@ -764,10 +765,10 @@ class ImageSourcediskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey')})
 
 
 if __name__ == '__main__':

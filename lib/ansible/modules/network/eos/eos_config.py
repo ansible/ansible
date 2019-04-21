@@ -435,13 +435,16 @@ def main():
 
             response = load_config(module, commands, replace=replace, commit=commit)
 
-            if 'diff' in response and module.params['diff_against'] == 'session':
-                result['diff'] = {'prepared': response['diff']}
+            result['changed'] = True
+
+            if module.params['diff_against'] == 'session':
+                if 'diff' in response:
+                    result['diff'] = {'prepared': response['diff']}
+                else:
+                    result['changed'] = False
 
             if 'session' in response:
                 result['session'] = response['session']
-
-            result['changed'] = True
 
     running_config = module.params['running_config']
     startup_config = None

@@ -27,8 +27,6 @@ FILE_ATTRIBUTES = {
     'Z': 'compresseddirty',
 }
 
-PASS_BOOLS = ('no_log', 'debug', 'diff')
-
 # Ansible modules can be written in any language.
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
@@ -157,6 +155,7 @@ from ansible.module_utils.common.parameters import (
     list_deprecations,
     list_no_log_values,
     PASS_VARS,
+    PASS_BOOLS,
 )
 
 from ansible.module_utils.six import (
@@ -711,8 +710,10 @@ class AnsibleModule(object):
         if self._tmpdir is None:
             basedir = None
 
-            basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
-            if not os.path.exists(basedir):
+            if self._remote_tmp is not None:
+                basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
+
+            if basedir is not None and not os.path.exists(basedir):
                 try:
                     os.makedirs(basedir, mode=0o700)
                 except (OSError, IOError) as e:
@@ -1441,20 +1442,27 @@ class AnsibleModule(object):
         if legal_inputs is None:
             legal_inputs = self._legal_inputs
 
-        for (k, v) in list(param.items()):
+        for k in list(param.keys()):
 
             if check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
-            elif k.startswith('_ansible_'):
-                # handle setting internal properties from internal ansible vars
-                key = k.replace('_ansible_', '')
-                if key in PASS_BOOLS:
-                    setattr(self, PASS_VARS[key], self.boolean(v))
-                else:
-                    setattr(self, PASS_VARS[key], v)
 
-                # clean up internal params:
-                del self.params[k]
+        for k in PASS_VARS:
+            # handle setting internal properties from internal ansible vars
+            param_key = '_ansible_%s' % k
+            if param_key in param:
+                if k in PASS_BOOLS:
+                    setattr(self, PASS_VARS[k][0], self.boolean(param[param_key]))
+                else:
+                    setattr(self, PASS_VARS[k][0], param[param_key])
+
+                # clean up internal top level params:
+                if param_key in self.params:
+                    del self.params[param_key]
+            else:
+                # use defaults if not already set
+                if not hasattr(self, PASS_VARS[k][0]):
+                    setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
         if unsupported_parameters:
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
@@ -2069,9 +2077,11 @@ class AnsibleModule(object):
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
-        if not os.path.exists(filename):
+        b_filename = to_bytes(filename, errors='surrogate_or_strict')
+
+        if not os.path.exists(b_filename):
             return None
-        if os.path.isdir(filename):
+        if os.path.isdir(b_filename):
             self.fail_json(msg="attempted to take checksum of directory: %s" % filename)
 
         # preserve old behaviour where the third parameter was a hash algorithm object
@@ -2085,7 +2095,7 @@ class AnsibleModule(object):
                                    (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
 
         blocksize = 64 * 1024
-        infile = open(os.path.realpath(filename), 'rb')
+        infile = open(os.path.realpath(b_filename), 'rb')
         block = infile.read(blocksize)
         while block:
             digest_method.update(block)

@@ -919,26 +919,10 @@ class ClusterMasterauth(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {
-                u'username': self.request.get('username'),
-                u'password': self.request.get('password'),
-                u'clusterCaCertificate': self.request.get('cluster_ca_certificate'),
-                u'clientCertificate': self.request.get('client_certificate'),
-                u'clientKey': self.request.get('client_key'),
-            }
-        )
+        return remove_nones_from_dict({u'username': self.request.get('username'), u'password': self.request.get('password')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {
-                u'username': self.request.get(u'username'),
-                u'password': self.request.get(u'password'),
-                u'clusterCaCertificate': self.request.get(u'clusterCaCertificate'),
-                u'clientCertificate': self.request.get(u'clientCertificate'),
-                u'clientKey': self.request.get(u'clientKey'),
-            }
-        )
+        return remove_nones_from_dict({u'username': self.request.get(u'username'), u'password': self.request.get(u'password')})
 
 
 class ClusterPrivateclusterconfig(object):
@@ -955,8 +939,6 @@ class ClusterPrivateclusterconfig(object):
                 u'enablePrivateNodes': self.request.get('enable_private_nodes'),
                 u'enablePrivateEndpoint': self.request.get('enable_private_endpoint'),
                 u'masterIpv4CidrBlock': self.request.get('master_ipv4_cidr_block'),
-                u'privateEndpoint': self.request.get('private_endpoint'),
-                u'publicEndpoint': self.request.get('public_endpoint'),
             }
         )
 
@@ -966,8 +948,6 @@ class ClusterPrivateclusterconfig(object):
                 u'enablePrivateNodes': self.request.get(u'enablePrivateNodes'),
                 u'enablePrivateEndpoint': self.request.get(u'enablePrivateEndpoint'),
                 u'masterIpv4CidrBlock': self.request.get(u'masterIpv4CidrBlock'),
-                u'privateEndpoint': self.request.get(u'privateEndpoint'),
-                u'publicEndpoint': self.request.get(u'publicEndpoint'),
             }
         )
 

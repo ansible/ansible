@@ -42,8 +42,8 @@ options:
     description:
       - Name the hypervisor to be used.
       - Required if I(state=present).
+      - Possible values are C(KVM), C(VMware), C(BareMetal), C(XenServer), C(LXC), C(HyperV), C(UCS), C(OVM), C(Simulator).
     type: str
-    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM ]
   url:
     description:
       - URL for the cluster
@@ -206,7 +206,6 @@ from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
     cs_argument_spec,
     cs_required_together,
-    CS_HYPERVISORS
 )
 
 
@@ -350,7 +349,7 @@ def main():
         zone=dict(),
         pod=dict(),
         cluster_type=dict(choices=['CloudManaged', 'ExternalManaged']),
-        hypervisor=dict(choices=CS_HYPERVISORS),
+        hypervisor=dict(),
         state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
         url=dict(),
         username=dict(),

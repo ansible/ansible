@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 set -euvx
+source virtualenv.sh
+
 
 MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 trap 'rm -rf "${MYTMPDIR}"' EXIT
@@ -403,6 +405,14 @@ ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-pass
 ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password
 ansible-playbook test_vaulted_inventory.yml -i vaulted.inventory -v "$@" --vault-password-file vault-password
 ansible-playbook test_vaulted_template.yml -i ../../inventory -v "$@" --vault-password-file vault-password
+
+
+# install TOML for parse toml inventory
+# test playbooks using vaulted files(toml)
+pip install toml
+ansible-vault encrypt  ./inventory.toml -v "$@" --vault-password-file=./vault-password
+ansible-playbook test_vaulted_inventory_toml.yml -i ./inventory.toml -v "$@" --vault-password-file vault-password
+ansible-vault decrypt  ./inventory.toml -v "$@" --vault-password-file=./vault-password
 
 # test a playbook with a host_var whose value is non-ascii utf8 (see https://github.com/ansible/ansible/issues/37258)
 ansible-playbook -i ../../inventory -v "$@" --vault-id vault-password test_vaulted_utf8_value.yml

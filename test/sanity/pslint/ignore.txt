@@ -72,7 +72,6 @@ lib/ansible/modules/windows/win_file_version.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_find.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingWMICmdlet
-lib/ansible/modules/windows/win_firewall_rule.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_get_url.ps1 PSUsePSCredentialType  # Credential param can take a base64 encoded string as well as a PSCredential
 lib/ansible/modules/windows/win_hotfix.ps1 PSAvoidTrailingWhitespace
@@ -92,9 +91,6 @@ lib/ansible/modules/windows/win_iis_website.ps1 PSUseDeclaredVarsMoreThanAssignm
 lib/ansible/modules/windows/win_lineinfile.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_mapped_drive.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_msg.ps1 PSAvoidTrailingWhitespace
-lib/ansible/modules/windows/win_nssm.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_nssm.ps1 PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_nssm.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_package.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_package.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_package.ps1 PSUseApprovedVerbs
@@ -125,7 +121,6 @@ lib/ansible/modules/windows/win_regmerge.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_robocopy.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_route.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_route.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_scheduled_task.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_scheduled_task_stat.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_scheduled_task_stat.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_scheduled_task_stat.ps1 PSUseDeclaredVarsMoreThanAssignments
@@ -133,7 +128,6 @@ lib/ansible/modules/windows/win_security_policy.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_security_policy.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_security_policy.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_security_policy.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_service.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_share.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_shell.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_shell.ps1 PSAvoidUsingCmdletAliases
@@ -153,11 +147,11 @@ lib/ansible/modules/windows/win_uri.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_user.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_user.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_user_profile.ps1 PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_user_right.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_wait_for.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_wait_for.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_xml.ps1 PSCustomUseLiteralPath
+test/integration/targets/collections/collection_root_user/ansible_collections/testns/testcoll/plugins/module_utils/MyPSMU.psm1 PSUseApprovedVerbs
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 PSAvoidUsingCmdletAliases
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 PSCustomUseLiteralPath
 test/integration/targets/win_chocolatey/files/tools/chocolateyUninstall.ps1 PSCustomUseLiteralPath

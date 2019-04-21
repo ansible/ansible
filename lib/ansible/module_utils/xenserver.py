@@ -478,7 +478,7 @@ def gather_vm_facts(module, vm_params):
                 vm_facts['cdrom'].update(type="none")
             else:
                 vm_facts['cdrom'].update(type="iso")
-                vm_facts['cdrom'].update(iso=vm_vbd_params['VDI']['name_label'])
+                vm_facts['cdrom'].update(iso_name=vm_vbd_params['VDI']['name_label'])
 
     for vm_vif_params in vm_params['VIFs']:
         vm_guest_metrics_networks = vm_params['guest_metrics'].get('networks', {})
@@ -492,7 +492,8 @@ def gather_vm_facts(module, vm_params):
             "prefix": "",
             "netmask": "",
             "gateway": "",
-            "ip6": [vm_guest_metrics_networks[ipv6] for ipv6 in vm_guest_metrics_networks.keys() if ipv6.startswith("%s/ipv6/" % vm_vif_params['device'])],
+            "ip6": [vm_guest_metrics_networks[ipv6] for ipv6 in sorted(vm_guest_metrics_networks.keys()) if ipv6.startswith("%s/ipv6/" %
+                                                                                                                            vm_vif_params['device'])],
             "prefix6": "",
             "gateway6": "",
         }
@@ -575,7 +576,7 @@ def set_vm_power_state(module, vm_ref, power_state, timeout=300):
                     # hard_shutdown will halt VM regardless of current state.
                     xapi_session.xenapi.VM.hard_shutdown(vm_ref)
             elif power_state == "restarted":
-                # hard_restart will restart VM only if VM is in paused or running state.
+                # hard_reboot will restart VM only if VM is in paused or running state.
                 if vm_power_state_current in ["paused", "poweredon"]:
                     if not module.check_mode:
                         xapi_session.xenapi.VM.hard_reboot(vm_ref)
@@ -712,7 +713,7 @@ def wait_for_vm_ip_address(module, vm_ref, timeout=300):
         vm_power_state = xapi_to_module_vm_power_state(xapi_session.xenapi.VM.get_power_state(vm_ref).lower())
 
         if vm_power_state != 'poweredon':
-            module.fail_json(msg="Cannot wait for VM IP address when VM is in state '%s'." % vm_power_state)
+            module.fail_json(msg="Cannot wait for VM IP address when VM is in state '%s'!" % vm_power_state)
 
         interval = 2
 

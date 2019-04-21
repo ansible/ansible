@@ -236,6 +236,30 @@
       - result is not changed
       - result.hcloud_server.backup_window != ""
 
+- name: test rebuild server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    image: ubuntu-18.04
+    state: rebuild
+  register: result_after_test
+- name: verify rebuild server
+  assert:
+    that:
+      - result_after_test is changed
+      - result.hcloud_server.id == result_after_test.hcloud_server.id
+
+- name: test rebuild server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    image: ubuntu-18.04
+    state: rebuild
+  register: result_after_test
+  check_mode: true
+- name: verify rebuild server with check mode
+  assert:
+    that:
+      - result_after_test is changed
+
 - name: absent server
   hcloud_server:
     name: "{{ hcloud_server_name }}"

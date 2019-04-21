@@ -34,6 +34,8 @@ try:
 except ImportError:
     HAS_PSYCOPG2 = False
 
+from ansible.module_utils._text import to_native
+
 
 class LibraryError(Exception):
     pass
@@ -43,7 +45,7 @@ def ensure_libs(sslrootcert=None):
     if not HAS_PSYCOPG2:
         raise LibraryError('psycopg2 is not installed. we need psycopg2.')
     if sslrootcert and psycopg2.__version__ < '2.4.3':
-        raise LibraryError('psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
+        raise LibraryError('psycopg2 must be at least 2.4.3 in order to use the ca_cert parameter')
 
     # no problems
     return None
@@ -55,7 +57,34 @@ def postgres_common_argument_spec():
         login_password=dict(default='', no_log=True),
         login_host=dict(default=''),
         login_unix_socket=dict(default=''),
-        port=dict(type='int', default=5432),
-        ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(),
+        port=dict(type='int', default=5432, aliases=['login_port']),
+        ssl_mode=dict(default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ca_cert=dict(aliases=['ssl_rootcert']),
     )
+
+
+def connect_to_db(module, kw, autocommit=False):
+    try:
+        db_connection = psycopg2.connect(**kw)
+        if autocommit:
+            if psycopg2.__version__ >= '2.4.2':
+                db_connection.set_session(autocommit=True)
+            else:
+                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least '
+                                 'version 8.4 to support sslrootcert')
+
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+
+    return db_connection
+
+
+def get_pg_version(cursor):
+    cursor.execute("select current_setting('server_version_num')")
+    return int(cursor.fetchone()[0])

@@ -124,6 +124,9 @@ files:
     labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
+  $modules/cloud/docker/docker_compose.py:
+    <<: *docker
+    maintainers: $team_docker sluther
   $modules/cloud/docker/docker_network.py:
     <<: *docker
     maintainers: $team_docker olsaki
@@ -139,7 +142,14 @@ files:
     keywords: [ hcloud, hetzner cloud ]
     labels: [ cloud, hcloud ]
     maintainers: $team_hcloud
-  $modules/cloud/kubevirt/: machacekondra mmazur pkliczewski
+  $modules/cloud/huawei/: &huawei
+    keywords: [ cloud, huawei, hwc ]
+    labels: [ cloud, huawei ]
+    maintainers: $team_huawei
+  $modules/cloud/kubevirt/: &kubevirt
+    keywords: [ kubevirt ]
+    labels: [ cloud, kubevirt ]
+    maintainers: $team_kubevirt
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: glitchcrab
@@ -476,6 +486,8 @@ files:
   $modules/system/solaris: *solaris
   $modules/system/sysctl.py: Akasurde
   $modules/system/systemd.py: $team_ansible
+  $modules/system/ufw.py:
+    notified: felixfontein
   $modules/system/user.py: $team_ansible samdoran
   $modules/utilities/helper/meta.py: $team_ansible
   $modules/utilities/logic/assert.py: $team_ansible
@@ -674,6 +686,7 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
+  $module_utils/hwc_utils.py: *huawei
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -683,6 +696,7 @@ files:
       - k8s
   $module_utils/keycloak.py:
     maintainers: eikef
+  $module_utils/kubevirt.py: *kubevirt
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
   $module_utils/memset.py:
@@ -1089,6 +1103,7 @@ files:
     support: community
     supershipit: $team_google
     maintainers: $team_google
+  $plugins/doc_fragments/hwc.py: *huawei
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
@@ -1096,6 +1111,8 @@ files:
   $plugins/doc_fragments/proxysql.py: *mysql
   $plugins/doc_fragments/ucs.py: *ucs
   $plugins/doc_fragments/vultr.py: *vultr
+  $plugins/doc_fragments/ovirt.py: *ovirt
+  $plugins/doc_fragments/ovirt_facts.py: *ovirt
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
@@ -1127,6 +1144,9 @@ files:
   $plugins/inventory/__init__.py:
     support: core
   $plugins/inventory/docker: *docker
+  $plugins/inventory/docker_swarm.py:
+    <<: *docker
+    maintainers: $team_docker morph027
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
@@ -1202,6 +1222,8 @@ files:
   $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
+  $plugins/lookup/manifold:
+    maintainers: galanoff
 ###############################
 # plugins/netconf
   $plugins/netconf/:
@@ -1332,6 +1354,7 @@ files:
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
+  test/integration/targets/hwc_: *huawei
   test/integration/targets/inventory_docker: *docker
   test/integration/targets/inventory_docker_swarm:
     <<: *docker
@@ -1345,6 +1368,7 @@ files:
   test/integration/targets/nxos_: *nxos
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
+  test/integration/targets/scaleway_: *scaleway
   test/integration/targets/setup_acme: *crypto
   test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_openssl: *crypto
@@ -1355,9 +1379,6 @@ files:
   test/integration/targets/vultr: *vultr
   test/legacy/:
     notified: mattclay
-  test/legacy/scaleway:
-    <<: *scaleway
-    support: community
   test/runner/:
     notified: mattclay
   test/runner/lib/cloud/acme.py: *crypto
@@ -1369,6 +1390,7 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
+  test/units/module_utils/hwc: *huawei
   test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
@@ -1420,12 +1442,14 @@ macros:
   team_google: rambleraptor erjohnso
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
+  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang
   team_imc: dagwieers
   team_intersight: dsoper2 movinalot
   team_ios: rcarrillocruz
   team_iosxr: rcarrillocruz gdpak
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
+  team_kubevirt: machacekondra mmazur pkliczewski
   team_linode: InTheCloudDan lwm displague rmcintosh
   team_macos: akasurde dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
@@ -1439,7 +1463,7 @@ macros:
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha chrisvanheuveln
   team_onyx: anasbadaha samerd
-  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull
+  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull gtema
   team_openswitch: Qalthos gdpak
   team_ovirt: machacekondra mwperina mnecas
   team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem

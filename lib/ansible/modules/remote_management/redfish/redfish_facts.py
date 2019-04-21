@@ -43,6 +43,12 @@ options:
     required: true
     description:
       - Password for authentication with OOB controller
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to OOB controller
+    default: 10
+    type: int
+    version_added: '2.8'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -68,13 +74,22 @@ EXAMPLES = '''
   - debug:
       msg: "{{ redfish_facts.cpu.entries.0.Model }}"
 
-  - name: Get fan inventory
+  - name: Get memory inventory
+    redfish_facts:
+      category: Systems
+      command: GetMemoryInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Get fan inventory with a timeout of 20 seconds
     redfish_facts:
       category: Chassis
       command: GetFanInventory
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+      timeout: 20
 
   - name: Get default inventory information
     redfish_facts:
@@ -143,9 +158,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["GetSystemInventory", "GetCpuInventory",
-                "GetNicInventory", "GetStorageControllerInventory",
-                "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
+    "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
+                "GetMemoryInventory", "GetNicInventory",
+                "GetStorageControllerInventory", "GetDiskInventory",
+                "GetBiosAttributes", "GetBootOrder"],
     "Chassis": ["GetFanInventory", "GetPsuInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
@@ -172,6 +188,7 @@ def main():
             baseuri=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
     )
@@ -180,10 +197,13 @@ def main():
     creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
+    # timeout
+    timeout = module.params['timeout']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri)
+    rf_utils = RedfishUtils(creds, root_uri, timeout)
 
     # Build Category list
     if "all" in module.params['category']:
@@ -227,6 +247,8 @@ def main():
                     result["system"] = rf_utils.get_multi_system_inventory()
                 elif command == "GetCpuInventory":
                     result["cpu"] = rf_utils.get_multi_cpu_inventory()
+                elif command == "GetMemoryInventory":
+                    result["memory"] = rf_utils.get_multi_memory_inventory()
                 elif command == "GetNicInventory":
                     result["nic"] = rf_utils.get_multi_nic_inventory(category)
                 elif command == "GetStorageControllerInventory":
@@ -278,7 +300,7 @@ def main():
 
             for command in command_list:
                 if command == "GetManagerNicInventory":
-                    result["manager_nics"] = rf_utils.get_multi_nic_inventory(resource_type=category)
+                    result["manager_nics"] = rf_utils.get_multi_nic_inventory(category)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 

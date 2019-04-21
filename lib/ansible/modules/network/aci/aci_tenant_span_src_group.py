@@ -189,7 +189,7 @@ def main():
     argument_spec.update(
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         src_group=dict(type='str', aliases=['name']),  # Not required for querying all objects
-        admin_state=dict(type='raw'),  # Turn into a boolean in v2.9
+        admin_state=dict(type='bool'),
         description=dict(type='str', aliases=['descr']),
         dst_group=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),

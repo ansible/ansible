@@ -76,7 +76,21 @@
     - name: Generate publickey 5 - PEM format
       openssl_publickey:
         path: '{{ output_dir }}/publickey5.pub'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        backup: yes
+      register: privatekey5_1
+    - name: Generate publickey 5 - PEM format (idempotent)
+      openssl_publickey:
+        path: '{{ output_dir }}/publickey5.pub'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        backup: yes
+      register: privatekey5_2
+    - name: Generate publickey 5 - PEM format (different private key)
+      openssl_publickey:
+        path: '{{ output_dir }}/publickey5.pub'
         privatekey_path: '{{ output_dir }}/privatekey5.pem'
+        backup: yes
+      register: privatekey5_3
 
     - name: Generate privatekey with password
       openssl_privatekey:
@@ -107,6 +121,35 @@
         privatekey_path: '{{ output_dir }}/privatekeypw.pem'
       ignore_errors: yes
       register: passphrase_error_3
+
+    - name: Create broken key
+      copy:
+        dest: "{{ output_dir }}/publickeybroken.pub"
+        content: "broken"
+    - name: Regenerate broken key
+      openssl_publickey:
+        path: '{{ output_dir }}/publickeybroken.pub'
+        privatekey_path: '{{ output_dir }}/privatekey5.pem'
+      register: output_broken
+
+    - name: Generate publickey - PEM format (for removal)
+      openssl_publickey:
+        path: '{{ output_dir }}/publickey_removal.pub'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+    - name: Generate publickey - PEM format (removal)
+      openssl_publickey:
+        state: absent
+        path: '{{ output_dir }}/publickey_removal.pub'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        backup: yes
+      register: remove_1
+    - name: Generate publickey - PEM format (removal, idempotent)
+      openssl_publickey:
+        state: absent
+        path: '{{ output_dir }}/publickey_removal.pub'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        backup: yes
+      register: remove_2
 
     - import_tasks: ../tests/validate.yml
 

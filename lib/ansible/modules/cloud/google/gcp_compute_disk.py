@@ -163,9 +163,10 @@ options:
     - The source snapshot used to create this disk. You can provide this as a partial
       or full URL to the resource.
     - 'This field represents a link to a Snapshot resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_snapshot
-      task and then set this source_snapshot field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_snapshot task and then set this source_snapshot field to "{{
+      name-of-resource }}"'
     required: false
   source_snapshot_encryption_key:
     description:
@@ -374,7 +375,7 @@ sourceSnapshot:
   - The source snapshot used to create this disk. You can provide this as a partial
     or full URL to the resource.
   returned: success
-  type: str
+  type: dict
 sourceSnapshotEncryptionKey:
   description:
   - The customer-supplied encryption key of the source snapshot. Required if the source
@@ -441,7 +442,7 @@ def main():
             zone=dict(required=True, type='str'),
             source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
             disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
-            source_snapshot=dict(),
+            source_snapshot=dict(type='dict'),
             source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'))),
         )
     )
@@ -664,14 +665,10 @@ class DiskSourceimageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class DiskDiskencryptionkey(object):
@@ -683,14 +680,10 @@ class DiskDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class DiskSourcesnapshotencryptionkey(object):
@@ -702,14 +695,10 @@ class DiskSourcesnapshotencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name'), u'sha256': self.request.get('sha256')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName'), u'sha256': self.request.get(u'sha256')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 if __name__ == '__main__':

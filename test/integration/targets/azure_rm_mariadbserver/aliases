@@ -1,6 +1,6 @@
 cloud/azure
 destructive
-shippable/azure/group8
+shippable/azure/group3
 azure_rm_mariadbserver_facts
 azure_rm_mariadbdatabase
 azure_rm_mariadbdatabase_facts

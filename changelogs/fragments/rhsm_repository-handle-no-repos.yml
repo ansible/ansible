@@ -1,2 +1,0 @@
-bugfixes:
-  - rhsm_repository - handle systems without any repos

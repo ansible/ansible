@@ -2,6 +2,46 @@
 
 set -eux
 
+platform="$(uname)"
+
+function setup() {
+    if [[ "${platform}" == "FreeBSD" ]] || [[ "${platform}" == "Darwin" ]]; then
+        ifconfig lo0
+
+        existing=$(ifconfig lo0 | grep '^[[:blank:]]inet 127\.0\.0\. ' || true)
+
+        echo "${existing}"
+
+        for i in 3 4 254; do
+            ip="127.0.0.${i}"
+
+            if [[ "${existing}" != *"${ip}"* ]]; then
+                ifconfig lo0 alias "${ip}" up
+            fi
+        done
+
+        ifconfig lo0
+    fi
+}
+
+function teardown() {
+    if [[ "${platform}" == "FreeBSD" ]] || [[ "${platform}" == "Darwin" ]]; then
+        for i in 3 4 254; do
+            ip="127.0.0.${i}"
+
+            if [[ "${existing}" != *"${ip}"* ]]; then
+                ifconfig lo0 -alias "${ip}"
+            fi
+        done
+
+        ifconfig lo0
+    fi
+}
+
+setup
+
+trap teardown EXIT
+
 ANSIBLE_SSH_ARGS='-C -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=/dev/null' \
     ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook test_delegate_to.yml -i inventory -v "$@"
 

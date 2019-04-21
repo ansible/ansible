@@ -257,24 +257,45 @@ state:
     sample: file
 '''
 
+import errno
+import filecmp
+import grp
 import os
 import os.path
-import shutil
-import filecmp
+import platform
 import pwd
-import grp
+import shutil
 import stat
-import errno
 import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.six import PY3
+
+
+# The AnsibleModule object
+module = None
 
 
 class AnsibleModuleError(Exception):
     def __init__(self, results):
         self.results = results
+
+
+# Once we get run_command moved into common, we can move this into a common/files module.  We can't
+# until then because of the module.run_command() method.  We may need to move it into
+# basic::AnsibleModule() until then but if so, make it a private function so that we don't have to
+# keep it for backwards compatibility later.
+def clear_facls(path):
+    setfacl = get_bin_path('setfacl', True)
+    # FIXME "setfacl -b" is available on Linux and FreeBSD. There is "setfacl -D e" on z/OS. Others?
+    acl_command = [setfacl, '-b', path]
+    b_acl_command = [to_bytes(x) for x in acl_command]
+    rc, out, err = module.run_command(b_acl_command, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+    if rc != 0:
+        raise RuntimeError('Error running "{0}": stdout: "{1}"; stderr: "{2}"'.format(' '.join(b_acl_command), out, err))
 
 
 def split_pre_existing_dir(dirname):
@@ -467,6 +488,8 @@ def copy_common_dirs(src, dest, module):
 
 def main():
 
+    global module
+
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
@@ -576,7 +599,7 @@ def main():
             dest = to_native(b_dest, errors='surrogate_or_strict')
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
-        if os.access(b_dest, os.R_OK) and os.path.isfile(dest):
+        if os.access(b_dest, os.R_OK) and os.path.isfile(b_dest):
             checksum_dest = module.sha1(dest)
     else:
         if not os.path.exists(os.path.dirname(b_dest)):
@@ -631,7 +654,55 @@ def main():
                             module.warn("Unable to copy stats {0}".format(to_native(b_src)))
                         else:
                             raise
+
+                # might be needed below
+                if PY3 and hasattr(os, 'listxattr'):
+                    try:
+                        src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
+                    except Exception as e:
+                        # assume unwanted ACLs by default
+                        src_has_acls = True
+
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
+
+                if PY3 and hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
+                    # atomic_move used above to copy src into dest might, in some cases,
+                    # use shutil.copy2 which in turn uses shutil.copystat.
+                    # Since Python 3.3, shutil.copystat copies file extended attributes:
+                    # https://docs.python.org/3/library/shutil.html#shutil.copystat
+                    # os.listxattr (along with others) was added to handle the operation.
+
+                    # This means that on Python 3 we are copying the extended attributes which includes
+                    # the ACLs on some systems - further limited to Linux as the documentation above claims
+                    # that the extended attributes are copied only on Linux. Also, os.listxattr is only
+                    # available on Linux.
+
+                    # If not remote_src, then the file was copied from the controller. In that
+                    # case, any filesystem ACLs are artifacts of the copy rather than preservation
+                    # of existing attributes. Get rid of them:
+
+                    if src_has_acls:
+                        # FIXME If dest has any default ACLs, there are not applied to src now because
+                        # they were overridden by copystat. Should/can we do anything about this?
+                        # 'system.posix_acl_default' in os.listxattr(os.path.dirname(b_dest))
+
+                        try:
+                            clear_facls(dest)
+                        except ValueError as e:
+                            if 'setfacl' in to_native(e):
+                                # No setfacl so we're okay.  The controller couldn't have set a facl
+                                # without the setfacl command
+                                pass
+                            else:
+                                raise
+                        except RuntimeError as e:
+                            # setfacl failed.
+                            if 'Operation not supported' in to_native(e):
+                                # The file system does not support ACLs.
+                                pass
+                            else:
+                                raise
+
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
         changed = True

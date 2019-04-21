@@ -70,6 +70,23 @@ items:
       - Cloud Storage bucket name.
       returned: success
       type: str
+    cdnPolicy:
+      description:
+      - Cloud CDN configuration for this Backend Bucket.
+      returned: success
+      type: complex
+      contains:
+        signedUrlCacheMaxAgeSec:
+          description:
+          - Maximum number of seconds the response to a signed URL request will be
+            considered fresh. Defaults to 1hr (3600s). After this time period, the
+            response will be revalidated before being served.
+          - 'When serving responses to signed URL requests, Cloud CDN will internally
+            behave as though all responses from this backend had a "Cache-Control:
+            public, max-age=[TTL]" header, regardless of any existing Cache-Control
+            header. The actual headers served in responses will not be altered.'
+          returned: success
+          type: int
     creationTimestamp:
       description:
       - Creation timestamp in RFC3339 text format.

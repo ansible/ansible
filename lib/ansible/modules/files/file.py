@@ -59,7 +59,7 @@ options:
   recurse:
     description:
     - Recursively set the specified file attributes on directory contents.
-    - This applies only to C(state=directory).
+    - This applies only when C(state) is set to C(directory).
     type: bool
     default: no
     version_added: '1.1'
@@ -187,6 +187,15 @@ EXAMPLES = r'''
     path: /etc/another_file
     state: file
     access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
+
+- name: Recursively change ownership of a directory
+  file:
+    path: /etc/foo
+    state: directory
+    recurse: yes
+    owner: foo
+    group: foo
+
 '''
 RETURN = r'''
 
@@ -374,6 +383,8 @@ def get_timestamp_for_time(formatted_time, time_format):
 
 
 def update_timestamp_for_file(path, mtime, atime, diff=None):
+    b_path = to_bytes(path, errors='surrogate_or_strict')
+
     try:
         # When mtime and atime are set to 'now', rely on utime(path, None) which does not require ownership of the file
         # https://github.com/ansible/ansible/issues/50943
@@ -382,8 +393,8 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
             # not be updated. Just use the current time for the diff values
             mtime = atime = time.time()
 
-            previous_mtime = os.stat(path).st_mtime
-            previous_atime = os.stat(path).st_atime
+            previous_mtime = os.stat(b_path).st_mtime
+            previous_atime = os.stat(b_path).st_atime
 
             set_time = None
         else:
@@ -391,8 +402,8 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
             if mtime is None and atime is None:
                 return False
 
-            previous_mtime = os.stat(path).st_mtime
-            previous_atime = os.stat(path).st_atime
+            previous_mtime = os.stat(b_path).st_mtime
+            previous_atime = os.stat(b_path).st_atime
 
             if mtime is None:
                 mtime = previous_mtime
@@ -410,7 +421,7 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
 
             set_time = (atime, mtime)
 
-        os.utime(path, set_time)
+        os.utime(b_path, set_time)
 
         if diff is not None:
             if 'before' not in diff:

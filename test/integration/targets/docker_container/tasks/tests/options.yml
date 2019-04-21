@@ -5,23 +5,9 @@
     cname_h1: "{{ cname_prefix ~ '-options-h1' }}"
     cname_h2: "{{ cname_prefix ~ '-options-h2' }}"
     cname_h3: "{{ cname_prefix ~ '-options-h3' }}"
-    nname_1: "{{ cname_prefix ~ '-network-1' }}"
-    nname_2: "{{ cname_prefix ~ '-network-2' }}"
 - name: Registering container name
   set_fact:
     cnames: "{{ cnames }} + [cname, cname_h1, cname_h2, cname_h3]"
-    dnetworks: "{{ dnetworks }} + [nname_1, nname_2]"
-
-- name: Create networks
-  docker_network:
-    name: "{{ network_name }}"
-    state: present
-  loop:
-  - "{{ nname_1 }}"
-  - "{{ nname_2 }}"
-  loop_control:
-    loop_var: network_name
-  when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
 ## auto_remove #####################################################
@@ -951,6 +937,7 @@
     dns_search_domains:
     - example.org
     - example.com
+    force_kill: yes
   register: dns_search_domains_3
 
 - name: dns_search_domains (changed elements)
@@ -1014,6 +1001,7 @@
     dns_servers:
     - 8.8.8.8
     - 1.1.1.1
+    force_kill: yes
   register: dns_servers_3
 
 - name: dns_servers (changed elements)
@@ -2139,6 +2127,7 @@
     log_options:
       labels: production_status
       env: os,customer
+      max-file: 5
   register: log_options_1
 
 - name: log_options (idempotency)
@@ -2151,6 +2140,7 @@
     log_options:
       env: os,customer
       labels: production_status
+      max-file: 5
   register: log_options_2
 
 - name: log_options (less log options)
@@ -2173,7 +2163,7 @@
     log_driver: json-file
     log_options:
       labels: production_status
-      max-file: 1
+      max-size: 10m
     force_kill: yes
   register: log_options_4
 
@@ -2188,6 +2178,8 @@
     that:
     - log_options_1 is changed
     - log_options_2 is not changed
+    - "'Non-string value found for log_options option \\'max-file\\'. The value is automatically converted to \\'5\\'. If this is not correct, or you want to
+avoid such warnings, please quote the value.' in log_options_2.warnings"
     - log_options_3 is not changed
     - log_options_4 is changed
 
@@ -2433,164 +2425,6 @@
     - memory_swappiness_1 is changed
     - memory_swappiness_2 is not changed
     - memory_swappiness_3 is changed
-
-####################################################################
-## network_mode ####################################################
-####################################################################
-
-- name: network_mode
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: host
-  register: network_mode_1
-
-- name: network_mode (idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: host
-  register: network_mode_2
-
-- name: network_mode (change)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: none
-    force_kill: yes
-  register: network_mode_3
-
-- name: network_mode (container mode setup)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname_h1 }}"
-    state: started
-
-- name: network_mode (container mode)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: "container:{{ cname_h1 }}"
-    force_kill: yes
-  register: network_mode_4
-
-- name: network_mode (container mode idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: "container:{{ cname_h1 }}"
-  register: network_mode_5
-
-- name: cleanup
-  docker_container:
-    name: "{{ container_name }}"
-    state: absent
-    force_kill: yes
-  loop:
-  - "{{ cname }}"
-  - "{{ cname_h1 }}"
-  loop_control:
-    loop_var: container_name
-  diff: no
-
-- assert:
-    that:
-    - network_mode_1 is changed
-    - network_mode_2 is not changed
-    - network_mode_3 is changed
-    - network_mode_4 is changed
-    - network_mode_5 is not changed
-
-####################################################################
-## networks, purge_networks ########################################
-####################################################################
-
-- block:
-  - name: networks, purge_networks
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-      - name: "{{ nname_1 }}"
-    register: networks_1
-
-  - name: networks, purge_networks (idempotency)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: "{{ nname_1 }}"
-      - name: bridge
-    register: networks_2
-
-  - name: networks (less networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      networks:
-      - name: bridge
-    register: networks_3
-
-  - name: networks, purge_networks (less networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-    register: networks_4
-
-  - name: networks, purge_networks (more networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-      - name: "{{ nname_2 }}"
-      force_kill: yes
-    register: networks_5
-
-  - name: cleanup
-    docker_container:
-      name: "{{ cname }}"
-      state: absent
-      force_kill: yes
-    diff: no
-
-  - assert:
-      that:
-      - networks_1 is changed
-      - networks_2 is not changed
-      - networks_3 is not changed
-      - networks_4 is changed
-      - networks_5 is changed
-
-  when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
 ## oom_killer ######################################################
@@ -4144,15 +3978,3 @@
 ####################################################################
 ####################################################################
 ####################################################################
-
-- name: Delete networks
-  docker_network:
-    name: "{{ network_name }}"
-    state: absent
-    force: yes
-  loop:
-  - "{{ nname_1 }}"
-  - "{{ nname_2 }}"
-  loop_control:
-    loop_var: network_name
-  when: docker_py_version is version('1.10.0', '>=')
