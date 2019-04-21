@@ -197,7 +197,6 @@ class OnyxBgpModule(BaseOnyxModule):
     def init_module(self):
         """ initialize module
         """
-        self.file = open("/tmp/debug.txt", "w")
         neighbor_spec = dict(
             remote_as=dict(type='int', required=True),
             neighbor=dict(required=True),
@@ -303,8 +302,6 @@ class OnyxBgpModule(BaseOnyxModule):
         bgp_config = self._get_bgp_summary()
         if bgp_config:
             self._set_bgp_config(bgp_config)
-
-        self.file.write("current_config: %s" % self._current_config)
 
     def generate_commands(self):
         state = self._required_config['state']
