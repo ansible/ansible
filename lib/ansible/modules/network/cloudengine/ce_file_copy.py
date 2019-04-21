@@ -97,7 +97,7 @@ import re
 import os
 import time
 from xml.etree import ElementTree
-from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
 
 try:
@@ -150,42 +150,6 @@ CE_NC_GET_SCP_ENABLE = """
   </sshs>
 </filter>
 """
-
-
-def get_cli_exception(exc=None):
-    """Get cli exception message"""
-
-    msg = list()
-    if not exc:
-        exc = get_exception()
-    if exc:
-        errs = str(exc).split("\r\n")
-        for err in errs:
-            if not err:
-                continue
-            if "matched error in response:" in err:
-                continue
-            if " at '^' position" in err:
-                err = err.replace(" at '^' position", "")
-            if err.replace(" ", "") == "^":
-                continue
-            if len(err) > 2 and err[0] in ["<", "["] and err[-1] in [">", "]"]:
-                continue
-            if err[-1] == ".":
-                err = err[:-1]
-            if err.replace(" ", "") == "":
-                continue
-            msg.append(err)
-    else:
-        msg = ["Error: Fail to get cli exception message."]
-
-    while msg[-1][-1] == ' ':
-        msg[-1] = msg[-1][:-1]
-
-    if msg[-1][-1] != ".":
-        msg[-1] += "."
-
-    return ", ".join(msg).capitalize()
 
 
 class FileCopy(object):
@@ -285,7 +249,7 @@ class FileCopy(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=hostname, username=username, password=password, port=port)
-        full_remote_path = '{}{}'.format(self.file_system, dest)
+        full_remote_path = '{0}{1}'.format(self.file_system, dest)
         scp = SCPClient(ssh.get_transport())
         try:
             scp.put(self.local_file, full_remote_path)

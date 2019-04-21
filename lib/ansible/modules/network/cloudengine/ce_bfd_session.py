@@ -40,6 +40,7 @@ options:
             - BFD session creation mode, the currently created BFD session
               only supports static or static auto-negotiation mode.
         choices: ['static', 'auto']
+        default: 'static'
     addr_type:
         description:
             - Specifies the peer IP address type.
@@ -54,11 +55,11 @@ options:
         description:
             - Indicates the source IP address carried in BFD packets.
     local_discr:
-	    version_added: "2.9"
+        version_added: "2.9"
         description:
             - The BFD session local identifier does not need to be configured when the mode is auto.
     remote_discr:
-	    version_added: "2.9"
+        version_added: "2.9"
         description:
             - The BFD session remote identifier does not need to be configured when the mode is auto.
     vrf_name:
@@ -78,7 +79,7 @@ options:
     state:
         description:
             - Determines whether the config should be present or not on the device.
-        default: present
+        default: 'present'
         choices: ['present', 'absent']
 """
 
