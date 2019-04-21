@@ -51,6 +51,11 @@ class TestOnyxBgpModule(TestOnyxModule):
         commands = ['no router bgp 172']
         self.execute_module(changed=True, commands=commands)
 
+    def test_bgp_with_vrf_changed(self):
+        set_module_args(dict(as_number=173, vrf='new_vrf'))
+        commands = ['no router bgp 172 vrf default', 'router bgp 173 vrf new_vrf', 'exit']
+        self.execute_module(changed=True, commands=commands)
+
     def test_bgp_change(self):
         neighbor = dict(remote_as=173, neighbor='10.2.3.4')
         set_module_args(dict(as_number=174, router_id='1.2.3.4',
@@ -58,7 +63,7 @@ class TestOnyxBgpModule(TestOnyxModule):
                              evpn=False, fast_external_fallover=False,
                              max_paths=32, ecmp_bestpath=False,
                              ))
-        commands = ['no router bgp 172', 'router bgp 174 vrf default', 'exit',
+        commands = ['no router bgp 172 vrf default', 'router bgp 174 vrf default', 'exit',
                     'router bgp 174 vrf default router-id 1.2.3.4 force',
                     'router bgp 174 vrf default neighbor 10.2.3.4 remote-as 173',
                     'no router bgp 174 vrf default neighbor evpn peer-group',

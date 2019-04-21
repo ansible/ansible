@@ -197,6 +197,7 @@ class OnyxBgpModule(BaseOnyxModule):
     def init_module(self):
         """ initialize module
         """
+        self.file = open("/tmp/debug.txt", "w")
         neighbor_spec = dict(
             remote_as=dict(type='int', required=True),
             neighbor=dict(required=True),
@@ -303,6 +304,8 @@ class OnyxBgpModule(BaseOnyxModule):
         if bgp_config:
             self._set_bgp_config(bgp_config)
 
+        self.file.write("current_config: %s" % self._current_config)
+
     def generate_commands(self):
         state = self._required_config['state']
         if state == 'present':
@@ -317,10 +320,11 @@ class OnyxBgpModule(BaseOnyxModule):
 
         as_number = self._required_config['as_number']
         curr_as_num = self._current_config.get('as_number')
+        curr_vrf = self._current_config.get("vrf")
         bgp_removed = False
-        if curr_as_num != as_number:
+        if curr_as_num != as_number or vrf != curr_vrf:
             if curr_as_num:
-                self._commands.append('no router bgp %d' % curr_as_num)
+                self._commands.append('no router bgp %d vrf %s' % (curr_as_num, curr_vrf))
                 bgp_removed = True
             self._commands.append('router bgp %d vrf %s' % (as_number, vrf))
             self._commands.append('exit')
