@@ -23,7 +23,7 @@ options:
   state:
     description:
       - enable congestion control on interface.
-    choices: ['enabled','disabled']
+    choices: ['enabled', 'disabled']
     default: enabled
   interfaces:
     description:
@@ -51,12 +51,10 @@ options:
         description:
           - Set minimum-threshold value (in KBs) for marking traffic-class queue.
         required: true
-        type: int
       max_threshold:
         description:
           - Set maximum-threshold value (in KBs) for marking traffic-class queue.
         required: true
-        type: int
   dcb:
     description:
       - configure dcb control on interface.
@@ -69,7 +67,6 @@ options:
       weight:
         description:
           - Relevant only for wrr mode.
-        type: int
 """
 
 EXAMPLES = """
