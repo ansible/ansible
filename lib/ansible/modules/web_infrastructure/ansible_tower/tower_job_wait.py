@@ -83,7 +83,9 @@ status:
 
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
+from ansible.module_utils.six import PY2
 from ansible.module_utils.six.moves import cStringIO as StringIO
+from codecs import getwriter
 
 
 try:
@@ -119,7 +121,10 @@ def main():
 
         # tower-cli gets very noisy when monitoring.
         # We pass in our our outfile to suppress the out during our monitor call.
-        outfile = StringIO()
+        if PY2:
+            outfile = getwriter('utf-8')(StringIO())
+        else:
+            outfile = StringIO()
         params['outfile'] = outfile
 
         job_id = params.get('job_id')

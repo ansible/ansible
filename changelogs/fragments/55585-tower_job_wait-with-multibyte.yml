@@ -1,0 +1,2 @@
+bugfixes:
+- Fixed multibyte character handling issue for tower_job_wait module (https://github.com/ansible/ansible/issues/55585)

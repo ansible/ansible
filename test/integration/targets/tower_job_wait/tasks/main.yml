@@ -1,3 +1,21 @@
+- name: create a tempdir for hostvars
+  local_action: shell mktemp -d
+  register: tempdir
+
+- name: write a file w/ hostvars
+  local_action:
+    module: lineinfile
+    dest: "{{ tempdir.stdout }}/vars"
+    line: '{"ansible_connection": "local"}'
+    create: true
+
+- name: Create a Host using multi-byte characters
+  tower_host:
+    name: "テストサーバー"
+    inventory: "Demo Inventory"
+    state: present
+    variables: "@{{ tempdir.stdout }}/vars"
+
 - name: Launch a Job Template
   tower_job_launch:
     job_template: "Demo Job Template"
@@ -24,3 +42,9 @@
 - assert:
     that:
       - "result.msg =='Unable to wait, no job_id 99999999 found: The requested object could not be found.'"
+
+- name: Delete a Host
+  tower_host:
+    name: "テストサーバー"
+    inventory: "Demo Inventory"
+    state: absent
