@@ -181,32 +181,33 @@ class OnyxTrafficClassModule(BaseOnyxModule):
                                                  interface, if_type, if_id):
         tc = self._required_config.get("tc")
         interface_dcb_ets = self._show_interface_dcb_ets(if_type, if_id)[0].get(interface)
-        ets_per_tc = interface_dcb_ets[2].get("ETS per TC")
-        tc_config = ets_per_tc[0].get(str(tc))
-        dcb_mode = tc_config[0].get("S.Mode")
-        dcb_weight = int(tc_config[0].get("W"))
-        dcb = dict(mode=dcb_mode.lower(), weight=dcb_weight)
+        if interface_dcb_ets is None:
+            dcb = dict()
+        else:
+            ets_per_tc = interface_dcb_ets[2].get("ETS per TC")
+            tc_config = ets_per_tc[0].get(str(tc))
+            dcb_mode = tc_config[0].get("S.Mode")
+            dcb_weight = int(tc_config[0].get("W"))
+            dcb = dict(mode=dcb_mode.lower(), weight=dcb_weight)
+
         interface_congestion_control_config = interface_congestion_control_config[tc + 1]
         mode = interface_congestion_control_config.get("Mode")
         if mode == "none":
             self._current_config[interface] = dict(state="disabled", dcb=dcb, if_type=if_type, if_id=if_id)
             return
 
-        congestion_control = dict()
         threshold_mode = interface_congestion_control_config.get("Threshold mode")
         max_threshold = interface_congestion_control_config.get("Maximum threshold")
         min_threshold = interface_congestion_control_config.get("Minimum threshold")
 
         if threshold_mode == "absolute":
-            min_absolute = int(min_threshold.split(" ")[0])
-            max_absolute = int(max_threshold.split(" ")[0])
-            congestion_control = dict(control=mode.lower(), threshold_mode=threshold_mode,
-                                      min_threshold=min_absolute, max_threshold=max_absolute)
-        elif threshold_mode == "relative":
-            min_relative = int(min_threshold.split("%")[0])
-            max_relative = int(max_threshold.split("%")[0])
-            congestion_control = dict(control=mode.lower(), threshold_mode=threshold_mode,
-                                      min_threshold=min_relative, max_threshold=max_relative)
+            delimiter = ' '
+        else:
+            delimiter = '%'
+        min_value = int(min_threshold.split(delimiter)[0])
+        max_malue = int(max_threshold.split(delimiter)[0])
+        congestion_control = dict(control=mode.lower(), threshold_mode=threshold_mode,
+                                  min_threshold=min_value, max_threshold=max_malue)
 
         self._current_config[interface] = dict(state="enabled", congestion_control=congestion_control,
                                                dcb=dcb, if_type=if_type, if_id=if_id)
@@ -243,10 +244,9 @@ class OnyxTrafficClassModule(BaseOnyxModule):
             current_state = current_interface.get("state")
             if_type = current_interface.get("if_type")
             if_id = current_interface.get("if_id")
-            if state == "disabled" and current_state == "enabled":
-                self._commands.append('interface {0} {1} no traffic-class {2} congestion-control'.format(if_type, if_id, tc))
-                continue
-            elif state == "disabled" and current_state == "disabled":
+            if state == "disabled":
+                if current_state == "enabled":
+                    self._commands.append('interface {0} {1} no traffic-class {2} congestion-control'.format(if_type, if_id, tc))
                 continue
 
             congestion_control = self._required_config.get("congestion_control")
@@ -288,10 +288,7 @@ class OnyxTrafficClassModule(BaseOnyxModule):
                 elif dcb_mode == "wrr":
                     weight = dcb.get("weight")
                     current_weight = current_dcb.get("weight")
-                    if dcb_mode != current_dcb_mode:
-                        self._commands.append('interface {0} {1} traffic-class {2} '
-                                              'dcb ets {3} {4}'.format(if_type, if_id, tc, dcb_mode, weight))
-                    elif weight != current_weight:
+                    if dcb_mode != current_dcb_mode or weight != current_weight:
                         self._commands.append('interface {0} {1} traffic-class {2} '
                                               'dcb ets {3} {4}'.format(if_type, if_id, tc, dcb_mode, weight))
 
