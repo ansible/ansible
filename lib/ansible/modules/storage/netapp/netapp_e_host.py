@@ -290,6 +290,26 @@ class Host(object):
                                     used_host_ports.update({host["hostRef"]: port_ref})
                                 else:
                                     used_host_ports[host["hostRef"]].extend(port_ref)
+            else:
+                for host_port in host['hostSidePorts']:
+                    for port in self.ports:
+                        if ((host_port['label'] == port['label'] and host_port['address'] != port['port']) or
+                                (host_port['label'] != port['label'] and host_port['address'] == port['port'])):
+                            if not self.force_port:
+                                self.module.fail_json(msg="There are no host ports available OR there are not enough"
+                                                          " unassigned host ports")
+                            else:
+                                # Determine port reference
+                                port_ref = [port["hostPortRef"] for port in host["ports"]
+                                            if port["hostPortName"] == host_port["address"]]
+                                port_ref.extend([port["initiatorRef"] for port in host["initiators"]
+                                                 if port["nodeName"]["iscsiNodeName"] == host_port["address"]])
+
+                                # Create dictionary of hosts containing list of port references
+                                if host["hostRef"] not in used_host_ports.keys():
+                                    used_host_ports.update({host["hostRef"]: port_ref})
+                                else:
+                                    used_host_ports[host["hostRef"]].extend(port_ref)
 
         # Unassign assigned ports
         if apply_unassigning:
