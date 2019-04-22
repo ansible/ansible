@@ -35,6 +35,14 @@ options:
     default: false
     type: bool
 
+  boot_type:
+    description:
+      - Boot method
+    default: bootscript
+    choices:
+      - bootscript
+      - local
+
   image:
     description:
       - Image identifier used to start the instance with
@@ -239,6 +247,7 @@ def create_server(compute_api, server):
     target_server = None
     response = compute_api.post(path="servers",
                                 data={"enable_ipv6": server["enable_ipv6"],
+                                      "boot_type": server["boot_type"],
                                       "tags": server["tags"],
                                       "commercial_type": server["commercial_type"],
                                       "image": server["image"],
@@ -570,6 +579,7 @@ def core(module):
         "name": module.params["name"],
         "commercial_type": module.params["commercial_type"],
         "enable_ipv6": module.params["enable_ipv6"],
+        "boot_type": module.params["boot_type"],
         "tags": module.params["tags"],
         "organization": module.params["organization"]
     }
@@ -589,6 +599,7 @@ def main():
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
         commercial_type=dict(required=True, choices=SCALEWAY_COMMERCIAL_TYPES),
         enable_ipv6=dict(default=False, type="bool"),
+        boot_type=dict(default="bootscript"),
         state=dict(choices=state_strategy.keys(), default='present'),
         tags=dict(type="list", default=[]),
         organization=dict(required=True),
