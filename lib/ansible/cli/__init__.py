@@ -9,7 +9,6 @@ __metaclass__ = type
 
 import getpass
 import os
-import os.path
 import re
 import subprocess
 import sys
