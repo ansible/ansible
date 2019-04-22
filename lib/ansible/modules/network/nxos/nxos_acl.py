@@ -177,7 +177,7 @@ from ansible.module_utils.basic import AnsibleModule
 def execute_show_command(command, module, check_rc=True):
     command += ' | json'
     cmds = [command]
-    body = run_commands(module, cmds, check_rc)
+    body = run_commands(module, cmds, check_rc=check_rc)
     return body
 
 def get_acl(module, acl_name, seq_number):
