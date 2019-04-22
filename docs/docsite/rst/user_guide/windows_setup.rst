@@ -381,7 +381,7 @@ target Windows host:
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig
 
     # Test out HTTPS (will fail if the cert is not verifiable)
-    winrs -r:http://server:5985/wsman -u:Username -p:Password -ssl ipconfig
+    winrs -r:https://server:5986/wsman -u:Username -p:Password -ssl ipconfig
 
     # Test out HTTPS, ignoring certificate verification
     $username = "Username"
