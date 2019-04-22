@@ -611,14 +611,14 @@ options:
       uid:
         description:
           - UID of the secret file's owner.
-        type: int
+        type: str
       gid:
         description:
           - GID of the secret file's group.
-        type: int
+        type: str
       mode:
         description:
-          - File access mode inside the container.
+          - File access mode inside the container. Must an octal number (like C(0644) or C(0444)).
         type: int
   state:
     description:
@@ -2263,8 +2263,8 @@ class DockerServiceManager(object):
                     'secret_id': secret_data['SecretID'],
                     'secret_name': secret_data['SecretName'],
                     'filename': secret_data['File'].get('Name'),
-                    'uid': int(secret_data['File'].get('UID')),
-                    'gid': int(secret_data['File'].get('GID')),
+                    'uid': secret_data['File'].get('UID'),
+                    'gid': secret_data['File'].get('GID'),
                     'mode': secret_data['File'].get('Mode')
                 })
 
@@ -2514,8 +2514,8 @@ def main():
             secret_id=dict(type='str', required=True),
             secret_name=dict(type='str', required=True),
             filename=dict(type='str'),
-            uid=dict(type='int'),
-            gid=dict(type='int'),
+            uid=dict(type='str'),
+            gid=dict(type='str'),
             mode=dict(type='int'),
         )),
         networks=dict(type='list', elements='str'),
