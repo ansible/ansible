@@ -48,7 +48,7 @@ The ``httpapi`` connection plugin has a ``send()`` method, but an httpapi plugin
 
 .. code-block:: python
 
-   from ansible.module-utils.six-moves.urllib.error import HTTPError
+   from ansible.module_utils.six.moves.urllib.error import HTTPError
 
    def send_request(self, data, path, method='POST'):
        # Fixed headers for requests
