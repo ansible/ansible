@@ -65,7 +65,7 @@ options:
         type: str
       mode:
         description:
-          - File access mode inside the container. Must an octal number (like C(0644) or C(0444)).
+          - File access mode inside the container. Must be an octal number (like C(0644) or C(0444)).
         type: int
   constraints:
     description:
@@ -618,7 +618,7 @@ options:
         type: str
       mode:
         description:
-          - File access mode inside the container. Must an octal number (like C(0644) or C(0444)).
+          - File access mode inside the container. Must be an octal number (like C(0644) or C(0444)).
         type: int
   state:
     description:
