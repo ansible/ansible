@@ -31,6 +31,7 @@ options:
     description:
       - Graylog privileged user password.
     required: false
+    type: str
   action:
     description:
       - Action to take against pipeline API.
@@ -38,38 +39,47 @@ options:
     default: list
     choices: [ create, create_connection, parse_rule, create_rule, update,
                 update_connection, update_rule, delete, delete_rule, list, list_rules, query_rules, query_pipelines ]
+    type: str
   pipeline_id:
     description:
-      - Pipeline id.
+      - Pipeline ID.
     required: false
+    type: str
   pipeline_name:
     description:
       - Pipeline name.
     required: false
+    type: str
   stream_ids:
     description:
-      - Stream id.
+      - Stream IDs.
     required: false
+    type: list
   rule_id:
     description:
-      - Rule id.
+      - Rule ID.
     required: false
+    type: str
   rule_name:
     description:
       - Rule name.
     required: false
+    type: str
   title:
     description:
       - Title.
     required: false
+    type: str
   description:
     description:
       - Description.
     required: false
+    type: str
   source:
     description:
       - Rule source.
     required: false
+    type: str
 '''
 
 EXAMPLES = '''
@@ -568,10 +578,6 @@ def main():
     pipeline_name = module.params['pipeline_name']
     rule_id = module.params['rule_id']
     rule_name = module.params['rule_name']
-    stream_ids = module.params['stream_ids']
-    title = module.params['title']
-    description = module.params['description']
-    source = module.params['source']
 
     pipeline_url = "https://%s/api/system/pipelines/pipeline" % (endpoint)
     rule_url = "https://%s/api/system/pipelines/rule" % (endpoint)
