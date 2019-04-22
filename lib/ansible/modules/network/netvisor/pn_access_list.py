@@ -100,7 +100,10 @@ def check_cli(module, cli):
     list_name = module.params['pn_name']
 
     cli += ' access-list-show format name no-show-headers'
-    out = run_commands(module, cli)
+    out = run_commands(module, cli)[1]
+
+    if out:
+        out = out.split()
 
     return True if list_name in out else False
 

@@ -124,9 +124,10 @@ def check_cli(module, cli):
         )
 
     cli = clicopy
-    cli += ' cpu-class-show name %s format name no-show-headers' % name
+    cli += ' cpu-class-show format name no-show-headers'
     out = run_commands(module, cli)[1]
-    out = out.split()
+    if out:
+        out = out.split()
 
     return True if name in out else False
 
