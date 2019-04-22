@@ -39,7 +39,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Thomas Stringer (@tstringer)"
+    - "Thomas Stringer (@trstringer)"
 '''
 
 EXAMPLES = '''

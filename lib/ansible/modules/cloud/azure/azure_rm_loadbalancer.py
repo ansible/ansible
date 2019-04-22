@@ -332,7 +332,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Thomas Stringer (@tstringer)"
+    - "Thomas Stringer (@trstringer)"
     - "Yuwei Zhou (@yuwzho)"
 '''
 

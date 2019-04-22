@@ -307,5 +307,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-Thank you to Thomas Stringer (`@tstringer <https://github.com/tstringer>`_) for contributing source
+Thank you to Thomas Stringer (`@trstringer <https://github.com/trstringer>`_) for contributing source
 material for this topic.
