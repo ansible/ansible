@@ -984,8 +984,8 @@ class DockerServiceManager():
                 'config_id': config_data['ConfigID'],
                 'config_name': config_data['ConfigName'],
                 'filename': config_data['File'].get('Name'),
-                'uid': int(config_data['File'].get('UID')),
-                'gid': int(config_data['File'].get('GID')),
+                'uid': config_data['File'].get('UID'),
+                'gid': config_data['File'].get('GID'),
                 'mode': config_data['File'].get('Mode')
             })
         for secret_data in raw_data['Spec']['TaskTemplate']['ContainerSpec'].get('Secrets', []):
