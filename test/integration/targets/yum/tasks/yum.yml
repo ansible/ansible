@@ -93,15 +93,30 @@
         - "not yum_result is changed"
 
 - name: install sos again with missing repo enablerepo
-  yum: name=sos state=present enablerepo="thisrepodoesnotexist"
-  ignore_errors: True
+  yum:
+    name: sos
+    state: present
+    enablerepo: "thisrepodoesnotexist"
   register: yum_result
 - name: verify no change on fourth install with missing repo enablerepo (yum)
   assert:
     that:
+        - "yum_result is success"
+
+- name: install sos again with only missing repo enablerepo
+  yum:
+    name: sos
+    state: present
+    enablerepo: "thisrepodoesnotexist"
+    disablerepo: "*"
+    ignore_errors: true
+  register: yum_result
+- name: verify no change on fifth install with only missing repo enablerepo (yum)
+  assert:
+    that:
         - "yum_result is not success"
   when: ansible_pkg_mgr == 'yum'
-- name: verify no change on fourth install with missing repo enablerepo (dnf)
+- name: verify no change on fifth install with only missing repo enablerepo (dnf)
   assert:
     that:
         - "yum_result is success"

@@ -391,12 +391,24 @@ class YumModule(YumDnf):
         self.lockfile = '/var/run/yum.pid'
 
     def _enablerepos_with_error_checking(self, yumbase):
-        for rid in self.enablerepo:
+        # NOTE: This seems unintuitive, but it mirrors yum's CLI bahavior
+        if len(self.enablerepo) > 1:
             try:
                 yumbase.repos.enableRepo(rid)
             except yum.Errors.YumBaseError as e:
                 if u'repository not found' in to_text(e):
                     self.module.fail_json(msg="Repository %s not found." % rid)
+                else:
+                    raise e
+        else:
+            for rid in self.enablerepo:
+                try:
+                    yumbase.repos.enableRepo(rid)
+                except yum.Errors.YumBaseError as e:
+                    if u'repository not found' in to_text(e):
+                        self.module.warn("Repository %s not found." % rid)
+                    else:
+                        raise e
 
     def yum_base(self):
         my = yum.YumBase()
