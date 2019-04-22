@@ -530,6 +530,8 @@ class StrategyBase:
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
+                                        if not isinstance(listeners, list):
+                                            listeners = [listeners]
                                         if handler_name not in listeners:
                                             continue
                                         else:
