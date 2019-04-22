@@ -31,29 +31,35 @@ options:
     description:
       - Graylog privileged user password.
     required: false
+    type: str
   action:
     description:
       - Action to take against role API.
     required: false
     default: list
     choices: [ create, update, delete, list ]
+    type: str
   name:
     description:
       - Role name.
     required: false
+    type: str
   description:
     description:
       - Role description.
     required: false
+    type: str
   permissions:
     description:
       - Permissions list for role.
     required: false
+    type: list
   read_only:
     description:
       - Read only, true or false.
     required: false
     default: "false"
+    type: str
 '''
 
 EXAMPLES = '''
@@ -255,10 +261,6 @@ def main():
     graylog_user = module.params['graylog_user']
     graylog_password = module.params['graylog_password']
     action = module.params['action']
-    name = module.params['name']
-    description = module.params['description']
-    permissions = module.params['permissions']
-    read_only = module.params['read_only']
 
     base_url = "https://%s/api/roles" % (endpoint)
 
