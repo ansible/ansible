@@ -70,7 +70,8 @@ AZURE_API_PROFILES = {
         'WebSiteManagementClient': '2018-02-01',
         'PostgreSQLManagementClient': '2017-12-01',
         'MySQLManagementClient': '2017-12-01',
-        'MariaDBManagementClient': '2019-03-01'
+        'MariaDBManagementClient': '2019-03-01',
+        'PolicyClient': '2018-05-01'
     },
 
     '2017-03-09-profile': {
@@ -149,6 +150,7 @@ try:
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
     from azure.mgmt.resource.subscriptions import SubscriptionClient
+    from azure.mgmt.resource.policy import PolicyClient
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.mgmt.dns import DnsManagementClient
@@ -308,6 +310,7 @@ class AzureRMModuleBase(object):
         self._resource = None
         self._log_analytics_client = None
         self._servicebus_client = None
+        self._policy_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -1004,6 +1007,20 @@ class AzureRMModuleBase(object):
     @property
     def servicebus_models(self):
         return ServicebusModel
+
+    @property
+    def rm_policy_client(self):
+        self.log('Getting resource policy client')
+        if not self._policy_client:
+            self._policy_client = self.get_mgmt_svc_client(PolicyClient,
+                                                           base_url=self._cloud_environment.endpoints.resource_manager,
+                                                           api_version='2018-05-01')
+        return self._policy_client
+
+    @property
+    def rm_policy_models(self):
+        self.log("Getting resource policy models")
+        return PolicyClient.models("2018-05-01")
 
 
 class AzureRMAuthException(Exception):
