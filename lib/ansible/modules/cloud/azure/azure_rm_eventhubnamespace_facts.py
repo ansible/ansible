@@ -120,7 +120,8 @@ class AzureRMEventHubNamespaceFacts(AzureRMModuleBase):
         self.results['eventhubnamespaces'] = [self.to_dict(x) for x in response if self.has_tags(x.tags, self.tags)]
 
         if self.show_sas_policies:
-            self.results['eventhubnamespaces'] = [self.get_sas_policies(x) for x in self.results['eventhubnamespaces']]
+            for x in self.results['eventhubnamespaces']:
+                self.add_sas_policies(x)
         return self.results
 
     def get_item(self):
@@ -153,13 +154,13 @@ class AzureRMEventHubNamespaceFacts(AzureRMModuleBase):
         except Exception as exc:
             self.fail('Filed to list all eventhub namespaces - {0}'.format(exc.message or str(exc)))
 
-    def get_sas_policies(self, eventhubnamespace):
-        results = eventhubnamespace
+    def add_sas_policies(self, eventhubnamespace):
         namespace_name = eventhubnamespace['name']
         resource_group_name = eventhubnamespace['resource_group']
         rules = self.list_authorization_rules(resource_group_name=resource_group_name, namespace_name=namespace_name)
-        results['sas_policies'] = [self.list_keys(resource_group_name=resource_group_name, namespace_name=namespace_name, rule_name=x.name) for x in rules]
-        return results
+        eventhubnamespace['sas_policies'] = [self.list_keys(resource_group_name=resource_group_name,
+                                                            namespace_name=namespace_name,
+                                                            rule_name=x.name) for x in rules]
 
     def list_authorization_rules(self, resource_group_name, namespace_name):
         try:
