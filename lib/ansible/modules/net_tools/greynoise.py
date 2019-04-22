@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
+# Copyright: (c) 2019, Whitney Champion <whitney.ellis.champion@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 module: greynoise
 short_description: Communicate with the GreyNoise API
 description:
-    - The GreyNoise module queries the GreyNoise API
+    - The GreyNoise module queries the GreyNoise API.
 version_added: "2.9"
 author: "Whitney Champion (@shortstack)"
 options:
@@ -23,18 +23,22 @@ options:
     required: true
     default: list_tags
     choices: [ query_ip, query_tag, list_tags ]
+    type: str
   ip:
     description:
       - IP to query.
     required: true
+    type: str
   tag:
     description:
       - Tag to query.
     required: true
+    type: str
   greynoise_api_key:
     description:
       - GreyNoise API key
     required: false
+    type: str
 '''
 
 EXAMPLES = '''
@@ -86,7 +90,7 @@ from ansible.module_utils.urls import fetch_url, to_text
 
 def list_tags(module, base_url):
 
-    url = base_url + "list"
+    url = "/".join([base_url, "list"])
 
     response, info = fetch_url(module=module, url=url, method='GET')
 
@@ -94,7 +98,7 @@ def list_tags(module, base_url):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -103,7 +107,7 @@ def list_tags(module, base_url):
 
 def query_ip(module, base_url, ip, greynoise_api_key):
 
-    url = base_url + "ip"
+    url = "/".join([base_url, "ip"])
 
     data = 'key=%s&ip=%s' % (greynoise_api_key, ip)
 
@@ -113,7 +117,7 @@ def query_ip(module, base_url, ip, greynoise_api_key):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -122,7 +126,7 @@ def query_ip(module, base_url, ip, greynoise_api_key):
 
 def query_tag(module, base_url, tag, greynoise_api_key):
 
-    url = base_url + "tag"
+    url = "/".join([base_url, "tag"])
 
     data = 'key=%s&tag=%s' % (greynoise_api_key, tag)
 
@@ -132,7 +136,7 @@ def query_tag(module, base_url, tag, greynoise_api_key):
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
 
     try:
-        content = response.read()
+        content = to_text(response.read(), errors='surrogate_or_strict')
     except AttributeError:
         content = info.pop('body', '')
 
@@ -154,7 +158,7 @@ def main():
     tag = module.params['tag']
     greynoise_api_key = module.params['greynoise_api_key']
 
-    base_url = "http://api.greynoise.io:8888/v1/query/"
+    base_url = "http://api.greynoise.io:8888/v1/query"
 
     if action == "query_ip":
         status, message, content, url = query_ip(module, base_url, ip, greynoise_api_key)
