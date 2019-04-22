@@ -306,6 +306,14 @@
       3911340502960ca33aece01129234460bfeb2791  not_target1.txt
       1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt
 
+- name: create sha1 checksum file of src with an asterisk leading path
+  copy:
+    dest: '{{ files_dir }}/sha1sum_with_asterisk.txt'
+    content: |
+      a97e6837f60cec6da4491bab387296bbcd72bdba *27617.txt
+      3911340502960ca33aece01129234460bfeb2791 *not_target1.txt
+      1b4b6adf30992cedb0f6edefd6478ff0a593b2e4 *not_target2.txt
+
 - name: create sha256 checksum file of src
   copy:
     dest: '{{ files_dir }}/sha256sum.txt'
@@ -342,6 +350,17 @@
     path: "{{ remote_tmp_dir }}/27617.txt"
   register: stat_result_sha1
 
+- name: download src with sha1 checksum url with asterisk leading path
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum_with_asterisk.txt'
+  register: result_sha1_with_asterisk
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617.txt"
+  register: stat_result_sha1_with_asterisk
+
 - name: download src with sha256 checksum url
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
@@ -368,9 +387,11 @@
   assert:
     that:
       - result_sha1 is changed
+      - result_sha1_with_asterisk is changed
       - result_sha256 is changed
       - result_sha256_with_dot is changed
       - "stat_result_sha1.stat.exists == true"
+      - "stat_result_sha1_with_asterisk.stat.exists == true"
       - "stat_result_sha256.stat.exists == true"
       - "stat_result_sha256_with_dot.stat.exists == true"
 
