@@ -174,13 +174,11 @@ from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
-
-def execute_show_command(command, module):
+def execute_show_command(command, module, check_rc=True):
     command += ' | json'
     cmds = [command]
-    body = run_commands(module, cmds)
+    body = run_commands(module, cmds, check_rc)
     return body
-
 
 def get_acl(module, acl_name, seq_number):
     command = 'show ip access-list'
@@ -188,9 +186,13 @@ def get_acl(module, acl_name, seq_number):
     saveme = {}
     acl_body = {}
 
-    body = execute_show_command(command, module)[0]
-    if body:
-        all_acl_body = body['TABLE_ip_ipv6_mac']['ROW_ip_ipv6_mac']
+    body = execute_show_command(command, module, check_rc=False)
+    if 'Structured output unsupported' in repr(body):
+        # Some older versions raise 501 and return a string when no ACLs exist
+        return {}, []
+
+    if body and body[0]:
+        all_acl_body = body[0]['TABLE_ip_ipv6_mac']['ROW_ip_ipv6_mac']
     else:
         # no access-lists configured on the device
         return {}, []
