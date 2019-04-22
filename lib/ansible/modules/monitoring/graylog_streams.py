@@ -31,36 +31,44 @@ options:
     description:
       - Graylog privileged user password.
     required: false
+    type: str
   action:
     description:
       - Action to take against stream API.
     required: false
     default: list
     choices: [ create, create_rule, start, pause, update, update_rule, delete, delete_rule, list, query_streams ]
+    type: str
   title:
     description:
       - Stream title.
     required: false
+    type: str
   description:
     description:
       - Stream description.
     required: false
+    type: str
   stream_id:
     description:
       - Stream ID.
     required: false
+    type: str
   rule_id:
     description:
       - Rule ID.
     required: false
+    type: str
   index_set_id:
     description:
       - Index set ID.
     required: false
+    type: str
   matching_type:
     description:
       - Matching type for the stream rules.
     required: false
+    type: str
   remove_matches_from_default_stream:
     description:
       - Remove matches from default stream, true or false.
@@ -71,10 +79,12 @@ options:
     description:
       - Stream name to use with the query_streams action.
     required: false
+    type: str
   field:
     description:
       - Field name for the stream rule to check.
     required: false
+    type: str
   type:
     description:
       - Rule type for the stream rule, 1-7.
@@ -85,6 +95,7 @@ options:
     description:
       - Value to check rule against.
     required: false
+    type: str
   inverted:
     description:
       - Invert rule (must not match value).
@@ -95,6 +106,7 @@ options:
     description:
       - List of rules associated with a stream.
     required: false
+    type: list
 '''
 
 EXAMPLES = '''
@@ -588,9 +600,6 @@ def main():
     index_set_id = module.params['index_set_id']
     inverted = module.params['inverted']
     description = module.params['description']
-    remove_matches_from_default_stream = module.params['remove_matches_from_default_stream']
-    matching_type = module.params['matching_type']
-    rules = module.params['rules']
 
     base_url = "https://%s/api/streams" % (endpoint)
 
