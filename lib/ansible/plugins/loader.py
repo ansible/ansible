@@ -51,7 +51,7 @@ def add_all_plugin_dirs(path):
                 if os.path.isdir(plugin_path):
                     obj.add_directory(to_text(plugin_path))
     else:
-        display.warning("Ignoring invalid path provided to plugin path: %s is not a directory" % to_native(path))
+        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_native(path))
 
 
 def get_shell_plugin(shell_type=None, executable=None):
@@ -85,6 +85,13 @@ def get_shell_plugin(shell_type=None, executable=None):
         setattr(shell, 'executable', executable)
 
     return shell
+
+
+def add_dirs_to_loader(which_loader, paths):
+
+    loader = getattr(sys.modules[__name__], '%s_loader' % which_loader)
+    for path in paths:
+        loader.add_directory(path, with_subdir=True)
 
 
 class PluginLoader:
@@ -435,6 +442,7 @@ class PluginLoader:
         #       looks like _get_paths() never forces a cache refresh so if we expect
         #       additional directories to be added later, it is buggy.
         for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
+            display.debug('trying %s' % path)
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
