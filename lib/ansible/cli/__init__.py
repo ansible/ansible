@@ -24,6 +24,7 @@ import getpass
 import operator
 import optparse
 import os
+import re
 import subprocess
 import re
 import sys

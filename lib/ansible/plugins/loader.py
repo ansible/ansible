@@ -34,6 +34,13 @@ def get_all_plugin_loaders():
     return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
 
 
+def add_dirs_to_loader(which_loader, paths):
+
+    loader = getattr(sys.modules[__name__], '%s_loader' % which_loader)
+    for path in paths:
+        loader.add_directory(path, with_subdir=True)
+
+
 class PluginLoader:
     '''
     PluginLoader loads plugins from the configured plugin directories.
@@ -267,6 +274,7 @@ class PluginLoader:
         #       looks like _get_paths() never forces a cache refresh so if we expect
         #       additional directories to be added later, it is buggy.
         for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
+            display.debug('trying %s' % path)
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
