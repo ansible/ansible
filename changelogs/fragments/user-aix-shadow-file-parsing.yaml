@@ -1,0 +1,2 @@
+bugfixes:
+  - user - properly parse the shadow file on AIX (https://github.com/ansible/ansible/issues/54461)
