@@ -839,9 +839,15 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                 .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
                             vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
                                 .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].application_gateway_backend_address_pools = None
                         elif self.application_gateway:
                             vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
                                 .ip_configurations[0].application_gateway_backend_address_pools = application_gateway_backend_address_pools
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].load_balancer_backend_address_pools = None
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].load_balancer_inbound_nat_pools = None
 
                     if self.data_disks is not None:
                         data_disks = []
