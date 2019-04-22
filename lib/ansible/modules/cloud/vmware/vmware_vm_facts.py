@@ -3,6 +3,7 @@
 
 # Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # Copyright: (c) 2018, Ansible Project
+# Copyright: (c) 2018, Fedor Vompe <f.vompe () comptek.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -25,6 +26,7 @@ version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Abhijeet Kasurde (@Akasurde)
+- Fedor Vompe (@sumkincpp)
 notes:
 - Tested on vSphere 5.5 and vSphere 6.5
 - From 2.8 and onwards, facts are returned as list of dict instead of dict.
@@ -41,6 +43,13 @@ options:
       default: 'all'
       choices: [ all, vm, template ]
       version_added: 2.5
+      type: str
+    show_attribute:
+      description:
+      - Attributes related to VM guest shown in facts only when this is set C(true).
+      default: no
+      type: bool
+      version_added: 2.8
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -114,7 +123,17 @@ virtual_machines:
         ],
         "power_state": "poweredOff",
         "uuid": "4207072c-edd8-3bd5-64dc-903fd3a0db04",
-        "vm_network": {}
+        "vm_network": {
+            "00:50:56:87:a5:9a": {
+              "ipv4": [
+                "10.76.33.228"
+              ],
+              "ipv6": []
+            }
+        },
+        "attributes": {
+            "job": "backup-prepare"
+        }
     }
   ]
 '''
@@ -131,6 +150,11 @@ from ansible.module_utils.vmware import PyVmomi, get_all_objs, vmware_argument_s
 class VmwareVmFacts(PyVmomi):
     def __init__(self, module):
         super(VmwareVmFacts, self).__init__(module)
+        self.custom_field_mgr = self.content.customFieldsManager.field
+
+    def get_vm_attributes(self, vm):
+        return dict((x.name, v.value) for x in self.custom_field_mgr
+                    for v in vm.customValue if x.key == v.key)
 
     # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/getallvms.py
     def get_all_virtual_machines(self):
@@ -177,6 +201,10 @@ class VmwareVmFacts(PyVmomi):
             if esxi_parent and isinstance(esxi_parent, vim.ClusterComputeResource):
                 cluster_name = summary.runtime.host.parent.name
 
+            vm_attributes = dict()
+            if self.module.params.get('show_attribute'):
+                vm_attributes = self.get_vm_attributes(vm)
+
             virtual_machine = {
                 "guest_name": summary.config.name,
                 "guest_fullname": summary.config.guestFullName,
@@ -187,6 +215,7 @@ class VmwareVmFacts(PyVmomi):
                 "vm_network": net_dict,
                 "esxi_hostname": esxi_hostname,
                 "cluster": cluster_name,
+                "attributes": vm_attributes
             }
 
             vm_type = self.module.params.get('vm_type')
@@ -204,9 +233,13 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         vm_type=dict(type='str', choices=['vm', 'all', 'template'], default='all'),
+        show_attribute=dict(type='bool', default='no'),
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True
+    )
 
     vmware_vm_facts = VmwareVmFacts(module)
     _virtual_machines = vmware_vm_facts.get_all_virtual_machines()

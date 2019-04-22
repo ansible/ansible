@@ -1,2 +1,0 @@
-bugfixes:
-   - ansible-galaxy - Prevent unicode errors when searching - https://github.com/ansible/ansible/issues/42866

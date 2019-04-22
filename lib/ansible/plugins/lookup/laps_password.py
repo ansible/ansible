@@ -40,13 +40,14 @@ options:
     - gssapi
     default: gssapi
     type: str
-  cacert_file:
+  ca_cert:
     description:
     - The path to a CA certificate PEM file to use for certificate validation.
     - Certificate validation is used when C(scheme=ldaps) or C(start_tls=yes).
     - This may fail on hosts with an older OpenLDAP install like MacOS, this will have to be updated before
       reinstalling python-ldap to get working again.
     type: str
+    aliases: [ cacert_file ]
   domain:
     description:
     - The domain to search in to retrieve the LAPS password.
@@ -173,7 +174,7 @@ EXAMPLES = """
     ansible_password: "{{ lookup('laps_password', 'windows-pc',
                                  domain='dc01.ansible.com',
                                  start_tls=True,
-                                 cacert_file='/usr/local/share/certs/ad.pem') }}"
+                                 ca_cert='/usr/local/share/certs/ad.pem') }}"
 """
 
 RETURN = """
@@ -243,7 +244,7 @@ class LookupModule(LookupBase):
         scheme = self.get_option('scheme')
         start_tls = self.get_option('start_tls')
         validate_certs = self.get_option('validate_certs')
-        cacert_file = self.get_option('cacert_file')
+        cacert_file = self.get_option('ca_cert')
         search_base = self.get_option('search_base')
         username = self.get_option('username')
         password = self.get_option('password')

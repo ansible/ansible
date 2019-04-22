@@ -44,20 +44,22 @@ options:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_sql_instance
-      task and then set this instance field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_sql_instance task and then set this instance field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a database facts
+- name: " a database facts"
   gcp_sql_database_facts:
-      instance: "{{ instance }}"
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    instance: "{{ instance }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -86,7 +88,7 @@ items:
       description:
       - The name of the Cloud SQL instance. This does not include the project ID.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################
@@ -101,7 +103,7 @@ import json
 
 
 def main():
-    module = GcpModule(argument_spec=dict(instance=dict(required=True)))
+    module = GcpModule(argument_spec=dict(instance=dict(required=True, type='dict')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/sqlservice.admin']

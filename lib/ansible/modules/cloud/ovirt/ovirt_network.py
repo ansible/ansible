@@ -73,12 +73,30 @@ options:
     clusters:
         description:
             - "List of dictionaries describing how the network is managed in specific cluster."
-            - "C(name) - Cluster name."
-            - "C(assigned) - I(true) if the network should be assigned to cluster. Default is I(true)."
-            - "C(required) - I(true) if the network must remain operational for all hosts associated with this network."
-            - "C(display) - I(true) if the network should marked as display network."
-            - "C(migration) - I(true) if the network should marked as migration network."
-            - "C(gluster) - I(true) if the network should marked as gluster network."
+        suboptions:
+            name:
+                description:
+                    - Cluster name.
+            assigned:
+                description:
+                    - I(true) if the network should be assigned to cluster. Default is I(true).
+                type: bool
+            required:
+                description:
+                    - I(true) if the network must remain operational for all hosts associated with this network.
+                type: bool
+            display:
+                description:
+                    - I(true) if the network should marked as display network.
+                type: bool
+            migration:
+                description:
+                    - I(true) if the network should marked as migration network.
+                type: bool
+            gluster:
+                description:
+                    - I(true) if the network should marked as gluster network.
+                type: bool
     label:
         description:
             - "Name of the label to assign to the network."

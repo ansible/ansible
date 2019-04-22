@@ -31,9 +31,9 @@ function Get-UserSID {
 
     if ($searchAppPools) {
         Import-Module -Name WebAdministration
-        $testIISPath = Test-Path -Path "IIS:"
+        $testIISPath = Test-Path -LiteralPath "IIS:"
         if ($testIISPath) {
-            $appPoolObj = Get-ItemProperty -Path "IIS:\AppPools\$AccountName"
+            $appPoolObj = Get-ItemProperty -LiteralPath "IIS:\AppPools\$AccountName"
             $userSID = $appPoolObj.applicationPoolSid
         }
     }
@@ -90,7 +90,19 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $inherit = Get-AnsibleParam -obj $params -name "inherit" -type "str"
 $propagation = Get-AnsibleParam -obj $params -name "propagation" -type "str" -default "None" -validateset "InheritOnly","None","NoPropagateInherit"
 
-If (-Not (Test-Path -Path $path)) {
+# We mount the HKCR, HKU, and HKCC registry hives so PS can access them
+$path_qualifier = Split-Path -Path $path -Qualifier
+if ($path_qualifier -eq "HKCR:" -and (-not (Test-Path -LiteralPath HKCR:\))) {
+    New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT > $null
+}
+if ($path_qualifier -eq "HKU:" -and (-not (Test-Path -LiteralPath HKU:\))) {
+    New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS > $null
+}
+if ($path_qualifier -eq "HKCC:" -and (-not (Test-Path -LiteralPath HKCC:\))) {
+    New-PSDrive -Name HKCC -PSProvider Registry -Root HKEY_CURRENT_CONFIG > $null
+}
+
+If (-Not (Test-Path -LiteralPath $path)) {
     Fail-Json -obj $result -message "$path file or directory does not exist on the host"
 }
 
@@ -100,16 +112,21 @@ if (!$sid) {
     Fail-Json -obj $result -message "$user is not a valid user or group on the host machine or domain"
 }
 
-If (Test-Path -Path $path -PathType Leaf) {
+If (Test-Path -LiteralPath $path -PathType Leaf) {
     $inherit = "None"
 }
 ElseIf ($null -eq $inherit) {
     $inherit = "ContainerInherit, ObjectInherit"
 }
 
+# Bug in Set-Acl, Get-Acl where -LiteralPath only works for the Registry provider if the location is in that root
+# qualifier.
+Push-Location -LiteralPath $path_qualifier
+
 Try {
     SetPrivilegeTokens
-    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
+    $path_item = Get-Item -LiteralPath $path -Force
+    If ($path_item.PSProvider.Name -eq "Registry") {
         $colRights = [System.Security.AccessControl.RegistryRights]$rights
     }
     Else {
@@ -127,13 +144,13 @@ Try {
     }
 
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
-    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
+    If ($path_item.PSProvider.Name -eq "Registry") {
         $objACE = New-Object System.Security.AccessControl.RegistryAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     }
     Else {
         $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     }
-    $objACL = Get-ACL $path
+    $objACL = Get-ACL -LiteralPath $path
 
     # Check if the ACE exists already in the objects ACL list
     $match = $false
@@ -152,7 +169,7 @@ Try {
             $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
         }
 
-        If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
+        If ($path_item.PSProvider.Name -eq "Registry") {
             If (($rule.RegistryRights -eq $objACE.RegistryRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
                 $match = $true
                 Break
@@ -168,7 +185,7 @@ Try {
     If ($state -eq "present" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
-            Set-ACL $path $objACL
+            Set-ACL -LiteralPath $path -AclObject $objACL
             $result.changed = $true
         }
         Catch {
@@ -178,7 +195,7 @@ Try {
     ElseIf ($state -eq "absent" -And $match -eq $true) {
         Try {
             $objACL.RemoveAccessRule($objACE)
-            Set-ACL $path $objACL
+            Set-ACL -LiteralPath $path -AclObject $objACL
             $result.changed = $true
         }
         Catch {
@@ -198,6 +215,10 @@ Try {
 }
 Catch {
     Fail-Json -obj $result -message "an error occurred when attempting to $state $rights permission(s) on $path for $user - $($_.Exception.Message)"
+}
+Finally {
+    # Make sure we revert the location stack to the original path just for cleanups sake
+    Pop-Location
 }
 
 Exit-Json -obj $result

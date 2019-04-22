@@ -80,7 +80,8 @@ options:
         default: no
         version_added: "2.3"
 notes:
-    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', and all except 'daemon_reload' also require 'name'.
+    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
+      and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
     - Before 2.4 you always required 'name'.
 requirements:
     - A system managed by systemd.
@@ -123,6 +124,10 @@ EXAMPLES = '''
 - name: just force systemd to reread configs (2.4 and above)
   systemd:
     daemon_reload: yes
+
+- name: just force systemd to re-execute itself (2.8 and above)
+  systemd:
+    daemon_reexec: yes
 '''
 
 RETURN = '''
@@ -325,7 +330,7 @@ def main():
             no_block=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
-        required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
+        required_one_of=[['state', 'enabled', 'masked', 'daemon_reload', 'daemon_reexec']],
         required_by=dict(
             state=('name', ),
             enabled=('name', ),
@@ -503,7 +508,7 @@ def main():
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
             # check for chroot
-            elif is_chroot():
+            elif is_chroot(module):
                 module.warn("Target is a chroot. This can lead to false positives or prevent the init system tools from working.")
             else:
                 # this should not happen?

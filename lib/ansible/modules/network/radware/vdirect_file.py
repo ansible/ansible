@@ -76,13 +76,14 @@ options:
      - may be set as VDIRECT_HTTPS or VDIRECT_USE_SSL environment variable.
     type: bool
     default: 'yes'
-  vdirect_validate_certs:
+  validate_certs:
     description:
      - If C(no), SSL certificates will not be validated,
      - may be set as VDIRECT_VALIDATE_CERTS or VDIRECT_VERIFY environment variable.
      - This should only set to C(no) used on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
+    aliases: [ vdirect_validate_certs ]
   file_name:
     description:
      - vDirect runnable file name to be uploaded.
@@ -148,9 +149,9 @@ meta_args = dict(
     vdirect_timeout=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_TIMEOUT']),
         default=60, type='int'),
-    vdirect_validate_certs=dict(
+    validate_certs=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_VERIFY', 'VDIRECT_VALIDATE_CERTS']),
-        default=True, type='bool'),
+        default=True, type='bool', aliases=['vdirect_validate_certs']),
     vdirect_https_port=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_HTTPS_PORT']),
         default=2189, type='int'),
@@ -187,7 +188,7 @@ class VdirectFile(object):
                                              http_port=params['vdirect_http_port'],
                                              timeout=params['vdirect_timeout'],
                                              https=params['vdirect_use_ssl'],
-                                             verify=params['vdirect_validate_certs'])
+                                             verify=params['validate_certs'])
 
     def upload(self, fqn):
         if fqn.endswith(TEMPLATE_EXTENSION):

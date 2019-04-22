@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a target https proxy facts
+- name: " a target https proxy facts"
   gcp_compute_target_https_proxy_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -111,13 +112,13 @@ items:
         resource. If not set, the TargetHttpsProxy resource will not have any SSL
         policy configured.
       returned: success
-      type: str
+      type: dict
     urlMap:
       description:
       - A reference to the UrlMap resource that defines the mapping from URL to the
         BackendService.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################

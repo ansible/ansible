@@ -235,7 +235,11 @@
 - name:  Verify random_mac filter
   assert:
     that:
+            - "'00' | random_mac is match('^00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00' | random_mac is match('^00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"  
             - "'00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00:00:00' | random_mac is match('^00:00:00:00:00:[a-f0-9][a-f0-9]$')"  
             - "'00:00:00' | random_mac != '00:00:00' | random_mac"
 
 - name: Verify that union can be chained
@@ -266,3 +270,10 @@
       - "'192.168.0.1/24' | ipaddr('network') == '192.168.0.0'"
       - "'fe80::dead:beef/64' | ipaddr('broadcast') == 'fe80::ffff:ffff:ffff:ffff'"
       - "'::1/120' | ipaddr('netmask') == 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'"
+
+- name: Ensure dict2items works with hostvars
+  debug:
+    msg: "{{ item.key }}"
+  loop: "{{ hostvars|dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"

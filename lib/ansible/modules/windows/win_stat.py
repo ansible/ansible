@@ -26,6 +26,7 @@ options:
               back slashes are accepted.
         type: path
         required: yes
+        aliases: [ dest, name ]
     get_md5:
         description:
             - Whether to return the checksum sum of the file. Between Ansible 1.9

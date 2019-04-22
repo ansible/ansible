@@ -189,21 +189,21 @@ author:
 EXAMPLES = '''
     - name: Create a windows web app with non-exist app service plan
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mywinwebapp
+        resource_group: myResourceGroup
+        name: myWinWebapp
         plan:
-          resource_group: myappserviceplan_rg
-          name: myappserviceplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
           is_linux: false
           sku: S1
 
     - name: Create a docker web app with some app settings, with docker image
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mydockerwebapp
+        resource_group: myResourceGroup
+        name: myDockerWebapp
         plan:
-          resource_group: appserviceplan_test
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
           is_linux: true
           sku: S1
           number_of_workers: 2
@@ -215,9 +215,9 @@ EXAMPLES = '''
 
     - name: Create a docker web app with private acr registry
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mydockerwebapp
-        plan: myappplan
+        resource_group: myResourceGroup
+        name: myDockerWebapp
+        plan: myAppServicePlan
         app_settings:
           testkey: testvalue
         container_settings:
@@ -228,11 +228,11 @@ EXAMPLES = '''
 
     - name: Create a linux web app with Node 6.6 framework
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mylinuxwebapp
+        resource_group: myResourceGroup
+        name: myLinuxWebapp
         plan:
-          resource_group: appserviceplan_test
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
         app_settings:
           testkey: testvalue
         frameworks:
@@ -241,11 +241,11 @@ EXAMPLES = '''
 
     - name: Create a windows web app with node, php
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mywinwebapp
+        resource_group: myResourceGroup
+        name: myWinWebapp
         plan:
-          resource_group: appserviceplan_test
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
         app_settings:
           testkey: testvalue
         frameworks:
@@ -254,13 +254,23 @@ EXAMPLES = '''
           - name: "php"
             version: "7.0"
 
+    - name: Create a stage deployment slot for an existing web app
+      azure_rm_webapp:
+        resource_group: myResourceGroup
+        name: myWebapp/slots/stage
+        plan:
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
+        app_settings:
+          testkey:testvalue
+
     - name: Create a linux web app with java framework
       azure_rm_webapp:
-        resource_group: myresourcegroup
-        name: mylinuxwebapp
+        resource_group: myResourceGroup
+        name: myLinuxWebapp
         plan:
-          resource_group: appserviceplan_test
-          name: myappplan
+          resource_group: myAppServicePlan_rg
+          name: myAppServicePlan
         app_settings:
           testkey: testvalue
         frameworks:
@@ -277,7 +287,7 @@ azure_webapp:
     returned: always
     type: dict
     sample: {
-        "id": "/subscriptions/<subscription_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa"
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp"
     }
 '''
 
@@ -286,7 +296,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
     from azure.mgmt.web.models import (
         site_config, app_service_plan, Site,
@@ -671,7 +681,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if self.app_settings:
                     app_settings = []
                     for key in self.app_settings.keys():
-                        app_settings.append(NameValuePair(key, self.app_settings[key]))
+                        app_settings.append(NameValuePair(name=key, value=self.app_settings[key]))
 
                     self.site_config['app_settings'] = app_settings
             else:
@@ -707,7 +717,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 # purge existing app_settings:
                 if self.purge_app_settings:
                     to_be_updated = True
-                    self.app_settings_strDic.properties = dict()
+                    self.app_settings_strDic = dict()
                     self.to_do.append(Actions.UpdateAppSettings)
 
                 # check if app settings changed
@@ -717,7 +727,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
                     if self.app_settings:
                         for key in self.app_settings.keys():
-                            self.app_settings_strDic.properties[key] = self.app_settings[key]
+                            self.app_settings_strDic[key] = self.app_settings[key]
 
         elif self.state == 'absent':
             if old_response:
@@ -772,7 +782,8 @@ class AzureRMWebApps(AzureRMModuleBase):
     # compare existing web app with input, determine weather it's update operation
     def is_updatable_property_changed(self, existing_webapp):
         for property_name in self.updatable_properties:
-            if hasattr(self, property_name) and getattr(self, property_name) != existing_webapp.get(property_name, None):
+            if hasattr(self, property_name) and getattr(self, property_name) is not None and \
+                    getattr(self, property_name) != existing_webapp.get(property_name, None):
                 return True
 
         return False
@@ -790,9 +801,9 @@ class AzureRMWebApps(AzureRMModuleBase):
     # comparing existing app setting with input, determine whether it's changed
     def is_app_settings_changed(self):
         if self.app_settings:
-            if self.app_settings_strDic.properties:
+            if self.app_settings_strDic:
                 for key in self.app_settings.keys():
-                    if self.app_settings[key] != self.app_settings_strDic.properties.get(key, None):
+                    if self.app_settings[key] != self.app_settings_strDic.get(key, None):
                         return True
             else:
                 return True
@@ -831,7 +842,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                                                                  skip_custom_domain_verification=self.skip_custom_domain_verification,
                                                                  force_dns_registration=force_dns_registration,
                                                                  ttl_in_seconds=self.ttl_in_seconds)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -872,13 +883,17 @@ class AzureRMWebApps(AzureRMModuleBase):
             response = self.web_client.web_apps.get(resource_group_name=self.resource_group,
                                                     name=self.name)
 
-            self.log("Response : {0}".format(response))
-            self.log("Web App instance : {0} found".format(response.name))
-            return webapp_to_dict(response)
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            if response is not None:
+                self.log("Response : {0}".format(response))
+                self.log("Web App instance : {0} found".format(response.name))
+                return webapp_to_dict(response)
 
         except CloudError as ex:
-            self.log("Didn't find web app {0} in resource group {1}".format(
-                self.name, self.resource_group))
+            pass
+
+        self.log("Didn't find web app {0} in resource group {1}".format(
+            self.name, self.resource_group))
 
         return False
 
@@ -891,14 +906,20 @@ class AzureRMWebApps(AzureRMModuleBase):
 
         try:
             response = self.web_client.app_service_plans.get(
-                self.plan['resource_group'], self.plan['name'])
-            self.log("Response : {0}".format(response))
-            self.log("App Service Plan : {0} found".format(response.name))
+                resource_group_name=self.plan['resource_group'],
+                name=self.plan['name'])
 
-            return appserviceplan_to_dict(response)
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            if response is not None:
+                self.log("Response : {0}".format(response))
+                self.log("App Service Plan : {0} found".format(response.name))
+
+                return appserviceplan_to_dict(response)
         except CloudError as ex:
-            self.log("Didn't find app service plan {0} in resource group {1}".format(
-                self.plan['name'], self.plan['resource_group']))
+            pass
+
+        self.log("Didn't find app service plan {0} in resource group {1}".format(
+            self.plan['name'], self.plan['resource_group']))
 
         return False
 
@@ -921,7 +942,7 @@ class AzureRMWebApps(AzureRMModuleBase):
             poller = self.web_client.app_service_plans.create_or_update(
                 self.plan['resource_group'], self.plan['name'], plan_def)
 
-            if isinstance(poller, AzureOperationPoller):
+            if isinstance(poller, LROPoller):
                 response = self.get_poller_result(poller)
 
             self.log("Response : {0}".format(response))
@@ -944,7 +965,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 resource_group_name=self.resource_group, name=self.name)
             self.log("Response : {0}".format(response))
 
-            return response
+            return response.properties
         except CloudError as ex:
             self.fail("Failed to list application settings for web app {0} in resource group {1}: {2}".format(
                 self.name, self.resource_group, str(ex)))
@@ -958,7 +979,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
         try:
             response = self.web_client.web_apps.update_application_settings(
-                resource_group_name=self.resource_group, name=self.name, app_settings=self.app_settings_strDic)
+                resource_group_name=self.resource_group, name=self.name, properties=self.app_settings_strDic)
             self.log("Response : {0}".format(response))
 
             return response

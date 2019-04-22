@@ -24,7 +24,7 @@ description:
     - Provides functionality similar to the "docker login" command.
     - Authenticate with a docker registry and add the credentials to your local Docker config file. Adding the
       credentials to the config files allows future connections to the registry using tools such as Ansible's Docker
-      modules, the Docker CLI and docker-py without needing to provide credentials.
+      modules, the Docker CLI and Docker SDK for Python without needing to provide credentials.
     - Running in check mode will perform the authentication without updating the config file.
 options:
   registry_url:
@@ -71,7 +71,7 @@ options:
       - This controls the current state of the user. C(present) will login in a user, C(absent) will log them out.
       - To logout you only need the registry server, which defaults to DockerHub.
       - Before 2.1 you could ONLY log in.
-      - docker does not support 'logout' with a custom config file.
+      - Docker does not support 'logout' with a custom config file.
     type: str
     default: 'present'
     choices: ['present', 'absent']
@@ -80,7 +80,7 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "Docker API >= 1.20"
   - "Only to be able to logout, that is for I(state) = C(absent): the C(docker) command line utility"
 author:
@@ -203,11 +203,10 @@ class LoginManager(DockerBaseClass):
         :return: None
         '''
 
-        cmd = "%s logout " % self.client.module.get_bin_path('docker', True)
+        cmd = [self.client.module.get_bin_path('docker', True), "logout", self.registry_url]
         # TODO: docker does not support config file in logout, restore this when they do
         # if self.config_path and self.config_file_exists(self.config_path):
-        #     cmd += "--config '%s' " % self.config_path
-        cmd += "'%s'" % self.registry_url
+        #     cmd.extend(["--config", self.config_path])
 
         (rc, out, err) = self.client.module.run_command(cmd)
         if rc != 0:

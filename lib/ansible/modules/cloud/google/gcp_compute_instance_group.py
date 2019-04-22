@@ -83,9 +83,10 @@ options:
     description:
     - The network to which all instances in the instance group belong.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: false
   region:
     description:
@@ -95,9 +96,10 @@ options:
     description:
     - The subnetwork to which all instances in the instance group belong.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_subnetwork task and then set this subnetwork field to "{{ name-of-resource
+      }}"'
     required: false
   zone:
     description:
@@ -118,25 +120,25 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-instancegroup"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-instancegroup
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "test_object"
-      named_ports:
-      - name: ansible
-        port: 1234
-      network: "{{ network }}"
-      zone: us-central1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    named_ports:
+    - name: ansible
+      port: 1234
+    network: "{{ network }}"
+    zone: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -188,7 +190,7 @@ network:
   description:
   - The network to which all instances in the instance group belong.
   returned: success
-  type: str
+  type: dict
 region:
   description:
   - The region where the instance group is located (for regional resources).
@@ -198,7 +200,7 @@ subnetwork:
   description:
   - The subnetwork to which all instances in the instance group belong.
   returned: success
-  type: str
+  type: dict
 zone:
   description:
   - A reference to the zone where the instance group resides.
@@ -238,11 +240,11 @@ def main():
             description=dict(type='str'),
             name=dict(type='str'),
             named_ports=dict(type='list', elements='dict', options=dict(name=dict(type='str'), port=dict(type='int'))),
-            network=dict(),
+            network=dict(type='dict'),
             region=dict(type='str'),
-            subnetwork=dict(),
+            subnetwork=dict(type='dict'),
             zone=dict(required=True, type='str'),
-            instances=dict(type='list'),
+            instances=dict(type='list', elements='dict'),
         )
     )
 

@@ -57,7 +57,7 @@ class TestAdminSyslogModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_scope': 'local', 'pn_host': '166.68.224.46', 'pn_message_format': 'structured', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-syslog-create name foo  scope local host 166.68.224.46 '
+        expected_cmd = ' switch sw01 admin-syslog-create name foo  scope local host 166.68.224.46 '
         expected_cmd += 'transport udp message-format structured'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
@@ -65,12 +65,12 @@ class TestAdminSyslogModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-syslog-delete name foo '
+        expected_cmd = ' switch sw01 admin-syslog-delete name foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_admin_syslog_update(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'state': 'update'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-syslog-modify name foo  transport udp'
+        expected_cmd = ' switch sw01 admin-syslog-modify name foo  transport udp'
         self.assertEqual(result['cli_cmd'], expected_cmd)

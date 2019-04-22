@@ -24,9 +24,9 @@
   # executable override
 
   - name: Test executable override
-    flatpak:
-      name: org.gnome.Characters
-      remote: flathub
+    flatpak_remote:
+      name: irrelevant
+      remote: irrelevant
       state: present
       executable: nothing-that-exists
     ignore_errors: true
@@ -53,4 +53,5 @@
       method: system
 
   when: |
-      ansible_distribution in ('Fedora', 'Ubuntu')
+      ansible_distribution == 'Fedora' or
+      ansible_distribution == 'Ubuntu' and not ansible_distribution_major_version | int < 16

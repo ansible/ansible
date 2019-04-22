@@ -29,6 +29,12 @@ options:
     - The location of the PsExec utility (in case it is not located in your PATH).
     type: path
     default: psexec.exe
+  extra_opts:
+    description:
+    - Specify additional options to add onto the PsExec invocation.
+    - This module was undocumented in older releases and will be removed in
+      Ansible 2.10.
+    type: list
   hostnames:
     description:
     - The hostnames to run the command.

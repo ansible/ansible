@@ -28,6 +28,7 @@ import sys
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.six import iteritems
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -127,9 +128,12 @@ class PlayContext(Base):
     _verbosity = FieldAttribute(isa='int', default=0)
     _only_tags = FieldAttribute(isa='set', default=set)
     _skip_tags = FieldAttribute(isa='set', default=set)
-    _force_handlers = FieldAttribute(isa='bool', default=False)
+
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
+
+    # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
+    _force_handlers = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
@@ -171,21 +175,7 @@ class PlayContext(Base):
                     setattr(self, flag, self.connection.get_option(flag))
 
     def set_attributes_from_play(self, play):
-        # From ansible.playbook.Become
-        self.become = play.become
-        self.become_method = play.become_method
-        self.become_user = play.become_user
-
-        # From ansible.playbook.Base
-        self.check_mode = play.check_mode
-        self.diff = play.diff
-        self.connection = play.connection
-        self.remote_user = play.remote_user
-
-        # from ansible.playbook.Play
         self.force_handlers = play.force_handlers
-        self.only_tags = play.only_tags
-        self.skip_tags = play.skip_tags
 
     def set_attributes_from_cli(self):
         '''
@@ -419,18 +409,12 @@ class PlayContext(Base):
         conn_type = None
         if self._attributes['connection'] == 'smart':
             conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self.password:
-                # due to a current bug in sshpass on OSX, which can trigger
-                # a kernel panic even for non-privileged users, we revert to
-                # paramiko on that OS when a SSH password is specified
+            # see if SSH can support ControlPersist if not use paramiko
+            if not check_for_controlpersist(self.ssh_executable) and paramiko is not None:
                 conn_type = "paramiko"
-            else:
-                # see if SSH can support ControlPersist if not use paramiko
-                if not check_for_controlpersist(self.ssh_executable):
-                    conn_type = "paramiko"
 
         # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        elif self._attributes['connection'] == 'persistent':
+        elif self._attributes['connection'] == 'persistent' and paramiko is not None:
             conn_type = 'paramiko'
 
         if conn_type:

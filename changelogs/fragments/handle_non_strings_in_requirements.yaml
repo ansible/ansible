@@ -1,2 +1,0 @@
-bugfixes:
-- handle non strings in requirements version for ansible-galaxy

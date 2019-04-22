@@ -23,12 +23,14 @@ options:
   name:
     description:
       - Specifies the name of the profile.
+    type: str
     required: True
   parent:
     description:
       - Specifies the profile from which this profile inherits settings.
       - When creating a new profile, if this parameter is not specified, the default
         is the system-supplied C(fastL4) profile.
+    type: str
   idle_timeout:
     description:
       - Specifies the length of time that a connection is idle (has no traffic) before
@@ -42,6 +44,7 @@ options:
         regardless of how long they remain idle.
       - When C(0), or C(immediate), specifies that the system deletes connections
         immediately when they become idle.
+    type: str
   client_timeout:
     description:
       - Specifies a timeout for Late Binding.
@@ -53,9 +56,11 @@ options:
         transmission.
       - When C(indefinite), disables the limit. This allows the client unlimited time
         to send the sender and target information.
+    type: str
   description:
     description:
       - Description of the profile.
+    type: str
   explicit_flow_migration:
     description:
       - Specifies whether a qualified late-binding connection requires an explicit iRule
@@ -75,6 +80,7 @@ options:
         Header DF bit.
       - When C(set), sets the outgoing packet's IP Header DF bit.
       - When C(clear), clears the outgoing packet's IP Header DF bit.
+    type: str
     choices:
       - pmtu
       - preserve
@@ -89,6 +95,7 @@ options:
       - When C(pass-through), specifies that the IP ToS setting remains unchanged.
       - When C(mimic), specifies that the system sets the ToS level of outgoing packets to
         the same ToS level of the most-recently received incoming packet.
+    type: str
   ip_tos_to_server:
     description:
       - Specifies, for IP traffic passing through the system to back-end servers, whether
@@ -98,6 +105,7 @@ options:
       - When C(pass-through), specifies that the IP ToS setting remains unchanged.
       - When C(mimic), specifies that the system sets the ToS level of outgoing packets to
         the same ToS level of the most-recently received incoming packet.
+    type: str
   ip_ttl_mode:
     description:
       - Specifies the outgoing TCP packet's IP Header TTL mode.
@@ -108,6 +116,7 @@ options:
         incoming TTL value.
       - When C(set), sets the outgoing IP Header TTL value to a specific value(as specified
         by C(ip_ttl_v4) or C(ip_ttl_v6).
+    type: str
     choices:
       - proxy
       - preserve
@@ -117,13 +126,16 @@ options:
     description:
       - Specifies the outgoing packet's IP Header TTL value for IPv4 traffic.
       - Maximum TTL value that can be specified is 255.
+    type: int
   ip_ttl_v6:
     description:
       - Specifies the outgoing packet's IP Header TTL value for IPv6 traffic.
       - Maximum TTL value that can be specified is 255.
+    type: int
   keep_alive_interval:
     description:
       - Specifies the keep-alive probe interval, in seconds.
+    type: int
   late_binding:
     description:
       - Enables intelligent selection of a back-end server or pool, using an
@@ -140,6 +152,7 @@ options:
       - When a number, specifies the link QoS setting that the system inserts
         in the IP packet header.
       - When C(pass-through), specifies that the link QoS setting remains unchanged.
+    type: str
   link_qos_to_server:
     description:
       - Specifies, for IP traffic passing through the system to back-end servers,
@@ -151,6 +164,7 @@ options:
       - When a number, specifies the link QoS setting that the system inserts
         in the IP packet header.
       - When C(pass-through), specifies that the link QoS setting remains unchanged.
+    type: str
   loose_close:
     description:
       - When C(yes), specifies, that the system closes a loosely-initiated connection
@@ -166,6 +180,7 @@ options:
     description:
       - Specifies a maximum segment size (MSS) override for server-side connections.
       - Valid range is 256 to 9162 or 0 to disable.
+    type: int
   reassemble_fragments:
     description:
       - When C(yes), specifies that the system reassembles IP fragments.
@@ -174,6 +189,7 @@ options:
     description:
       - Specifies the amount of data the BIG-IP system can accept without acknowledging
         the server.
+    type: int
   reset_on_timeout:
     description:
       - When C(yes), specifies that the system sends a reset packet (RST) in addition
@@ -204,9 +220,11 @@ options:
       - Specifies a value that overrides the SYN cookie maximum segment size (MSS)
         value in the SYN-ACK packet that is returned to the client.
       - Valid values are 0, and values from 256 through 9162.
+    type: int
   tcp_close_timeout:
     description:
       - Specifies the length of time a connection can remain idle before deletion.
+    type: str
   tcp_generate_isn:
     description:
       - When C(yes), specifies that the system generates initial sequence numbers
@@ -223,6 +241,7 @@ options:
       - When C(disabled), specifies that the system does not apply a timeout to a
         TCP handshake.
       - When C(indefinite), specifies that attempting a TCP handshake never times out.
+    type: str
   tcp_strip_sack:
     description:
       - When C(yes), specifies that the system blocks a TCP selective ACK SackOK
@@ -232,9 +251,11 @@ options:
     description:
       - Specifies the number of milliseconds that a connection is in the TIME-WAIT
         state before closing.
+    type: int
   tcp_timestamp_mode:
     description:
       - Specifies the action that the system should take on TCP timestamps.
+    type: str
     choices:
       - preserve
       - rewrite
@@ -242,6 +263,7 @@ options:
   tcp_wscale_mode:
     description:
       - Specifies the action that the system should take on TCP windows.
+    type: str
     choices:
       - preserve
       - rewrite
@@ -254,21 +276,24 @@ options:
       - When C(fallback), reverts the connection to normal FastL4 load-balancing,
         based on the client's TCP header. This causes the BIG-IP system to choose
         a back-end server based only on the source address and port.
+    type: str
     choices:
       - disconnect
       - fallback
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the profile exists.
       - When C(absent), ensures the profile is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -460,22 +485,16 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
 
@@ -1115,7 +1134,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -1368,16 +1387,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

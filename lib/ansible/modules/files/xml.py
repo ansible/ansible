@@ -251,15 +251,14 @@ EXAMPLES = r'''
     value: 1976-08-05
 
 # How to read an attribute value and access it in Ansible
-- name: Read attribute value
+- name: Read an element's attribute values
   xml:
     path: /foo/bar.xml
     xpath: /business/website/validxhtml
     content: attribute
-    attribute: validatedon
   register: xmlresp
 
-- name: Show attribute value
+- name: Show an attribute value
   debug:
     var: xmlresp.matches[0].validxhtml.validatedon
 
@@ -833,7 +832,8 @@ def main():
         supports_check_mode=True,
         required_by=dict(
             add_children=['xpath'],
-            attribute=['value'],
+            # TODO: Reinstate this in Ansible v2.12 when we have deprecated the incorrect use below
+            # attribute=['value'],
             content=['xpath'],
             set_children=['xpath'],
             value=['xpath'],
@@ -881,6 +881,11 @@ def main():
         module.fail_json(msg='The xml ansible module requires lxml 2.3.0 or newer installed on the managed machine')
     elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('3.0.0'):
         module.warn('Using lxml version lower than 3.0.0 does not guarantee predictable element attribute order.')
+
+    # Report wrongly used attribute parameter when using content=attribute
+    # TODO: Remove this in Ansible v2.12 (and reinstate strict parameter test above) and remove the integration test example
+    if content == 'attribute' and attribute is not None:
+        module.deprecate("Parameter 'attribute=%s' is ignored when using 'content=attribute' only 'xpath' is used. Please remove entry." % attribute, '2.12')
 
     # Check if the file exists
     if xml_string:

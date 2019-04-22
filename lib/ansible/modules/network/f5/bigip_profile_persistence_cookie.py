@@ -23,15 +23,18 @@ options:
   name:
     description:
       - Specifies the name of the profile.
+    type: str
     required: True
   description:
     description:
       - Description of the profile.
+    type: str
   parent:
     description:
       - Specifies the profile from which this profile inherits settings.
       - When creating a new profile, if this parameter is not specified, the default
         is the system-supplied C(cookie) profile.
+    type: str
     default: cookie
   cookie_method:
     description:
@@ -47,6 +50,7 @@ options:
       - When C(rewrite), specifies that the system intercepts the BIGipCookie
         header, sent from the server, and overwrites the name and value of that
         cookie.
+    type: str
     choices:
       - hash
       - insert
@@ -55,6 +59,7 @@ options:
   cookie_name:
     description:
       - Specifies a unique name for the cookie.
+    type: str
   http_only:
     description:
       - Specifies whether the httponly attribute should be enabled or
@@ -87,6 +92,7 @@ options:
       - When C(disabled), generates the cookie format unencrypted.
       - When C(preferred), generate an encrypted cookie, but accepts both encrypted and unencrypted formats.
       - When C(required), cookie format must be encrypted.
+    type: str
     choices:
       - disabled
       - preferred
@@ -114,35 +120,76 @@ options:
   encryption_passphrase:
     description:
       - Specifies a passphrase to be used for cookie encryption.
+    type: str
   update_password:
     description:
       - C(always) will allow to update passphrases if the user chooses to do so.
         C(on_create) will only set the passphrase for newly created profiles.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
+  expiration:
+    description:
+      - Specifies the expiration time of the cookie. By default the system generates and uses session cookie.
+        This cookie expires when the user session expires, that is when the browser is closed.
+    suboptions:
+      days:
+        description:
+          - Cookie expiration time in days, the value must be in range from C(0) to C(24855) days.
+        type: int
+      hours:
+        description:
+          - Cookie expiration time in hours, the value must be in the range from C(0) to C(23) hours.
+        type: int
+      minutes:
+        description:
+          - Cookie expiration time in minutes, the value must be in the range from C(0) to C(59) minutes.
+        type: int
+      seconds:
+        description:
+          - Cookie expiration time in seconds, the value must be in the range from C(0) to C(59) seconds.
+        type: int
+        default: 0
+    type: dict
+    version_added: 2.8
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the profile exists.
       - When C(absent), ensures the profile is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
-- name: Create a ...
+- name: Create a persistence cookie profile
   bigip_profile_persistence_cookie:
     name: foo
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+- name: Create a persistence cookie profile with expiration time
+  bigip_profile_persistence_cookie:
+    name: foo
+    expiration:
+      days: 7
+      hours: 12
+      minutes: 30
     provider:
       password: secret
       server: lb.mydomain.com
@@ -216,6 +263,32 @@ secure:
   returned: changed
   type: bool
   sample: no
+expiration:
+  description: The expiration time of the cookie.
+  returned: changed
+  type: complex
+  contains:
+    days:
+      description: Cookie expiration time in days.
+      returned: changed
+      type: int
+      sample: 125
+    hours:
+      description: Cookie expiration time in hours.
+      returned: changed
+      type: int
+      sample: 22
+    minutes:
+      description: Cookie expiration time in minutes.
+      returned: changed
+      type: int
+      sample: 58
+    seconds:
+      description: Cookie expiration time in seconds.
+      returned: changed
+      type: int
+      sample: 20
+  sample: hash/dictionary of values
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -225,11 +298,8 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_str_with_none
@@ -237,11 +307,8 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_str_with_none
@@ -278,6 +345,7 @@ class Parameters(AnsibleF5Parameters):
         'secure',
         'cookieEncryptionPassphrase',
         'method',
+        'expiration'
     ]
 
     returnables = [
@@ -295,6 +363,7 @@ class Parameters(AnsibleF5Parameters):
         'encryption_passphrase',
         'description',
         'secure',
+        'expiration',
     ]
 
     updatables = [
@@ -312,6 +381,7 @@ class Parameters(AnsibleF5Parameters):
         'encryption_passphrase',
         'description',
         'secure',
+        'expiration',
     ]
 
     @property
@@ -370,6 +440,86 @@ class ModuleParameters(Parameters):
         elif self._values['description'] in ['none', '']:
             return ''
         return self._values['description']
+
+    @property
+    def expiration(self):
+        if self._values['expiration'] is None:
+            return None
+
+        days = self.days
+        hours = self.hours
+        minutes = self.minutes
+        seconds = self.seconds
+
+        if days is not None:
+            if hours is None:
+                raise F5ModuleError(
+                    "Incorrect format, 'hours' parameter is missing value."
+                )
+            if minutes is None:
+                raise F5ModuleError(
+                    "Incorrect format, 'minutes' parameter is missing value."
+                )
+
+            expiry_time = '{0}:{1}:{2}:{3}'.format(days, hours, minutes, seconds)
+            return expiry_time
+
+        if hours is not None:
+            if minutes is None:
+                raise F5ModuleError(
+                    "Incorrect format, 'minutes' parameter is missing value."
+                )
+
+            expiry_time = '{0}:{1}:{2}'.format(hours, minutes, seconds)
+            return expiry_time
+
+        if minutes is not None:
+            expiry_time = '{0}:{1}'.format(minutes, seconds)
+            return expiry_time
+
+        return str(seconds)
+
+    @property
+    def days(self):
+        days = self._values['expiration']['days']
+        if days is None:
+            return None
+        if days < 0 or days >= 24856:
+            raise F5ModuleError(
+                'The provided value is invalid, the correct value range is: 0 - 24855 days.'
+            )
+        return days
+
+    @property
+    def hours(self):
+        hours = self._values['expiration']['hours']
+        if hours is None:
+            return None
+        if hours < 0 or hours > 23:
+            raise F5ModuleError(
+                'The provided value is invalid, the correct value range is: 0 - 23 hours.'
+            )
+        return hours
+
+    @property
+    def minutes(self):
+        minutes = self._values['expiration']['minutes']
+        if minutes is None:
+            return None
+        if minutes < 0 or minutes > 59:
+            raise F5ModuleError(
+                'The provided value is invalid, the correct value range is: 0 - 59 minutes.'
+            )
+        return minutes
+
+    @property
+    def seconds(self):
+        seconds = self._values['expiration']['seconds']
+        if seconds < 0 or seconds > 59:
+            raise F5ModuleError(
+                'The provided value is invalid, the correct value range is: 0 - 59 seconds.'
+            )
+        return seconds
 
 
 class Changes(Parameters):
@@ -487,6 +637,32 @@ class ReportableChanges(Changes):
     def encryption_passphrase(self):
         return None
 
+    @property
+    def expiration(self):
+        expire = self._values['expiration']
+        result = dict()
+
+        if expire is None:
+            return None
+        tmp = expire.split(':')
+
+        if len(tmp) == 1:
+            result['seconds'] = int(tmp[0])
+        if len(tmp) == 2:
+            result['minutes'] = int(tmp[0])
+            result['seconds'] = int(tmp[1])
+        if len(tmp) == 3:
+            result['hours'] = int(tmp[0])
+            result['minutes'] = int(tmp[1])
+            result['seconds'] = int(tmp[2])
+        if len(tmp) == 4:
+            result['days'] = int(tmp[0])
+            result['hours'] = int(tmp[1])
+            result['minutes'] = int(tmp[2])
+            result['seconds'] = int(tmp[3])
+
+        return result
+
 
 class Difference(object):
     def __init__(self, want, have=None):
@@ -524,7 +700,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -744,6 +920,24 @@ class ArgumentSpec(object):
                 default='always',
                 choices=['always', 'on_create']
             ),
+            expiration=dict(
+                type='dict',
+                options=dict(
+                    days=dict(
+                        type='int'
+                    ),
+                    hours=dict(
+                        type='int'
+                    ),
+                    minutes=dict(
+                        type='int'
+                    ),
+                    seconds=dict(
+                        type='int',
+                        default=0
+                    )
+                )
+            ),
             state=dict(
                 default='present',
                 choices=['present', 'absent']
@@ -766,16 +960,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

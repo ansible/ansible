@@ -52,6 +52,9 @@
  iface ext2 inet manual
  bond-master agge
  
+ auto eth1
+ iface eth1 inet dhcp
+
  auto lo
  iface lo inet loopback
  

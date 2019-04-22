@@ -109,9 +109,11 @@ class TestManager(unittest.TestCase):
             gzip_memory_level=64,
             gzip_level=2,
             gzip_window_size=128,
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

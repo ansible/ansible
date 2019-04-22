@@ -25,7 +25,7 @@ $result = @{
 [System.Collections.ArrayList]$indexes     = @()
 
 # Type checking
-# You would think that "$managers -ne $null" would work, but it doesn't.
+# You would think that "$null -ne $managers" would work, but it doesn't.
 # A proper type check is required. If a user provides an empty list then $managers
 # is still of the correct type. If a user provides no option then $managers is $null.
 If ($managers -Is [System.Collections.ArrayList] -And $managers.Count -gt 0 -And $managers[0] -IsNot [String]) {

@@ -89,11 +89,15 @@ options:
             - User Data to be passed to the server on creation.
             - Only used if server does not exists.
         type: str
+    labels:
+        description:
+            - User-defined labels (key-value pairs).
+        type: dict
     state:
         description:
             - State of the server.
         default: present
-        choices: [ absent, present, restarted, started, stopped ]
+        choices: [ absent, present, restarted, started, stopped, rebuild ]
         type: str
 extends_documentation_fragment: hcloud
 """
@@ -112,7 +116,8 @@ EXAMPLES = """
     server_type: cx11
     image: ubuntu-18.04
     location: fsn1
-    ssh-key: my-ssh-key
+    ssh_keys:
+      - my-ssh-key
     state: present
 
 - name: Resize an existing server
@@ -141,6 +146,12 @@ EXAMPLES = """
   hcloud_server:
     name: my-server
     state: restarted
+
+- name: Ensure the server is rebuild
+  hcloud_server:
+    name: my-server
+    image: ubuntu-18.04
+    state: rebuild
 """
 
 RETURN = """
@@ -223,6 +234,7 @@ class AnsibleHcloudServer(Hcloud):
             ),
             "image": self.client.images.get_by_name(self.module.params.get("image")),
             "user_data": self.module.params.get("user_data"),
+            "labels": self.module.params.get("labels"),
         }
 
         if self.module.params.get("ssh_keys") is not None:
@@ -267,6 +279,12 @@ class AnsibleHcloudServer(Hcloud):
                 self.hcloud_server.disable_backup().wait_until_finished()
             self._mark_as_changed()
 
+        labels = self.module.params.get("labels")
+        if labels is not None and labels != self.hcloud_server.labels:
+            if not self.module.check_mode:
+                self.hcloud_server.update(labels=labels)
+            self._mark_as_changed()
+
         server_type = self.module.params.get("server_type")
         if server_type is not None and self.hcloud_server.server_type.name != server_type:
             previous_server_status = self.hcloud_server.status
@@ -283,7 +301,7 @@ class AnsibleHcloudServer(Hcloud):
             timeout = 100
             if self.module.params.get("upgrade_disk"):
                 timeout = (
-                    500
+                    1000
                 )  # When we upgrade the disk too the resize progress takes some more time.
             if not self.module.check_mode:
                 self.hcloud_server.change_type(
@@ -308,6 +326,16 @@ class AnsibleHcloudServer(Hcloud):
             if not self.module.check_mode:
                 self.client.servers.power_off(self.hcloud_server).wait_until_finished()
             self._mark_as_changed()
+        self._get_server()
+
+    def rebuild_server(self):
+        self.module.fail_on_missing_params(
+            required_params=["image"]
+        )
+        if not self.module.check_mode:
+            self.client.servers.rebuild(self.hcloud_server, self.client.images.get_by_name(self.module.params.get("image"))).wait_until_finished()
+        self._mark_as_changed()
+
         self._get_server()
 
     def present_server(self):
@@ -338,11 +366,12 @@ class AnsibleHcloudServer(Hcloud):
                 user_data={"type": "str"},
                 ssh_keys={"type": "list"},
                 volumes={"type": "list"},
+                labels={"type": "dict"},
                 backups={"type": "bool", "default": False},
                 upgrade_disk={"type": "bool", "default": False},
                 force_upgrade={"type": "bool", "default": False},
                 state={
-                    "choices": ["absent", "present", "restarted", "started", "stopped"],
+                    "choices": ["absent", "present", "restarted", "started", "stopped", "rebuild"],
                     "default": "present",
                 },
                 **Hcloud.base_module_arguments()
@@ -372,6 +401,9 @@ def main():
         hcloud.present_server()
         hcloud.stop_server()
         hcloud.start_server()
+    elif state == "rebuild":
+        hcloud.present_server()
+        hcloud.rebuild_server()
 
     module.exit_json(**hcloud.get_result())
 

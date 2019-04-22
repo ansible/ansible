@@ -19,51 +19,14 @@ module: postgresql_ping
 short_description: Check remote PostgreSQL server availability
 description:
 - Simple module to check remote PostgreSQL server availability.
-version_added: "2.8"
+version_added: '2.8'
 options:
   db:
     description:
     - Name of database to connect.
     type: str
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    type: str
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-    default: prefer
-  ssl_rootcert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s).
-    - If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
+    aliases:
+    - login_db
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -76,6 +39,7 @@ notes:
 requirements: [ psycopg2 ]
 author:
 - Andrew Klychkov (@Andersson007)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -90,7 +54,7 @@ EXAMPLES = r'''
     login_host: dbsrv
     login_user: secret
     login_password: secret_pass
-    ssl_rootcert: /root/root.crt
+    ca_cert: /root/root.crt
     ssl_mode: verify-full
 '''
 
@@ -114,7 +78,7 @@ try:
 except ImportError:
     HAS_PSYCOPG2 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
@@ -170,9 +134,7 @@ class PgPing(object):
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        db=dict(type='str'),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(type='str'),
+        db=dict(type='str', aliases=['login_db']),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -180,9 +142,9 @@ def main():
     )
 
     if not HAS_PSYCOPG2:
-        module.fail_json(msg="The python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib('psycopg2'))
 
-    sslrootcert = module.params["ssl_rootcert"]
+    sslrootcert = module.params["ca_cert"]
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -194,7 +156,7 @@ def main():
         "port": "port",
         "db": "database",
         "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
+        "ca_cert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != "" and v is not None)
@@ -206,7 +168,7 @@ def main():
 
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
-                             'to user the ssl_rootcert parameter')
+                             'to user the ca_cert parameter')
 
     # Set some default values:
     cursor = False

@@ -31,7 +31,7 @@ $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 Function Get-CertFile($module, $path, $password, $key_exportable, $key_storage) {
     # parses a certificate file and returns X509Certificate2Collection
-    if (-not (Test-Path -Path $path -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         $module.FailJson("File at '$path' either does not exist or is not a file")
     }
 
@@ -67,7 +67,7 @@ Function New-CertFile($module, $cert, $path, $type, $password) {
     }
     if ($type -eq "pkcs12") {
         $missing_key = $false
-        if ($cert.PrivateKey -eq $null) {
+        if ($null -eq $cert.PrivateKey) {
             $missing_key = $true
         } elseif ($cert.PrivateKey.CspKeyContainerInfo.Exportable -eq $false) {
             $missing_key = $true
@@ -77,8 +77,8 @@ Function New-CertFile($module, $cert, $path, $type, $password) {
         }
     }
 
-    if (Test-Path -Path $path) {
-        Remove-Item -Path $path -Force
+    if (Test-Path -LiteralPath $path) {
+        Remove-Item -LiteralPath $path -Force
         $module.Result.changed = $true
     }
     try {
@@ -97,7 +97,7 @@ Function New-CertFile($module, $cert, $path, $type, $password) {
         $cert_bytes = $file_encoding.GetBytes($cert_content)
     } elseif ($type -eq "pkcs12") {
         $module.Result.key_exported = $false
-        if ($cert.PrivateKey -ne $null) {
+        if ($null -ne $cert.PrivateKey) {
             $module.Result.key_exportable = $cert.PrivateKey.CspKeyContainerInfo.Exportable
         }
     }
@@ -109,7 +109,7 @@ Function New-CertFile($module, $cert, $path, $type, $password) {
             $module.FailJson("Failed to write cert to file, cert was null: $($_.Exception.Message)", $_)
         } catch [System.IO.IOException] {
             $module.FailJson("Failed to write cert to file due to IO Exception: $($_.Exception.Message)", $_)
-        } catch [System.UnauthorizedAccessException, System.Security.SecurityException] {
+        } catch [System.UnauthorizedAccessException] {
             $module.FailJson("Failed to write cert to file due to permissions: $($_.Exception.Message)", $_)
         } catch {
             $module.FailJson("Failed to write cert to file: $($_.Exception.Message)", $_)
@@ -129,7 +129,7 @@ Function Get-CertFileType($path, $password) {
         return "unknown"
     }
 
-    $file_contents = Get-Content -Path $path -Raw
+    $file_contents = Get-Content -LiteralPath $path -Raw
     if ($file_contents.StartsWith("-----BEGIN CERTIFICATE-----")) {
         return "pem"
     } elseif ($file_contents.StartsWith("-----BEGIN PKCS7-----")) {
@@ -176,12 +176,12 @@ try {
     if ($state -eq "absent") {
         $cert_thumbprints = @()
 
-        if ($path -ne $null) {
+        if ($null -ne $path) {
             $certs = Get-CertFile -module $module -path $path -password $password -key_exportable $key_exportable -key_storage $key_storage
             foreach ($cert in $certs) {
                 $cert_thumbprints += $cert.Thumbprint
             }
-        } elseif ($thumbprint -ne $null) {
+        } elseif ($null -ne $thumbprint) {
             $cert_thumbprints += $thumbprint
         }
 
@@ -207,9 +207,9 @@ try {
         # TODO: Add support for PKCS7 and exporting a cert chain
         $module.Result.thumbprints += $thumbprint
         $export = $true
-        if (Test-Path -Path $path -PathType Container) {
+        if (Test-Path -LiteralPath $path -PathType Container) {
             $module.FailJson("Cannot export cert to path '$path' as it is a directory")
-        } elseif (Test-Path -Path $path -PathType Leaf) {
+        } elseif (Test-Path -LiteralPath $path -PathType Leaf) {
             $actual_cert_type = Get-CertFileType -path $path -password $password
             if ($actual_cert_type -eq $file_type) {
                 try {

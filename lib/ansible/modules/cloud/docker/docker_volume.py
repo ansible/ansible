@@ -92,7 +92,7 @@ author:
   - Alex Grönholm (@agronholm)
 
 requirements:
-  - "docker-py >= 1.10.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.10.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "The docker server >= 1.9.0"
 '''
 
@@ -128,7 +128,7 @@ volume:
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import (

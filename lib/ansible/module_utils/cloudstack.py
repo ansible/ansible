@@ -22,17 +22,6 @@ except ImportError:
     CS_IMP_ERR = traceback.format_exc()
     HAS_LIB_CS = False
 
-CS_HYPERVISORS = [
-    'KVM', 'kvm',
-    'VMware', 'vmware',
-    'BareMetal', 'baremetal',
-    'XenServer', 'xenserver',
-    'LXC', 'lxc',
-    'HyperV', 'hyperv',
-    'UCS', 'ucs',
-    'OVM', 'ovm',
-    'Simulator', 'simulator',
-]
 
 if sys.version_info > (3,):
     long = int
@@ -106,6 +95,7 @@ class AnsibleCloudStack:
         self.project = None
         self.ip_address = None
         self.network = None
+        self.physical_network = None
         self.vpc = None
         self.zone = None
         self.vm = None
@@ -300,6 +290,24 @@ class AnsibleCloudStack:
                     for n in vpc.get('network', []):
                         self._vpc_networks_ids.append(n['id'])
         return network_id in self._vpc_networks_ids
+
+    def get_physical_network(self, key=None):
+        if self.physical_network:
+            return self._get_by_key(key, self.physical_network)
+        physical_network = self.module.params.get('physical_network')
+        args = {
+            'zoneid': self.get_zone(key='id')
+        }
+        physical_networks = self.query_api('listPhysicalNetworks', **args)
+        if not physical_networks:
+            self.fail_json(msg="No physical networks available.")
+
+        for net in physical_networks['physicalnetwork']:
+            if physical_network in [net['name'], net['id']]:
+                self.physical_network = net
+                self.result['physical_network'] = net['name']
+                return self._get_by_key(key, self.physical_network)
+        self.fail_json(msg="Physical Network '%s' not found" % physical_network)
 
     def get_network(self, key=None):
         """Return a network dictionary or the value of given key of."""

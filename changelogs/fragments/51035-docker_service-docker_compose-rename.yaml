@@ -1,2 +1,0 @@
-minor_changes:
-- The ``docker_service`` module has been renamed to ``docker_compose``.

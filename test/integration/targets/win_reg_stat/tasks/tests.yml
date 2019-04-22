@@ -1,0 +1,364 @@
+---
+- name: expect failure when not passing in path option
+  win_reg_stat:
+    name: a
+  register: actual
+  failed_when: "actual.msg != 'Get-AnsibleParam: Missing required argument: path'"
+
+- name: expect failure when passing in an invalid hive
+  win_reg_stat:
+    path: ABCD:\test
+  register: actual
+  failed_when: 'actual.msg != "path: ABCD:\\test is not a valid registry path, see module documentation for examples."'
+
+- name: get known nested reg key structure
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\nested
+  register: actual
+
+- name: set expected value for reg structure
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      properties:
+        binary: { raw_value: ["0x01", "0x16"], type: 'REG_BINARY', value: [1, 22] }
+        dword: { raw_value: 1, type: 'REG_DWORD', value: 1 }
+        expand: { raw_value: '%windir%\dir', type: 'REG_EXPAND_SZ', value: "{{win_dir_value.stdout_lines[0]}}\\dir" }
+        large_dword: { raw_value: 4294967295, type: 'REG_DWORD', value: 4294967295 }
+        large_qword: { raw_value: 18446744073709551615, type: 'REG_QWORD', value: 18446744073709551615 }
+        multi: { raw_value: ['a, b', 'c'], type: 'REG_MULTI_SZ', value: ['a, b', 'c'] }
+        qword: { raw_value: 1, type: 'REG_QWORD', value: 1 }
+        string: { raw_value: 'test', type: 'REG_SZ', value: 'test' }
+      sub_keys:
+      - nest1
+      - nest2
+
+- name: assert get known nested reg key structure
+  assert:
+    that:
+    - actual == expected
+
+- name: get known reg key with no sub keys but some properties
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\single
+  register: actual
+
+- name: set expected value for reg key with no sub keys but some properties
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      properties:
+        none: { raw_value: [], type: 'REG_NONE', value: [] }
+        none1: { raw_value: ["0x00"], type: 'REG_NONE', value: [0] }
+        string1: { raw_value: '', type: 'REG_SZ', value: '' }
+        string2: { raw_value: 'abc123', type: 'REG_SZ', value: 'abc123' }
+      sub_keys: []
+
+- name: assert get known reg key with no sub keys but some properties
+  assert:
+    that:
+    - actual == expected
+
+- name: get known reg key without sub keys and properties
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\nested\nest2
+  register: actual
+
+- name: set expected value for reg key without sub keys or properties
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      properties: {}
+      sub_keys: []
+  register: expected
+
+- name: assert get known reg key without sub keys and properties
+  assert:
+    that:
+      - actual == expected
+
+- name: get non-existent reg key
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\Thispathwillneverexist
+  register: actual
+
+- name: set expected value for non-existent reg key
+  set_fact:
+    expected:
+      changed: false
+      exists: false
+      failed: false
+
+- name: assert get non-existent reg key
+  assert:
+    that:
+    - actual == expected
+
+- name: get string property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\nested
+    name: string
+  register: actual
+
+- name: set expected string property
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      raw_value: 'test'
+      type: 'REG_SZ'
+      value: 'test'
+
+- name: assert get string property
+  assert:
+    that:
+    - actual == expected
+
+- name: get expand string property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\nested
+    name: expand
+  register: actual
+
+- name: set expected expand string property
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      raw_value: '%windir%\dir'
+      type: 'REG_EXPAND_SZ'
+      value: "{{win_dir_value.stdout_lines[0]}}\\dir"
+
+- name: assert get expand string property
+  assert:
+    that:
+    - actual == expected
+
+- name: get multi string property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\nested
+    name: multi
+  register: actual
+
+- name: set expected multi string property
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      raw_value: ['a, b', 'c']
+      type: 'REG_MULTI_SZ'
+      value: ['a, b', 'c']
+
+- name: assert get multi string property
+  assert:
+    that:
+    - actual == expected
+
+- name: get binary property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\nested
+    name: binary
+  register: actual
+
+- name: set expected binary property
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      raw_value: ["0x01", "0x16"]
+      type: 'REG_BINARY'
+      value: [1, 22]
+
+- name: assert get binary property
+  assert:
+    that:
+    - actual == expected
+
+- name: get dword property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\nested
+    name: dword
+  register: actual
+
+- name: set expected dword property
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      raw_value: 1
+      type: 'REG_DWORD'
+      value: 1
+
+- name: assert get dword property
+  assert:
+    that:
+    - actual == expected
+
+- name: get qword property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\nested
+    name: qword
+  register: actual
+
+- name: set expected qword property
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      raw_value: 1
+      type: 'REG_QWORD'
+      value: 1
+
+- name: assert get qword property
+  assert:
+    that:
+    - actual == expected
+
+- name: get none property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\single
+    name: none
+  register: actual
+
+- name: set expected none property
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      raw_value: []
+      type: 'REG_NONE'
+      value: []
+
+- name: assert get none property
+  assert:
+    that:
+    - actual == expected
+
+- name: get none with value property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\single
+    name: none1
+  register: actual
+
+- name: set expected none with value property
+  set_fact:
+    expected:
+      changed: false
+      exists: true
+      failed: false
+      raw_value: ["0x00"]
+      type: 'REG_NONE'
+      value: [0]
+
+- name: assert get non with value property
+  assert:
+    that:
+    - actual == expected
+
+- name: get non-existent property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\single
+    name: doesnotexist
+  register: actual
+
+- name: set expected non-existent property
+  set_fact:
+    expected:
+      changed: false
+      exists: false
+      failed: false
+
+- name: assert get non-existent property
+  assert:
+    that:
+    - actual == expected
+
+- name: get key with default property set
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\Duplicate Default
+  register: actual
+
+- name: assert get key with default property set
+  assert:
+    that:
+    - actual.properties[""]['raw_value'] == "default"
+    - actual.properties[""]['type'] == "REG_SZ"
+    - actual.properties[""]['value'] == "default"
+    - actual.properties['(Default)'].raw_value == "custom"
+    - actual.properties['(Default)'].type == "REG_SZ"
+    - actual.properties['(Default)'].value == "custom"
+
+- name: get default property
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\Duplicate Default
+    name: ''
+  register: actual
+
+- name: assert get default property
+  assert:
+    that:
+    - actual.value == "default"
+    - actual.raw_value == "default"
+    - actual.type == "REG_SZ"
+
+- name: get key with blank property set
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\Blank Default
+  register: actual
+
+- name: assert get key with blank property set
+  assert:
+    that:
+    - actual.properties[""].raw_value == ""
+    - actual.properties[""].type == "REG_SZ"
+    - actual.properties[""].value == ""
+    - actual.properties['(Default)'].raw_value == ""
+    - actual.properties['(Default)'].type == "REG_SZ"
+    - actual.properties['(Default)'].value == ""
+
+- name: get default property as empty string
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\Blank Default
+    name: ''
+  register: actual
+
+- name: assert get default property as empty string
+  assert:
+    that:
+    - actual.value == ""
+    - actual.raw_value == ""
+    - actual.type == "REG_SZ"
+
+- name: get key with no properties set
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\Empty Default
+  register: actual
+
+- name: assert get key with no properties set
+  assert:
+    that:
+    - actual.properties == {}
+
+- name: get default property that has not been set
+  win_reg_stat:
+    path: HKCU:\{{ test_reg_path }}\Empty Default
+    name: ''
+  register: actual
+
+- name: assert get default property that has not been set
+  assert:
+    that:
+    - not actual.exists

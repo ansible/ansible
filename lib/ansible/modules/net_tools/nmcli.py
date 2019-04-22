@@ -31,6 +31,8 @@ description:
       libnm-qt-devel.x86_64, nm-connection-editor.x86_64, libsemanage-python, policycoreutils-python.'
     - 'On Ubuntu and Debian like systems, the requirements can be met by installing the following packages: network-manager,
       python-dbus (or python3-dbus, depending on the Python version in use), libnm-glib-dev.'
+    - 'On openSUSE, the requirements can be met by installing the following packages: NetworkManager, python2-dbus-python (or
+      python3-dbus-python), typelib-1_0-NMClient-1_0 and typelib-1_0-NetworkManager-1_0.'
 options:
     state:
         description:
@@ -371,7 +373,7 @@ EXAMPLES = r'''
         - nm-connection-editor
         - libsemanage-python
         - policycoreutils-python
-      state: installed
+      state: present
 
 ##### Working with all cloud nodes - Teaming
   - name: Try nmcli add team - conn_name only & ip4 gw4
@@ -741,7 +743,7 @@ class Nmcli(object):
         except dbus.exceptions.DBusException as e:
             self.module.fail_json(msg="Unable to read Network Manager settings from DBus system bus: %s" % to_native(e),
                                   details="Please check if NetworkManager is installed and"
-                                          " service network-manager is started.")
+                                          "service network-manager is started.")
         connection_paths = settings.ListConnections()
         connection_list = []
         # List each connection's name, UUID, and type
