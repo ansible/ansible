@@ -505,7 +505,7 @@ def main():
         if existing_core:
             commands.append(['no {0}'.format(seq)])
     elif state == 'delete_acl':
-        if acl[0].get('acl') != 'no_entries':
+        if acl and acl[0].get('acl') != 'no_entries':
             commands.append(['no ip access-list {0}'.format(name)])
 
     cmds = []
