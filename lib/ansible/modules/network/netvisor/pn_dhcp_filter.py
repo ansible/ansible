@@ -103,7 +103,8 @@ def check_cli(module, cli):
     cli += ' dhcp-filter-show format name no-show-headers'
     out = run_commands(module, cli)[1]
 
-    out = out.split()
+    if out:
+        out = out.split()
 
     return True if user_name in out else False
 

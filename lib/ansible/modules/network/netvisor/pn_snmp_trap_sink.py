@@ -110,14 +110,16 @@ def check_cli(module, cli):
     cli += ' snmp-community-show format community-string no-show-headers'
     rc, out, err = run_commands(module, cli)
 
-    out = out.split()
+    if out:
+        out = out.split()
 
     if community in out:
         cli = show
         cli += ' snmp-trap-sink-show community %s format type,dest-host no-show-headers' % community
         rc, out, err = run_commands(module, cli)
 
-        out = out.split()
+        if out:
+            out = out.split()
 
         return True if dest_host in out else False
     else:

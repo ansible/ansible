@@ -133,7 +133,8 @@ def check_cli(module, cli):
     cli += ' role-show format name no-show-headers'
     out = run_commands(module, cli)[1]
 
-    out = out.split()
+    if out:
+        out = out.split()
 
     return True if role_name in out else False
 

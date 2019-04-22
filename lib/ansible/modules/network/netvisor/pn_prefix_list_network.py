@@ -116,7 +116,7 @@ def check_cli(module, cli):
     rc, out, err = run_commands(module, cli)
 
     if out:
-        out = out.split()[1]
+        out = out.split()[-1]
         return True if network in out.split('/')[0] else False
 
     return False
