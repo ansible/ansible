@@ -5,7 +5,7 @@
 
 - set_fact: def_met_default="default"
   # CSCvi74876 Cannot remove default-metric
-  when: not ((platform is search('N9K')) and (imagetag and (imagetag is version_compare('I7', 'eq'))))
+  when: imagetag is not search("I7")
 
 - name: "Setup: disable feature OSPF for initial cleanup"
   nxos_feature:
