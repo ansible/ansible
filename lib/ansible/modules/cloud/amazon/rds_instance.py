@@ -277,7 +277,7 @@ options:
     performance_insights_retention_period:
         description:
           - The amount of time, in days, to retain Performance Insights data. Valid values are 7 or 731.
-        type: str
+        type: int
     port:
         description:
           - The port number on which the instances accept connections.
