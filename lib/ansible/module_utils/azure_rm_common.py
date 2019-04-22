@@ -132,6 +132,7 @@ AZURE_API_PROFILES = {
         'KeyVaultClient': '2016-10-01',
         'azure.multiapi.storage': '2017-04-17',
         'azure.multiapi.cosmosdb': '2017-04-17'
+        'PolicyClient': '2018-05-01'
     },
     '2017-03-09-profile': {
         'StorageManagementClient': '2016-01-01',
@@ -220,6 +221,7 @@ try:
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
     from azure.mgmt.resource.subscriptions import SubscriptionClient
+    from azure.mgmt.resource.policy import PolicyClient
     from azure.mgmt.storage import StorageManagementClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.mgmt.dns import DnsManagementClient
@@ -401,6 +403,7 @@ class AzureRMModuleBase(object):
         self._automation_client = None
         self._IoThub_client = None
         self._lock_client = None
+        self._policy_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -1192,6 +1195,18 @@ class AzureSASAuthentication(Authentication):
         session = super(AzureSASAuthentication, self).signed_session()
         session.headers['Authorization'] = self.token
         return session
+    def rm_policy_client(self):
+        self.log('Getting resource policy client')
+        if not self._policy_client:
+            self._policy_client = self.get_mgmt_svc_client(PolicyClient,
+                                                           base_url=self._cloud_environment.endpoints.resource_manager,
+                                                           api_version='2018-05-01')
+        return self._policy_client
+
+    @property
+    def rm_policy_models(self):
+        self.log("Getting resource policy models")
+        return PolicyClient.models("2018-05-01")
 
 
 class AzureRMAuthException(Exception):
