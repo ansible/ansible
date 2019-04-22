@@ -1851,6 +1851,15 @@ STRING_CONVERSION_ACTION:
     - section: defaults
       key: string_conversion_action
   type: string
+REMOTE_TASK_UUID:
+  description: If True, Ansible will send task uuid to the remote to add to any logging created via run_command.
+  version_added: "2.9"
+  type: boolean
+  env:
+    - name: ANSIBLE_REMOTE_TASK_UUID
+  ini:
+    - section: defaults
+      key: remote_task_uuid
 VERBOSE_TO_STDERR:
   version_added: '2.8'
   description:
