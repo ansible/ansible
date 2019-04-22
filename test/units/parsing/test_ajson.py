@@ -7,9 +7,10 @@ __metaclass__ = type
 import os
 import json
 
-import pytest
+from decimal import Decimal
 
-from ansible.parsing.ajson import AnsibleJSONDecoder
+from ansible.module_utils._text import to_native
+from ansible.parsing.ajson import AnsibleJSONDecoder, AnsibleJSONEncoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 
@@ -20,3 +21,17 @@ def test_AnsibleJSONDecoder_vault():
     assert isinstance(data['password'], AnsibleVaultEncryptedUnicode)
     assert isinstance(data['bar']['baz'][0]['password'], AnsibleVaultEncryptedUnicode)
     assert isinstance(data['foo']['password'], AnsibleVaultEncryptedUnicode)
+
+
+def test_AnsibleJSONEncoder_decimal():
+    test_numbers = (
+        (1, 1.0),
+        (1.0, 1.0),
+        (1.155789, 1.155789),
+    )
+
+    for test in test_numbers:
+        value = Decimal(test[0])
+        test_data = {'number': value}
+        data = json.dumps(test_data, cls=AnsibleJSONEncoder)
+        assert '{{"number": {}}}'.format(to_native(test[1])) == data
