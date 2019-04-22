@@ -207,7 +207,7 @@ class JenkinsBuild:
                                   self.jenkins_url), exception=traceback.format_exc())
 
     def wait_job_build(self):
-        for _ in range(1, self.wait_build_timeout):
+        for __ in range(1, self.wait_build_timeout):
             if self.server.get_build_info(self.name, self.build_number)['building']:
                 time.sleep(1)
             else:
@@ -225,7 +225,7 @@ class JenkinsBuild:
                 except Exception as e:
                     self.module.fail_json(msg='Fail to get nextBuildNumber: %s' % str(e))
                 queue_id = self.server.build_job(self.name, self.params, self.build_token)
-                for _ in range(1, self.wait_build_timeout):
+                for __ in range(1, self.wait_build_timeout):
                     queue_item = self.server.get_queue_item(queue_id)
                     if (queue_item is not None) \
                        and ('executable' in queue_item) \
