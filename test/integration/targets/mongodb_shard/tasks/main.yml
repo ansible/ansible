@@ -23,22 +23,26 @@
     path: /home/tests
     state: directory
 
-- name: Execute cleanup script if /home/tests/mongodb[1-3] directories exist
-  script: files/bash/mongod_teardown.sh
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset1 }}"
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3003 "{{ mongodb_replicaset2 }}" 3 0
+- set_fact:
+    mongodb_nodes: [ 3001, 3002, 3003 ]
 
-- name: Ensure /home/tests/config dir exists
-  file:
-    path: /home/tests/config
-    state: directory
+- include_tasks: mongod_replicaset.yml
+
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset2 }}"
+
+- set_fact:
+    mongodb_nodes: [ 3004, 3005, 3006 ]
+
+- include_tasks: mongod_replicaset.yml
 
 - name: Launch cfg server
-  command: mongod --configsvr --port 4000 --dbpath /home/tests/config --logpath /home/tests/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
+  command: mongod --configsvr --port 4000 --dbpath {{ remote_tmp_dir }}/config --logpath {{ remote_tmp_dir }}/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
 
 - name: Create replicaset1 with module
   mongodb_replicaset:
@@ -86,10 +90,10 @@
     src: js/is_primary.js
     dest: /home/tests/is_primary.js
 
-- name: Ensure host reaches primary before proceeding
+- name: Ensure host reaches primary before proceeding 3001
   command: mongo admin --port 3001 /home/tests/is_primary.js
 
-- name: Ensure host reaches primary before proceeding
+- name: Ensure host reaches primary before proceeding 3004
   command: mongo admin --port 3004 /home/tests/is_primary.js
 
 - name: Add shard 1
@@ -160,30 +164,23 @@
       - "'balancer' in mongo_output.stdout"
 
 # Repeat of above with auth enabled
-- name: Execute cleanup script if /home/tests/mongodb[1-*] directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Murder all mongod processes
-  shell: pkill mongod && sleep 10 || sleep 10;
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset1 }}"
 
-- name: Murder all mongos processes
-  shell: pkill mongos && sleep 10 || sleep 10;
+- set_fact:
+    mongodb_nodes: [ 3001, 3002, 3003 ]
 
-- name: Remove /home/tests/config
-  shell: rm -Rf /home/tests/config
+- include_tasks: mongod_replicaset.yml
 
-- name: Ensure /home/tests/config dir exists
-  file:
-    path: /home/tests/config
-    state: directory
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset2 }}"
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 0
+- set_fact:
+    mongodb_nodes: [ 3004, 3005, 3006 ]
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3003 "{{ mongodb_replicaset2 }}" 3 0
+- include_tasks: mongod_replicaset.yml
 
 - name: Create replicaset1 with module
   mongodb_replicaset:
@@ -211,13 +208,8 @@
      - "localhost:3005"
      - "localhost:3006"
 
-- name: Ensure /home/tests/config dir exists
-  file:
-    path: /home/tests/config
-    state: directory
-
 - name: Launch cfg server
-  command: mongod --configsvr --port 4000 --dbpath /home/tests/config --logpath /home/tests/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
+  command: mongod --configsvr --port 4000 --dbpath {{ remote_tmp_dir }}/config --logpath {{ remote_tmp_dir }}/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
 
 - name: Create config srv replicaset with module
   mongodb_replicaset:
@@ -230,13 +222,13 @@
     members:
      - "localhost:4000"
 
-- name: Ensure host reaches primary before proceeding
+- name: Ensure host reaches primary before proceeding 3001
   command: mongo admin --port 3001 /home/tests/is_primary.js
 
-- name: Ensure host reaches primary before proceeding
+- name: Ensure host reaches primary before proceeding 3004
   command: mongo admin --port 3004 /home/tests/is_primary.js
 
-- name: Ensure host reaches primary before proceeding
+- name: Ensure host reaches primary before proceeding 4000
   command: mongo admin --port 4000 /home/tests/is_primary.js
 
 - name: Add mongodb admin user to each shard 3.4+
@@ -280,30 +272,64 @@
     dest: /root/create_user_root_3.2.js
   when: mongodb_version in ["3.2", "4.0"]
 
+- pause:
+    seconds: 10
+
 - name: Create admin user on 3.2 and 4.0 config replset
-  shell: mongo admin --port 4000 /root/create_user_root_3.2.js
+  shell: mongo admin --port {{ item }} /root/create_user_root_3.2.js
+  with_items:
+    - 4000
+    - 3001
+    - 3004
   when: mongodb_version in ["3.2", "4.0"]
 
 - name: Murder all mongod processes
   shell: pkill mongod && sleep 10 || sleep 10;
 
-- name: Execute mongod script to launch with auth shard1
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 1
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset1 }}"
 
-- name: Execute mongod script to launch with auth shard2
-  script: files/bash/mongodb_replicaset.sh 3003 "{{ mongodb_replicaset2 }}" 3 1
+- set_fact:
+    mongodb_nodes: [ 3001, 3002, 3003 ]
+
+- set_fact:
+    mongod_auth: true
+
+- include_tasks: mongod_replicaset.yml
+
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset2 }}"
+
+- set_fact:
+    mongodb_nodes: [ 3004, 3005, 3006 ]
+
+- set_fact:
+    mongod_auth: true
+
+- include_tasks: mongod_replicaset.yml
 
 - name: Launch cfg server with auth
-  command: mongod --configsvr --port 4000 --dbpath /home/tests/config --logpath /home/tests/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork --auth --keyFile /root/my.key
+  command: mongod --configsvr --port 4000 --dbpath {{ remote_tmp_dir }}/config --logpath {{ remote_tmp_dir }}/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork --auth --keyFile {{ remote_tmp_dir }}/my.key
 
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3001 /home/tests/is_primary.js
+- name: Copy script to host
+  template:
+    src: files/bash/ensure_primary.sh.j2
+    dest: /root/ensure_primary.sh
 
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3004 /home/tests/is_primary.js
+- name: Execute script for 3001
+  script: /root/ensure_primary.sh 3001
+
+- name: Execute script for 3004
+  script: /root/ensure_primary.sh 3004
+
+- name: Ensure host reaches primary before proceeding 3001
+  command: mongo admin --port 3001 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} /home/tests/is_primary.js
+
+- name: Ensure host reaches primary before proceeding 3004
+  command: mongo admin --port 3004 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} /home/tests/is_primary.js
 
 - name: Launch mongos
-  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath /home/tests/mongos.log --port 27017 --fork --keyFile /root/my.key
+  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath /home/tests/mongos.log --port 27017 --fork --keyFile {{ remote_tmp_dir }}/my.key
 
 - pause:
     seconds: 10

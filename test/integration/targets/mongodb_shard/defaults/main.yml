@@ -7,3 +7,4 @@ test_mongo_auth: yes
 mongodb_admin_user: test_root
 mongodb_admin_password: saE_Rr9!gE6gh#e~R#nZ
 debug: yes
+mongod_auth: false

@@ -49,9 +49,6 @@
     src: js/is_primary.js
     dest: /home/tests/is_primary.js
 
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3001 /home/tests/is_primary.js
-
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
   register: mongo_output
@@ -132,9 +129,6 @@
     replica_set: "{{ mongodb_replicaset2 }}"
     members: [ "localhost:3001", "localhost:3002", "localhost:3003" ]
 
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3001 /home/tests/is_primary.js
-
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
   register: mongo_output
@@ -171,9 +165,6 @@
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset3 }}"
     members: "localhost:3001,localhost:3002,localhost:3003"
-
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
@@ -213,7 +204,7 @@
     replica_set: "{{ mongodb_replicaset4 }}"
     members: "localhost:3001,localhost:3002,localhost:3003"
 
-- name: Ensure host reaches primary before proceeding
+- name: Ensure host reaches primary before proceeding 3001
   command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
@@ -257,9 +248,6 @@
       - localhost:3001
       - localhost:3002
       - localhost:3003
-
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.conf()" --port 3001
@@ -307,9 +295,6 @@
       - localhost:3004
       - localhost:3005
 
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3001 /home/tests/is_primary.js
-
 - name: Get replicaset info
   command: mongo admin --eval "rs.conf()" --port 3001
   register: mongo_output
@@ -355,9 +340,6 @@
       - localhost:3001
       - localhost:3002
       - localhost:3003
-
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.conf()" --port 3001
@@ -415,9 +397,6 @@
       - localhost:3002
       - localhost:3003
   when: mongodb_version.startswith('4') == True
-
-- name: Ensure host reaches primary before proceeding
-  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.conf()" --port 3001

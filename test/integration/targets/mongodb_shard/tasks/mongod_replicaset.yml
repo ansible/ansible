@@ -8,6 +8,14 @@
     recurse: yes
   with_items: "{{ mongodb_nodes }}"
 
+- name: Ensure {{ remote_tmp_dir }}/config dir exists
+  file:
+    path: "{{ remote_tmp_dir }}/config"
+    state: directory
+    owner: mongodb
+    group: mongodb
+    mode: 0755
+
 - name: Create keyfile
   copy:
     dest: "{{ remote_tmp_dir }}/my.key"

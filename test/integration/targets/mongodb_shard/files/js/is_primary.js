@@ -1,8 +1,13 @@
 var done = false;
+var iterations = 0;
 while(rs.status()['myState'] != 1) {
 		if (!done) {
 			//print("State is not yet PRIMARY. Waiting...");
 			done = true
 		}
-		sleep(10);
+		sleep(1000);
+		iterations++;
+		if (iterations == 10) {
+			throw new Error("Exceeded iterations limit.");
+		}
 	}

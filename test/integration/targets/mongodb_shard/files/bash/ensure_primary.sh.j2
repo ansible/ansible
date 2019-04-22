@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# This script is here because on some occassions the head mongodb does not become primary.
+
+PRIMARY=$1;
+
+if [ "$PRIMARY" == "3001" ]; then
+  mongo admin --port 3002 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval "rs.freeze(120)";
+  mongo admin --port 3003 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval "rs.freeze(120)";
+  mongo admin --port 3002 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval "rs.stepDown()";
+  mongo admin --port 3003 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval "rs.stepDown()";
+elif [ "$PRIMARY" == "3004" ]; then
+  mongo admin --port 3005 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval "rs.freeze(120)";
+  mongo admin --port 3006 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval "rs.freeze(120)";
+  mongo admin --port 3005 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval "rs.stepDown()";
+  mongo admin --port 3006 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval "rs.stepDown()";
+else
+  echo "Unsupported port!";
+  exit 1;
+fi;
