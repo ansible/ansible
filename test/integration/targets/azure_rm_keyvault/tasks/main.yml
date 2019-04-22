@@ -155,7 +155,7 @@
 # azure_rm_keyvaultkey tests
 #
 
-- name: create a kevyault key
+- name: create a keyvault key
   block:
     - azure_rm_keyvaultkey:
         keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
@@ -172,7 +172,7 @@
         state: absent
         key_name: testkey
 
-- name: delete a kevyault key
+- name: delete a keyvault key
   azure_rm_keyvaultkey:
     keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
     state: absent
@@ -185,7 +185,7 @@
 #
 # azure_rm_keyvaultsecret tests
 #
-- name: create a kevyault secret
+- name: create a keyvault secret
   block:
     - azure_rm_keyvaultsecret:
         keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
@@ -203,7 +203,7 @@
         state: absent
         secret_name: testsecret
 
-- name: delete a kevyault secret
+- name: delete a keyvault secret
   azure_rm_keyvaultsecret:
     keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
     state: absent
