@@ -115,7 +115,7 @@
        - output.eventhubnamespaces[0]['is_auto_inflate_enabled'] != None
        - output.eventhubnamespaces[0]['maximum_throughput_units'] != None
        - output.eventhubnamespaces[0]['kafka_enabled'] != None
-       - output.eventhubnamespaces[0]['sas_keys'] != None
+       - output.eventhubnamespaces[0]['sas_policies'] != None
        - output.eventhubnamespaces[1]['id'] != None
        - output.eventhubnamespaces[1]['name'] != None
        - output.eventhubnamespaces[1]['location'] != None
@@ -123,7 +123,7 @@
        - output.eventhubnamespaces[1]['is_auto_inflate_enabled'] != None
        - output.eventhubnamespaces[1]['maximum_throughput_units'] != None
        - output.eventhubnamespaces[1]['kafka_enabled'] != None
-       - output.eventhubnamespaces[1]['sas_keys'] != None
+       - output.eventhubnamespaces[1]['sas_policies'] != None
 
 - name: Delete first eventhub namespace
   azure_rm_eventhubnamespace:

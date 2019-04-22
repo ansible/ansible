@@ -77,7 +77,7 @@ except ImportError:
     pass
 
 
-class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
+class AzureRMEventHubNamespaceFacts(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -103,7 +103,7 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
         self.tags = None
         self.show_sas_policies = None
 
-        super(AzureRMEventHubNamespaceFact, self).__init__(self.module_arg_spec, supports_tags=True, facts_module=True)
+        super(AzureRMEventHubNamespaceFacts, self).__init__(self.module_arg_spec, supports_tags=True, facts_module=True)
 
     def exec_module(self, **kwargs):
 
@@ -158,7 +158,7 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
         namespace_name = eventhubnamespace['name']
         resource_group_name = eventhubnamespace['resource_group']
         rules = self.list_authorization_rules(resource_group_name=resource_group_name, namespace_name=namespace_name)
-        results['sas_keys'] = [self.list_keys(resource_group_name=resource_group_name, namespace_name=namespace_name, rule_name=x.name) for x in rules]
+        results['sas_policies'] = [self.list_keys(resource_group_name=resource_group_name, namespace_name=namespace_name, rule_name=x.name) for x in rules]
         return results
 
     def list_authorization_rules(self, resource_group_name, namespace_name):
@@ -197,7 +197,7 @@ class AzureRMEventHubNamespaceFact(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMEventHubNamespaceFact()
+    AzureRMEventHubNamespaceFacts()
 
 
 if __name__ == '__main__':
