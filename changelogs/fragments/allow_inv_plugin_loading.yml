@@ -1,0 +1,2 @@
+bugfixes:
+    - allow loading inventory plugins adjacent to playbooks
