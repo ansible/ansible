@@ -28,10 +28,15 @@ options:
     type: path
     required: true
     aliases: [ path ]
+  chunk:
+    description:
+      - Sets the size of how much of the file should be read/encoded at a time, if not set or ``<= 0``, it will read the full file.
+    type: int
+    version_added: "2.9"
 notes:
-   - This module returns an 'in memory' base64 encoded version of the file, take into account that this will require at least twice the RAM as the
-     original file size.
-   - This module is also supported for Windows targets.
+   - This module returns an 'in memory' base64 encoded version of the file, take into account that this will, by default,
+     require at least twice the RAM as the original file size on the target, use the C(chunk) option to minimize this.
+     It will also require x2 the RAM on the controller if you 'decode in memory', save to a base64 encoded file and decode the file to avoid this.
 seealso:
 - module: fetch
 author:
@@ -41,12 +46,27 @@ author:
 
 EXAMPLES = r'''
 - name: Find out what the remote machine's mounts are
-  slurp:
-    src: /proc/mounts
-  register: mounts
+  block:
+   - name: slurp contents and register
+     slurp:
+        src: /proc/mounts
+     register: mounts
 
-- debug:
-    msg: "{{ mounts['content'] | b64decode }}"
+    - name: display contents (needs to decode)
+      debug:
+        msg: "{{ mounts['content'] | b64decode }}"
+
+- name: Display large file but read in 64k chunks
+  block:
+    - name: actually read file
+      slurp:
+        src: /home/user/bigfile
+        chunk: 65535
+      register: bigfile
+
+    - debug:
+      name: show contents of bigfile
+        msg: "{{ bigfile['content'] | b64decode }}"
 
 # From the commandline, find the pid of the remote machine's sshd
 # $ ansible host -m slurp -a 'src=/var/run/sshd.pid'
@@ -74,6 +94,7 @@ def main():
         supports_check_mode=True,
     )
     source = module.params['src']
+    chunk = module.params['chunk']
 
     if not os.path.exists(source):
         module.fail_json(msg="file not found: %s" % source)
@@ -81,10 +102,19 @@ def main():
         module.fail_json(msg="file is not readable: %s" % source)
 
     with open(source, 'rb') as source_fh:
-        source_content = source_fh.read()
-    data = base64.b64encode(source_content)
+        if chunk is None or chunk <= 0:
+            data = base64.b64encode(source_fh.read())
+        else:
+            encoded = []
+            while True:
+                e_chunk = source_fh.read(chunk)
+                if not e_chunk:
+                    break
+                encoded.append(base64.b64encode(e_chunk))
 
-    module.exit_json(content=data, source=source, encoding='base64')
+            data = ''.join(encoded)
+
+    module.exit_json(content=data, source=source, path=source, encoding='base64')
 
 
 if __name__ == '__main__':
