@@ -31,12 +31,14 @@ options:
     description:
       - Graylog privileged user password, used to auth with Graylog API.
     required: false
+    type: str
   action:
     description:
       - Action to take against user API.
     required: false
     default: list
     choices: [ create, update, delete, list ]
+    type: str
   username:
     description:
       - Username.
@@ -46,27 +48,33 @@ options:
     description:
       - Password.
     required: false
+    type: str
   full_name:
     description:
       - Display name.
     required: false
+    type: str
   email:
     description:
       - Email.
     required: false
+    type: str
   roles:
     description:
       - List of role names to add the user to.
     required: false
+    type: list
   permissions:
     description:
       - List of permission names to add the user to.
     required: false
+    type: list
   timezone:
     description:
       - Timezone.
     required: false
     default: 'UTC'
+    type: str
 '''
 
 EXAMPLES = '''
@@ -298,13 +306,6 @@ def main():
     graylog_user = module.params['graylog_user']
     graylog_password = module.params['graylog_password']
     action = module.params['action']
-    username = module.params['username']
-    password = module.params['password']
-    full_name = module.params['full_name']
-    email = module.params['email']
-    timezone = module.params['timezone']
-    roles = module.params['roles']
-    permissions = module.params['permissions']
 
     base_url = "https://%s/api/users" % (endpoint)
 
