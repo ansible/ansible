@@ -176,7 +176,7 @@ options:
     required: false
     description:
     - List of dictionaries describing the service secrets.
-    - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
+    - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0444)
     - Maps docker service --secret option.
     - Requires API version >= 1.25
     default: []
@@ -184,7 +184,7 @@ options:
     required: false
     description:
     - List of dictionaries describing the service configs.
-    - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
+    - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0444)
     - Maps docker service --config option.
     - Requires API version >= 1.30
     default: []
@@ -654,9 +654,9 @@ class DockerService(DockerBaseClass):
             service_c['config_id'] = param_m['config_id']
             service_c['config_name'] = str(param_m['config_name'])
             service_c['filename'] = param_m.get('filename', service_c['config_name'])
-            service_c['uid'] = int(param_m.get('uid', "0"))
-            service_c['gid'] = int(param_m.get('gid', "0"))
-            service_c['mode'] = param_m.get('mode', 0o444)
+            service_c['uid'] = str(param_m.get('uid', "0"))
+            service_c['gid'] = str(param_m.get('gid', "0"))
+            service_c['mode'] = int(param_m.get('mode', 0o444))
             s.configs.append(service_c)
 
         s.secrets = []
@@ -665,9 +665,9 @@ class DockerService(DockerBaseClass):
             service_s['secret_id'] = param_m['secret_id']
             service_s['secret_name'] = str(param_m['secret_name'])
             service_s['filename'] = param_m.get('filename', service_s['secret_name'])
-            service_s['uid'] = int(param_m.get('uid', "0"))
-            service_s['gid'] = int(param_m.get('gid', "0"))
-            service_s['mode'] = param_m.get('mode', 0o444)
+            service_s['uid'] = str(param_m.get('uid', "0"))
+            service_s['gid'] = str(param_m.get('gid', "0"))
+            service_s['mode'] = int(param_m.get('mode', 0o444))
             s.secrets.append(service_s)
         return s
 
@@ -993,8 +993,8 @@ class DockerServiceManager():
                 'secret_id': secret_data['SecretID'],
                 'secret_name': secret_data['SecretName'],
                 'filename': secret_data['File'].get('Name'),
-                'uid': int(secret_data['File'].get('UID')),
-                'gid': int(secret_data['File'].get('GID')),
+                'uid': secret_data['File'].get('UID'),
+                'gid': secret_data['File'].get('GID'),
                 'mode': secret_data['File'].get('Mode')
             })
         networks_names_ids = self.get_networks_names_ids()
