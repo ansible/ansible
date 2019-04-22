@@ -1,4 +1,4 @@
-Homepage and documentation source for Ansible
+Homepage and Documentation Source for Ansible
 =============================================
 
 This project hosts the source behind [docs.ansible.com](https://docs.ansible.com/)
@@ -15,7 +15,7 @@ If you do not want to learn the reStructuredText format, you can also [file issu
 
 Note that module documentation can actually be [generated from a DOCUMENTATION docstring][module-docs] in the modules directory, so corrections to modules written as such need to be made in the module source, rather than in docsite source.
 
-To install sphinx and the required theme, install pip and then "pip install sphinx sphinx_rtd_theme"
+To install sphinx and the required theme, install ``pip`` and then ``pip install sphinx sphinx_rtd_theme``
 
 [file issues]: https://github.com/ansible/ansible/issues
 [module-docs]: https://docs.ansible.com/developing_modules.html#documenting-your-module
@@ -23,7 +23,7 @@ To install sphinx and the required theme, install pip and then "pip install sphi
 HEADERS
 =======
 
-RST allows for arbitrary hierchy for the headers, it will 'learn on the fly' but we want a standard so all our documents can follow:
+RST allows for arbitrary hierarchy for the headers, it will 'learn on the fly'. We also want a standard that all our documents can follow:
 
 ```
 ##########################
