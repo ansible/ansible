@@ -22,6 +22,7 @@ import os
 import pytest
 
 from units.compat import unittest
+from unittest import mock
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 from ansible.module_utils.six import PY2, PY3
@@ -62,6 +63,23 @@ def module():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False)
     return MerakiModule(module)
+
+
+def mocked_fetch_url():
+    response_mock = Mock()
+    if args[0] == 'https://api.meraki.com/404':
+        info = {'status': 404,
+                'body': "404 - Page is missing",
+                }
+    return (None, info)
+
+
+@mock.patch('ansible.module_utils.urls.fetch_url', side_effect=mocked_fetch_url)
+def test_fetch_url_404(module, mocker):
+    url = 'https://api.meraki.com/404'
+    data = module.request(url, method='GET')
+    print(data)
+    assert module.status == 404
 
 
 def test_define_protocol_https(module):
