@@ -29,7 +29,7 @@ options:
             - Name of the eventhub namespace.
         required: true
     name:
-        decription:
+        description:
             - Name of the eventhub alias.
     show_sas_policies:
         description:
@@ -74,6 +74,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 class AzureRMEventHubGeoRecoveryFacts(AzureRMModuleBase):
 
     def __init__(self):
@@ -100,14 +101,13 @@ class AzureRMEventHubGeoRecoveryFacts(AzureRMModuleBase):
             eventhubalias=[]
         )
 
-
         self.resource_group = None
         self.namespace = None
         self.name = None
         self.show_sas_policies = None
 
         super(AzureRMEventHubGeoRecoveryFacts, self).__init__(self.module_arg_spec, facts_module=True, supports_tags=False)
-    
+
     def exec_module(self, **kwargs):
 
         for key in self.module_arg_spec.keys():
@@ -151,9 +151,9 @@ class AzureRMEventHubGeoRecoveryFacts(AzureRMModuleBase):
         results = eventhubalias
         name = eventhubalias['name']
         rules = self.list_authorization_rules(resource_group_name=self.resource_group, namespace_name=self.namespace, alias_name=name)
-        results['sas_keys'] = [self.list_keys(resource_group_name=self.resource_group, 
-                                              namespace_name=self.namespace, 
-                                              alias_name=name, 
+        results['sas_keys'] = [self.list_keys(resource_group_name=self.resource_group,
+                                              namespace_name=self.namespace,
+                                              alias_name=name,
                                               rule_name=x.name) for x in rules]
         return results
 

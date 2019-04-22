@@ -29,7 +29,7 @@ options:
             - Name of the eventhub namespace.
         required: true
     name:
-        decription:
+        description:
             - Name of the eventhub alias.
         required: true
     state:
@@ -69,7 +69,8 @@ EXAMPLES = '''
         namespace: myeventhubnamespace
         resource_group: myResourceGroup
         name: myaliastesting
-        partner_namespace: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.EventHub/namespaces/myeventhubnamespace02"
+        partner_namespace: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/
+                            myResourceGroup/providers/Microsoft.EventHub/namespaces/myeventhubnamespace02"
 
     - name: Disable the disaster recovery
       azure_rm_eventhubgeorecovery:
@@ -173,7 +174,7 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
                                                          supports_check_mode=True,
                                                          supports_tags=False,
                                                          mutually_exclusive=mutually_exclusive)
-    
+
     def exec_module(self, **kwargs):
 
         for key in self.module_arg_spec.keys():
@@ -248,6 +249,7 @@ class AzureRMEventHubGeoRecovery(AzureRMModuleBase):
             return self.wait_provision_succeeded()
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Fail to invoke the disaster recovery {0} failover: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
+
     def get_alias(self):
         alias = None
         try:
