@@ -102,7 +102,8 @@ def check_cli(module, cli):
     cli += ' snmp-community-show format community-string no-show-headers'
     out = run_commands(module, cli)[1]
 
-    out = out.split()
+    if out:
+        out = out.split()
 
     return True if comm_str in out else False
 

@@ -111,7 +111,8 @@ def check_cli(module, cli):
     # Check for vRouter
     check_vrouter = cli + ' vrouter-show format name no-show-headers '
     out = run_commands(module, check_vrouter)[1]
-    out = out.split()
+    if out:
+        out = out.split()
 
     VROUTER_EXISTS = True if vrouter_name in out else False
 
@@ -119,6 +120,9 @@ def check_cli(module, cli):
         # Check for nic
         show = cli + ' vrouter-ospf6-show vrouter-name %s format nic no-show-headers' % vrouter_name
         out = run_commands(module, show)[1]
+
+        if out:
+            out.split()
 
         NIC_EXISTS = True if nic_str in out else False
 
