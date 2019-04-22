@@ -34,4 +34,4 @@ def test_AnsibleJSONEncoder_decimal():
         value = Decimal(test[0])
         test_data = {'number': value}
         data = json.dumps(test_data, cls=AnsibleJSONEncoder)
-        assert '{{"number": {}}}'.format(to_native(test[1])) == data
+        assert '{{"number": {0}}}'.format(to_native(test[1])) == data
