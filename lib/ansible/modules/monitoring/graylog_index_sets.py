@@ -367,20 +367,6 @@ def main():
     action = module.params['action']
     title = module.params['title']
     index_set_id = module.params['index_set_id']
-    description = module.params['description']
-    index_prefix = module.params['index_prefix']
-    index_analyzer = module.params['index_analyzer']
-    shards = module.params['shards']
-    replicas = module.params['replicas']
-    rotation_strategy_class = module.params['rotation_strategy_class']
-    retention_strategy_class = module.params['retention_strategy_class']
-    rotation_strategy = module.params['rotation_strategy']
-    retention_strategy = module.params['retention_strategy']
-    index_optimization_max_num_segments = module.params['index_optimization_max_num_segments']
-    index_optimization_disabled = module.params['index_optimization_disabled']
-    writable = module.params['writable']
-    default = module.params['default']
-    creation_date = datetime.datetime.utcnow().isoformat() + 'Z'
 
     base_url = "https://%s/api/system/indices/index_sets" % (endpoint)
 
