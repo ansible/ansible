@@ -138,12 +138,19 @@ from ansible.module_utils.ovirt import (
     get_link_name,
     ovirt_full_argument_spec,
     wait,
+    convert_to_bytes,
+    search_by_name,
 )
 
 
 class VmPoolsModule(BaseModule):
+    def __init__(self, *args, **kwargs):
+        super(VmPoolsModule, self).__init__(*args, **kwargs)
+        self._initialization = None
+
 
     def build_entity(self):
+        vm = self.param('vm')
         return otypes.VmPool(
             id=self._module.params['id'],
             name=self._module.params['name'],
@@ -161,7 +168,91 @@ class VmPoolsModule(BaseModule):
             type=otypes.VmPoolType(
                 self._module.params['type']
             ) if self._module.params['type'] else None,
+            vm=self.build_vm(vm)
         )
+
+
+    def build_vm(self, vm):
+        return otypes.Vm(
+            description=vm.get('description'),
+            comment=vm.get('comment'),
+            memory=convert_to_bytes(
+                vm.get('memory')
+            ) if vm.get('memory') else None,
+            memory_policy=otypes.MemoryPolicy(
+                guaranteed=convert_to_bytes(vm.get('memory_guaranteed')),
+                ballooning=vm.get('ballooning_enabled'),
+                max=convert_to_bytes(vm.get('memory_max')),
+            ) if any((
+                vm.get('memory_guaranteed'),
+                vm.get('ballooning_enabled') is not None,
+                vm.get('memory_max')
+            )) else None,
+            usb=(
+                otypes.Usb(enabled=vm.get('usb_support'))
+            ) if vm.get('usb_support') is not None else None,
+            initialization=self.get_initialization(vm) if vm.get('cloud_init_persist') else None,
+            display=otypes.Display(
+                smartcard_enabled=vm.get('smartcard_enabled')
+            ) if vm.get('smartcard_enabled') is not None else None,
+            soundcard_enabled=vm.get('soundcard_enabled'),
+            sso=(
+                otypes.Sso(
+                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if vm.get('sso') else []
+                )
+            ) if vm.get('sso') is not None else None,
+            time_zone=otypes.TimeZone(
+                name=vm.get('timezone'),
+            ) if vm.get('timezone') else None,
+        )
+
+
+    def get_initialization(self, vm):
+        if self._initialization is not None:
+            return self._initialization
+
+        sysprep = vm.get('sysprep')
+        cloud_init = vm.get('cloud_init')
+        cloud_init_nics = vm.get('cloud_init_nics') or []
+        if cloud_init is not None:
+            cloud_init_nics.append(cloud_init)
+
+        if cloud_init or cloud_init_nics:
+            self._initialization = otypes.Initialization(
+                nic_configurations=[
+                    otypes.NicConfiguration(
+                        boot_protocol=otypes.BootProtocol(
+                            nic.pop('nic_boot_protocol').lower()
+                        ) if nic.get('nic_boot_protocol') else None,
+                        name=nic.pop('nic_name', None),
+                        on_boot=nic.pop('nic_on_boot', None),
+                        ip=otypes.Ip(
+                            address=nic.pop('nic_ip_address', None),
+                            netmask=nic.pop('nic_netmask', None),
+                            gateway=nic.pop('nic_gateway', None),
+                        ) if (
+                            nic.get('nic_gateway') is not None or
+                            nic.get('nic_netmask') is not None or
+                            nic.get('nic_ip_address') is not None
+                        ) else None,
+                    )
+                    for nic in cloud_init_nics
+                    if (
+                        nic.get('nic_gateway') is not None or
+                        nic.get('nic_netmask') is not None or
+                        nic.get('nic_ip_address') is not None or
+                        nic.get('nic_boot_protocol') is not None or
+                        nic.get('nic_on_boot') is not None
+                    )
+                ] if cloud_init_nics else None,
+                **cloud_init
+            )
+        elif sysprep:
+            self._initialization = otypes.Initialization(
+                **sysprep
+            )
+        return self._initialization
+
 
     def update_check(self, entity):
         return (
@@ -186,6 +277,7 @@ def main():
         template=dict(default=None),
         cluster=dict(default=None),
         description=dict(default=None),
+        vm=dict(default=None, type='dict'),
         comment=dict(default=None),
         vm_per_user=dict(default=None, type='int'),
         prestarted=dict(default=None, type='int'),
