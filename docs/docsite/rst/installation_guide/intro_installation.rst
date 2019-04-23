@@ -429,6 +429,91 @@ Now let's test things with a ping command:
 
 You can also use "sudo make install".
 
+.. _shell_completion:
+
+Shell Completion
+````````````````
+
+As of Ansible 2.9 shell completion of the ansible command line utilities is available and provided through an optional dependency
+called ``argcomplete``. ``argcomplete`` supports bash, and limited support for zsh and tcsh
+
+``python-argcomplete`` can be installed from EPEL on Red Hat Enterprise based distributions, and is available in the standard OS repositories for many other distributions.
+
+For more information about installing and configuration see the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>_`.
+
+Installing
+++++++++++
+
+via yum/dnf
+-----------
+
+On Fedora:
+
+.. code-block:: bash
+
+    $ sudo dnf install python-argcomplete
+
+On RHEL and CentOS:
+
+.. code-block:: bash
+
+    $ sudo yum install epel-release
+    $ sudo yum install python-argcomplete
+
+via apt
+-------
+
+.. code-block:: bash
+
+    $ sudo apt install python-argcomplete
+
+via pip
+-------
+
+.. code-block:: bash
+
+    $ pip install argcomplete
+
+Configuring
++++++++++++
+
+There are 2 ways to configure argcomplete to allow shell completion of the Ansible command line utilities. Per command, or globally.
+
+Globally
+--------
+
+Global completion requires bash 4.2
+
+.. code-block:: bash
+
+    $ sudo activate-global-python-argcomplete
+
+This will write a bash completion file to a global location, use ``--dest`` to change the location
+
+Per Command
+-----------
+
+If you do not have bash 4.2, you must register each script independently
+
+.. code-block:: bash
+
+    $ eval $(register-python-argcomplete ansible)
+    $ eval $(register-python-argcomplete ansible-config)
+    $ eval $(register-python-argcomplete ansible-console)
+    $ eval $(register-python-argcomplete ansible-doc)
+    $ eval $(register-python-argcomplete ansible-galaxy)
+    $ eval $(register-python-argcomplete ansible-inventory)
+    $ eval $(register-python-argcomplete ansible-playbook)
+    $ eval $(register-python-argcomplete ansible-pull)
+    $ eval $(register-python-argcomplete ansible-vault)
+
+It would be advisable to place the above commands, into your shells profile file such as ``~/.profile`` or ``~/.bash_profile``.
+
+Zsh or tcsh
+-----------
+
+See the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>_`.
+
 .. _getting_ansible:
 
 Ansible on GitHub

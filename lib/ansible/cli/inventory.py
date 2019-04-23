@@ -5,13 +5,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import optparse
+import argparse
 from operator import attrgetter
 
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
-from ansible.cli.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes, to_native
@@ -64,39 +64,41 @@ class InventoryCLI(CLI):
         opt_help.add_basedir_options(self.parser)
 
         # remove unused default options
-        self.parser.remove_option('--limit')
-        self.parser.remove_option('--list-hosts')
+        self.parser.add_argument('--limit', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --limit'))
+        self.parser.add_argument('--list-hosts', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --list-hosts'))
+
+        self.parser.add_argument('args', metavar='host|group', nargs='?')
 
         # Actions
-        action_group = optparse.OptionGroup(self.parser, "Actions", "One of following must be used on invocation, ONLY ONE!")
-        action_group.add_option("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
-        action_group.add_option("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
-        action_group.add_option("--graph", action="store_true", default=False, dest='graph',
-                                help='create inventory graph, if supplying pattern it must be a valid group name')
-        self.parser.add_option_group(action_group)
+        action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
+        action_group.add_argument("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
+        action_group.add_argument("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
+        action_group.add_argument("--graph", action="store_true", default=False, dest='graph',
+                                  help='create inventory graph, if supplying pattern it must be a valid group name')
+        self.parser.add_argument_group(action_group)
 
         # graph
-        self.parser.add_option("-y", "--yaml", action="store_true", default=False, dest='yaml',
-                               help='Use YAML format instead of default JSON, ignored for --graph')
-        self.parser.add_option('--toml', action='store_true', default=False, dest='toml',
-                               help='Use TOML format instead of default JSON, ignored for --graph')
-        self.parser.add_option("--vars", action="store_true", default=False, dest='show_vars',
-                               help='Add vars to graph display, ignored unless used with --graph')
+        self.parser.add_argument("-y", "--yaml", action="store_true", default=False, dest='yaml',
+                                 help='Use YAML format instead of default JSON, ignored for --graph')
+        self.parser.add_argument('--toml', action='store_true', default=False, dest='toml',
+                                 help='Use TOML format instead of default JSON, ignored for --graph')
+        self.parser.add_argument("--vars", action="store_true", default=False, dest='show_vars',
+                                 help='Add vars to graph display, ignored unless used with --graph')
 
         # list
-        self.parser.add_option("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
-                               help="When doing an --list, represent in a way that is optimized for export,"
-                                    "not as an accurate representation of how Ansible has processed it")
-        self.parser.add_option('--output', default=None, dest='output_file',
-                               help="When doing an --list, send the inventory to a file instead of of to screen")
-        # self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
-        #                       help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
+        self.parser.add_argument("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
+                                 help="When doing an --list, represent in a way that is optimized for export,"
+                                      "not as an accurate representation of how Ansible has processed it")
+        self.parser.add_argument('--output', default=None, dest='output_file',
+                                 help="When doing --list, send the inventory to a file instead of to the screen")
+        # self.parser.add_argument("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
+        #                          help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
-    def post_process_args(self, options, args):
-        options, args = super(InventoryCLI, self).post_process_args(options, args)
+    def post_process_args(self, options):
+        options = super(InventoryCLI, self).post_process_args(options)
 
         display.verbosity = options.verbosity
-        self.validate_conflicts(options, vault_opts=True)
+        self.validate_conflicts(options)
 
         # there can be only one! and, at least, one!
         used = 0
@@ -109,12 +111,12 @@ class InventoryCLI(CLI):
             raise AnsibleOptionsError("Conflicting options used, only one of --host, --graph or --list can be used at the same time.")
 
         # set host pattern to default if not supplied
-        if len(args) > 0:
-            options.pattern = args[0]
+        if options.args:
+            options.pattern = options.args[0]
         else:
             options.pattern = 'all'
 
-        return options, args
+        return options
 
     def run(self):
 
