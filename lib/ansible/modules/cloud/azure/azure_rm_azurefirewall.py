@@ -222,7 +222,7 @@ options:
           id:
             description:
               - Resource ID.
-      public_ipaddress:
+      public_ip_address:
         description:
           - >-
             Reference of the PublicIP resource. This field is a mandatory input
@@ -321,11 +321,11 @@ EXAMPLES = '''
             /subscriptions/{{ subscription_id }}/resourceGroups/{{
             resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
             virtual_network_name }}/subnets/{{ subnet_name }}
-        public_ipaddress:
+        public_ip_address:
           id: >-
             /subscriptions/{{ subscription_id }}/resourceGroups/{{
             resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{
-            public_ipaddress_name }}
+            public_ip_address_name }}
         name: azureFirewallIpConfiguration
 - name: Delete Azure Firewall
   azure_rm_azurefirewall:
@@ -363,9 +363,15 @@ import time
 import json
 import re
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 from copy import deepcopy
-from msrestazure.azure_exceptions import CloudError
+try:
+    from msrestazure.azure_exceptions import CloudError
+    from azure.mgmt.network import NetworkManagementClient
+    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
+except ImportError:
+    # This is handled in azure_rm_common
+    pass
 
 
 class Actions:
@@ -377,64 +383,64 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(
                 type='str',
-                comparison='default',
-                updatable=True,
-                disposition='resourceGroupName',
+                comparison='',
+                updatable=False,
+                disposition='resource_group_name',
                 required=True
             ),
             name=dict(
                 type='str',
-                comparison='default',
-                updatable=True,
-                disposition='azureFirewallName',
+                comparison='',
+                updatable=False,
+                disposition='azure_firewall_name',
                 required=True
             ),
             id=dict(
                 type='str',
-                comparison='default',
-                updatable=True,
+                comparison='',
+                updatable=False,
                 disposition='/'
             ),
             location=dict(
                 type='str',
-                comparison='default',
-                updatable=True,
+                comparison='',
+                updatable=False,
                 disposition='/'
             ),
             tags=dict(
                 type='unknown[DictionaryType {"$id":"440","$type":"DictionaryType","valueType":{"$id":"441","$type":"PrimaryType","knownPrimaryType":"string","name":{"$id":"442","fixed":false,"raw":"String"},"deprecated":false},"supportsAdditionalProperties":false,"name":{"$id":"443","fixed":false},"deprecated":false}]',
-                comparison='default',
-                updatable=True,
+                comparison='',
+                updatable=False,
                 disposition='/'
             ),
             application_rule_collections=dict(
                 type='list',
-                comparison='default',
-                updatable=True,
-                disposition='/properties/applicationRuleCollections',
+                comparison='',
+                updatable=False,
+                disposition='/properties/*',
                 options=dict(
                     id=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='*'
                     ),
                     priority=dict(
                         type='number',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*'
                     ),
                     action=dict(
                         type='dict',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*',
                         options=dict(
                             type=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*',
                                 choices=['Allow',
                                          'Deny']
@@ -443,53 +449,53 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     rules=dict(
                         type='list',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*',
                         options=dict(
                             name=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*'
                             ),
                             description=dict(
                                 type='str',
-                                comparison='xxx',
+                                comparison='',
                                 updatable=False,
                                 disposition='*'
                             ),
                             source_addresses=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='sourceAddresses'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             ),
                             protocols=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*'
                             ),
                             target_fqdns=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='targetFqdns'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             ),
                             fqdn_tags=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='fqdnTags'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             )
                         )
                     ),
                     provisioning_state=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
-                        disposition='properties/provisioningState',
+                        comparison='',
+                        updatable=False,
+                        disposition='properties/*',
                         choices=['Succeeded',
                                  'Updating',
                                  'Deleting',
@@ -497,40 +503,40 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     name=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='*'
                     )
                 )
             ),
             nat_rule_collections=dict(
                 type='list',
-                comparison='default',
-                updatable=True,
-                disposition='/properties/natRuleCollections',
+                comparison='',
+                updatable=False,
+                disposition='/properties/*',
                 options=dict(
                     id=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='*'
                     ),
                     priority=dict(
                         type='number',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*'
                     ),
                     action=dict(
                         type='dict',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*',
                         options=dict(
                             type=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*',
                                 choices=['Snat',
                                          'Dnat']
@@ -539,65 +545,65 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     rules=dict(
                         type='list',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*',
                         options=dict(
                             name=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*'
                             ),
                             description=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*'
                             ),
                             source_addresses=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='sourceAddresses'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             ),
                             destination_addresses=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='destinationAddresses'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             ),
                             destination_ports=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='destinationPorts'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             ),
                             protocols=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*'
                             ),
                             translated_address=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
-                                disposition='translatedAddress'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             ),
                             translated_port=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
-                                disposition='translatedPort'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             )
                         )
                     ),
                     provisioning_state=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
-                        disposition='properties/provisioningState',
+                        comparison='',
+                        updatable=False,
+                        disposition='properties/*',
                         choices=['Succeeded',
                                  'Updating',
                                  'Deleting',
@@ -605,40 +611,40 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     name=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='*'
                     )
                 )
             ),
             network_rule_collections=dict(
                 type='list',
-                comparison='default',
-                updatable=True,
-                disposition='/properties/networkRuleCollections',
+                comparison='',
+                updatable=False,
+                disposition='/properties/*',
                 options=dict(
                     id=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='*'
                     ),
                     priority=dict(
                         type='number',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*'
                     ),
                     action=dict(
                         type='dict',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*',
                         options=dict(
                             type=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*',
                                 choices=['Allow',
                                          'Deny']
@@ -647,53 +653,53 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     rules=dict(
                         type='list',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*',
                         options=dict(
                             name=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*'
                             ),
                             description=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*'
                             ),
                             protocols=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*'
                             ),
                             source_addresses=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='sourceAddresses'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             ),
                             destination_addresses=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='destinationAddresses'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             ),
                             destination_ports=dict(
                                 type='list',
-                                comparison='default',
-                                updatable=True,
-                                disposition='destinationPorts'
+                                comparison='',
+                                updatable=False,
+                                disposition='*'
                             )
                         )
                     ),
                     provisioning_state=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
-                        disposition='properties/provisioningState',
+                        comparison='',
+                        updatable=False,
+                        disposition='properties/*',
                         choices=['Succeeded',
                                  'Updating',
                                  'Deleting',
@@ -701,34 +707,34 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     name=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='*'
                     )
                 )
             ),
             ip_configurations=dict(
                 type='list',
-                comparison='default',
-                updatable=True,
-                disposition='/properties/ipConfigurations',
+                comparison='',
+                updatable=False,
+                disposition='/properties/*',
                 options=dict(
                     id=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='*'
                     ),
                     subnet=dict(
                         type='dict',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='properties/*',
                         options=dict(
                             id=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*',
                                 pattern='/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name }}/subnets/{{ name }}'
                             )
@@ -736,14 +742,14 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     public_ip_address=dict(
                         type='dict',
-                        comparison='default',
-                        updatable=True,
-                        disposition='properties/publicIPAddress',
+                        comparison='',
+                        updatable=False,
+                        disposition='properties/*',
                         options=dict(
                             id=dict(
                                 type='str',
-                                comparison='default',
-                                updatable=True,
+                                comparison='',
+                                updatable=False,
                                 disposition='*',
                                 pattern='/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{ name }}'
                             )
@@ -751,9 +757,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     provisioning_state=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
-                        disposition='properties/provisioningState',
+                        comparison='',
+                        updatable=False,
+                        disposition='properties/*',
                         choices=['Succeeded',
                                  'Updating',
                                  'Deleting',
@@ -761,17 +767,17 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                     ),
                     name=dict(
                         type='str',
-                        comparison='default',
-                        updatable=True,
+                        comparison='',
+                        updatable=False,
                         disposition='*'
                     )
                 )
             ),
             provisioning_state=dict(
                 type='str',
-                comparison='default',
-                updatable=True,
-                disposition='/properties/provisioningState',
+                comparison='',
+                updatable=False,
+                disposition='/properties/*',
                 choices=['Succeeded',
                          'Updating',
                          'Deleting',
@@ -786,19 +792,12 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
 
         self.resource_group = None
         self.name = None
+        self.body = {}
 
         self.results = dict(changed=False)
         self.mgmt_client = None
         self.state = None
-        self.url = None
-        self.status_code = [200, 201, 202]
         self.to_do = Actions.NoAction
-
-        self.body = {}
-        self.query_parameters = {}
-        self.query_parameters['api-version'] = '2018-11-01'
-        self.header_parameters = {}
-        self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         super(AzureRMAzureFirewalls, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                     supports_check_mode=True,
@@ -816,7 +815,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         old_response = None
         response = None
 
-        self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
+        self.mgmt_client = self.get_mgmt_svc_client(NetworkManagementClientClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
@@ -824,101 +823,49 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         if 'location' not in self.body:
             self.body['location'] = resource_group.location
 
-        self.url = ('/subscriptions' +
-                    '/{{ subscription_id }}' +
-                    '/resourceGroups' +
-                    '/{{ resource_group }}' +
-                    '/providers' +
-                    '/Microsoft.Network' +
-                    '/azureFirewalls' +
-                    '/{{ azure_firewall_name }}')
-        self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
-        self.url = self.url.replace('{{ resource_group }}', self.resource_group)
-        self.url = self.url.replace('{{ azure_firewall_name }}', self.name)
 
         old_response = self.get_resource()
 
         if not old_response:
-            self.log("AzureFirewall instance doesn't exist")
-
-            if self.state == 'absent':
-                self.log("Old instance didn't exist")
-            else:
+            if self.state == 'present':
                 self.to_do = Actions.Create
         else:
-            self.log('AzureFirewall instance already exists')
-
             if self.state == 'absent':
                 self.to_do = Actions.Delete
-            elif self.state == 'present':
-                self.log('Need to check if AzureFirewall instance has to be deleted or may be updated')
-                modifiers = {}
-                self.create_compare_modifiers(self.module_arg_spec, '', modifiers)
-                if not self.default_compare(modifiers, self.body, old_response, '', self.results):
-                    self.to_do = Actions.Update
+            elif self.idempotency_check(self.module_arg_spec, self.body, old_response, 0):
+                self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
-            self.log('Need to Create / Update the AzureFirewall instance')
-
+            self.results['changed'] = True
             if self.check_mode:
-                self.results['changed'] = True
                 return self.results
-
             response = self.create_update_resource()
-
-            # if not old_response:
-            self.results['changed'] = True
             self.results['response'] = response
-            # else:
-            #     self.results['changed'] = old_response.__ne__(response)
-            self.log('Creation / Update done')
         elif self.to_do == Actions.Delete:
-            self.log('AzureFirewall instance deleted')
             self.results['changed'] = True
-
             if self.check_mode:
                 return self.results
-
             self.delete_resource()
-
-            # make sure instance is actually deleted, for some Azure resources, instance is hanging around
-            # for some time after deletion -- this should be really fixed in Azure
-            while self.get_resource():
-                time.sleep(20)
         else:
-            self.log('AzureFirewall instance unchanged')
             self.results['changed'] = False
             response = old_response
 
-        #if response:
-        #    self.results["name"] = response["name"]
-        #    self.results["type"] = response["type"]
-        #    self.results["etag"] = response["etag"]
+        if response:
+self.results["name"] = response["name"]
+self.results["type"] = response["type"]
+self.results["etag"] = response["etag"]
 
         return self.results
 
     def create_update_resource(self):
-        # self.log('Creating / Updating the AzureFirewall instance {0}'.format(self.))
-
         try:
             if self.to_do == Actions.Create:
-                response = self.mgmt_client.query(self.url,
-                                                  'PUT',
-                                                  self.query_parameters,
-                                                  self.header_parameters,
-                                                  self.body,
-                                                  self.status_code,
-                                                  600,
-                                                  30)
+                response = self.mgmt_client.azure_firewalls.create()
             else:
-                response = self.mgmt_client.query(self.url,
-                                                  'PUT',
-                                                  self.query_parameters,
-                                                  self.header_parameters,
-                                                  self.body,
-                                                  self.status_code,
-                                                  600,
-                                                  30)
+                response = self.mgmt_client.azure_firewalls.update()
+            if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
+               response = self.get_poller_result(response)
+
         except CloudError as exc:
             self.log('Error attempting to create the AzureFirewall instance.')
             self.fail('Error creating the AzureFirewall instance: {0}'.format(str(exc)))
@@ -934,14 +881,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
     def delete_resource(self):
         # self.log('Deleting the AzureFirewall instance {0}'.format(self.))
         try:
-            response = self.mgmt_client.query(self.url,
-                                              'DELETE',
-                                              self.query_parameters,
-                                              self.header_parameters,
-                                              None,
-                                              self.status_code,
-                                              600,
-                                              30)
+            response = self.mgmt_client.azure_firewalls.delete(resource_group_name=self.resource_group,
+                                                               azure_firewall_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the AzureFirewall instance.')
             self.fail('Error deleting the AzureFirewall instance: {0}'.format(str(e)))
@@ -949,55 +890,49 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         return True
 
     def get_resource(self):
+        # self.log('Checking if the AzureFirewall instance {0} is present'.format(self.))
+        found = False
         try:
-            response = self.mgmt_client.query(self.url,
-                                              'GET',
-                                              self.query_parameters,
-                                              self.header_parameters,
-                                              None,
-                                              self.status_code,
-                                              600,
-                                              30)
-            found = True
-            response = json.loads(response.text)
+            response = self.mgmt_client.azure_firewalls.get(resource_group_name=self.resource_group,
+                                                            azure_firewall_name=self.name)
         except CloudError as e:
-            return None
-        return response
+           return False
+        return response.as_dict()
 
     def inflate_parameters(self, spec, body, level):
-      if isinstance(body, list):
-        for item in body:
-          self.inflate_parameters(spec, item, level)
-        return
-      for name in spec.keys():
-        # first check if option was passed
-        param = body.get(name)
-        if not param:
-          continue
-        # check if pattern needs to be used
-        pattern = spec[name].get('pattern', None)
-        if pattern:
-          param = self.normalize_resource_id(param, pattern)
-          body[name] = param
-        disposition = spec[name].get('disposition', '*')
-        # do nothing if disposition is *
-        if disposition == '*':
-          continue
-        if level == 0 and not disposition.startswith('/'):
-          continue
-        if disposition == '/':
-          disposition = '/*'
-        parts = disposition.split('/')
-        if parts[0] == '':
-          # should fail if level is > 0?
-          parts.pop(0)
-        target_dict = body
-        while len(parts) > 1:
-          target_dict = target_dict.setdefault(parts.pop(0), {})
-        targetName = parts[0] if parts[0] != '*' else name
-        target_dict[targetName] = body.pop(name)
-        if spec[name].get('options'):
-          self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
+        if isinstance(body, list):
+            for item in body:
+                self.inflate_parameters(spec, item, level)
+            return
+        for name in spec.keys():
+            # first check if option was passed
+            param = body.get(name)
+            if not param:
+                continue
+            # check if pattern needs to be used
+            pattern = spec[name].get('pattern', None)
+            if pattern:
+                param = self.normalize_resource_id(param, pattern)
+                body[name] = param
+            disposition = spec[name].get('disposition', '*')
+            # do nothing if disposition is *
+            if disposition == '*':
+                continue
+            if level == 0 and not disposition.startswith('/'):
+                continue
+            if disposition == '/':
+                disposition = '/*'
+            parts = disposition.split('/')
+            if parts[0] == '':
+                # should fail if level is > 0?
+                parts.pop(0)
+            target_dict = body
+            while len(parts) > 1:
+                target_dict = target_dict.setdefault(parts.pop(0), {})
+            targetName = parts[0] if parts[0] != '*' else name
+            target_dict[targetName] = body.pop(name)
+            if spec[name].get('options'):
+                self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
 
     def normalize_resource_id(self, value, pattern):
         '''
@@ -1045,70 +980,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
 
         return '/'.join(pattern_parts)
 
-    def create_compare_modifiers(self, arg_spec, path, result):
-        for k in arg_spec.keys():
-            o = arg_spec[k]
-            updatable = o.get('updatable', True)
-            comparison = o.get('comparison', 'default')
-            p = (path +
-                 ('/' if len(path) > 0 else '') +
-                 o.get('disposition', '*').replace('*', k) +
-                 ('/*' if o['type'] == 'list' else ''))
-            if comparison != 'default' or not updatable:
-                result[p] = { 'updatable': updatable, 'comparison': comparison }
-            if o.get('options'):
-                self.create_compare_modifiers(o.get('options'), p, result)
-
-    def default_compare(self, modifiers, new, old, path, result):
-        if new is None:
-            return True
-        elif isinstance(new, dict):
-            if not isinstance(old, dict):
-                result['compare'] = 'changed [' + path + '] old dict is null'
-                return False
-            for k in new.keys():
-                if not self.default_compare(modifiers, new.get(k), old.get(k, None), path + '/' + k, result):
-                    return False
-            return True
-        elif isinstance(new, list):
-            if not isinstance(old, list) or len(new) != len(old):
-                result['compare'] = 'changed [' + path + '] length is different or null'
-                return False
-            if isinstance(old[0], dict):
-                key = None
-                if 'id' in old[0] and 'id' in new[0]:
-                    key = 'id'
-                elif 'name' in old[0] and 'name' in new[0]:
-                    key = 'name'
-                else:
-                    key = old[0].keys()[0]
-                new = sorted(new, key=lambda x: x.get(key, None))
-                old = sorted(old, key=lambda x: x.get(key, None))
-            else:
-                new = sorted(new)
-                old = sorted(old)
-            for i in range(len(new)):
-                if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
-                    return False
-            return True
-        else:
-            updatable = modifiers.get(path, {}).get('updatable', True)
-            comparison = modifiers.get(path, {}).get('comparison', 'default')
-            if path == '/location' or path.endswith('locationName'):
-                new = new.replace(' ', '').lower()
-                old = old.replace(' ', '').lower()
-            elif path.endswith('adminPassword') or path.endswith('administratorLoginPassword') or path.endswith('createMode'):
-                return True
-            if str(new) == str(old):
-                result['compare'] = result.get('compare', '') + "(" + str(new) + ":" + str(old) + ")"
-                return True
-            else:
-                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
-                if updatable:
-                    return False
-                else:
-                    # XXX change new value to old
-                    self.module.warn("property '" + path + "' cannot be updated (" + str(old) + "->" + str(new) + ")")
+    def idempotency_check(self, spec, new, old, level):
+        return False
 
 
 def main():
