@@ -190,7 +190,7 @@ changed:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, exec_command
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -258,17 +258,19 @@ class NetstreamExport(object):
         if not self.module.check_mode:
             load_config(self.module, commands)
 
-    def get_netstream_config(self):
+    def get_netstream_config(self, exp):
         """get current netstream configuration"""
 
-        flags = list()
-        exp = " | inc ^netstream export"
-        flags.append(exp)
-        return get_config(self.module, flags)
+        rc, out, err = exec_command(self.module, exp)
+        if rc != 0:
+            self.module.fail_json(msg='Error: run command:% failed.' % exp)
+        return out
 
     def get_existing(self):
         """get existing config"""
 
+        cmd = " | inc netstream export"
+        self.get_config_data(cmd)
         self.existing = dict(type=self.type,
                              source_ip=self.exist_conf['source_ip'],
                              host_ip=self.exist_conf['host_ip'],
@@ -293,7 +295,9 @@ class NetstreamExport(object):
 
     def get_end_state(self):
         """get end config"""
-        self.get_config_data()
+
+        cmd = " | inc netstream expor"
+        self.get_config_data(cmd)
         self.end_state = dict(type=self.type,
                               source_ip=self.exist_conf['source_ip'],
                               host_ip=self.exist_conf['host_ip'],
@@ -492,7 +496,7 @@ class NetstreamExport(object):
         if (self.host_ip and not self.host_port) or (self.host_port and not self.host_ip):
             self.module.fail_json(msg="Error: host_ip and host_port must both exist or not exist.")
 
-    def get_config_data(self):
+    def get_config_data(self, cmd):
         """get configuration commands and current configuration"""
 
         self.exist_conf['type'] = self.type
@@ -504,7 +508,7 @@ class NetstreamExport(object):
         self.exist_conf['as_option'] = None
         self.exist_conf['bgp_netxhop'] = 'disable'
 
-        self.config = self.get_netstream_config()
+        self.config = self.get_netstream_config(cmd)
 
         if self.type and self.source_ip:
             self.config_nets_export_src_addr()
@@ -523,7 +527,6 @@ class NetstreamExport(object):
 
         self.check_params()
         self.get_proposed()
-        self.get_config_data()
         self.get_existing()
 
         self.config_netstream_export()
