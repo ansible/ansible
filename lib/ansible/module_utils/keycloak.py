@@ -26,7 +26,6 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import absolute_import, division, print_function
-from ansible.modules.identity.keycloak.keycloak_realm import realm
 
 __metaclass__ = type
 
@@ -758,6 +757,13 @@ class KeycloakAPI(object):
         return changed
 
     def add_attributes_list_to_attributes_dict(self, AttributesList, AttributesDict):
+        """
+        Add items form an attribute list which is not a Keycloak standard to as an attribute dict.
+        
+        :param AttributesList: List of attribute to add
+        :param AttributesDict: Dict of attributes in which to add the list
+        :return: nothing
+        """
         if AttributesList is not None:
             if AttributesDict is None:
                 AttributesDict = {}
@@ -766,6 +772,17 @@ class KeycloakAPI(object):
                     AttributesDict[attr["name"]] = attr["value"]
                     
     def assing_roles_to_group(self, groupRepresentation, groupRealmRoles, groupClientRoles, realm='master'):
+        """
+        Assing roles to group. Roles can be composites of other roles. 
+        Composites can be composed by realm and client roles.
+        Every member of the group will inherit those roles.
+        
+        :param groupRepresentation: Representation of the group to assign roles
+        :param groupRealmRoles: Realm roles to assign to group
+        :param groupClientRoles: Clients roles to assign to group.
+        :param realm: Realm
+        :return: True if roles have been assigned or revoked to the group. False otherwise.
+        """
         roleSvcBaseUrl = URL_REALM_ROLES.format(url=self.baseurl, realm=realm)
         clientSvcBaseUrl = URL_CLIENTS.format(url=self.baseurl, realm=realm)
         # Get the id of the group
@@ -831,7 +848,15 @@ class KeycloakAPI(object):
                 
         return changed
     
-    def sync_ldap_groups(self, syncLdapMappers, realm='master'):
+    def sync_ldap_groups(self, direction, realm='master'):
+        """
+        Synchronize groups between Keycloak and LDAP. Every group mappers of users storage providers will be synchronized. 
+        The direction parameter will specify how the synchronization will be done.
+        
+        :param direction: fedToKeycloak or keycloakToFed
+        :param realm: Realm
+        :return: Nothing
+        """
         LDAPUserStorageProviderType = "org.keycloak.storage.UserStorageProvider"
         componentSvcBaseUrl = URL_COMPONENTS.format(url=self.baseurl, realm=realm)
         userStorageBaseUrl = URL_USER_STORAGE.format(url=self.baseurl, realm=realm)
@@ -844,10 +869,17 @@ class KeycloakAPI(object):
             for subComponent in subComponents:
                 if subComponent["providerId"] == 'group-ldap-mapper':
                     # Sync groups
-                    open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync", method='POST', headers=self.restheaders, params={"direction": syncLdapMappers}) 
+                    open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync", method='POST', headers=self.restheaders, params={"direction": direction}) 
 
 
     def get_authentication_flow_by_alias(self, alias, realm='master'):
+        """
+        Get an authentication flow by it's alias
+        
+        :param alias: Alias of the authentication flow to get.
+        :param realm: Realm.
+        :return: Authentication flow representation.
+        """
         authenticationFlow = {}
         # Check if the authentication flow exists on the Keycloak serveraders
         authentications = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
@@ -874,7 +906,14 @@ class KeycloakAPI(object):
                                       % (id, realm, str(e)))
         
 
-    def copy_auth_flow(self, config, realm='master'):    
+    def copy_auth_flow(self, config, realm='master'):
+        """
+        Create a new authentication flow from a copy of another.
+        
+        :param config: Representation of the authentication flow to create.
+        :param realm: Realm.
+        :return: Representation of the new authentication flow.
+        """    
         newName = dict(
             newName = config["alias"]
         )
@@ -888,7 +927,13 @@ class KeycloakAPI(object):
         return None
     
     def create_empty_auth_flow(self, config, realm='master'):
+        """
+        Create a new empty authentication flow.
         
+        :param config: Representation of the authentication flow to create.
+        :param realm: Realm.
+        :return: Representation of the new authentication flow.
+        """    
         newFlow = dict(
             alias = config["alias"],
             providerId = config["providerId"],
@@ -903,6 +948,13 @@ class KeycloakAPI(object):
         return None
     
     def create_or_update_executions(self, config, realm='master'):
+        """
+        Create or update executions for an authentication flow.
+        
+        :param config: Representation of the authentication flow including it's executions.
+        :param realm: Realm
+        :return: True if executions have been modified. False otherwise.
+        """ 
         changed = False
     
         if "authenticationExecutions" in config:
@@ -957,6 +1009,13 @@ class KeycloakAPI(object):
         return changed
     
     def get_executions_representation(self, config, realm='master'):
+        """
+        Get a representation of the executions for an authentication flow.
+        
+        :param config: Representation of the authentication flow
+        :param realm: Realm
+        :return: Representation of the executions
+        """
         # Get executions created
         executions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
         for execution in executions:
