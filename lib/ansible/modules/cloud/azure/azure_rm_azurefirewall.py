@@ -859,7 +859,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
 
     def create_update_resource(self):
         try:
-            response = self.mgmt_client.azure_firewalls.create_or_update()
+            response = self.mgmt_client.azure_firewalls.create_or_update(resource_group_name=self.resource_group,
+                                                                         azure_firewall_name=self.name,
+                                                                         parameters=self.body)
             if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
                response = self.get_poller_result(response)
         except CloudError as exc:
