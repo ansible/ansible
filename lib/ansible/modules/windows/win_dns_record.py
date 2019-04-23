@@ -71,17 +71,17 @@ options:
 EXAMPLES = r'''
 - name: Create database server alias
   win_dns_record:
-    name: db1
-    type: CNAME
-    value: cgyl1404p.amer.example.com
-    zone: amer.example.com
+    name: "db1"
+    type: "CNAME"
+    value: "cgyl1404p.amer.example.com"
+    zone: "amer.example.com"
 
 - name: Remove static record
   win_dns_record:
-    name: db1
-    type: A
+    name: "db1"
+    type: "A"
     state: absent
-    zone: amer.example.com
+    zone: "amer.example.com"
 '''
 
 RETURN = r'''
