@@ -867,7 +867,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         except CloudError as exc:
             self.log('Error attempting to create the AzureFirewall instance.')
             self.fail('Error creating the AzureFirewall instance: {0}'.format(str(exc)))
-        return response
+        return response.as_dict()
 
     def delete_resource(self):
         # self.log('Deleting the AzureFirewall instance {0}'.format(self.))
