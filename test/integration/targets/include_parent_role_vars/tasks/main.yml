@@ -1,0 +1,21 @@
+# Copyright 2019 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+- name: ensure our parent role tree to contain only our direct parent item
+  assert:
+    that:
+      - "ansible_parent_role_names == ['special_vars']"
+
+- name: ensure that ansible_parent_role_paths has the same length as ansible_parent_role_names
+  assert:
+    that:
+      - "ansible_parent_role_names|length == ansible_parent_role_paths|length"
+
+# task importing should not affect ansible_parent_role_names
+- name: test task-importing after we've been included by another role
+  import_tasks: "included_by_other_role.yml"
+
+# task inclusion should not affect ansible_parent_role_names
+- name: test task-inclusion after we've been included by another role
+  include_tasks: "included_by_other_role.yml"
