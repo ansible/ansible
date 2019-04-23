@@ -909,9 +909,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                 param = self.normalize_resource_id(param, pattern)
                 body[name] = param
             disposition = spec[name].get('disposition', '*')
-            # do nothing if disposition is *
-            if disposition == '*':
-                continue
             if level == 0 and not disposition.startswith('/'):
                 continue
             if disposition == '/':
