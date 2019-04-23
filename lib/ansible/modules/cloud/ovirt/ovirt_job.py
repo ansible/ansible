@@ -170,7 +170,7 @@ def attach_steps(module, job_id, jobs_service):
 def get_entity(service, description):
     all_entities = service.list()
     for entity in all_entities:
-        if entity.description == description:
+        if entity.description == description and entity.status not in [otypes.StepStatus.FINISHED, otypes.JobStatus.FINISHED]:
             return entity
 
 
