@@ -859,23 +859,12 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
 
     def create_update_resource(self):
         try:
-            if self.to_do == Actions.Create:
-                response = self.mgmt_client.azure_firewalls.create()
-            else:
-                response = self.mgmt_client.azure_firewalls.update()
+            response = self.mgmt_client.azure_firewalls.create_or_update()
             if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
                response = self.get_poller_result(response)
-
         except CloudError as exc:
             self.log('Error attempting to create the AzureFirewall instance.')
             self.fail('Error creating the AzureFirewall instance: {0}'.format(str(exc)))
-
-        try:
-            response = json.loads(response.text)
-        except Exception:
-            response = {'text': response.text}
-            pass
-
         return response
 
     def delete_resource(self):
