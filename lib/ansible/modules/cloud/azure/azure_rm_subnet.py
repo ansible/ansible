@@ -84,7 +84,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
@@ -219,7 +218,8 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.service_endpoints = None
 
         super(AzureRMSubnet, self).__init__(self.module_arg_spec,
-                                            supports_check_mode=True)
+                                            supports_check_mode=True,
+                                            supports_tags=False)
 
     def exec_module(self, **kwargs):
 
