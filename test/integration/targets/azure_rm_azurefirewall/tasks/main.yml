@@ -54,7 +54,7 @@
               - 216.58.216.164
               - 10.0.0.0/25
             protocols:
-              - protocolType: Https
+              - protocol_type: Https
                 port: '443'
             target_fqdns:
               - www.test.com
@@ -180,7 +180,7 @@
         name: azureFirewallIpConfiguration
   register: output
 
-- name: Assert that output has changed
+- name: Assert that output has not changed
   assert:
     that:
       - not output.changed
