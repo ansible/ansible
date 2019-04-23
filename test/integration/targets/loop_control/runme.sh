@@ -9,3 +9,4 @@ MATCH='foo_label
 bar_label'
 [ "$(ansible-playbook label.yml "$@" |grep 'item='|sed -e 's/^.*(item=looped_var \(.*\)).*$/\1/')" == "${MATCH}" ]
 
+ansible-playbook break_when.yml -v "$@"

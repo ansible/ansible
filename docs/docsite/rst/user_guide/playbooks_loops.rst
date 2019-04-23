@@ -412,6 +412,18 @@ For role authors, writing roles that allow loops, instead of dictating the requi
 
     "{{ lookup('vars', ansible_loop_var) }}"
 
+Breaking from a loop prematurely
+--------------------------------
+.. versionadded:: 2.8
+
+You can cause a loop to exit prematurely using the ``break_when`` attribute to ``loop_control``.  This is a conditional expression in the style of the ``changed_when`` or ``failed_when`` task attributes::
+
+    - debug:
+        msg: "This is item {{ item }}"
+      loop: "{{ range(100)|list }}"
+      loop_control:
+        break_when: item == 10
+
 .. _migrating_to_loop:
 
 Migrating from with_X to loop

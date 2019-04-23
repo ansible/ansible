@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - "loop_control: add the break_when keyword to allow tasks to break out
+    of a loop prematurely."

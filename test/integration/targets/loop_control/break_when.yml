@@ -1,0 +1,40 @@
+---
+- name: loop_control/break_when
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: a loop that runs until completion
+      set_fact:
+        last_item: "{{ item }}"
+      loop: "{{ range(10)|list }}"
+
+    - name: assert that loop exited as expected
+      assert:
+        that:
+          - last_item == 9
+
+    - name: a loop that breaks prematurely using the loop var
+      set_fact:
+        last_item: "{{ item }}"
+      loop: "{{ range(10)|list }}"
+      loop_control:
+        break_when: item == 5
+
+    - name: assert that loop exited as expected
+      assert:
+        that:
+          - last_item == 5
+
+    - name: a loop that breaks prematurely using a registered var
+      debug:
+        msg:
+          item: "{{ item }}"
+      register: result
+      loop: "{{ range(10)|list }}"
+      loop_control:
+        break_when: result.msg.item == 5
+
+    - name: assert that loop exited as expected
+      assert:
+        that:
+          - result.results[-1].item == 5

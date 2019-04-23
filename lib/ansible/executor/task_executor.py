@@ -291,6 +291,7 @@ class TaskExecutor:
         label = None
         loop_pause = 0
         extended = False
+        break_when = None
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
 
         # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
@@ -300,8 +301,9 @@ class TaskExecutor:
             loop_pause = templar.template(self._task.loop_control.pause)
             extended = templar.template(self._task.loop_control.extended)
 
-            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
+            # These may be 'None',so they are templated below after we ensure a value and an item is assigned
             label = self._task.loop_control.label
+            break_when = self._task.loop_control.break_when
 
         # ensure we always have a label
         if label is None:
@@ -407,7 +409,15 @@ class TaskExecutor:
                 block=False,
             )
             results.append(res)
-            del task_vars[loop_var]
+
+            try:
+                if break_when is not None and break_when:
+                    cond = Conditional(loader=self._loader)
+                    cond.when = break_when
+                    if cond.evaluate_conditional(templar, task_vars):
+                        break
+            finally:
+                del task_vars[loop_var]
 
         self._task.no_log = no_log
 

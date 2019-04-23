@@ -30,9 +30,14 @@ class LoopControl(FieldAttributeBase):
     _label = FieldAttribute(isa='str')
     _pause = FieldAttribute(isa='float', default=0)
     _extended = FieldAttribute(isa='bool')
+    _break_when = FieldAttribute(isa='list', default=list)
 
     def __init__(self):
         super(LoopControl, self).__init__()
+
+    def _validate_break_when(self, attr, name, value):
+        if not isinstance(value, list):
+            setattr(self, name, [value])
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):

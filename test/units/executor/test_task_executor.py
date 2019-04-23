@@ -145,6 +145,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_task = MagicMock()
         mock_task.copy.side_effect = _copy
+        mock_task.loop_control = {}
 
         mock_play_context = MagicMock()
 
