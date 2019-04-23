@@ -140,6 +140,8 @@ except ImportError:
 else:
     pymongo_found = True
 
+MONGO_ERRCODE_UNAUTHORIZED = 13
+
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import configparser
@@ -268,15 +270,13 @@ def main():
 
         try:
             check_compatibility(module, client)
-        except Exception as excep:
-            if "not authorized on" in str(excep) or "there are no users authenticated" in str(excep):
-                if login_user is not None and login_password is not None:
-                    client.admin.authenticate(login_user, login_password, source=login_database)
-                    check_compatibility(module, client)
-                else:
-                    raise excep
-            else:
+        except OperationFailure as excep:
+            if excep.code != MONGO_ERRCODE_UNAUTHORIZED:
                 raise excep
+            if login_user is None or login_password is None:
+                raise excep
+            client.admin.authenticate(login_user, login_password, source=login_database)
+            check_compatibility(module, client)
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
@@ -288,14 +288,12 @@ def main():
 
         try:
             client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
-        except Exception as excep:
-            if "not authorized on" in str(excep) or "command listDatabases requires authentication" in str(excep):
-                if login_user is not None and login_password is not None:
-                    client.admin.authenticate(login_user, login_password, source=login_database)
-                else:
-                    raise excep
-            else:
+        except OperationFailure as excep:
+            if excep.code != MONGO_ERRCODE_UNAUTHORIZED:
                 raise excep
+            if login_user is None or login_password is None:
+                raise excep
+            client.admin.authenticate(login_user, login_password, source=login_database)
 
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
