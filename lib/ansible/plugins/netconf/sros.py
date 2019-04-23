@@ -22,24 +22,18 @@ __metaclass__ = type
 import json
 import re
 
-from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.module_utils._text import to_text, to_native
+from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected
+from ansible.plugins.netconf import ensure_ncclient
 
 try:
     from ncclient import manager
-    from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
-    from ncclient.xml_ import to_ele, to_xml, new_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
-
-try:
-    from lxml import etree
-except ImportError:
-    raise AnsibleError("lxml is not installed")
+    from ncclient.xml_ import to_ele
+    HAS_NCCLIENT = True
+except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
 
 
 class Netconf(NetconfBase):
@@ -49,6 +43,7 @@ class Netconf(NetconfBase):
         except AttributeError:
             pass
 
+    @ensure_ncclient
     def get_device_info(self):
         device_info = dict()
         device_info['network_os'] = 'sros'
@@ -75,6 +70,7 @@ class Netconf(NetconfBase):
         return json.dumps(result)
 
     @staticmethod
+    @ensure_ncclient
     def guess_network_os(obj):
         try:
             m = manager.connect(

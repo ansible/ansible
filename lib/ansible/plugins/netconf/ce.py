@@ -22,29 +22,31 @@ __metaclass__ = type
 import json
 import re
 
-from ansible import constants as C
 from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected
+from ansible.plugins.netconf import ensure_connected, ensure_ncclient
 
 try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml, new_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    HAS_NCCLIENT = True
+except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
 
 
 class Netconf(NetconfBase):
 
+    @ensure_ncclient
     def get_text(self, ele, tag):
         try:
             return to_text(ele.find(tag).text, errors='surrogate_then_replace').strip()
         except AttributeError:
             pass
 
+    @ensure_ncclient
     def get_device_info(self):
         device_info = dict()
         device_info['network_os'] = 'ce'
@@ -65,6 +67,7 @@ class Netconf(NetconfBase):
            :name: Name of rpc in string format"""
         return self.rpc(name)
 
+    @ensure_ncclient
     @ensure_connected
     def load_configuration(self, *args, **kwargs):
         """Loads given configuration on device
@@ -95,8 +98,8 @@ class Netconf(NetconfBase):
         return json.dumps(result)
 
     @staticmethod
+    @ensure_ncclient
     def guess_network_os(obj):
-
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
@@ -135,6 +138,7 @@ class Netconf(NetconfBase):
            :rollback: rollback id"""
         return self.m.compare_configuration(*args, **kwargs).data_xml
 
+    @ensure_ncclient
     @ensure_connected
     def execute_action(self, xml_str):
         """huawei execute-action"""
@@ -156,11 +160,7 @@ class Netconf(NetconfBase):
         """reboot the device"""
         return self.m.reboot().data_xml
 
-    @ensure_connected
-    def halt(self):
-        """reboot the device"""
-        return self.m.halt().data_xml
-
+    @ensure_ncclient
     @ensure_connected
     def get(self, *args, **kwargs):
         try:
@@ -168,6 +168,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def get_config(self, *args, **kwargs):
         try:
@@ -175,6 +176,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def edit_config(self, *args, **kwargs):
         try:
@@ -182,6 +184,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def execute_nc_cli(self, *args, **kwargs):
         try:
@@ -189,6 +192,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def commit(self, *args, **kwargs):
         try:
@@ -203,9 +207,3 @@ class Netconf(NetconfBase):
     @ensure_connected
     def discard_changes(self, *args, **kwargs):
         return self.m.discard_changes(*args, **kwargs).data_xml
-
-    @ensure_connected
-    def execute_rpc(self, name):
-        """RPC to be execute on remote device
-           :name: Name of rpc in string format"""
-        return self.rpc(name)
