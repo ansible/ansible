@@ -32,7 +32,7 @@
 import re
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.common.config import NetworkConfig, ConfigLine, ignore_line
@@ -152,16 +152,16 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'datacenter-bridging.*$'),
         re.compile(r'line (console|telnet|ssh).*$'),
         re.compile(r'ip ssh !(server).*$'),
+        re.compile(r'(ip|mac|management|arp|ipv6) access-list.*$'),
         re.compile(r'ip dhcp pool.*$'),
         re.compile(r'ip vrf !(forwarding).*$'),
-        re.compile(r'(ip|mac|management|arp) access-list.*$'),
         re.compile(r'ipv6 (dhcp pool|router).*$'),
         re.compile(r'mail-server.*$'),
         re.compile(r'vpc domain.*$'),
         re.compile(r'router.*$'),
         re.compile(r'route-map.*$'),
         re.compile(r'policy-map.*$'),
-        re.compile(r'class-map match-all.*$'),
+        re.compile(r'(^class-map)|(class\s\w+).*$'),
         re.compile(r'captive-portal.*$'),
         re.compile(r'admin-profile.*$'),
         re.compile(r'link-dependency group.*$'),
@@ -200,6 +200,10 @@ def os6_parse(lines, indent=None, comment_tokens=None):
                     if children:
                         children.insert(len(parent) - 1, [])
                         children[len(parent) - 2].append(cfg)
+                    if not children and len(parent) > 1:
+                        configlist = [cfg]
+                        children.append(configlist)
+                        children.insert(len(parent) - 1, [])
                     parent_match = True
                     continue
             # handle exit
