@@ -1,0 +1,2 @@
+minor_changes:
+- six - Update bundled copy of six from 1.11.0 to 1.12.0 (https://github.com/ansible/ansible/issues/55303)

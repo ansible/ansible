@@ -3,7 +3,7 @@
 # upstream vendored file that we're not going to modify on our own
 # pylint: disable=undefined-variable
 
-# Copyright (c) 2010-2017 Benjamin Peterson
+# Copyright (c) 2010-2018 Benjamin Peterson
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,10 +35,10 @@ import types
 
 # The following makes it easier for us to script updates of the bundled code.  It is not part of
 # upstream six
-_BUNDLED_METADATA = {"pypi_name": "six", "version": "1.11.0"}
+_BUNDLED_METADATA = {"pypi_name": "six", "version": "1.12.0"}
 
 __author__ = "Benjamin Peterson <benjamin@python.org>"
-__version__ = "1.11.0"
+__version__ = "1.12.0"
 
 
 # Useful for very coarse version differentiation.
@@ -855,8 +855,68 @@ def add_metaclass(metaclass):
                 orig_vars.pop(slots_var)
         orig_vars.pop('__dict__', None)
         orig_vars.pop('__weakref__', None)
+        if hasattr(cls, '__qualname__'):
+            orig_vars['__qualname__'] = cls.__qualname__
         return metaclass(cls.__name__, cls.__bases__, orig_vars)
     return wrapper
+
+
+def ensure_binary(s, encoding='utf-8', errors='strict'):
+    """Coerce **s** to six.binary_type.
+
+    For Python 2:
+      - `unicode` -> encoded to `str`
+      - `str` -> `str`
+
+    For Python 3:
+      - `str` -> encoded to `bytes`
+      - `bytes` -> `bytes`
+    """
+    if isinstance(s, text_type):
+        return s.encode(encoding, errors)
+    elif isinstance(s, binary_type):
+        return s
+    else:
+        raise TypeError("not expecting type '%s'" % type(s))
+
+
+def ensure_str(s, encoding='utf-8', errors='strict'):
+    """Coerce *s* to `str`.
+
+    For Python 2:
+      - `unicode` -> encoded to `str`
+      - `str` -> `str`
+
+    For Python 3:
+      - `str` -> `str`
+      - `bytes` -> decoded to `str`
+    """
+    if not isinstance(s, (text_type, binary_type)):
+        raise TypeError("not expecting type '%s'" % type(s))
+    if PY2 and isinstance(s, text_type):
+        s = s.encode(encoding, errors)
+    elif PY3 and isinstance(s, binary_type):
+        s = s.decode(encoding, errors)
+    return s
+
+
+def ensure_text(s, encoding='utf-8', errors='strict'):
+    """Coerce *s* to six.text_type.
+
+    For Python 2:
+      - `unicode` -> `unicode`
+      - `str` -> `unicode`
+
+    For Python 3:
+      - `str` -> `str`
+      - `bytes` -> decoded to `str`
+    """
+    if isinstance(s, binary_type):
+        return s.decode(encoding, errors)
+    elif isinstance(s, text_type):
+        return s
+    else:
+        raise TypeError("not expecting type '%s'" % type(s))
 
 
 def python_2_unicode_compatible(klass):
