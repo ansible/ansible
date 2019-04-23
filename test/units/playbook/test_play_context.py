@@ -12,7 +12,7 @@ import pytest
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
@@ -45,8 +45,7 @@ def reset_cli_args():
 
 
 def test_play_context(mocker, parser, reset_cli_args):
-    (options, args) = parser.parse_args(['-vv', '--check'])
-    options.args = args
+    options = parser.parse_args(['-vv', '--check'])
     context._init_global_context(options)
     play = Play.load({})
     play_context = PlayContext(play=play)
@@ -97,8 +96,7 @@ def test_play_context(mocker, parser, reset_cli_args):
 
 
 def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
-    (options, args) = parser.parse_args([])
-    options.args = args
+    options = parser.parse_args([])
     context._init_global_context(options)
     play_context = PlayContext()
 

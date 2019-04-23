@@ -41,9 +41,8 @@ class TestVaultCli(unittest.TestCase):
 
     def test_parse_empty(self):
         cli = VaultCLI([])
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                '.*Missing required action.*',
-                                cli.parse)
+        self.assertRaises(SystemExit,
+                          cli.parse)
 
     # FIXME: something weird seems to be afoot when parsing actions
     # cli = VaultCLI(args=['view', '/dev/null/foo', 'mysecret3'])
