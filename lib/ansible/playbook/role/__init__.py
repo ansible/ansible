@@ -59,7 +59,6 @@ def hash_params(params):
     # Any container is unhashable if it contains unhashable items (for
     # instance, tuple() is a Hashable subclass but if it contains a dict, it
     # cannot be hashed)
-    new_params = None
     if isinstance(params, Container) and not isinstance(params, (text_type, binary_type)):
         if isinstance(params, Mapping):
             try:
