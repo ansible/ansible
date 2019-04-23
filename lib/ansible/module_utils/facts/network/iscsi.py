@@ -80,23 +80,32 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     break
         elif sys.platform.startswith('aix'):
             if module is not None:
-                rc, out, err = module.run_command('/usr/sbin/lsattr -E -l iscsi0 | grep initiator_name')
+                cmd = module.get_bin_path('lsattr', required=True)
+                cmd = cmd + " -E -l iscsi0"
+                rc, out, err = module.run_command(cmd)
                 if out:
-                    iscsi_facts['iscsi_iqn'] = out.split()[1].rstrip()
+                    for line in out.splitlines():
+                        if 'initiator_name' in line:
+                            iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
             else:
-                aixcmd = '/usr/sbin/lsattr -E -l iscsi0 | grep initiator_name'
+                aixcmd = '/usr/sbin/lsattr -E -l iscsi0'
                 aixret = subprocess.check_output(aixcmd, shell=True)
                 if aixret[0].isalpha():
-                    iscsi_facts['iscsi_iqn'] = aixret.split()[1].rstrip()
+                    for line in aixret.splitlines():
+                        if 'initiator_name' in line:
+                            iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
         elif sys.platform.startswith('hp-ux'):
             if module is not None:
-                rc, out, err = module.run_command("/opt/iscsi/bin/iscsiutil -l | grep 'Initiator Name'",
-                                                  use_unsafe_shell=True)
+                rc, out, err = module.run_command("/opt/iscsi/bin/iscsiutil -l")
                 if out:
-                    iscsi_facts['iscsi_iqn'] = out.split(":", 1)[1].rstrip()
+                    for line in out.splitlines():
+                        if 'Initiator Name' in line:
+                            iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
             else:
-                hpuxcmd = "/opt/iscsi/bin/iscsiutil -l | grep 'Initiator Name'"
+                hpuxcmd = "/opt/iscsi/bin/iscsiutil -l"
                 hpuxret = subprocess.check_output(hpuxcmd, shell=True)
                 if hpuxret[0].isalpha():
-                    iscsi_facts['iscsi_iqn'] = hpuxret.split(":", 1)[1].rstrip()
+                    for line in hpuxret.splitlines():
+                        if 'Initiator Name' in line:
+                            iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
         return iscsi_facts
