@@ -35,7 +35,7 @@ options:
     description:
      - The type of the datasource.
     required: true
-    choices: [ graphite, prometheus, elasticsearch, influxdb, opentsdb, mysql, postgres, cloudwatch, alexanderzobnin-zabbix-datasource]
+    choices: [ graphite, prometheus, elasticsearch, influxdb, opentsdb, mysql, postgres, cloudwatch, alexanderzobnin-zabbix-datasource, sni-thruk-datasource]
   url:
     description:
       - The URL of the datasource.
@@ -604,7 +604,8 @@ def main():
                               'mysql',
                               'postgres',
                               'cloudwatch',
-                              'alexanderzobnin-zabbix-datasource']),
+                              'alexanderzobnin-zabbix-datasource',
+                              'sni-thruk-datasource']),
         url=dict(required=True, type='str', aliases=['ds_url']),
         access=dict(default='proxy', choices=['proxy', 'direct']),
         grafana_api_key=dict(type='str', no_log=True),
