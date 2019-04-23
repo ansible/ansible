@@ -259,21 +259,27 @@ class MySQL_Info(object):
                     if vname != 'Engine':
                         self.info['engines'][engine][vname] = val
 
+    def __convert(self, val):
+        try:
+            if isinstance(val, Decimal):
+                val = float(val)
+            else:
+                val = int(val)
+
+        except ValueError:
+            pass
+
+        except TypeError:
+            pass
+
+        return val
+
     def __get_global_variables(self):
         res = self.__exec_sql('SHOW GLOBAL VARIABLES')
 
         if res:
             for var in res:
-                try:
-                    var['Value'] = int(var['Value'])
-
-                except ValueError:
-                    pass
-
-                if isinstance(var['Value'], Decimal):
-                    var['Value'] = float(var['Value'])
-
-                self.info['settings'][var['Variable_name']] = var['Value']
+                self.info['settings'][var['Variable_name']] = self.__convert(var['Value'])
 
             ver = self.info['settings']['version'].split('.')
             release = ver[2].split('-')[0]
@@ -289,7 +295,7 @@ class MySQL_Info(object):
         if res:
             for line in res:
                 for vname, val in iteritems(line):
-                    self.info['master_status'][vname] = val
+                    self.info['master_status'][vname] = self.__convert(val)
 
     def __get_slave_status(self):
         res = self.__exec_sql('SHOW SLAVE STATUS')
@@ -302,7 +308,7 @@ class MySQL_Info(object):
 
                 for vname, val in iteritems(line):
                     if vname not in ('Master_Host', 'Master_Port', 'Master_User'):
-                        self.info['slave_status'][host][port][user][vname] = val
+                        self.info['slave_status'][host][port][user][vname] = self.__convert(val)
 
     def __get_slaves(self):
         res = self.__exec_sql('SHOW SLAVE HOSTS')
@@ -313,7 +319,7 @@ class MySQL_Info(object):
 
                 for vname, val in iteritems(line):
                     if vname != 'Server_id':
-                        self.info['slave_hosts'][srv_id][vname] = val
+                        self.info['slave_hosts'][srv_id][vname] = self.__convert(val)
 
     def __get_users(self):
         res = self.__exec_sql('SELECT * FROM mysql.user')
@@ -325,7 +331,7 @@ class MySQL_Info(object):
 
                 for vname, val in iteritems(line):
                     if vname not in ('Host', 'User'):
-                        self.info['roles'][host][user][vname] = val
+                        self.info['roles'][host][user][vname] = self.__convert(val)
 
     def __get_databases(self):
         query = ('SELECT table_schema AS "name", '
