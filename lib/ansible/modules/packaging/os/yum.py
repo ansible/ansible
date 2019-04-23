@@ -392,12 +392,12 @@ class YumModule(YumDnf):
 
     def _enablerepos_with_error_checking(self, yumbase):
         # NOTE: This seems unintuitive, but it mirrors yum's CLI bahavior
-        if len(self.enablerepo) > 1:
+        if len(self.enablerepo) == 1:
             try:
-                yumbase.repos.enableRepo(rid)
+                yumbase.repos.enableRepo(self.enablerepo[0])
             except yum.Errors.YumBaseError as e:
                 if u'repository not found' in to_text(e):
-                    self.module.fail_json(msg="Repository %s not found." % rid)
+                    self.module.fail_json(msg="Repository %s not found." % self.enablerepo[0])
                 else:
                     raise e
         else:
