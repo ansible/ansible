@@ -133,8 +133,3 @@ def connect_to_db(module, autocommit=False, fail_on_conn=True):
             db_connection = None
 
     return db_connection
-
-
-def get_pg_version(cursor):
-    cursor.execute("select current_setting('server_version_num')")
-    return int(cursor.fetchone()[0])

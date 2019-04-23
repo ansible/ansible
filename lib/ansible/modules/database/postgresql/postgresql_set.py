@@ -166,7 +166,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, get_pg_version, postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 
 PG_REQ_VER = 90400
@@ -308,10 +308,9 @@ def main():
     db_connection = connect_to_db(module, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
-    # Check server version (needs 9.4 or later):
-    ver = get_pg_version(cursor)
-
     kw = {}
+    # Check server version (needs 9.4 or later):
+    ver = db_connection.server_version
     if ver < PG_REQ_VER:
         module.warn("PostgreSQL is %s version but %s or later is required" % (ver, PG_REQ_VER))
         kw = dict(

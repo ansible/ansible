@@ -150,7 +150,7 @@ except Exception:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, get_pg_version, postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 
 
@@ -183,8 +183,7 @@ class PgSlot(object):
 
         if kind == 'physical':
             # Check server version (needs for immedately_reserverd needs 9.6+):
-            ver = get_pg_version(self.cursor)
-            if ver < 96000:
+            if self.cursor.connection.server_version < 96000:
                 query = "SELECT pg_create_physical_replication_slot('%s')" % self.name
 
             else:
