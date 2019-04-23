@@ -84,28 +84,28 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                 cmd = cmd + " -E -l iscsi0"
                 rc, out, err = module.run_command(cmd)
                 if out:
-                    for line in out.splitlines():
-                        if 'initiator_name' in line:
-                            iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
+                    line = self.findstr(out, 'initiator_name')
             else:
                 aixcmd = '/usr/sbin/lsattr -E -l iscsi0'
                 aixret = subprocess.check_output(aixcmd, shell=True)
                 if aixret[0].isalpha():
-                    for line in aixret.splitlines():
-                        if 'initiator_name' in line:
-                            iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
+                    line = self.findstr(aixret, 'initiator_name')
+            iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
         elif sys.platform.startswith('hp-ux'):
             if module is not None:
                 rc, out, err = module.run_command("/opt/iscsi/bin/iscsiutil -l")
                 if out:
-                    for line in out.splitlines():
-                        if 'Initiator Name' in line:
-                            iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
+                    line = self.findstr(out, 'Initiator Name')
             else:
                 hpuxcmd = "/opt/iscsi/bin/iscsiutil -l"
                 hpuxret = subprocess.check_output(hpuxcmd, shell=True)
                 if hpuxret[0].isalpha():
-                    for line in hpuxret.splitlines():
-                        if 'Initiator Name' in line:
-                            iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
+                    line = self.findstr(hpuxret, 'Initiator Name')
+            iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
         return iscsi_facts
+
+    def findstr(self, text, match):
+        for line in text.splitlines():
+            if match in line:
+                found = line
+        return found
