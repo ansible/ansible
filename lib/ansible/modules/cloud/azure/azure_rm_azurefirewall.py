@@ -429,13 +429,13 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='number',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*'
+                        disposition='/*'
                     ),
                     action=dict(
                         type='dict',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         options=dict(
                             type=dict(
                                 type='str',
@@ -451,7 +451,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='list',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         options=dict(
                             name=dict(
                                 type='str',
@@ -495,7 +495,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='str',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         choices=['Succeeded',
                                  'Updating',
                                  'Deleting',
@@ -513,7 +513,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                 type='list',
                 comparison='',
                 updatable=False,
-                disposition='/*',
+                disposition=/*',
                 options=dict(
                     id=dict(
                         type='str',
@@ -525,13 +525,13 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='number',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*'
+                        disposition='/*'
                     ),
                     action=dict(
                         type='dict',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         options=dict(
                             type=dict(
                                 type='str',
@@ -547,7 +547,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='list',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         options=dict(
                             name=dict(
                                 type='str',
@@ -603,7 +603,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='str',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         choices=['Succeeded',
                                  'Updating',
                                  'Deleting',
@@ -633,13 +633,13 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='number',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*'
+                        disposition='/*'
                     ),
                     action=dict(
                         type='dict',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         options=dict(
                             type=dict(
                                 type='str',
@@ -655,7 +655,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='list',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         options=dict(
                             name=dict(
                                 type='str',
@@ -699,7 +699,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='str',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         choices=['Succeeded',
                                  'Updating',
                                  'Deleting',
@@ -729,7 +729,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='dict',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         options=dict(
                             id=dict(
                                 type='str',
@@ -744,7 +744,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='dict',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         options=dict(
                             id=dict(
                                 type='str',
@@ -759,7 +759,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                         type='str',
                         comparison='',
                         updatable=False,
-                        disposition='properties/*',
+                        disposition='/*',
                         choices=['Succeeded',
                                  'Updating',
                                  'Deleting',
