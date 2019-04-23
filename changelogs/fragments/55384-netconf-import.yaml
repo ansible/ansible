@@ -1,0 +1,2 @@
+bugfixes:
+  - Move netconf import errors from import to use.
