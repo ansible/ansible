@@ -21,12 +21,12 @@ The ``distro`` package (``distro`` stands for Linux Distribution) provides
 information about the Linux distribution it runs on, such as a reliable
 machine-readable distro ID, or version information.
 
-It is a renewed alternative implementation for Python's original
+It is the recommended replacement for Python's original
 :py:func:`platform.linux_distribution` function, but it provides much more
 functionality. An alternative implementation became necessary because Python
-3.5 deprecated this function, and Python 3.7 is expected to remove it
-altogether. Its predecessor function :py:func:`platform.dist` was already
-deprecated since Python 2.6 and is also expected to be removed in Python 3.7.
+3.5 deprecated this function, and Python 3.8 will remove it altogether.
+Its predecessor function :py:func:`platform.dist` was already
+deprecated since Python 2.6 and will also be removed in Python 3.8.
 Still, there are many cases in which access to OS distribution information
 is needed. See `Python issue 1322 <https://bugs.python.org/issue1322>`_ for
 more information.
@@ -52,7 +52,9 @@ _OS_RELEASE_BASENAME = 'os-release'
 #:   with blanks translated to underscores.
 #:
 #: * Value: Normalized value.
-NORMALIZED_OS_ID = {}
+NORMALIZED_OS_ID = {
+    'ol': 'oracle',  # Oracle Enterprise Linux
+}
 
 #: Translation table for normalizing the "Distributor ID" attribute returned by
 #: the lsb_release command, for use by the :func:`distro.id` method.
@@ -866,10 +868,14 @@ class LinuxDistribution(object):
 
         For details, see :func:`distro.codename`.
         """
-        return self.os_release_attr('codename') \
-            or self.lsb_release_attr('codename') \
-            or self.distro_release_attr('codename') \
-            or ''
+        try:
+            # Handle os_release specially since distros might purposefully set
+            # this to empty string to have no codename
+            return self._os_release_info['codename']
+        except KeyError:
+            return self.lsb_release_attr('codename') \
+                or self.distro_release_attr('codename') \
+                or ''
 
     def info(self, pretty=False, best=False):
         """
@@ -926,6 +932,7 @@ class LinuxDistribution(object):
 
         For details, see :func:`distro.uname_info`.
         """
+        return self._uname_info
 
     def os_release_attr(self, attribute):
         """
@@ -1017,23 +1024,30 @@ class LinuxDistribution(object):
                 if isinstance(v, bytes):
                     v = v.decode('utf-8')
                 props[k.lower()] = v
-                if k == 'VERSION':
-                    # this handles cases in which the codename is in
-                    # the `(CODENAME)` (rhel, centos, fedora) format
-                    # or in the `, CODENAME` format (Ubuntu).
-                    codename = re.search(r'(\(\D+\))|,(\s+)?\D+', v)
-                    if codename:
-                        codename = codename.group()
-                        codename = codename.strip('()')
-                        codename = codename.strip(',')
-                        codename = codename.strip()
-                        # codename appears within paranthese.
-                        props['codename'] = codename
-                    else:
-                        props['codename'] = ''
             else:
                 # Ignore any tokens that are not variable assignments
                 pass
+
+        if 'version_codename' in props:
+            # os-release added a version_codename field.  Use that in
+            # preference to anything else Note that some distros purposefully
+            # do not have code names.  They should be setting
+            # version_codename=""
+            props['codename'] = props['version_codename']
+        elif 'ubuntu_codename' in props:
+            # Same as above but a non-standard field name used on older Ubuntus
+            props['codename'] = props['ubuntu_codename']
+        elif 'version' in props:
+            # If there is no version_codename, parse it from the version
+            codename = re.search(r'(\(\D+\))|,(\s+)?\D+', props['version'])
+            if codename:
+                codename = codename.group()
+                codename = codename.strip('()')
+                codename = codename.strip(',')
+                codename = codename.strip()
+                # codename appears within paranthese.
+                props['codename'] = codename
+
         return props
 
     @cached_property
@@ -1126,7 +1140,10 @@ class LinuxDistribution(object):
             # file), because we want to use what was specified as best as
             # possible.
             match = _DISTRO_RELEASE_BASENAME_PATTERN.match(basename)
-            if match:
+            if 'name' in distro_info \
+               and 'cloudlinux' in distro_info['name'].lower():
+                distro_info['id'] = 'cloudlinux'
+            elif match:
                 distro_info['id'] = match.group(1)
             return distro_info
         else:
@@ -1167,6 +1184,8 @@ class LinuxDistribution(object):
                         # The name is always present if the pattern matches
                         self.distro_release_file = filepath
                         distro_info['id'] = match.group(1)
+                        if 'cloudlinux' in distro_info['name'].lower():
+                            distro_info['id'] = 'cloudlinux'
                         return distro_info
             return {}
 
