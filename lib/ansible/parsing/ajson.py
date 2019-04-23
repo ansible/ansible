@@ -8,7 +8,6 @@ __metaclass__ = type
 import json
 
 from datetime import date, datetime
-from decimal import Decimal
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping

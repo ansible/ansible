@@ -55,7 +55,6 @@ import traceback
 import types
 
 from collections import deque
-from decimal import Decimal
 from itertools import chain, repeat
 
 try:
@@ -398,7 +397,6 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
 
     elif isinstance(value, datetime.datetime):
         value = value.isoformat()
-
     else:
         raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
 

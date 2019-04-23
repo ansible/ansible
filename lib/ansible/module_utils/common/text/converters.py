@@ -8,7 +8,6 @@ __metaclass__ = type
 import datetime
 import json
 
-from decimal import Decimal
 from itertools import repeat
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
