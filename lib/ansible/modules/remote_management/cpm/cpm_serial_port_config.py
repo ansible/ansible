@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: cpm_serial_port_config
-version_added: "2.8"
+version_added: "2.9"
 author: "Western Telematic Inc. (@wtinetworkgear)"
 short_description: Set Serial port parameters in WTI OOB and PDU devices
 description:
@@ -118,17 +118,17 @@ options:
     description:
       -This is the command echo parameter to assign to the port, 0=Off, 1=On
     required: false
-    choices: [ 0, 1 ]
   break_allow:
     description:
       - This is if the break character is allowed to be passed through the port, 0=Off, 1=On
     required: false
-    choices: [ 0, 1 ]
   logoff:
     description:
       - This is the logout character to assign to the port
       - If preceded by a ^ character, the sequence will be a control character. Used if seq is set to 0 or 1
     required: false
+notes:
+  - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.
 """
 
 EXAMPLES = """
@@ -261,8 +261,8 @@ def run_module():
         cmd=dict(type='int', required=False, default=None, choices=[0, 1]),
         seq=dict(type='int', required=False, default=None, choices=[1, 2, 3]),
         tout=dict(type='int', required=False, default=None, choices=[0, 1, 2, 3, 4, 5]),
-        echo=dict(type='bool', required=False, default=None, choices=[0, 1]),
-        break_allow=dict(type='bool', required=False, default=None, choices=[0, 1]),
+        echo=dict(type='bool', required=False, default=None),
+        break_allow=dict(type='bool', required=False),
         logoff=dict(type='str', required=False, default=None),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
