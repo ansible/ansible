@@ -54,7 +54,7 @@ please see the `source code <https://github.com/ansible/ansible/tree/devel/lib/a
 - ``database.py`` - Miscellaneous helper functions for PostGRES and MySQL
 - ``docker_common.py`` - Definitions and helper utilities for modules working with Docker.
 - ``ec2.py`` - Definitions and utilities for modules working with Amazon EC2
-- ``facts/- Folder containing helper functions for modules that return facts. See https://github.com/ansible/ansible/pull/23012 for more information.
+- ``facts.py`` - Folder containing helper functions for modules that return facts. See https://github.com/ansible/ansible/pull/23012 for more information.
 - ``gce.py`` - Definitions and helper functions for modules that work with Google Compute Engine resources.
 - ``ismount.py`` - Contains single helper function that fixes os.path.ismount
 - ``keycloak.py`` - Definitions and helper functions for modules working with the Keycloak API
@@ -98,7 +98,7 @@ please see the `source code <https://github.com/ansible/ansible/tree/devel/lib/a
 - ``network/vyos/vyos.py`` - Definitions and functions for working with VyOS networking
 - ``openstack.py`` - Utilities for modules that work with Openstack instances.
 - ``openswitch.py`` - Definitions and helper functions for modules that manage OpenSwitch devices
-- ``powershell.ps1 - Utilities for working with Microsoft Windows clients
+- ``powershell.ps1`` - Utilities for working with Microsoft Windows clients
 - ``pure.py`` - Functions and utilities for modules that work with the Pure Storage storage platforms.
 - ``pycompat24.py`` - Exception workaround for Python 2.4.
 - ``rax.py`` -  Definitions and helper functions for modules that work with Rackspace resources.
