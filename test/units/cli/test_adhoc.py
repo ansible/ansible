@@ -80,3 +80,10 @@ def test_run_import_playbook():
         adhoc_cli.run()
     assert context.CLIARGS['module_name'] == import_playbook
     assert "'%s' is not a valid action for ad-hoc commands" % import_playbook == str(exec_info.value)
+
+
+def test_run_no_extra_vars():
+    adhoc_cli = AdHocCLI(args=['/bin/ansible', 'localhost', '-e'])
+    with pytest.raises(SystemExit) as exec_info:
+        adhoc_cli.parse()
+    assert exec_info.value.code == 2
