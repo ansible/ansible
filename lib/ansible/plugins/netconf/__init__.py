@@ -25,7 +25,6 @@ from functools import wraps
 from ansible.errors import AnsibleError
 from ansible.plugins import AnsiblePlugin
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import missing_required_lib
 
 try:
     from ncclient.operations import RPCError
@@ -55,7 +54,7 @@ def ensure_ncclient(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
         if not HAS_NCCLIENT:
-            raise AnsibleError("%s: %s" % (missing_required_lib('ncclient'), to_native(NCCLIENT_IMP_ERR)))
+            raise AnsibleError("Package ncclient is not installed: %s. Please install it with `pip install ncclient`" % to_native(NCCLIENT_IMP_ERR))
         return func(self, *args, **kwargs)
     return wrapped
 
