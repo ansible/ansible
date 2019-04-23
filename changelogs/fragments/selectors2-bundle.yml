@@ -1,0 +1,2 @@
+minor_changes:
+- selectors2 - Update bundled copy of selectors2 from 1.1.0 to 1.1.1 (https://github.com/ansible/ansible/issues/55300)
