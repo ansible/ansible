@@ -223,18 +223,21 @@ class Stp(object):
 
         rc, out, err = exec_command(self.module, cmd)
         if rc != 0:
-            self._module.fail_json(msg=err)
+            self.module.fail_json(msg=err)
         self.stp_cfg = str(out).strip()
 
     def cli_get_interface_stp_config(self):
         """ Cli get interface's stp configuration """
 
         if self.interface:
-            cmd = "display current-configuration | ignore-case section include ^interface %s$" % self.interface
+            cmd = "display current-configuration | ignore-case section include interface %s" % self.interface
             rc, out, err = exec_command(self.module, cmd)
             if rc != 0:
-                self._module.fail_json(msg=err)
-            tmp_cfg = str(out).strip()
+                self.module.fail_json(msg=err)
+            cfg_list = out.split('\n')
+            tmp_cfg = out
+            if len(cfg_list) > 0 and cfg_list[0].startswith('display'):
+                tmp_cfg = '\n'.join(cfg_list[1:])
 
             if not tmp_cfg:
                 self.module.fail_json(
