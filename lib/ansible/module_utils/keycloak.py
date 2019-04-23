@@ -31,6 +31,7 @@ from ansible.modules.identity.keycloak.keycloak_realm import realm
 __metaclass__ = type
 
 import json
+import urllib
 
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
@@ -54,7 +55,13 @@ URL_GROUP_REALM_ROLE_MAPPING = "{url}/admin/realms/{realm}/groups/{groupid}/role
 
 URL_COMPONENTS = "{url}/admin/realms/{realm}/components"
 URL_USER_STORAGE = "{url}/admin/realms/{realm}/user-storage"
-
+URL_AUTHENTICATION_FLOWS = "{url}/admin/realms/{realm}/authentication/flows"
+URL_AUTHENTICATION_FLOW = "{url}/admin/realms/{realm}/authentication/flows/{id}"
+URL_AUTHENTICATION_FLOW_COPY = "{url}/admin/realms/{realm}/authentication/flows/{copyfrom}/copy"
+URL_AUTHENTICATION_FLOW_EXECUTIONS = "{url}/admin/realms/{realm}/authentication/flows/{flowalias}/executions"
+URL_AUTHENTICATION_FLOW_EXECUTIONS_EXECUTION = "{url}/admin/realms/{realm}/authentication/flows/{flowalias}/executions/execution"
+URL_AUTHENTICATION_EXECUTIONS_CONFIG = "{url}/admin/realms/{realm}/authentication/executions/{id}/config"
+URL_AUTHENTICATION_CONFIG = "{url}/admin/realms/{realm}/authentication/config/{id}"
 
 def keycloak_argument_spec():
     """
@@ -838,3 +845,123 @@ class KeycloakAPI(object):
                 if subComponent["providerId"] == 'group-ldap-mapper':
                     # Sync groups
                     open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync", method='POST', headers=self.restheaders, params={"direction": syncLdapMappers}) 
+
+
+    def get_authentication_flow_by_alias(self, alias, realm='master'):
+        authenticationFlow = {}
+        # Check if the authentication flow exists on the Keycloak serveraders
+        authentications = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
+        for authentication in authentications:
+            if authentication["alias"] == alias:
+                authenticationFlow = authentication
+                break
+        return authenticationFlow
+
+    def delete_authentication_flow_by_id(self, id, realm='master'):
+        """ Delete an authentication flow from Keycloak
+
+        :param id: id of authentication flow to be deleted
+        :param realm: realm of client to be deleted
+        :return: HTTPResponse object on success
+        """
+        flow_url = URL_AUTHENTICATION_FLOW.format(url=self.baseurl, realm=realm, id=id)
+
+        try:
+            return open_url(flow_url, method='DELETE', headers=self.restheaders,
+                            validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(msg='Could not delete authentication flow %s in realm %s: %s'
+                                      % (id, realm, str(e)))
+        
+
+    def copy_auth_flow(self, config, realm='master'):    
+        newName = dict(
+            newName = config["alias"]
+        )
+        
+        data = json.dumps(newName)
+        open_url(URL_AUTHENTICATION_FLOW_COPY.format(url=self.baseurl, realm=realm, copyfrom=urllib.quote(config["copyFrom"])), method='POST', headers=self.restheaders, data=data)
+        flowList = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
+        for flow in flowList:
+            if flow["alias"] == config["alias"]:
+                return flow
+        return None
+    
+    def create_empty_auth_flow(self, config, realm='master'):
+        
+        newFlow = dict(
+            alias = config["alias"],
+            providerId = config["providerId"],
+            topLevel = True
+        )
+        data = json.dumps(newFlow)
+        open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='POST', headers=self.restheaders, data=data)
+        flowList = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
+        for flow in flowList:
+            if flow["alias"] == config["alias"]:
+                return flow
+        return None
+    
+    def create_or_update_executions(self, config, realm='master'):
+        changed = False
+    
+        if "authenticationExecutions" in config:
+            for newExecution in config["authenticationExecutions"]:
+                # Get existing executions on the Keycloak server for this alias
+                existingExecutions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
+                executionFound = False
+                for existingExecution in existingExecutions:
+                    if "providerId" in existingExecution and existingExecution["providerId"] == newExecution["providerId"]:
+                        executionFound = True
+                        break
+                if executionFound:
+                    # Replace config id of the execution config by it's complete representation
+                    if "authenticationConfig" in existingExecution:
+                        execConfigId = existingExecution["authenticationConfig"]
+                        execConfig = json.load(open_url(URL_AUTHENTICATION_CONFIG.format(url=self.baseurl, realm=realm, id=execConfigId), method='GET', headers=self.restheaders))
+                        existingExecution["authenticationConfig"] = execConfig
+    
+                    # Compare the executions to see if it need changes
+                    if not isDictEquals(newExecution, existingExecution):
+                        changed = True
+                else:
+                    # Create the new execution
+                    newExec = {}
+                    newExec["provider"] = newExecution["providerId"]
+                    newExec["requirement"] = newExecution["requirement"]
+                    data = json.dumps(newExec)
+                    open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS_EXECUTION.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='POST', headers=self.restheaders, data=data)
+                    changed = True
+                if changed:
+                    # Get existing executions on the Keycloak server for this alias
+                    existingExecutions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
+                    executionFound = False
+                    for existingExecution in existingExecutions:
+                        if "providerId" in existingExecution and existingExecution["providerId"] == newExecution["providerId"]:
+                            executionFound = True
+                            break
+                    if executionFound:
+                        # Update the existing execution
+                        updatedExec = {}
+                        updatedExec["id"] = existingExecution["id"]
+                        for key in newExecution:
+                            # create the execution configuration
+                            if key == "authenticationConfig":
+                                # Add the autenticatorConfig to the execution
+                                data = json.dumps(newExecution["authenticationConfig"])
+                                open_url(URL_AUTHENTICATION_EXECUTIONS_CONFIG.format(url=self.baseurl, realm=realm, id=existingExecution["id"]), method='POST', headers=self.restheaders, data=data)
+                            else:
+                                updatedExec[key] = newExecution[key]
+                        data = json.dumps(updatedExec)
+                        open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='PUT', headers=self.restheaders, data=data)
+        return changed
+    
+    def get_executions_representation(self, config, realm='master'):
+        # Get executions created
+        executions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
+        for execution in executions:
+            if "authenticationConfig" in execution:
+                execConfigId = execution["authenticationConfig"]
+                execConfig = json.load(open_url(URL_AUTHENTICATION_CONFIG.format(url=self.baseurl, realm=realm, id=execConfigId), method='GET', headers=self.restheaders))
+                execution["authenticationConfig"] = execConfig
+        return executions
