@@ -251,7 +251,6 @@ def main():
     slot_type = module.params["slot_type"]
     immediately_reserve = module.params["immediately_reserve"]
     state = module.params["state"]
-    ssl_rootcert = module.params["ca_cert"]
     output_plugin = module.params["output_plugin"]
 
     if immediately_reserve and slot_type == 'logical':
