@@ -56,3 +56,45 @@
   assert:
     that:
       - "(ansible_play_role_names + ansible_dependent_role_names)|unique|sort|list == ansible_role_names|sort|list"
+
+- name: check that ansible_parent_role_names is normally unset when not included/imported (before including other roles)
+  assert:
+    that:
+      - "ansible_parent_role_names is undefined"
+      - "ansible_parent_role_paths is undefined"
+
+- name: ansible_parent_role_names - test functionality by including another role
+  include_role:
+    name: include_parent_role_vars
+    tasks_from: included_by_other_role.yml
+
+- name: check that ansible_parent_role_names is normally unset when not included/imported (after including other role)
+  assert:
+    that:
+      - "ansible_parent_role_names is undefined"
+      - "ansible_parent_role_paths is undefined"
+
+- name: ansible_parent_role_names - test functionality by importing another role
+  import_role:
+    name: include_parent_role_vars
+    tasks_from: included_by_other_role.yml
+
+- name: check that ansible_parent_role_names is normally unset when not included/imported (after importing other role)
+  assert:
+    that:
+      - "ansible_parent_role_names is undefined"
+      - "ansible_parent_role_paths is undefined"
+
+- name: ansible_parent_role_names - test functionality by including another role
+  include_role:
+    name: include_parent_role_vars
+
+- name: check that ansible_parent_role_names is normally unset when not included/imported (after both import and inlcude)
+  assert:
+    that:
+      - "ansible_parent_role_names is undefined"
+      - "ansible_parent_role_paths is undefined"
+
+- name: ansible_parent_role_names - test functionality by importing another role
+  import_role:
+    name: include_parent_role_vars
