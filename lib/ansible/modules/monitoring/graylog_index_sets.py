@@ -158,12 +158,93 @@ RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: str
-msg:
-  description: The HTTP message from the request
-  returned: always
-  type: str
-  sample: OK (unknown bytes)
+  type: complex
+  contains:
+      title:
+          description: Title.
+          returned: success
+          type: str
+          sample: 'Graylog'
+      creation_date:
+          description: Index set creation date.
+          returned: success
+          type: str
+          sample: '2019-01-21T19:45:09.098Z'
+      default:
+          description: Whether or not it is the default index set.
+          returned: success
+          type: bool
+          sample: false
+      description:
+          description: Index set description.
+          returned: success
+          type: str
+          sample: 'Client X index set'
+      field_type_refresh_interval:
+          description: How often the field type information for the active write index will be updated.
+          returned: success
+          type: int
+          sample: 5000
+      id:
+          description: Index set ID.
+          returned: success
+          type: str
+          sample: '4a362233815c349e7e2b945c'
+      index_analyzer:
+          description: Index set analyzer.
+          returned: success
+          type: str
+          sample: 'standard'
+      index_optimization_disabled:
+          description: Whether index set optimization is enabled or disabled.
+          returned: success
+          type: bool
+          sample: false
+      index_optimization_max_num_segments:
+          description: Index optimization segments.
+          returned: success
+          type: int
+          sample: 1
+      index_prefix:
+          description: Index set prefix.
+          returned: success
+          type: str
+          sample: 'graylog'
+      replicas:
+          description: Number of replicas.
+          returned: success
+          type: int
+          sample: 1
+      retention_strategy:
+          description: Index set retention strategy.
+          returned: success
+          type: dict
+          sample: { "max_number_of_indices": 720, "type": "org.graylog2.indexer.retention.strategies.DeletionRetentionStrategyConfig" }
+      rotation_strategy:
+          description: Index set rotation strategy.
+          returned: success
+          type: dict
+          sample: { "rotation_period": "PT6H", "type": "org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategyConfig" }
+      retention_strategy_class:
+          description: Retention strategy class.
+          returned: success
+          type: str
+          sample: 'org.graylog2.indexer.retention.strategies.DeletionRetentionStrategy'
+      rotation_strategy_class:
+          description: Rotation strategy class.
+          returned: success
+          type: str
+          sample: 'org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategy'
+      shards:
+          description: Number of shards.
+          returned: success
+          type: int
+          sample: 4
+      writable:
+          description: Whether or not index set is writable.
+          returned: success
+          type: bool
+          sample: true
 status:
   description: The HTTP status code from the request
   returned: always
@@ -387,7 +468,6 @@ def main():
         status, message, content, url = list(module, base_url, headers, index_set_id)
 
     uresp = {}
-    content = to_text(content, encoding='UTF-8')
 
     try:
         js = json.loads(content)
