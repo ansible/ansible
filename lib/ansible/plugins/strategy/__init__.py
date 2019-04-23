@@ -530,10 +530,6 @@ class StrategyBase:
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
-                                        if isinstance(listeners, string_types):
-                                            listeners = [listeners]
-                                        elif not isinstance(listeners, list):
-                                            raise AnsibleError("Listeners {0} are expected to be a string or list".format(listeners))
                                         if handler_name not in listeners:
                                             continue
                                         else:
