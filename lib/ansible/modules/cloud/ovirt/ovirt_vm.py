@@ -784,6 +784,18 @@ options:
             - NOTE - If there are multiple next run configuration changes on the VM, the first change may get reverted if this option is not passed.
         version_added: "2.8"
         type: bool
+    snapshot:
+        description:
+            - "Snapshot to clone VM from."
+            - "Snapshot with description specified should exist."
+            - "VM having this snapshot should be specified by C(srcvm)."
+        version_added: "2.9"
+    srcvm:
+        description:
+            - "Source VM to clone VM from."
+            - "VM should have snapshot specified by C(snapshot)."
+            - "If C(snapshot) specified C(srcvm) is required."
+        version_added: "2.9"
 
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -1141,6 +1153,13 @@ EXAMPLES = '''
         host: myhost
         filename: myvm.ova
         directory: /tmp/
+
+- name: Clone VM from snapshot
+  ovirt_vm:
+    srcvm: myvm
+    snapshot: myvm_snap
+    name: myvm_clone
+    state: present
 '''
 
 
@@ -1254,9 +1273,40 @@ class VmsModule(BaseModule):
 
         return disks
 
+    def __get_snapshot(self):
+
+        if self.param('srcvm') is None:
+            return None
+
+        if self.param('snapshot') is None:
+            return None
+
+        vms_service = self._connection.system_service().vms_service()
+        vm = search_by_name(vms_service, self.param('srcvm'))
+        if not vm:
+            raise ValueError(
+                "VM with name '%s' was not found'" % (
+                    self.param('srcvm'),
+                )
+            )
+
+        vm_service = vms_service.vm_service(vm.id)
+        snaps_service = vm_service.snapshots_service()
+        snaps = snaps_service.list()
+        snap = next(
+            (s for s in snaps if s.description == self.param('snapshot')),
+            None
+        )
+
+        cluster = self._connection.system_service().clusters_service().cluster_service(vm.cluster.id).get()
+
+        self._module.params['cluster'] = cluster.name
+
+        return snap
+
     def build_entity(self):
         template = self.__get_template_with_version()
-
+        snapshot = self.__get_snapshot()
         disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
 
         return otypes.Vm(
@@ -1400,6 +1450,7 @@ class VmsModule(BaseModule):
                 ) for cp in self.param('custom_properties') if cp
             ] if self.param('custom_properties') is not None else None,
             initialization=self.get_initialization() if self.param('cloud_init_persist') else None,
+            snapshots=[otypes.Snapshot(id=snapshot.id)] if snapshot is not None else None,
         )
 
     def _get_export_domain_service(self):
@@ -2264,6 +2315,8 @@ def main():
         force_migrate=dict(type='bool'),
         migrate=dict(type='bool', default=None),
         next_run=dict(type='bool'),
+        snapshot=dict(type='str'),
+        srcvm=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
