@@ -107,12 +107,28 @@ RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: str
-msg:
-  description: The HTTP message from the request
-  returned: always
-  type: str
-  sample: OK (unknown bytes)
+  type: complex
+  contains:
+      name:
+          description: Role name.
+          returned: success
+          type: str
+          sample: 'Administrators'
+      description:
+          description: Role description.
+          returned: success
+          type: str
+          sample: 'Administrators group'
+      permissions:
+          description: Role permissions (dashboards, streams, collectors, etc).
+          returned: success
+          type: list
+          sample: [ "dashboards:read:4c58eef77ec84145c3a2d9f3", "sidecars:update" ]
+      read_only:
+          description: Whether or not the role is a read-only role.
+          returned: success
+          type: bool
+          sample: false
 status:
   description: The HTTP status code from the request
   returned: always
@@ -275,7 +291,7 @@ def main():
     elif action == "delete":
         status, message, content, url = delete(module, base_url, headers)
     elif action == "list":
-        status, message, content, url = list(module, base_url, api_token)
+        status, message, content, url = list(module, base_url, headers)
 
     uresp = {}
     content = to_text(content, encoding='UTF-8')
