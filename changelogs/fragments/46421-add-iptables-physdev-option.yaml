@@ -1,0 +1,2 @@
+minor_changes:
+   - Adding ``physdev`` parameter to iptables module. (https://github.com/ansible/ansible/pull/46421)
