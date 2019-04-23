@@ -1,0 +1,2 @@
+minor_changes:
+  - Adding ``proxy`` parameter to k8s modules that are based on kubernetes-client/python. (https://github.com/ansible/ansible/pull/55377)
