@@ -1328,6 +1328,9 @@ class PyVmomiHelper(PyVmomi):
                         self.module.fail_json(msg="Changing the device type is not possible when interface is already present. "
                                                   "The failing device type is %s" % network_devices[key]['device_type'])
                 if 'mac' in network_devices[key] and nic.device.macAddress != network_devices[key]['mac']:
+                    if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                        self.module.fail_json(msg="Changing the device MAC address is not "
+                                                  "possible when the guest is powered on.")
                     nic.device.addressType = 'manual'
                     nic.device.macAddress = network_devices[key]['mac']
                     nic_change_detected = True
