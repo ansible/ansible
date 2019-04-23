@@ -29,17 +29,6 @@ options:
       - Whether to follow symlinks.
     type: bool
     default: no
-  get_md5:
-    description:
-      - Whether to return the md5 sum of the file.
-      - Will return None if not a regular file or if we're
-        unable to use md5 (Common for FIPS-140 compliant systems).
-      - The default of this option changed from C(yes) to C(no) in Ansible 2.5
-        and will be removed altogether in Ansible 2.9.
-      - Use C(get_checksum=true) with C(checksum_algorithm=md5) to return an
-        md5 hash under the C(checksum) return value.
-    type: bool
-    default: no
   get_checksum:
     description:
       - Whether to return a checksum of the file.
@@ -444,7 +433,6 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True),
             follow=dict(type='bool', default=False),
-            get_md5=dict(type='bool'),
             get_checksum=dict(type='bool', default=True),
             get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
             get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
@@ -460,15 +448,7 @@ def main():
     follow = module.params.get('follow')
     get_mime = module.params.get('get_mime')
     get_attr = module.params.get('get_attributes')
-    get_md5 = module.params.get('get_md5')
 
-    # get_md5 will be an undocumented option in 2.9 to be removed at a later
-    # date if possible (3.0+)
-    if get_md5:
-        module.deprecate("get_md5 has been deprecated along with the md5 return value, use "
-                         "get_checksum=True and checksum_algorithm=md5 instead", 2.9)
-    else:
-        get_md5 = False
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
 
@@ -511,12 +491,6 @@ def main():
 
     # checksums
     if output.get('isreg') and output.get('readable'):
-        if get_md5:
-            # Will fail on FIPS-140 compliant systems
-            try:
-                output['md5'] = module.md5(b_path)
-            except ValueError:
-                output['md5'] = None
 
         if get_checksum:
             output['checksum'] = module.digest_from_file(b_path, checksum_algorithm)
