@@ -26,7 +26,6 @@ import optparse
 import os
 import re
 import subprocess
-import re
 import sys
 import time
 import yaml
