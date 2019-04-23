@@ -64,7 +64,7 @@ def postgres_common_argument_spec():
     )
 
 
-def connect_to_db(module, autocommit=False):
+def connect_to_db(module, autocommit=False, fail_on_conn=True):
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
@@ -119,10 +119,18 @@ def connect_to_db(module, autocommit=False):
             module.fail_json(msg='Postgresql server must be at least '
                                  'version 8.4 to support sslrootcert')
 
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        if fail_on_conn:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        else:
+            module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+            db_connection = None
 
     except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        if fail_on_conn:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        else:
+            module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+            db_connection = None
 
     return db_connection
 
