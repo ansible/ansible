@@ -97,10 +97,9 @@
         name: netrulecoll
     ip_configurations:
       - subnet:
-          id: >-
-            /subscriptions/{{ subscription_id }}/resourceGroups/{{
-            resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
-            virtual_network_name }}/subnets/{{ subnet_name }}
+          id:
+            virtual_network_name: "{{ virtual_network_name }}"
+            name: "{{ name }}"
         public_ip_address:
           id:
             name: "{{ public_ipaddress_name }}"
@@ -172,10 +171,9 @@
         name: netrulecoll
     ip_configurations:
       - subnet:
-          id: >-
-            /subscriptions/{{ subscription_id }}/resourceGroups/{{
-            resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
-            virtual_network_name }}/subnets/{{ subnet_name }}
+          id:
+            virtual_network_name: "{{ virtual_network_name }}"
+            name: "{{ name }}"
         public_ip_address:
           id:
             name: "{{ public_ipaddress_name }}"
@@ -247,10 +245,9 @@
         name: netrulecoll
     ip_configurations:
       - subnet:
-          id: >-
-            /subscriptions/{{ subscription_id }}/resourceGroups/{{
-            resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
-            virtual_network_name }}/subnets/{{ subnet_name }}
+          id:
+            virtual_network_name: "{{ virtual_network_name }}"
+            name: "{{ name }}"
         public_ip_address:
           id:
             name: "{{ public_ipaddress_name }}"
