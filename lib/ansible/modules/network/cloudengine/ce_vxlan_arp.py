@@ -288,20 +288,24 @@ class VxlanArp(object):
         flags = list()
         exp = "| ignore-case section include evn bgp|host collect protocol bgp"
         if self.vbdif_name:
-            exp += "|^interface %s$" % self.vbdif_name
+            exp += "|interface %s" % self.vbdif_name
 
         if self.bridge_domain_id:
-            exp += "|^bridge-domain %s$" % self.bridge_domain_id
+            exp += "|bridge-domain %s" % self.bridge_domain_id
 
         flags.append(exp)
         cfg_str = self.get_config(flags)
         config = cfg_str.split("\n")
 
-        exist_config = ""
+        exist_config = list()
         for cfg in config:
             if not cfg.startswith("display"):
-                exist_config += cfg
-        return exist_config
+                exist_config.append(cfg)
+        if exist_config:
+            config_all = "\n".join(exist_config)
+        else:
+            config_all = ""
+        return config_all
 
     def cli_add_command(self, command, undo=False):
         """add command to self.update_cmd and self.commands"""
@@ -325,18 +329,29 @@ class VxlanArp(object):
         # [undo] arp broadcast-suppress enable
 
         cmd = "bridge-domain %s" % self.bridge_domain_id
-        if not is_config_exist(self.config, cmd):
+        exist_bd = False
+        exist_arp = False
+        if self.config:
+            cfg_section = self.config.split("#\n")
+            for cfg in cfg_section:
+                if re.findall(r"^%s" % cmd, cfg):
+                    exist_bd = True
+                    cmd_arp = "arp broadcast-suppress enable"
+                    cfg_list = cfg.split("\n")
+                    for index, tmp in enumerate(cfg_list):
+                        cfg_list[index] = tmp.strip()
+                    if cmd_arp in cfg_list:
+                        exist_arp = True
+        if not exist_bd:
             self.module.fail_json(msg="Error: Bridge domain %s is not exist." % self.bridge_domain_id)
-
-        cmd = "arp broadcast-suppress enable"
-        exist = is_config_exist(self.config, cmd)
-        if self.arp_suppress == "enable" and not exist:
+        cmd_arp = "arp broadcast-suppress enable"
+        if self.arp_suppress == "enable" and not exist_arp:
             self.cli_add_command("bridge-domain %s" % self.bridge_domain_id)
-            self.cli_add_command(cmd)
+            self.cli_add_command(cmd_arp)
             self.cli_add_command("quit")
-        elif self.arp_suppress == "disable" and exist:
+        elif self.arp_suppress == "disable" and exist_arp:
             self.cli_add_command("bridge-domain %s" % self.bridge_domain_id)
-            self.cli_add_command(cmd, undo=True)
+            self.cli_add_command(cmd_arp, undo=True)
             self.cli_add_command("quit")
 
     def config_evn_bgp(self):
@@ -433,24 +448,35 @@ class VxlanArp(object):
         # interface vbdif bd-id
         # [undo] arp collect host enable
 
-        cmd = "interface %s" % self.vbdif_name.lower().capitalize()
-        exist = is_config_exist(self.config, cmd)
+        cmd = "interface %s" % self.vbdif_name.lower().capitalize().replace(" ", "")
+        exist_intf = False
+        exist_arp = False
+        if self.config:
+            cfg_section = self.config.split("#\n")
+            for cfg in cfg_section:
+                if re.findall(r"^%s" % cmd, cfg):
+                    exist_intf = True
+                    cmd_arp = "arp collect host enable"
+                    cfg_list = cfg.split("\n")
+                    for index, tmp in enumerate(cfg_list):
+                        cfg_list[index] = tmp.strip()
+                    if cmd_arp in cfg_list:
+                        exist_arp = True
 
-        if not exist:
+        if not exist_intf:
             self.module.fail_json(
                 msg="Error: Interface %s does not exist." % self.vbdif_name)
 
-        cmd = "arp collect host enable"
-        exist = is_config_exist(self.config, cmd)
-        if self.arp_collect_host == "enable" and not exist:
+        cmd_arp = "arp collect host enable"
+        if self.arp_collect_host == "enable" and not exist_arp:
             self.cli_add_command("interface %s" %
                                  self.vbdif_name.lower().capitalize())
-            self.cli_add_command(cmd)
+            self.cli_add_command(cmd_arp)
             self.cli_add_command("quit")
-        elif self.arp_collect_host == "disable" and exist:
+        elif self.arp_collect_host == "disable" and exist_arp:
             self.cli_add_command("interface %s" %
                                  self.vbdif_name.lower().capitalize())
-            self.cli_add_command(cmd, undo=True)
+            self.cli_add_command(cmd_arp, undo=True)
             self.cli_add_command("quit")
 
     def config_host_collect_protocal(self):
@@ -541,7 +567,7 @@ class VxlanArp(object):
         if self.arp_suppress:
             self.proposed["arp_suppress"] = self.arp_suppress
         if self.vbdif_name:
-            self.proposed["vbdif_name"] = self.evn_peer_ip
+            self.proposed["vbdif_name"] = self.vbdif_name
         if self.bridge_domain_id:
             self.proposed["bridge_domain_id"] = self.bridge_domain_id
         self.proposed["state"] = self.state

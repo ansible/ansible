@@ -274,10 +274,20 @@ def is_valid_v6addr(addr):
     """check if ipv6 addr is valid"""
     if addr.find(':') != -1:
         addr_list = addr.split(':')
-        if len(addr_list) > 6:
+        if len(addr_list) > 8:
             return False
-        if addr_list[1] == "":
-            return False
+        re_find = re.findall(r"::", addr)
+        if re_find:
+            if len(re_find) > 1:
+                return False
+        if len(addr_list) < 8:
+            if not re_find:
+                return False
+        for addr in addr_list:
+            if len(addr) > 4:
+                return False
+            if re.findall(r"[^0-9a-fA-F]", addr):
+                return False
         return True
     return False
 
@@ -607,6 +617,9 @@ class StaticRoute(object):
                 if not is_valid_v4addr(self.next_hop):
                     self.module.fail_json(
                         msg='Error: The %s is not a valid address' % self.next_hop)
+            if not is_valid_v4addr(self.prefix):
+                self.module.fail_json(
+                    msg='Error: The %s is not a valid address' % self.prefix)
         # ipv6 check
         if self.aftype == "v6":
             if int(self.mask) > 128 or int(self.mask) < 0:
@@ -616,6 +629,9 @@ class StaticRoute(object):
                 if not is_valid_v6addr(self.next_hop):
                     self.module.fail_json(
                         msg='Error: The %s is not a valid address' % self.next_hop)
+            if not is_valid_v6addr(self.prefix):
+                self.module.fail_json(
+                    msg='Error: The %s is not a valid address' % self.prefix)
 
         # description check
         if self.description:
