@@ -293,7 +293,7 @@ class ActionModule(ActionBase):
             reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
         except AnsibleConnectionFailure as e:
             # If the connection is closed too quickly due to the system being shutdown, carry on
-            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_native(e)))
+            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
             reboot_result['rc'] = 0
 
         result['start'] = datetime.utcnow()

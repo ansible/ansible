@@ -56,7 +56,7 @@ class InventoryModule(BaseInventoryPlugin):
                     try:
                         (host, port) = parse_address(h, allow_ranges=False)
                     except AnsibleError as e:
-                        self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_native(e))
+                        self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_text(e))
                         host = h
                         port = None
 

@@ -161,7 +161,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 self.inventory.set_variable(hostname, self.get_option('vars_prefix') + key, item[key])
             except (ValueError, TypeError) as e:
-                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_native(e)))
+                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_text(e)))
         self.inventory.add_child('all', hostname)
 
     def verify_file(self, path):

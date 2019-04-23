@@ -104,7 +104,7 @@ class VariableManager:
         except AnsibleError as e:
             # bad cache plugin is not fatal error
             # fallback to a dict as in memory cache
-            display.warning(to_native(e))
+            display.warning(to_text(e))
             self._fact_cache = {}
 
     def __getstate__(self):

@@ -306,7 +306,7 @@ class PlaybookExecutor:
                 for x in replay_hosts:
                     fd.write("%s\n" % x)
         except Exception as e:
-            display.warning("Could not create retry file '%s'.\n\t%s" % (retry_path, to_native(e)))
+            display.warning("Could not create retry file '%s'.\n\t%s" % (retry_path, to_text(e)))
             return False
 
         return True

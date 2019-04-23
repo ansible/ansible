@@ -215,9 +215,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                             try:
                                 self.inventory.set_variable(host['name'], self.get_option('vars_prefix') + k, v)
                             except ValueError as e:
-                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_native(e)))
+                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_text(e)))
                 except ValueError as e:
-                    self.display.warning("Could not get host info for %s, skipping: %s" % (host['name'], to_native(e)))
+                    self.display.warning("Could not get host info for %s, skipping: %s" % (host['name'], to_text(e)))
 
                 # set host vars from params
                 if self.get_option('want_params'):
