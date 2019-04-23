@@ -2,7 +2,7 @@
   set_fact:
     virtual_network_name: myVirtualNetwork
     subnet_name: AzureFirewallSubnet
-    public_ipdaddress_name: myPublicIpAddress
+    public_ipaddress_name: myPublicIpAddress
     azure_firewall_name: myFirewall
 
 - name: Create virtual network
@@ -107,5 +107,157 @@
         name: azureFirewallIpConfiguration
   register: output
 
-- debug:
-    var: output
+- name: Assert that output has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Create Azure Firewall -- idempotent
+  azure_rm_azurefirewall:
+    resource_group: '{{resource_group}}'
+    name: '{{azure_firewall_name}}'
+    #tags:
+    #  key1: value1
+    application_rule_collections:
+      - priority: '110'
+        action:
+          type: Deny
+        rules:
+          - name: rule1
+            description: Deny inbound rule
+            source_addresses:
+              - 216.58.216.164
+              - 10.0.0.0/25
+            protocols:
+              - protocolType: Https
+                port: '443'
+            target_fqdns:
+              - www.test.com
+        name: apprulecoll
+    nat_rule_collections:
+      - priority: '112'
+        action:
+          type: Dnat
+        rules:
+          - name: DNAT-HTTPS-traffic
+            description: D-NAT all outbound web traffic for inspection
+            source_addresses:
+              - '*'
+            destination_addresses:
+              - "{{ pip_output.state.ip_address }}"
+            destination_ports:
+              - '443'
+            protocols:
+              - TCP
+            translated_address: 1.2.3.5
+            translated_port: '8443'
+        name: natrulecoll
+    network_rule_collections:
+      - priority: '112'
+        action:
+          type: Deny
+        rules:
+          - name: L4-traffic
+            description: Block traffic based on source IPs and ports
+            protocols:
+              - TCP
+            source_addresses:
+              - 192.168.1.1-192.168.1.12
+              - 10.1.4.12-10.1.4.255
+            destination_addresses:
+              - '*'
+            destination_ports:
+              - 443-444
+              - '8443'
+        name: netrulecoll
+    ip_configurations:
+      - subnet:
+          id: >-
+            /subscriptions/{{ subscription_id }}/resourceGroups/{{
+            resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
+            virtual_network_name }}/subnets/{{ subnet_name }}
+        public_ip_address:
+          id:
+            name: "{{ public_ipaddress_name }}"
+        name: azureFirewallIpConfiguration
+  register: output
+
+- name: Assert that output has changed
+  assert:
+    that:
+      - not output.changed
+
+- name: Create Azure Firewall -- change something
+  azure_rm_azurefirewall:
+    resource_group: '{{resource_group}}'
+    name: '{{azure_firewall_name}}'
+    #tags:
+    #  key1: value1
+    application_rule_collections:
+      - priority: '110'
+        action:
+          type: Deny
+        rules:
+          - name: rule1
+            description: Deny inbound rule
+            source_addresses:
+              - 216.58.216.165
+              - 10.0.0.0/25
+            protocols:
+              - protocolType: Https
+                port: '443'
+            target_fqdns:
+              - www.test.com
+        name: apprulecoll
+    nat_rule_collections:
+      - priority: '112'
+        action:
+          type: Dnat
+        rules:
+          - name: DNAT-HTTPS-traffic
+            description: D-NAT all outbound web traffic for inspection
+            source_addresses:
+              - '*'
+            destination_addresses:
+              - "{{ pip_output.state.ip_address }}"
+            destination_ports:
+              - '443'
+            protocols:
+              - TCP
+            translated_address: 1.2.3.6
+            translated_port: '8443'
+        name: natrulecoll
+    network_rule_collections:
+      - priority: '112'
+        action:
+          type: Deny
+        rules:
+          - name: L4-traffic
+            description: Block traffic based on source IPs and ports
+            protocols:
+              - TCP
+            source_addresses:
+              - 192.168.1.1-192.168.1.12
+              - 10.1.4.12-10.1.4.255
+            destination_addresses:
+              - '*'
+            destination_ports:
+              - 443-445
+              - '8443'
+        name: netrulecoll
+    ip_configurations:
+      - subnet:
+          id: >-
+            /subscriptions/{{ subscription_id }}/resourceGroups/{{
+            resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
+            virtual_network_name }}/subnets/{{ subnet_name }}
+        public_ip_address:
+          id:
+            name: "{{ public_ipaddress_name }}"
+        name: azureFirewallIpConfiguration
+  register: output
+
+- name: Assert that output has changed
+  assert:
+    that:
+      - output.changed
