@@ -27,7 +27,7 @@ import tempfile
 import yaml
 
 from ansible import context
-from ansible.cli.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import PY3
@@ -128,14 +128,13 @@ class TestGalaxy(unittest.TestCase):
     def test_run(self):
         ''' verifies that the GalaxyCLI object's api is created and that execute() is called. '''
         gc = GalaxyCLI(args=["ansible-galaxy", "install", "--ignore-errors", "imaginary_role"])
-        with patch.object(ansible.cli.CLI, "execute", return_value=None) as mock_ex:
-            with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_run:
-                gc.run()
-                # testing
-                self.assertIsInstance(gc.galaxy, ansible.galaxy.Galaxy)
-                self.assertEqual(mock_run.call_count, 1)
-                self.assertTrue(isinstance(gc.api, ansible.galaxy.api.GalaxyAPI))
-                self.assertEqual(mock_ex.call_count, 1)
+        gc.parse()
+        with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_run:
+            gc.run()
+            # testing
+            self.assertIsInstance(gc.galaxy, ansible.galaxy.Galaxy)
+            self.assertEqual(mock_run.call_count, 1)
+            self.assertTrue(isinstance(gc.api, ansible.galaxy.api.GalaxyAPI))
 
     def test_execute_remove(self):
         # installing role
@@ -172,51 +171,26 @@ class TestGalaxy(unittest.TestCase):
             gc.run()
             self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
 
-    def run_parse_common(self, galaxycli_obj, action):
-        with patch.object(opt_help.SortedOptParser, "set_usage") as mocked_usage:
-            galaxycli_obj.parse()
-
-            # checking that the common results of parse() for all possible actions have been created/called
-            self.assertIsInstance(galaxycli_obj.parser, opt_help.SortedOptParser)
-            formatted_call = {
-                'import': 'usage: %prog import [options] github_user github_repo',
-                'delete': 'usage: %prog delete [options] github_user github_repo',
-                'info': 'usage: %prog info [options] role_name[,version]',
-                'init': 'usage: %prog init [options] role_name',
-                'install': 'usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]',
-                'list': 'usage: %prog list [role_name]',
-                'login': 'usage: %prog login [options]',
-                'remove': 'usage: %prog remove role1 role2 ...',
-                'search': ('usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] '
-                           '[--author username]'),
-                'setup': 'usage: %prog setup [options] source github_user github_repo secret',
-            }
-
-            first_call = 'usage: %prog [delete|import|info|init|install|list|login|remove|search|setup] [--help] [options] ...'
-            second_call = formatted_call[action]
-            calls = [call(first_call), call(second_call)]
-            mocked_usage.assert_has_calls(calls)
-
     def test_parse_no_action(self):
         ''' testing the options parser when no action is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", ""])
-        self.assertRaises(AnsibleOptionsError, gc.parse)
+        self.assertRaises(SystemExit, gc.parse)
 
     def test_parse_invalid_action(self):
         ''' testing the options parser when an invalid action is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "NOT_ACTION"])
-        self.assertRaises(AnsibleOptionsError, gc.parse)
+        self.assertRaises(SystemExit, gc.parse)
 
     def test_parse_delete(self):
         ''' testing the options parser when the action 'delete' is given '''
-        gc = GalaxyCLI(args=["ansible-galaxy", "delete"])
-        self.run_parse_common(gc, "delete")
+        gc = GalaxyCLI(args=["ansible-galaxy", "delete", "foo", "bar"])
+        gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
     def test_parse_import(self):
         ''' testing the options parser when the action 'import' is given '''
-        gc = GalaxyCLI(args=["ansible-galaxy", "import"])
-        self.run_parse_common(gc, "import")
+        gc = GalaxyCLI(args=["ansible-galaxy", "import", "foo", "bar"])
+        gc.parse()
         self.assertEqual(context.CLIARGS['wait'], True)
         self.assertEqual(context.CLIARGS['reference'], None)
         self.assertEqual(context.CLIARGS['check_status'], False)
@@ -224,21 +198,21 @@ class TestGalaxy(unittest.TestCase):
 
     def test_parse_info(self):
         ''' testing the options parser when the action 'info' is given '''
-        gc = GalaxyCLI(args=["ansible-galaxy", "info"])
-        self.run_parse_common(gc, "info")
+        gc = GalaxyCLI(args=["ansible-galaxy", "info", "foo", "bar"])
+        gc.parse()
         self.assertEqual(context.CLIARGS['offline'], False)
 
     def test_parse_init(self):
         ''' testing the options parser when the action 'init' is given '''
-        gc = GalaxyCLI(args=["ansible-galaxy", "init"])
-        self.run_parse_common(gc, "init")
+        gc = GalaxyCLI(args=["ansible-galaxy", "init", "foo"])
+        gc.parse()
         self.assertEqual(context.CLIARGS['offline'], False)
         self.assertEqual(context.CLIARGS['force'], False)
 
     def test_parse_install(self):
         ''' testing the options parser when the action 'install' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "install"])
-        self.run_parse_common(gc, "install")
+        gc.parse()
         self.assertEqual(context.CLIARGS['ignore_errors'], False)
         self.assertEqual(context.CLIARGS['no_deps'], False)
         self.assertEqual(context.CLIARGS['role_file'], None)
@@ -247,35 +221,34 @@ class TestGalaxy(unittest.TestCase):
     def test_parse_list(self):
         ''' testing the options parser when the action 'list' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "list"])
-        self.run_parse_common(gc, "list")
+        gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
     def test_parse_login(self):
         ''' testing the options parser when the action 'login' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "login"])
-        self.run_parse_common(gc, "login")
+        gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
         self.assertEqual(context.CLIARGS['token'], None)
 
     def test_parse_remove(self):
         ''' testing the options parser when the action 'remove' is given '''
-        gc = GalaxyCLI(args=["ansible-galaxy", "remove"])
-        self.run_parse_common(gc, "remove")
+        gc = GalaxyCLI(args=["ansible-galaxy", "remove", "foo"])
+        gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
     def test_parse_search(self):
         ''' testing the options parswer when the action 'search' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "search"])
-        self.run_parse_common(gc, "search")
+        gc.parse()
         self.assertEqual(context.CLIARGS['platforms'], None)
         self.assertEqual(context.CLIARGS['galaxy_tags'], None)
         self.assertEqual(context.CLIARGS['author'], None)
 
     def test_parse_setup(self):
         ''' testing the options parser when the action 'setup' is given '''
-        gc = GalaxyCLI(args=["ansible-galaxy", "setup"])
-        self.run_parse_common(gc, "setup")
-
+        gc = GalaxyCLI(args=["ansible-galaxy", "setup", "source", "github_user", "github_repo", "secret"])
+        gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
         self.assertEqual(context.CLIARGS['remove_id'], None)
         self.assertEqual(context.CLIARGS['setup_list'], False)
