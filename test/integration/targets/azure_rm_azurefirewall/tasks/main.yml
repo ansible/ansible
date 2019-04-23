@@ -99,7 +99,7 @@
       - subnet:
           id:
             virtual_network_name: "{{ virtual_network_name }}"
-            name: "{{ name }}"
+            name: "{{ subnet_name }}"
         public_ip_address:
           id:
             name: "{{ public_ipaddress_name }}"
@@ -173,7 +173,7 @@
       - subnet:
           id:
             virtual_network_name: "{{ virtual_network_name }}"
-            name: "{{ name }}"
+            name: "{{ subnet_name }}"
         public_ip_address:
           id:
             name: "{{ public_ipaddress_name }}"
