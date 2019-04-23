@@ -495,6 +495,7 @@ def append_tcp_flags(rule, param, flag):
         if 'flags' in param and 'flags_set' in param:
             rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
+
 def append_physdev(rule, param, flag):
     if param:
         if 'filter' in param:
@@ -502,6 +503,7 @@ def append_physdev(rule, param, flag):
             if param['filter'] == 'in' or param['filter'] == 'out':
                 if 'device' in param:
                     rule.extend([param['device']])
+
 
 def append_match_flag(rule, param, flag, negatable):
     if param == 'match':
