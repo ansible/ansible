@@ -298,7 +298,7 @@ def add_runas_options(parser):
     # consolidated privilege escalation (become)
     runas_group.add_argument("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
                              help="run operations with become (does not imply password prompting)")
-    runas_group.add_argument('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, choices=C.BECOME_METHODS,
+    runas_group.add_argument('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD,
                              help="privilege escalation method to use (default=%(default)s), use "
                                   "`ansible-doc -t become -l` to list valid choices.")
     runas_group.add_argument('--become-user', default=None, dest='become_user', type=str,
