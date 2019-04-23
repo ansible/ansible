@@ -16,9 +16,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_batchaccount
 version_added: "2.9"
-
 short_description: Manages a Batch Account on Azure.
-
 description:
     - Create, update and delete instance of Azure Batch Account.
 
@@ -78,11 +76,11 @@ author:
 EXAMPLES = '''
   - name: Create (or update) Batch Account
     azure_rm_batchaccount:
-      resource_group: MyResGroup
-      name: "test_object"
-      location: West US
-      auto_storage_account: MyStorageAccountId
-      state: present
+        resource_group: MyResGroup
+        name: test_object
+        location: West US
+        auto_storage_account: MyStorageAccountId
+        state: present
 '''
 
 RETURN = '''
