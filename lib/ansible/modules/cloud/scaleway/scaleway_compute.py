@@ -46,8 +46,8 @@ options:
 
   boot_type:
     description:
-      - Boot method
-    default: bootscript
+      - Boot method. The API automatically picks the right option if nothing is specified.
+    required: false
     version_added: 2.9
     choices:
       - bootscript
@@ -265,7 +265,6 @@ def create_server(compute_api, server):
     compute_api.module.debug("Starting a create_server")
     target_server = None
     data = {"enable_ipv6": server["enable_ipv6"],
-            "boot_type": server["boot_type"],
             "tags": server["tags"],
             "commercial_type": server["commercial_type"],
             "image": server["image"],
@@ -273,6 +272,9 @@ def create_server(compute_api, server):
             "name": server["name"],
             "organization": server["organization"]
             }
+
+    if server["boot_type"]:
+        data["boot_type"] = server["boot_type"]
 
     if server["security_group"]:
         data["security_group"] = server["security_group"]
@@ -654,7 +656,7 @@ def main():
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
         commercial_type=dict(required=True),
         enable_ipv6=dict(default=False, type="bool"),
-        boot_type=dict(default="bootscript", choices=['bootscript', 'local']),
+        boot_type=dict(choices=['bootscript', 'local']),
         public_ip=dict(default="absent"),
         state=dict(choices=state_strategy.keys(), default='present'),
         tags=dict(type="list", default=[]),
