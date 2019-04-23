@@ -246,7 +246,6 @@ def main():
         supports_check_mode=True,
     )
 
-    db = module.params["db"]
     name = module.params["name"]
     slot_type = module.params["slot_type"]
     immediately_reserve = module.params["immediately_reserve"]

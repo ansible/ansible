@@ -210,7 +210,6 @@ def main():
         supports_check_mode=True,
     )
 
-    db = module.params["db"]
     ext = module.params["ext"]
     schema = module.params["schema"]
     state = module.params["state"]
@@ -237,7 +236,7 @@ def main():
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     db_connection.close()
-    module.exit_json(changed=changed, db=db, ext=ext, queries=executed_queries)
+    module.exit_json(changed=changed, db=module.params["db"], ext=ext, queries=executed_queries)
 
 
 if __name__ == '__main__':
