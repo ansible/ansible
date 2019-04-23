@@ -94,30 +94,43 @@ any directories related to that playbook or role to the search path. Those
 directories remain in scope for the duration of the run, even after the playbook or role
 has finished executing. Ansible loads modules, module utilities, and plugins in this order:
 
-1. A directory adjacent to a playbook specified on the command line is added
-   first. If you run Ansible with ``ansible-playbook /path/to/play.yml``, Ansible appends these directories if they exist:
-   ``/path/to/modules``
-   ``/path/to/module_utils``
-   ``/path/to/plugins``
+1. Directories adjacent to a playbook specified on the command line. If you run Ansible with ``ansible-playbook /path/to/play.yml``, Ansible appends these directories if they exist:
 
-2. A directory adjacent to a playbook that was statically imported by a
+   .. code-block:: bash
+
+      /path/to/modules
+      /path/to/module_utils
+      /path/to/plugins
+
+2. Directories adjacent to a playbook that is statically imported by a
    playbook specified on the command line. If ``play.yml`` includes
    ``- import_playbook: /path/to/subdir/play1.yml``, Ansible appends these directories if they exist:
-   ``/path/to/subdir/modules``
-   ``/path/to/subdir/module_utils``
-   ``/path/to/subdir/plugins``
 
-3. A subdirectory of a role directory referenced by a playbook. If
-   ``/path/to/play.yml`` references ``myrole``, Ansible appends these directories if they exist:
-   ``/path/to/roles/myrole/modules``
-   ``/path/to/roles/myrole/module_utils``
-   ``/path/to/roles/myrole/plugins``
+   .. code-block:: bash
 
-4. A directory specified in ``ansible.cfg`` or by the environment variables:
-   :ref:`DEFAULT_MODULE_PATH`
-   :ref:`DEFAULT_MODULE_UTILS_PATH`
-   and the default paths for the various plugin types, for example:
-   :ref:`DEFAULT_FILTER_PLUGIN_PATH`
+      /path/to/subdir/modules
+      /path/to/subdir/module_utils
+      /path/to/subdir/plugins
+
+3. Subdirectories of a role directory referenced by a playbook. If
+   ``play.yml`` runs ``myrole``, Ansible appends these directories if they exist:
+
+   .. code-block:: bash
+
+      /path/to/roles/myrole/modules
+      /path/to/roles/myrole/module_utils
+      /path/to/roles/myrole/plugins
+
+4. Directories specified in ``ansible.cfg`` or by the various
+   ``DEFAULT_*_PATH`` environment variables, including the paths for the
+   various plugin types:
+
+   .. code-block:: bash
+
+      DEFAULT_MODULE_PATH
+      DEFAULT_MODULE_UTILS_PATH
+      DEFAULT_CACHE_PLUGIN_PATH
+      DEFAULT_FILTER_PLUGIN_PATH
 
 5. The standard directories that ship as part of the Ansible distribution.
 
