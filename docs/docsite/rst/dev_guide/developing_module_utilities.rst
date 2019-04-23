@@ -29,7 +29,7 @@ Naming and finding module utilities
 Ansible uses namespacing to organize module utilities. We store generic
 utilities in the root directory. For example,
 the shared code for parsing URLs is in ``lib/ansible/module_utils/urls.py``.
-We store code files with a more specific purpose live in more specific
+Code files with a more specific purpose live in more specific
 directories. For example, modules related to EMC live in ``lib/ansible/modules/storage/emc/``
 and the module utilities related to EMC live in ``lib/ansible/module_utils/storage/emc/``.
 Following this pattern with your own module utilities makes everything easy to find and use.
