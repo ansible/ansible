@@ -150,7 +150,78 @@ RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: str
+  type: complex
+  contains:
+      username:
+          description: Username.
+          returned: success
+          type: str
+          sample: 'john'
+      id:
+          description: User ID.
+          returned: success
+          type: str
+          sample: '4bc73d5108e33b4810f3eab0'
+      email:
+          description: User email.
+          returned: success
+          type: str
+          sample: 'john@domain.com'
+      full_name:
+          description: Full name of the user.
+          returned: success
+          type: str
+          sample: 'John Smith'
+      last_activity:
+          description: Last user activity.
+          returned: success
+          type: str
+          sample: '2019-04-21T23:16:53.500+0000'
+      external:
+          description: Whether or not the user was created from an external authentication source (such as LDAP).
+          returned: success
+          type: bool
+          sample: true
+      session_active:
+          description: Whether or not the user's session is active.
+          returned: success
+          type: bool
+          sample: true
+      session_timeout_ms:
+          description: Session automatically ends after this amount of time.
+          returned: success
+          type: int
+          sample: 3600000
+      startpage:
+          description: User's start page.
+          returned: success
+          type: dict
+          sample: { "id": "5b05eea33f5e865e57babfae", "type": "dashboard" }
+      preferences:
+          description: User's preferences.
+          returned: success
+          type: dict
+          sample: { "enableSmartSearch": true }
+      timezone:
+          description: User's timezone.
+          returned: success
+          type: str
+          sample: 'America/Chicago'
+      permissions:
+          description: User permissions (dashboards, streams, collectors, etc).
+          returned: success
+          type: list
+          sample: [ "dashboards:read:4c58eef77ec84145c3a2d9f3" ]
+      roles:
+          description: User roles.
+          returned: success
+          type: list
+          sample: [ "analyst", "Administrator" ]
+      read_only:
+          description: Whether or not the user is a read-only user.
+          returned: success
+          type: bool
+          sample: false
 msg:
   description: The HTTP message from the request
   returned: always
@@ -320,7 +391,7 @@ def main():
     elif action == "delete":
         status, message, content, url = delete(module, base_url, headers)
     elif action == "list":
-        status, message, content, url = list(module, base_url, api_token)
+        status, message, content, url = list(module, base_url, headers)
 
     uresp = {}
     content = to_text(content, encoding='UTF-8')
