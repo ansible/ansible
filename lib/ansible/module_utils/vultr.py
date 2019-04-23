@@ -128,15 +128,15 @@ class Vultr:
             return
 
         r_value = resource.get(resource_key)
-        if isinstance(param, bool):
-            if param is True and r_value not in ['yes', 'enable']:
+        if r_value in ['yes', 'no']:
+            if param and r_value != 'yes':
                 return "enable"
-            elif param is False and r_value not in ['no', 'disable']:
+            elif not param and r_value != 'no':
                 return "disable"
         else:
-            if r_value is None:
+            if param and not r_value:
                 return "enable"
-            else:
+            elif not param and r_value:
                 return "disable"
 
     def api_query(self, path="/", method="GET", data=None):
