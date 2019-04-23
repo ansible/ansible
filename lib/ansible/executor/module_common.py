@@ -394,7 +394,8 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
 ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
         try:
             if PY3:
-                importlib.util.find_spec('coverage')
+                if importlib.util.find_spec('coverage') is None:
+                    raise ImportError
             else:
                 imp.find_module('coverage')
         except ImportError:
