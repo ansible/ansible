@@ -39,12 +39,6 @@ class ShellBase(AnsiblePlugin):
         super(ShellBase, self).__init__()
 
         self.env = {}
-        if C.DEFAULT_MODULE_SET_LOCALE:
-            module_locale = C.DEFAULT_MODULE_LANG
-            self.env = {'LANG': module_locale,
-                        'LC_ALL': module_locale,
-                        'LC_MESSAGES': module_locale}
-
         self.tmpdir = None
         self.executable = None
 
