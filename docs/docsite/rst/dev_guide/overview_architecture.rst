@@ -10,26 +10,34 @@ It uses no agents and no additional custom security infrastructure, so it's easy
 
 In this section, we'll give you a really quick overview of how Ansible works so you can see how the pieces fit together.
 
+.. contents::
+   :local:
+
 Modules
 =======
 
-Ansible works by connecting to your nodes and pushing out small programs, called "Ansible Modules" to them. These programs are written to be resource models of the desired state of the system. Ansible then executes these modules (over SSH by default), and removes them when finished.
+Ansible works by connecting to your nodes and pushing out small programs, called "Ansible Modules" to them. These programs are written to be resource models of the desired state of the system. Ansible then executes these modules (over SSH by default), and removes them when finished. Your library of modules can reside on any machine, and there are no servers, daemons, or databases required.
 
-Your library of modules can reside on any machine, and there are no servers, daemons, or databases required. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content.
+You can :ref:`write your own modules <developing_modules_general>`, though you should first consider :ref:`whether you should <developing_modules>`. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content.
+
+Module utilities
+================
+
+When multiple modules use the same code, Ansible stores those functions as module utilities. For example, the code that parses URLs is ``lib/ansible/module_utils/url.py``. You can :ref:`write your own module utilities <appendix_module_utilities>` as well.
 
 Plugins
 =======
 
-Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own.
+Plugins augment Ansible's core functionality with features like cacheing, callbacks, filters, and lookups. Plugins are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`.
 
 Inventory
 =========
 
-By default, Ansible represents what machines it manages using a very simple INI file that puts all of your managed machines in groups of your own choosing.
+By default, Ansible represents what machines it manages using a simple INI file that puts all of your managed machines in groups of your own choosing.
 
 To add new machines, there is no additional SSL signing server involved, so there's never any hassle deciding why a particular machine didn't get linked up due to obscure NTP or DNS issues.
 
-If there's another source of truth in your infrastructure, Ansible can also plugin to that, such as drawing inventory, group, and variable information from sources like EC2, Rackspace, OpenStack, and more.
+If there's another source of truth in your infrastructure, Ansible can also connect to that. Ansible can draw inventory, group, and variable information from sources like EC2, Rackspace, OpenStack, and more.
 
 Here's what a plain text inventory file looks like::
 
@@ -67,8 +75,57 @@ Here's what a simple playbook looks like::
     - common
     - content
 
-
-Extending Ansible with plug-ins and the API
+Extending Ansible with plugins and the API
 ===========================================
 
-Should you want to write your own, Ansible modules can be written in any language that can return JSON (Ruby, Python, bash, etc). Inventory can also plug in to any datasource by writing a program that speaks to that datasource and returns JSON. There's also various Python APIs for extending Ansible's connection types (SSH is not the only transport possible), callbacks (how Ansible logs, etc), and even for adding new server side behaviors.
+You can write your own specialized Ansible modules, module utilities, or plugins in any language that can return JSON (Ruby, Python, bash, etc). You can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. There are also various Python APIs for extending Ansible's connection types (SSH is not the only transport possible), for adding callbacks (how Ansible logs, etc), and even for adding new server side behaviors.
+
+.. _ansible_search_path:
+
+The Ansible search path
+=======================
+
+Modules, module utilities, plugins, playbooks, and roles can live in multiple locations. If you
+write your own code to extend Ansible's core features, you may have multiple files with similar or the same names in different locations on your Ansible control node. The search path determines which of these files Ansible will discover and use on any given playbook run.
+
+Ansible's search path grows incrementally over a run. As
+Ansible finds each playbook and role included in a given run, it appends
+any directories related to that playbook or role to the search path. Those
+directories remain in scope for the duration of the run, even after the playbook or role
+has finished executing. Ansible loads modules, module utilities, and plugins in this order:
+
+1. A directory adjacent to a playbook specified on the command line is added
+   first. If you run Ansible with ``ansible-playbook /path/to/play.yml``, Ansible appends these directories if they exist:
+   ``/path/to/modules``
+   ``/path/to/module_utils``
+   ``/path/to/plugins``
+
+2. A directory adjacent to a playbook that was statically imported by a
+   playbook specified on the command line. If ``play.yml`` includes
+   ``- import_playbook: /path/to/subdir/play1.yml``, Ansible appends these directories if they exist:
+   ``/path/to/subdir/modules``
+   ``/path/to/subdir/module_utils``
+   ``/path/to/subdir/plugins``
+
+3. A subdirectory of a role directory referenced by a playbook. If
+   ``/path/to/play.yml`` references ``myrole``, Ansible appends these directories if they exist:
+   ``/path/to/roles/myrole/modules``
+   ``/path/to/roles/myrole/module_utils``
+   ``/path/to/roles/myrole/plugins``
+
+4. A directory specified in ``ansible.cfg`` or by the environment variables:
+   :ref:`DEFAULT_MODULE_PATH`
+   :ref:`DEFAULT_MODULE_UTILS_PATH`
+   and the default paths for the various plugin types, for example:
+   :ref:`DEFAULT_FILTER_PLUGIN_PATH`
+
+5. The standard directories that ship as part of the Ansible distribution.
+
+.. caution::
+
+   Modules, module utilities, and plugins in user-specified directories will
+   override the standard versions. This includes some files with generic names.
+   For example, if you have a file named ``basic.py`` in a user-specified
+   directory, it will override the standard ``ansible.module_utils.basic``.
+
+   If you have more than one module, module utility, or plugin with the same name in different user-specified directories, the order of commands at the command line and the order of includes and roles in your playbooks will affect which one is found and used on that particular run.
