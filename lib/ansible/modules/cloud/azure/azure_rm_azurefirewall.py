@@ -35,6 +35,9 @@ options:
   location:
     description:
       - Resource location.
+  tags:
+    description:
+      - Resource tags.
   application_rule_collections:
     description:
       - Collection of application rule collections used by Azure Firewall.
@@ -43,50 +46,46 @@ options:
       id:
         description:
           - Resource ID.
-      properties:
+      priority:
         description:
-          - undefined
+          - Priority of the application rule collection resource.
+      action:
+        description:
+          - The action type of a rule collection
         suboptions:
-          priority:
+          type:
             description:
-              - Priority of the application rule collection resource.
-          action:
+              - The type of action.
+      rules:
+        description:
+          - Collection of rules used by a application rule collection.
+        type: list
+        suboptions:
+          name:
             description:
-              - The action type of a rule collection
-            suboptions:
-              type:
-                description:
-                  - The type of action.
-          rules:
+              - Name of the application rule.
+          description:
             description:
-              - Collection of rules used by a application rule collection.
+              - Description of the rule.
+          source_addresses:
+            description:
+              - List of source IP addresses for this rule.
             type: list
-            suboptions:
-              name:
-                description:
-                  - Name of the application rule.
-              description:
-                description:
-                  - Description of the rule.
-              source_addresses:
-                description:
-                  - List of source IP addresses for this rule.
-                type: list
-              protocols:
-                description:
-                  - Array of ApplicationRuleProtocols.
-                type: list
-              target_fqdns:
-                description:
-                  - List of FQDNs for this rule.
-                type: list
-              fqdn_tags:
-                description:
-                  - List of FQDN Tags for this rule.
-                type: list
-          provisioning_state:
+          protocols:
             description:
-              - The provisioning state of the resource.
+              - Array of ApplicationRuleProtocols.
+            type: list
+          target_fqdns:
+            description:
+              - List of FQDNs for this rule.
+            type: list
+          fqdn_tags:
+            description:
+              - List of FQDN Tags for this rule.
+            type: list
+      provisioning_state:
+        description:
+          - The provisioning state of the resource.
       name:
         description:
           - >-
@@ -100,58 +99,54 @@ options:
       id:
         description:
           - Resource ID.
-      properties:
+      priority:
         description:
-          - undefined
+          - Priority of the NAT rule collection resource.
+      action:
+        description:
+          - The action type of a NAT rule collection
         suboptions:
-          priority:
+          type:
             description:
-              - Priority of the NAT rule collection resource.
-          action:
+              - The type of action.
+      rules:
+        description:
+          - Collection of rules used by a NAT rule collection.
+        type: list
+        suboptions:
+          name:
             description:
-              - The action type of a NAT rule collection
-            suboptions:
-              type:
-                description:
-                  - The type of action.
-          rules:
+              - Name of the NAT rule.
+          description:
             description:
-              - Collection of rules used by a NAT rule collection.
+              - Description of the rule.
+          source_addresses:
+            description:
+              - List of source IP addresses for this rule.
             type: list
-            suboptions:
-              name:
-                description:
-                  - Name of the NAT rule.
-              description:
-                description:
-                  - Description of the rule.
-              source_addresses:
-                description:
-                  - List of source IP addresses for this rule.
-                type: list
-              destination_addresses:
-                description:
-                  - List of destination IP addresses for this rule.
-                type: list
-              destination_ports:
-                description:
-                  - List of destination ports.
-                type: list
-              protocols:
-                description:
-                  - >-
-                    Array of AzureFirewallNetworkRuleProtocols applicable to
-                    this NAT rule.
-                type: list
-              translated_address:
-                description:
-                  - The translated address for this NAT rule.
-              translated_port:
-                description:
-                  - The translated port for this NAT rule.
-          provisioning_state:
+          destination_addresses:
             description:
-              - The provisioning state of the resource.
+              - List of destination IP addresses for this rule.
+            type: list
+          destination_ports:
+            description:
+              - List of destination ports.
+            type: list
+          protocols:
+            description:
+              - >-
+                Array of AzureFirewallNetworkRuleProtocols applicable to this
+                NAT rule.
+            type: list
+          translated_address:
+            description:
+              - The translated address for this NAT rule.
+          translated_port:
+            description:
+              - The translated port for this NAT rule.
+      provisioning_state:
+        description:
+          - The provisioning state of the resource.
       name:
         description:
           - >-
@@ -165,50 +160,46 @@ options:
       id:
         description:
           - Resource ID.
-      properties:
+      priority:
         description:
-          - undefined
+          - Priority of the network rule collection resource.
+      action:
+        description:
+          - The action type of a rule collection
         suboptions:
-          priority:
+          type:
             description:
-              - Priority of the network rule collection resource.
-          action:
+              - The type of action.
+      rules:
+        description:
+          - Collection of rules used by a network rule collection.
+        type: list
+        suboptions:
+          name:
             description:
-              - The action type of a rule collection
-            suboptions:
-              type:
-                description:
-                  - The type of action.
-          rules:
+              - Name of the network rule.
+          description:
             description:
-              - Collection of rules used by a network rule collection.
+              - Description of the rule.
+          protocols:
+            description:
+              - Array of AzureFirewallNetworkRuleProtocols.
             type: list
-            suboptions:
-              name:
-                description:
-                  - Name of the network rule.
-              description:
-                description:
-                  - Description of the rule.
-              protocols:
-                description:
-                  - Array of AzureFirewallNetworkRuleProtocols.
-                type: list
-              source_addresses:
-                description:
-                  - List of source IP addresses for this rule.
-                type: list
-              destination_addresses:
-                description:
-                  - List of destination IP addresses.
-                type: list
-              destination_ports:
-                description:
-                  - List of destination ports.
-                type: list
-          provisioning_state:
+          source_addresses:
             description:
-              - The provisioning state of the resource.
+              - List of source IP addresses for this rule.
+            type: list
+          destination_addresses:
+            description:
+              - List of destination IP addresses.
+            type: list
+          destination_ports:
+            description:
+              - List of destination ports.
+            type: list
+      provisioning_state:
+        description:
+          - The provisioning state of the resource.
       name:
         description:
           - >-
@@ -222,36 +213,32 @@ options:
       id:
         description:
           - Resource ID.
-      properties:
+      subnet:
         description:
-          - undefined
+          - >-
+            Reference of the subnet resource. This resource must be named
+            'AzureFirewallSubnet'.
         suboptions:
-          subnet:
+          id:
             description:
-              - >-
-                Reference of the subnet resource. This resource must be named
-                'AzureFirewallSubnet'.
-            suboptions:
-              id:
-                description:
-                  - Resource ID.
-          public_i_p_address:
+              - Resource ID.
+      public_ipaddress:
+        description:
+          - >-
+            Reference of the PublicIP resource. This field is a mandatory input
+            if subnet is not null.
+        suboptions:
+          id:
             description:
-              - >-
-                Reference of the PublicIP resource. This field is a mandatory
-                input if subnet is not null.
-            suboptions:
-              id:
-                description:
-                  - Resource ID.
-          provisioning_state:
-            description:
-              - The provisioning state of the resource.
+              - Resource ID.
+      provisioning_state:
+        description:
+          - The provisioning state of the resource.
       name:
         description:
           - >-
             Name of the resource that is unique within a resource group. This
-         
+            name can be used to access the resource.
   provisioning_state:
     description:
       - The provisioning state of the resource.
@@ -280,69 +267,65 @@ EXAMPLES = '''
     tags:
       key1: value1
     application_rule_collections:
-      - properties:
-          priority: '110'
-          action: {}
-          rules:
-            - name: rule1
-              description: Deny inbound rule
-              source_addresses:
-                - 216.58.216.164
-                - 10.0.0.0/24
-              protocols:
-                - protocolType: Https
-                  port: '443'
-              target_fqdns:
-                - www.test.com
+      - priority: '110'
+        action: {}
+        rules:
+          - name: rule1
+            description: Deny inbound rule
+            source_addresses:
+              - 216.58.216.164
+              - 10.0.0.0/24
+            protocols:
+              - protocolType: Https
+                port: '443'
+            target_fqdns:
+              - www.test.com
         name: apprulecoll
     nat_rule_collections:
-      - properties:
-          priority: '112'
-          action: {}
-          rules:
-            - name: DNAT-HTTPS-traffic
-              description: D-NAT all outbound web traffic for inspection
-              source_addresses:
-                - '*'
-              destination_addresses:
-                - 1.2.3.4
-              destination_ports:
-                - '443'
-              protocols:
-                - TCP
-              translated_address: 1.2.3.5
-              translated_port: '8443'
+      - priority: '112'
+        action: {}
+        rules:
+          - name: DNAT-HTTPS-traffic
+            description: D-NAT all outbound web traffic for inspection
+            source_addresses:
+              - '*'
+            destination_addresses:
+              - 1.2.3.4
+            destination_ports:
+              - '443'
+            protocols:
+              - TCP
+            translated_address: 1.2.3.5
+            translated_port: '8443'
         name: natrulecoll
     network_rule_collections:
-      - properties:
-          priority: '112'
-          action: {}
-          rules:
-            - name: L4-traffic
-              description: Block traffic based on source IPs and ports
-              protocols:
-                - TCP
-              source_addresses:
-                - 192.168.1.1-192.168.1.12
-                - 10.1.4.12-10.1.4.255
-              destination_addresses:
-                - '*'
-              destination_ports:
-                - 443-444
-                - '8443'
+      - priority: '112'
+        action: {}
+        rules:
+          - name: L4-traffic
+            description: Block traffic based on source IPs and ports
+            protocols:
+              - TCP
+            source_addresses:
+              - 192.168.1.1-192.168.1.12
+              - 10.1.4.12-10.1.4.255
+            destination_addresses:
+              - '*'
+            destination_ports:
+              - 443-444
+              - '8443'
         name: netrulecoll
     ip_configurations:
-      - properties:
-          subnet:
-            id: >-
-              /subscriptions/{{ subscription_id }}/resourceGroups/{{
-              resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
-              virtual_network_name }}/subnets/{{ subnet_name }}
-          public_i_p_address:
-            id: >-
-              /subscriptions/{{ subscription_id }}/resourceGroups/{{
-              resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{
-              public_ipaddress_name }}
+      - subnet:
+          id: >-
+            /subscriptions/{{ subscription_id }}/resourceGroups/{{
+            resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
+            virtual_network_name }}/subnets/{{ subnet_name }}
+        public_ipaddress:
+          id: >-
+            /subscriptions/{{ subscription_id }}/resourceGroups/{{
+            resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{
+            public_ipaddress_name }}
         name: azureFirewallIpConfiguration
 - name: Delete Azure Firewall
   azure_rm_azurefirewall:
@@ -378,13 +361,11 @@ etag:
 
 import time
 import json
+import re
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
-try:
-    from msrestazure.azure_exceptions import CloudError
-except ImportError:
-    # This is handled in azure_rm_common
-    pass
+from copy import deepcopy
+from msrestazure.azure_exceptions import CloudError
 
 
 class Actions:
@@ -396,403 +377,405 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(
                 type='str',
-                comparison='',
-                updatable=False,
+                comparison='default',
+                updatable=True,
                 disposition='resourceGroupName',
                 required=True
             ),
             name=dict(
                 type='str',
-                comparison='',
-                updatable=False,
+                comparison='default',
+                updatable=True,
                 disposition='azureFirewallName',
                 required=True
             ),
             id=dict(
                 type='str',
-                comparison='',
-                updatable=False,
+                comparison='default',
+                updatable=True,
                 disposition='/'
             ),
             location=dict(
                 type='str',
-                comparison='',
-                updatable=False,
+                comparison='default',
+                updatable=True,
+                disposition='/'
+            ),
+            tags=dict(
+                type='unknown[DictionaryType {"$id":"440","$type":"DictionaryType","valueType":{"$id":"441","$type":"PrimaryType","knownPrimaryType":"string","name":{"$id":"442","fixed":false,"raw":"String"},"deprecated":false},"supportsAdditionalProperties":false,"name":{"$id":"443","fixed":false},"deprecated":false}]',
+                comparison='default',
+                updatable=True,
                 disposition='/'
             ),
             application_rule_collections=dict(
                 type='list',
-                comparison='',
-                updatable=False,
+                comparison='default',
+                updatable=True,
                 disposition='/properties/applicationRuleCollections',
                 options=dict(
                     id=dict(
                         type='str',
-                        comparison='',
-                        updatable=False,
+                        comparison='default',
+                        updatable=True,
                         disposition='*'
                     ),
-                    properties=dict(
+                    priority=dict(
+                        type='number',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*'
+                    ),
+                    action=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*',
                         options=dict(
-                            priority=dict(
-                                type='number',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
-                            ),
-                            action=dict(
-                                type='dict',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
-                                options=dict(
-                                    type=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    )
-                                )
-                            ),
-                            rules=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
-                                options=dict(
-                                    name=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    description=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    source_addresses=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='sourceAddresses'
-                                    ),
-                                    protocols=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    target_fqdns=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='targetFqdns'
-                                    ),
-                                    fqdn_tags=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='fqdnTags'
-                                    )
-                                )
-                            ),
-                            provisioning_state=dict(
+                            type=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='provisioningState'
+                                comparison='default',
+                                updatable=True,
+                                disposition='*',
+                                choices=['Allow',
+                                         'Deny']
                             )
                         )
                     ),
+                    rules=dict(
+                        type='list',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*',
+                        options=dict(
+                            name=dict(
+                                type='str',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*'
+                            ),
+                            description=dict(
+                                type='str',
+                                comparison='xxx',
+                                updatable=False,
+                                disposition='*'
+                            ),
+                            source_addresses=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='sourceAddresses'
+                            ),
+                            protocols=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*'
+                            ),
+                            target_fqdns=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='targetFqdns'
+                            ),
+                            fqdn_tags=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='fqdnTags'
+                            )
+                        )
+                    ),
+                    provisioning_state=dict(
+                        type='str',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/provisioningState',
+                        choices=['Succeeded',
+                                 'Updating',
+                                 'Deleting',
+                                 'Failed']
+                    ),
                     name=dict(
                         type='str',
-                        comparison='',
-                        updatable=False,
+                        comparison='default',
+                        updatable=True,
                         disposition='*'
                     )
                 )
             ),
             nat_rule_collections=dict(
                 type='list',
-                comparison='',
-                updatable=False,
+                comparison='default',
+                updatable=True,
                 disposition='/properties/natRuleCollections',
                 options=dict(
                     id=dict(
                         type='str',
-                        comparison='',
-                        updatable=False,
+                        comparison='default',
+                        updatable=True,
                         disposition='*'
                     ),
-                    properties=dict(
+                    priority=dict(
+                        type='number',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*'
+                    ),
+                    action=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*',
                         options=dict(
-                            priority=dict(
-                                type='number',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
-                            ),
-                            action=dict(
-                                type='dict',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
-                                options=dict(
-                                    type=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    )
-                                )
-                            ),
-                            rules=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
-                                options=dict(
-                                    name=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    description=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    source_addresses=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='sourceAddresses'
-                                    ),
-                                    destination_addresses=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='destinationAddresses'
-                                    ),
-                                    destination_ports=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='destinationPorts'
-                                    ),
-                                    protocols=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    translated_address=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='translatedAddress'
-                                    ),
-                                    translated_port=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='translatedPort'
-                                    )
-                                )
-                            ),
-                            provisioning_state=dict(
+                            type=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='provisioningState'
+                                comparison='default',
+                                updatable=True,
+                                disposition='*',
+                                choices=['Snat',
+                                         'Dnat']
                             )
                         )
                     ),
+                    rules=dict(
+                        type='list',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*',
+                        options=dict(
+                            name=dict(
+                                type='str',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*'
+                            ),
+                            description=dict(
+                                type='str',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*'
+                            ),
+                            source_addresses=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='sourceAddresses'
+                            ),
+                            destination_addresses=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='destinationAddresses'
+                            ),
+                            destination_ports=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='destinationPorts'
+                            ),
+                            protocols=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*'
+                            ),
+                            translated_address=dict(
+                                type='str',
+                                comparison='default',
+                                updatable=True,
+                                disposition='translatedAddress'
+                            ),
+                            translated_port=dict(
+                                type='str',
+                                comparison='default',
+                                updatable=True,
+                                disposition='translatedPort'
+                            )
+                        )
+                    ),
+                    provisioning_state=dict(
+                        type='str',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/provisioningState',
+                        choices=['Succeeded',
+                                 'Updating',
+                                 'Deleting',
+                                 'Failed']
+                    ),
                     name=dict(
                         type='str',
-                        comparison='',
-                        updatable=False,
+                        comparison='default',
+                        updatable=True,
                         disposition='*'
                     )
                 )
             ),
             network_rule_collections=dict(
                 type='list',
-                comparison='',
-                updatable=False,
+                comparison='default',
+                updatable=True,
                 disposition='/properties/networkRuleCollections',
                 options=dict(
                     id=dict(
                         type='str',
-                        comparison='',
-                        updatable=False,
+                        comparison='default',
+                        updatable=True,
                         disposition='*'
                     ),
-                    properties=dict(
+                    priority=dict(
+                        type='number',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*'
+                    ),
+                    action=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*',
                         options=dict(
-                            priority=dict(
-                                type='number',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
-                            ),
-                            action=dict(
-                                type='dict',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
-                                options=dict(
-                                    type=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    )
-                                )
-                            ),
-                            rules=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
-                                options=dict(
-                                    name=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    description=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    protocols=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    ),
-                                    source_addresses=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='sourceAddresses'
-                                    ),
-                                    destination_addresses=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='destinationAddresses'
-                                    ),
-                                    destination_ports=dict(
-                                        type='list',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='destinationPorts'
-                                    )
-                                )
-                            ),
-                            provisioning_state=dict(
+                            type=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='provisioningState'
+                                comparison='default',
+                                updatable=True,
+                                disposition='*',
+                                choices=['Allow',
+                                         'Deny']
                             )
                         )
                     ),
+                    rules=dict(
+                        type='list',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*',
+                        options=dict(
+                            name=dict(
+                                type='str',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*'
+                            ),
+                            description=dict(
+                                type='str',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*'
+                            ),
+                            protocols=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*'
+                            ),
+                            source_addresses=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='sourceAddresses'
+                            ),
+                            destination_addresses=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='destinationAddresses'
+                            ),
+                            destination_ports=dict(
+                                type='list',
+                                comparison='default',
+                                updatable=True,
+                                disposition='destinationPorts'
+                            )
+                        )
+                    ),
+                    provisioning_state=dict(
+                        type='str',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/provisioningState',
+                        choices=['Succeeded',
+                                 'Updating',
+                                 'Deleting',
+                                 'Failed']
+                    ),
                     name=dict(
                         type='str',
-                        comparison='',
-                        updatable=False,
+                        comparison='default',
+                        updatable=True,
                         disposition='*'
                     )
                 )
             ),
             ip_configurations=dict(
                 type='list',
-                comparison='',
-                updatable=False,
+                comparison='default',
+                updatable=True,
                 disposition='/properties/ipConfigurations',
                 options=dict(
                     id=dict(
                         type='str',
-                        comparison='',
-                        updatable=False,
+                        comparison='default',
+                        updatable=True,
                         disposition='*'
                     ),
-                    properties=dict(
+                    subnet=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/*',
                         options=dict(
-                            subnet=dict(
-                                type='dict',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
-                                options=dict(
-                                    id=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    )
-                                )
-                            ),
-                            public_i_p_address=dict(
-                                type='dict',
-                                comparison='',
-                                updatable=False,
-                                disposition='publicIPAddress',
-                                options=dict(
-                                    id=dict(
-                                        type='str',
-                                        comparison='',
-                                        updatable=False,
-                                        disposition='*'
-                                    )
-                                )
-                            ),
-                            provisioning_state=dict(
+                            id=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='provisioningState'
+                                comparison='default',
+                                updatable=True,
+                                disposition='*',
+                                pattern='/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name }}/subnets/{{ name }}'
                             )
                         )
                     ),
+                    public_ip_address=dict(
+                        type='dict',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/publicIPAddress',
+                        options=dict(
+                            id=dict(
+                                type='str',
+                                comparison='default',
+                                updatable=True,
+                                disposition='*',
+                                pattern='/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{ name }}'
+                            )
+                        )
+                    ),
+                    provisioning_state=dict(
+                        type='str',
+                        comparison='default',
+                        updatable=True,
+                        disposition='properties/provisioningState',
+                        choices=['Succeeded',
+                                 'Updating',
+                                 'Deleting',
+                                 'Failed']
+                    ),
                     name=dict(
                         type='str',
-                        comparison='',
-                        updatable=False,
+                        comparison='default',
+                        updatable=True,
                         disposition='*'
                     )
                 )
             ),
             provisioning_state=dict(
                 type='str',
-                comparison='',
-                updatable=False,
-                disposition='/properties/provisioningState'
+                comparison='default',
+                updatable=True,
+                disposition='/properties/provisioningState',
+                choices=['Succeeded',
+                         'Updating',
+                         'Deleting',
+                         'Failed']
             ),
             state=dict(
                 type='str',
@@ -869,6 +852,10 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log('Need to check if AzureFirewall instance has to be deleted or may be updated')
+                modifiers = {}
+                self.create_compare_modifiers(self.module_arg_spec, '', modifiers)
+                if not self.default_compare(modifiers, self.body, old_response, '', self.results):
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log('Need to Create / Update the AzureFirewall instance')
@@ -882,7 +869,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
             # if not old_response:
             self.results['changed'] = True
             self.results['response'] = response
-            #self.results['xxx'] = self.body
             # else:
             #     self.results['changed'] = old_response.__ne__(response)
             self.log('Creation / Update done')
@@ -904,10 +890,10 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
             self.results['changed'] = False
             response = old_response
 
-        if response:
-            self.results["name"] = response["name"]
-            self.results["type"] = response["type"]
-            self.results["etag"] = response["etag"]
+        #if response:
+        #    self.results["name"] = response["name"]
+        #    self.results["type"] = response["type"]
+        #    self.results["etag"] = response["etag"]
 
         return self.results
 
@@ -963,8 +949,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
         return True
 
     def get_resource(self):
-        # self.log('Checking if the AzureFirewall instance {0} is present'.format(self.))
-        found = False
         try:
             response = self.mgmt_client.query(self.url,
                                               'GET',
@@ -975,127 +959,157 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                                               600,
                                               30)
             found = True
-            self.log("Response : {0}".format(response))
-            # self.log("AzureFirewall instance : {0} found".format(response.name))
+            response = json.loads(response.text)
         except CloudError as e:
-            self.log('Did not find the AzureFirewall instance.')
-        if found is True:
-            return response
-
-        return False
+            return None
+        return response
 
     def inflate_parameters(self, spec, body, level):
-        self.results['log'] = self.results.get('log', [])
-        if isinstance(body, list):
-            self.results['log'].append("COMPARING LIST, LEVEL " + str(level))
-            for i in range(len(body)):
-                self.results['log'].append("INFLATING ELEMENT " + body[i]['name']) # + " --- " + str(spec))
-                self.inflate_parameters(spec, body[i], level)
-            return
-
-        for name in spec.keys():
-            disposition = spec[name].get('disposition', '*')
-            param = body.get(name)
-            if not param:
-                continue
-            if disposition != "*" and not (level == 0 and not disposition.startswith('/')):
-                if disposition == '/':
-                    disposition = '/*'
-                # find parameter
-                param = body.get(name)
-                if not param:
-                    continue
-                parts = disposition.split('/')
-                if parts[0] == '':
-                    # should fail if level is > 0?
-                    parts.pop(0)
-                target_dict = body
-                while len(parts) > 1:
-                    target_dict = target_dict.setdefault(parts.pop(0), {})
-                targetName = parts[0] if parts[0] != '*' else name
-                target_dict[targetName] = body.pop(name)
-            else:
-                target_dict = body
-                targetName = name
-            if spec[name].get('options'):
-                self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
+      if isinstance(body, list):
+        for item in body:
+          self.inflate_parameters(spec, item, level)
+        return
+      for name in spec.keys():
+        # first check if option was passed
+        param = body.get(name)
+        if not param:
+          continue
+        # check if pattern needs to be used
+        pattern = spec[name].get('pattern', None)
+        if pattern:
+          param = self.normalize_resource_id(param, pattern)
+          body[name] = param
+        disposition = spec[name].get('disposition', '*')
+        # do nothing if disposition is *
+        if disposition == '*':
+          continue
+        if level == 0 and not disposition.startswith('/'):
+          continue
+        if disposition == '/':
+          disposition = '/*'
+        parts = disposition.split('/')
+        if parts[0] == '':
+          # should fail if level is > 0?
+          parts.pop(0)
+        target_dict = body
+        while len(parts) > 1:
+          target_dict = target_dict.setdefault(parts.pop(0), {})
+        targetName = parts[0] if parts[0] != '*' else name
+        target_dict[targetName] = body.pop(name)
+        if spec[name].get('options'):
+          self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
 
     def normalize_resource_id(self, value, pattern):
-      # normalize pattern
-      pattern_parts = pattern.split('/')
-      for i in range(len(pattern_parts)):
-        x = re.sub('[{} ]+', '', pattern_parts[i], 2)
-        if len(x) < len(pattern_parts[i]):
-          pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
+        '''
+        Return a proper resource id string..
 
-      if isinstance(value, str):
-        value_parts = value.split('/')
-        if len(value_parts) != len(pattern_parts):
-          print "ERROR PATTERN PARTS"
-          return
-        value_dict = {}
-        for i in range(len(value_parts)):
-          if pattern_parts[i].startswith('{'):
-            value_dict[pattern_parts[i][1:-1]] = value_parts[i]
-          elif value_parts[i].lower() != pattern_parts[i].lower():
-            print "ERROR PATTERN DOESN'T MATCH"
-            return
-      elif isinstance(value, dict):
-        value_dict = value
-      else:
-        print "ERROR VALUE MUST BE STR OR DICT"
-        return
+        :param resource_id: It could be a resource name, resource id or dict containing parts from the pattern.
+        :param pattern: pattern of resource is, just like in Azure Swagger
+        '''
+        pattern_parts = pattern.split('/')
+        for i in range(len(pattern_parts)):
+            x = re.sub('[{} ]+', '', pattern_parts[i], 2)
+            if len(x) < len(pattern_parts[i]):
+                pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
 
-      for i in range(len(pattern_parts)):
-        if pattern_parts[i].startswith('{'):
-          value = value_dict.get(pattern_parts[i][1:-1], None)
-          if not value:
-            print "PARAMETER " + pattern_parts[i][1:-1] + " NOT SPECIFIED"
-            return
-          pattern_parts[i] = value
-
-      return "/".join(pattern_parts)
-
-    def idempotency_check(self, old_params, new_params):
-        return self.idempotency_check_internal(self.module_arg_spec, old_params, new_params)
-
-    def idempotency_check_internal(self, spec, old_params, new_params):
-        if isinstance(body, list):
-            self.results['log'].append("COMPARING LIST, LEVEL " + str(level))
-            for i in range(len(body)):
-                self.results['log'].append("INFLATING ELEMENT " + body[i]['name']) # + " --- " + str(spec))
-                self.inflate_parameters(spec, body[i], level)
-            return
-
-        for name in spec.keys():
-            disposition = spec[name].get('disposition', '*')
-            param = body.get(name)
-            if not param:
-                continue
-            if disposition != "*" and not (level == 0 and not disposition.startswith('/')):
-                if disposition == '/':
-                    disposition = '/*'
-                # find parameter
-                param = body.get(name)
-                if not param:
-                    continue
-                parts = disposition.split('/')
-                if parts[0] == '':
-                    # should fail if level is > 0?
-                    parts.pop(0)
-                target_dict = body
-                while len(parts) > 1:
-                    target_dict = target_dict.setdefault(parts.pop(0), {})
-                targetName = parts[0] if parts[0] != '*' else name
-                target_dict[targetName] = body.pop(name)
+        if isinstance(value, str):
+            value_parts = value.split('/')
+            if len(value_parts) == 1:
+                value_dict = {}
+                value_dict['name'] = value
             else:
-                target_dict = body
-                targetName = name
-            if spec[name].get('options'):
-                self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
+                if len(value_parts) != len(pattern_parts):
+                    return None
+            value_dict = {}
+            for i in range(len(value_parts)):
+                if pattern_parts[i].startswith('{'):
+                    value_dict[pattern_parts[i][1:-1]] = value_parts[i]
+                elif value_parts[i].lower() != pattern_parts[i].lower():
+                    return None
+        elif isinstance(value, dict):
+            value_dict = value
+        else:
+            return None
 
-    def idempotency_check_default(self, old_params, new_params):
-        return False
+        if not value_dict.get('subscription_id'):
+            value_dict['subscription_id'] = self.subscription_id
+        if not value_dict.get('resource_group'):
+            value_dict['resource_group'] = self.resource_group
+
+        for i in range(len(pattern_parts)):
+            if pattern_parts[i].startswith('{'):
+                value = value_dict.get(pattern_parts[i][1:-1], None)
+                if not value:
+                    return None
+                pattern_parts[i] = value
+
+        return '/'.join(pattern_parts)
+
+    def create_compare_modifiers(self, arg_spec, path, result):
+        for k in arg_spec.keys():
+            o = arg_spec[k]
+            updatable = o.get('updatable', True)
+            comparison = o.get('comparison', 'default')
+            p = (path +
+                 ('/' if len(path) > 0 else '') +
+                 o.get('disposition', '*').replace('*', k) +
+                 ('/*' if o['type'] == 'list' else ''))
+            if comparison != 'default' or not updatable:
+                result[p] = { 'updatable': updatable, 'comparison': comparison }
+            if o.get('options'):
+                self.create_compare_modifiers(o.get('options'), p, result)
+
+    def default_compare(self, modifiers, new, old, path, result):
+        if new is None:
+            return True
+        elif isinstance(new, dict):
+            if not isinstance(old, dict):
+                result['compare'] = 'changed [' + path + '] old dict is null'
+                return False
+            for k in new.keys():
+                if not self.default_compare(modifiers, new.get(k), old.get(k, None), path + '/' + k, result):
+                    return False
+            return True
+        elif isinstance(new, list):
+            if not isinstance(old, list) or len(new) != len(old):
+                result['compare'] = 'changed [' + path + '] length is different or null'
+                return False
+            if isinstance(old[0], dict):
+                key = None
+                if 'id' in old[0] and 'id' in new[0]:
+                    key = 'id'
+                elif 'name' in old[0] and 'name' in new[0]:
+                    key = 'name'
+                else:
+                    key = old[0].keys()[0]
+                new = sorted(new, key=lambda x: x.get(key, None))
+                old = sorted(old, key=lambda x: x.get(key, None))
+            else:
+                new = sorted(new)
+                old = sorted(old)
+            for i in range(len(new)):
+                if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
+                    return False
+            return True
+        else:
+            updatable = modifiers.get(path, {}).get('updatable', True)
+            comparison = modifiers.get(path, {}).get('comparison', 'default')
+            if path == '/location' or path.endswith('locationName'):
+                new = new.replace(' ', '').lower()
+                old = old.replace(' ', '').lower()
+            elif path.endswith('adminPassword') or path.endswith('administratorLoginPassword') or path.endswith('createMode'):
+                return True
+            if str(new) == str(old):
+                result['compare'] = result.get('compare', '') + "(" + str(new) + ":" + str(old) + ")"
+                return True
+            else:
+                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
+                if updatable:
+                    return False
+                else:
+                    # XXX change new value to old
+                    self.module.warn("property '" + path + "' cannot be updated (" + str(old) + "->" + str(new) + ")")
+
 
 def main():
     AzureRMAzureFirewalls()
