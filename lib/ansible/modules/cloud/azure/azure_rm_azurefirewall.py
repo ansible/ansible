@@ -513,7 +513,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBase):
                 type='list',
                 comparison='',
                 updatable=False,
-                disposition=/*',
+                disposition='/*',
                 options=dict(
                     id=dict(
                         type='str',
