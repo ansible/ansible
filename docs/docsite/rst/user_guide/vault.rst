@@ -344,7 +344,7 @@ passwords will be tried in the order they are specified.
 In the above case, the 'dev' password will be tried first, then the 'prod' password for cases
 where Ansible doesn't know which vault ID is used to encrypt something.
 
-To add a vault ID label to the encrypted data use the :option:`--vault-id <ansible-vault --vault-id>` option
+To add a vault ID label to the encrypted data use the :option:`--vault-id <ansible-vault-create --vault-id>` option
 with a label when encrypting the data.
 
 The :ref:`DEFAULT_VAULT_ID_MATCH` config option can be set so that Ansible will only use the password with
