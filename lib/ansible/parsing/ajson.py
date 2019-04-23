@@ -64,9 +64,6 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         elif isinstance(o, (date, datetime)):
             # date object
             value = o.isoformat()
-        elif isinstance(o, Decimal):
-            # decimal.Decimal object
-            value = float(o)
         else:
             # use default encoder
             value = super(AnsibleJSONEncoder, self).default(o)

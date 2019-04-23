@@ -26,8 +26,6 @@ def _json_encode_fallback(obj):
         return list(obj)
     elif isinstance(obj, datetime.datetime):
         return obj.isoformat()
-    elif isinstance(obj, Decimal):
-        return float(obj)
     raise TypeError("Cannot json serialize %s" % to_native(obj))
 
 

@@ -168,6 +168,8 @@ slave_hosts:
   - { "2": { "Host": "", "Master_id": 1, "Port": 3306 } }
 '''
 
+from decimal import Decimal
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect, mysql_common_argument_spec, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils.six import iteritems
@@ -267,6 +269,9 @@ class MySQL_Info(object):
 
                 except ValueError:
                     pass
+
+                if isinstance(var['Value'], Decimal):
+                    var['Value'] = float(var['Value'])
 
                 self.info['settings'][var['Variable_name']] = var['Value']
 
