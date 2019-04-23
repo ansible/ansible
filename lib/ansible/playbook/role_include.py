@@ -166,4 +166,6 @@ class IncludeRole(TaskInclude):
         v = super(IncludeRole, self).get_include_params()
         if self._parent_role:
             v.update(self._parent_role.get_role_params())
+            v.setdefault('ansible_parent_role_names', []).insert(0, self._parent_role.get_name())
+            v.setdefault('ansible_parent_role_paths', []).insert(0, self._parent_role._role_path)
         return v
