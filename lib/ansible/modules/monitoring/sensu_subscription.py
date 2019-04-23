@@ -49,7 +49,7 @@ author: Anders Ingemann (@andsens)
 
 RETURN = '''
 reasons:
-    description: the reasons why the moule changed or did not change something
+    description: the reasons why the module changed or did not change something
     returned: success
     type: list
     sample: ["channel subscription was absent and state is `present'"]
