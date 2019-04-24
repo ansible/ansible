@@ -385,7 +385,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             value.post_validate(templar=templar)
         return value
 
-
     def post_validate(self, templar):
         '''
         we can't tell that everything is of the right type until we have

@@ -534,7 +534,9 @@ class StrategyBase:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
                                         templar = get_handler_templar(listening_handler)
-                                        listeners = listening_handler.get_validated_value('listen', listening_handler._valid_attrs['listen'], listeners, templar)
+                                        listeners = listening_handler.get_validated_value(
+                                            'listen', listening_handler._valid_attrs['listen'], listeners, templar
+                                        )
                                         if handler_name not in listeners:
                                             continue
                                         else:
