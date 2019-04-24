@@ -2325,7 +2325,7 @@ def main():
             ('state', 'registered', ['storage_domain']),
         ],
         required_together=[
-          ['snapshot_name', 'snapshot_vm']
+          [ 'snapshot_name', 'snapshot_vm' ]
         ]
     )
 
