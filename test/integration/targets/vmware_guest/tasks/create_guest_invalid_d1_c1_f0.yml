@@ -2,48 +2,15 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#- name: Wait for Flask controller to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 5000
-#    state: started
-#
-#- name: kill vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/killall
-#- name: start vcsim with no folders
-#  uri:
-#    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-#  register: vcsim_instance
-#
-#- name: Wait for Flask controller to come up online
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 443
-#    state: started
-#
-#- debug: var=vcsim_instance
-#
-#- name: get a list of Datacenter from vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=DC
-#  register: datacenters
-#
-#- set_fact: dc1="{{ datacenters['json'][0] }}"
-#
-#- name: get a list of virtual machines from vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-#  register: vms
-#
-#- set_fact: vm1="{{ vms['json'][0] }}"
+
+#- set_fact: vm1="{{ vmlist['json'][0] }}"
 #
 #- name: create new virtual machine with invalid guest id
 #  vmware_guest:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
 #    name: "{{ 'invalid_vm_' + vm1 | basename }}"
 #    guest_id: "invalid_guest_id"
 #    datacenter: "{{ (vm1|basename).split('_')[0] }}"

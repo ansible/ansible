@@ -1,47 +1,34 @@
 # Test code for the vmware_guest_move module
 # Copyright: (c) 2018, Jose Angel Munoz <josea.munoz@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?folder=2&dc=2
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- debug: var=vcsim_instance
-
-- name: get a list of virtual machines from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vms
-
-- set_fact: vm1="{{ vms['json'][0] }}"
+- name: Create a VM folder on given Datacenter
+  vcenter_folder:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    folder_name: 'f1'
+    folder_type: vm
+    state: present
+    validate_certs: no
 
 # Testcase 0001: Move vm and get changed status
 - name: Move VM (Changed)
   vmware_guest_move:
     validate_certs: false
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ (vm1|basename).split('_')[0] }}"
-    name: "{{ vm1|basename }}"
-    dest_folder: F1/DC1/vm/F1
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ infra.vm_list[0] }}"
+    dest_folder: '/F0/DC0/vm/f1'
   register: vm_facts_0001
 
 
@@ -49,12 +36,12 @@
 - name: Move VM (OK)
   vmware_guest_move:
     validate_certs: false
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ (vm1|basename).split('_')[0] }}"
-    name: "{{ vm1|basename }}"
-    dest_folder: F1/DC1/vm/F1
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ infra.vm_list[0] }}"
+    dest_folder: 'F0/DC0/vm/f1'
   register: vm_facts_0002
 
 - debug:
@@ -63,11 +50,7 @@
 - debug:
     msg: "{{ vm_facts_0002 }}"
 
-- name: get all VMs
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vms_diff
-
-- name: Difference
-  debug:
-    var: vms_diff.json | difference(vms.json)
+- assert:
+    that:
+      - vm_facts_0001.changed
+      - not vm_facts_0002.changed

@@ -2,44 +2,15 @@
 # Copyright: (c) 2018, Christophe FERREIRA <christophe.ferreira@cnaf.fr>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim   
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-- debug: var=vmlist
-
-- name: clone vm from template and convert to thin 
+- name: clone vm from template and convert to thin
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ 'thin_' + item|basename }}"
     template: "{{ item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}" 
+    datacenter: "{{ (item|basename).split('_')[0] }}"
     state: poweredoff
     folder: "{{ item|dirname }}"
     convert: thin
@@ -53,15 +24,15 @@
     that:
         - "clone_thin.results|map(attribute='changed')|unique|list == [true]"
 
-- name: clone vm from template and convert to thick 
+- name: clone vm from template and convert to thick
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ 'thick_' + item|basename }}"
     template: "{{ item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}" 
+    datacenter: "{{ (item|basename).split('_')[0] }}"
     state: poweredoff
     folder: "{{ item|dirname }}"
     convert: thick
@@ -78,12 +49,12 @@
 - name: clone vm from template and convert to eagerzeroedthick
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ 'eagerzeroedthick_' + item|basename }}"
     template: "{{ item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}" 
+    datacenter: "{{ (item|basename).split('_')[0] }}"
     state: poweredoff
     folder: "{{ item|dirname }}"
     convert: eagerzeroedthick
