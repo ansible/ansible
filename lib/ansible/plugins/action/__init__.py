@@ -968,6 +968,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['deprecations'] = []
             data['deprecations'].extend(self._discovery_deprecation_warnings)
 
+        # mark the entire module results untrusted as a template right here, since the current action could
+        # possibly template one of these values.
+        data = wrap_var(data)
+
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
@@ -978,9 +982,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 display.warning(w)
 
             data = json.loads(filtered_output)
-
-            if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                data['ansible_facts'] = wrap_var(data['ansible_facts'])
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error

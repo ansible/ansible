@@ -1,2 +1,2 @@
 bugfixes:
-    - ensure facts are always unsafe objects and don't rely on plugin returns
+    - ensure module results and facts are marked untrusted as templates for safer use within the same task
