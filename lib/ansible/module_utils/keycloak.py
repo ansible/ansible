@@ -1040,7 +1040,7 @@ class KeycloakAPI(object):
                             open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='PUT', headers=self.restheaders, data=data)
             return changed
         except Exception as e:
-            self.module.fail_json(msg='Could create or update executions for authentication flow %s in realm %s: %s'
+            self.module.fail_json(msg='Could not create or update executions for authentication flow %s in realm %s: %s'
                                       % (config["alias"], realm, str(e)))
     
     def get_executions_representation(self, config, realm='master'):
@@ -1061,7 +1061,7 @@ class KeycloakAPI(object):
                     execution["authenticationConfig"] = execConfig
             return executions
         except Exception as e:
-            self.module.fail_json(msg='Could get executions for authentication flow %s in realm %s: %s'
+            self.module.fail_json(msg='Could not get executions for authentication flow %s in realm %s: %s'
                                       % (config["alias"], realm, str(e)))
                 
     def get_component_by_id(self, component_id, realm='master'):
@@ -1076,7 +1076,7 @@ class KeycloakAPI(object):
             return json.load(open_url(component_url, method='GET', headers=self.restheaders))
 
         except Exception as e:
-            self.module.fail_json(msg='Could get component %s in realm %s: %s'
+            self.module.fail_json(msg='Could not get component %s in realm %s: %s'
                                       % (component_id, realm, str(e)))
 
     def get_component_by_name_provider_and_parent(self, name, provider_type, provider_id, parent_id, realm='master'):
@@ -1114,7 +1114,7 @@ class KeycloakAPI(object):
             components = json.load(open_url(component_url, method='GET', headers=self.restheaders))
             return components
         except Exception as e:
-            self.module.fail_json(msg='Could get component %s in realm %s: %s'
+            self.module.fail_json(msg='Could not get component %s in realm %s: %s'
                                       % (name, realm, str(e)))
     
     def create_component(self, newComponent, newSubComponents, syncLdapMappers, realm='master'):
@@ -1136,7 +1136,7 @@ class KeycloakAPI(object):
     
             return component
         except Exception as e:
-            self.module.fail_json(msg='Could create component %s in realm %s: %s'
+            self.module.fail_json(msg='Could not create component %s in realm %s: %s'
                                       % (newComponent["name"], realm, str(e)))
     
     def create_new_sub_components(self, component, newSubComponents, syncLdapMappers, realm='master'):
@@ -1167,7 +1167,7 @@ class KeycloakAPI(object):
                                 sync_url = URL_USER_STORAGE_MAPPER_SYNC.format(url=self.baseurl, realm=realm, parentid=subComponent["parentId"], id=subComponent["id"], direction=syncLdapMappers)
                                 open_url(sync_url, method='POST', headers=self.restheaders)
         except Exception as e:
-            self.module.fail_json(msg='Could create sub components for parent %s in realm %s: %s'
+            self.module.fail_json(msg='Could not create sub components for parent %s in realm %s: %s'
                                       % (component["name"], realm, str(e)))
                             
     def update_component(self, newComponent, realm='master'):
@@ -1179,14 +1179,12 @@ class KeycloakAPI(object):
         """
         try:
             # Add existing component Id to new component
-            #newComponent['id'] = component['id']
-            #newComponent['parentId'] = component['parentId']
             component_url = URL_COMPONENT.format(url=self.baseurl, realm=realm, id=newComponent["id"])
             open_url(component_url, method='PUT', headers=self.restheaders, data=json.dumps(newComponent))
             return self.get_component_by_id(newComponent['id'], realm=realm)
         except Exception as e:
-            self.module.fail_json(msg='Could update component %s in realm %s: %s'
-                                      % (component["name"], realm, str(e)))
+            self.module.fail_json(msg='Could not update component %s in realm %s: %s'
+                                      % (newComponent["name"], realm, str(e)))
     
     def update_sub_components(self, component, newSubComponents, syncLdapMappers, realm='master'):
         try:
@@ -1235,7 +1233,7 @@ class KeycloakAPI(object):
                                 open_url(sync_url, method='POST', headers=self.restheaders)
             return changed
         except Exception as e:
-            self.module.fail_json(msg='Could update component %s in realm %s: %s'
+            self.module.fail_json(msg='Could not update component %s in realm %s: %s'
                                       % (component["name"], realm, str(e)))
 
     def get_all_sub_components(self, parent_id, realm='master'):
@@ -1250,14 +1248,35 @@ class KeycloakAPI(object):
             subcomponents = json.load(open_url(subcomponents_url, method='GET', headers=self.restheaders))
             return subcomponents
         except Exception as e:
-            self.module.fail_json(msg='Could get sub component for parent component %s in realm %s: %s'
+            self.module.fail_json(msg='Could not get sub components for parent component %s in realm %s: %s'
                                       % (parent_id, realm, str(e)))
         
     def delete_component(self, component_id, realm='master'):
-        component_url = URL_COMPONENT.format(url=self.baseurl, realm=realm, id=component_id)
-        open_url(component_url, method='DELETE', headers=self.restheaders)
+        """
+        Delete component from Keycloak server
+        :param component_id: Id of the component to delete
+        :param realm: Realm
+        :return: HTTP response
+        """
+        try:
+            component_url = URL_COMPONENT.format(url=self.baseurl, realm=realm, id=component_id)
+            return open_url(component_url, method='DELETE', headers=self.restheaders)
+        except Exception as e:
+            self.module.fail_json(msg='Could not delete component %s in realm %s: %s'
+                                      % (component_id, realm, str(e)))
         
     def sync_user_storage(self, component_id, action, realm='master'):
-        sync_url=URL_USER_STORAGE_SYNC.format(url=self.baseurl, realm=realm, id=component_id, action=action)
-        open_url(sync_url, method='POST', headers=self.restheaders)
+        """
+        Synchronize LDAP user storage component with Keycloak.
+        :param component_id: ID of the component to synchronize
+        :param action: Type of synchronization ("triggerFullSync" or "triggerChangedUsersSync")
+        :param realm: Realm
+        :return: HTTP response
+        """
+        try:
+            sync_url=URL_USER_STORAGE_SYNC.format(url=self.baseurl, realm=realm, id=component_id, action=action)
+            return open_url(sync_url, method='POST', headers=self.restheaders)
+        except Exception as e:
+            self.module.fail_json(msg='Could synchronize component %s action %s in realm %s: %s'
+                                      % (component_id, action, realm, str(e)))
            
