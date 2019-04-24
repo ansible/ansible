@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "Fixes an issue when subscription_id is masked in the output when it's passed as one of the parameters."
