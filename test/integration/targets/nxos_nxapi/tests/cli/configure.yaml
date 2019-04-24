@@ -26,10 +26,10 @@
     when: platform is match('N7K')
 
   - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https.yaml
-    when: platform is match('N5K')
+    when: platform is search('N5K|N6K')
 
   - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https.yaml
-    when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
+    when: platform is not search('N35|N5K|N6K|N7K')
 
   - name: Configure NXAPI HTTPS again
     nxos_nxapi: *configure_https
@@ -60,7 +60,7 @@
     when: platform is match('N5K')
 
   - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https_http.yaml
-    when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
+    when: platform is not search('N35|N5K|N6K|N7K')
 
   - name: Configure NXAPI HTTPS & HTTP again
     nxos_nxapi: *configure_https_http
@@ -90,7 +90,7 @@
     when: platform is match('N5K')
 
   - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https_http_ports.yaml
-    when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
+    when: platform is not search('N35|N5K|N6K|N7K')
 
   - name: Configure different NXAPI HTTPS & HTTP ports again
     nxos_nxapi: *configure_https_http_ports
@@ -118,7 +118,7 @@
     when: platform is match('N5K')
 
   - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_http.yaml
-    when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
+    when: platform is not search('N35|N5K|N6K|N7K')
 
   - name: Configure NXAPI HTTP again
     nxos_nxapi: *configure_http
