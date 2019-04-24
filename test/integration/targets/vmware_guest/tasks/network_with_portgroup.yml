@@ -2,47 +2,12 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>, Tim Steinbach <tim@nequissimus.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-
-- debug: var=vmlist
-
-- set_fact:
-   vm1: "{{ vmlist['json'][0] }}"
-
-- debug: var=vm1
-
 - name: Create dvswitch
   vmware_dvswitch:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter_name: "{{ (vm1 | basename).split('_')[0] }}"
     switch_name: dvSwitch
     uplink_quantity: 2
@@ -55,9 +20,9 @@
 - name: Add portgroup
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     portgroup_name: "portgroup_network"
     switch_name: "{{ dvswitch.switch_name }}"
     vlan_id: "1"
@@ -69,9 +34,9 @@
 - name: create new VMs with portgroup
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm_pg
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"

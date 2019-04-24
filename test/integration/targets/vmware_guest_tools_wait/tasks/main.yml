@@ -2,44 +2,23 @@
 # Copyright: (c) 2017 Philippe Dellaert <philippe@dellaert.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of virtual machines from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vms
-
-- set_fact: vm1="{{ vms['json'][0] }}"
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
 
 - name: Power on VM1
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ vm1|basename }}"
-    datacenter: "{{ (vm1|basename).split('_')[0] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ infra.vm_list[0] }}"
+    datacenter: "{{ dc1 }}"
     state: poweredon
-    folder: "{{ vm1|dirname }}"
+    folder: "{{ f0 }}"
 
 # FixMe: govcsim does not support VMware tools status reporting
 ## Testcase 0001: Wait for VMware tools to become available by name
