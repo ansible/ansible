@@ -64,7 +64,7 @@ except ImportError:
     pass
 
 
-class AzureRMLock(AzureRMModuleBase):
+class AzureRMLockFacts(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -88,7 +88,7 @@ class AzureRMLock(AzureRMModuleBase):
         self._query_parameters = {'api-version': '2016-09-01'}
         self._header_parameters = {'Content-Type': 'application/json; charset=utf-8'}
 
-        super(AzureRMLock, self).__init__(self.module_arg_spec, facts_module=True, mutually_exclusive=mutually_exclusive, supports_tags=False)
+        super(AzureRMLockFacts, self).__init__(self.module_arg_spec, facts_module=True, mutually_exclusive=mutually_exclusive, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -147,7 +147,7 @@ class AzureRMLock(AzureRMModuleBase):
 
 
 def main():
-    AzureRMLock()
+    AzureRMLockFacts()
 
 
 if __name__ == '__main__':
