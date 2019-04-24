@@ -53,7 +53,12 @@ URL_GROUP_CLIENT_ROLE_MAPPING = "{url}/admin/realms/{realm}/groups/{groupid}/rol
 URL_GROUP_REALM_ROLE_MAPPING = "{url}/admin/realms/{realm}/groups/{groupid}/role-mappings/realm"
 
 URL_COMPONENTS = "{url}/admin/realms/{realm}/components"
+URL_COMPONENT = "{url}/admin/realms/{realm}/components/{id}"
+URL_COMPONENT_BY_NAME_TYPE_PARENT = "{url}/admin/realms/{realm}/components?name={name}&type={type}&parent={parent}"
+URL_SUB_COMPONENTS = "{url}/admin/realms/{realm}/components?parent={parent}"
 URL_USER_STORAGE = "{url}/admin/realms/{realm}/user-storage"
+URL_USER_STORAGE_SYNC = "{url}/admin/realms/{realm}/user-storage/{id}/sync?action={action}"
+URL_USER_STORAGE_MAPPER_SYNC = "{url}/admin/realms/{realm}/user-storage/{parentid}/mappers/{id}/sync?direction={direction}"
 URL_AUTHENTICATION_FLOWS = "{url}/admin/realms/{realm}/authentication/flows"
 URL_AUTHENTICATION_FLOW = "{url}/admin/realms/{realm}/authentication/flows/{id}"
 URL_AUTHENTICATION_FLOW_COPY = "{url}/admin/realms/{realm}/authentication/flows/{copyfrom}/copy"
@@ -591,16 +596,19 @@ class KeycloakAPI(object):
         :param clientRepresentation: actual representation of the client
         :return: nothing, the roles representation is added to the client representation as clientRoles key
         """
-        clientRolesRepresentation = json.load(open_url(clientRolesUrl, method='GET', headers=self.restheaders))
-        for clientRole in clientRolesRepresentation:
-            if clientRole["composite"]:
-                clientRole["composites"] = json.load(open_url(clientRolesUrl + '/' + clientRole['name'] +'/composites', method='GET', headers=self.restheaders))
-                
-                for roleComposite in clientRole["composites"]:
-                    if roleComposite['clientRole']:
-                        roleCompositeClient = json.load(open_url(clientSvcBaseUrl + '/' + roleComposite['containerId'], method='GET', headers=self.restheaders))
-                        roleComposite["clientId"] = roleCompositeClient["clientId"]
-        clientRepresentation['clientRoles'] = clientRolesRepresentation
+        try:
+            clientRolesRepresentation = json.load(open_url(clientRolesUrl, method='GET', headers=self.restheaders))
+            for clientRole in clientRolesRepresentation:
+                if clientRole["composite"]:
+                    clientRole["composites"] = json.load(open_url(clientRolesUrl + '/' + clientRole['name'] +'/composites', method='GET', headers=self.restheaders))
+                    
+                    for roleComposite in clientRole["composites"]:
+                        if roleComposite['clientRole']:
+                            roleCompositeClient = json.load(open_url(clientSvcBaseUrl + '/' + roleComposite['containerId'], method='GET', headers=self.restheaders))
+                            roleComposite["clientId"] = roleCompositeClient["clientId"]
+            clientRepresentation['clientRoles'] = clientRolesRepresentation
+        except Exception as e:
+            self.module.fail_json(msg="Unable to add client roles %s: %s" % (clientRepresentation["id"], str(e)))
         
     def create_or_update_client_roles(self, newClientRoles, roleSvcBaseUrl, clientSvcBaseUrl, clientRolesUrl):
         """ Create or update client roles. Client roles can be added, updated or removed depending of the state.
@@ -611,102 +619,105 @@ class KeycloakAPI(object):
         :param clientRolesUrl: Url of the actual client roles
         :return: True if the client roles have changed, False otherwise
         """
-        changed = False
-        # Manage the roles
-        if newClientRoles is not None:
-            for newClientRole in newClientRoles:
-                changeNeeded = False
-                desiredState = "present"
-                # If state key is included in the client role representation, save its value and remove the key from the representation.
-                if "state" in newClientRole:
-                    desiredState = newClientRole["state"]
-                    del(newClientRole["state"])
-                if 'composites' in newClientRole and newClientRole['composites'] is not None:
-                    newComposites = newClientRole['composites']
-                    for newComposite in newComposites:
-                        if "id" in newComposite and newComposite["id"] is not None:
-                            keycloakClients=json.load(open_url(clientSvcBaseUrl, method='GET', headers=self.restheaders))
-                            for keycloakClient in keycloakClients:
-                                if keycloakClient['clientId'] == newComposite["id"]:
-                                    roles=json.load(open_url(clientSvcBaseUrl + '/' + keycloakClient['id'] + '/roles', method='GET', headers=self.restheaders))
-                                    for role in roles:
-                                        if role["name"] == newComposite["name"]:
-                                            newComposite['id'] = role['id']
-                                            newComposite['clientRole'] = True
-                                            break
-                        else:
-                            realmRoles=json.load(open_url(roleSvcBaseUrl, method='GET', headers=self.restheaders))
-                            for realmRole in realmRoles:
-                                if realmRole["name"] == newComposite["name"]:
-                                    newComposite['id'] = realmRole['id']
-                                    newComposite['clientRole'] = False
-                                    break;
-                    
-                clientRoleFound = False
-                clientRoles = json.load(open_url(clientRolesUrl, method='GET', headers=self.restheaders))
-                if len(clientRoles) > 0:
-                    # Check if role to be created already exist for the client
-                    for clientRole in clientRoles:
-                        if (clientRole['name'] == newClientRole['name']):
-                            clientRoleFound = True
-                            break
-                    # If we have to create the role because it does not exist and the desired state is present, or it exists and the desired state is absent
-                    if (not clientRoleFound and desiredState != "absent") or (clientRoleFound and desiredState == "absent"):
-                        changeNeeded = True
-                    else:
-                        if "composites" in newClientRole and newClientRole['composites'] is not None:
-                            excludes = []
-                            excludes.append("composites")
-                            if not isDictEquals(newClientRole, clientRole, excludes):
-                                changeNeeded = True
-                            else:
-                                for newComposite in newClientRole['composites']:
-                                    compositeFound = False
-                                    if 'composites' not in clientRole or clientRole['composites'] is None:
-                                        changeNeeded = True
-                                        break
-                                    for existingComposite in clientRole['composites']:
-                                        if isDictEquals(newComposite,existingComposite):
-                                            compositeFound = True
-                                            break
-                                    if not compositeFound:
-                                        changeNeeded = True
-                                        break
-                        else:
-                            if not isDictEquals(newClientRole, clientRole):
-                                changeNeeded = True
-                elif desiredState != "absent":
-                    changeNeeded = True
-                if changeNeeded and desiredState != "absent":
-                    # If role must be modified
-                    newRoleRepresentation = {}
-                    newRoleRepresentation["name"] = newClientRole['name'].decode("utf-8")
-                    newRoleRepresentation["description"] = newClientRole['description'].decode("utf-8")
-                    newRoleRepresentation["composite"] = newClientRole['composite'] if "composite" in newClientRole else False
-                    newRoleRepresentation["clientRole"] = newClientRole['clientRole'] if "clientRole" in newClientRole else True
-                    data=json.dumps(newRoleRepresentation)
-                    if clientRoleFound:
-                        open_url(clientRolesUrl + '/' + newClientRole['name'], method='PUT', headers=self.restheaders, data=data)
-                    else:
-                        open_url(clientRolesUrl, method='POST', headers=self.restheaders, data=data)
-                    changed = True
-                    # Composites role
-                    if 'composites' in newClientRole and newClientRole['composites'] is not None and len(newClientRole['composites']) > 0:
+        try:
+            changed = False
+            # Manage the roles
+            if newClientRoles is not None:
+                for newClientRole in newClientRoles:
+                    changeNeeded = False
+                    desiredState = "present"
+                    # If state key is included in the client role representation, save its value and remove the key from the representation.
+                    if "state" in newClientRole:
+                        desiredState = newClientRole["state"]
+                        del(newClientRole["state"])
+                    if 'composites' in newClientRole and newClientRole['composites'] is not None:
                         newComposites = newClientRole['composites']
-                        if clientRoleFound and "composites" in clientRole:
-                            rolesToDelete = []
-                            for roleTodelete in clientRole['composites']:
-                                tmprole = {}
-                                tmprole['id'] = roleTodelete['id']
-                                rolesToDelete.append(tmprole)
-                            data=json.dumps(rolesToDelete)
-                            open_url(clientRolesUrl + '/' + newClientRole['name'] + '/composites', method='DELETE', headers=self.restheaders, data=data)
-                        data=json.dumps(newClientRole["composites"])
-                        open_url(clientRolesUrl + '/' + newClientRole['name'] + '/composites', method='POST', headers=self.restheaders, data=data)
-                elif changeNeeded and desiredState == "absent" and clientRoleFound:
-                    open_url(clientRolesUrl + '/' + newClientRole['name'], method='DELETE', headers=self.restheaders)
-                    changed = True
-        return changed
+                        for newComposite in newComposites:
+                            if "id" in newComposite and newComposite["id"] is not None:
+                                keycloakClients=json.load(open_url(clientSvcBaseUrl, method='GET', headers=self.restheaders))
+                                for keycloakClient in keycloakClients:
+                                    if keycloakClient['clientId'] == newComposite["id"]:
+                                        roles=json.load(open_url(clientSvcBaseUrl + '/' + keycloakClient['id'] + '/roles', method='GET', headers=self.restheaders))
+                                        for role in roles:
+                                            if role["name"] == newComposite["name"]:
+                                                newComposite['id'] = role['id']
+                                                newComposite['clientRole'] = True
+                                                break
+                            else:
+                                realmRoles=json.load(open_url(roleSvcBaseUrl, method='GET', headers=self.restheaders))
+                                for realmRole in realmRoles:
+                                    if realmRole["name"] == newComposite["name"]:
+                                        newComposite['id'] = realmRole['id']
+                                        newComposite['clientRole'] = False
+                                        break;
+                        
+                    clientRoleFound = False
+                    clientRoles = json.load(open_url(clientRolesUrl, method='GET', headers=self.restheaders))
+                    if len(clientRoles) > 0:
+                        # Check if role to be created already exist for the client
+                        for clientRole in clientRoles:
+                            if (clientRole['name'] == newClientRole['name']):
+                                clientRoleFound = True
+                                break
+                        # If we have to create the role because it does not exist and the desired state is present, or it exists and the desired state is absent
+                        if (not clientRoleFound and desiredState != "absent") or (clientRoleFound and desiredState == "absent"):
+                            changeNeeded = True
+                        else:
+                            if "composites" in newClientRole and newClientRole['composites'] is not None:
+                                excludes = []
+                                excludes.append("composites")
+                                if not isDictEquals(newClientRole, clientRole, excludes):
+                                    changeNeeded = True
+                                else:
+                                    for newComposite in newClientRole['composites']:
+                                        compositeFound = False
+                                        if 'composites' not in clientRole or clientRole['composites'] is None:
+                                            changeNeeded = True
+                                            break
+                                        for existingComposite in clientRole['composites']:
+                                            if isDictEquals(newComposite,existingComposite):
+                                                compositeFound = True
+                                                break
+                                        if not compositeFound:
+                                            changeNeeded = True
+                                            break
+                            else:
+                                if not isDictEquals(newClientRole, clientRole):
+                                    changeNeeded = True
+                    elif desiredState != "absent":
+                        changeNeeded = True
+                    if changeNeeded and desiredState != "absent":
+                        # If role must be modified
+                        newRoleRepresentation = {}
+                        newRoleRepresentation["name"] = newClientRole['name'].decode("utf-8")
+                        newRoleRepresentation["description"] = newClientRole['description'].decode("utf-8")
+                        newRoleRepresentation["composite"] = newClientRole['composite'] if "composite" in newClientRole else False
+                        newRoleRepresentation["clientRole"] = newClientRole['clientRole'] if "clientRole" in newClientRole else True
+                        data=json.dumps(newRoleRepresentation)
+                        if clientRoleFound:
+                            open_url(clientRolesUrl + '/' + newClientRole['name'], method='PUT', headers=self.restheaders, data=data)
+                        else:
+                            open_url(clientRolesUrl, method='POST', headers=self.restheaders, data=data)
+                        changed = True
+                        # Composites role
+                        if 'composites' in newClientRole and newClientRole['composites'] is not None and len(newClientRole['composites']) > 0:
+                            newComposites = newClientRole['composites']
+                            if clientRoleFound and "composites" in clientRole:
+                                rolesToDelete = []
+                                for roleTodelete in clientRole['composites']:
+                                    tmprole = {}
+                                    tmprole['id'] = roleTodelete['id']
+                                    rolesToDelete.append(tmprole)
+                                data=json.dumps(rolesToDelete)
+                                open_url(clientRolesUrl + '/' + newClientRole['name'] + '/composites', method='DELETE', headers=self.restheaders, data=data)
+                            data=json.dumps(newClientRole["composites"])
+                            open_url(clientRolesUrl + '/' + newClientRole['name'] + '/composites', method='POST', headers=self.restheaders, data=data)
+                    elif changeNeeded and desiredState == "absent" and clientRoleFound:
+                        open_url(clientRolesUrl + '/' + newClientRole['name'], method='DELETE', headers=self.restheaders)
+                        changed = True
+            return changed
+        except Exception as e:
+            self.module.fail_json(msg="Unable to create or update client roles %s: %s" % (clientRolesUrl, str(e)))
     
     def create_or_update_client_mappers(self, clientUrl, clientRepresentation):
         """ Create or update client protocol mappers. Mappers can be added, updated or removed depending of the state.
@@ -715,46 +726,49 @@ class KeycloakAPI(object):
         :param clientRepresentation: Desired representation of the client including protocolMappers list
         :return: True if the client roles have changed, False otherwise
         """
-        changed = False
-        if camel('protocol_mappers') in clientRepresentation and clientRepresentation[camel('protocol_mappers')] is not None:
-            newClientProtocolMappers = clientRepresentation[camel('protocol_mappers')]
-            # Get existing mappers from the client
-            clientMappers = json.load(open_url(clientUrl + '/protocol-mappers/models', method='GET', headers=self.restheaders))
-            
-            for newClientProtocolMapper in newClientProtocolMappers:
-                desiredState = "present"
-                # If state key is included in the mapper representation, save its value and remove the key from the representation.
-                if "state" in newClientProtocolMapper:
-                    desiredState = newClientProtocolMapper["state"]
-                    del(newClientProtocolMapper["state"])
-                clientMapperFound = False
-                # Check if mapper already exist for the client
-                for clientMapper in clientMappers:
-                    if (clientMapper['name'] == newClientProtocolMapper['name']):
-                        clientMapperFound = True
-                        break
-                # If mapper exists for the client
-                if clientMapperFound:
-                    if desiredState == "absent":
-                        # Delete the mapper
-                        open_url(clientUrl + '/protocol-mappers/models/' + clientMapper['id'], method='DELETE', headers=self.restheaders)
-                        changed = True
-                    else:
-                        if not isDictEquals(newClientProtocolMapper, clientMapper):
-                            # If changed has been introduced for the mapper
+        try:
+            changed = False
+            if camel('protocol_mappers') in clientRepresentation and clientRepresentation[camel('protocol_mappers')] is not None:
+                newClientProtocolMappers = clientRepresentation[camel('protocol_mappers')]
+                # Get existing mappers from the client
+                clientMappers = json.load(open_url(clientUrl + '/protocol-mappers/models', method='GET', headers=self.restheaders))
+                
+                for newClientProtocolMapper in newClientProtocolMappers:
+                    desiredState = "present"
+                    # If state key is included in the mapper representation, save its value and remove the key from the representation.
+                    if "state" in newClientProtocolMapper:
+                        desiredState = newClientProtocolMapper["state"]
+                        del(newClientProtocolMapper["state"])
+                    clientMapperFound = False
+                    # Check if mapper already exist for the client
+                    for clientMapper in clientMappers:
+                        if (clientMapper['name'] == newClientProtocolMapper['name']):
+                            clientMapperFound = True
+                            break
+                    # If mapper exists for the client
+                    if clientMapperFound:
+                        if desiredState == "absent":
+                            # Delete the mapper
+                            open_url(clientUrl + '/protocol-mappers/models/' + clientMapper['id'], method='DELETE', headers=self.restheaders)
                             changed = True
-                            newClientProtocolMapper["id"] = clientMapper["id"]
+                        else:
+                            if not isDictEquals(newClientProtocolMapper, clientMapper):
+                                # If changed has been introduced for the mapper
+                                changed = True
+                                newClientProtocolMapper["id"] = clientMapper["id"]
+                                data=json.dumps(newClientProtocolMapper)
+                                # Modify the mapper
+                                open_url(clientUrl + '/protocol-mappers/models/' + clientMapper['id'], method='PUT', headers=self.restheaders, data=data)
+                        
+                    else: # If mapper does not exist for the client
+                        if desiredState != "absent":
+                            # Create the mapper
                             data=json.dumps(newClientProtocolMapper)
-                            # Modify the mapper
-                            open_url(clientUrl + '/protocol-mappers/models/' + clientMapper['id'], method='PUT', headers=self.restheaders, data=data)
-                    
-                else: # If mapper does not exist for the client
-                    if desiredState != "absent":
-                        # Create the mapper
-                        data=json.dumps(newClientProtocolMapper)
-                        open_url(clientUrl + '/protocol-mappers/models', method='POST', headers=self.restheaders, data=data)
-                        changed = True
-        return changed
+                            open_url(clientUrl + '/protocol-mappers/models', method='POST', headers=self.restheaders, data=data)
+                            changed = True
+            return changed
+        except Exception as e:
+            self.module.fail_json(msg="Unable to create or update client mappers %s: %s" % (clientRepresentation["id"], str(e)))
 
     def add_attributes_list_to_attributes_dict(self, AttributesList, AttributesDict):
         """
@@ -783,70 +797,73 @@ class KeycloakAPI(object):
         :param realm: Realm
         :return: True if roles have been assigned or revoked to the group. False otherwise.
         """
-        roleSvcBaseUrl = URL_REALM_ROLES.format(url=self.baseurl, realm=realm)
-        clientSvcBaseUrl = URL_CLIENTS.format(url=self.baseurl, realm=realm)
-        # Get the id of the group
-        if 'id' in groupRepresentation:
-            gid = groupRepresentation['id']
-        else:
-            gid = self.get_group_by_name(name=groupRepresentation['name'], realm=realm)['id']
-        changed = False
-        # Assing Realm Roles
-        realmRolesRepresentation = []
-        if groupRealmRoles is not None:
-            for realmRole in groupRealmRoles:
-                # Look for existing role into group representation
-                if not "realmRoles" in groupRepresentation or not realmRole in groupRepresentation["realmRoles"]:
-                    roleid = None
-                    # Get all realm roles
-                    realmRoles = json.load(open_url(roleSvcBaseUrl, method='GET', headers=self.restheaders))
-                    # Find the role id
-                    for role in realmRoles:
-                        if role["name"] == realmRole:
-                            roleid = role["id"]
-                            break
-                    if roleid is not None:
-                        realmRoleRepresentation = {}
-                        realmRoleRepresentation["id"] = roleid
-                        realmRoleRepresentation["name"] = realmRole
-                        realmRolesRepresentation.append(realmRoleRepresentation)
-            if len(realmRolesRepresentation) > 0 :
-                data=json.dumps(realmRolesRepresentation)
-                # Assing Role
-                open_url(URL_GROUP_REALM_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid), method='POST', headers=self.restheaders, data=data)
-                changed = True
-
-        if groupClientRoles is not None:
-            # If there is change to do for client roles
-            if not "clientRoles" in groupRepresentation or not isDictEquals(groupClientRoles, groupRepresentation["clientRoles"]):
-                # Assing clients roles            
-                for clientRolesToAssing in groupClientRoles:    
-                    rolesToAssing = []
-                    clientIdOfClientRole = clientRolesToAssing['clientid']
-                    # Get the id of the client
-                    clients = json.load(open_url(clientSvcBaseUrl + '?clientId=' + clientIdOfClientRole, method='GET', headers=self.restheaders))
-                    if len(clients) > 0 and "id" in clients[0]:
-                        clientId = clients[0]["id"]
-                        # Get the client roles
-                        clientRoles = json.load(open_url(URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=clientId), method='GET', headers=self.restheaders))
-                        for clientRoleToAssing in clientRolesToAssing["roles"]:
-                            # Find his Id
-                            for clientRole in clientRoles:
-                                if clientRole["name"] == clientRoleToAssing:
-                                    newRole = {}
-                                    newRole["id"] = clientRole["id"]
-                                    newRole["name"] = clientRole["name"]
-                                    rolesToAssing.append(newRole)
-                                    break
-                    if len(rolesToAssing) > 0:
-                        # Delete exiting client Roles
-                        open_url(URL_GROUP_CLIENT_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid, clientid=clientId), method='DELETE', headers=self.restheaders)
-                        data=json.dumps(rolesToAssing)
-                        # Assing Role
-                        open_url(URL_GROUP_CLIENT_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid, clientid=clientId), method='POST', headers=self.restheaders, data=data)
-                        changed = True
-                
-        return changed
+        try:
+            roleSvcBaseUrl = URL_REALM_ROLES.format(url=self.baseurl, realm=realm)
+            clientSvcBaseUrl = URL_CLIENTS.format(url=self.baseurl, realm=realm)
+            # Get the id of the group
+            if 'id' in groupRepresentation:
+                gid = groupRepresentation['id']
+            else:
+                gid = self.get_group_by_name(name=groupRepresentation['name'], realm=realm)['id']
+            changed = False
+            # Assing Realm Roles
+            realmRolesRepresentation = []
+            if groupRealmRoles is not None:
+                for realmRole in groupRealmRoles:
+                    # Look for existing role into group representation
+                    if not "realmRoles" in groupRepresentation or not realmRole in groupRepresentation["realmRoles"]:
+                        roleid = None
+                        # Get all realm roles
+                        realmRoles = json.load(open_url(roleSvcBaseUrl, method='GET', headers=self.restheaders))
+                        # Find the role id
+                        for role in realmRoles:
+                            if role["name"] == realmRole:
+                                roleid = role["id"]
+                                break
+                        if roleid is not None:
+                            realmRoleRepresentation = {}
+                            realmRoleRepresentation["id"] = roleid
+                            realmRoleRepresentation["name"] = realmRole
+                            realmRolesRepresentation.append(realmRoleRepresentation)
+                if len(realmRolesRepresentation) > 0 :
+                    data=json.dumps(realmRolesRepresentation)
+                    # Assing Role
+                    open_url(URL_GROUP_REALM_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid), method='POST', headers=self.restheaders, data=data)
+                    changed = True
+    
+            if groupClientRoles is not None:
+                # If there is change to do for client roles
+                if not "clientRoles" in groupRepresentation or not isDictEquals(groupClientRoles, groupRepresentation["clientRoles"]):
+                    # Assing clients roles            
+                    for clientRolesToAssing in groupClientRoles:    
+                        rolesToAssing = []
+                        clientIdOfClientRole = clientRolesToAssing['clientid']
+                        # Get the id of the client
+                        clients = json.load(open_url(clientSvcBaseUrl + '?clientId=' + clientIdOfClientRole, method='GET', headers=self.restheaders))
+                        if len(clients) > 0 and "id" in clients[0]:
+                            clientId = clients[0]["id"]
+                            # Get the client roles
+                            clientRoles = json.load(open_url(URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=clientId), method='GET', headers=self.restheaders))
+                            for clientRoleToAssing in clientRolesToAssing["roles"]:
+                                # Find his Id
+                                for clientRole in clientRoles:
+                                    if clientRole["name"] == clientRoleToAssing:
+                                        newRole = {}
+                                        newRole["id"] = clientRole["id"]
+                                        newRole["name"] = clientRole["name"]
+                                        rolesToAssing.append(newRole)
+                                        break
+                        if len(rolesToAssing) > 0:
+                            # Delete exiting client Roles
+                            open_url(URL_GROUP_CLIENT_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid, clientid=clientId), method='DELETE', headers=self.restheaders)
+                            data=json.dumps(rolesToAssing)
+                            # Assing Role
+                            open_url(URL_GROUP_CLIENT_ROLE_MAPPING.format(url=self.baseurl, realm=realm, groupid=gid, clientid=clientId), method='POST', headers=self.restheaders, data=data)
+                            changed = True
+                    
+            return changed
+        except Exception as e:
+            self.module.fail_json(msg="Unable to assign roles to group %s: %s" % (groupRepresentation['name'], str(e)))
     
     def sync_ldap_groups(self, direction, realm='master'):
         """
@@ -857,19 +874,22 @@ class KeycloakAPI(object):
         :param realm: Realm
         :return: Nothing
         """
-        LDAPUserStorageProviderType = "org.keycloak.storage.UserStorageProvider"
-        componentSvcBaseUrl = URL_COMPONENTS.format(url=self.baseurl, realm=realm)
-        userStorageBaseUrl = URL_USER_STORAGE.format(url=self.baseurl, realm=realm)
-        # Get all components of type org.keycloak.storage.UserStorageProvider
-        components = json.load(open_url(componentSvcBaseUrl + '?type=' + LDAPUserStorageProviderType, method='GET', headers=self.restheaders))
-        for component in components:
-            # Get all sub components of type group-ldap-mapper
-            subComponents = json.load(open_url(componentSvcBaseUrl, method='GET', headers=self.restheaders, params={"parent": component["id"], "providerId": "group-ldap-mapper"}))
-            # For each group mappers
-            for subComponent in subComponents:
-                if subComponent["providerId"] == 'group-ldap-mapper':
-                    # Sync groups
-                    open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync", method='POST', headers=self.restheaders, params={"direction": direction}) 
+        try:
+            LDAPUserStorageProviderType = "org.keycloak.storage.UserStorageProvider"
+            componentSvcBaseUrl = URL_COMPONENTS.format(url=self.baseurl, realm=realm)
+            userStorageBaseUrl = URL_USER_STORAGE.format(url=self.baseurl, realm=realm)
+            # Get all components of type org.keycloak.storage.UserStorageProvider
+            components = json.load(open_url(componentSvcBaseUrl + '?type=' + LDAPUserStorageProviderType, method='GET', headers=self.restheaders))
+            for component in components:
+                # Get all sub components of type group-ldap-mapper
+                subComponents = json.load(open_url(componentSvcBaseUrl, method='GET', headers=self.restheaders, params={"parent": component["id"], "providerId": "group-ldap-mapper"}))
+                # For each group mappers
+                for subComponent in subComponents:
+                    if subComponent["providerId"] == 'group-ldap-mapper':
+                        # Sync groups
+                        open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync", method='POST', headers=self.restheaders, params={"direction": direction}) 
+        except Exception as e:
+            self.module.fail_json(msg="Unable to sync ldap groups %s: %s" % (direction, str(e)))
 
 
     def get_authentication_flow_by_alias(self, alias, realm='master'):
@@ -880,14 +900,17 @@ class KeycloakAPI(object):
         :param realm: Realm.
         :return: Authentication flow representation.
         """
-        authenticationFlow = {}
-        # Check if the authentication flow exists on the Keycloak serveraders
-        authentications = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
-        for authentication in authentications:
-            if authentication["alias"] == alias:
-                authenticationFlow = authentication
-                break
-        return authenticationFlow
+        try:
+            authenticationFlow = {}
+            # Check if the authentication flow exists on the Keycloak serveraders
+            authentications = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
+            for authentication in authentications:
+                if authentication["alias"] == alias:
+                    authenticationFlow = authentication
+                    break
+            return authenticationFlow
+        except Exception as e:
+            self.module.fail_json(msg="Unable get authentication flow %s: %s" % (alias, str(e)))
 
     def delete_authentication_flow_by_id(self, id, realm='master'):
         """ Delete an authentication flow from Keycloak
@@ -914,17 +937,21 @@ class KeycloakAPI(object):
         :param realm: Realm.
         :return: Representation of the new authentication flow.
         """    
-        newName = dict(
-            newName = config["alias"]
-        )
-        
-        data = json.dumps(newName)
-        open_url(URL_AUTHENTICATION_FLOW_COPY.format(url=self.baseurl, realm=realm, copyfrom=urllib.quote(config["copyFrom"])), method='POST', headers=self.restheaders, data=data)
-        flowList = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
-        for flow in flowList:
-            if flow["alias"] == config["alias"]:
-                return flow
-        return None
+        try:
+            newName = dict(
+                newName = config["alias"]
+            )
+            
+            data = json.dumps(newName)
+            open_url(URL_AUTHENTICATION_FLOW_COPY.format(url=self.baseurl, realm=realm, copyfrom=urllib.quote(config["copyFrom"])), method='POST', headers=self.restheaders, data=data)
+            flowList = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
+            for flow in flowList:
+                if flow["alias"] == config["alias"]:
+                    return flow
+            return None
+        except Exception as e:
+            self.module.fail_json(msg='Could not copy authentication flow %s in realm %s: %s'
+                                      % (config["alias"], realm, str(e)))
     
     def create_empty_auth_flow(self, config, realm='master'):
         """
@@ -934,18 +961,22 @@ class KeycloakAPI(object):
         :param realm: Realm.
         :return: Representation of the new authentication flow.
         """    
-        newFlow = dict(
-            alias = config["alias"],
-            providerId = config["providerId"],
-            topLevel = True
-        )
-        data = json.dumps(newFlow)
-        open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='POST', headers=self.restheaders, data=data)
-        flowList = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
-        for flow in flowList:
-            if flow["alias"] == config["alias"]:
-                return flow
-        return None
+        try:
+            newFlow = dict(
+                alias = config["alias"],
+                providerId = config["providerId"],
+                topLevel = True
+            )
+            data = json.dumps(newFlow)
+            open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='POST', headers=self.restheaders, data=data)
+            flowList = json.load(open_url(URL_AUTHENTICATION_FLOWS.format(url=self.baseurl, realm=realm), method='GET', headers=self.restheaders))
+            for flow in flowList:
+                if flow["alias"] == config["alias"]:
+                    return flow
+            return None
+        except Exception as e:
+            self.module.fail_json(msg='Could not create empty authentication flow %s in realm %s: %s'
+                                      % (config["alias"], realm, str(e)))
     
     def create_or_update_executions(self, config, realm='master'):
         """
@@ -955,36 +986,11 @@ class KeycloakAPI(object):
         :param realm: Realm
         :return: True if executions have been modified. False otherwise.
         """ 
-        changed = False
-    
-        if "authenticationExecutions" in config:
-            for newExecution in config["authenticationExecutions"]:
-                # Get existing executions on the Keycloak server for this alias
-                existingExecutions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
-                executionFound = False
-                for existingExecution in existingExecutions:
-                    if "providerId" in existingExecution and existingExecution["providerId"] == newExecution["providerId"]:
-                        executionFound = True
-                        break
-                if executionFound:
-                    # Replace config id of the execution config by it's complete representation
-                    if "authenticationConfig" in existingExecution:
-                        execConfigId = existingExecution["authenticationConfig"]
-                        execConfig = json.load(open_url(URL_AUTHENTICATION_CONFIG.format(url=self.baseurl, realm=realm, id=execConfigId), method='GET', headers=self.restheaders))
-                        existingExecution["authenticationConfig"] = execConfig
-    
-                    # Compare the executions to see if it need changes
-                    if not isDictEquals(newExecution, existingExecution):
-                        changed = True
-                else:
-                    # Create the new execution
-                    newExec = {}
-                    newExec["provider"] = newExecution["providerId"]
-                    newExec["requirement"] = newExecution["requirement"]
-                    data = json.dumps(newExec)
-                    open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS_EXECUTION.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='POST', headers=self.restheaders, data=data)
-                    changed = True
-                if changed:
+        try:
+            changed = False
+        
+            if "authenticationExecutions" in config:
+                for newExecution in config["authenticationExecutions"]:
                     # Get existing executions on the Keycloak server for this alias
                     existingExecutions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
                     executionFound = False
@@ -993,20 +999,49 @@ class KeycloakAPI(object):
                             executionFound = True
                             break
                     if executionFound:
-                        # Update the existing execution
-                        updatedExec = {}
-                        updatedExec["id"] = existingExecution["id"]
-                        for key in newExecution:
-                            # create the execution configuration
-                            if key == "authenticationConfig":
-                                # Add the autenticatorConfig to the execution
-                                data = json.dumps(newExecution["authenticationConfig"])
-                                open_url(URL_AUTHENTICATION_EXECUTIONS_CONFIG.format(url=self.baseurl, realm=realm, id=existingExecution["id"]), method='POST', headers=self.restheaders, data=data)
-                            else:
-                                updatedExec[key] = newExecution[key]
-                        data = json.dumps(updatedExec)
-                        open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='PUT', headers=self.restheaders, data=data)
-        return changed
+                        # Replace config id of the execution config by it's complete representation
+                        if "authenticationConfig" in existingExecution:
+                            execConfigId = existingExecution["authenticationConfig"]
+                            execConfig = json.load(open_url(URL_AUTHENTICATION_CONFIG.format(url=self.baseurl, realm=realm, id=execConfigId), method='GET', headers=self.restheaders))
+                            existingExecution["authenticationConfig"] = execConfig
+        
+                        # Compare the executions to see if it need changes
+                        if not isDictEquals(newExecution, existingExecution):
+                            changed = True
+                    else:
+                        # Create the new execution
+                        newExec = {}
+                        newExec["provider"] = newExecution["providerId"]
+                        newExec["requirement"] = newExecution["requirement"]
+                        data = json.dumps(newExec)
+                        open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS_EXECUTION.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='POST', headers=self.restheaders, data=data)
+                        changed = True
+                    if changed:
+                        # Get existing executions on the Keycloak server for this alias
+                        existingExecutions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
+                        executionFound = False
+                        for existingExecution in existingExecutions:
+                            if "providerId" in existingExecution and existingExecution["providerId"] == newExecution["providerId"]:
+                                executionFound = True
+                                break
+                        if executionFound:
+                            # Update the existing execution
+                            updatedExec = {}
+                            updatedExec["id"] = existingExecution["id"]
+                            for key in newExecution:
+                                # create the execution configuration
+                                if key == "authenticationConfig":
+                                    # Add the autenticatorConfig to the execution
+                                    data = json.dumps(newExecution["authenticationConfig"])
+                                    open_url(URL_AUTHENTICATION_EXECUTIONS_CONFIG.format(url=self.baseurl, realm=realm, id=existingExecution["id"]), method='POST', headers=self.restheaders, data=data)
+                                else:
+                                    updatedExec[key] = newExecution[key]
+                            data = json.dumps(updatedExec)
+                            open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='PUT', headers=self.restheaders, data=data)
+            return changed
+        except Exception as e:
+            self.module.fail_json(msg='Could create or update executions for authentication flow %s in realm %s: %s'
+                                      % (config["alias"], realm, str(e)))
     
     def get_executions_representation(self, config, realm='master'):
         """
@@ -1016,11 +1051,213 @@ class KeycloakAPI(object):
         :param realm: Realm
         :return: Representation of the executions
         """
-        # Get executions created
-        executions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
-        for execution in executions:
-            if "authenticationConfig" in execution:
-                execConfigId = execution["authenticationConfig"]
-                execConfig = json.load(open_url(URL_AUTHENTICATION_CONFIG.format(url=self.baseurl, realm=realm, id=execConfigId), method='GET', headers=self.restheaders))
-                execution["authenticationConfig"] = execConfig
-        return executions
+        try:
+            # Get executions created
+            executions = json.load(open_url(URL_AUTHENTICATION_FLOW_EXECUTIONS.format(url=self.baseurl, realm=realm, flowalias=urllib.quote(config["alias"])), method='GET', headers=self.restheaders))
+            for execution in executions:
+                if "authenticationConfig" in execution:
+                    execConfigId = execution["authenticationConfig"]
+                    execConfig = json.load(open_url(URL_AUTHENTICATION_CONFIG.format(url=self.baseurl, realm=realm, id=execConfigId), method='GET', headers=self.restheaders))
+                    execution["authenticationConfig"] = execConfig
+            return executions
+        except Exception as e:
+            self.module.fail_json(msg='Could get executions for authentication flow %s in realm %s: %s'
+                                      % (config["alias"], realm, str(e)))
+                
+    def get_component_by_id(self, component_id, realm='master'):
+        """
+        Get component representation by it's ID
+        :param component_id: ID of the component to get
+        :param realm: Realm
+        :return: Representation of the component
+        """
+        try:
+            component_url = URL_COMPONENT.format(url=self.baseurl, realm=realm, id=component_id)
+            return json.load(open_url(component_url, method='GET', headers=self.restheaders))
+
+        except Exception as e:
+            self.module.fail_json(msg='Could get component %s in realm %s: %s'
+                                      % (component_id, realm, str(e)))
+
+    def get_component_by_name_provider_and_parent(self, name, provider_type, provider_id, parent_id, realm='master'):
+        """
+        Get a component by it's name, provider type, provider id and parent
+        
+        :param name: Name of the component
+        :param provider_type: Provider type of the component
+        :param provider_id: Provider ID of the component
+        :param parent_id: Parent ID of the component. Realm is used as parent for base component.
+        :return: Component's representation if found. An empty dict otherwise.
+        """
+        componentFound = {}
+        components = self.get_components_by_name_provider_and_parent(name=name, provider_type=provider_type, parent_id=parent_id, realm=realm)
+        
+        for component in components:
+            if "providerId" in component and component["providerId"] == provider_id:
+                componentFound = component
+                break
+            
+        return componentFound
+    
+    def get_components_by_name_provider_and_parent(self, name, provider_type, parent_id, realm='master'):
+        """
+        Get components by name, provider and parent
+        
+        :param name: Name of the component
+        :param provider_type: Provider type of the component
+        :param provider_id: Provider ID of the component
+        :param parent_id: Parent ID of the component. Realm is used as parent for base component.
+        :return: List of components found.
+        """
+        try:
+            component_url = URL_COMPONENT_BY_NAME_TYPE_PARENT.format(url=self.baseurl, realm=realm, name=name, type=provider_type, parent=parent_id)
+            components = json.load(open_url(component_url, method='GET', headers=self.restheaders))
+            return components
+        except Exception as e:
+            self.module.fail_json(msg='Could get component %s in realm %s: %s'
+                                      % (name, realm, str(e)))
+    
+    def create_component(self, newComponent, newSubComponents, syncLdapMappers, realm='master'):
+        """
+        Create a component and it's subComponents
+        :param newComponent: Representation of the component to create
+        :param newSubComponents: List of subcomponents to create
+        :param syncLdapMappers: Mapper synchronization
+        :param realm: Realm
+        :return: Representation of the component created
+        """
+        try:
+            component_url = URL_COMPONENTS.format(url=self.baseurl, realm=realm)
+            open_url(component_url, method='POST', headers=self.restheaders, data=json.dumps(newComponent))
+            # Get the new created component
+            component = self.get_component_by_name_provider_and_parent(name=newComponent["name"], provider_type=newComponent["providerType"], provider_id=newComponent["providerId"], parent_id=newComponent["parentId"], realm=realm)
+            # Create Sub components
+            self.create_new_sub_components(component, newSubComponents, syncLdapMappers, realm=realm)
+    
+            return component
+        except Exception as e:
+            self.module.fail_json(msg='Could create component %s in realm %s: %s'
+                                      % (newComponent["name"], realm, str(e)))
+    
+    def create_new_sub_components(self, component, newSubComponents, syncLdapMappers, realm='master'):
+        """
+        Create subcomponents for a component.
+        :param component: Representation of the parent component
+        :param newSubComponents: List of subcomponents to create for this parent
+        :param syncLdapMappers: Mapper synchronization
+        :param realm: Realm
+        :return: Nothing
+        """
+        try:
+            # If subcomponents are defined
+            if newSubComponents is not None:
+                for componentType in newSubComponents.keys():
+                    for newSubComponent in newSubComponents[componentType]:
+                        newSubComponent["providerType"] = componentType
+                        newSubComponent["parentId"] = component["id"]
+                        # Create sub component
+                        component_url = URL_COMPONENTS.format(url=self.baseurl, realm=realm)
+                        open_url(component_url, method='POST', headers=self.restheaders, data=json.dumps(newSubComponent))
+                        # Check if users and groups synchronization is needed
+                        if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers is not "no":
+                            # Get subcomponents
+                            subComponents = self.get_component_by_name_provider_and_parent(name=newSubComponent["name"], provider_type=newSubComponent["providerType"], parent_id=component["id"], realm=realm)
+                            for subComponent in subComponents:
+                                # Sync sub component
+                                sync_url = URL_USER_STORAGE_MAPPER_SYNC.format(url=self.baseurl, realm=realm, parentid=subComponent["parentId"], id=subComponent["id"], direction=syncLdapMappers)
+                                open_url(sync_url, method='POST', headers=self.restheaders)
+        except Exception as e:
+            self.module.fail_json(msg='Could create sub components for parent %s in realm %s: %s'
+                                      % (component["name"], realm, str(e)))
+                            
+    def update_component(self, newComponent, realm='master'):
+        """
+        Update a component.
+        :param component: Representation of the component tu update.
+        :param realm: Realm
+        :return: new representation of the updated component
+        """
+        try:
+            # Add existing component Id to new component
+            #newComponent['id'] = component['id']
+            #newComponent['parentId'] = component['parentId']
+            component_url = URL_COMPONENT.format(url=self.baseurl, realm=realm, id=newComponent["id"])
+            open_url(component_url, method='PUT', headers=self.restheaders, data=json.dumps(newComponent))
+            return self.get_component_by_id(newComponent['id'], realm=realm)
+        except Exception as e:
+            self.module.fail_json(msg='Could update component %s in realm %s: %s'
+                                      % (component["name"], realm, str(e)))
+    
+    def update_sub_components(self, component, newSubComponents, syncLdapMappers, realm='master'):
+        try:
+            changed=False
+            # Get all existing sub components for the component to update.
+            subComponents = self.get_all_sub_components(parent_id=component["id"], realm=realm)
+            # For all new sub components to update
+            for componentType in newSubComponents.keys():
+                for newSubComponent in newSubComponents[componentType]:
+                    newSubComponent["providerType"] = componentType
+                    # Search in al existing subcomponents
+                    newSubComponentFound = False
+                    for subComponent in subComponents:
+                        # If the existing component is the same type than the new component
+                        if subComponent["name"] == newSubComponent["name"]:
+                            # Compare them to see if the existing component need to be changed
+                            if not isDictEquals(newSubComponent, subComponent):
+                                # Update the Ids
+                                newSubComponent["parentId"] = subComponent["parentId"]
+                                newSubComponent["id"] = subComponent["id"]
+                                # Update the sub component
+                                component_url = URL_COMPONENT.format(url=self.baseurl, realm=realm, id=subComponent["id"])
+                                open_url(component_url, method='PUT', headers=self.restheaders, data=json.dumps(newSubComponent))
+                                changed = True
+                            newSubComponentFound = True
+                            # If sync is needed for the subcomponent
+                            if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers is not "no":
+                                # Do the sync
+                                sync_url = URL_USER_STORAGE_MAPPER_SYNC.format(url=self.baseurl, realm=realm, parentid=subComponent["parentId"], id=subComponent["id"], direction=syncLdapMappers)
+                                open_url(sync_url, method='POST', headers=self.restheaders)
+                            break
+                    # If sub-component does not already exists
+                    if not newSubComponentFound:
+                        # Update the parent Id
+                        newSubComponent["parentId"] = component["id"]
+                        # Create the sub-component
+                        component_url = URL_COMPONENTS.format(url=self.baseurl, realm=realm)
+                        open_url(component_url, method='POST', headers=self.restheaders, data=json.dumps(newSubComponent))
+                        changed = True
+                        # Sync LDAP for group mappers
+                        if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers is not "no":
+                            # Get subcomponents
+                            subComponents = self.get_component_by_name_provider_and_parent(name=newSubComponent["name"], provider_type=newSubComponent["providerType"], parent_id=component["id"], realm=realm)
+                            for subComponent in subComponents:
+                                sync_url = URL_USER_STORAGE_MAPPER_SYNC.format(url=self.baseurl, realm=realm, parentid=subComponent["parentId"], id=subComponent["id"], direction=syncLdapMappers)
+                                open_url(sync_url, method='POST', headers=self.restheaders)
+            return changed
+        except Exception as e:
+            self.module.fail_json(msg='Could update component %s in realm %s: %s'
+                                      % (component["name"], realm, str(e)))
+
+    def get_all_sub_components(self, parent_id, realm='master'):
+        """
+        Get a list of sub components representation for a parent component.
+        :param parent_ip: ID of the parent component
+        :param realm: Realm
+        :return: List of representation for the sub component.
+        """
+        try:
+            subcomponents_url = URL_SUB_COMPONENTS.format(url=self.baseurl, realm=realm, parent=parent_id)
+            subcomponents = json.load(open_url(subcomponents_url, method='GET', headers=self.restheaders))
+            return subcomponents
+        except Exception as e:
+            self.module.fail_json(msg='Could get sub component for parent component %s in realm %s: %s'
+                                      % (parent_id, realm, str(e)))
+        
+    def delete_component(self, component_id, realm='master'):
+        component_url = URL_COMPONENT.format(url=self.baseurl, realm=realm, id=component_id)
+        open_url(component_url, method='DELETE', headers=self.restheaders)
+        
+    def sync_user_storage(self, component_id, action, realm='master'):
+        sync_url=URL_USER_STORAGE_SYNC.format(url=self.baseurl, realm=realm, id=component_id, action=action)
+        open_url(sync_url, method='POST', headers=self.restheaders)
+           
