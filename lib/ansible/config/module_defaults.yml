@@ -92,6 +92,16 @@ groupings:
   - aws
   cloudwatchlogs_log_group_facts:
   - aws
+  cpm_plugconfig:
+  - cpm
+  cpm_plugcontrol:
+  - cpm
+  cpm_serial_port_config:
+  - cpm
+  cpm_serial_port_info:
+  - cpm
+  cpm_user:
+  - cpm
   data_pipeline:
   - aws
   dynamodb_table:
