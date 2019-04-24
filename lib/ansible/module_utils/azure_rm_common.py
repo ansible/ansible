@@ -516,7 +516,75 @@ class AzureRMModuleBase(object):
         :param old_params: old parameters dictionary, body from Get request.
         :param new_params: new parameters dictionary, unpacked module parameters.
         '''
-        return False
+        modifiers = {}
+        result = {}
+        self.create_compare_modifiers(self.argument_spec, '', modifiers)
+        return self.default_compare(modifiers, new_params, old_params, '', result)
+
+    def create_compare_modifiers(self, arg_spec, path, result):
+        for k in arg_spec.keys():
+            o = arg_spec[k]
+            updatable = o.get('updatable', True)
+            comparison = o.get('comparison', 'default')
+            p = (path +
+                 ('/' if len(path) > 0 else '') +
+                 o.get('disposition', '*').replace('*', k) +
+                 ('/*' if o['type'] == 'list' else ''))
+            if comparison != 'default' or not updatable:
+                result[p] = { 'updatable': updatable, 'comparison': comparison }
+            if o.get('options'):
+                self.create_compare_modifiers(o.get('options'), p, result)
+
+    def default_compare(self, modifiers, new, old, path, result):
+        if new is None:
+            return True
+        elif isinstance(new, dict):
+            if not isinstance(old, dict):
+                result['compare'] = 'changed [' + path + '] old dict is null'
+                return False
+            for k in new.keys():
+                if not self.default_compare(modifiers, new.get(k), old.get(k, None), path + '/' + k, result):
+                    return False
+            return True
+        elif isinstance(new, list):
+            if not isinstance(old, list) or len(new) != len(old):
+                result['compare'] = 'changed [' + path + '] length is different or null'
+                return False
+            if isinstance(old[0], dict):
+                key = None
+                if 'id' in old[0] and 'id' in new[0]:
+                    key = 'id'
+                elif 'name' in old[0] and 'name' in new[0]:
+                    key = 'name'
+                else:
+                    key = old[0].keys()[0]
+                new = sorted(new, key=lambda x: x.get(key, None))
+                old = sorted(old, key=lambda x: x.get(key, None))
+            else:
+                new = sorted(new)
+                old = sorted(old)
+            for i in range(len(new)):
+                if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
+                    return False
+            return True
+        else:
+            updatable = modifiers.get(path, {}).get('updatable', True)
+            comparison = modifiers.get(path, {}).get('comparison', 'default')
+            if path == '/location' or path.endswith('locationName'):
+                new = new.replace(' ', '').lower()
+                old = old.replace(' ', '').lower()
+            elif path.endswith('adminPassword') or path.endswith('administratorLoginPassword') or path.endswith('createMode'):
+                return True
+            if str(new) == str(old):
+                result['compare'] = result.get('compare', '') + "(" + str(new) + ":" + str(old) + ")"
+                return True
+            else:
+                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
+                if updatable:
+                    return False
+                else:
+                    # XXX change new value to old
+                    self.module.warn("property '" + path + "' cannot be updated (" + str(old) + "->" + str(new) + ")")
 
     def serialize_obj(self, obj, class_name, enum_modules=None):
         '''
