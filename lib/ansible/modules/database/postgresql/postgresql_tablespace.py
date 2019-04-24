@@ -174,7 +174,7 @@ try:
     from psycopg2.extras import DictCursor
     from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT as AUTOCOMMIT
     from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED as READ_COMMITTED
-except Exception:
+except ImportError:
     # psycopg2 is checked by connect_to_db()
     # from ansible.module_utils.postgres
     pass

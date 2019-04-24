@@ -73,7 +73,7 @@ server_version:
 
 try:
     from psycopg2.extras import DictCursor
-except Exception:
+except ImportError:
     # psycopg2 is checked by connect_to_db()
     # from ansible.module_utils.postgres
     pass
