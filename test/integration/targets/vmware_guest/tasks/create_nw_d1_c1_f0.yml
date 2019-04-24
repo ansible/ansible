@@ -2,43 +2,15 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-- debug: var=vmlist
-
 - name: create new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ 'newvmnw_' + item|basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: newvmnw_4
     guest_id: centos64Guest
-    datacenter: "{{ (item|basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 4
         memory_mb: 512
@@ -55,8 +27,7 @@
           start_connected: True
           allow_guest_control: True
     state: poweredoff
-    folder: "{{ item|dirname }}"
-  with_items: "{{ vmlist['json'] }}"
+    folder: F0
   register: clone_d1_c1_f0
 
 - debug: var=clone_d1_c1_f0
@@ -64,4 +35,4 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+        - clone_d1_c1_f0 is changed
