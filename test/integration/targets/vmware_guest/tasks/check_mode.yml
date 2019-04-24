@@ -2,46 +2,14 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-- debug: var=vmlist
-
-- name: get a guest
-  set_fact:
-    guest1: "{{ vmlist.json[0] }}"
-
 - name: Perform all operation in check mode
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ guest1|basename }}"
-    datacenter: "{{ (guest1|basename).split('_')[0] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ infra.vm_list[0] }}"
+    datacenter: "{{ dc1 }}"
     state: "{{ item }}"
   with_items:
     - absent
@@ -55,22 +23,23 @@
   register: check_mode_state
   check_mode: yes
 
-- debug: var=check_mode_state
+- debug:
+    var: check_mode_state
 
 - name: assert that changes were made
   assert:
     that:
       - "check_mode_state.results|map(attribute='changed')|unique|list == [true]"
-      - "check_mode_state.results|map(attribute='vm_name')|unique|list == [ guest1 | basename ]"
+      - "check_mode_state.results|map(attribute='vm_name')|unique|list == [ infra.vm_list[0] ]"
 
 - name: Perform all operation on non-existent VM in check mode
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: non_existent_vm
-    datacenter: "{{ (guest1|basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     state: "{{ item }}"
   with_items:
     - present
@@ -81,7 +50,8 @@
   register: check_mode_state
   check_mode: yes
 
-- debug: var=check_mode_state
+- debug:
+    var: check_mode_state
 
 - name: assert that changes were made
   assert:

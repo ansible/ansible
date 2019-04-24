@@ -1,37 +1,9 @@
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: "http://{{ vcsim }}:5000/killall"
-- name: start vcsim with no folders
-  uri:
-    url: "http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0"
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMs from vcsim
-  uri:
-    url: "http://{{ vcsim }}:5000/govc_find?filter=VM"
-  register: vmlist
-
-- debug: var=vcsim_instance
-- debug: var=vmlist
-
 - name: ensure that VMs are not flagged as templates
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
     folder: "{{ item|dirname }}"
     name: "{{ item|basename }}"
@@ -50,9 +22,9 @@
 - name: convert all VMs to templates
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
     folder: "{{ item|dirname }}"
     name: "{{ item|basename }}"
@@ -71,9 +43,9 @@
 - name: make double sure that all VMs are templates
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
     folder: "{{ item|dirname }}"
     name: "{{ item|basename }}"
@@ -92,9 +64,9 @@
 - name: convert all templates back to VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
     folder: "{{ item|dirname }}"
     name: "{{ item|basename }}"
