@@ -2,56 +2,19 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
-
-- debug: var=vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of Datacenters from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DC
-  register: datacenters
-
-- name: get a datacenter
-  set_fact: dc1="{{ datacenters['json'][0] | basename }}"
-
-- debug: var=dc1
-
-- name: get a list of Clusters from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
-  register: clusters
-
-- name: get a cluster
-  set_fact: ccr1="{{ clusters['json'][0] | basename }}"
-
-- debug: var=ccr1
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
 
 # Testcase 0001: Add Resource pool
 - name: add resource pool
   vmware_resource_pool:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: test_resource_0001
@@ -66,27 +29,19 @@
     state: present
   register: resource_result_0001
 
-- name: get a list of resources from vcsim after adding a resource pool
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=RP
-  register: new_rp_list
-
-- set_fact: new_resource="{% for rp in new_rp_list['json'] %} {{ True if (rp | basename) == 'test_resource_0001' else False }} {% endfor %}"
-
 - name: ensure a resource pool is present
   assert:
     that:
         - "{{ resource_result_0001.changed == true }}"
-        - "{{ 'True' in new_resource }}"
 
 
 # Testcase 0002: Add Resource pool again
 - name: add resource pool again
   vmware_resource_pool:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: test_resource_0001
@@ -111,9 +66,9 @@
 - name: add resource pool again
   vmware_resource_pool:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: test_resource_0001
@@ -129,9 +84,9 @@
 - name: add resource pool again
   vmware_resource_pool:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: test_resource_0001

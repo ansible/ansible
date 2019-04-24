@@ -4,3 +4,4 @@ skip/python3
 destructive
 needs/file/contrib/inventory/vmware_inventory.py
 needs/file/contrib/inventory/vmware_inventory.ini
+needs/target/prepare_vmware_tests
