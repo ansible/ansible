@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_instance - Fix issue that prevented module from setting security groups correctly on existing instances.
