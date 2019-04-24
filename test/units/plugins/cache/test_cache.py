@@ -95,7 +95,6 @@ class TestCachePluginAdjudicator:
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
 
-
 class TestFactCache(unittest.TestCase):
 
     def setUp(self):
@@ -116,6 +115,13 @@ class TestFactCache(unittest.TestCase):
             self.assertRaisesRegexp(AnsibleError,
                                     "Unable to load the facts cache plugin.*json.*",
                                     FactCache)
+    def test_update(self):
+        self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
+        assert self.cache['cache_key']['key2'] == 'updatedvalue'
+
+    def test_update_legacy(self):
+        self.cache.update('cache_key', {'key2': 'updatedvalue'})
+        assert self.cache['cache_key']['key2'] == 'updatedvalue'
 
     def test_update_legacy_key_exists(self):
         self.cache['cache_key'] = {'key': 'value', 'key2': 'value2'}
