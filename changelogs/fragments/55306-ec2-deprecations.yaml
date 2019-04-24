@@ -1,0 +1,2 @@
+minor_changes:
+  - ec2 - Remove deprecated ``device_type`` option (https://github.com/ansible/ansible/issues/55306)
