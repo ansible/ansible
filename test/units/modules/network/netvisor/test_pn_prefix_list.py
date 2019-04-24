@@ -51,12 +51,12 @@ class TestPrefixListModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_scope': 'local', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 prefix-list-create name foo  scope local '
+        expected_cmd = ' switch sw01 prefix-list-create name foo  scope local '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_prefix_list_delete(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 prefix-list-delete name foo '
+        expected_cmd = ' switch sw01 prefix-list-delete name foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)

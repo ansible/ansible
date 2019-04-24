@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: pn_prefix_list
 author: "Pluribus Networks (@rajaspachipulusu17)"
-version_added: "2.8"
+version_added: "2.9"
 short_description: CLI command to create/delete prefix-list
 description:
   - This module can be used to create or delete prefix list.
