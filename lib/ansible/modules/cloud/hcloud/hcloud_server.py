@@ -47,6 +47,8 @@ options:
     ssh_keys:
         description:
             - List of SSH Keys Names
+            - The key names correspond to the SSH keys configured for your
+              Hetzner Cloud account access.
         type: list
     volumes:
         description:
@@ -117,7 +119,7 @@ EXAMPLES = """
     image: ubuntu-18.04
     location: fsn1
     ssh_keys:
-      - my-ssh-key
+      - me@myorganisation
     state: present
 
 - name: Resize an existing server
