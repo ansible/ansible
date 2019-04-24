@@ -42,11 +42,12 @@ class LibraryError(Exception):
     pass
 
 
-def ensure_libs(sslrootcert=None):
+def ensure_libs(module):
     if not HAS_PSYCOPG2:
-        raise LibraryError('psycopg2 is not installed. we need psycopg2.')
-    if sslrootcert and psycopg2.__version__ < '2.4.3':
-        raise LibraryError('psycopg2 must be at least 2.4.3 in order to use the ca_cert parameter')
+        module.fail_json(msg=missing_required_lib('psycopg2'))
+
+    if module.params.get('ca_cert') and psycopg2.__version__ < '2.4.3':
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
     # no problems
     return None
@@ -65,13 +66,12 @@ def postgres_common_argument_spec():
 
 
 def connect_to_db(module, autocommit=False, fail_on_conn=True):
+
+    ensure_libs(module)
+
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
-    sslrootcert = module.params['ca_cert']
-
-    ensure_libs(sslrootcert)
-
     params_map = {
         "login_host": "host",
         "login_user": "user",
