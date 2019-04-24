@@ -4,7 +4,7 @@
   when: ansible_connection == "local"
 
 - set_fact: soft_reconfiguration_ina="always"
-  when: imagetag and (imagetag is version_compare('D1', 'ne'))
+  when: imagetag is not search("D1|N1")
 
 - name: "Disable feature BGP"
   nxos_feature: &disable_bgp
