@@ -191,7 +191,7 @@ class VmPoolsModule(BaseModule):
             usb=(
                 otypes.Usb(enabled=vm.get('usb_support'))
             ) if vm.get('usb_support') is not None else None,
-            initialization=self.get_initialization(vm) if vm.get('cloud_init_persist') else None,
+            initialization=self.get_initialization(vm),
             display=otypes.Display(
                 smartcard_enabled=vm.get('smartcard_enabled')
             ) if vm.get('smartcard_enabled') is not None else None,
