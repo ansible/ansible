@@ -36,6 +36,11 @@ options:
     type: string
     default: None
     version_added: "2.8"
+  http_agent:
+    description: Header to identify as, generally appears in web server logs.
+    type: string
+    default: ansible-httpget
+    version_added: "2.9"
 """
 
 EXAMPLES = """
@@ -78,7 +83,8 @@ class LookupModule(LookupBase):
                 response = open_url(term, validate_certs=self.get_option('validate_certs'),
                                     use_proxy=self.get_option('use_proxy'),
                                     url_username=self.get_option('username'),
-                                    url_password=self.get_option('password'))
+                                    url_password=self.get_option('password'),
+                                    http_agent=self.get_option('http_agent'))
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:
