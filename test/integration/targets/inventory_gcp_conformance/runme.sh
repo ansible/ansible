@@ -2,6 +2,15 @@
 
 set -eux
 
+correct_jinja_version_found=$(
+python -c 'import jinja2; from distutils.version import StrictVersion; print(StrictVersion(jinja2.__version__) >= StrictVersion("2.10"))'
+)
+if [[ "$correct_jinja_version_found" != "True" ]]; then
+    printf "SKIPPING TEST: found jinja2 version is too old for ANSIBLE_JINJA2_NATIVE\n"
+    exit 0
+fi
+
+
 # set the output dir
 if [ -z "${OUTPUT_DIR+null}" ]; then
     export OUTPUT_DIR=${PWD}
@@ -60,7 +69,7 @@ auth_kind: serviceaccount
 service_account_file: $OUTPUT_DIR/gcp_credentials.json
 compose:
   ansible_ssh_host: networkInterfaces[0]['accessConfigs'][0]['natIP']
-  gce_description: description if description else None
+  gce_description: description if description and description != u'' else None
   gce_id: id
   gce_image: image
   gce_machine_type: machineType
