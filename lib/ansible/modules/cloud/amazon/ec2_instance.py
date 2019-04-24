@@ -714,13 +714,11 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.six import text_type, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib import parse as urlparse
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_native
 import ansible.module_utils.ec2 as ec2_utils
-from ansible.module_utils.ec2 import (boto3_conn,
-                                      ec2_argument_spec,
-                                      get_aws_connection_info,
+from ansible.module_utils.ec2 import (ec2_argument_spec,
                                       AWSRetry,
                                       ansible_dict_to_boto3_filter_list,
                                       compare_aws_tags,
@@ -1237,20 +1235,62 @@ def diff_instance_and_params(instance, params, ec2=None, skip=None):
     param_mappings = [
         ParamMapper('ebs_optimized', 'EbsOptimized', 'ebsOptimized', value_wrapper),
         ParamMapper('termination_protection', 'DisableApiTermination', 'disableApiTermination', value_wrapper),
+        ParamMapper('security_groups', 'Groups', 'groupSet', value_wrapper),
+        ParamMapper('security_group', 'Groups', 'groupSet', value_wrapper),
         # user data is an immutable property
         # ParamMapper('user_data', 'UserData', 'userData', value_wrapper),
     ]
 
     for mapping in param_mappings:
         if params.get(mapping.param_key) is not None and mapping.instance_key not in skip:
+<<<<<<< HEAD
             value = AWSRetry.jittered_backoff()(ec2.describe_instance_attribute)(Attribute=mapping.attribute_name, InstanceId=id_)
             if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
                 arguments = dict(
                     InstanceId=instance['InstanceId'],
                     # Attribute=mapping.attribute_name,
+||||||| merged common ancestors
+            value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
+            if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
+                arguments = dict(
+                    InstanceId=instance['InstanceId'],
+                    # Attribute=mapping.attribute_name,
+=======
+            value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
+            if mapping.param_key not in ['security_groups', 'security_group']:
+                if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
+                    arguments = dict(
+                        InstanceId=instance['InstanceId'],
+                        # Attribute=mapping.attribute_name,
+                    )
+                    arguments[mapping.instance_key] = mapping.add_value(params.get(mapping.param_key))
+                    changes_to_apply.append(arguments)
+            elif bool(params.get(mapping.param_key)) is not False:
+                if params.get('vpc_subnet_id'):
+                    subnet_id = params.get('vpc_subnet_id')
+                else:
+                    default_vpc = get_default_vpc(ec2)
+                    if default_vpc is None:
+                        raise module.fail_json(
+                            msg="No default subnet could be found - you must include a VPC subnet ID (vpc_subnet_id parameter) to create an instance")
+                    else:
+                        sub = get_default_subnet(ec2, default_vpc)
+                        subnet_id = sub['SubnetId']
+
+                groups = discover_security_groups(
+                    group=params.get('security_group'),
+                    groups=params.get('security_groups'),
+                    subnet_id=subnet_id,
+                    ec2=ec2
+>>>>>>> Added SG handling for existing instances + some cleanup
                 )
-                arguments[mapping.instance_key] = mapping.add_value(params.get(mapping.param_key))
-                changes_to_apply.append(arguments)
+                expected_groups = [g['GroupId'] for g in groups]
+                instance_groups = [g['GroupId'] for g in value['Groups']]
+                if set(instance_groups) != set(expected_groups):
+                    changes_to_apply.append(dict(
+                        Groups=expected_groups,
+                        InstanceId=instance['InstanceId']
+                    ))
 
     if (params.get('network') or {}).get('source_dest_check') is not None:
         # network.source_dest_check is nested, so needs to be treated separately
