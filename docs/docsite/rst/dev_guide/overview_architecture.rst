@@ -29,9 +29,7 @@ When multiple modules use the same code, Ansible stores those functions as modul
 Plugins
 =======
 
-Plugins augment Ansible's core functionality with features like cacheing, callbacks, filters, and lookups. Plugins are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`. Plugins must be written in Python.
-
-You can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. Plugins can also use Python APIs for extending Ansible's connection types (SSH is not the only transport possible), for adding callbacks (how Ansible logs, etc), and even for adding new server side behaviors.
+Plugins augment Ansible's core functionality with features like cacheing, callbacks, filters, and lookups. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`. For example, you can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. Plugins can also use Python APIs for extending Ansible's connection types (SSH is not the only transport possible), for adding callbacks (how Ansible logs, etc), and even for adding new server side behaviors. Plugins must be written in Python.
 
 Inventory
 =========
