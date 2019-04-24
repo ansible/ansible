@@ -207,7 +207,7 @@ class ConnectionBase(AnsiblePlugin):
     @ensure_connect
     @abstractmethod
     def fetch_file(self, in_path, out_path):
-        """Fetch a file from remote to local"""
+        """Fetch a file from remote to local; callers are expected to have pre-created the directory chain for out_path"""
         pass
 
     @abstractmethod
