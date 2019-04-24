@@ -29,6 +29,13 @@ class SortingHelpFormatter(argparse.HelpFormatter):
         super(SortingHelpFormatter, self).add_arguments(actions)
 
 
+class AnsibleVersion(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        ansible_version = to_native(version(getattr(parser, 'prog')))
+        print(ansible_version)
+        parser.exit()
+
+
 class PrependListAction(argparse.Action):
     """A near clone of ``argparse._AppendAction``, but designed to prepend list values
     instead of appending.
@@ -184,7 +191,8 @@ def create_base_parser(usage="", desc=None, epilog=None):
     )
     version_help = "show program's version number, config file location, configured module search path," \
                    " module location, executable location and exit"
-    parser.add_argument('--version', action='version', version=to_native(version("%(prog)s")), help=version_help)
+
+    parser.add_argument('--version', action=AnsibleVersion, nargs=0, help=version_help)
     add_verbosity_options(parser)
     return parser
 
