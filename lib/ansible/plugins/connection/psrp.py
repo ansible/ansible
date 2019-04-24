@@ -277,7 +277,6 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _common_args
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash
-from ansible.utils.path import makedirs_safe
 
 HAS_PYPSRP = True
 PYPSRP_IMP_ERR = None
@@ -540,12 +539,11 @@ if ($bytes_read -gt 0) {
             raise AnsibleError("failed to setup file stream for fetch '%s': %s"
                                % (out_path, to_native(stderr)))
         elif stdout.strip() == '[DIR]':
-            # in_path was a dir so we need to create the dir locally
-            makedirs_safe(out_path)
+            # to be consistent with other connection plugins, we assume the caller has created the target dir
             return
 
         b_out_path = to_bytes(out_path, errors='surrogate_or_strict')
-        makedirs_safe(os.path.dirname(b_out_path))
+        # to be consistent with other connection plugins, we assume the caller has created the target dir
         offset = 0
         with open(b_out_path, 'wb') as out_file:
             while True:
