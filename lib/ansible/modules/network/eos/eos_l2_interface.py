@@ -213,16 +213,19 @@ def map_config_to_obj(module):
     for item in set(match):
         command = {'command': 'show interfaces {0} switchport | include Switchport'.format(item),
                    'output': 'text'}
-        switchport_cfg = run_commands(module, command)[0].split(':')[1].strip()
-        if switchport_cfg == 'Enabled':
-            state = 'present'
-        else:
-            state = 'absent'
+        command_result = run_commands(module, command)
+        if command_result[0] != "":
+            switchport_cfg = command_result[0].split(':')[1].strip()
 
-        obj = {
-            'name': item.lower(),
-            'state': state,
-        }
+            if switchport_cfg == 'Enabled':
+                state = 'present'
+            else:
+                state = 'absent'
+
+            obj = {
+                'name': item.lower(),
+                'state': state,
+            }
 
         obj['access_vlan'] = parse_config_argument(configobj, item, 'switchport access vlan')
         obj['native_vlan'] = parse_config_argument(configobj, item, 'switchport trunk native vlan')
