@@ -45,6 +45,15 @@ options:
     - If C(state) is C(present), C(meta_url) and C(vib_url) is required for the given VIB. C(name) is optional.
     - If C(state) is C(absent), C(name) is required for the given VIB. C(meta_url) and C(vib_url) is optional.
     type: list
+  state:
+    description:
+    - Define operation to perform using VIB information provided.
+    - If C(state) is set C(present), VIB provided will be installed.
+    - If C(state) is set C(absent), VIB provided will be uninstalled.
+    required: False
+    choices: [ absent, present ]
+    default: present
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -101,7 +110,8 @@ EXAMPLES = r'''
 RETURN = r'''
 patch_results:
     description:
-    - dict with hostname as key and dict with package facts as value
+    - dict with hostname as key and dict with patch facts as value.
+    returned: always
     type: dict
     sample: {
         "localhost.localdomain": {
