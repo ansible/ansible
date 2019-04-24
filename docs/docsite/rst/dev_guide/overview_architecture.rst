@@ -29,7 +29,7 @@ When multiple modules use the same code, Ansible stores those functions as modul
 Plugins
 =======
 
-Plugins augment Ansible's core functionality. While modules execute on the target system (usually that means on a remote system), plugins execute on the control node. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`. For example, you can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. Plugins must be written in Python.
+:ref:`Plugins <plugins_lookup>` augment Ansible's core functionality. While modules execute on the target system (usually that means on a remote system), plugins execute on the control node. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`. For example, you can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. Plugins must be written in Python.
 
 Inventory
 =========
