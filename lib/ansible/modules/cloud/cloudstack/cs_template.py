@@ -396,7 +396,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             'templatetag': 'template_tag',
             'sshkeyenabled': 'sshkey_enabled',
             'passwordenabled': 'password_enabled',
-            'tempaltetype': 'template_type',
+            'templatetype': 'template_type',
             'ostypename': 'os_type',
             'crossZones': 'cross_zones',
             'format': 'format',
