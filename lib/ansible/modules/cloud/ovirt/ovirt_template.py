@@ -321,14 +321,6 @@ options:
                 description:
                     - Custom MAC address of the network interface, by default it's obtained from MAC pool.
         version_added: "2.9"
-    cloud_init_persist:
-        description:
-            - "If I(yes) the C(cloud_init) or C(sysprep) parameters will be saved for the template
-            and the virtual machine from template won't be started as run-once."
-        type: bool
-        aliases: [ 'sysprep_persist' ]
-        default: 'no'
-        version_added: "2.9"
     sysprep:
         description:
             - Dictionary with values for Windows Virtual Machine initialization using sysprep.
@@ -633,7 +625,7 @@ class TemplatesModule(BaseModule):
             io=otypes.Io(
                 threads=self.param('io_threads'),
             ) if self.param('io_threads') is not None else None,
-            initialization=self.get_initialization() if self.param('cloud_init_persist') else None,
+            initialization=self.get_initialization(),
         )
 
     def _get_base_template(self):
@@ -751,7 +743,6 @@ class TemplatesModule(BaseModule):
     def update_check(self, entity):
         template_display = entity.display
         return (
-            not self.param('cloud_init_persist') and
             equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster)) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self.param('operating_system'), str(entity.os.type)) and
@@ -924,7 +915,6 @@ def main():
         nics=dict(type='list', default=[]),
         cloud_init=dict(type='dict'),
         cloud_init_nics=dict(type='list', default=[]),
-        cloud_init_persist=dict(type='bool', default=False, aliases=['sysprep_persist']),
         sysprep=dict(type='dict'),
     )
     module = AnsibleModule(
