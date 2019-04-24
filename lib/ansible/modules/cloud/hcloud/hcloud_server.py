@@ -46,7 +46,7 @@ options:
         type: str
     ssh_keys:
         description:
-            - List of SSH Keys Names
+            - List of SSH key names
             - The key names correspond to the SSH keys configured for your
               Hetzner Cloud account access.
         type: list
