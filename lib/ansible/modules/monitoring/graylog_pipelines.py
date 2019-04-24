@@ -214,7 +214,11 @@ json:
           description: Pipeline source.
           returned: success
           type: str
-          sample: 'pipeline "Threat Detection"\nstage 0 match either\nrule "threat_rules"\nend'
+          sample: |
+            pipeline "Threat Detection"
+            stage 0 match either
+            rule "threat_rules"
+            end
       stages:
           description: Pipeline title.
           returned: success
