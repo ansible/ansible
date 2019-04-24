@@ -271,8 +271,6 @@ def main():
     have = map_config_to_obj(module)
     commands = map_obj_to_commands((want, have), module)
     result['commands'] = commands
-    result['want'] = want
-    result['have'] = have
 
     if commands:
         commit = not module.check_mode
