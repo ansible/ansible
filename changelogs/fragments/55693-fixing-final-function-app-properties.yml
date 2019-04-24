@@ -1,0 +1,2 @@
+bugfixes:
+  - azure_rm_functionapp - adding two properties which need to be set by default, otherwise function app won't behave correctly in Azure Portal.
