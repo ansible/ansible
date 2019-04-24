@@ -69,7 +69,7 @@ auth_kind: serviceaccount
 service_account_file: $OUTPUT_DIR/gcp_credentials.json
 compose:
   ansible_ssh_host: networkInterfaces[0]['accessConfigs'][0]['natIP']
-  gce_description: description if description and description != u'' else None
+  gce_description: description if description else None
   gce_id: id
   gce_image: image
   gce_machine_type: machineType
