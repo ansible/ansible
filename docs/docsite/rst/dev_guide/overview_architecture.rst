@@ -16,19 +16,22 @@ In this section, we'll give you a really quick overview of how Ansible works so 
 Modules
 =======
 
-Ansible works by connecting to your nodes and pushing out small programs, called "Ansible Modules" to them. These programs are written to be resource models of the desired state of the system. Ansible then executes these modules (over SSH by default), and removes them when finished. Your library of modules can reside on any machine, and there are no servers, daemons, or databases required.
+Ansible works by connecting to your nodes and pushing out scripts called "Ansible modules" to them. Most modules accept parameters that describe the desired state of the system.
+Ansible then executes these modules (over SSH by default), and removes them when finished. Your library of modules can reside on any machine, and there are no servers, daemons, or databases required.
 
-You can :ref:`write your own modules <developing_modules_general>`, though you should first consider :ref:`whether you should <developing_modules>`. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content.
+You can :ref:`write your own modules <developing_modules_general>`, though you should first consider :ref:`whether you should <developing_modules>`. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content. You may write specialized modules in any language that can return JSON (Ruby, Python, bash, etc).
 
 Module utilities
 ================
 
-When multiple modules use the same code, Ansible stores those functions as module utilities. For example, the code that parses URLs is ``lib/ansible/module_utils/url.py``. You can :ref:`write your own module utilities <appendix_module_utilities>` as well.
+When multiple modules use the same code, Ansible stores those functions as module utilities. For example, the code that parses URLs is ``lib/ansible/module_utils/url.py``. You can :ref:`write your own module utilities <appendix_module_utilities>` as well. Module utilities may only be written in Python or in PowerShell.
 
 Plugins
 =======
 
-Plugins augment Ansible's core functionality with features like cacheing, callbacks, filters, and lookups. Plugins are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`.
+Plugins augment Ansible's core functionality with features like cacheing, callbacks, filters, and lookups. Plugins are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`. Plugins must be written in Python.
+
+You can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. Plugins can also use Python APIs for extending Ansible's connection types (SSH is not the only transport possible), for adding callbacks (how Ansible logs, etc), and even for adding new server side behaviors.
 
 Inventory
 =========
@@ -74,11 +77,6 @@ Here's what a simple playbook looks like::
     roles:
     - common
     - content
-
-Extending Ansible with plugins and the API
-===========================================
-
-You can write your own specialized Ansible modules, module utilities, or plugins in any language that can return JSON (Ruby, Python, bash, etc). You can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. There are also various Python APIs for extending Ansible's connection types (SSH is not the only transport possible), for adding callbacks (how Ansible logs, etc), and even for adding new server side behaviors.
 
 .. _ansible_search_path:
 
