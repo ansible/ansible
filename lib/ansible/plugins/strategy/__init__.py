@@ -530,6 +530,7 @@ class StrategyBase:
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
+                                        listeners = listening_handler.get_validated_value('listen', listening_handler._valid_attrs['listen'], listeners)
                                         if handler_name not in listeners:
                                             continue
                                         else:

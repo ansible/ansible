@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
 from ansible.module_utils.six import string_types
@@ -39,19 +38,6 @@ class Handler(Task):
     def __repr__(self):
         ''' returns a human readable representation of the handler '''
         return "HANDLER: %s" % self.get_name()
-
-    def _validate_listen(self, attr, name, value):
-        if not isinstance(value, list):
-            if isinstance(value, string_types):
-                value = [value]
-                setattr(self, name, value)
-            else:
-                raise AnsibleParserError("The field '%s' is supposed to be a string or list type,"
-                                         " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds())
-        for item in value:
-            if not isinstance(item, string_types):
-                raise AnsibleParserError("The field '%s' is supposed to be a list of %s,"
-                                         " but the item '%s' is a %s" % (name, string_types, item, type(item)), obj=self.get_ds())
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
