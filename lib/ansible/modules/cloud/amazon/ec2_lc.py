@@ -389,21 +389,6 @@ except ImportError:
 
 
 def create_block_device_meta(module, volume):
-    # device_type has been used historically to represent volume_type,
-    # however ec2_vol uses volume_type, as does the BlockDeviceType, so
-    # we add handling for either/or but not both
-    if 'device_type' in volume:
-        if 'volume_type' in volume:
-            module.fail_json(msg='device_type is a deprecated name for volume_type. '
-                             'Do not use both device_type and volume_type')
-        else:
-            module.deprecate('device_type is deprecated for block devices - use volume_type instead',
-                             version=2.9)
-
-    # rewrite device_type key to volume_type
-    if 'device_type' in volume:
-        volume['volume_type'] = volume.pop('device_type')
-
     if 'snapshot' not in volume and 'ephemeral' not in volume and 'no_device' not in volume:
         if 'volume_size' not in volume:
             module.fail_json(msg='Size must be specified when creating a new volume or modifying the root volume')
