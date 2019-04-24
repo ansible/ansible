@@ -283,11 +283,6 @@ class Default(FactsBase):
 
         return platform_facts
 
-    def parse_license_hostid(self, data):
-        match = re.search(r'License hostid: VDH=(.+)$', data, re.M)
-        if match:
-            return match.group(1)
-
 
 class Config(FactsBase):
 
