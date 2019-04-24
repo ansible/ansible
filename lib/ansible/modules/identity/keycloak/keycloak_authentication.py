@@ -32,19 +32,6 @@ description:
     - It can also delete the flow.
 version_added: "2.3"
 options:
-    url:
-        description:
-            - The url of the Keycloak server.
-        default: http://localhost:8080    
-        required: true    
-    username:
-        description:
-            - The username to logon to the master realm.
-        required: true
-    password:
-        description:
-            - The password for the user to logon the master realm.
-        required: true
     realm:
         description:
             - The name of the realm in which is the authentication.
@@ -77,6 +64,8 @@ options:
         description:
             - If yes, allows to remove the authentication flow and recreate it.
         required: false
+extends_documentation_fragment:
+    - keycloak
 notes:
     - This module has very limited functions at the moment. Please contribute if you need more...
 '''
