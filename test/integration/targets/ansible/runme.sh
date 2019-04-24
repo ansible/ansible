@@ -5,6 +5,8 @@ set -eux -o pipefail
 ansible --version
 ansible --help
 
+python test_version.py
+
 ansible testhost -i ../../inventory -m ping  "$@"
 ansible testhost -i ../../inventory -m setup "$@"
 
