@@ -145,7 +145,8 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_resourcegroups=[])
+            ansible_facts=dict(azure_resourcegroups=[]),
+            resourcegroups=[]
         )
 
         self.name = None
@@ -169,6 +170,8 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
         if self.list_resources:
             for item in self.results['ansible_facts']['azure_resourcegroups']:
                 item['resources'] = self.list_by_rg(item['name'])
+
+        self.results['resourcegroups'] = self.results['ansible_facts']['azure_resourcegroups']
 
         return self.results
 
