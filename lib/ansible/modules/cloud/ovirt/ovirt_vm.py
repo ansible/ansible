@@ -2324,9 +2324,7 @@ def main():
         required_if=[
             ('state', 'registered', ['storage_domain']),
         ],
-        required_together=[
-          [ 'snapshot_name', 'snapshot_vm' ]
-        ]
+        required_together=[['snapshot_name', 'snapshot_vm']]
     )
 
     check_sdk(module)
