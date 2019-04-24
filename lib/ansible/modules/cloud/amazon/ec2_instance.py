@@ -1126,9 +1126,6 @@ def build_top_level_options(params):
         spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
         spec['EbsOptimized'] = params.get('ebs_optimized')
-    elif (params.get('network') or {}).get('ebs_optimized') is not None:
-        # Backward compatibility for workaround described in https://github.com/ansible/ansible/issues/48159
-        spec['EbsOptimized'] = params['network'].get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
     if params.get('termination_protection') is not None:
@@ -1625,9 +1622,6 @@ def main():
     )
 
     if module.params.get('network'):
-        if 'ebs_optimized' in module.params['network']:
-            module.deprecate("network.ebs_optimized is deprecated."
-                             "Use the top level ebs_optimized parameter instead", 2.9)
         if module.params.get('network').get('interfaces'):
             if module.params.get('security_group'):
                 module.fail_json(msg="Parameter network.interfaces can't be used with security_group")
