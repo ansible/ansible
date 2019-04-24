@@ -1298,23 +1298,27 @@ class VmsModule(BaseModule):
             None
         )
 
-        cluster = self._connection.system_service().clusters_service().cluster_service(vm.cluster.id).get()
-
-        self._module.params['cluster'] = cluster.name
-
         return snap
 
     def build_entity(self):
         template = self.__get_template_with_version()
+        cluster = self.param('cluster')
+
+        if self.param('cluster') is None and self.param('snapshot') is not None and self.param('srcvm') is not None:
+            vms_service = self._connection.system_service().vms_service()
+            vm = search_by_name(vms_service, self.param('srcvm'))
+            cluster = self._connection.system_service().clusters_service().cluster_service(vm.cluster.id).get().name
+
         snapshot = self.__get_snapshot()
+
         disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
 
         return otypes.Vm(
             id=self.param('id'),
             name=self.param('name'),
             cluster=otypes.Cluster(
-                name=self.param('cluster')
-            ) if self.param('cluster') else None,
+                name=cluster
+            ) if cluster else None,
             disk_attachments=disk_attachments,
             template=otypes.Template(
                 id=template.id,
