@@ -99,6 +99,7 @@ EXAMPLES = '''
 # ==============================================================
 
 import os
+import re
 import tempfile
 
 from ansible.module_utils.basic import get_platform, AnsibleModule
@@ -215,6 +216,14 @@ class SysctlModule(object):
         else:
             return value
 
+    def _stderr_failed(self, err):
+        # sysctl can fail to set a value even if it returns an exit status 0
+        # (https://bugzilla.redhat.com/show_bug.cgi?id=1264080). That's why we
+        # also have to check stderr for errors. For now we will only fail on
+        # specific errors defined by the regex below.
+        errors_regex = r'^sysctl: setting key "[^"]+": (Invalid argument|Read-only file system)$'
+        return re.search(errors_regex, err, re.MULTILINE) is not None
+
     # ==============================================================
     #   SYSCTL COMMAND MANAGEMENT
     # ==============================================================
@@ -251,7 +260,7 @@ class SysctlModule(object):
                 ignore_missing = '-e'
             thiscmd = "%s %s -w %s=%s" % (self.sysctl_cmd, ignore_missing, token, value)
         rc, out, err = self.module.run_command(thiscmd)
-        if rc != 0:
+        if rc != 0 or self._stderr_failed(err):
             self.module.fail_json(msg='setting %s failed: %s' % (token, out + err))
         else:
             return rc
@@ -281,7 +290,7 @@ class SysctlModule(object):
 
             rc, out, err = self.module.run_command(sysctl_args)
 
-        if rc != 0:
+        if rc != 0 or self._stderr_failed(err):
             self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
 
     # ==============================================================
