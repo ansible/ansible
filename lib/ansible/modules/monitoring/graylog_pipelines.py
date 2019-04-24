@@ -205,25 +205,6 @@ json:
           returned: success
           type: str
           sample: '4a362233815c349e7e2b945c'
-      modified_at:
-          description: Pipeline modified time.
-          returned: success
-          type: str
-          sample: '2018-10-17T18:22:42.599Z'
-      source:
-          description: Pipeline source.
-          returned: success
-          type: str
-          sample: |
-            pipeline "Threat Detection"
-            stage 0 match either
-            rule "threat_rules"
-            end
-      stages:
-          description: Pipeline title.
-          returned: success
-          type: dict
-          sample: '{ "match_all": false, "rules": [ "threat_rules" ], "stage": 0 }'
 status:
   description: The HTTP status code from the request
   returned: always
