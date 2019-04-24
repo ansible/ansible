@@ -25,7 +25,8 @@ options:
   members:
     description:
       - A list of members to ensure are present/absent from the group.
-      - The given names must be a SmaAccountName of a user, group, service account, or computer
+      - The given names must be a SamAccountName of a user, group, service account, or computer.
+      - For computers, you must add "$" after the name; for example, to add "Mycomputer" to a group, use "Mycomputer$" as the member.
     type: list
     required: yes
   state:
