@@ -60,7 +60,6 @@ EXAMPLES = '''
 RETURN = '''
 '''  # NOQA
 
-from ansible.module_utils.common.dict_transformations import _camel_to_snake
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 
 try:
@@ -80,13 +79,17 @@ class AzureRMLock(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             resource_group=dict(type='str'),
             resource_id=dict(type='str'),
-            level=dict(type='str', choices=['not_specified', 'can_not_delete', 'read_only'], required=True)
+            level=dict(type='str', choices=['can_not_delete', 'read_only'])
         )
 
         self.results = dict(
             changed=False,
             id=None
         )
+
+        required_if = [
+          ('state', 'present', ['level'])
+        ]
 
         mutually_exclusive = [['resource_group', 'resource_id']]
 
@@ -96,7 +99,11 @@ class AzureRMLock(AzureRMModuleBase):
         self.resource_group = None
         self.resource_id = None
 
-        super(AzureRMLock, self).__init__(self.module_arg_spec, supports_check_mode=True, mutually_exclusive=mutually_exclusive, supports_tags=False)
+        super(AzureRMLock, self).__init__(self.module_arg_spec,
+                                          supports_check_mode=True,
+                                          required_if=required_if,
+                                          mutually_exclusive=mutually_exclusive,
+                                          supports_tags=False)
 
     def exec_module(self, **kwargs):
 
