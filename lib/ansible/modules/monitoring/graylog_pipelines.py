@@ -178,33 +178,12 @@ RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: complex
-  contains:
-      title:
-          description: Pipeline title.
-          returned: success
-          type: str
-          sample: 'Threat Detection'
-      created_at:
-          description: Pipeline creation time.
-          returned: success
-          type: str
-          sample: '2018-10-17T17:53:42.675Z'
-      description:
-          description: Pipeline description.
-          returned: success
-          type: str
-          sample: 'Threat Detection pipeline'
-      errors:
-          description:
-          returned: success
-          type: str
-          sample: 'Threat Detection'
-      id:
-          description: Pipeline ID.
-          returned: success
-          type: str
-          sample: '4a362233815c349e7e2b945c'
+  type: str
+msg:
+  description: The HTTP message from the request
+  returned: always
+  type: str
+  sample: OK (unknown bytes)
 status:
   description: The HTTP status code from the request
   returned: always
