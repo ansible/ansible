@@ -143,7 +143,6 @@ def managed_disk_to_dict(managed_disk):
     )
 
 
-
 class AzureRMManagedDiskFacts(AzureRMModuleBase):
     """Utility class to get managed disk facts"""
 
