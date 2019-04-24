@@ -299,7 +299,7 @@ class TaskExecutor:
             loop_pause = templar.template(self._task.loop_control.pause)
             extended = templar.template(self._task.loop_control.extended)
 
-            # This may be 'None',so it is tempalted below after we ensure a value and an item is assigned
+            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
             label = self._task.loop_control.label
 
         # ensure we always have a label
