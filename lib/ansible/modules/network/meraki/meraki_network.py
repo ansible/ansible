@@ -67,7 +67,7 @@ options:
         - Boolean value specifying whether VLANs should be supported on a network.
         - Requires C(net_name) or C(net_id) to be specified.
         type: bool
-        version_added: '2.8'
+        version_added: '2.9'
     disable_my_meraki:
         description: >
             - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
