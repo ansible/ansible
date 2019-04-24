@@ -1,0 +1,10 @@
+---
+- name: Add a VMware vSwitchs
+  vmware_vswitch:
+    validate_certs: no
+    hostname: '{{ hostvars[item].ansible_host }}'
+    username: '{{ hostvars[item].ansible_user }}'
+    password: '{{ hostvars[item].ansible_password }}'
+    switch_name: "{{ switch1 }}"
+    state: present
+  with_items: "{{ groups['esxi-lab'] }}"

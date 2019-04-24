@@ -1,0 +1,43 @@
+---
+- debug: var=datastores
+- name: Mount NFS (ds1) datastores to ESXi
+  vmware_host_datastore:
+    hostname: '{{ hostvars[item].ansible_host }}'
+    username: '{{ hostvars[item].ansible_user }}'
+    password: '{{ hostvars[item].ansible_password }}'
+    datastore_name: '{{ ds1 }}'
+    datastore_type: '{{ infra.datastores[ds1].type }}'
+    nfs_server: '{{ infra.datastores[ds1].server }}'
+    nfs_path: '{{ infra.datastores[ds1].path }}'
+    nfs_ro: '{{ infra.datastores[ds2].ro }}'
+    esxi_hostname: '{{ hostvars[item].ansible_host }}'
+    state: present
+    validate_certs: no
+  with_items: "{{ groups['esxi-lab'] }}"
+
+- name: Mount NFS (ds2) datastores on the ESXi
+  vmware_host_datastore:
+    hostname: '{{ hostvars[item].ansible_host }}'
+    username: '{{ hostvars[item].ansible_user }}'
+    password: '{{ hostvars[item].ansible_password }}'
+    datastore_name: '{{ ds2 }}'
+    datastore_type: '{{ infra.datastores[ds2].type }}'
+    nfs_server: '{{ infra.datastores[ds2].server }}'
+    nfs_path: '{{ infra.datastores[ds2].path }}'
+    nfs_ro: '{{ infra.datastores[ds2].ro }}'
+    esxi_hostname: '{{ hostvars[item].ansible_host }}'
+    state: present
+    validate_certs: no
+  with_items: "{{ groups['esxi-lab'] }}"
+
+- name: The vcenter needs a bit of time to refresh the DS list
+  vmware_datastore_facts:
+    validate_certs: false
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+  register: setup_datastore_datatstore_facts
+  failed_when: setup_datastore_datatstore_facts.datastores|length != 2
+  until: setup_datastore_datatstore_facts is succeeded
+  retries: 60
+  delay: 1

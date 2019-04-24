@@ -1,0 +1,9 @@
+- name: Create Cluster
+  vmware_cluster:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ dc1 }}'
+    cluster_name: '{{ ccr1 }}'
+    validate_certs: no
+    enable_drs: yes
