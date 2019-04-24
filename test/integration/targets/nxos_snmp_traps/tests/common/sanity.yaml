@@ -54,15 +54,16 @@
   - assert: *true
 
   - block:
-    # On I2, link command does not work properly
+    # On I2/I7, link command does not work properly
     # On D1, callhome command does not work properly
     # skip for these older platforms
     - name: Idempotence Check
       nxos_snmp_traps: *config1
       register: result
+      when: imagetag is not search("I2|I7|D1")
 
     - assert: *false
-    when: imagetag is not search("I2|I7|D1")
+      when: imagetag is not search("I2|I7|D1")
 
   - name: Cleanup
     nxos_snmp_traps: *remove
