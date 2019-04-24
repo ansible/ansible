@@ -206,7 +206,7 @@
 
       when: bare|bool
 
-    - name: assert that the bad nested conditional did run since non bare 'string' is untempalted but 'trueish'
+    - name: assert that the bad nested conditional did run since non bare 'string' is untemplated but 'trueish'
       assert:
         that:
          - result is skipped
