@@ -157,8 +157,7 @@ def assemble_payload(meraki):
 
 
 def get_rules(meraki, net_id, number):
-    path = meraki.construct_path('get_all', net_id=net_id)
-    path = path + number + '/l3FirewallRules'
+    path = meraki.construct_path('get_all', net_id=net_id, custom={'number': number})
     response = meraki.request(path, method='GET')
     if meraki.status == 200:
         return response
@@ -216,8 +215,8 @@ def main():
 
     meraki.params['follow_redirects'] = 'all'
 
-    query_urls = {'mr_l3_firewall': '/networks/{net_id}/ssids/'}
-    update_urls = {'mr_l3_firewall': '/networks/{net_id}/ssids/'}
+    query_urls = {'mr_l3_firewall': '/networks/{net_id}/ssids/{number}/l3FirewallRules'}
+    update_urls = {'mr_l3_firewall': '/networks/{net_id}/ssids/{number}/l3FirewallRules'}
 
     meraki.url_catalog['get_all'].update(query_urls)
     meraki.url_catalog['update'] = update_urls
@@ -256,8 +255,7 @@ def main():
         meraki.result['data'] = get_rules(meraki, net_id, number)
     elif meraki.params['state'] == 'present':
         rules = get_rules(meraki, net_id, number)
-        path = meraki.construct_path('get_all', net_id=net_id)
-        path = path + number + '/l3FirewallRules'
+        path = meraki.construct_path('get_all', net_id=net_id, custom={'number': number})
         if meraki.params['rules']:
             payload = assemble_payload(meraki)
         else:
