@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 
 import astroid
 
@@ -35,7 +35,7 @@ MSGS = {
 }
 
 
-ANSIBLE_VERSION = StrictVersion('.'.join(ansible_version_raw.split('.')[:3]))
+ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version_raw.split('.')[:3]))
 
 
 def _get_expr_name(node):
@@ -83,7 +83,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
                         return
 
                 try:
-                    if ANSIBLE_VERSION >= StrictVersion(str(version)):
+                    if ANSIBLE_VERSION >= LooseVersion(str(version)):
                         self.add_message('ansible-deprecated-version', node=node, args=(version,))
                 except ValueError:
                     self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
