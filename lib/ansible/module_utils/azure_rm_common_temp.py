@@ -502,7 +502,7 @@ class AzureRMModuleBase(object):
 
         for i in range(len(pattern_parts)):
             if pattern_parts[i].startswith('{'):
-                value = value_dict.get(pattern_parts[i][1:-1], None)
+                value = str(value_dict.get(pattern_parts[i][1:-1], None))
             if not value:
                 return None
             pattern_parts[i] = value
