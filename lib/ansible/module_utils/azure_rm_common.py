@@ -517,9 +517,8 @@ class AzureRMModuleBase(object):
         :param new_params: new parameters dictionary, unpacked module parameters.
         '''
         modifiers = {}
-        result = {}
-        self.create_compare_modifiers(self.argument_spec, '', modifiers)
-        return self.default_compare(modifiers, new_params, old_params, '', result)
+        self.create_compare_modifiers(self.module.argument_spec, '', modifiers)
+        return self.default_compare(modifiers, new_params, old_params, '', self.results)
 
     def create_compare_modifiers(self, arg_spec, path, result):
         for k in arg_spec.keys():
@@ -585,6 +584,7 @@ class AzureRMModuleBase(object):
                 else:
                     # XXX change new value to old
                     self.module.warn("property '" + path + "' cannot be updated (" + str(old) + "->" + str(new) + ")")
+                    return True
 
     def serialize_obj(self, obj, class_name, enum_modules=None):
         '''
