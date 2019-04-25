@@ -366,145 +366,86 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
         self.module_arg_spec = dict(
             resource_group=dict(
                 type='str',
-                comparison='',
-                updatable=False,
                 disposition='resource_group_name',
                 required=True
             ),
             name=dict(
                 type='str',
-                comparison='',
-                updatable=False,
                 disposition='azure_firewall_name',
                 required=True
             ),
             id=dict(
                 type='str',
-                comparison='',
-                updatable=False,
                 disposition='/'
             ),
             location=dict(
                 type='str',
-                comparison='',
                 updatable=False,
                 disposition='/'
             ),
             application_rule_collections=dict(
                 type='list',
-                comparison='',
-                updatable=False,
-                disposition='/*',
+                disposition='/',
                 options=dict(
                     id=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='str'
                     ),
                     priority=dict(
-                        type='number',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='number'
                     ),
                     action=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
                         options=dict(
                             type=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
                                 choices=['Allow',
                                          'Deny']
                             )
                         )
                     ),
                     rules=dict(
-                        type='list',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
+                        type='list'
                         options=dict(
                             name=dict(
-                                type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='str'
                             ),
                             description=dict(
-                                type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='str'
                             ),
                             source_addresses=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             protocols=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             target_fqdns=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             fqdn_tags=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             )
                         )
                     ),
                     name=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='str'
                     )
                 )
             ),
             nat_rule_collections=dict(
                 type='list',
-                comparison='',
-                updatable=False,
-                disposition='/*',
+                disposition='/',
                 options=dict(
                     id=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='str'
                     ),
                     priority=dict(
-                        type='number',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='number'
                     ),
                     action=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
                         options=dict(
                             type=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
                                 choices=['Snat',
                                          'Dnat']
                             )
@@ -513,96 +454,57 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     rules=dict(
                         type='list',
                         comparison='',
-                        updatable=False,
                         disposition='*',
                         options=dict(
                             name=dict(
                                 type='str',
                                 comparison='',
-                                updatable=False,
                                 disposition='*'
                             ),
                             description=dict(
-                                type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='str'
                             ),
                             source_addresses=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             destination_addresses=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             destination_ports=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             protocols=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             translated_address=dict(
-                                type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='str'
                             ),
                             translated_port=dict(
-                                type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='str'
                             )
                         )
                     ),
                     name=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='str'
                     )
                 )
             ),
             network_rule_collections=dict(
                 type='list',
                 comparison='',
-                updatable=False,
                 disposition='/*',
                 options=dict(
                     id=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='str'
                     ),
                     priority=dict(
                         type='number',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
                     ),
                     action=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
                         options=dict(
                             type=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
                                 choices=['Allow',
                                          'Deny']
                             )
@@ -610,79 +512,44 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     ),
                     rules=dict(
                         type='list',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
                         options=dict(
                             name=dict(
-                                type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='str'
                             ),
                             description=dict(
-                                type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='str'
                             ),
                             protocols=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             source_addresses=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             destination_addresses=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             ),
                             destination_ports=dict(
-                                type='list',
-                                comparison='',
-                                updatable=False,
-                                disposition='*'
+                                type='list'
                             )
                         )
                     ),
                     name=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='str'
                     )
                 )
             ),
             ip_configurations=dict(
                 type='list',
-                comparison='',
-                updatable=False,
-                disposition='/*',
+                disposition='/',
                 options=dict(
                     id=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='str'
                     ),
                     subnet=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
                         options=dict(
                             id=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
                                 pattern=('/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}'
                                          '/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name }}'
                                          '/subnets/{{ name }}')
@@ -691,25 +558,16 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     ),
                     public_ip_address=dict(
                         type='dict',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
                         options=dict(
                             id=dict(
                                 type='str',
-                                comparison='',
-                                updatable=False,
-                                disposition='*',
                                 pattern=('/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}'
                                          '/providers/Microsoft.Network/publicIPAddresses/{{ name }}')
                             )
                         )
                     ),
                     name=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*'
+                        type='str'
                     )
                 )
             ),
