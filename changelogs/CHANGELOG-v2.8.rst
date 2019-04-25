@@ -5,6 +5,65 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.0rc1
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2019-04-25
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add variable type for performance_insights_retention_period (https://github.com/ansible/ansible/issues/49904).
+- Fix API call to _wait_for_response in k8s modules (https://github.com/ansible/ansible/pull/53937).
+- Try to use bundled urllib3 first, then falls back to non-bundled version in vmware_tools (https://github.com/ansible/ansible/pull/55187).
+- vmware_portgroup accepts list of ESXi hostsystem. Modified get_all_host_objs API to accept list of hostsystems.
+
+Bugfixes
+--------
+
+- Enable azure manged disk test
+- Fixes an issue when subscription_id is masked in the output when it's passed as one of the parameters.
+- Fixes replacing load balancer with application gateway in Azure virtualmachine scaleset, as leaning up old load balancer was not done properly.
+- Move netconf import errors from import to use.
+- SECURITY Fixed the python interpreter detection, added in 2.8.0alpha1, to properly mark the returned data as untemplatable. This prevents a malicious managed machine from running code on the controller via templating.
+- acme_certificate - use ``ipaddress`` module bundled with Ansible for normalizations needed for OpenSSL backend.
+- add resource group test
+- allow loading inventory plugins adjacent to playbooks
+- azure_rm_functionapp - adding two properties which need to be set by default, otherwise function app won't behave correctly in Azure Portal.
+- docker_container - fix idempotency of ``log_options`` when non-string values are used. Also warn user that this is the case.
+- docker_host_info - ``network_filters`` needs docker-py 2.0.2, ``disk_usage`` needs docker-py 2.2.0.
+- docker_swarm_service - Change the type of options ``gid`` and ``uid`` on ``secrets`` and ``configs`` to ``str``.
+- docker_swarm_service_info - work around problems with older docker-py versions such as 2.0.2.
+- ensure module results and facts are marked untrusted as templates for safer use within the same task
+- gitlab modules - Update version deprecations to use strings instead of integers so that ``2.10`` isn't converted to ``2.1``. (https://github.com/ansible/ansible/pull/55395)
+- meraki_static_route - Module would make unnecessary API calls to Meraki when ``net_id`` is specified in task.
+- meraki_static_route - Module would make unnecessary API calls to Meraki when ``net_id`` is specified in task.
+- meraki_vlan - Module would make unnecessary API calls to Meraki when net_id is specified in task.
+- openssl_csr - SAN normalization for IP addresses for the pyOpenSSL backend was broken.
+- openssl_csr - the cryptography backend's idempotency checking for basic constraints was broken.
+- openssl_csr, openssl_csr_info - use ``ipaddress`` module bundled with Ansible for normalizations needed for pyOpenSSL backend.
+- pass correct loading context to persistent connections
+- postgresql_idx - removed useless rows that remained after the previous refactoring
+- postgresql_slot - fixed sslrootcert mapping to psycopg2 connection string
+- psrp - Fix blank newlines appearing before ``stdout`` when using ``script`` or ``raw`` with the ``psrp`` connection plugin
+- psrp - Fix issues when fetching large files causing a memory leak - https://github.com/ansible/ansible/issues/55239
+- psrp - Fix issues with propagating errors back to Ansible with ``raw`` tasks
+- purefa_facts - remove unnecessary line that could cause failure in rare circumstances.
+- redfish_utils - fix "406 Not Acceptable" issue with some OOB controllers (https://github.com/ansible/ansible/issues/55078)
+- tower_job_wait - Fixed wrong variable specification in examples
+- user - properly parse the shadow file on AIX (https://github.com/ansible/ansible/issues/54461)
+- vsphere_guest - creating machines without vm_extra_config allowed
+- vsphere_guest - powering on/off absent virtual machine will fail
+- vultr_server - Fix idempotency for options ``ipv6_enabled`` and ``private_network_enabled``.
+- win_domain - Fix checking for a domain introduced in a recent patch
+- win_reboot - pass return value for ``test_command`` result when using the ``psrp`` connection plugin
+- win_region - Fix the check for ``format`` when running on the ``psrp`` connection plugin
+
 v2.8.0b1
 ========
 

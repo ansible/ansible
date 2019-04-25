@@ -1471,3 +1471,45 @@ releases:
       - cloudscale
       - kubevirt
     release_date: '2019-04-15'
+  2.8.0rc1:
+    codename: How Many More Times
+    fragments:
+    - 49904-rds_instance-datatype.yml
+    - 54955-docker_container-log_options-strings.yml
+    - 55078-redfish_utils_fix_406_not_acceptable_issue_with_some_oob_controllers.yml
+    - 55142-openssl_csr-crypto-backend-san.yml
+    - 55203-fix-for-removing-subscription-id-from-facts.yaml
+    - 55258-docker_host_info-old-docker-py.yml
+    - 55258-docker_swarm_service_info-old-docker-py.yml
+    - 55266-purefa_facts_remove_line.yaml
+    - 55278-cryto-use-bundled-ipaddress.yml
+    - 55384-netconf-import.yaml
+    - 55546-fixed-replacing-lb-with-ag-in-vmss.yaml
+    - 55591-docker_swarm_service-fix-uid-gid-secrets-config-type.yaml
+    - 55619-vultr_server_idempotency.yml
+    - 55681-azure_rm_manageddisk.yaml
+    - 55688-azure_rm_resourcegroup.yml
+    - 55693-fixing-final-function-app-properties.yml
+    - allow_inv_plugin_loading.yml
+    - ensure_discovery_unsafe.yml
+    - ensure_facts_safe.yml
+    - gitlab-deprecated-version.yaml
+    - k8s-fix_wait_for_response.yaml
+    - meraki_content_filtering-redundant-calls.yml
+    - meraki_static_route_api_calls.yml
+    - meraki_vlan_api_calls.yml
+    - persistent_loading.yml
+    - postgresql_idx-remove-useless-lines.yml
+    - postgresql_slot-fix-sslrootcert.yml
+    - psrp-fetch.yaml
+    - psrp-output.yaml
+    - tower_job_wait-wrong_examples.yml
+    - user-aix-shadow-file-parsing.yaml
+    - v2.8.0rc1_summary.yaml
+    - vmware_portgroup_list_host.yml
+    - vmware_tools_fix_urllib3_import.yaml
+    - vsphere_guest-corrected-state-operations.yml
+    - win_domain-setup.yaml
+    - win_reboot-psrp-command.yaml
+    - win_region-format.yaml
+    release_date: '2019-04-25'
