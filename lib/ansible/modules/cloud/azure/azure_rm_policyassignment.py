@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_policyassignment
 version_added: "2.9"
-short_description: Manage MySQL Policy Assignment instance.
+short_description: Manage Policy Assignment instance.
 description:
     - Create, update and delete instance of policy assignment.
 
