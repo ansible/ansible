@@ -54,7 +54,7 @@ options:
         description:
             - Credentials for google cloud platform.
             - Field introduced in 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     name:
         description:
             - Name of the object.
@@ -63,7 +63,7 @@ options:
         description:
             - Credentials for oracle cloud infrastructure.
             - Field introduced in 18.2.1,18.1.3.
-        version_added: "2.8"
+        version_added: "2.9"
     private_key:
         description:
             - Private_key of cloudconnectoruser.
@@ -77,7 +77,7 @@ options:
         description:
             - Credentials for tencent cloud.
             - Field introduced in 18.2.3.
-        version_added: "2.8"
+        version_added: "2.9"
     url:
         description:
             - Avi controller URL of the object.

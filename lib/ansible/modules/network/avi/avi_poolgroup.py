@@ -94,7 +94,7 @@ options:
             - In openshift/kubernetes environments, app metadata info is stored.
             - Any user input to this field will be overwritten by avi vantage.
             - Field introduced in 17.2.14,18.1.5,18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.

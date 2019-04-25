@@ -60,7 +60,7 @@ options:
             - Pingaccessagent uuid.
             - It is a reference to an object of type pingaccessagent.
             - Field introduced in 18.2.3.
-        version_added: "2.8"
+        version_added: "2.9"
     saml:
         description:
             - Saml settings.

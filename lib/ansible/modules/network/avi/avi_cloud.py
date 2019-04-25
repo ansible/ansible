@@ -55,7 +55,7 @@ options:
             - Cloudconnector polling interval for external autoscale groups.
             - Field introduced in 18.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 60.
-        version_added: "2.8"
+        version_added: "2.9"
     aws_configuration:
         description:
             - Awsconfiguration settings for cloud.
@@ -103,13 +103,13 @@ options:
         description:
             - Google cloud platform configuration.
             - Field introduced in 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     ip6_autocfg_enabled:
         description:
             - Enable ipv6 auto configuration.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.8"
+        version_added: "2.9"
         type: bool
     ipam_provider_ref:
         description:

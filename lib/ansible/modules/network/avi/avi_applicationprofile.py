@@ -47,12 +47,12 @@ options:
             - Checksum of application profiles.
             - Internally set by cloud connector.
             - Field introduced in 17.2.14, 18.1.5, 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     created_by:
         description:
             - Name of the application profile creator.
             - Field introduced in 17.2.14, 18.1.5, 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     description:
         description:
             - User defined description for the object.
@@ -86,7 +86,7 @@ options:
         description:
             - Specifies various sip service related controls for virtual service.
             - Field introduced in 17.2.8, 18.1.3, 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     tcp_app_profile:
         description:
             - Specifies the tcp application proxy profile parameters.

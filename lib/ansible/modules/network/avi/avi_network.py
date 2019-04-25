@@ -63,7 +63,7 @@ options:
             - Enable ipv6 auto configuration.
             - Field introduced in 18.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
-        version_added: "2.8"
+        version_added: "2.9"
         type: bool
     name:
         description:

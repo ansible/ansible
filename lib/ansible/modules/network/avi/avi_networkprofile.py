@@ -48,7 +48,7 @@ options:
             - Applicable only in legacy ha mode.
             - Field introduced in 18.1.3,18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.8"
+        version_added: "2.9"
         type: bool
     description:
         description:

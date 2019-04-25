@@ -45,17 +45,17 @@ options:
         description:
             - Aws access key id.
             - Field introduced in 18.2.3.
-        version_added: "2.8"
+        version_added: "2.9"
     aws_bucket_id:
         description:
             - Aws bucket.
             - Field introduced in 18.2.3.
-        version_added: "2.8"
+        version_added: "2.9"
     aws_secret_access:
         description:
             - Aws secret access key.
             - Field introduced in 18.2.3.
-        version_added: "2.8"
+        version_added: "2.9"
     backup_file_prefix:
         description:
             - Prefix of the exported configuration file.
@@ -97,7 +97,7 @@ options:
         description:
             - Cloud backup.
             - Field introduced in 18.2.3.
-        version_added: "2.8"
+        version_added: "2.9"
         type: bool
     url:
         description:

@@ -42,6 +42,14 @@ options:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+    async_interval:
+        description:
+            - Frequency with which messages are propagated to vs mgr.
+            - Value of 0 disables async behavior and rpc are sent inline.
+            - Allowed values are 0-5.
+            - Field introduced in 18.2.3.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        version_added: "2.9"
     clear_on_max_retries:
         description:
             - Max retries after which the remote site is treated as a fresh start.
@@ -99,7 +107,7 @@ options:
             - When the user leaves maintenance mode, the original send-interval is reinstated.
             - This internal variable is used to store the original send-interval.
             - Field introduced in 18.2.3.
-        version_added: "2.8"
+        version_added: "2.9"
     sites:
         description:
             - Select avi site member belonging to this gslb.
@@ -254,6 +262,7 @@ def main():
         avi_api_update_method=dict(default='put',
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
+        async_interval=dict(type='int',),
         clear_on_max_retries=dict(type='int',),
         client_ip_addr_group=dict(type='dict',),
         description=dict(type='str',),

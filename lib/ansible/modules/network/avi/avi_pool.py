@@ -59,13 +59,13 @@ options:
         description:
             - Determines analytics settings for the pool.
             - Field introduced in 18.1.5, 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     analytics_profile_ref:
         description:
             - Specifies settings related to analytics.
             - It is a reference to an object of type analyticsprofile.
             - Field introduced in 18.1.4,18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     apic_epg_name:
         description:
             - Synchronize cisco apic epg members with pool servers.
@@ -107,7 +107,7 @@ options:
         description:
             - Connnection pool properties.
             - Field introduced in 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     connection_ramp_duration:
         description:
             - Duration for which new connections will be gradually ramped up to a server recently brought online.
@@ -132,7 +132,7 @@ options:
             - They are disabled, if the knob is set to false.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
-        version_added: "2.8"
+        version_added: "2.9"
         type: bool
     description:
         description:
@@ -206,7 +206,7 @@ options:
             - The load balancing algorithm will pick a server within the pool's list of available servers.
             - Enum options - LB_ALGORITHM_LEAST_CONNECTIONS, LB_ALGORITHM_ROUND_ROBIN, LB_ALGORITHM_FASTEST_RESPONSE, LB_ALGORITHM_CONSISTENT_HASH,
             - LB_ALGORITHM_LEAST_LOAD, LB_ALGORITHM_FEWEST_SERVERS, LB_ALGORITHM_RANDOM, LB_ALGORITHM_FEWEST_TASKS, LB_ALGORITHM_NEAREST_SERVER,
-            - LB_ALGORITHM_CORE_AFFINITY.
+            - LB_ALGORITHM_CORE_AFFINITY, LB_ALGORITHM_TOPOLOGY.
             - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_LEAST_CONNECTIONS.
     lb_algorithm_consistent_hash_hdr:
         description:
@@ -245,12 +245,12 @@ options:
         description:
             - Minimum number of health monitors in up state to mark server up.
             - Field introduced in 18.2.1, 17.2.12.
-        version_added: "2.8"
+        version_added: "2.9"
     min_servers_up:
         description:
             - Minimum number of servers in up state for marking the pool up.
             - Field introduced in 18.2.1, 17.2.12.
-        version_added: "2.8"
+        version_added: "2.9"
     name:
         description:
             - The name of the pool.
@@ -321,7 +321,7 @@ options:
             - Allowed values are 0-3600000.
             - Field introduced in 18.1.5,18.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
-        version_added: "2.8"
+        version_added: "2.9"
     servers:
         description:
             - The pool directs load balanced traffic to this list of destination servers.
@@ -332,7 +332,7 @@ options:
             - In openshift/kubernetes environments, app metadata info is stored.
             - Any user input to this field will be overwritten by avi vantage.
             - Field introduced in 17.2.14,18.1.5,18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     sni_enabled:
         description:
             - Enable tls sni for server connections.

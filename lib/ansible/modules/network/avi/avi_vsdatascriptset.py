@@ -69,6 +69,12 @@ options:
         description:
             - Uuid of pools that could be referred by vsdatascriptset objects.
             - It is a reference to an object of type pool.
+    protocol_parser_refs:
+        description:
+            - List of protocol parsers that could be referred by vsdatascriptset objects.
+            - It is a reference to an object of type protocolparser.
+            - Field introduced in 18.2.3.
+        version_added: "2.9"
     string_group_refs:
         description:
             - Uuid of string groups that could be referred by vsdatascriptset objects.
@@ -125,6 +131,7 @@ def main():
         name=dict(type='str', required=True),
         pool_group_refs=dict(type='list',),
         pool_refs=dict(type='list',),
+        protocol_parser_refs=dict(type='list',),
         string_group_refs=dict(type='list',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),

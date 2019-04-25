@@ -74,7 +74,7 @@ options:
             - set.
             - This is only used when fip is used for vs on azure cloud.
             - Field introduced in 18.2.3.
-        version_added: "2.8"
+        version_added: "2.9"
         type: bool
     uuid:
         description:
@@ -95,7 +95,7 @@ options:
             - Checksum of cloud configuration for vsvip.
             - Internally set by cloud connector.
             - Field introduced in 17.2.9, 18.1.2.
-        version_added: "2.8"
+        version_added: "2.9"
 extends_documentation_fragment:
     - avi
 '''

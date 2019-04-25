@@ -81,6 +81,11 @@ options:
         description:
             - A user friendly name for this health monitor.
         required: true
+    radius_monitor:
+        description:
+            - Health monitor for radius.
+            - Field introduced in 18.2.3.
+        version_added: "2.9"
     receive_timeout:
         description:
             - A valid response from the server is expected within the receive timeout window.
@@ -97,7 +102,7 @@ options:
         description:
             - Health monitor for sip.
             - Field introduced in 17.2.8, 18.1.3, 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     successful_checks:
         description:
             - Number of continuous successful health checks before server is marked up.
@@ -113,7 +118,7 @@ options:
         description:
             - Type of the health monitor.
             - Enum options - HEALTH_MONITOR_PING, HEALTH_MONITOR_TCP, HEALTH_MONITOR_HTTP, HEALTH_MONITOR_HTTPS, HEALTH_MONITOR_EXTERNAL, HEALTH_MONITOR_UDP,
-            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB, HEALTH_MONITOR_SIP.
+            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB, HEALTH_MONITOR_SIP, HEALTH_MONITOR_RADIUS.
         required: true
     udp_monitor:
         description:
@@ -178,6 +183,7 @@ def main():
         is_federated=dict(type='bool',),
         monitor_port=dict(type='int',),
         name=dict(type='str', required=True),
+        radius_monitor=dict(type='dict',),
         receive_timeout=dict(type='int',),
         send_interval=dict(type='int',),
         sip_monitor=dict(type='dict',),

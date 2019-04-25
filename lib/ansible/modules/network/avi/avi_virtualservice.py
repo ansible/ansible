@@ -58,7 +58,7 @@ options:
             - Datascript apis need to be used for processing of such requests.
             - Field introduced in 18.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
-        version_added: "2.8"
+        version_added: "2.9"
         type: bool
     analytics_policy:
         description:
@@ -73,7 +73,7 @@ options:
             - Should be in the <contract name> <graph name> format.
             - This is applicable only for service integration mode with cisco apic controller.
             - Field introduced in 17.2.12,18.1.2.
-        version_added: "2.8"
+        version_added: "2.9"
     application_profile_ref:
         description:
             - Enable application layer specific features for the virtual service.
@@ -108,7 +108,7 @@ options:
             - Azure availability set to which this vs is associated.
             - Internally set by the cloud connector.
             - Field introduced in 17.2.12, 18.1.2.
-        version_added: "2.8"
+        version_added: "2.9"
     bulk_sync_kvcache:
         description:
             - (this is a beta feature).
@@ -281,7 +281,7 @@ options:
         description:
             - Minimum number of up pools to mark vs up.
             - Field introduced in 18.2.1, 17.2.12.
-        version_added: "2.8"
+        version_added: "2.9"
     name:
         description:
             - Name for the virtual service.
@@ -327,6 +327,11 @@ options:
     requests_rate_limit:
         description:
             - Rate limit the incoming requests to this virtual service.
+    saml_sp_config:
+        description:
+            - Application-specific saml config.
+            - Field introduced in 18.2.3.
+        version_added: "2.9"
     scaleout_ecmp:
         description:
             - Disable re-distribution of flows across service engines for a virtual service.
@@ -344,7 +349,7 @@ options:
             - This policy is used to perform security actions such as distributed denial of service (ddos) attack mitigation, etc.
             - It is a reference to an object of type securitypolicy.
             - Field introduced in 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
     server_network_profile_ref:
         description:
             - Determines the network settings profile for the server side of tcp proxied connections.
@@ -385,6 +390,11 @@ options:
         description:
             - Determines the set of ssl versions and ciphers to accept for ssl/tls terminated connections.
             - It is a reference to an object of type sslprofile.
+    ssl_profile_selectors:
+        description:
+            - Select ssl profile based on client ip address match.
+            - Field introduced in 18.2.3.
+        version_added: "2.9"
     ssl_sess_cache_avg_size:
         description:
             - Expected number of ssl session cache entries (may be exceeded).
@@ -393,8 +403,15 @@ options:
     sso_policy:
         description:
             - Client authentication and authorization policy for the virtualservice.
+            - Field deprecated in 18.2.3.
             - Field introduced in 18.2.1.
-        version_added: "2.8"
+        version_added: "2.9"
+    sso_policy_ref:
+        description:
+            - The sso policy attached to the virtualservice.
+            - It is a reference to an object of type ssopolicy.
+            - Field introduced in 18.2.3.
+        version_added: "2.9"
     static_dns_records:
         description:
             - List of static dns records applied to this virtual service.
@@ -411,6 +428,11 @@ options:
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+    topology_policies:
+        description:
+            - Topology policies applied on the dns traffic of the virtual service based ongslb topology algorithm.
+            - Field introduced in 18.2.3.
+        version_added: "2.9"
     traffic_clone_profile_ref:
         description:
             - Server network or list of servers for cloning traffic.
@@ -476,7 +498,7 @@ options:
             - Checksum of cloud configuration for vsvip.
             - Internally set by cloud connector.
             - Field introduced in 17.2.9, 18.1.2.
-        version_added: "2.8"
+        version_added: "2.9"
     vsvip_ref:
         description:
             - Mostly used during the creation of shared vs, this field refers to entities that can be shared across virtual services.
@@ -605,6 +627,7 @@ def main():
         port_uuid=dict(type='str',),
         remove_listening_port_on_vs_down=dict(type='bool',),
         requests_rate_limit=dict(type='dict',),
+        saml_sp_config=dict(type='dict',),
         scaleout_ecmp=dict(type='bool',),
         se_group_ref=dict(type='str',),
         security_policy_ref=dict(type='str',),
@@ -617,12 +640,15 @@ def main():
         sp_pool_refs=dict(type='list',),
         ssl_key_and_certificate_refs=dict(type='list',),
         ssl_profile_ref=dict(type='str',),
+        ssl_profile_selectors=dict(type='list',),
         ssl_sess_cache_avg_size=dict(type='int',),
         sso_policy=dict(type='dict',),
+        sso_policy_ref=dict(type='str',),
         static_dns_records=dict(type='list',),
         subnet=dict(type='dict',),
         subnet_uuid=dict(type='str',),
         tenant_ref=dict(type='str',),
+        topology_policies=dict(type='list',),
         traffic_clone_profile_ref=dict(type='str',),
         traffic_enabled=dict(type='bool',),
         type=dict(type='str',),
