@@ -80,9 +80,6 @@ options:
             description:
               - List of FQDN Tags for this rule.
             type: list
-      provisioning_state:
-        description:
-          - The provisioning state of the resource.
       name:
         description:
           - >-
@@ -141,9 +138,6 @@ options:
           translated_port:
             description:
               - The translated port for this NAT rule.
-      provisioning_state:
-        description:
-          - The provisioning state of the resource.
       name:
         description:
           - >-
@@ -194,9 +188,6 @@ options:
             description:
               - List of destination ports.
             type: list
-      provisioning_state:
-        description:
-          - The provisioning state of the resource.
       name:
         description:
           - >-
@@ -228,17 +219,11 @@ options:
           id:
             description:
               - Resource ID.
-      provisioning_state:
-        description:
-          - The provisioning state of the resource.
       name:
         description:
           - >-
             Name of the resource that is unique within a resource group. This
             name can be used to access the resource.
-  provisioning_state:
-    description:
-      - The provisioning state of the resource.
   state:
     description:
       - Assert the state of the AzureFirewall.
@@ -483,16 +468,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                             )
                         )
                     ),
-                    provisioning_state=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
-                        choices=['Succeeded',
-                                 'Updating',
-                                 'Deleting',
-                                 'Failed']
-                    ),
                     name=dict(
                         type='str',
                         comparison='',
@@ -591,16 +566,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                             )
                         )
                     ),
-                    provisioning_state=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
-                        choices=['Succeeded',
-                                 'Updating',
-                                 'Deleting',
-                                 'Failed']
-                    ),
                     name=dict(
                         type='str',
                         comparison='',
@@ -687,16 +652,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                             )
                         )
                     ),
-                    provisioning_state=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
-                        choices=['Succeeded',
-                                 'Updating',
-                                 'Deleting',
-                                 'Failed']
-                    ),
                     name=dict(
                         type='str',
                         comparison='',
@@ -750,16 +705,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                             )
                         )
                     ),
-                    provisioning_state=dict(
-                        type='str',
-                        comparison='',
-                        updatable=False,
-                        disposition='*',
-                        choices=['Succeeded',
-                                 'Updating',
-                                 'Deleting',
-                                 'Failed']
-                    ),
                     name=dict(
                         type='str',
                         comparison='',
@@ -767,16 +712,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         disposition='*'
                     )
                 )
-            ),
-            provisioning_state=dict(
-                type='str',
-                comparison='',
-                updatable=False,
-                disposition='/*',
-                choices=['Succeeded',
-                         'Updating',
-                         'Deleting',
-                         'Failed']
             ),
             state=dict(
                 type='str',
