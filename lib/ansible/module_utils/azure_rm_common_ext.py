@@ -8,6 +8,7 @@ from ansible.module_utils.common.dict_transformations import _camel_to_snake, _s
 from ansible.module_utils.six import string_types
 
 
+
 class AzureRMModuleBaseExt(AzureRMModuleBase):
 
     def inflate_parameters(self, spec, body, level):
