@@ -446,7 +446,7 @@ def main():
     )
 
     pre_prov_spec = dict(
-        hardware_info=dict(type='list', options=hw_spec),
+        hardware_info=dict(type='list', elements='dict', options=hw_spec),
         licenses=dict(type='list'),
     )
 
