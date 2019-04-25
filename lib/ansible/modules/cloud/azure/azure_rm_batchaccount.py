@@ -99,7 +99,7 @@ account_endpoint:
 '''
 
 import time
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
+from ansible.module_utils.azure_rm_common_temp import AzureRMModuleBase, normalize_location_name
 from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 try:

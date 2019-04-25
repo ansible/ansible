@@ -27,7 +27,7 @@ AZURE_COMMON_ARGS = dict(
         choices=['auto', 'cli', 'env', 'credential_file', 'msi']
     ),
     profile=dict(type='str'),
-    subscription_id=dict(type='str'),
+    subscription_id=dict(type='str', no_log=True),
     client_id=dict(type='str', no_log=True),
     secret=dict(type='str', no_log=True),
     tenant=dict(type='str', no_log=True),
@@ -462,6 +462,129 @@ class AzureRMModuleBase(object):
         resource_dict['resource_group'] = resource_dict.get('resource_group', self.resource_group)
         resource_dict['subscription_id'] = resource_dict.get('subscription_id', self.subscription_id)
         return resource_dict
+
+    def normalize_resource_id(self, value, pattern):
+        '''
+        Return a proper resource id string..
+
+        :param resource_id: It could be a resource name, resource id or dict containing parts from the pattern.
+        :param pattern: pattern of resource is, just like in Azure Swagger
+        '''
+        pattern_parts = pattern.split('/')
+        for i in range(len(pattern_parts)):
+            x = re.sub('[{} ]+', '', pattern_parts[i], 2)
+            if len(x) < len(pattern_parts[i]):
+                pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
+
+        if isinstance(value, str):
+            value_parts = value.split('/')
+            if len(value_parts) == 1:
+                value_dict = {}
+                value_dict['name'] = value
+            else:
+                if len(value_parts) != len(pattern_parts):
+                    return None
+            value_dict = {}
+            for i in range(len(value_parts)):
+                if pattern_parts[i].startswith('{'):
+                    value_dict[pattern_parts[i][1:-1]] = value_parts[i]
+                elif value_parts[i].lower() != pattern_parts[i].lower():
+                    return None
+        elif isinstance(value, dict):
+            value_dict = value
+        else:
+            return None
+
+        if not value_dict.get('subscription_id'):
+            value_dict['subscription_id'] = self.subscription_id
+        if not value_dict.get('resource_group'):
+            value_dict['resource_group'] = self.resource_group
+
+        for i in range(len(pattern_parts)):
+            if pattern_parts[i].startswith('{'):
+                value = value_dict.get(pattern_parts[i][1:-1], None)
+            if not value:
+                return None
+            pattern_parts[i] = value
+
+        return "/".join(pattern_parts)
+
+    def idempotency_check(self, old_params, new_params):
+        '''
+        Return True if something changed. Function will use fields from module_arg_spec to perform dependency checks.
+        :param old_params: old parameters dictionary, body from Get request.
+        :param new_params: new parameters dictionary, unpacked module parameters.
+        '''
+        modifiers = {}
+        result = {}
+        self.create_compare_modifiers(self.module.argument_spec, '', modifiers)
+        return self.default_compare(modifiers, new_params, old_params, '', self.results)
+
+    def create_compare_modifiers(self, arg_spec, path, result):
+        for k in arg_spec.keys():
+            o = arg_spec[k]
+            updatable = o.get('updatable', True)
+            comparison = o.get('comparison', 'default')
+            p = (path +
+                 ('/' if len(path) > 0 else '') +
+                 o.get('disposition', '*').replace('*', k) +
+                 ('/*' if o['type'] == 'list' else ''))
+            if comparison != 'default' or not updatable:
+                result[p] = { 'updatable': updatable, 'comparison': comparison }
+            if o.get('options'):
+                self.create_compare_modifiers(o.get('options'), p, result)
+
+    def default_compare(self, modifiers, new, old, path, result):
+        if new is None:
+            return True
+        elif isinstance(new, dict):
+            if not isinstance(old, dict):
+                result['compare'] = 'changed [' + path + '] old dict is null'
+                return False
+            for k in new.keys():
+                if not self.default_compare(modifiers, new.get(k), old.get(k, None), path + '/' + k, result):
+                    return False
+            return True
+        elif isinstance(new, list):
+            if not isinstance(old, list) or len(new) != len(old):
+                result['compare'] = 'changed [' + path + '] length is different or null'
+                return False
+            if isinstance(old[0], dict):
+                key = None
+                if 'id' in old[0] and 'id' in new[0]:
+                    key = 'id'
+                elif 'name' in old[0] and 'name' in new[0]:
+                    key = 'name'
+                else:
+                    key = old[0].keys()[0]
+                new = sorted(new, key=lambda x: x.get(key, None))
+                old = sorted(old, key=lambda x: x.get(key, None))
+            else:
+                new = sorted(new)
+                old = sorted(old)
+            for i in range(len(new)):
+                if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
+                    return False
+            return True
+        else:
+            updatable = modifiers.get(path, {}).get('updatable', True)
+            comparison = modifiers.get(path, {}).get('comparison', 'default')
+            if path == '/location' or path.endswith('locationName'):
+                new = new.replace(' ', '').lower()
+                old = old.replace(' ', '').lower()
+            elif path.endswith('adminPassword') or path.endswith('administratorLoginPassword') or path.endswith('createMode'):
+                return True
+            if str(new) == str(old):
+                result['compare'] = result.get('compare', '') + "(" + str(new) + ":" + str(old) + ")"
+                return True
+            else:
+                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
+                if updatable:
+                    return False
+                else:
+                    # XXX change new value to old
+                    self.module.warn("property '" + path + "' cannot be updated (" + str(old) + "->" + str(new) + ")")
+                    return True
 
     def serialize_obj(self, obj, class_name, enum_modules=None):
         '''
@@ -1149,9 +1272,8 @@ class AzureRMAuth(object):
 
         return None
 
-    def _get_msi_credentials(self, subscription_id_param=None, **kwargs):
-        client_id = kwargs.get('client_id', None)
-        credentials = MSIAuthentication(client_id=client_id)
+    def _get_msi_credentials(self, subscription_id_param=None):
+        credentials = MSIAuthentication()
         subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
             try:
@@ -1207,7 +1329,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'msi':
             self.log('Retrieving credenitals from MSI')
-            return self._get_msi_credentials(arg_credentials['subscription_id'], client_id=params.get('client_id', None))
+            return self._get_msi_credentials(arg_credentials['subscription_id'])
 
         if auth_source == 'cli':
             if not HAS_AZURE_CLI_CORE:
@@ -1227,7 +1349,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'credential_file':
             self.log("Retrieving credentials from credential file")
-            profile = params.get('profile') or 'default'
+            profile = params.get('profile', 'default')
             default_credentials = self._get_profile(profile)
             return default_credentials
 
