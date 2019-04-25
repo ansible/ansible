@@ -19,15 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import yaml
+
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.six import StringIO
+from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_tasks
+from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.sentinel import Sentinel
+
 
 
 class Block(Base, Conditional, CollectionSearch, Taggable):
@@ -40,6 +46,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     # other fields
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
+
+    # loop
+    _loop = FieldAttribute()
+    _loop_control = FieldAttribute(isa='dict', default=dict, inherit=False)
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -119,6 +129,19 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     def _load_block(self, attr, ds):
         try:
+            if self.loop is not None:
+                # TODO:
+                # remove temp file
+                # rework to avoid writing to a temp file (perhaps a special include_tasks param that takes a file-like object)
+                # disallow use of loop with always/rescue/etc. to avoid existing problems
+                #tmp_file = StringIO(yaml.dump(ds))
+                import tempfile
+                tmp_file = tempfile.NamedTemporaryFile(delete=False)
+                tmp_file.write(yaml.dump(ds, Dumper=AnsibleDumper, default_flow_style=False))
+                tmp_file.close()
+                ds = [{'include_tasks': tmp_file.name, 'loop': self.loop, 'loop_control': self.loop_control}]
+                self.loop = None
+                self.loop_control = None
             return load_list_of_tasks(
                 ds,
                 play=self._play,
