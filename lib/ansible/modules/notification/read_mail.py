@@ -66,33 +66,28 @@ message:
     returned: always
 '''
 import imaplib
-import email
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY3
+
+if PY3:
+    from email.header import decode_header
+    from email import message_from_bytes as message_parser
+else:
+    from email.Header import decode_header
+    from email import message_from_string as message_parser
 
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
-        host=dict(type='str', required=True),
+        host=dict(type='str', required=False, default='localhost'),
         username=dict(type='str', required=True),
-        password=dict(type='str', required=True),
+        password=dict(type='str', required=True, no_log=True),
         ssl=dict(type='bool', required=False, default=True),
-        port=dict(type='int', required=False, default=None)
-    )
-
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # change is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
-    result = dict(
-        changed=False,
-        username='',
-        host='',
-        password='',
-        ssl='',
-        list=''
+        port=dict(type='int', required=False, default=None),
+        mailbox=dict(type='str', required=False, default='INBOX'),
+        filter=dict(type='dict', required=False, default={'ALL': ''})
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -102,6 +97,19 @@ def run_module():
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
+    )
+
+    # seed the result dict in the object
+    # we primarily care about changed and state
+    # change is if this module effectively modified the target
+    # state will include any data that you want your module to pass back
+    # for consumption, for example, in a subsequent task
+    result = dict(
+        changed=True,
+        username=module.params['username'],
+        host=module.params['host'],
+        mails=[],
+        mails_count=0
     )
 
     # if the user is working with this module in only check mode we do not
@@ -133,21 +141,32 @@ def run_module():
     except Exception as e:
         module.fail_json(msg=str(e), **result)
 
-    M.list()
-    M.select('inbox')
-    err, search = M.search(None, 'SUBJECT', '"Alerta"')
-    if err != 'OK':
-        module.fail_json(msg='Error', **result)
+    # selects mailbox
+    M.select(module.params['mailbox'])
 
+    # makes the filter
+    search_array = []
+    for k, v in module.params['filter'].items():
+        search_array.append(k)
+        search_array.append(v)
+    status, search = M.search(None, *search_array)
+    if status != 'OK':
+        module.fail_json(msg='Error filtering', **result)
+
+    # build result mails
     for email_id in search[0].split():
-        # last_email_id = search[0].split()[-1]
-        err, body = M.fetch(email_id, '(RFC822)')
-        if err != 'OK':
-            module.fail_json(msg='Error', **result)
+        status, content = M.fetch(email_id, '(RFC822)')
+        if status != 'OK':
+            module.fail_json(msg='Error parsing', **result)
 
-        msg = email.message_from_bytes(body[0][1])
-        print(msg['to'])
-        print(msg['from'])
+        msg = message_parser(content[0][1])
+
+        result['mails'].append({
+            'to': decode_header(msg['to'])[0][0],
+            'from': decode_header(msg['from'])[0][0],
+            'subject': decode_header(msg['subject'])[0][0]
+        })
+    result['mails_count'] = len(result['mails'])
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
