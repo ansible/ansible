@@ -112,13 +112,13 @@ def main():
     )
 
     argument_spec = dict(
-            pn_cliswitch=dict(required=False, type='str'),
-            state=dict(required=False, type='str',
-                       choices=state_map.keys(), default='present'),
-            pn_name=dict(required=True, type='str'),
-            pn_scope=dict(required=False, type='str',
-                          choices=['local', 'fabric']),
-        )
+        pn_cliswitch=dict(required=False, type='str'),
+        state=dict(required=False, type='str',
+                   choices=state_map.keys(), default='present'),
+        pn_name=dict(required=True, type='str'),
+        pn_scope=dict(required=False, type='str',
+                      choices=['local', 'fabric']),
+    )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
