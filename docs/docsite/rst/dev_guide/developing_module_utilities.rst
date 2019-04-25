@@ -44,7 +44,7 @@ You can find the module
 utility source code in the ``./lib/ansible/module_utils`` directory under
 your main Ansible path. Most module utilities have names that describe their
 functions - for example, ``openstack.py`` contains utilities for modules that work with Openstack instances. We've described the most widely-used utilities below. For more details on any specific module utility,
-please see the `source code <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils>`_.
+please see the `source code for module_utils <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils>`_.
 
 .. include:: shared_snippets/licensing.txt
 
