@@ -16,6 +16,8 @@ module: smsapipl
 
 short_description: Send SMS via smsapi.pl
 
+version_added: "2.7"
+
 description:
   - "Module to send SMS via smsapi.pl; it allow replace Polish diacritic chars to Latin alpha."
 
