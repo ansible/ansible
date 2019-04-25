@@ -66,7 +66,7 @@ def postgres_common_argument_spec():
     )
 
 
-def connect_to_db(module, autocommit=False, fail_on_conn=True):
+def connect_to_db(module, autocommit=False, fail_on_conn=True, warn_db_default=True):
 
     ensure_libs(module)
 
@@ -89,6 +89,10 @@ def connect_to_db(module, autocommit=False, fail_on_conn=True):
         params_map['database'] = 'database'
     elif module.params.get('login_db'):
         params_map['login_db'] = 'database'
+    else:
+        if warn_db_default:
+            module.warn('Database name has not been passed, '
+                        'used default database to connect to.')
 
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)

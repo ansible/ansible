@@ -305,7 +305,7 @@ def main():
     if not value and not reset:
         module.fail_json(msg="%s: at least one of value or reset param must be specified" % name)
 
-    db_connection = connect_to_db(module, autocommit=True)
+    db_connection = connect_to_db(module, autocommit=True, warn_db_default=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     kw = {}

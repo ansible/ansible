@@ -494,7 +494,7 @@ class PgDbConn(object):
 
     def connect(self):
         try:
-            self.db_conn = connect_to_db(self.module)
+            self.db_conn = connect_to_db(self.module, warn_db_default=False)
             self.cursor = self.db_conn.cursor(cursor_factory=DictCursor)
 
             # Switch role, if specified:

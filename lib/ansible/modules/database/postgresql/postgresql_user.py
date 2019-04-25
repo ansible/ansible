@@ -801,7 +801,7 @@ def main():
     conn_limit = module.params["conn_limit"]
     role_attr_flags = module.params["role_attr_flags"]
 
-    db_connection = connect_to_db(module)
+    db_connection = connect_to_db(module, warn_db_default=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     try:
