@@ -484,12 +484,12 @@ class AzureRMModuleBase(object):
             else:
                 if len(value_parts) != len(pattern_parts):
                     return None
-            value_dict = {}
-            for i in range(len(value_parts)):
-                if pattern_parts[i].startswith('{'):
-                    value_dict[pattern_parts[i][1:-1]] = value_parts[i]
-                elif value_parts[i].lower() != pattern_parts[i].lower():
-                    return None
+                value_dict = {}
+                for i in range(len(value_parts)):
+                    if pattern_parts[i].startswith('{'):
+                        value_dict[pattern_parts[i][1:-1]] = value_parts[i]
+                    elif value_parts[i].lower() != pattern_parts[i].lower():
+                        return None
         elif isinstance(value, dict):
             value_dict = value
         else:
@@ -502,10 +502,10 @@ class AzureRMModuleBase(object):
 
         for i in range(len(pattern_parts)):
             if pattern_parts[i].startswith('{'):
-                value = str(value_dict.get(pattern_parts[i][1:-1], None))
-            if not value:
-                return None
-            pattern_parts[i] = value
+                value = value_dict.get(pattern_parts[i][1:-1], None)
+                if not value:
+                    return None
+                pattern_parts[i] = value
 
         return "/".join(pattern_parts)
 

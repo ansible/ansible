@@ -194,9 +194,9 @@ class AzureRMBatchAccount(AzureRMModuleBase):
         if self.batch_account.get('location') is None:
             self.batch_account['location'] = resource_group.location
         if self.batch_account.get('auto_storage_account') is not None:
-            self.batch_account['auto_storage_account'] = self.normalize_resource_id(
+            self.batch_account['auto_storage'] = { 'storage_account_id': self.normalize_resource_id(
                 self.batch_account['auto_storage_account'],
-                '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/sample-acct')
+                '/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Storage/storageAccounts/{{ name }}')}
         self.batch_account['pool_allocation_mode'] = _snake_to_camel(self.batch_account['pool_allocation_mode'], True)
 
         response = None
@@ -217,6 +217,8 @@ class AzureRMBatchAccount(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
+                self.results['old'] = old_response
+                self.results['new'] = self.batch_account
                 if not self.idempotency_check(old_response, self.batch_account):
                     self.to_do = Actions.Update
 
