@@ -6,6 +6,7 @@
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 import re
 
+
 class AzureRMModuleBaseExt(AzureRMModuleBase):
 
     def normalize_resource_id(self, value, pattern):

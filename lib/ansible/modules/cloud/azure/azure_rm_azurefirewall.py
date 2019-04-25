@@ -35,9 +35,6 @@ options:
   location:
     description:
       - Resource location.
-  tags:
-    description:
-      - Resource tags.
   application_rule_collections:
     description:
       - Collection of application rule collections used by Azure Firewall.
@@ -403,12 +400,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             ),
             location=dict(
                 type='str',
-                comparison='',
-                updatable=False,
-                disposition='/'
-            ),
-            tags=dict(
-                type='unknown[DictionaryType {"$id":"440","$type":"DictionaryType","valueType":{"$id":"441","$type":"PrimaryType","knownPrimaryType":"string","name":{"$id":"442","fixed":false,"raw":"String"},"deprecated":false},"supportsAdditionalProperties":false,"name":{"$id":"443","fixed":false},"deprecated":false}]',
                 comparison='',
                 updatable=False,
                 disposition='/'
@@ -801,7 +792,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
 
         super(AzureRMAzureFirewalls, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                     supports_check_mode=True,
-                                                    supports_tags=False)
+                                                    supports_tags=True)
 
     def exec_module(self, **kwargs):
         for key in list(self.module_arg_spec.keys()):
@@ -822,7 +813,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
 
         if 'location' not in self.body:
             self.body['location'] = resource_group.location
-
 
         old_response = self.get_resource()
 
@@ -853,7 +843,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             self.results['changed'] = False
             response = old_response
 
-        #if response:
+        # if response:
         #    self.results["name"] = response["name"]
         #    self.results["type"] = response["type"]
         #    self.results["etag"] = response["etag"]
@@ -890,7 +880,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             response = self.mgmt_client.azure_firewalls.get(resource_group_name=self.resource_group,
                                                             azure_firewall_name=self.name)
         except CloudError as e:
-           return False
+            return False
         return response.as_dict()
 
 
