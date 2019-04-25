@@ -9,6 +9,39 @@ import re
 
 class AzureRMModuleBaseExt(AzureRMModuleBase):
 
+    def inflate_parameters(self, spec, body, level):
+        if isinstance(body, list):
+            for item in body:
+                self.inflate_parameters(spec, item, level)
+            return
+        for name in spec.keys():
+            # first check if option was passed
+            param = body.get(name)
+            if not param:
+                continue
+
+            # check if pattern needs to be used
+            pattern = spec[name].get('pattern', None)
+            if pattern:
+                param = self.normalize_resource_id(param, pattern)
+                body[name] = param
+            disposition = spec[name].get('disposition', '*')
+            if level == 0 and not disposition.startswith('/'):
+                continue
+            if disposition == '/':
+                disposition = '/*'
+            parts = disposition.split('/')
+            if parts[0] == '':
+                # should fail if level is > 0?
+                parts.pop(0)
+            target_dict = body
+            while len(parts) > 1:
+                target_dict = target_dict.setdefault(parts.pop(0), {})
+            targetName = parts[0] if parts[0] != '*' else name
+            target_dict[targetName] = body.pop(name)
+            if spec[name].get('options'):
+                self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
+
     def normalize_resource_id(self, value, pattern):
         '''
         Return a proper resource id string..
