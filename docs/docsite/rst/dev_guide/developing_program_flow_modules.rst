@@ -326,19 +326,28 @@ in :file:`ansible/module_utils` that are imported by the module, and some
 boilerplate to pass in the module's parameters.  The zipfile is then Base64
 encoded and wrapped in a small Python script which decodes the Base64 encoding
 and places the zipfile into a temp directory on the managed node.  It then
-extracts just the ansible module script from the zip file and places that in
-the temporary directory as well.  Then it sets the PYTHONPATH to find python
-modules inside of the zip file and invokes :command:`python` on the extracted
-ansible module.
+extracts just the Ansible module script from the zip file and places that in
+the temporary directory as well.  Then it sets the PYTHONPATH to find Python
+modules inside of the zip file and imports the Ansible module as the special name, ``__main__``.
+Importing it as ``__main__`` causes Python to think that it is executing a script rather than simply
+importing a module, thus running the code within.
 
 .. note::
-    Ansible wraps the zipfile in the Python script for two reasons:
 
-    * for compatibility with Python 2.6 which has a less
-      functional version of Python's ``-m`` command line switch.
-    * so that pipelining will function properly.  Pipelining needs to pipe the
-      Python module into the Python interpreter on the remote node.  Python
-      understands scripts on stdin but does not understand zip files.
+
+.. note::
+    * Ansible wraps the zipfile in the Python script for two reasons:
+
+        * for compatibility with Python 2.6 which has a less
+          functional version of Python's ``-m`` command line switch.
+
+        * so that pipelining will function properly.  Pipelining needs to pipe the
+          Python module into the Python interpreter on the remote node.  Python
+          understands scripts on stdin but does not understand zip files.
+
+    * Prior to Ansible 2.7, the module was executed via a second Python interpreter instead of being
+      executed inside of the same process.  This change was made once Python-2.4 support was dropped
+      to speed up module execution.
 
 In Ansiballz, any imports of Python modules from the
 :py:mod:`ansible.module_utils` package trigger inclusion of that Python file
@@ -355,6 +364,7 @@ the zipfile as well.
     import that has :py:mod:`ansible.module_utils` in it to allow Ansiballz to
     determine that the file should be included.
 
+
 .. _flow_passing_module_args:
 
 Passing args
@@ -362,23 +372,27 @@ Passing args
 
 In :ref:`module_replacer`, module arguments are turned into a JSON-ified
 string and substituted into the combined module file.  In :ref:`Ansiballz`,
-the JSON-ified string is passed into the module via stdin.  When
-a  :class:`ansible.module_utils.basic.AnsibleModule` is instantiated,
-it parses this string and places the args into
-:attr:`AnsibleModule.params` where it can be accessed by the module's
-other code.
+the JSON-ified string is part of the script which wraps the zipfile.  Just before the wrapper script
+imports the Ansible module as ``__main__``, it monkeypatches the private, ``_ANSIBLE_ARGS`` variable
+in ``basic.py`` with the variable values.  When a :class:`ansible.module_utils.basic.AnsibleModule`
+is instantiated, it parses this string and places the args into :attr:`AnsibleModule.params` where
+it can be accessed by the module's other code.
+
+.. warning::
+    The ``_ANSIBLE_ARGS`` variable should be considered an internal implementation detail.  This has
+    changed in the past and will change again in the future when changes to the common module_utils
+    code allows Ansible modules to forgo using :class:`ansible.module_utils.basic.AnsibleModule`.
+    Very dynamic custom modules which need to parse the parameters prior to instantiating an
+    ``AnsibleModule`` may use ``_load_params`` to retrieve the parameters.  Be aware that
+    ``_load_params`` is an internal function and may change in breaking ways if necessary to support
+    changes in the code.  However, we'll do our best not to break it gratuitously, which is not
+    something that can be said for either the way parameters are passed or the internal global
+    variable.
 
 .. note::
-    Internally, the `AnsibleModule` uses the helper function,
-    :py:func:`ansible.module_utils.basic._load_params`, to load the parameters
-    from stdin and save them into an internal global variable.  Very dynamic
-    custom modules which need to parse the parameters prior to instantiating
-    an ``AnsibleModule`` may use ``_load_params`` to retrieve the
-    parameters.  Be aware that ``_load_params`` is an internal function and
-    may change in breaking ways if necessary to support changes in the code.
-    However, we'll do our best not to break it gratuitously, which is not
-    something that can be said for either the way parameters are passed or
-    the internal global variable.
+    Prior to Ansible 2.7, the Ansible module was invoked in a second Python interpreter and the
+    arguments were then passed to the script over the script's stdin.
+
 
 .. _flow_internal_arguments:
 
@@ -391,6 +405,16 @@ additional arguments are internal parameters that help implement global
 Ansible features.  Modules often do not need to know about these explicitly as
 the features are implemented in :py:mod:`ansible.module_utils.basic` but certain
 features need support from the module so it's good to know about them.
+
+In general, new internal arguments should only be created for features which are needed by most
+modules :file:`module_utils/common/` code.  When a feature is not needed by most modules, it is
+better to add the arguments to a specific module's internal arguments (via an action plugin for that
+module).
+
+.. seealso::
+
+    ``_original_basename`` in the `copy action plugin <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/action/copy.py#L329>`_  for an example of an action plugin setting and internal parameter for a module.
+
 
 _ansible_no_log
 ^^^^^^^^^^^^^^^
@@ -490,6 +514,47 @@ from :attr:`AnsibleModule.ansible_version`.  This replaces
 :ref:`module_replacer`.
 
 .. versionadded:: 2.1
+
+
+.. _flow_module_return_values:
+
+Module Return Values
+--------------------
+
+At the end of a module's execution, it formats the data that it wants to return as a JSON string and
+prints it to its stdout.  This string is received by the normal action plugin which parses it from
+a JSON string into a Python dictionary.  It makes a few transformations to the data and then returns
+it to the executor.
+
+
+.. _flow_module_action_executor_trust:
+
+The Executor-Action-Module trust model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One of the most important transformations that the module performs is to mark all strings inside of
+the returned data as ``Unsafe``.  This marking causes Ansible to emit any Jinja2 templates in the
+strings verbatim, not expanded by Jinja2.  The reason for this is that Ansible can be used to manage
+remote machines which might be used by other parties (for instance, a hosting company pushing out
+configuration to virtual machines that it rents to customers.) In these cases, an unscrupulous user
+of the remote machine could configure it to return malicious Jinja2 template strings as part of the
+return data.  If those strings were then templated on the controller by Ansible, Ansible could
+potentially execute arbitrary code on the controller.
+
+.. warning::
+
+    Strings returned by invoking a module through ``ActionPlugin._execute_module()`` are
+    automatically marked as ``Unsafe``.  If an action plugin retrieves informaion from a module
+    through some other means, the module is responsible for marking the data as ``Unsafe`` on its
+    own.
+
+Once the results are returned to the executor, the executor also audits the results, marking all
+strings as ``Unsafe``.  The reason for this second check is in case any poorly coded action plugins
+have failed to mark their results as ``Unsafe``.  Whereas the transformation inside of the action
+plugin protects the action plugin and any other code that it calls with the result data as a
+parameter, the check inside of the executor ensures subsequent tasks run by Ansible will not
+template anything from the results either.
+
 
 .. _flow_special_considerations:
 
