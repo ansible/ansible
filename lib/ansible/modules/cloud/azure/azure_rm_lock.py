@@ -33,9 +33,9 @@ options:
             - Get this via facts module.
             - Cannot be set mutal with C(resource_group).
             - Manage subscription if both C(managed_resource_id) and C(resource_group) not defined.
-            - '/subscriptions/{subscriptionId}' for subscriptions.
-            - '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups.
-            - '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources.
+            - "'/subscriptions/{subscriptionId}' for subscriptions."
+            - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups."
+            - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources."
     resource_group:
         description:
             - Resource group name where need to manage the lock.
