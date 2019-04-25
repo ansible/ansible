@@ -79,34 +79,22 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     iscsi_facts['iscsi_iqn'] = line.split('=', 1)[1]
                     break
         elif sys.platform.startswith('aix'):
-            if module is not None:
-                cmd = module.get_bin_path('lsattr', required=True)
-                cmd = cmd + " -E -l iscsi0"
-                rc, out, err = module.run_command(cmd)
-                if out:
-                    line = self.findstr(out, 'initiator_name')
-            else:
-                aixcmd = '/usr/sbin/lsattr -E -l iscsi0'
-                aixret = subprocess.check_output(aixcmd, shell=True)
-                if aixret[0].isalpha():
-                    line = self.findstr(aixret, 'initiator_name')
+            cmd = module.get_bin_path('lsattr', required=True)
+            cmd += " -E -l iscsi0"
+            rc, out, err = module.run_command(cmd)
+            if out:
+                line = self.findstr(out, 'initiator_name')
             iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
         elif sys.platform.startswith('hp-ux'):
             hpuxcmd = "/opt/iscsi/bin/iscsiutil"
-            if module is not None:
-                # try to find it in the default PATH
-                cmd = module.get_bin_path('iscsiutil')
-                if not cmd:
-                    cmd = hpuxcmd
-                cmd = cmd + " -l"
-                rc, out, err = module.run_command(cmd)
-                if out:
-                    line = self.findstr(out, 'Initiator Name')
-            else:
-                hpuxcmd += " -l"
-                hpuxret = subprocess.check_output(hpuxcmd, shell=True)
-                if hpuxret[0].isalpha():
-                    line = self.findstr(hpuxret, 'Initiator Name')
+            # try to find it in the default PATH
+            cmd = module.get_bin_path('iscsiutil')
+            if not cmd:
+                cmd = hpuxcmd
+            cmd += " -l"
+            rc, out, err = module.run_command(cmd)
+            if out:
+                line = self.findstr(out, 'Initiator Name')
             iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
         return iscsi_facts
 
