@@ -49,7 +49,7 @@ please see the `source code <https://github.com/ansible/ansible/tree/devel/lib/a
 .. include:: shared_snippets/licensing.txt
 
 - ``basic.py`` - General definitions and helper utilities for Ansible modules.
-- ``facts/`` - Folder containing helper functions for modules that return facts. See https://github.com/ansible/ansible/pull/23012 for more information.
+- ``facts/`` - Folder containing helper functions for modules that return facts. See `PR 23012 <https://github.com/ansible/ansible/pull/23012>`_ for more information.
 - ``ismount.py`` - Contains single helper function that fixes os.path.ismount
 - ``known_hosts.py`` - utilities for working with known_hosts file
 - ``network/common/config.py`` - Configuration utility functions for use by networking modules
