@@ -45,15 +45,15 @@ author:
 
 EXAMPLES = '''
 - name: List all policy definitions
-    azure_rm_policydefinition_facts:
+  azure_rm_policydefinition_facts:
 
 - name: List all built-in policy definitions
-    azure_rm_policydefinition_facts:
-        built_in: true
+  azure_rm_policydefinition_facts:
+    built_in: true
 
 - name: List all built-in policy definitions
-    azure_rm_policydefinition_facts:
-        name: testpolicydefinition
+  azure_rm_policydefinition_facts:
+    name: testpolicydefinition
 '''
 
 RETURN = '''
@@ -136,8 +136,7 @@ policydefinitions:
                                 },
                                 "name": "sqlVulnerabilityAssessment",
                                 "type": "Microsoft.Security/complianceResults"
-                            },
-                            "effect": "[parameters('effect')]"
+                            }
                         }
                     }'
         policy_type:
