@@ -24,12 +24,12 @@ You can :ref:`write your own modules <developing_modules_general>`, though you s
 Module utilities
 ================
 
-When multiple modules use the same code, Ansible stores those functions as module utilities to minimize duplication and maintenance. For example, the code that parses URLs is ``lib/ansible/module_utils/url.py``. You can :ref:`write your own module utilities <appendix_module_utilities>` as well. Module utilities may only be written in Python or in PowerShell.
+When multiple modules use the same code, Ansible stores those functions as module utilities to minimize duplication and maintenance. For example, the code that parses URLs is ``lib/ansible/module_utils/url.py``. You can :ref:`write your own module utilities <developing_module_utilities>` as well. Module utilities may only be written in Python or in PowerShell.
 
 Plugins
 =======
 
-:ref:`Plugins <plugins_lookup>` augment Ansible's core functionality. While modules execute on the target system (usually that means on a remote system), plugins execute on the control node. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`. For example, you can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. Plugins must be written in Python.
+:ref:`Plugins <plugins_lookup>` augment Ansible's core functionality. While modules execute on the target system in separate processes (usually that means on a remote system), plugins execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more. Ansible ships with a number of handy plugins, and you can easily :ref:`write your own <developing_plugins>`. For example, you can write an :ref:`inventory plugin <developing_inventory>` to connect to any datasource that returns JSON. Plugins must be written in Python.
 
 Inventory
 =========
