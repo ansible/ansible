@@ -25,18 +25,21 @@ options:
         description:
             - Name of the lock.
         required: true
-    resource_id:
+    managed_resource_id:
         description:
             - Id of the resource where need to manage the lock.
             - Get this via facts module.
             - Cannot be set mutal with C(resource_group).
-            - Query subscription if both C(resource_id) and C(resource_group) not defined.
+            - Manage subscription if both C(managed_managed_resource_id) and C(resource_group) not defined.
+            - '/subscriptions/{subscriptionId}' for subscriptions.
+            - '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups.
+            - '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources.
     resource_group:
         description:
             - Resource group name where need to manage the lock.
             - The lock is in the resource group level.
-            - Cannot be set mutal with C(resource_id).
-            - Query subscription if both C(resource_id) and C(resource_group) not defined.
+            - Cannot be set mutal with C(managed_resource_id).
+            - Query subscription if both C(managed_resource_id) and C(resource_group) not defined.
 
 extends_documentation_fragment:
     - azure
@@ -50,11 +53,26 @@ EXAMPLES = '''
 - name: Get myLock details of myVM
   azure_rm_lock_facts:
     name: myLock
-    resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
+    managed_resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
 
 - name: List locks of myVM
   azure_rm_lock_facts:
-    resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
+    managed_resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
+
+- name: List locks of myResourceGroup
+  azure_rm_lock_facts:
+    resource_group: myResourceGroup
+
+- name: List locks of myResourceGroup
+  azure_rm_lock_facts:
+    managed_resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup
+
+- name: List locks of mySubscription
+  azure_rm_lock_facts:
+
+- name: List locks of mySubscription
+  azure_rm_lock_facts:
+    managed_resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 '''
 
 RETURN = '''
@@ -91,11 +109,10 @@ locks:
 
 import json
 from ansible.module_utils.common.dict_transformations import _camel_to_snake
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 
 try:
-    from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
     # This is handled in azure_rm_common
@@ -109,7 +126,7 @@ class AzureRMLockFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            resource_id=dict(type='str')
+            managed_resource_id=dict(type='str')
         )
 
         self.results = dict(
@@ -117,11 +134,11 @@ class AzureRMLockFacts(AzureRMModuleBase):
             locks=[]
         )
 
-        mutually_exclusive = [['resource_group', 'resource_id']]
+        mutually_exclusive = [['resource_group', 'managed_resource_id']]
 
         self.name = None
         self.resource_group = None
-        self.resource_id = None
+        self.managed_resource_id = None
         self._mgmt_client = None
         self._query_parameters = {'api-version': '2016-09-01'}
         self._header_parameters = {'Content-Type': 'application/json; charset=utf-8'}
@@ -178,8 +195,8 @@ class AzureRMLockFacts(AzureRMModuleBase):
         '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups,
         '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources.
         '''
-        if self.resource_id:
-            return self.resource_id
+        if self.managed_resource_id:
+            return self.managed_resource_id
         elif self.resource_group:
             return '/subscriptions/{0}/resourcegroups/{1}'.format(self.subscription_id, self.resource_group)
         else:
