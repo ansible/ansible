@@ -542,8 +542,8 @@ potentially execute arbitrary code on the controller.
 
     Strings returned by invoking a module through ``ActionPlugin._execute_module()`` are
     automatically marked as ``Unsafe``.  If an action plugin retrieves informaion from a module
-    through some other means, the module is responsible for marking the data as ``Unsafe`` on its
-    own.
+    through some other means, the action plugin is responsible for marking the data as ``Unsafe`` on
+    its own.
 
 Once the results are returned to the executor, the executor also audits the results, marking all
 strings as ``Unsafe``.  The reason for this second check is in case any poorly coded action plugins
