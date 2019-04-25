@@ -1,0 +1,42 @@
+- name: Prepare random number
+  set_fact:
+    storage_name: "st{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    batch_account_name: "ba{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create storage account
+  azure_rm_storageaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ storage_account_name }}"
+      account_type: Standard_LRS
+      location: eastus
+
+- name: Create Batch Account
+  azure_rm_batchaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ batch_account_name }}"
+      location: eastus
+      auto_storage_account:
+        name: "{{ storage_account_name }}"
+      pool_allocation_mode: batch_service
+  register: output
+
+- name: Assert the resource was created
+  assert:
+    that:
+      - output.changed
+
+- name: Create Batch Account -- idempotent
+  azure_rm_batchaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ batch_account_name }}"
+      location: eastus
+      auto_storage_account:
+        name: "{{ storage_account_name }}"
+      pool_allocation_mode: batch_service
+  register: output
+
+- name: Assert the resource was created
+  assert:
+    that:
+      - not output.changed
