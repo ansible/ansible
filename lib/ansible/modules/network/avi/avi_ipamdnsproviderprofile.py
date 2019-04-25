@@ -82,7 +82,6 @@ options:
     openstack_profile:
         description:
             - Provider details if type is openstack.
-        version_added: "2.9"
     proxy_configuration:
         description:
             - Field introduced in 17.1.1.
@@ -93,6 +92,7 @@ options:
         description:
             - Provider details for tencent cloud.
             - Field introduced in 18.2.3.
+        version_added: "2.9"
     type:
         description:
             - Provider type for the ipam/dns provider profile.
