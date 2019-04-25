@@ -404,7 +404,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         )
                     ),
                     rules=dict(
-                        type='list'
+                        type='list',
                         options=dict(
                             name=dict(
                                 type='str'
