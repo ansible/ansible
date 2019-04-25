@@ -134,7 +134,7 @@ class AzureRMBatchAccount(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/*',
+                disposition='/',
             ),
             auto_storage_account=dict(
                 type='raw'
@@ -151,14 +151,14 @@ class AzureRMBatchAccount(AzureRMModuleBaseExt):
                         type='str'
                     )
                 ),
-                disposition='/*',
+                disposition='/',
                 updatable=False
             ),
             pool_allocation_mode=dict(
                 default='batch_service',
                 type='str',
                 choices=['batch_service', 'user_subscription'],
-                disposition='/*',
+                disposition='/',
                 updatable=False
             ),
             state=dict(
