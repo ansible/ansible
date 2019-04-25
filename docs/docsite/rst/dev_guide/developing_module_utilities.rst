@@ -1,8 +1,8 @@
-.. _appendix_module_utilities:
+.. _developing_module_utilities:
 
-**************************
-Appendix: Module Utilities
-**************************
+*************************************
+Using and Developing Module Utilities
+*************************************
 
 Ansible provides a number of module utilities, or snippets of shared code, that
 provide helper functions you can use when developing your own modules. The
@@ -14,7 +14,7 @@ Ansible library, and all Python Ansible modules must import something from
 
 The ``ansible.module_utils`` namespace is not a plain Python package: it is
 constructed dynamically for each task invocation, by extracting imports and
-resolving those matching the namespace against a search path derived from the
+resolving those matching the namespace against a :ref:`search path <ansible_search_path>` derived from the
 active configuration.
 
 If you need to share Python code between some of your own local modules, you can use Ansible's ``module_utils`` directories for this. When you run ``ansible-playbook``, Ansible will merge any files in the local ``module_utils`` directory into the ``ansible.module_utils`` namespace. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file in the root location where your playbook lives, and then import it in your modules like so::
@@ -24,26 +24,26 @@ If you need to share Python code between some of your own local modules, you can
 Your custom ``module_utils`` directories can live in the root directory of your playbook, or in the individual role directories, or in the directories specified by the ``ANSIBLE_MODULE_UTILS`` configuration setting.
 
 Naming and finding module utilities
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+===================================
 
-Ansible uses namespacing to organize module utilities. We store generic
-utilities in the ``common`` subdirectory or in the root directory. For example,
-the shared code for parsing URLs is in ``lib/ansible/module_utils/urls.py``.
-Code files with a more specific purpose live in more specific
-directories. For example, modules related to EMC live in ``lib/ansible/modules/storage/emc/``
-and the module utilities related to EMC live in ``lib/ansible/module_utils/storage/emc/``.
+You can generally tell what a module utility does from its name and/or its location. For example, ``openstack.py`` contains utilities for modules that work with OpenStack instances.
+Generic utilities (shared code used by many different kinds of modules) live in the ``common`` subdirectory or in the root directory. Utilities
+used by a particular set of modules generally live in a sub-directory that mirrors
+the directory for those modules. For example:
+  * ``lib/ansible/module_utils/urls.py`` contains shared code for parsing URLs
+  * ``lib/ansible/module_utils/storage/emc/`` contains shared code related to EMC
+  *  ``lib/ansible/modules/storage/emc/`` contains modules related to EMC
 Following this pattern with your own module utilities makes everything easy to find and use.
 
 .. _standard_mod_utils:
 
 Standard module utilities
-~~~~~~~~~~~~~~~~~~~~~~~~~
+=========================
 
-Ansible ships with a comprehensive library of ``module_utils`` files.
+Ansible ships with an extensive library of ``module_utils`` files.
 You can find the module
 utility source code in the ``./lib/ansible/module_utils`` directory under
-your main Ansible path. Most module utilities have names that describe their
-functions - for example, ``openstack.py`` contains utilities for modules that work with Openstack instances. We've described the most widely-used utilities below. For more details on any specific module utility,
+your main Ansible path. We've described the most widely-used utilities below. For more details on any specific module utility,
 please see the `source code for module_utils <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils>`_.
 
 .. include:: shared_snippets/licensing.txt
