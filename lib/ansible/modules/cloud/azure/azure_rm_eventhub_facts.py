@@ -129,9 +129,11 @@ class AzureRMEventHubFacts(AzureRMModuleBase):
             response = self.list_by_namespace()
         self.results['eventhubs'] = [self.to_dict(x) for x in response]
         if self.show_sas_policies:
-            self.results['eventhubs'] = [self.get_sas_policies(x) for x in self.results['eventhubs']]
+            for x in self.results['eventhubs']:
+                self.add_sas_policies(x)
         if self.show_consumer_groups:
-            self.results['eventhubs'] = [self.get_consumer_groups(x) for x in self.results['eventhubs']]
+            for x in self.results['eventhubs']:
+                self.add_consumer_groups(x)
         return self.results
 
     def get_item(self):
@@ -158,12 +160,10 @@ class AzureRMEventHubFacts(AzureRMModuleBase):
         except self.eventhub_models.ErrorResponseException as exc:
             self.fail('Filed to list eventhub by namespace {0}: {1}'.format(self.namespace, str(exc.inner_exception) or exc.message or str(exc)))
 
-    def get_sas_policies(self, eventhub):
-        results = eventhub
+    def add_sas_policies(self, eventhub):
         name = eventhub['name']
         rules = self.list_authorization_rules(name)
-        results['sas_keys'] = [self.list_keys(eventhub=name, rule_name=x.name).as_dict() for x in rules]
-        return results
+        eventhub['sas_keys'] = [self.list_keys(eventhub=name, rule_name=x.name).as_dict() for x in rules]
 
     def list_authorization_rules(self, eventhub):
         try:
@@ -185,11 +185,9 @@ class AzureRMEventHubFacts(AzureRMModuleBase):
             self.fail('Failed to list keys of authorization rules {0}: {1}'.format(rule_name,
                                                                                    str(exc.inner_exception) or exc.message or str(exc)))
 
-    def get_consumer_groups(self, eventhub):
-        results = eventhub
+    def add_consumer_groups(self, eventhub):
         consumer_groups = self.list_consumer_groups(eventhub['name'])
-        results['consumer_groups'] = [x.as_dict() for x in consumer_groups]
-        return results
+        eventhub['consumer_groups'] = [x.as_dict() for x in consumer_groups]
 
     def list_consumer_groups(self, eventhub):
         try:
