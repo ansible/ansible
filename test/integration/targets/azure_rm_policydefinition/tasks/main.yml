@@ -1,6 +1,7 @@
 - name: Fix resource prefix
   set_fact:
     policy_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}testpolicy"
+    policy_assignment_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}testassignment"
   run_once: yes
 
 - name: Create a policy definition (Check Mode)
@@ -134,6 +135,67 @@
   assert:
     that:
       - output.changed
+
+- name: Create policy assignment
+  azure_rm_policyassignment:
+    name: {{ policy_assignment_name }}
+    policy_definition_id: {{ output.id }}
+    display_name: testassignment
+    sku: a0
+    metadata:
+      testing: yes
+    location: westus
+  register: output
+
+- name: Assert creating policy assignment
+  assert:
+    that:
+      - output.changed
+
+- name: list all policy assignment
+  azure_rm_policyassignment_facts:
+  register: output
+
+- name: Assert facts
+  assert:
+    that:
+      - output["policyassignments"] != None
+
+- name: list policy assignment by name
+  azure_rm_policyassignment_facts:
+    name: {{ policy_assignment_name }}
+  register: output
+
+- name: Assert facts
+  assert:
+    that:
+      - output["policyassignments"] | length == 1
+      - output["policyassignments"][0]['id'] != None
+      - output["policyassignments"][0]['metadata'] != None
+      - output["policyassignments"][0]['name'] != None
+      - output["policyassignments"][0]['policy_definition_id'] != None
+
+- name: Delete policy assignment
+  azure_rm_policyassignment:
+    name: {{ policy_assignment_name }}
+    state: absent
+  register: output
+
+- name: Assert deleting policy assignment
+  assert:
+    that:
+      - output.changed
+
+- name: Delete policy assignment (idempontent)
+  azure_rm_policyassignment:
+    name: {{ policy_assignment_name }}
+    state: absent
+  register: output
+
+- name: Assert deleting policy assignment
+  assert:
+    that:
+      - not output.changed
 
 - name: Delete the policy definition (Check Mode)
   azure_rm_policydefinition:
