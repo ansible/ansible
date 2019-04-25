@@ -229,17 +229,21 @@ valid:
   sample: true
 '''
 
-try:
-    from psycopg2.extras import DictCursor
-except ImportError:
-    # psycopg2 is checked by connect_to_db()
-    # from ansible.module_utils.postgres
-    pass
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+PSYCOPG2_IMP_ERR = None
+try:
+    import psycopg2
+    HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
+    PSYCOPG2_IMP_ERR = traceback.format_exc()
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
 
 VALID_IDX_TYPES = ('BTREE', 'HASH', 'GIST', 'SPGIST', 'GIN', 'BRIN')
@@ -424,6 +428,9 @@ def main():
         supports_check_mode=True,
     )
 
+    if not HAS_PSYCOPG2:
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
+
     idxname = module.params["idxname"]
     state = module.params["state"]
     concurrent = module.params["concurrent"]
@@ -431,6 +438,8 @@ def main():
     idxtype = module.params["idxtype"]
     columns = module.params["columns"]
     cond = module.params["cond"]
+    sslrootcert = module.params["ca_cert"]
+    session_role = module.params["session_role"]
     tablespace = module.params["tablespace"]
     storage_params = module.params["storage_params"]
     cascade = module.params["cascade"]
@@ -453,8 +462,37 @@ def main():
     if cascade and state != 'absent':
         module.fail_json(msg="cascade parameter used only with state=absent")
 
-    db_connection = connect_to_db(module, autocommit=True)
-    cursor = db_connection.cursor(cursor_factory=DictCursor)
+    # To use defaults values, keyword arguments must be absent, so
+    # check which values are empty and don't include in the **kw
+    # dictionary
+    params_map = {
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "db": "database",
+        "ssl_mode": "sslmode",
+        "ca_cert": "sslrootcert"
+    }
+    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
+              if k in params_map and v != "" and v is not None)
+
+    # If a login_unix_socket is specified, incorporate it here.
+    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
+    if is_localhost and module.params["login_unix_socket"] != "":
+        kw["host"] = module.params["login_unix_socket"]
+
+    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
+
+    db_connection = connect_to_db(module, kw, autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    if session_role:
+        try:
+            cursor.execute('SET ROLE %s' % session_role)
+        except Exception as e:
+            module.fail_json(msg="Could not switch role: %s" % to_native(e))
 
     # Set defaults:
     changed = False
@@ -516,7 +554,6 @@ def main():
         db_connection.commit()
 
     kw['changed'] = changed
-    db_connection.close()
     module.exit_json(**kw)
 
 
