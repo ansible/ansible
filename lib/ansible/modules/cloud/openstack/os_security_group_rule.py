@@ -239,7 +239,7 @@ def _find_matching_rule(module, secgroup, remotegroup):
     remote_group_id = remotegroup['id']
 
     for rule in secgroup['security_group_rules']:
-        if (protocol == rule['protocol'] and
+        if ((not protocol or protocol == rule['protocol']) and
                 remote_ip_prefix == rule['remote_ip_prefix'] and
                 ethertype == rule['ethertype'] and
                 direction == rule['direction'] and
