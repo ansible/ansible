@@ -243,7 +243,7 @@ def get_vpc(module):
                 if 'system-priority' in each:
                     line = each.split()
                     vpc['system_priority'] = line[-1]
-                if re.search('delay restore \d+', each):
+                if re.search(r'delay restore \d+', each):
                     line = each.split()
                     vpc['delay_restore'] = line[-1]
                 if 'delay restore interface-vlan' in each:
