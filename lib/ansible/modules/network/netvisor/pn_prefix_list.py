@@ -29,13 +29,14 @@ options:
     description:
       - State the action to perform. Use C(present) to create prefix-list and
         C(absent) to delete prefix-list.
-    required: true
+    required: false
     type: str
     choices: ['present', 'absent']
+    default: 'present'
   pn_name:
     description:
       - Prefix List Name.
-    required: false
+    required: true
     type: str
   pn_scope:
     description:
@@ -110,15 +111,17 @@ def main():
         absent='prefix-list-delete'
     )
 
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = dict(
             pn_cliswitch=dict(required=False, type='str'),
-            state=dict(required=True, type='str',
-                       choices=state_map.keys()),
-            pn_name=dict(required=False, type='str'),
+            state=dict(required=False, type='str',
+                       choices=state_map.keys(), default='present'),
+            pn_name=dict(required=True, type='str'),
             pn_scope=dict(required=False, type='str',
                           choices=['local', 'fabric']),
-        ),
+        )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         required_if=(
             ["state", "present", ["pn_name", "pn_scope"]],
             ["state", "absent", ["pn_name"]],
