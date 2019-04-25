@@ -50,13 +50,13 @@ EXAMPLES = '''
          - i-123456789
          - i-987654321
   register: my_vms_eips
-  
+
 # List all EIP addresses using the 'Name' tag as a filter.
 - ec2_eip_facts:
     filters:
       tag:Name: www.example.com
   register: my_vms_eips
-  
+
 # List all EIP addresses using the Allocation-id as a filter
 - ec2_eip_facts:
     filters:
