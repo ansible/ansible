@@ -486,7 +486,7 @@ def main():
 
     if not raw_connection:
         try:
-            pgutils.ensure_libs(sslrootcert=module.params.get('ca_cert'))
+            pgutils.ensure_libs(module)
             db_connection = psycopg2.connect(database=maintenance_db, **kw)
 
             # Enable autocommit so we can create databases
