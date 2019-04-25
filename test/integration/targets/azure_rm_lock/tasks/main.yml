@@ -1,7 +1,15 @@
-- name: Add lock to resource group (check_mode)
+- name: Create a virtual network
+  azure_rm_virtualnetwork:
+      name: mytestvirtualnetworklock
+      resource_group: "{{ resource_group }}"
+      address_prefixes_cidr:
+         - "10.1.0.0/16"
+  register: vn
+
+- name: Add lock to resource (check_mode)
   azure_rm_lock:
       name: keep
-      resource_group: "{{ resource_group }}"
+      resource_id: "{{ vn.state.id }}"
       level: read_only
   register: lock
   check_mode: yes
@@ -12,17 +20,17 @@
 
 - name: Query lock
   azure_rm_lock_facts:
-      resource_group: "{{ resource_group }}"
+      resource_id: "{{ vn.state.id }}"
   register: locks
 
 - assert:
       that:
           - locks.locks | length == 0
 
-- name: Add lock to resource group
+- name: Add lock to resource
   azure_rm_lock:
       name: keep
-      resource_group: "{{ resource_group }}"
+      resource_id: "{{ vn.state.id }}"
       level: read_only
   register: lock
 
@@ -34,21 +42,17 @@
 - name: Query lock
   azure_rm_lock_facts:
       name: keep
-      resource_group: "{{ resource_group }}"
+      resource_id: "{{ vn.state.id }}"
   register: locks
 
 - assert:
       that:
           - locks.locks | length == 1
 
-- name: Get resource group id
-  azure_rm_resource_facts:
-      name: "{{ resource_group }}"
-
-- name: Update lock to resource group (idempontent)
+- name: Update lock to resource (idempontent)
   azure_rm_lock:
       name: keep
-      resource_id: "{{ azure_resourcegroups[0].id }}"
+      resource_id: "{{ vn.state.id }}"
       level: read_only
   register: lock1
 
@@ -60,7 +64,7 @@
 - name: Update lock level
   azure_rm_lock:
       name: keep
-      resource_id: "{{ azure_resourcegroups[0].id }}"
+      resource_id: "{{ vn.state.id }}"
       level: can_not_delete
   register: lock
 
@@ -72,7 +76,7 @@
 - name: Delete lock
   azure_rm_lock:
       name: keep
-      resource_group: "{{ resource_group }}"
+      resource_id: "{{ vn.state.id }}"
   register: lock
 
 - assert:
@@ -81,9 +85,15 @@
 
 - name: Query lock
   azure_rm_lock_facts:
-      resource_group: "{{ resource_group }}"
+      resource_id: "{{ vn.state.id }}"
   register: locks
 
 - assert:
       that:
           - locks.locks | length == 0
+
+- name: Clean up
+  azure_rm_virtualnetwork:
+      name: mytestvirtualnetworklock
+      resource_group: "{{ resource_group }}"
+      state: absent

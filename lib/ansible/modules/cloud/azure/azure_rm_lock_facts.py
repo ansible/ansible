@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_lock
+module: azure_rm_lock_facts
 version_added: "2.9"
 short_description: Manage Azure locks.
 description:
@@ -47,11 +47,49 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Get myLock details of myVM
+  azure_rm_lock_facts:
+    name: myLock
+    resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
+
+- name: List locks of myVM
+  azure_rm_lock_facts:
+    resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
 '''
 
 RETURN = '''
+locks:
+    description: List of locks dicts.
+    returned: always
+    type: complex
+    contains:
+        id:
+            description:
+                - Id of the Lock.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Authorization/locks/myLock"
+        name:
+            description:
+                - Name of the lock.
+            returned: always
+            type: str
+            sample: myLock
+        level:
+            description:
+                - Type level of the lock
+            returned: always
+            type: str
+            sample: can_not_delete
+        notes:
+            description:
+                - Notes of the lock added by creator.
+            returned: always
+            type: str
+            sample: "This is a lock"
 '''  # NOQA
 
+import json
 from ansible.module_utils.common.dict_transformations import _camel_to_snake
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
@@ -102,25 +140,26 @@ class AzureRMLockFacts(AzureRMModuleBase):
         url = '/{0}/providers/Microsoft.Authorization/locks'.format(scope)
         if self.name:
             url = '{0}/{1}'.format(url, self.name)
-        resp = self.list_locks(url)
-        self.results = [self.to_dict(x) for x in resp]
+        locks = self.list_locks(url)
+        resp = locks.get('value') if 'value' in locks else [locks]
+        self.results['locks'] = [self.to_dict(x) for x in resp]
         return self.results
 
     def to_dict(self, lock):
         resp = dict(
             id=lock['id'],
             name=lock['name'],
-            level=_camel_to_snake(lock['level'])
+            level=_camel_to_snake(lock['properties']['level'])
         )
-        if lock.get('notes'):
-            resp['notes'] = lock['notes']
-        if lock.get('owners'):
-            resp['owners'] = [x['application_id'] for x in lock['owners']]
+        if lock['properties'].get('notes'):
+            resp['notes'] = lock['properties']['notes']
+        if lock['properties'].get('owners'):
+            resp['owners'] = [x['application_id'] for x in lock['properties']['owners']]
         return resp
 
     def list_locks(self, url):
         try:
-            return self._mgmt_client.query(url=url,
+            resp = self._mgmt_client.query(url=url,
                                            method='GET',
                                            query_parameters=self._query_parameters,
                                            header_parameters=self._header_parameters,
@@ -128,6 +167,7 @@ class AzureRMLockFacts(AzureRMModuleBase):
                                            expected_status_codes=[200],
                                            polling_timeout=None,
                                            polling_interval=None)
+            return json.loads(resp.text)
         except CloudError as exc:
             self.fail('Error when finding locks {0}: {1}'.format(url, exc.message))
 

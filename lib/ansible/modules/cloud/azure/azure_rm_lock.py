@@ -20,6 +20,8 @@ version_added: "2.9"
 short_description: Manage Azure locks.
 description:
     - Create, delete an Azure lock.
+    - To create or delete management locks, you must have access to Microsoft.Authorization/* or Microsoft.Authorization/locks/* actions.
+    - Of the built-in roles, only Owner and User Access Administrator are granted those actions.
 options:
     name:
         description:
@@ -45,7 +47,12 @@ options:
         choices:
             - absent
             - present
-
+    level:
+        description:
+            - The lock level type.
+        choices:
+            - can_not_delete
+            - read_only
 extends_documentation_fragment:
     - azure
 
@@ -55,9 +62,37 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Create a lock for a resource
+  azure_rm_lock:
+      resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
+      name: myLock
+      level: read_only
+
+- name: Create a lock for a resource group
+  azure_rm_lock:
+      resource_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup
+      name: myLock
+      level: read_only
+
+- name: Create a lock for a resource group
+  azure_rm_lock:
+      resource_group: myResourceGroup
+      name: myLock
+      level: read_only
+
+- name: Create a lock for a subscription
+  azure_rm_lock:
+      name: myLock
+      level: read_only
 '''
 
 RETURN = '''
+id:
+    description:
+        - Resource ID of the lock.
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Authorization/locks/keep"
+    returned: success
+    type: str
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
@@ -88,7 +123,7 @@ class AzureRMLock(AzureRMModuleBase):
         )
 
         required_if = [
-          ('state', 'present', ['level'])
+            ('state', 'present', ['level'])
         ]
 
         mutually_exclusive = [['resource_group', 'resource_id']]
@@ -120,9 +155,9 @@ class AzureRMLock(AzureRMModuleBase):
                 changed = True
                 lock = self.lock_models.ManagementLockObject(level=lock_level)
             elif lock.level != lock_level:
-                    self.log('Lock level changed')
-                    lock.level = lock_level
-                    changed = True
+                self.log('Lock level changed')
+                lock.level = lock_level
+                changed = True
             if not self.check_mode:
                 lock = self.create_or_update_lock(scope, lock)
                 self.results['id'] = lock.id
@@ -137,7 +172,7 @@ class AzureRMLock(AzureRMModuleBase):
         try:
             return self.lock_client.management_locks.delete_by_scope(scope, self.name)
         except CloudError as exc:
-            self.fail('Error when deleting lock {0} for {1}: {2}'.format(self.name, scope, exc.message)) 
+            self.fail('Error when deleting lock {0} for {1}: {2}'.format(self.name, scope, exc.message))
 
     def create_or_update_lock(self, scope, lock):
         try:
