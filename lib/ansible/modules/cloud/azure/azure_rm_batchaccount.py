@@ -131,7 +131,9 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 type='str'
             ),
             location=dict(
-                type='str'
+                type='str',
+                updatable=False,
+                disposition='/*',
             ),
             auto_storage_account=dict(
                 type='raw'
@@ -147,12 +149,16 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                         required=True,
                         type='str'
                     )
-                )
+                ),
+                disposition='/*',
+                updatable=False
             ),
             pool_allocation_mode=dict(
                 default='batch_service',
                 type='str',
-                choices=['batch_service', 'user_subscription']
+                choices=['batch_service', 'user_subscription'],
+                disposition='/*',
+                updatable=False
             ),
             state=dict(
                 type='str',
@@ -164,6 +170,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.batch_account = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -210,7 +217,8 @@ class AzureRMBatchAccount(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                self.idempotency_check(old_response, self.batch_account)
+                if not self.idempotency_check(old_response, self.batch_account):
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Batch Account instance")
@@ -259,7 +267,7 @@ class AzureRMBatchAccount(AzureRMModuleBase):
                 response = self.mgmt_client.batch_account.update(resource_group_name=self.resource_group,
                                                                  account_name=self.name,
                                                                  tags=self.tags,
-                                                                 auto_storage=self.auto_storage)
+                                                                 auto_storage=self.batch_account.get('auto_storage'))
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
         except CloudError as exc:
