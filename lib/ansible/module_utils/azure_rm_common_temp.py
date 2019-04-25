@@ -530,7 +530,7 @@ class AzureRMModuleBase(object):
                  o.get('disposition', '*').replace('*', k) +
                  ('/*' if o['type'] == 'list' else ''))
             if comparison != 'default' or not updatable:
-                result[p] = { 'updatable': updatable, 'comparison': comparison }
+                result[p] = {'updatable': updatable, 'comparison': comparison}
             if o.get('options'):
                 self.create_compare_modifiers(o.get('options'), p, result)
 
@@ -539,10 +539,10 @@ class AzureRMModuleBase(object):
             Default dictionary comparison.
             This function will work well with most of the Azure resources.
             It correctly handles "location" comparison.
-            
+
             Value handling:
                 - if "new" value is None, it will be taken from "old" dictionary if "incremental_update"
-                  is enabled. 
+                  is enabled.
             List handling:
                 - if list contains "name" field it will be sorted by "name" before comparison is done.
                 - if module has "incremental_update" set, items missing in the new list will be copied
