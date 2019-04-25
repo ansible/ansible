@@ -58,6 +58,19 @@ class FactCache(MutableMapping):
         """ Flush the fact cache of all keys. """
         self._plugin.flush()
 
+    def first_order_merge(self, key, value):
+        host_facts = {key: value}
+
+        try:
+            host_cache = self._plugin.get(key)
+            if host_cache:
+                host_cache.update(value)
+                host_facts[key] = host_cache
+        except KeyError:
+            pass
+
+        super(FactCache, self).update(host_facts)
+
     def update(self, *args):
         """
         Backwards compat shim
