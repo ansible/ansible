@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - strip whitespaces in package names (https://github.com/ansible/ansible/issues/55741)
