@@ -134,13 +134,14 @@ from ansible.module_utils._text import to_native
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from six.moves.urllib.request import urlopen
-    from six.moves.urllib.parse import urlparse
+    from ansible.module_utils.urls import open_url
+    from ansible.module_utils.six.moves.urllib.parse import urlparse
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 AUTO_ADDED_METADATA = ["createdBy", "createdOn", "updatedBy", "updatedOn"]
+
 
 class AzureRMPolicyDefinition(AzureRMModuleBase):
     """Configuration class for an Azure RM Policy definition resource"""
@@ -273,7 +274,7 @@ class AzureRMPolicyDefinition(AzureRMModuleBase):
             else:
                 return self.rm_policy_client.policy_definitions.create_or_update(policy_definition_name=self.name,
                                                                                  parameters=policy_definition)
-                
+
         except CloudError as exc:
             self.fail("Error creating or updating the resource policy definition {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
 
@@ -370,12 +371,12 @@ class AzureRMPolicyDefinition(AzureRMModuleBase):
                     return base64.b64encode(input_file.read()).decode("utf-8")
             except Exception:
                 pass
-        self.fail("Failed to decode file {} - unknown decoding".format(file_path))
+        self.fail("Failed to decode file {0} - unknown decoding".format(file_path))
 
     def load_file_string_or_url(self, file_or_string_or_url):
         url = urlparse(file_or_string_or_url)
         if url.scheme == 'http' or url.scheme == 'https' or url.scheme == 'file':
-            response = urlopen(file_or_string_or_url)
+            response = open_url(file_or_string_or_url)
             reader = codecs.getreader('utf-8')
             result = json.load(reader(response))
             response.close()
