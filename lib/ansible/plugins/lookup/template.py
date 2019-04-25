@@ -11,7 +11,7 @@ DOCUMENTATION = """
     version_added: "0.9"
     short_description: retrieve contents of file after templating with Jinja2
     description:
-      - Returns a string containing the results of processing the template file(s) you pass in.
+      - Returns a list of strings; for each template in the list of templates you pass in, returns a string containing the results of processing that template.
     options:
       _terms:
         description: list of files to template
