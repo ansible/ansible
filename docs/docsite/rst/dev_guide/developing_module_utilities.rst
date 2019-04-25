@@ -57,7 +57,7 @@ please see the `source code <https://github.com/ansible/ansible/tree/devel/lib/a
 - ``network/common/parsing.py`` - Definitions and helper functions for Network modules.
 - ``network/common/network.py`` - Functions for running commands on networking devices
 - ``network/common/utils.py`` - Defines commands and comparison operators and other utilises for use in networking modules
-- ``powershell.ps1`` - Utilities for working with Microsoft Windows clients
+- ``powershell/` - Utilities for working with Microsoft Windows clients
 - ``pycompat24.py`` - Exception workaround for Python 2.4.
 - ``service.py`` - Contains utilities to enable modules to work with Linux services (placeholder, not in use).
 - ``shell.py`` - Functions to allow modules to create shells and work with shell commands
