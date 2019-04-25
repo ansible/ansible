@@ -99,7 +99,8 @@ account_endpoint:
 '''
 
 import time
-from ansible.module_utils.azure_rm_common_temp import AzureRMModuleBase, normalize_location_name
+from ansible.module_utils.azure_rm_common import normalize_location_name
+from ansible.module_utils.azure_rm_common_ext import AzureRMModuleBaseExt
 from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 try:
@@ -117,7 +118,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMBatchAccount(AzureRMModuleBase):
+class AzureRMBatchAccount(AzureRMModuleBaseExt):
     """Configuration class for an Azure RM Batch Account resource"""
 
     def __init__(self):
