@@ -92,16 +92,18 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     line = self.findstr(aixret, 'initiator_name')
             iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
         elif sys.platform.startswith('hp-ux'):
+            hpuxcmd = "/opt/iscsi/bin/iscsiutil"
             if module is not None:
+                # try to find it in the default PATH
                 cmd = module.get_bin_path('iscsiutil')
                 if not cmd:
-                    cmd = '/opt/iscsi/bin/iscsiutil'
+                    cmd = hpuxcmd
                 cmd = cmd + " -l"
                 rc, out, err = module.run_command(cmd)
                 if out:
                     line = self.findstr(out, 'Initiator Name')
             else:
-                hpuxcmd = "/opt/iscsi/bin/iscsiutil -l"
+                hpuxcmd += " -l"
                 hpuxret = subprocess.check_output(hpuxcmd, shell=True)
                 if hpuxret[0].isalpha():
                     line = self.findstr(hpuxret, 'Initiator Name')
