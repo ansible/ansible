@@ -43,6 +43,7 @@ def meraki_argument_spec():
                 use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),
+                output_format=dict(type='str', choices=['camelcase', 'snakecase'], default='snakecase', fallback=(env_fallback, ['ANSIBLE_MERAKI_FORMAT'])),
                 output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
                 timeout=dict(type='int', default=30),
                 org_name=dict(type='str', aliases=['organization']),
@@ -357,9 +358,8 @@ class MerakiModule(object):
             self.result['url'] = self.url
         self.result.update(**kwargs)
         try:
-            if os.environ['ANSIBLE_MERAKI_FORMAT'] == 'camelcase':
+            if self.params['output_format'] == 'camelcase':
                 self.module.deprecate("Ansible's Meraki modules will stop supporting camel case output in Ansible 2.12. Please update your playbooks.")
-                # self.result['data'] = self.result['data']
         except KeyError:
             self.result['data'] = self.sanitize_keys(self.result['data'])
         self.module.exit_json(**self.result)

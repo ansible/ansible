@@ -34,6 +34,12 @@ options:
         - Only useful for internal Meraki developers.
         type: bool
         default: yes
+    output_format:
+        description:
+        - Instructs module whether response keys should be snake case (ex. C(net_id)) or camel case (ex. C(netId)).
+        type: str
+        choices: [snakecase, camelcase]
+        default: snakecase
     output_level:
         description:
         - Set amount of debug output during module execution.
