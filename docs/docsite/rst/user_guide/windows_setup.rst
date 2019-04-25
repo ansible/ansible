@@ -101,6 +101,8 @@ The following PowerShell command will install the hotfix:
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     powershell.exe -ExecutionPolicy ByPass -File $file -Verbose
 
+For more details, please refer to the `Hotfix document <https://support.microsoft.com/en-us/help/2842230/out-of-memory-error-on-a-computer-that-has-a-customized-maxmemorypersh>`_ from Microsoft.
+
 WinRM Setup
 ```````````
 Once Powershell has been upgraded to at least version 3.0, the final step is for the
