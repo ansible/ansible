@@ -67,6 +67,11 @@ URL_AUTHENTICATION_FLOW_EXECUTIONS_EXECUTION = "{url}/admin/realms/{realm}/authe
 URL_AUTHENTICATION_EXECUTIONS_CONFIG = "{url}/admin/realms/{realm}/authentication/executions/{id}/config"
 URL_AUTHENTICATION_CONFIG = "{url}/admin/realms/{realm}/authentication/config/{id}"
 
+URL_IDPS = "{url}/admin/realms/{realm}/identity-provider/instances"
+URL_IDP = "{url}/admin/realms/{realm}/identity-provider/instances/{alias}"
+URL_IDP_MAPPERS = "{url}/admin/realms/{realm}/identity-provider/instances/{alias}/mappers"
+URL_IDP_MAPPER = "{url}/admin/realms/{realm}/identity-provider/instances/{alias}/mappers/{id}"
+
 def keycloak_argument_spec():
     """
     Returns argument_spec of options common to keycloak_*-modules
@@ -1277,6 +1282,237 @@ class KeycloakAPI(object):
             sync_url=URL_USER_STORAGE_SYNC.format(url=self.baseurl, realm=realm, id=component_id, action=action)
             return open_url(sync_url, method='POST', headers=self.restheaders)
         except Exception as e:
-            self.module.fail_json(msg='Could synchronize component %s action %s in realm %s: %s'
+            self.module.fail_json(msg='Could not synchronize component %s action %s in realm %s: %s'
                                       % (component_id, action, realm, str(e)))
-           
+            
+    def add_idp_endpoints(self, idPConfiguration, url):
+        """
+        This function extract OpenID connect endpoints from the identity provider's openid-configuration URL.
+        Endpoints are added to the idp configuration object received in parameter.
+        :param idPConfiguration: Identity provider configuration dict to update.
+        :param url: Identity provider's openid-configuration URL.
+        :param realm: Realm
+        :return: Nothing
+        """
+        try:
+            if url is not None:
+                openIdConfig = json.load(open_url(url, method='GET'))
+                if 'userinfo_endpoint' in openIdConfig.keys():
+                    idPConfiguration["userInfoUrl"] = openIdConfig["userinfo_endpoint"]
+                if 'token_endpoint' in openIdConfig.keys():
+                    idPConfiguration["tokenUrl"] = openIdConfig["token_endpoint"]
+                if 'jwks_uri' in openIdConfig.keys():
+                    idPConfiguration["jwksUrl"] = openIdConfig["jwks_uri"]
+                if 'issuer' in openIdConfig.keys():
+                    idPConfiguration["issuer"] = openIdConfig["issuer"]
+                if 'authorization_endpoint' in openIdConfig.keys():
+                    idPConfiguration["authorizationUrl"] = openIdConfig["authorization_endpoint"]
+                if 'end_session_endpoint' in openIdConfig.keys():
+                    idPConfiguration["logoutUrl"] = openIdConfig["end_session_endpoint"]        
+        except Exception, e:
+            self.module.fail_json(msg='Could not get IdP configuration from endpoint %s: %s'
+                                      % (url, str(e)))
+    
+    def delete_all_idp_mappers(self, alias, realm='master'):
+        """
+        Delete all mappers for an identity provider
+        :param alias: Idp alias to delete mappers from.
+        :param realm: Realm
+        :return: True if mappers have been deleted, False otherwise.
+        """
+        changed = False
+        try:
+            # Get idp's mappers list
+            mappers_url = URL_IDP_MAPPERS.format(url=self.baseurl, realm=realm, alias=alias)
+            mappers = json.load(open_url(mappers_url, method='GET',headers=self.restheaders))
+            for mapper in mappers:
+                mapper_url = URL_IDP_MAPPER.format(url=self.baseurl,realm=realm,alias=alias,id=mapper['id'])
+                open_url(mapper_url,method='DELETE',headers=self.restheaders)
+                changed=True
+                
+            return changed
+        except Exception, e:
+            self.module.fail_json(msg='Could not delete mappers for IdP %s in realm %s: %s'
+                                      % (alias, realm, str(e)))
+         
+    
+    def create_or_update_idp_mappers(self, alias, idPMappers, realm='master'):
+        """
+        Create, update or delete mappers for an identity provider.
+        :param alias: Idp alias to add, update or delete mappers from.
+        :param idPMappers: List of mappers
+        :param realm: Realm
+        :return: True if mappers have been modified, False otherwise.
+        """
+        changed = False
+        try:
+            # Get idp's mappers list
+            mappers_url = URL_IDP_MAPPERS.format(url=self.baseurl, realm=realm, alias=alias)
+            mappers = json.load(open_url(mappers_url, method='GET',headers=self.restheaders))
+            for idPMapper in idPMappers:
+                desiredState = "present"
+                if "state" in idPMapper:
+                    desiredState = idPMapper["state"]
+                    del(idPMapper["state"])
+                mapperFound = False
+                for mapper in mappers:
+                    if mapper['name'] == idPMapper['name']:
+                        mapperFound = True
+                        break
+                # If mapper already exist and is different
+                if mapperFound and not isDictEquals(idPMapper,mapper):
+                    # update the existing mapper
+                    for key in idPMapper.keys():
+                        mapper[key] = idPMapper[key]
+                        mapper_url = URL_IDP_MAPPER.format(url=self.baseurl, realm=realm, alias=alias, id=mapper['id'])
+                        open_url(mapper_url, method='PUT', headers=self.restheaders, data=json.dumps(mapper))                        
+                    changed = True
+                elif mapperFound and desiredState == "absent":
+                    # delete the mapper
+                    mapper_url = URL_IDP_MAPPER.format(url=self.baseurl,realm=realm,alias=alias,id=mapper['id'])
+                    open_url(mapper_url,method='DELETE',headers=self.restheaders)
+                    changed = True
+                # If the mapper does not already exist
+                elif not mapperFound and desiredState != "absent":
+                    # Complete the mapper settings with defaults
+                    if 'identityProviderMapper' not in idPMapper.keys(): # if mapper's type is provided
+                        idPMapper['identityProviderMapper'] = 'oidc-user-attribute-idp-mapper'                
+                    idPMapper['identityProviderAlias'] = alias
+     
+                    # Create it
+                    mappers_url=URL_IDP_MAPPERS.format(url=self.baseurl, realm=realm, alias=alias)
+                    open_url(mappers_url, method='POST', headers=self.restheaders, data=json.dumps(idPMapper))
+                    changed = True
+
+            return changed        
+        except Exception ,e :
+            self.module.fail_json(msg='Could not create or update mappers for IdP %s in realm %s: %s'
+                                      % (alias, realm, str(e)))
+
+
+    def get_idp_by_alias(self, alias, realm='master'):
+        """
+        Get an identity provider by alias. Representation of the idp is returned.
+        :param alias: Alias of the Idp to get
+        :param realm: Realm
+        :return: Representation of the Idp.
+        """
+        try:
+            idPRepresentation = {}
+            idp_url = URL_IDP.format(url=self.baseurl,realm=realm,alias=alias)
+            
+            # Get all IdP from Keycloak server
+            idPRepresentation = json.load(open_url(idp_url, method='GET', headers=self.restheaders))
+            return idPRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get IdP by alias %s in realm %s: %s'
+                                      % (alias, realm, str(e)))
+
+    def search_idp_by_alias(self, alias, realm='master'):
+        """
+        Search an identity provider by alias. Representation of the idp found is returned.
+        :param alias: Alias of the Idp to find
+        :param realm: Realm
+        :return: Representation of the Idp. An empty dict is returned if alias is not found.
+        """
+        try:
+            idPRepresentation = {}
+            idps_url = URL_IDPS.format(url=self.baseurl,realm=realm)
+            
+            # Get all idps from Keycloak server
+            listIdPs = json.load(open_url(idps_url, method='GET', headers=self.restheaders))
+        
+            for idP in listIdPs:
+                if idP['alias'] == alias:
+                    # Get existing IdP
+                    idPRepresentation = idP
+                    break
+            return idPRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not search IdP by alias %s in realm %s: %s'
+                                      % (alias, realm, str(e)))
+
+    def search_idp_by_client_id(self, client_id, realm='master'):
+        """
+        Search an identity provider by its client ID. Representation of the idp found is returned.
+        :param alias: Alias of the Idp to find
+        :param realm: Realm
+        :return: Representation of the Idp. An empty dict is returned if client id is not found.
+        """
+        try:
+            idPRepresentation = {}
+            idps_url = URL_IDPS.format(url=self.baseurl,realm=realm)
+            
+            # Get all idps from Keycloak server
+            listIdPs = json.load(open_url(idps_url, method='GET', headers=self.restheaders))
+        
+            for idP in listIdPs:
+                if 'config' in idP and idP['config'] is not None and 'clientId' in idP['config'] and idP['config']['clientId'] == client_id:
+                    # Obtenir le IdP exitant
+                    idPRepresentation = idP
+                    break
+            return idPRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not search IdP by client Id %s in realm %s: %s'
+                                      % (client_id, realm, str(e)))
+
+    def create_idp(self, newIdPRepresentation, realm='master'):
+        """
+        Create an identity provider on a Keycloak server.
+        :param newIdPRepresentation: Representation of the Idp to create.
+        :param realm: Realm
+        :return: Actual representation of the idp created.
+        """
+        try:
+            idps_url = URL_IDPS.format(url=self.baseurl, realm=realm)
+            open_url(idps_url, method='POST', headers=self.restheaders, data=json.dumps(newIdPRepresentation))
+            return self.get_idp_by_alias(newIdPRepresentation["alias"], realm)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not create the IdP %s in realm %s: %s'
+                                      % (newIdPRepresentation["alias"], realm, str(e)))
+
+    def update_idp(self, newIdPRepresentation, realm='master'):
+        """
+        Update an identity provider on a Keycloak server.
+        :param newIdPRepresentation: Representation of the Idp to create.
+        :param realm: Realm
+        :return: Actual representation of the updated idp.
+        """
+        try:
+            idp_url = URL_IDP.format(url=self.baseurl, realm=realm, alias=newIdPRepresentation["alias"])
+            open_url(idp_url, method='PUT', headers=self.restheaders, data=json.dumps(newIdPRepresentation))
+            return self.get_idp_by_alias(newIdPRepresentation["alias"], realm)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not update the IdP %s in realm %s: %s'
+                                      % (newIdPRepresentation["alias"], realm, str(e)))
+
+    def delete_idp(self, alias, realm='master'):
+        """
+        Delete an identity provider from a Keycloak server.
+        :param alias: Alias of the IdP to delete
+        :param realm: Realm
+        :return: HTTP response
+        """
+        try:
+            idp_url = URL_IDP.format(url=self.baseurl, realm=realm, alias=alias)
+            return open_url(idp_url, method='DELETE', headers=self.restheaders)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not delete the IdP %s in realm %s: %s'
+                                      % (alias, realm, str(e)))
+
+    def get_idp_mappers(self, alias, realm='master'):
+        """
+        Get all mappers for an identity provider.
+        :param alias: Alias of the Idp
+        :param realm: Realm
+        :return: List of mappers
+        """
+        try:
+            mapper_url = URL_IDP_MAPPERS.format(url=self.baseurl,realm=realm,alias=alias)
+            
+            # Get all mappers for the IdP from Keycloak server
+            idMappers = json.load(open_url(mapper_url, method='GET', headers=self.restheaders))
+            return idMappers
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get IdP mappers for alias %s in realm %s: %s'
+                                      % (alias, realm, str(e)))
