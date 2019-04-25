@@ -159,7 +159,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                 elif 'name' in old[0] and 'name' in new[0]:
                     key = 'name'
                 else:
-                    key = old[0].keys()[0]
+                    key = list(old[0].keys())[0]
                 new = sorted(new, key=lambda x: x.get(key, None))
                 old = sorted(old, key=lambda x: x.get(key, None))
             else:
