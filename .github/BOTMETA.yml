@@ -1345,7 +1345,7 @@ files:
     labels:
       - cloud
       - cloudstack
-    maintainers: $team_azure
+    maintainers: $team_cloudstack
   docs/docsite/rst/scenario_guides/guide_docker.rst: *docker
   docs/docsite/rst/scenario_guides/guide_vmware.rst: *vmware
   docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
