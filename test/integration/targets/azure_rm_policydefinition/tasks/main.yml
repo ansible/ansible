@@ -1,0 +1,167 @@
+- name: Fix resource prefix
+  set_fact:
+    policy_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}testpolicy"
+  run_once: yes
+
+- name: Create a policy definition (Check Mode)
+  azure_rm_policydefinition:
+    name: "{{ policy_name }}"
+    policy_rule: '{
+                    "if":
+                    {
+                        "field": "type",
+                        "equals": "Microsoft.Storage/storageAccounts/write"
+                    },
+                    "then":
+                    {
+                        "effect": "deny"
+                    }
+                  }'
+    metadata:
+        fortesting: yes
+    mode: all
+    policy_type: custom
+    description: "This policy is built for testing"
+    display_name: "mytestpolicy"
+  check_mode: yes
+  register: output
+
+- name: Assert creating policy definition check mode
+  assert:
+    that:
+      - output.changed
+
+- name: Create a policy definition
+  azure_rm_policydefinition:
+    name: "{{ policy_name }}"
+    policy_rule: '{
+                    "if":
+                    {
+                        "field": "type",
+                        "equals": "Microsoft.Storage/storageAccounts/write"
+                    },
+                    "then":
+                    {
+                        "effect": "deny"
+                    }
+                  }'
+    metadata:
+        fortesting: yes
+    mode: all
+    policy_type: custom
+    description: "This policy is built for testing"
+    display_name: "mytestpolicy"
+  register: output
+
+- name: Assert creating policy definition
+  assert:
+    that:
+      - output.changed
+
+- name: Get facts by subsription
+  azure_rm_policydefinition_facts:
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts['policydefinitions'] | length > 1
+
+- name: Get facts by name
+  azure_rm_policydefinition_facts:
+    name: "{{ policy_name }}"
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts['policydefinitions'] | length == 1
+      - facts['policydefinitions'][0]['id'] != None
+      - facts['policydefinitions'][0]['metadata'] != None
+      - facts['policydefinitions'][0]['policy_rule'] != None
+      - facts['policydefinitions'][0]['mode'] != None
+
+- name: Update a policy definition (idempontent)
+  azure_rm_policydefinition:
+    name: "{{ policy_name }}"
+    policy_rule: '{
+                    "if":
+                    {
+                        "field": "type",
+                        "equals": "Microsoft.Storage/storageAccounts/write"
+                    },
+                    "then":
+                    {
+                        "effect": "deny"
+                    }
+                  }'
+    metadata:
+        fortesting: yes
+    mode: all
+    policy_type: custom
+    description: "This policy is built for testing"
+    display_name: "mytestpolicy"
+  register: output
+
+- name: Assert updating policy definition
+  assert:
+    that:
+      - not output.changed
+
+- name: Update a policy definition
+  azure_rm_policydefinition:
+    name: "{{ policy_name }}"
+    policy_rule: '{
+                    "if":
+                    {
+                        "field": "type",
+                        "equals": "Microsoft.Storage/storageAccounts/read"
+                    },
+                    "then":
+                    {
+                        "effect": "deny"
+                    }
+                  }'
+    metadata:
+        fortesting: nonono
+    mode: indexed
+    policy_type: custom
+    description: "This policy is built for testing"
+    display_name: "mytestpolicy01"
+  register: output
+
+- name: Assert updating policy definition
+  assert:
+    that:
+      - output.changed
+
+- name: Delete the policy definition (Check Mode)
+  azure_rm_policydefinition:
+    name: "{{ policy_name }}"
+    state: absent
+  check_mode: yes
+  register: output
+
+- name: assert deleting policy definition check mode
+  assert:
+    that: output.changed
+
+- name: Delete the policy definition
+  azure_rm_policydefinition:
+    name: "{{ policy_name }}"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete the policy definition (idempontent)
+  azure_rm_policydefinition:
+    name: "{{ policy_name }}"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - not output.changed
