@@ -82,6 +82,7 @@ options:
       - Manages auto-recovery reload-delay timer in seconds
       - mutually exclusive with auto_recovery
     type: str
+    version_added: "2.9"
   delay_restore:
     description:
       - manages delay restore command and config value in seconds
@@ -91,11 +92,13 @@ options:
       - manages delay restore interface-vlan command and config value in seconds
       - not supported on all platforms
     type: str
+    version_added: "2.9"
   delay_restore_orphan_port:
     description:
       - manages delay restore orphan-port command and config value in seconds
       - not supported on all platforms
     type: str
+    version_added: "2.9"
   state:
     description:
       - Manages desired state of the resource
