@@ -232,6 +232,159 @@
        - output.eventhubs[0]['status'] != None
        - output.eventhubs[0]['consumer_groups'] != None
 
+- name: Create a sas policy for an eventhub namespace
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    rights: send
+  register: output
+
+- name: Assert the sas policy was created
+  assert:
+    that:
+       - output.changed
+       - output.state['id'] != None
+       - output.keys != None
+
+- name: Update a sas policy for an eventhub namespace
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    rights: listen_send
+  register: output
+
+- name: Assert the sas policy was updated
+  assert:
+    that:
+       - output.changed
+       - output.state['id'] != None
+       - output.keys != None
+
+- name: Update a sas policy for an eventhub namespace
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    regenerate_secondary_key: true
+    regenerate_primary_key: true
+    rights: listen_send
+  register: output
+
+- name: Assert the sas policy was updated
+  assert:
+    that:
+       - output.changed
+       - output.state['id'] != None
+       - output.keys != None
+
+- name: Create a sas policy for an eventhub
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    rights: send
+  register: output
+
+- name: Assert the sas policy was created
+  assert:
+    that:
+       - output.changed
+       - output.state['id'] != None
+       - output.keys != None
+
+- name: Update a sas policy for an eventhub
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    rights: listen_send
+  register: output
+
+- name: Assert the sas policy was updated
+  assert:
+    that:
+       - output.changed
+       - output.state['id'] != None
+       - output.state['rights'] == "listen_send"
+
+- name: Update a sas policy for an eventhub
+  azure_rm_eventhubsaspolicy:
+    name: deadbeef
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    regenerate_secondary_key: true
+    regenerate_primary_key: true
+    rights: listen_send
+  register: output
+
+- name: Assert the sas policy was updated
+  assert:
+    that:
+       - output.changed
+       - output.state['id'] != None
+
+- name: Create a consumer group
+  azure_rm_eventhubconsumergroup:
+    consumer_group: testconsumergroup
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- name: Assert the consumer group was created
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+
+- name: Update a consumer group
+  azure_rm_eventhubconsumergroup:
+    consumer_group: testconsumergroup
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    user_metadata: testdata
+  register: output
+
+- name: Assert the consumer group was updated
+  assert:
+    that:
+       - output.changed
+       - output.id != None
+
+- name: Update a consumer group (idempotent)
+  azure_rm_eventhubconsumergroup:
+    consumer_group: testconsumergroup
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    user_metadata: testdata
+  register: output
+
+- name: Assert the consumer group was updated
+  assert:
+    that: not output.changed
+
+- name: Delete a consumer group
+  azure_rm_eventhubconsumergroup:
+    consumer_group: testconsumergroup
+    eventhub: "{{ eventhub_aname}}"
+    namespace: "{{ namespace_aname}}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+  register: output
+
+- name: Assert the consumer group was deleted
+  assert:
+    that:
+       - output.changed
+       - output.id == None
+
 - name: Delete first event hub
   azure_rm_eventhub:
     name: "{{ eventhub_aname}}"
