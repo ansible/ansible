@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
+# Copyright: (c) 2018, Caio Ramos <caioramos97@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
@@ -11,58 +11,99 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: my_sample_module
+module: read_mail
 
-short_description: This is my sample module
+short_description: Module for reading emails from a IMAP server
 
-version_added: "2.4"
+version_added: "2.8"
 
 description:
-    - "This is my longer description explaining my sample module"
+    - "Get emails from a IMAP server using basic filtering rules an returns an email count and list"
 
 options:
-    name:
+    host:
         description:
-            - This is the message to send to the sample module
-        required: true
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not
+            - IMAP server host
         required: false
-
-extends_documentation_fragment:
-    - azure
+        default: localhost
+    port:
+        description:
+            - IMAP server port
+        required: false
+        default: 993 or 143
+    username:
+        description:
+            - Username to get the emails
+        required: true
+    password:
+        description:
+            - Password to get the emails
+        required: true
+    ssl:
+        description:
+            - Whether to use SSL or not
+        required: false
+        default: true
+    mailbox:
+        description:
+            - Select the mailbox to use
+        required: false
+        default: INBOX
+    filter:
+        description:
+            - Default IMAP filters. Checkout the options at blablabla.
+        required: false
+        default: ALL
 
 author:
-    - Your Name (@yourhandle)
+    - Caio Ramos (@caiohsramos)
+    - Gabriely Rangel (@)
 '''
 
 EXAMPLES = '''
-# Pass in a message
+# simplest use
 - name: Test with a message
-  my_new_test_module:
-    name: hello world
+  read_mail:
+    host: imap.myhost.com
+    password: mypass
 
-# pass in a message and have changed true
+# no ssl and custom username and port
 - name: Test with a message and changed output
-  my_new_test_module:
-    name: hello world
-    new: true
+  read_mail:
+    host: imap.myhost.com
+    port: 42
+    username: myuser
+    password: mypass
+    ssl: no
 
-# fail the module
+# using filters
 - name: Test failure of the module
-  my_new_test_module:
-    name: fail me
+  read_mail:
+    host: imap.myhost.com
+    port: 42
+    username: myuser
+    password: mypass
+    filter:
+      subject: mysubject
+      to: example@example.com
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
+host:
+    description: The original host param that was passed in
     type: str
     returned: always
-message:
-    description: The output message that the sample module generates
+username:
+    description: The username used in the request
     type: str
+    returned: always
+mails:
+    description: A list of the email's headers that satisfied the filter
+    type: list
+    returned: always
+mails_count:
+    description: The email count that satisfied the filter
+    type: int
     returned: always
 '''
 import imaplib
