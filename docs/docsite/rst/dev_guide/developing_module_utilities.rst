@@ -17,11 +17,12 @@ constructed dynamically for each task invocation, by extracting imports and
 resolving those matching the namespace against a :ref:`search path <ansible_search_path>` derived from the
 active configuration.
 
-If you need to share Python code between some of your own local modules, you can use Ansible's ``module_utils`` directories for this. When you run ``ansible-playbook``, Ansible will merge any files in the local ``module_utils`` directory into the ``ansible.module_utils`` namespace. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file in the root location where your playbook lives, and then import it in your modules like so::
+To reduce the maintenance burden on your own local modules, you can extract
+duplicated code into one or more module utilities and import them into your modules. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file like this::
 
   from ansible.module_utils.my_shared_code import MySharedCodeClient
 
-Your custom ``module_utils`` directories can live in the root directory of your playbook, or in the individual role directories, or in the directories specified by the ``ANSIBLE_MODULE_UTILS`` configuration setting.
+When you run ``ansible-playbook``, Ansible will merge any files in your local ``module_utils`` directories into the ``ansible.module_utils`` namespace in the order defined by the :ref:`ansible_search_path`.
 
 Naming and finding module utilities
 ===================================
