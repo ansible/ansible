@@ -1,0 +1,5 @@
+cloud/azure
+shippable/azure/group8
+destructive
+azure_rm_eventhubnamespace
+azure_rm_eventhubnamespace_facts
