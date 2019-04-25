@@ -58,7 +58,7 @@ options:
     filter:
         description:
             - The filter to apply on the operation.
-            - Valid values for $filter are: 'atScope()' or 'policyDefinitionId eq '\{value\}''.
+            - Valid values for I(filter) are atScope() or policyDefinitionId eq {value}.
 
 extends_documentation_fragment:
     - azure
@@ -247,7 +247,7 @@ class AzureRMPolicyAssignmentFacts(AzureRMModuleBase):
             results = self.list_policy_assignments_by_resource_group()
         else:
             results = self.list_all_policy_assignments()
-        
+
         self.results['policyassignments'] = [self.policyassignment_to_dict(x) for x in results] if results else None
         return self.results
 
@@ -266,7 +266,7 @@ class AzureRMPolicyAssignmentFacts(AzureRMModuleBase):
         result = None
         try:
             self.log("Getting the resource policy assignment by name")
-            result = self.rm_policy_client.policy_assignments.get_by_id(policy_assignment_id=self.policy_assignment_id) 
+            result = self.rm_policy_client.policy_assignments.get_by_id(policy_assignment_id=self.policy_assignment_id)
             result = [result]
         except self.rm_policy_models.ErrorResponseException as exc:
             self.fail("Error getting the info for resource policy assignment {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
@@ -295,7 +295,7 @@ class AzureRMPolicyAssignmentFacts(AzureRMModuleBase):
         except self.rm_policy_models.ErrorResponseException as exc:
             self.fail("Error getting the info for resource policy assignment {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
         return result
-    
+
     def list_all_policy_assignments(self):
         result = None
         try:

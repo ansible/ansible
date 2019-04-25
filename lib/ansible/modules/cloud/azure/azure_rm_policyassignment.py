@@ -257,7 +257,7 @@ class AzureRMPolicyAssignment(AzureRMModuleBase):
             return self.rm_policy_client.policy_assignments.create(scope=self.scope,
                                                                    policy_assignment_name=self.name,
                                                                    parameters=policy_assignment)
-                
+
         except self.rm_policy_models.ErrorResponseException as exc:
             self.fail("Error creating or updating the resource policy assignment {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
 
