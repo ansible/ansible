@@ -22,7 +22,7 @@ duplicated code into one or more module utilities and import them into your modu
 
   from ansible.module_utils.my_shared_code import MySharedCodeClient
 
-When you run ``ansible-playbook``, Ansible will merge any files in your local ``module_utils`` directories into the ``ansible.module_utils`` namespace in the order defined by the :ref:`ansible_search_path`.
+When you run ``ansible-playbook``, Ansible will merge any files in your local ``module_utils`` directories into the ``ansible.module_utils`` namespace in the order defined by the :ref:`Ansible search path <ansible_search_path>`.
 
 Naming and finding module utilities
 ===================================
@@ -31,9 +31,11 @@ You can generally tell what a module utility does from its name and/or its locat
 Generic utilities (shared code used by many different kinds of modules) live in the ``common`` subdirectory or in the root directory. Utilities
 used by a particular set of modules generally live in a sub-directory that mirrors
 the directory for those modules. For example:
-  * ``lib/ansible/module_utils/urls.py`` contains shared code for parsing URLs
-  * ``lib/ansible/module_utils/storage/emc/`` contains shared code related to EMC
-  *  ``lib/ansible/modules/storage/emc/`` contains modules related to EMC
+
+* ``lib/ansible/module_utils/urls.py`` contains shared code for parsing URLs
+* ``lib/ansible/module_utils/storage/emc/`` contains shared code related to EMC
+*  ``lib/ansible/modules/storage/emc/`` contains modules related to EMC
+
 Following this pattern with your own module utilities makes everything easy to find and use.
 
 .. _standard_mod_utils:
