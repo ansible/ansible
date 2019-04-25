@@ -254,8 +254,9 @@ def main():
 
         validate_param_values(module, param_to_xpath_map, param=item)
 
-        param_to_xpath_map['mode']['xpath'] = \
-            'interface-mode' if param['enhanced_layer'] else 'port-mode'
+        if not param['enhanced_layer']:
+            param_to_xpath_map['mode']['xpath'] = 'port-mode'
+            param_to_xpath_map['native_vlan']['top'] = 'unit/family/ethernet-switching'
 
         want = map_params_to_obj(module, param_to_xpath_map, param=item)
         requests.append(map_obj_to_ele(module, want, top, param=item))
