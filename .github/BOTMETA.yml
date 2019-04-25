@@ -43,7 +43,7 @@ files:
   changelogs/fragments/:
     support: community
   $modules:
-    ignore: ryansb
+    ignored: ryansb
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph nadirollo tedder
   $modules/cloud/amazon/aws_api_gateway.py: willthames
