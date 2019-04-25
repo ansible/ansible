@@ -333,9 +333,6 @@ Importing it as ``__main__`` causes Python to think that it is executing a scrip
 importing a module, thus running the code within.
 
 .. note::
-
-
-.. note::
     * Ansible wraps the zipfile in the Python script for two reasons:
 
         * for compatibility with Python 2.6 which has a less
