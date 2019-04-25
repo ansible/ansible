@@ -330,7 +330,7 @@ extracts just the Ansible module script from the zip file and places that in
 the temporary directory as well.  Then it sets the PYTHONPATH to find Python
 modules inside of the zip file and imports the Ansible module as the special name, ``__main__``.
 Importing it as ``__main__`` causes Python to think that it is executing a script rather than simply
-importing a module, thus running the code within.
+importing a module. This lets Ansible run both the wrapper script and the module code in a single copy of Python on the remote machine.
 
 .. note::
     * Ansible wraps the zipfile in the Python script for two reasons:
