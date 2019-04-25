@@ -2,15 +2,8 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or
 # https://opensource.org/licenses/BSD-2-Clause)
 
+import re
 import traceback
-
-REQUESTS_IMP_ERR = None
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    REQUESTS_IMP_ERR = traceback.format_exc()
-    HAS_REQUESTS = False
 
 THIRD_LIBRARIES_IMP_ERR = None
 try:
@@ -22,7 +15,8 @@ except ImportError:
     THIRD_LIBRARIES_IMP_ERR = traceback.format_exc()
     HAS_THIRD_LIBRARIES = False
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
+from ansible.module_utils.basic import (AnsibleModule, env_fallback,
+                                        missing_required_lib)
 from ansible.module_utils._text import to_text
 
 
@@ -41,10 +35,6 @@ def navigate_hash(source, path, default=None):
         return result
 
 
-class HwcRequestException(Exception):
-    pass
-
-
 def remove_empty_from_dict(obj):
     return _DictClean(
         obj,
@@ -57,7 +47,8 @@ def remove_nones_from_dict(obj):
 
 
 def replace_resource_dict(item, value):
-    """ Handles the replacement of dicts with values -> the needed value for HWC API"""
+    """ Handles the replacement of dicts with values ->
+    the needed value for HWC API"""
     if isinstance(item, list):
         items = []
         for i in item:
@@ -84,111 +75,183 @@ def are_dicts_different(expect, actual):
     return DictComparison(expect_vals) != DictComparison(actual_vals)
 
 
-class HwcSession(object):
-    """Handles all authentation and HTTP sessions for HWC API calls."""
+class HwcClientException(Exception):
+    def __init__(self, code, message):
+        super(HwcClientException, self).__init__()
 
+        self._code = code
+        self._message = message
+
+    def __str__(self):
+        msg = " code=%s," % str(self._code) if self._code != 0 else ""
+        return "[HwcClientException]%s message=%s" % (
+            msg, self._message)
+
+
+class HwcClientException404(HwcClientException):
+    def __init__(self, message):
+        super(HwcClientException404, self).__init__(404, message)
+
+    def __str__(self):
+        return "[HwcClientException404] message=%s" % self._message
+
+
+def session_method_wrapper(f):
+    def _wrap(self, url, *args, **kwargs):
+        try:
+            url = self.endpoint + url
+            r = f(self, url, *args, **kwargs)
+        except Exception as ex:
+            raise HwcClientException(
+                0, "Sending request failed, error=%s" % ex)
+
+        result = None
+        if r.content:
+            try:
+                result = r.json()
+            except Exception as ex:
+                raise HwcClientException(
+                    0, "Parsing response to json failed, error: %s" % ex)
+
+        code = r.status_code
+        if code not in [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]:
+            msg = ""
+            for i in [['message'], ['error', 'message']]:
+                try:
+                    msg = navigate_hash(result, i)
+                    break
+                except Exception:
+                    pass
+            else:
+                msg = str(result)
+
+            if code == 404:
+                raise HwcClientException404(msg)
+
+            raise HwcClientException(code, msg)
+
+        return result
+
+    return _wrap
+
+
+class _ServiceClient(object):
+    def __init__(self, client, endpoint, product):
+        self._client = client
+        self._endpoint = endpoint
+        self._default_header = {
+            'User-Agent': "Huawei-Ansible-MM-%s" % product,
+            'Accept': 'application/json',
+        }
+
+    @property
+    def endpoint(self):
+        return self._endpoint
+
+    @session_method_wrapper
+    def get(self, url, body=None, header=None, timeout=None):
+        return self._client.get(url, json=body, timeout=timeout,
+                                headers=self._header(header))
+
+    @session_method_wrapper
+    def post(self, url, body=None, header=None, timeout=None):
+        return self._client.post(url, json=body, timeout=timeout,
+                                 headers=self._header(header))
+
+    @session_method_wrapper
+    def delete(self, url, body=None, header=None, timeout=None):
+        return self._client.delete(url, json=body, timeout=timeout,
+                                   headers=self._header(header))
+
+    @session_method_wrapper
+    def put(self, url, body=None, header=None, timeout=None):
+        return self._client.put(url, json=body, timeout=timeout,
+                                headers=self._header(header))
+
+    def _header(self, header):
+        if header and isinstance(header, dict):
+            for k, v in self._default_header.items():
+                if k not in header:
+                    header[k] = v
+        else:
+            header = self._default_header
+
+        return header
+
+
+class Config(object):
     def __init__(self, module, product):
-        self.module = module
-        self.product = product
-        self._validate()
-        self._session = self._credentials()
-        self._adapter = Adapter(self._session)
+        self._project_client = None
+        self._domain_client = None
+        self._module = module
+        self._product = product
         self._endpoints = {}
-        self._project_id = ""
 
-    def get(self, url, body=None):
+        self._validate()
+        self._gen_provider_client()
+
+    @property
+    def module(self):
+        return self._module
+
+    def client(self, region, service_type, service_level):
+        c = self._project_client
+        if service_level == "domain":
+            c = self._domain_client
+
+        e = self._get_service_endpoint(c, service_type, region)
+
+        return _ServiceClient(c, e, self._product)
+
+    def _gen_provider_client(self):
+        m = self._module
+        p = {
+            "auth_url": m.params['identity_endpoint'],
+            "password": m.params['password'],
+            "username": m.params['user'],
+            "project_name": m.params['project'],
+            "user_domain_name": m.params['domain'],
+            "reauthenticate": True
+        }
+
+        self._project_client = Adapter(
+            session.Session(auth=v3.Password(**p)),
+            raise_exc=False)
+
+        p.pop("project_name")
+        self._domain_client = Adapter(
+            session.Session(auth=v3.Password(**p)),
+            raise_exc=False)
+
+    def _get_service_endpoint(self, client, service_type, region):
+        k = "%s.%s" % (service_type, region if region else "")
+
+        if k in self._endpoints:
+            return self._endpoints.get(k)
+
+        url = None
         try:
-            return self._adapter.get(
-                url, json=body,
-                headers=self._headers(), raise_exc=False)
-        except getattr(requests.exceptions, 'RequestException') as inst:
-            self.module.fail_json(msg=inst.message)
+            url = client.get_endpoint(service_type=service_type,
+                                      region_name=region, interface="public")
+        except Exception as ex:
+            raise HwcClientException(
+                0, "Getting endpoint failed, error=%s" % ex)
 
-    def post(self, url, body=None):
-        try:
-            return self._adapter.post(
-                url, json=body,
-                headers=self._headers(), raise_exc=False)
-        except getattr(requests.exceptions, 'RequestException') as inst:
-            self.module.fail_json(msg=inst.message)
+        if url == "":
+            raise HwcClientException(
+                0, "Can not find the enpoint for %s" % service_type)
 
-    def delete(self, url, body=None):
-        try:
-            return self._adapter.delete(
-                url, json=body,
-                headers=self._headers(), raise_exc=False)
-        except getattr(requests.exceptions, 'RequestException') as inst:
-            self.module.fail_json(msg=inst.message)
-
-    def put(self, url, body=None):
-        try:
-            return self._adapter.put(
-                url, json=body,
-                headers=self._headers(), raise_exc=False)
-        except getattr(requests.exceptions, 'RequestException') as inst:
-            self.module.fail_json(msg=inst.message)
-
-    def get_service_endpoint(self, service_type):
-        if self._endpoints.get(service_type):
-            return self._endpoints.get(service_type)
-
-        e = None
-        try:
-            e = self._session.get_endpoint_data(
-                service_type=service_type,
-                region_name=self.module.params['region']
-            )
-        except getattr(requests.exceptions, 'RequestException') as inst:
-            self.module.fail_json(msg=inst.message)
-
-        if not e or e.url == "":
-            self.module.fail_json(
-                msg="Can not find the endpoint for %s" % service_type)
-
-        url = e.url
         if url[-1] != "/":
             url += "/"
 
-        self._endpoints[service_type] = url
+        self._endpoints[k] = url
         return url
 
-    def get_project_id(self):
-        if self._project_id:
-            return self._project_id
-        try:
-            pid = self._session.get_project_id()
-            self._project_id = pid
-            return pid
-        except getattr(requests.exceptions, 'RequestException') as inst:
-            self.module.fail_json(msg=inst.message)
-
     def _validate(self):
-        if not HAS_REQUESTS:
-            self.module.fail_json(msg=missing_required_lib('requests'),
-                                  exception=REQUESTS_IMP_ERR)
-
         if not HAS_THIRD_LIBRARIES:
             self.module.fail_json(
                 msg=missing_required_lib('keystoneauth1'),
                 exception=THIRD_LIBRARIES_IMP_ERR)
-
-    def _credentials(self):
-        auth = v3.Password(
-            auth_url=self.module.params['identity_endpoint'],
-            password=self.module.params['password'],
-            username=self.module.params['user'],
-            user_domain_name=self.module.params['domain'],
-            project_name=self.module.params['project'],
-            reauthenticate=True
-        )
-
-        return session.Session(auth=auth)
-
-    def _headers(self):
-        return {
-            'User-Agent': "Huawei-Ansible-MM-%s" % self.product,
-            'Accept': 'application/json',
-        }
 
 
 class HwcModule(AnsibleModule):
@@ -322,3 +385,30 @@ class _DictClean(object):
             if self.keep_it(v1):
                 r.append(v1)
         return r
+
+
+def build_path(module, path, kv=None):
+    if kv is None:
+        kv = dict()
+
+    v = {}
+    for p in re.findall(r"{[^/]*}", path):
+        n = p[1:][:-1]
+
+        if n in kv:
+            v[n] = str(kv[n])
+
+        else:
+            if n in module.params:
+                v[n] = str(module.params.get(n))
+            else:
+                v[n] = ""
+
+    return path.format(**v)
+
+
+def get_region(module):
+    if module.params['region']:
+        return module.params['region']
+
+    return module.params['project_name'].split("_")[0]
