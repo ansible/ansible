@@ -18,7 +18,7 @@ DOCUMENTATION = """
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
   options:
     secret:
-      description: query you are making.
+      description: query you are making. If this string ends with a slash "/", a list of subsequent secrets will be requested.
       required: True
     token:
       description: vault token.
@@ -68,12 +68,22 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- debug:
-    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
-
-- name: Return all secrets from a path
+- name: Return entire secret (a set of key-value pairs or a JSON object) from a path (which must not end in a slash)
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
+- name: Return one field with specific name within a secret.
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
+- name: Return a list of all secrets under a given path (which must end in a slash)
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/:keys token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200') }}"
+
+- name: Loop over a list of secrets under a given path
+  loop: "{{ lookup('hashi_vault', 'secret=secret/:keys token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200') }}"
+  debug:
+    msg: "See also {{ item }}"
 
 - name: Vault that requires authentication via LDAP
   debug:
@@ -189,7 +199,7 @@ class HashiVault:
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
 
     def get(self):
-        data = self.client.read(self.secret)
+        data = self.client.list(self.secret) if self.secret.endswith("/") else self.client.read(self.secret)
 
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
