@@ -727,7 +727,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 comparison='',
                                 updatable=False,
                                 disposition='*',
-                                pattern='/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name }}/subnets/{{ name }}'
+                                pattern=('/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}'
+                                         '/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name }}'
+                                         '/subnets/{{ name }}')
                             )
                         )
                     ),
@@ -742,7 +744,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 comparison='',
                                 updatable=False,
                                 disposition='*',
-                                pattern='/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{ name }}'
+                                pattern=('/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}'
+                                         '/providers/Microsoft.Network/publicIPAddresses/{{ name }}')
                             )
                         )
                     ),
@@ -856,7 +859,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                                                          azure_firewall_name=self.name,
                                                                          parameters=self.body)
             if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
-               response = self.get_poller_result(response)
+                response = self.get_poller_result(response)
         except CloudError as exc:
             self.log('Error attempting to create the AzureFirewall instance.')
             self.fail('Error creating the AzureFirewall instance: {0}'.format(str(exc)))
