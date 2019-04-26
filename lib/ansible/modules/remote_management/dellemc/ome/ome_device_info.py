@@ -23,7 +23,7 @@ DOCUMENTATION = r'''
 ---
 module: ome_device_info
 short_description: Retrieves the information about Device.
-version_added: "2.8"
+version_added: "2.9"
 description:
    - This module retrieves the list of all devices information with the exhaustive inventory of each
      device.
