@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright: (c) 2017, F5 Networks Inc.
+# Copyright (c) 2017 F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -22,56 +22,47 @@ options:
   name:
     description:
       - Monitor name.
-    type: str
     required: True
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(http)
         parent on the C(Common) partition.
-    type: str
     default: /Common/http
   description:
     description:
       - The description of the monitor.
-    type: str
     version_added: 2.7
   send:
     description:
       - The send string for the monitor call. When creating a new monitor, if
         this value is not provided, the default C(GET /\r\n) will be used.
-    type: str
   receive:
     description:
       - The receive string for the monitor call.
-    type: str
   receive_disable:
     description:
       - This setting works like C(receive), except that the system marks the node
         or pool member disabled when its response matches the C(receive_disable)
         string but not C(receive). To use this setting, you must specify both
         C(receive_disable) and C(receive).
-    type: str
   ip:
     description:
       - IP address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'.
-    type: str
   port:
     description:
       - Port address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'. Note that if specifying an IP address, a value between 1 and 65535
         must be specified.
-    type: str
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this
         template will run. If this parameter is not provided when creating
         a new monitor, then the default value will be 5. This value B(must)
         be less than the C(timeout) value.
-    type: int
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -81,7 +72,6 @@ options:
         number to any number you want, however, it should be 3 times the
         interval number of seconds plus 1 second. If this parameter is not
         provided when creating a new monitor, then the default value will be 16.
-    type: int
   time_until_up:
     description:
       - Specifies the amount of time in seconds after the first successful
@@ -89,41 +79,25 @@ options:
         node to be marked up immediately after a valid response is received
         from the node. If this parameter is not provided when creating
         a new monitor, then the default value will be 0.
-    type: int
   target_username:
     description:
       - Specifies the user name, if the monitored target requires authentication.
-    type: str
   target_password:
     description:
       - Specifies the password, if the monitored target requires authentication.
-    type: str
-  reverse:
-    description:
-      - Specifies whether the monitor operates in reverse mode.
-      - When the monitor is in reverse mode, a successful receive string match
-        marks the monitored object down instead of up. You can use the
-        this mode only if you configure the C(receive) option.
-      - This parameter is not compatible with the C(time_until_up) parameter. If
-        C(time_until_up) is specified, it must be C(0). Or, if it already exists, it
-        must be C(0).
-    type: bool
-    version_added: 2.8
   partition:
     description:
       - Device partition to manage resources on.
-    type: str
     default: Common
     version_added: 2.5
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    type: str
+    default: present
     choices:
       - present
       - absent
-    default: present
     version_added: 2.5
 notes:
   - Requires BIG-IP software version >= 12
@@ -138,33 +112,30 @@ EXAMPLES = r'''
   bigip_monitor_http:
     state: present
     ip: 10.10.10.10
+    server: lb.mydomain.com
+    user: admin
+    password: secret
     name: my_http_monitor
-    provider:
-      server: lb.mydomain.com
-      user: admin
-      password: secret
   delegate_to: localhost
 
 - name: Remove HTTP Monitor
   bigip_monitor_http:
     state: absent
+    server: lb.mydomain.com
+    user: admin
+    password: secret
     name: my_http_monitor
-    provider:
-      server: lb.mydomain.com
-      user: admin
-      password: secret
   delegate_to: localhost
 
 - name: Include a username and password in the HTTP monitor
   bigip_monitor_http:
     state: absent
+    server: lb.mydomain.com
+    user: admin
+    password: secret
     name: my_http_monitor
     target_username: monitor_user
     target_password: monitor_pass
-    provider:
-      server: lb.mydomain.com
-      user: admin
-      password: secret
   delegate_to: localhost
 '''
 
@@ -172,7 +143,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: str
+  type: string
   sample: http
 description:
   description: The description of the monitor.
@@ -182,7 +153,7 @@ description:
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: str
+  type: string
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -199,11 +170,6 @@ time_until_up:
   returned: changed
   type: int
   sample: 2
-reverse:
-  description: Whether the monitor operates in reverse mode.
-  returned: changed
-  type: bool
-  sample: yes
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -213,22 +179,26 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
-    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
-    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -240,46 +210,18 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp',
-        'defaultsFrom',
-        'interval',
-        'timeout',
-        'recv',
-        'send',
-        'destination',
-        'username',
-        'password',
-        'recvDisable',
-        'description',
-        'reverse',
+        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'recv', 'send',
+        'destination', 'username', 'password', 'recvDisable', 'description',
     ]
 
     returnables = [
-        'parent',
-        'send',
-        'receive',
-        'ip',
-        'port',
-        'interval',
-        'timeout',
-        'time_until_up',
-        'receive_disable',
-        'description',
-        'reverse',
+        'parent', 'send', 'receive', 'ip', 'port', 'interval', 'timeout',
+        'time_until_up', 'receive_disable', 'description',
     ]
 
     updatables = [
-        'destination',
-        'send',
-        'receive',
-        'interval',
-        'timeout',
-        'time_until_up',
-        'target_username',
-        'target_password',
-        'receive_disable',
-        'description',
-        'reverse',
+        'destination', 'send', 'receive', 'interval', 'timeout', 'time_until_up',
+        'target_username', 'target_password', 'receive_disable', 'description',
     ]
 
     @property
@@ -331,9 +273,12 @@ class Parameters(AnsibleF5Parameters):
     def port(self):
         if self._values['port'] is None:
             return None
-        elif self._values['port'] == '*':
+
+        elif isinstance(self._values['port'], int):
+          return int(self._values['port'])
+
+	elif self._values['port'] == '*':
             return '*'
-        return int(self._values['port'])
 
     @property
     def time_until_up(self):
@@ -360,27 +305,13 @@ class Parameters(AnsibleF5Parameters):
     def password(self):
         return self._values['target_password']
 
-    @property
-    def reverse(self):
-        return flatten_boolean(self._values['reverse'])
-
 
 class ApiParameters(Parameters):
-    @property
-    def description(self):
-        if self._values['description'] in [None, 'none']:
-            return None
-        return self._values['description']
+    pass
 
 
 class ModuleParameters(Parameters):
-    @property
-    def description(self):
-        if self._values['description'] is None:
-            return None
-        elif self._values['description'] in ['none', '']:
-            return ''
-        return self._values['description']
+    pass
 
 
 class Changes(Parameters):
@@ -396,19 +327,11 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-    @property
-    def reverse(self):
-        if self._values['reverse'] is None:
-            return None
-        elif self._values['reverse'] == 'yes':
-            return 'enabled'
-        return 'disabled'
+    pass
 
 
 class ReportableChanges(Changes):
-    @property
-    def reverse(self):
-        return flatten_boolean(self._values['reverse'])
+    pass
 
 
 class Difference(object):
@@ -477,19 +400,11 @@ class Difference(object):
         except AttributeError:
             return attr1
 
-    @property
-    def description(self):
-        return cmp_str_with_none(self.want.description, self.have.description)
-
-    @property
-    def receive_disable(self):
-        return cmp_str_with_none(self.want.receive_disable, self.have.receive_disable)
-
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = F5RestClient(**self.module.params)
+        self.client = kwargs.get('client', None)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -576,15 +491,6 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.want.reverse == 'enabled':
-            if not self.want.receive and not self.have.receive:
-                raise F5ModuleError(
-                    "A 'receive' string must be specified when setting 'reverse'."
-                )
-            if self.want.time_until_up != 0 and self.have.time_until_up != 0:
-                raise F5ModuleError(
-                    "Monitors with the 'reverse' attribute are not currently compatible with 'time_until_up'."
-                )
         if self.module.check_mode:
             return True
         self.update_on_device()
@@ -600,15 +506,6 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
-        if self.want.reverse == 'enabled':
-            if self.want.time_until_up != 0:
-                raise F5ModuleError(
-                    "Monitors with the 'reverse' attribute are not currently compatible with 'time_until_up'."
-                )
-            if not self.want.receive:
-                raise F5ModuleError(
-                    "A 'receive' string must be specified when setting 'reverse'."
-                )
         self._set_default_creation_values()
         if self.module.check_mode:
             return True
@@ -712,11 +609,10 @@ class ArgumentSpec(object):
             description=dict(),
             send=dict(),
             receive=dict(),
-            receive_disable=dict(),
+            receive_disable=dict(required=False),
             ip=dict(),
-            port=dict(),
+            port=dict(type='str'),
             interval=dict(type='int'),
-            reverse=dict(type='bool'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),
             target_username=dict(),
@@ -742,13 +638,15 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
     )
-
+    client = F5RestClient(**module.params)
     try:
-        mm = ModuleManager(module=module)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        module.exit_json(**results)
+        cleanup_tokens(client)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
-        module.fail_json(msg=str(ex))
+        cleanup_tokens(client)
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':
