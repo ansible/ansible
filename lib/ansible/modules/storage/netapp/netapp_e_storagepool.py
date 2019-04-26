@@ -16,7 +16,7 @@ DOCUMENTATION = """
 module: netapp_e_storagepool
 short_description: NetApp E-Series manage volume groups and disk pools
 description: Create or remove volume groups and disk pools for NetApp E-series storage arrays.
-version_added: "2.2"
+version_added: '2.2'
 author:
   - Kevin Hulquest (@hulquest)
   - Nathan Swartz (@ndswartz)
@@ -74,7 +74,7 @@ options:
       - Only available for new storage pools; existing storage pools cannot be converted.
     default: false
     type: bool
-    version_added: 2.9
+    version_added: '2.9'
   criteria_drive_require_fde:
     description:
      - Whether full disk encryption ability is required for drives to be added to the storage pool
