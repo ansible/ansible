@@ -19,7 +19,7 @@ author: "Christian Kaiser <c.kaiser@also.com>"
 description:
   - Setup a webhook in Microsoft Teams. Using this webhook you can send html
     notifications.
-  - The module enabley you to write longer text in plain text or html, 
+  - The module enabley you to write longer text in plain text or html,
     instead of sending direct json to the endpoint.
 '''
 
@@ -29,10 +29,10 @@ EXAMPLES = '''
 - ms_teams:
     body: "{{ body }}"
     webhook: https://outlook.office.com/webhook/...
-	subject: Test
-    color: dd1111	
+    subject: Test
+    color: dd1111
   register: result
-- debug: 
+- debug:
     var=result
     verbosity=1
 '''
@@ -42,43 +42,46 @@ from ansible.module_utils.urls import fetch_url
 import json
 import os
 
-def create_payload(body, subject, color):    
-    payload={
+
+def create_payload(body, subject, color):
+    payload = {
         'text': body,
         'title': subject,
         'themeColor': color
     }
     return json.dumps(payload)
-    
+
+
 def post_to_msteams(module):
 
-    payload = create_payload(module.params['body'], 
-        module.params['subject'], 
-        module.params['color'])
-    
+    payload = create_payload(module.params['body'],
+                             module.params['subject'],
+                             module.params['color'])
+
     if module.check_mode:
         changed = False
         failed = False
         meta = payload
     else:
-        
-        headers = { 'Content-Type': 'application/json' }
-        response, info = fetch_url(module=module, 
-            url=module.params['webhook'], 
-            headers=headers, 
-            method='POST', 
-            data=payload)
-        
+
+        headers = {'Content-Type': 'application/json'}
+        response, info = fetch_url(module=modulea,
+                                   url=module.params['webhook'],
+                                   headers=headers,
+                                   method='POST',
+                                   data=payload)
+
         if info['status'] != 200:
             changed = False
             failed = True
-            meta = "failed to send %s: %s" % (payload, info['msg'])            
+            meta = "failed to send %s: %s" % (payload, info['msg'])
         else:
             changed = True
             failed = False
             meta = "Message send."
-        
+
     return (changed, failed, meta)
+
 
 def main():
 
@@ -88,12 +91,12 @@ def main():
         "subject": {"required": True, "type": "str"},
         "color": {"default": "ffffcc", "type": "str"}
     }
-    
+
     module = AnsibleModule(argument_spec=fields)
 
     changed, failed, meta = post_to_msteams(module)
     module.exit_json(changed=changed, meta=meta, failed=failed)
-    
+
 
 if __name__ == '__main__':
     main()
