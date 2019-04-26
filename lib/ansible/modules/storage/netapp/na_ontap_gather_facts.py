@@ -32,7 +32,7 @@ options:
         description:
             - When supplied, this argument will restrict the facts collected
                 to a given subset.  Possible values for this argument include
-                "aggregate_info", "cluster_node_info", "lun_info", "net_ifgrp_info",
+                "aggregate_info", "cluster_node_info", "igroup_info", "lun_info", "net_ifgrp_info",
                 "net_interface_info", "net_port_info", "nvme_info", "nvme_interface_info",
                 "nvme_namespace_info", "nvme_subsystem_info", "ontap_version",
                 "security_key_manager_key_info", "security_login_account_info",
@@ -103,7 +103,8 @@ ontap_facts:
             "vserver_login_banner_info": {...},
             "vserver_motd_info": {...},
             "vserver_info": {...},
-            "ontap_version": {...}
+            "ontap_version": {...},
+            "igroup_info": {...}
     }'
 '''
 
@@ -274,6 +275,16 @@ class NetAppONTAPGatherFacts(object):
                     'call': 'system-node-get-iter',
                     'attribute': 'node-details-info',
                     'field': 'node',
+                    'query': {'max-records': '1024'},
+                },
+                'min_version': '0',
+            },
+            'igroup_info': {
+                'method': self.get_generic_get_iter,
+                'kwargs': {
+                    'call': 'igroup-get-iter',
+                    'attribute': 'initiator-group-info',
+                    'field':  ('vserver', 'initiator-group-name'),
                     'query': {'max-records': '1024'},
                 },
                 'min_version': '0',
