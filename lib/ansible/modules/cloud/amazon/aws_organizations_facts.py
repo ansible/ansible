@@ -20,7 +20,7 @@ short_description: Obtain facts about AWS Organizations
 description:
   - Gets information about AWS Organizations
 requirements: [botocore, boto3]
-version_added: '2.7.10'
+version_added: '2.9'
 author: 'Sean Summers (@SeanSummers)'
 options:
     all_facts:
@@ -64,7 +64,7 @@ organizations:
     returned: on success
     description: AWS Organization Facts.
     type: object
-    sample: "{
+    sample: '{
         "id": "o-abcde01234",
         "arn": "arn:aws:organizations::123456789012:organization/o-abcde01234",
         "feature_set": "ALL",
@@ -96,7 +96,7 @@ organizations:
                 "status": "ACTIVE"
             }
         ]
-    }"
+    }'
 '''
 from ansible.module_utils.aws.core import (AnsibleAWSModule, HAS_BOTO3)
 from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict)
