@@ -67,7 +67,7 @@ class GalaxyCLI(CLI):
         roles_path.add_argument('-p', '--roles-path', dest='roles_path', type=opt_help.unfrack_path(pathsep=True),
                                 default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
                                 help='The path to the directory containing your roles.
-                                By default it will use the first writable directory you have configured in DEFAULT_ROLES_PATH: %s ' % ':'.join(C.DEFAULT_ROLES_PATH)
+                                By default it will use the first writable directory configured in DEFAULT_ROLES_PATH: %s ' % ':'.join(C.DEFAULT_ROLES_PATH)
 
         force = opt_help.argparse.ArgumentParser(add_help=False)
         force.add_argument('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
