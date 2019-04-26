@@ -401,7 +401,7 @@ def transfer(connection, module, direction, transfer_func):
             raise Exception(
                 "Error occurred while uploading image. The transfer is in %s" % transfer.phase
             )
-        if module.params.get('logical_unit'):
+        if not module.params.get('logical_unit'):
             disks_service = connection.system_service().disks_service()
             wait(
                 service=disks_service.service(module.params['id']),
