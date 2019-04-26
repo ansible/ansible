@@ -52,6 +52,28 @@ options:
     - The name of the vserver to use.
     required: true
 
+  export_policy:
+    description:
+    - The name of the export policy to apply.
+    version_added: '2.9'
+
+  security_style:
+    description:
+    - The security style for the qtree.
+    choices: ['unix', 'ntfs', 'mixed']
+    version_added: '2.9'
+
+  oplocks:
+    description:
+    - Whether the oplocks should be enabled or not for the qtree.
+    choices: ['enabled', 'disabled']
+    version_added: '2.9'
+
+  unix_permissions:
+    description:
+    - File permissions bits of the qtree.
+    version_added: '2.9'
+
 '''
 
 EXAMPLES = """
@@ -85,6 +107,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+from ansible.module_utils.netapp_module import NetAppModule
 
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
@@ -101,6 +124,11 @@ class NetAppOntapQTree(object):
             from_name=dict(required=False, type='str'),
             flexvol_name=dict(type='str'),
             vserver=dict(required=True, type='str'),
+            export_policy=dict(required=False, type='str'),
+            security_style=dict(required=False, choices=[
+                                'unix', 'ntfs', 'mixed']),
+            oplocks=dict(required=False, choices=['enabled', 'disabled']),
+            unix_permissions=dict(required=False, type='str'),
         ))
 
         self.module = AnsibleModule(
@@ -110,22 +138,15 @@ class NetAppOntapQTree(object):
             ],
             supports_check_mode=True
         )
-
-        p = self.module.params
-
-        # set up state variables
-        self.state = p['state']
-        self.name = p['name']
-        self.from_name = p['from_name']
-        self.flexvol_name = p['flexvol_name']
-        self.vserver = p['vserver']
+        self.na_helper = NetAppModule()
+        self.parameters = self.na_helper.set_parameters(self.module.params)
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(
                 msg="the python NetApp-Lib module is required")
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(
-                module=self.module, vserver=self.vserver)
+                module=self.module, vserver=self.parameters['vserver'])
 
     def get_qtree(self, name=None):
         """
@@ -137,12 +158,12 @@ class NetAppOntapQTree(object):
         :rtype: bool
         """
         if name is None:
-            name = self.name
+            name = self.parameters['name']
 
         qtree_list_iter = netapp_utils.zapi.NaElement('qtree-list-iter')
         query_details = netapp_utils.zapi.NaElement.create_node_with_children(
-            'qtree-info', **{'vserver': self.vserver,
-                             'volume': self.flexvol_name,
+            'qtree-info', **{'vserver': self.parameters['vserver'],
+                             'volume': self.parameters['flexvol_name'],
                              'qtree': name})
 
         query = netapp_utils.zapi.NaElement('query')
@@ -154,24 +175,36 @@ class NetAppOntapQTree(object):
 
         if (result.get_child_by_name('num-records') and
                 int(result.get_child_content('num-records')) >= 1):
-            return True
+            return_q = {'export_policy': result['attributes-list']['qtree-info']['export-policy'],
+                        'unix_permissions': result['attributes-list']['qtree-info']['mode'],
+                        'oplocks': result['attributes-list']['qtree-info']['oplocks'],
+                        'security_style': result['attributes-list']['qtree-info']['security-style'],
+            }
+            return return_q
         else:
             return False
 
     def create_qtree(self):
-        qtree_create = netapp_utils.zapi.NaElement.create_node_with_children(
-            'qtree-create', **{'volume': self.flexvol_name,
-                               'qtree': self.name})
-
-        try:
-            self.server.invoke_successfully(qtree_create,
+       options = {'qtree': self.parameters['name'], 'volume': self.parameters['flexvol_name']}
+       if self.parameters.get('export_policy'):
+           options['export-policy'] = self.parameters['export_policy']
+       if self.parameters.get('security_style'):
+           options['security-style'] = self.parameters['security_style']
+       if self.parameters.get('oplocks'):
+           options['oplocks'] = self.parameters['oplocks']
+       if self.parameters.get('unix_permissions'):
+           options['mode'] = self.parameters['unix_permissions']
+       qtree_create = netapp_utils.zapi.NaElement.create_node_with_children(
+           'qtree-create', **options)
+       try:
+           self.server.invoke_successfully(qtree_create,
                                             enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg="Error provisioning qtree %s: %s" % (self.name, to_native(e)),
+       except netapp_utils.zapi.NaApiError as e:
+           self.module.fail_json(msg="Error provisioning qtree %s: %s" % (self.parameters['name'], to_native(e)),
                                   exception=traceback.format_exc())
 
     def delete_qtree(self):
-        path = '/vol/%s/%s' % (self.flexvol_name, self.name)
+        path = '/vol/%s/%s' % (self.parameters['flexvol_name'], self.parameters['name'])
         qtree_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-delete', **{'qtree': path})
 
@@ -183,8 +216,8 @@ class NetAppOntapQTree(object):
                                   exception=traceback.format_exc())
 
     def rename_qtree(self):
-        path = '/vol/%s/%s' % (self.flexvol_name, self.from_name)
-        new_path = '/vol/%s/%s' % (self.flexvol_name, self.name)
+        path = '/vol/%s/%s' % (self.parameters['flexvol_name'], self.parameters['from_name'])
+        new_path = '/vol/%s/%s' % (self.parameters['flexvol_name'], self.parameters['name'])
         qtree_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-rename', **{'qtree': path,
                                'new-qtree-name': new_path})
@@ -193,24 +226,49 @@ class NetAppOntapQTree(object):
             self.server.invoke_successfully(qtree_rename,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg="Error renaming qtree %s: %s" % (self.from_name, to_native(e)),
+            self.module.fail_json(msg="Error renaming qtree %s: %s" % (self.parameters['from_name'], to_native(e)),
+                                  exception=traceback.format_exc())
+
+    def modify_qtree(self):
+        options = {'qtree': self.parameters['name'], 'volume': self.parameters['flexvol_name']}
+        if self.parameters.get('export_policy'):
+            options['export-policy'] = self.parameters['export_policy']
+        if self.parameters.get('security_style'):
+            options['security-style'] = self.parameters['security_style']
+        if self.parameters.get('oplocks'):
+            options['oplocks'] = self.parameters['oplocks']
+        if self.parameters.get('unix_permissions'):
+            options['mode'] = self.parameters['unix_permissions']
+        qtree_modify = netapp_utils.zapi.NaElement.create_node_with_children(
+            'qtree-modify', **options)
+        try:
+            self.server.invoke_successfully(qtree_modify, enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error modifying qtree %s: %s'
+                                  % (path, to_native(error)),
                                   exception=traceback.format_exc())
 
     def apply(self):
         changed = False
         qtree_exists = False
         rename_qtree = False
+        modified_qtree = None
         netapp_utils.ems_log_event("na_ontap_qtree", self.server)
         qtree_detail = self.get_qtree()
         if qtree_detail:
+            # delete or modify qtree
             qtree_exists = True
-            if self.state == 'absent':  # delete
+            if self.parameters['state'] == 'absent':  # delete
                 changed = True
-        elif self.state == 'present':
+            else:
+                modified_qtree = self.na_helper.get_modified_attributes(qtree_detail, self.parameters)
+                if modified_qtree is not None:
+                    changed = True
+        elif self.parameters['state'] == 'present':
             # create or rename qtree
-            if self.from_name:
-                if self.get_qtree(self.from_name) is None:
-                    self.module.fail_json(msg="Error renaming qtree %s: does not exists" % self.from_name)
+            if self.parameters.get('from_name'):
+                if self.get_qtree(self.parameters['from_name']) is None:
+                    self.module.fail_json(msg="Error renaming qtree %s: does not exists" % self.parameters['from_name'])
                 else:
                     changed = True
                     rename_qtree = True
@@ -220,12 +278,14 @@ class NetAppOntapQTree(object):
             if self.module.check_mode:
                 pass
             else:
-                if self.state == 'present':
+                if self.parameters['state'] == 'present':
                     if rename_qtree:
                         self.rename_qtree()
+                    elif modified_qtree:
+                        self.modify_qtree()
                     else:
                         self.create_qtree()
-                elif self.state == 'absent':
+                elif self.parameters['state'] == 'absent':
                     self.delete_qtree()
 
         self.module.exit_json(changed=changed)
