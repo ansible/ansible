@@ -53,8 +53,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+instances:
+  description: List of instances
   returned: always
   type: complex
   contains:
@@ -370,11 +370,10 @@ def main():
 
     items = fetch_list(module, collection(module))
     if items.get('items'):
-        items = items.get('items')
+        instances = items.get('items')
     else:
-        items = []
-    return_value = {'items': items}
-    module.exit_json(**return_value)
+        instances = []
+    module.exit_json(instances=instances)
 
 
 def collection(module):
