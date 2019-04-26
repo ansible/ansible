@@ -45,16 +45,16 @@ author:
 
 EXAMPLES = '''
 - name: List all policy set definitions
-    azure_rm_policysetdefinition_facts:
+  azure_rm_policysetdefinition_facts:
 
 - name: List all built-in policy set definitions
-    azure_rm_policysetdefinition_facts:
-        built_in: true
+  azure_rm_policysetdefinition_facts:
+    built_in: true
 
 - name: List all built-in policy set definitions
-    azure_rm_policysetdefinition_facts:
-        name: testpolicysetdefinition
-        built_in: true
+  azure_rm_policysetdefinition_facts:
+    name: testpolicysetdefinition
+    built_in: true
 '''
 
 RETURN = '''
@@ -192,7 +192,7 @@ class AzureRMPolicySetDefinitionFacts(AzureRMModuleBase):
             results = self.get_policy_set_definition()
         else:
             results = self.list_policy_set_definition()
-        
+
         self.results['policysetdefinitions'] = [self.policysetdefinition_to_dict(x) for x in results] if results else None
         return self.results
 

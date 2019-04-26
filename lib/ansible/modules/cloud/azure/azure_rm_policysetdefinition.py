@@ -76,10 +76,10 @@ EXAMPLES = '''
 - name: Create policy set definition
   azure_rm_policysetdefinition:
     name: mytestpolicyset
-    policy_definitions: '[ 
-                            { 
+    policy_definitions: '[
+                            {
                                 "policyDefinitionId": "/subscriptions/mySubId/providers/Microsoft.Authorization/policyDefinitions/storagePolicy"
-                            } 
+                            }
                         ]'
     metadata:
         fortesting: yes
@@ -118,6 +118,7 @@ except ImportError:
     pass
 
 AUTO_ADDED_METADATA = ["createdBy", "createdOn", "updatedBy", "updatedOn"]
+
 
 class AzureRMPolicySetDefinition(AzureRMModuleBase):
     """Configuration class for an Azure RM Policy definition resource"""
@@ -243,7 +244,7 @@ class AzureRMPolicySetDefinition(AzureRMModuleBase):
             else:
                 return self.rm_policy_client.policy_set_definitions.create_or_update(policy_set_definition_name=self.name,
                                                                                      parameters=policy_set_definition)
-                
+
         except self.rm_policy_models.ErrorResponseException as exc:
             self.fail("Error creating or updating the resource policy set definition {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
 
