@@ -19,6 +19,6 @@ for EXTRA in '{"inputlist": ["hostB", "hostA", "hostD", "hostC"]}' \
              '{"myorder": "shuffle", "inputlist": ["hostC", "hostD", "hostA", "hostB"]}'
 do
     cleanup
-    ansible-playbook order.yml --forks 1 -i inventory -e "$EXTRA" "$@" || cleanup
+    ansible-playbook order.yml --forks 1 -i inventory -e "$EXTRA" "$@"
 done
 cleanup
