@@ -6,7 +6,6 @@ __metaclass__ = type
 
 import pytest
 import re
-import sys
 
 from ansible import context
 from ansible.cli.adhoc import AdHocCLI, display
@@ -15,7 +14,7 @@ from ansible.errors import AnsibleOptionsError
 
 def test_parse():
     """ Test adhoc parse"""
-    adhoc_cli = AdHocCLI([])
+    adhoc_cli = AdHocCLI(['ansible'])
     with pytest.raises(SystemExit) as exec_info:
         adhoc_cli.parse()
 
@@ -92,7 +91,6 @@ def test_run_no_extra_vars():
 
 
 def test_ansible_version(capsys, mocker):
-    mocker.patch.object(sys, 'argv', new=['ansible'])
     adhoc_cli = AdHocCLI(args=['/bin/ansible', '--version'])
     with pytest.raises(SystemExit):
         adhoc_cli.run()

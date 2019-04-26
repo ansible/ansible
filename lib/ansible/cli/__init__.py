@@ -275,7 +275,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible.arguments.option_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
-        self.parser = opt_help.create_base_parser(usage=usage, desc=desc, epilog=epilog)
+        self.parser = opt_help.create_base_parser(usage=usage, desc=desc, epilog=epilog, prog=os.path.basename(self.args[0]))
 
     @abstractmethod
     def post_process_args(self, options):
