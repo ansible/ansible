@@ -1,5 +1,4 @@
 cloud/azure
-shippable/azure/group3
 destructive
 unsupported
 azure_rm_policydefinition_facts
