@@ -394,18 +394,8 @@ class StrategyModule(StrategyBase):
                 display.debug("results queue empty")
 
                 display.debug("checking for any_errors_fatal")
-                failed_hosts = []
-                unreachable_hosts = []
-                for res in results:
-                    # execute_meta() does not set 'failed' in the TaskResult
-                    # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
-                        failed_hosts.append(res._host.name)
-                    elif res.is_unreachable():
-                        unreachable_hosts.append(res._host.name)
-
                 # if any_errors_fatal and we had an error, mark all hosts as failed
-                if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
+                if any_errors_fatal and (self._tqm._failed_hosts or self._tqm._unreachable_hosts):
                     dont_fail_states = frozenset([iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS])
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
@@ -416,14 +406,14 @@ class StrategyModule(StrategyBase):
                 display.debug("done checking for any_errors_fatal")
 
                 display.debug("checking for max_fail_percentage")
-                if iterator._play.max_fail_percentage is not None and len(results) > 0:
+                if iterator._play.max_fail_percentage is not None and results:
                     percentage = iterator._play.max_fail_percentage / 100.0
 
                     if (len(self._tqm._failed_hosts) / iterator.batch_size) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
-                            if host.name not in failed_hosts:
+                            if host.name not in self._tqm._failed_hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                         self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')

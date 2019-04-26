@@ -1,0 +1,11 @@
+- block:
+  - include_tasks: test_55515_fail.yml
+    loop:
+      - item1
+      - item2
+      - item3
+  run_once: true
+
+  always:
+    - debug:
+        msg: always

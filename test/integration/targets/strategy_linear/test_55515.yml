@@ -1,0 +1,4 @@
+- hosts: testhost,testhost2,testhost3
+  gather_facts: no
+  tasks:
+    - include_tasks: test_55515_tasks.yml
