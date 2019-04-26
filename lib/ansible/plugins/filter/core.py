@@ -292,6 +292,20 @@ def mandatory(a):
     return a
 
 
+def recursive_check_defined(item):
+    from jinja2.runtime import Undefined
+
+    if isinstance(item, MutableMapping):
+        for key in item:
+            recursive_check_defined(item[key])
+    elif isinstance(item, list):
+        for i in item:
+            recursive_check_defined(i)
+    else:
+        if isinstance(item, Undefined):
+            raise AnsibleFilterError("{0} is undefined".format(item))
+
+
 def combine(*terms, **kwargs):
     recursive = kwargs.get('recursive', False)
     if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
@@ -300,8 +314,10 @@ def combine(*terms, **kwargs):
     dicts = []
     for t in terms:
         if isinstance(t, MutableMapping):
+            recursive_check_defined(t)
             dicts.append(t)
         elif isinstance(t, list):
+            recursive_check_defined(t)
             dicts.append(combine(*t, **kwargs))
         else:
             raise AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
