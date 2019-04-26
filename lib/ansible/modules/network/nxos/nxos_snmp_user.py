@@ -244,7 +244,7 @@ def get_non_structured_snmp_user(body_text):
     resource['encrypt'] = 'aes-128' if 'aes' in str(m.group('priv')) else 'none'
 
     resource['group'] = [m.group('group')]
-    more_groups = re.findall('^\s+([\w\d-]+)\s*$', output, re.M)
+    more_groups = re.findall(r'^\s+([\w\d-]+)\s*$', output, re.M)
     if more_groups:
         resource['group'] += more_groups
 
