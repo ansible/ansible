@@ -69,7 +69,7 @@ drs_rule_facts:
     type: dict
     sample: {
             "DC0_C0": [
-                {  
+                {
                     "rule_affinity": false,
                     "rule_enabled": true,
                     "rule_key": 1,
