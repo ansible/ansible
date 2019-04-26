@@ -233,6 +233,7 @@ def main():
                 changed = ext_create(cursor, ext, schema, cascade)
 
     except Exception as e:
+        db_connection.close()
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     db_connection.close()

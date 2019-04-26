@@ -37,6 +37,7 @@ except ImportError:
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
+from distutils.version import LooseVersion
 
 
 class LibraryError(Exception):
@@ -69,8 +70,8 @@ def ensure_required_libs(module):
     if not HAS_PSYCOPG2:
         module.fail_json(msg=missing_required_lib('psycopg2'))
 
-    if module.params.get('ca_cert') and psycopg2.__version__ < '2.4.3':
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
+    if module.params.get('ca_cert') and LooseVersion(psycopg2.__version__) < LooseVersion('2.4.3'):
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to use the ca_cert parameter')
 
 
 def connect_to_db(module, autocommit=False, fail_on_conn=True, warn_db_default=True):
