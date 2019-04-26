@@ -287,7 +287,7 @@ class NetAppONTAPGatherFacts(object):
                 'kwargs': {
                     'call': 'igroup-get-iter',
                     'attribute': 'initiator-group-info',
-                    'field':  ('vserver', 'initiator-group-name'),
+                    'field': ('vserver', 'initiator-group-name'),
                     'query': {'max-records': '1024'},
                 },
                 'min_version': '0',
