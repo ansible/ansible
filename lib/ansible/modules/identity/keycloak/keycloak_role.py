@@ -161,6 +161,10 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = keycloak_argument_spec()
 
+    composites_spec = dict(
+        name=dict(type='str', required=True),
+        clientId= dict(type='str')
+    )
     meta_args =  dict(
         realm=dict(type='str', default='master'),
         name=dict(type='str', required=True),
@@ -168,7 +172,7 @@ def main():
         composite=dict(type='bool',default=False),
         clientRole = dict(type='bool',default=False),
         containerId = dict(type='str', required=False),
-        composites = dict(type='list', default=[]),
+        composites = dict(type='list', default=[], options=composites_spec),
         state=dict(choices=["absent", "present"], default='present'),
         force=dict(type='bool', default=False),
     )
