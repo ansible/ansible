@@ -1,0 +1,2 @@
+minor_changes:
+    - Now callback plugins MUST allow for setting options as deprecation period that allowed older callbacks to ignore this is over.
