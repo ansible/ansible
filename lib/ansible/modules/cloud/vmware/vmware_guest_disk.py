@@ -26,7 +26,7 @@ description:
     - Be careful while removing disk specified as this may lead to data loss.
 version_added: 2.8
 author:
-    - Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 6.0 and 6.5
 requirements:

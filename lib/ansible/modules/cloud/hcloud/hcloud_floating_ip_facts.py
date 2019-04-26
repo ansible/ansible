@@ -25,7 +25,7 @@ description:
     - Gather facts about your Hetzner Cloud Floating IPs.
 
 author:
-    - Lukas Kaemmerling (@lkaemmerling)
+    - Lukas Kaemmerling (@LKaemmerling)
 
 options:
     id:

@@ -45,7 +45,7 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 
 author:
-  - Piotr Wojciechowski (@wojciechowskipiotr)
+  - Piotr Wojciechowski (@WojciechowskiPiotr)
 
 requirements:
   - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.4.0"
