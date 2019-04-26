@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: cli_command
 version_added: "2.7"
-author: "Nathaniel Case (@qalthos)"
+author: "Nathaniel Case (@Qalthos)"
 short_description: Run a cli command on cli-based network devices
 description:
   - Sends a command to a network device and returns the result read from the device.
