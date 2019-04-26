@@ -18,7 +18,7 @@ description:
     - Lists or describes services in ecs.
 version_added: "2.1"
 author:
-    - "Mark Chance (@java1guy)"
+    - "Mark Chance (@Java1Guy)"
     - "Darek Kaczynski (@kaczynskid)"
 requirements: [ json, botocore, boto3 ]
 options:

@@ -25,7 +25,7 @@ DOCUMENTATION = """
 ---
 module: vyos_config
 version_added: "2.2"
-author: "Nathaniel Case (@qalthos)"
+author: "Nathaniel Case (@Qalthos)"
 short_description: Manage VyOS configuration on remote device
 description:
   - This module provides configuration file management of VyOS

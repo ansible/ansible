@@ -25,7 +25,7 @@ DOCUMENTATION = """
 ---
 module: vyos_command
 version_added: "2.2"
-author: "Nathaniel Case (@qalthos)"
+author: "Nathaniel Case (@Qalthos)"
 short_description: Run one or more commands on VyOS devices
 description:
   - The command module allows running one or more commands on remote

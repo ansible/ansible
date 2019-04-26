@@ -16,7 +16,7 @@ DOCUMENTATION = """
 module: edgeos_config
 version_added: "2.5"
 author:
-    - "Nathaniel Case (@qalthos)"
+    - "Nathaniel Case (@Qalthos)"
     - "Sam Doran (@samdoran)"
 short_description: Manage EdgeOS configuration on remote device
 description:

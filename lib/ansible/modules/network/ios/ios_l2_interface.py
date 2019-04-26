@@ -22,7 +22,7 @@ description:
   - This module provides declarative management of Layer-2 interfaces on
     Cisco IOS devices.
 author:
-  - Nathaniel Case (@qalthos)
+  - Nathaniel Case (@Qalthos)
 options:
   name:
     description:
