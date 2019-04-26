@@ -67,7 +67,7 @@ class GalaxyCLI(CLI):
         roles_path.add_argument('-p', '--roles-path', dest='roles_path', type=opt_help.unfrack_path(pathsep=True),
                                 default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
                                 help='The path to the directory containing your roles. The default is the roles_path '
-                                     'configured in your ansible.cfg file (/etc/ansible/roles if not configured)')
+                                     'configured in your ansible.cfg file (~/ansible/roles if not configured)')
 
         force = opt_help.argparse.ArgumentParser(add_help=False)
         force.add_argument('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
