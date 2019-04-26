@@ -72,6 +72,8 @@ saml_provider_arn:
     sample: "arn:aws:iam::123456789012:saml-provider/my_saml_provider"
 '''
 
+import sys
+
 try:
     import boto3
     import botocore.exceptions
@@ -79,10 +81,9 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
-import sys
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AWSRetry, aws_common_argument_spec, get_aws_connection_info, boto3_conn
 
 
 class SAMLProviderManager:
@@ -223,6 +224,6 @@ def main():
     elif state == 'absent':
         sp_man.delete_saml_provider(name)
 
-		
+
 if __name__ == '__main__':
     main()
