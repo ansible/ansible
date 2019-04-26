@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_automationaccount_facts
-version_added: "2.9"
+version_added: '2.9'
 short_description: Get Azure automation account facts.
 description:
     - Get facts of automation account.
@@ -32,19 +32,182 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    list_statistics:
+        description:
+            - List statistics details for a automation account.
+            - Note this will cost network overhead, suggest only used when C(name) set.
+        type: bool
+    list_usages:
+        description:
+            - List usage details for a automation account.
+            - Note this will cost network overhead, suggest only used when C(name) set.
+        type: bool
+    list_keys:
+        description:
+            - List keys for a automation account.
+            - Note this will cost network overhead, suggest only used when C(name) set.
+        type: bool
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - 'Yuwei Zhou (@yuwzho)'
 
 '''
 
 EXAMPLES = '''
+- name: Get details of an automation account
+  azure_rm_automationaccount_facts:
+      name: Testing
+      resource_group: myResourceGroup
+      list_statistics: yes
+      list_usages: yes
+      list_keys: yes
+
+- name: List automation account in a resource group
+  azure_rm_automationaccount_facts:
+      resource_group: myResourceGroup
+
+- name: List automation account in a resource group
+  azure_rm_automationaccount_facts:
 '''
 
 RETURN = '''
+automation_accounts:
+    description: List of automation account  dicts.
+    returned: always
+    type: list
+    contains:
+        id:
+            description:
+                - Resource id.
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups
+                     /myResourceGroup/providers/Microsoft.Automation/automationAccounts/Testing"
+        resource_group:
+            description:
+                - Resource group name.
+            type: str
+            sample: myResourceGroup
+        name:
+            description:
+                - Resource name.
+            type: str
+            sample: Testing
+        location:
+            description:
+                - Resource location.
+            type: str
+            sample: eastus
+        creation_time:
+            description:
+                - Resource creation date time.
+            type: str
+            sample: "2019-04-26T02:55:16.500Z"
+        last_modified_time:
+            description:
+                - Resource last modified date time.
+            type: str
+            sample: "2019-04-26T02:55:16.500Z"
+        state:
+            description:
+                - Resource state.
+            type: str
+            sample: ok
+        keys:
+            description:
+                - Resource keys.
+            type: lsit
+            contains:
+                key_name:
+                    description:
+                        - Name of the key.
+                    type: str
+                    sample: Primary
+                permissions:
+                    description:
+                        - Permission of the key.
+                    type: str
+                    sample: Full
+                value:
+                    description:
+                        - Value of the key.
+                    type: str
+                    sample: "MbepKTO6IyGwml0GaKBkKN"
+        statistics:
+            description:
+                - Resource statistics.
+            type: list
+            contains:
+                counter_property:
+                    description:
+                        - Property value of the statistic.
+                    type: str
+                    sample: New
+                counter_value:
+                    description:
+                        - Value of the statistic.
+                    type: int
+                    sample: 0
+                end_time:
+                    description:
+                        - EndTime of the statistic.
+                    type: str
+                    sample: "2019-04-26T06:29:43.587518Z"
+                id:
+                    description:
+                        - Id of the statistic.
+                    type: str
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups
+                             /myResourceGroup/providers/Microsoft.Automation/automationAccounts/Testing/statistics/New"
+                start_time:
+                    description:
+                        - StartTime of the statistic.
+                    type: str
+                    sample: "2019-04-26T06:29:43.587518Z"
+        usages:
+            description:
+                - Resource usages.
+            type: list
+            contains:
+                current_value:
+                    description:
+                        - Current usage.
+                    type: float
+                    sample: 0.0
+                limit:
+                    description:
+                        - Max limit.
+                        - "-1 for unlimited"
+                    type: long
+                    sample: -1
+                name:
+                    description:
+                        - Usage counter name.
+                    type: complex
+                    contains:
+                        localized_value:
+                            description:
+                                - Localized name.
+                            type: str
+                            sample: "SubscriptionUsage"
+                        value:
+                            description:
+                                - Name value.
+                            type: str
+                            sample: "SubscriptionUsage"
+                unit:
+                    description:
+                        - Usage unit name.
+                    type: str
+                    sample: "Minute"
+                throttle_status:
+                    description:
+                        - Usage throttle status.
+                    type: str
+                    sample: "NotThrottled"
+
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -69,10 +232,10 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
             tags=dict(
                 type='list'
             ),
-            show_statistics=dict(
+            list_statistics=dict(
                 type='bool'
             ),
-            show_usages=dict(
+            list_usages=dict(
                 type='bool'
             ),
             list_keys=dict(
@@ -84,8 +247,8 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        self.show_statistics = None
-        self.show_usages= None
+        self.list_statistics = None
+        self.list_usages= None
         self.list_keys = None
         super(AzureRMAutomationAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
@@ -94,7 +257,7 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.resource_group and self.name:
-            accounts = self.get()
+            accounts = [self.get()]
         elif self.resource_group:
             accounts = self.list_by_resource_group()
         else:
@@ -106,42 +269,45 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
         if not account:
             return None
         id_dict = parse_resource_id(account.id)
-        result = dict(
-            id=account.id,
-            name=account.name,
-            resource_group=id_dict['resource_group'],
-            tags=account.tags,
-            location=account.location,
-            sku=account.sku.name,
-            last_modified_by=account.last_modified_by,
-            state=account.state,
-            description=account.description
-        )
-        if self.show_statistics:
-            account['statistics'] = self.get_statics(id_dict['resource_group'], account.name)
-        if self.show_usages:
-            account['usage'] = self.get_usages(id_dict['resource_group'], account.name)
+        result = account.as_dict()
+        result['resource_group'] = id_dict['resource_group']
+        if self.list_statistics:
+            result['statistics'] = self.get_statics(id_dict['resource_group'], account.name)
+        if self.list_usages:
+            result['usages'] = self.get_usages(id_dict['resource_group'], account.name)
         if self.list_keys:
-            account['list_keys'] = self.list_account_keys(id_dict['resource_group'], account.name)
+            result['keys'] = self.list_account_keys(id_dict['resource_group'], account.name)
         return result
 
     def get(self):
         try:
             return self.automation_client.automation_account.get(self.resource_group, self.name)
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when getting automation account {0}: {1}-{2}".format(self.name, exc.code, exc.message))
+            self.fail('Error when getting automation account {0}: {1}'.format(self.name, exc.message))
 
     def list_by_resource_group(self):
+        result = []
         try:
-            return self.automation_client.automation_account.list_by_resource_group(self.resource_group)
+            resp = self.automation_client.automation_account.list_by_resource_group(self.resource_group)
+            while True:
+                result.append(resp.next())
+        except StopIteration:
+            pass
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when listing automation account in resource group {0}: {1}-{2}".format(self.resource_group, exc.code, exc.message))
+            self.fail('Error when listing automation account in resource group {0}: {1}'.format(self.resource_group, exc.message))
+        return result
 
     def list_all(self):
+        result = []
         try:
-            return self.automation_client.automation_account.list()
+            resp = self.automation_client.automation_account.list()
+            while True:
+                result.append(resp.next())
+        except StopIteration:
+            pass
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when listing automation account: {1}-{2}".format(exc.code, exc.message))
+            self.fail('Error when listing automation account: {0}'.format(exc.message))
+        return result
 
     def get_statics(self, resource_group, name):
         result = []
@@ -152,7 +318,7 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
         except StopIteration:
             pass
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when getting statics for automation account {0}/{1}: {2}-{3}".format(resource_group, name, exc.code, exc.message))
+            self.fail('Error when getting statics for automation account {0}/{1}: {2}'.format(resource_group, name, exc.message))
         return result
 
     def get_usages(self, resource_group, name):
@@ -164,7 +330,7 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
         except StopIteration:
             pass
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when getting usage for automation account {0}/{1}: {2}-{3}".format(resource_group, name, exc.code, exc.message))
+            self.fail('Error when getting usage for automation account {0}/{1}: {2}'.format(resource_group, name, exc.message))
         return result
 
     def list_account_keys(self, resource_group, name):
@@ -172,7 +338,7 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
             resp = self.automation_client.keys.list_by_automation_account(resource_group, name)
             return [x.as_dict() for x in resp.keys]
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when listing keys for automation account {0}/{1}: {2}-{3}".format(resource_group, name, exc.code, exc.message))
+            self.fail('Error when listing keys for automation account {0}/{1}: {2}'.format(resource_group, name, exc.message))
 
 
 def main():

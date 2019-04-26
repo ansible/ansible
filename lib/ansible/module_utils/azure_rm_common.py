@@ -170,7 +170,7 @@ try:
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
     from azure.mgmt.loganalytics import LogAnalyticsManagementClient
     import azure.mgmt.loganalytics.models as LogAnalyticsModels
-    from azure.mgmt.automation as AutomationClient
+    from azure.mgmt.automation import AutomationClient
     import azure.mgmt.automation.models as AutomationModel
 except ImportError as exc:
     HAS_AZURE_EXC = traceback.format_exc()
@@ -1011,13 +1011,13 @@ class AzureRMModuleBase(object):
     @property
     def automation_client(self):
         self.log('Getting automation client')
-        if not self._servicebus_client:
+        if not self._automation_client:
             self._automation_client = self.get_mgmt_svc_client(AutomationClient,
                                                                base_url=self._cloud_environment.endpoints.resource_manager)
         return self._automation_client
 
     @property
-    def automation_model(self):
+    def automation_models(self):
         return AutomationModel
 
 

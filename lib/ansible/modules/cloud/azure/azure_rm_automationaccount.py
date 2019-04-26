@@ -51,6 +51,16 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Create an automation account
+  azure_rm_automationaccount:
+      name: Testing
+      resource_group: myResourceGroup
+
+- name: Create an automation account
+  azure_rm_automationaccount:
+      name: Testing
+      resource_group: myResourceGroup
+      location: eastus
 '''
 
 RETURN = '''
@@ -129,27 +139,26 @@ class AzureRMAutomationAccount(AzureRMModuleBase):
     def get_account(self):
         try:
             return self.automation_client.automation_account.get(self.resource_group, self.name)
-        except self.automation_models.ErrorResponseException as exc:
-            if exc.code != 404:
-                self.fail("Error when getting automation account {0}: {1}-{2}".format(self.name, exc.code, exc.message))
+        except self.automation_models.ErrorResponseException:
+            pass
 
     def create_or_update(self, param):
         try:
             return self.automation_client.automation_account.create_or_update(self.resource_group, self.name, param)
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when creating automation account {0}: {1}-{2}".format(self.name, exc.code, exc.message))
+            self.fail('Error when creating automation account {0}: {1}'.format(self.name, exc.message))
 
     def update_account_tags(self, param):
         try:
             return self.automation_client.automation_account.update(self.resource_group, self.name, param)
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when updating automation account {0}: {1}-{2}".format(self.name, exc.code, exc.message))
+            self.fail('Error when updating automation account {0}: {1}'.format(self.name, exc.message))
 
     def delete_account(self):
         try:
             return self.automation_client.automation_account.delete(self.resource_group, self.name)
         except self.automation_models.ErrorResponseException as exc:
-            self.fail("Error when deleting automation account {0}: {1}-{2}".format(self.name, exc.code, exc.message))
+            self.fail('Error when deleting automation account {0}: {1}'.format(self.name, exc.message))
 
 
 def main():
