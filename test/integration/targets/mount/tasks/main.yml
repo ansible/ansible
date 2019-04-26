@@ -249,7 +249,6 @@
       - "not swap2_removed_again['changed']"
   when: ansible_system in ('Linux')
 
-
 - name: Create fstab record with missing last two fields
   copy:
     dest: /etc/fstab
