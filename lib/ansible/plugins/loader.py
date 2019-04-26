@@ -11,7 +11,6 @@ import glob
 import imp
 import os
 import os.path
-import pkgutil
 import sys
 import warnings
 

@@ -143,9 +143,9 @@ class ActionModule(ActionBase):
         err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
         try:
             incorrect_type = any(not is_string(x) for x in search_paths)
-        except TypeError as te:
-            raise AnsibleError(err_msg.format(search_paths))
-        if not isinstance(search_paths, list) or incorrect_type:
+            if not isinstance(search_paths, list) or incorrect_type:
+                raise TypeError
+        except TypeError:
             raise AnsibleError(err_msg.format(search_paths))
 
         display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
