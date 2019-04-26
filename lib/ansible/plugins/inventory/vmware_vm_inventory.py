@@ -101,7 +101,12 @@ EXAMPLES = '''
 import ssl
 import atexit
 from ansible.errors import AnsibleError, AnsibleParserError
-from urllib.parse import quote_plus
+
+import urllib.parse #import quote_plus
+# Overwrite _ALWAYS_SAFE to no longer include b'_.-~', so that these are also quoted
+urllib.parse._ALWAYS_SAFE = frozenset(b'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                         b'abcdefghijklmnopqrstuvwxyz'
+                         b'0123456789')
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -364,9 +369,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     def _get_fullName(self, vm_obj_obj):
         if(vm_obj_obj.parent):
-            return self._get_fullName(vm_obj_obj.parent) + '/' + quote_plus(vm_obj_obj.name, safe='')
+            return self._get_fullName(vm_obj_obj.parent) + '/' + urllib.parse.quote_plus(vm_obj_obj.name, safe='')
         else:
-            return '/' + quote_plus(vm_obj_obj.name)
+            return '/' + urllib.parse.quote_plus(vm_obj_obj.name)
 
     def _populate_from_cache(self, source_data):
         """ Populate cache using source data """
