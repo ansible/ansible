@@ -72,6 +72,10 @@ URL_IDP = "{url}/admin/realms/{realm}/identity-provider/instances/{alias}"
 URL_IDP_MAPPERS = "{url}/admin/realms/{realm}/identity-provider/instances/{alias}/mappers"
 URL_IDP_MAPPER = "{url}/admin/realms/{realm}/identity-provider/instances/{alias}/mappers/{id}"
 
+URL_REALMS = "{url}/admin/realms"
+URL_REALM = "{url}/admin/realms/{realm}"
+URL_REALM_EVENT_CONFIG = "{url}/admin/realms/{realm}/events/config"
+
 def keycloak_argument_spec():
     """
     Returns argument_spec of options common to keycloak_*-modules
@@ -1516,3 +1520,108 @@ class KeycloakAPI(object):
         except Exception ,e :
             self.module.fail_json(msg='Could not get IdP mappers for alias %s in realm %s: %s'
                                       % (alias, realm, str(e)))
+
+    def search_realm(self, realm):
+        """
+        Search a realm by its name.
+        :param name: Name of the realm to find
+        :return: Realm representation. An empty dict is returned when realm have not been found
+        """
+        try:
+            realmRepresentation = {}
+            realms_url = URL_REALMS.format(url=self.baseurl)
+            
+            listRealms = json.load(open_url(realms_url, method='GET', headers=self.restheaders))
+        
+            for theRealm in listRealms:
+                if theRealm['realm'] == realm:
+                    realmRepresentation = theRealm
+                    break
+            return realmRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not search for realm %s: %s'
+                                      % (realm, str(e)))
+
+    def get_realm(self, realm):
+        """
+        Get a Realm.
+        :param realm: realm to get
+        :return: Representation of the realm.
+        """
+        try:
+            realm_url = URL_REALM.format(url=self.baseurl, realm=realm)
+            realmRepresentation = json.load(open_url(realm_url, method='GET', headers=self.restheaders))
+            return realmRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could get realm %s: %s'
+                                      % (realm, str(e)))
+
+    def create_realm(self, newRealmRepresentation):
+        """
+        Create a new Realm.
+        :param newRealmRepresentation: Representation of the realm to create
+        :return: Representation of the realm created.
+        """
+        try:
+            realms_url = URL_REALMS.format(url=self.baseurl)
+            open_url(realms_url, method='POST', headers=self.restheaders, data=json.dumps(newRealmRepresentation))
+            realmRepresentation = self.get_realm(realm=newRealmRepresentation["realm"])
+            return realmRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not create realm %s: %s'
+                                      % (newRealmRepresentation["realm"], str(e)))
+            
+    def delete_realm(self, realm):
+        """
+        Delete a Realm.
+        :param realm: realm to delete
+        :return: HTTP Response.
+        """
+        try:
+            realm_url = URL_REALM.format(url=self.baseurl, realm=realm)
+            return open_url(realm_url, method='DELETE', headers=self.restheaders)
+        except Exception ,e :
+            self.module.fail_json(msg='Could delete realm %s: %s'
+                                      % (realm, str(e)))
+
+    def update_realm(self, newRealmRepresentation):
+        """
+        Update a Realm.
+        :param newRealmRepresentation: Updated configuration of the realm
+        :return: Realm representation
+        """
+        try:
+            realm_url = URL_REALM.format(url=self.baseurl, realm=newRealmRepresentation["realm"])
+            open_url(realm_url, method='PUT', headers=self.restheaders, data=json.dumps(newRealmRepresentation))
+            return self.get_realm(newRealmRepresentation["realm"])
+        except Exception ,e :
+            self.module.fail_json(msg='Could update realm %s: %s'
+                                      % (newRealmRepresentation["realm"], str(e)))
+
+    def update_realm_events_config(self, realm, newEventsConfig):
+        """
+        Update events configuration for a REALM.
+        :param realm: Realm to update
+        :param eventConfig: new event configuration
+        :return: Updated events configuration for the realm.
+        """
+        try:
+            realm_events_config_url = URL_REALM_EVENT_CONFIG.format(url=self.baseurl, realm=realm)
+            open_url(realm_events_config_url, method='PUT', headers=self.restheaders, data=json.dumps(newEventsConfig))
+            return self.get_realm_events_config(realm=realm)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not update events config for realm %s: %s'
+                                      % (realm, str(e)))
+        
+    def get_realm_events_config(self, realm):
+        """
+        Get events configuration for a REALM.
+        :param realm: Realm to update
+        :return: Updated events configuration for the realm.
+        """
+        try:
+            realm_events_config_url = URL_REALM_EVENT_CONFIG.format(url=self.baseurl, realm=realm)
+            return json.load(open_url(realm_events_config_url, method='GET', headers=self.restheaders))
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get events config for realm %s: %s'
+                                      % (realm, str(e)))
