@@ -1,3 +1,4 @@
 - block:
-  - fail:
+  - name: EXPECTED FAILURE fail task
+    fail:
     when: item == 'item3'
