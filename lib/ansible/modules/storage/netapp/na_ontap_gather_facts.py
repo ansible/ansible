@@ -35,9 +35,9 @@ options:
                 "aggregate_info", "cluster_node_info", "igroup_info", "lun_info", "net_ifgrp_info",
                 "net_interface_info", "net_port_info", "nvme_info", "nvme_interface_info",
                 "nvme_namespace_info", "nvme_subsystem_info", "ontap_version",
-                "security_key_manager_key_info", "security_login_account_info",
-                "storage_failover_info", "volume_info", "vserver_info",
-                "vserver_login_banner_info", "vserver_motd_info"
+                "qos_adaptive_policy_info", "qos_policy_info", "security_key_manager_key_info",
+                "security_login_account_info", "storage_failover_info", "volume_info",
+                "vserver_info", "vserver_login_banner_info", "vserver_motd_info"
                 Can specify a list of values to include a larger subset.  Values can also be used
                 with an initial C(M(!)) to specify that a specific subset should
                 not be collected.
@@ -104,7 +104,9 @@ ontap_facts:
             "vserver_motd_info": {...},
             "vserver_info": {...},
             "ontap_version": {...},
-            "igroup_info": {...}
+            "igroup_info": {...},
+            "qos_policy_info": {...},
+            "qos_adaptive_policy_info": {...}
     }'
 '''
 
@@ -288,6 +290,27 @@ class NetAppONTAPGatherFacts(object):
                     'query': {'max-records': '1024'},
                 },
                 'min_version': '0',
+            },
+            'qos_policy_info': {
+                'method': self.get_generic_get_iter,
+                'kwargs': {
+                    'call': 'qos-policy-group-get-iter',
+                    'attribute': 'qos-policy-group-info',
+                    'field': 'policy-group',
+                    'query': {'max-records': '1024'},
+                },
+                'min_version': '0',
+            },
+            # supported in ONTAP 9.3 and onwards
+            'qos_adaptive_policy_info': {
+                'method': self.get_generic_get_iter,
+                'kwargs': {
+                    'call': 'qos-adaptive-policy-group-get-iter',
+                    'attribute': 'qos-adaptive-policy-group-info',
+                    'field': 'policy-group',
+                    'query': {'max-records': '1024'},
+                },
+                'min_version': '130',
             },
             # supported in ONTAP 9.4 and onwards
             'nvme_info': {
