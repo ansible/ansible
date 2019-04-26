@@ -72,15 +72,26 @@ EXAMPLES = '''
   tasks:
     - name: Find all instances in the specified region
       ali_instance_facts:
+        alicloud_access_key: '{{ alicloud_access_key }}'
+        alicloud_secret_key: '{{ alicloud_secret_key }}'
+        alicloud_region: '{{ alicloud_region }}'
       register: all_instances
+
     - name: Find all instances based on the specified ids
       ali_instance_facts:
+        alicloud_access_key: '{{ alicloud_access_key }}'
+        alicloud_secret_key: '{{ alicloud_secret_key }}'
+        alicloud_region: '{{ alicloud_region }}'
         instance_ids:
           - "i-35b333d9"
           - "i-ddav43kd"
       register: instances_by_ids
+
     - name: Find all instances based on the specified names/name-prefixes
       ali_instance_facts:
+        alicloud_access_key: '{{ alicloud_access_key }}'
+        alicloud_secret_key: '{{ alicloud_secret_key }}'
+        alicloud_region: '{{ alicloud_region }}'
         instance_names:
           - "ecs_instance-1"
           - "ecs_instance_2"
