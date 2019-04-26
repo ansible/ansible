@@ -85,7 +85,7 @@ def post_to_msteams(module):
     else:
 
         headers = {'Content-Type': 'application/json'}
-        response, info = fetch_url(module=modulea,
+        response, info = fetch_url(module=module,
                                    url=module.params['webhook'],
                                    headers=headers,
                                    method='POST',
@@ -115,7 +115,10 @@ def main():
     module = AnsibleModule(argument_spec=fields)
 
     changed, failed, meta = post_to_msteams(module)
-    module.exit_json(changed=changed, meta=meta, failed=failed)
+    if failed:
+        module.fail_json(msg=meta)
+    else:
+        module.exit_json(changed=changed, meta=meta)
 
 
 if __name__ == '__main__':

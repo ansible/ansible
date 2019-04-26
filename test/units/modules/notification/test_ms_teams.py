@@ -8,15 +8,15 @@ from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 class TestMsTeamsModule(ModuleTestCase):
 
     def setUp(self):
-        super(TestSlackModule, self).setUp()
-        self.module = slack
+        super(TestMsTeamsModule, self).setUp()
+        self.module = ms_teams
 
     def tearDown(self):
-        super(TestSlackModule, self).tearDown()
+        super(TestMsTeamsModule, self).tearDown()
 
     @pytest.fixture
     def fetch_url_mock(self, mocker):
-        return mocker.patch('ansible.module_utils.notification.slack.fetch_url')
+        return mocker.patch('ansible.module_utils.notification.ms_teams.fetch_url')
 
     def test_without_required_parameters(self):
         """Failure must occurs when all parameters are missing"""
@@ -32,7 +32,7 @@ class TestMsTeamsModule(ModuleTestCase):
             'webhook': 'https://outlook.office.com/my-webhook'
         })
 
-        with patch.object(slack, "fetch_url") as fetch_url_mock:
+        with patch.object(ms_teams, "fetch_url") as fetch_url_mock:
             fetch_url_mock.return_value = (None, {"status": 200})
             with self.assertRaises(AnsibleExitJson):
                 self.module.main()
@@ -54,7 +54,7 @@ class TestMsTeamsModule(ModuleTestCase):
             'webhook': 'https://outlook.office.com/my-webhook'
         })
 
-        with patch.object(slack, "fetch_url") as fetch_url_mock:
+        with patch.object(ms_teams, "fetch_url") as fetch_url_mock:
             fetch_url_mock.return_value = (None, {"status": 400, 'msg': 'test'})
             with self.assertRaises(AnsibleFailJson):
                 self.module.main()
