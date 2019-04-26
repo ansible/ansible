@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
     'status': ['preview']
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: aws_organizations_facts
 short_description: Obtain facts about AWS Organizations
@@ -40,7 +40,7 @@ extends_documentation_fragment:
     - ec2
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 - name: Gather facts about the organization
@@ -59,44 +59,39 @@ EXAMPLES = '''
     msg: "{{ ansible_facts['organizations'] }}"
 '''
 
-RETURN = '''
+RETURN = r'''
 organizations:
-    returned: on success
     description: AWS Organization Facts.
-    type: object
-    sample: '{
-        "id": "o-abcde01234",
-        "arn": "arn:aws:organizations::123456789012:organization/o-abcde01234",
-        "feature_set": "ALL",
-        "master_account_arn": "arn:aws:organizations::123456789012:account/o-abcde01234/123456789012",
-        "master_account_id": "123456789012",
-        "master_account_email": "mailbox@example.com",
-        "available_policy_types": [
-            {
-                "Type": "SERVICE_CONTROL_POLICY",
-                "Status": "ENABLED"
-            }
-        ],
-        "accounts": [
-            {
-                "arn": "arn:aws:organizations::210987654321:account/o-abcde01234/210987654321",
-                "email": "mailbox+account@example.com",
-                "id": "210987654321",
-                "joined_method": "CREATED",
-                "joined_timestamp": "2019-01-01T13:33:33.333000-03:00",
-                "name": "Another AWS Account",
-                "status": "ACTIVE"
-            }, {
-                "arn": "arn:aws:organizations::123456789012:account/o-abcde01234/123456789012",
-                "email": "mailbox@example.com",
-                "id": "123456789012",
-                "joined_method": "CREATED",
-                "joined_timestamp": "2018-01-01T12:22:22.222000-03:00",
-                "name": "Master AWS Account",
-                "status": "ACTIVE"
-            }
-        ]
-    }'
+    returned: success
+    type: dict
+    sample:
+      id: o-abcde01234
+      arn: arn:aws:organizations::123456789012:organization/o-abcde01234
+      feature_set: ALL
+      master_account_arn: arn:aws:organizations::123456789012:account/o-abcde01234/123456789012
+      master_account_id: 123456789012
+      master_account_email: mailbox@example.com
+      available_policy_types
+        - Type: SERVICE_CONTROL_POLICY
+          Status: ENABLED
+      accounts:
+         returned: success
+         type: list
+         sample:
+             - arn: arn:aws:organizations::210987654321:account/o-abcde01234/210987654321
+               email: mailbox+account@example.com
+               id: '210987654321'
+               joined_method: CREATED
+               joined_timestamp: 2019-01-01T13:33:33.333000-03:00
+               name: Another AWS Account
+               status: ACTIVE
+             - arn: arn:aws:organizations::123456789012:account/o-abcde01234/123456789012
+               email: mailbox@example.com
+               id: '123456789012'
+               joined_method": CREATED
+               joined_timestamp: 2018-01-01T12:22:22.222000-03:00
+               name: Master AWS Account
+               status": ACTIVE
 '''
 from ansible.module_utils.aws.core import (AnsibleAWSModule, HAS_BOTO3)
 from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict)
