@@ -271,7 +271,8 @@ class NetAppOntapQTree(object):
             else:
                 modified_qtree = self.na_helper.get_modified_attributes(
                     qtree_detail, self.parameters)
-                if modified_qtree is not None: changed = True
+                if modified_qtree is not None:
+                    changed = True
         elif self.parameters['state'] == 'present':
             # create or rename qtree
             if self.parameters.get('from_name'):
