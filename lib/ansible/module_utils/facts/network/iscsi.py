@@ -21,6 +21,7 @@ __metaclass__ = type
 import sys
 import subprocess
 
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.network.base import NetworkCollector
 
@@ -79,7 +80,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     iscsi_facts['iscsi_iqn'] = line.split('=', 1)[1]
                     break
         elif sys.platform.startswith('aix'):
-            cmd = module.get_bin_path('lsattr', required=True)
+            cmd = get_bin_path('lsattr', required=True)
             cmd += " -E -l iscsi0"
             rc, out, err = module.run_command(cmd)
             if out:
@@ -88,7 +89,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
         elif sys.platform.startswith('hp-ux'):
             hpuxcmd = "/opt/iscsi/bin/iscsiutil"
             # try to find it in the default PATH
-            cmd = module.get_bin_path('iscsiutil')
+            cmd = get_bin_path('iscsiutil')
             if not cmd:
                 cmd = hpuxcmd
             cmd += " -l"
