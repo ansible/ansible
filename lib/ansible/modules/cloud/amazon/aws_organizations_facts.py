@@ -1,9 +1,10 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2019, Sean Summers <seansummers@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -97,7 +98,7 @@ organizations:
         ]
     }"
 '''
-from ansible.module_utils.aws.core import AnsibleAWSModule, HAS_BOTO3
+from ansible.module_utils.aws.core import (AnsibleAWSModule, HAS_BOTO3)
 from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict)
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
