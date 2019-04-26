@@ -331,7 +331,10 @@ class UFWObj:
         # Save the pre state and rules in order to recognize changes
         self.pre_state = self.get_status_verbose()
         self.pre_rules = self.get_current_rules()
+
         self.changed = False
+
+        self.diff_result_check_mode = {"before":"", "after":""}
 
     def rule(self, value):
 
@@ -401,14 +404,16 @@ class UFWObj:
                 # ufw dry-run doesn't send all rules so have to compare ipv4 or ipv6 rules
                 if self.is_starting_by_ipv4(self.params['from_ip']) or self.is_starting_by_ipv4(self.params['to_ip']):
                     if self.get_lines_that_contains_ipv4(self.pre_rules) != self.get_lines_that_contains_ipv4(rules_dry):
-                        self.set_changed()
+                        self.set_changed(self.get_lines_that_contains_ipv4(self.pre_rules), self.get_lines_that_contains_ipv4(rules_dry))
                 elif self.is_starting_by_ipv6(self.params['from_ip']) or self.is_starting_by_ipv6(self.params['to_ip']):
                     if self.get_lines_that_contains_ipv6(self.pre_rules) != self.get_lines_that_contains_ipv6(rules_dry):
-                        self.set_changed()
+                        self.set_changed(self.get_lines_that_contains_ipv6(self.pre_rules),self.get_lines_that_contains_ipv6(rules_dry))
                 elif self.pre_rules != rules_dry:
-                    self.set_changed()
+                    self.set_changed(self.pre_rules, rules_dry)
 
-    def set_changed(self):
+    def set_changed(self, before, after):
+        self.diff_result_check_mode["before"] += before
+        self.diff_result_check_mode["after"] += after
         self.changed = True
 
     def run(self):
@@ -497,9 +502,9 @@ class UFWObj:
                 current_default_values["outgoing"] = extract.group(2)
                 current_default_values["routed"] = extract.group(3)
                 if current_default_values[self.params['direction']] != value:
-                    self.set_changed()
+                    self.set_changed(current_default_values[self.params['direction']], value)
             else:
-                self.set_changed()
+                self.set_changed(self.pre_state,)
         else:
             self.ufw([["default"], [value], [self.params['direction']]])
 
@@ -508,13 +513,13 @@ class UFWObj:
                   'reloaded': 'reload', 'reset': 'reset'}
 
         if value in ['reloaded', 'reset']:
-            self.set_changed()
+            self.set_changed("", value)
 
         if self.check_mode:
             # "active" would also match "inactive", hence the space
             ufw_enabled = self.pre_state.find(" active") != -1
             if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and not ufw_enabled):
-                self.set_changed()
+                self.set_changed(ufw_enabled, value)
         else:
             self.ufw([['-f'], [states[value]]])
 
@@ -525,11 +530,11 @@ class UFWObj:
             current_on_off_value = extract.group(1)
             if value != "off":
                 if value != "on" and (value != current_level):
-                    self.set_changed()
+                    self.set_changed(current_level, value)
                 elif current_on_off_value == "off":
-                    self.set_changed()
+                    self.set_changed(current_on_off_value, value)
             elif current_on_off_value != "off":
-                self.set_changed()
+                self.set_changed(current_on_off_value, value)
         else:
             self.set_changed()
 
