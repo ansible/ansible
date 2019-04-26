@@ -174,28 +174,21 @@ class VmPoolsModule(BaseModule):
 
     def build_vm(self, vm):
         return otypes.Vm(
-            description=vm.get('description'),
             comment=vm.get('comment'),
             memory=convert_to_bytes(
                 vm.get('memory')
             ) if vm.get('memory') else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(vm.get('memory_guaranteed')),
-                ballooning=vm.get('ballooning_enabled'),
                 max=convert_to_bytes(vm.get('memory_max')),
             ) if any((
                 vm.get('memory_guaranteed'),
-                vm.get('ballooning_enabled') is not None,
                 vm.get('memory_max')
             )) else None,
-            usb=(
-                otypes.Usb(enabled=vm.get('usb_support'))
-            ) if vm.get('usb_support') is not None else None,
             initialization=self.get_initialization(vm),
             display=otypes.Display(
                 smartcard_enabled=vm.get('smartcard_enabled')
             ) if vm.get('smartcard_enabled') is not None else None,
-            soundcard_enabled=vm.get('soundcard_enabled'),
             sso=(
                 otypes.Sso(
                     methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if vm.get('sso') else []
@@ -253,6 +246,71 @@ class VmPoolsModule(BaseModule):
             )
         return self._initialization
 
+    def get_vms(self, entity):
+        vms = self._connection.system_service().vms_service().list()
+        resp = []
+        for vm in vms:
+            if vm.vm_pool is not None and vm.vm_pool.id == entity.id:
+                resp.append(vm)
+        return resp
+
+    def post_create(self, entity):
+        vm_param = self.param('vm')
+        if vm_param is not None and vm_param.get('nics') is not None:
+            vms = self.get_vms(entity)
+            for vm in vms:
+                self.__attach_nics(vm,vm_param)
+
+    def __attach_nics(self, entity, vm_param):
+        # Attach NICs to VM, if specified:
+        vms_service = self._connection.system_service().vms_service()
+        nics_service = vms_service.service(entity.id).nics_service()
+        for nic in vm_param.get('nics'):
+            if search_by_name(nics_service, nic.get('name')) is None:
+                if not self._module.check_mode:
+                    nics_service.add(
+                        otypes.Nic(
+                            name=nic.get('name'),
+                            interface=otypes.NicInterface(
+                                nic.get('interface', 'virtio')
+                            ),
+                            vnic_profile=otypes.VnicProfile(
+                                id=self.__get_vnic_profile_id(nic),
+                            ) if nic.get('profile_name') else None,
+                            mac=otypes.Mac(
+                                address=nic.get('mac_address')
+                            ) if nic.get('mac_address') else None,
+                        )
+                    )
+                self.changed = True
+
+    def __get_vnic_profile_id(self, nic):
+        """
+        Return VNIC profile ID looked up by it's name, because there can be
+        more VNIC profiles with same name, other criteria of filter is cluster.
+        """
+        vnics_service = self._connection.system_service().vnic_profiles_service()
+        clusters_service = self._connection.system_service().clusters_service()
+        cluster = search_by_name(clusters_service, self.param('cluster'))
+        profiles = [
+            profile for profile in vnics_service.list()
+            if profile.name == nic.get('profile_name')
+        ]
+        cluster_networks = [
+            net.id for net in self._connection.follow_link(cluster.networks)
+        ]
+        try:
+            return next(
+                profile.id for profile in profiles
+                if profile.network.id in cluster_networks
+            )
+        except StopIteration:
+            raise Exception(
+                "Profile '%s' was not found in cluster '%s'" % (
+                    nic.get('profile_name'),
+                    self.param('cluster')
+                )
+            )
 
     def update_check(self, entity):
         return (
