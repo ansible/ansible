@@ -43,7 +43,6 @@ URL_CLIENT = "{url}/admin/realms/{realm}/clients/{id}"
 URL_CLIENTS = "{url}/admin/realms/{realm}/clients"
 URL_CLIENT_ROLES = "{url}/admin/realms/{realm}/clients/{id}/roles"
 URL_CLIENT_SECRET = "{url}/admin/realms/{realm}/clients/{id}/client-secret"
-URL_REALM_ROLES = "{url}/admin/realms/{realm}/roles"
 
 URL_CLIENTTEMPLATE = "{url}/admin/realms/{realm}/client-templates/{id}"
 URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
@@ -75,6 +74,9 @@ URL_IDP_MAPPER = "{url}/admin/realms/{realm}/identity-provider/instances/{alias}
 URL_REALMS = "{url}/admin/realms"
 URL_REALM = "{url}/admin/realms/{realm}"
 URL_REALM_EVENT_CONFIG = "{url}/admin/realms/{realm}/events/config"
+URL_REALM_ROLES = "{url}/admin/realms/{realm}/roles"
+URL_REALM_ROLE = "{url}/admin/realms/{realm}/roles/{name}"
+URL_REALM_ROLE_COMPOSITES = "{url}/admin/realms/{realm}/roles/{name}/composites"
 
 def keycloak_argument_spec():
     """
@@ -597,6 +599,19 @@ class KeycloakAPI(object):
         except Exception as e:
             self.module.fail_json(msg="Unable to delete group %s: %s" % (groupid, str(e)))
             
+    def get_client_roles(self, client_id, realm='master'):
+        """ Get all client's roles
+
+        :param client_id: id of the client
+        :return: Client's roles representation is added to the client representation as clientRoles key
+        """
+        try:
+            client_roles_url = URL_CLIENT_ROLES.format(url=self.baseurl,realm=realm,id=client_id)
+            clientRolesRepresentation = json.load(open_url(client_roles_url, method='GET', headers=self.restheaders))
+            return clientRolesRepresentation
+        except Exception as e:
+            self.module.fail_json(msg="Unable to get client's %s roles in realm %s: %s" % (client_id, realm, str(e)))
+
     def add_client_roles_to_representation(self, clientSvcBaseUrl, clientRolesUrl, clientRepresentation):
         """ Add client roles and their composites to the client representation in order to return this information to the user
 
@@ -1524,7 +1539,7 @@ class KeycloakAPI(object):
     def search_realm(self, realm):
         """
         Search a realm by its name.
-        :param name: Name of the realm to find
+        :param realm: Name of the realm to find
         :return: Realm representation. An empty dict is returned when realm have not been found
         """
         try:
@@ -1625,3 +1640,197 @@ class KeycloakAPI(object):
         except Exception ,e :
             self.module.fail_json(msg='Could not get events config for realm %s: %s'
                                       % (realm, str(e)))
+
+    def search_realm_role_by_name(self, name, realm="master"):
+        """
+        Search a REALM role by its name.
+        :param name: Name of the realm to find
+        :return: Realm role representation. An empty dict is returned when role have not been found
+        """
+        try:
+            rolerep = {}            
+            listRoles = self.get_realm_roles(realm=realm)
+            for role in listRoles:
+                if role['name'] == name:
+                    rolerep = role
+                    break
+            return rolerep
+        except Exception ,e :
+            self.module.fail_json(msg='Could not search for role % in realm %s: %s'
+                                      % (name, realm, str(e)))
+    def get_realm_roles(self, realm="master"):
+        """
+        Get all REALM roles.
+        :param realm: Realm
+        :return: Realm roles representation.
+        """
+        try:
+            realm_roles_url = URL_REALM_ROLES.format(url=self.baseurl,realm=realm)            
+            listRoles = json.load(open_url(realm_roles_url, method='GET', headers=self.restheaders))
+            return listRoles
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get roles in realm %s: %s'
+                                      % (realm, str(e)))
+
+    def get_realm_role(self, name, realm="master"):
+        """
+        Get a REALM role.
+        :param name: Name of the realm role to create
+        :param realm: Realm
+        :return: Realm roles representation.
+        """
+        try:
+            realm_role_url = URL_REALM_ROLE.format(url=self.baseurl,realm=realm,name=name)            
+            role = json.load(open_url(realm_role_url, method='GET', headers=self.restheaders))
+            return role
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get role %s in realm %s: %s'
+                                      % (name, realm, str(e)))
+
+    def create_realm_role(self, newRoleRepresentation, realm='master'):
+        """
+        Create a new Realm role.
+        :param newRoleRepresentation: Representation of the realm role to create
+        :param realm: Realm
+        :return: Representation of the realm role created.
+        """
+        try:
+            realm_roles_url = URL_REALM_ROLES.format(url=self.baseurl,realm=realm) 
+            open_url(realm_roles_url, method='POST', headers=self.restheaders, data=json.dumps(newRoleRepresentation))
+            roleRepresentation = self.get_realm_role(name=newRoleRepresentation['name'], realm=realm)
+            return roleRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not create realm role %s in realm %s: %s'
+                                      % (newRoleRepresentation["name"], realm, str(e)))
+
+    def delete_realm_role(self, name, realm='master'):
+        """
+        Delete a Realm role.
+        :param name: Name of the realm role to delete
+        :param realm: Realm
+        :return: Representation of the realm role created.
+        """
+        try:
+            realm_role_url = URL_REALM_ROLE.format(url=self.baseurl,realm=realm,name=name) 
+            return open_url(realm_role_url, method='DELETE', headers=self.restheaders)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not delete realm role %s in realm %s: %s'
+                                      % (name, realm, str(e)))
+
+    def update_realm_role(self, newRoleRepresentation, realm='master'):
+        """
+        Update a Realm role.
+        :param newRoleRepresentation: Representation of the realm role to update
+        :param realm: Realm
+        :return: Representation of the updated realm role.
+        """
+        try:
+            realm_role_url = URL_REALM_ROLE.format(url=self.baseurl,realm=realm,name=newRoleRepresentation["name"]) 
+            open_url(realm_role_url, method='PUT', headers=self.restheaders,data=json.dumps(newRoleRepresentation))
+            roleRepresentation = self.get_realm_role(name=newRoleRepresentation['name'], realm=realm)
+            return roleRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not update realm role %s in realm %s: %s'
+                                      % (newRoleRepresentation["name"], realm, str(e)))
+
+    def get_realm_role_composites_with_client_id(self, name, realm='master'):
+        """
+        Get realm role's composites with their clientId
+        :param name: Name of the role to get the composites from
+        :param realm: Realm
+        :return: Representation of the realm role's composites including the clientIds.
+        """
+        composites = self.get_realm_role_composites(name=name, realm=realm)
+        for composite in composites:
+            if composite["clientRole"]:
+                composite["clientId"] = self.get_client_by_id(id=composite["containerId"], realm=realm)["clientId"]
+        return composites
+
+    def get_realm_role_composites(self, name, realm='master'):
+        """
+        Get realm role's composites
+        :param name: Name of the role to get the composites from
+        :param realm: Realm
+        :return: Representation of the realm role's composites.
+        """
+        try:
+            realm_role_composites_url = URL_REALM_ROLE_COMPOSITES.format(url=self.baseurl,realm=realm,name=name) 
+            composites = json.load(open_url(realm_role_composites_url, method='GET', headers=self.restheaders))
+            return composites
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get realm role %s composites in realm %s: %s'
+                                      % (name, realm, str(e)))
+
+    def create_realm_role_composites(self, newCompositesToCreate, name, realm='master'):
+        """
+        Create composites for a Realm role.
+        :param newCompositesToCreate: Representation of the realm role's composites to create.
+        :param name: Name of the realm role
+        :param realm: Realm
+        :return: HTTP Response
+        """
+        try:
+            realm_role_composites_url = URL_REALM_ROLE_COMPOSITES.format(url=self.baseurl,realm=realm,name=name) 
+            return open_url(realm_role_composites_url, method='POST', headers=self.restheaders, data=json.dumps(newCompositesToCreate))
+        except Exception ,e :
+            self.module.fail_json(msg='Could not create realm role %s composites in realm %s: %s'
+                                      % (name, realm, str(e)))
+
+    def create_or_update_realm_role_composites(self, newComposites, newRoleRepresentation, realm='master'):
+        """
+        Create or update composite roles for a REALM role
+        :param newComposites: Representation of the composites to update or create
+        :param newRoleRepresentation: Representation of the realm role to update composites.
+        :param realm: Realm
+        :return: True if composites have changed, False otherwise.
+        """
+        changed = False
+        newCompositesToCreate = []
+        try:
+            # Get the realm role's composites already present on the Keycloak server
+            existingComposites = self.get_realm_role_composites(name=newRoleRepresentation["name"], realm=realm)
+            if existingComposites is None:
+                existingComposites = []
+            for existingComposite in existingComposites:
+                newCompositesToCreate.append(existingComposite)
+            # If new version of the role is composite and there are composites in it
+            if newComposites is not None and newRoleRepresentation["composite"]:
+                for newComposite in newComposites:
+                    newCompositeFound = False
+                    # Search composite to assing in composites of the role on the Keycloak Server
+                    for composite in existingComposites:
+                        if composite["clientRole"] and "clientId" in newComposite: # If composite is a client role
+                            # Get the clientId
+                            clientId = self.get_client_by_id(id=composite["containerId"], realm=realm)["clientId"]
+                            if composite["name"] == newComposite["name"] and clientId == newComposite["clientId"]:
+                                newCompositeFound = True
+                                break
+                        elif composite["name"] == newComposite["name"]:
+                            newCompositeFound = True
+                            break
+                    # If role is not already assigned to the role
+                    if not newCompositeFound:
+                        roles = []
+                        # If composite is a client role
+                        if "clientId" in newComposite:
+                            # Get the client
+                            client = self.get_client_by_clientid(client_id=newComposite["clientId"], realm=realm)
+                            if client != {}:
+                                # Get client's roles
+                                roles = self.get_client_roles(client_id=client["id"], realm=realm)
+                        else: # It is a REALM role
+                            # Get all realm roles
+                            roles = self.get_realm_roles()
+                        # Search in all roles found which is the role to assigne
+                        for role in roles:                   
+                            # Id role is found
+                            if role["name"] == newComposite["name"]:
+                                newCompositesToCreate.append(role)
+                                changed = True
+            if changed:
+                self.create_realm_role_composites(newCompositesToCreate=newCompositesToCreate, name=newRoleRepresentation["name"], realm=realm)
+            return changed
+        
+        except Exception ,e :
+            self.module.fail_json(msg='Could not create or update realm role %s composites in realm %s: %s'
+                                      % (newRoleRepresentation["name"], realm, str(e)))
