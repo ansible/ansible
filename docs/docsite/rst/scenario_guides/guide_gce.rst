@@ -169,9 +169,9 @@ rest.
      hosts: localhost
      gather_facts: no
      vars:
-         project: my-project
-         auth_kind: serviceaccount
-         service_account_file: /home/my_account.json
+         gcp_project: my-project
+         gcp_cred_kind: serviceaccount
+         gcp_cred_file: /home/my_account.json
          zone: "us-central1-a"
          region: "us-central1"
 
