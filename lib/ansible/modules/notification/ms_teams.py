@@ -17,19 +17,20 @@ module: ms_teams
 short_description: Send messages to a Microsoft Teams channel
 author: "Christian Kaiser <c.kaiser@also.com>"
 description:
-  - Setup a webhook in Microsoft Teams. Using this webhook you can send html notifications.
-  - The module enabley you to write longer text in plain text or html, instead of sending direct json to 
-    the endpoint.
+  - Setup a webhook in Microsoft Teams. Using this webhook you can send html
+    notifications.
+  - The module enabley you to write longer text in plain text or html, 
+    instead of sending direct json to the endpoint.
 '''
 
 EXAMPLES = '''
-- tempfile: state=file suffix=html register=body
-- template: src=teams-sample.html.j2 dest={{ body.path }}
-- name: send a message into an ms teams channel using a webhook
-  ms_teams:
-    body: "{{ body.path }}
-    subject: Test
-    webhook: https://outlook.office.com/webhook/...  
+- set_fact:
+    body: "{{ lookup('template', 'teams-sample.html.j2') }}"
+- ms_teams:
+    body: "{{ body }}"
+    webhook: https://outlook.office.com/webhook/...
+	subject: Test
+    color: dd1111	
   register: result
 - debug: 
     var=result
@@ -41,13 +42,9 @@ from ansible.module_utils.urls import fetch_url
 import json
 import os
 
-def create_payload(body_file_name, subject, color):
-    with open(body_file_name, 'r') as f:
-        data = f.read()
-    os.remove(body_file_name)
-    
+def create_payload(body, subject, color):    
     payload={
-        'text': data,
+        'text': body,
         'title': subject,
         'themeColor': color
     }
@@ -56,12 +53,13 @@ def create_payload(body_file_name, subject, color):
 def post_to_msteams(module):
 
     payload = create_payload(module.params['body'], 
-        module.params['subject'], module.params['color'])
+        module.params['subject'], 
+        module.params['color'])
     
     if module.check_mode:
         changed = False
         failed = False
-        meta = { "payload": payload, "subject": module.params['subject'] }
+        meta = payload
     else:
         
         headers = { 'Content-Type': 'application/json' }
