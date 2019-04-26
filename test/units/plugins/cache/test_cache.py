@@ -123,6 +123,7 @@ class TestFactCache(unittest.TestCase):
         assert self.cache['cache_key']['key'] == 'updatedvalue'
         assert self.cache['cache_key']['key2'] == 'value2'
 
+
 class TestAbstractClass(unittest.TestCase):
 
     def setUp(self):
