@@ -35,8 +35,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the availability set. Use 'present' to create or update a availability set and
-              'absent' to delete a availability set.
+            - Assert the state of the availability set. Use C(present) to create or update a availability set and
+              C(absent) to delete a availability set.
         default: present
         choices:
             - absent
@@ -70,13 +70,13 @@ author:
 EXAMPLES = '''
     - name: Create an availability set with default options
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
         resource_group: myResourceGroup
 
     - name: Create an availability set with advanced options
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
         resource_group: myResourceGroup
         platform_update_domain_count: 5
@@ -85,7 +85,7 @@ EXAMPLES = '''
 
     - name: Delete an availability set
       azure_rm_availabilityset:
-        name: myavailabilityset
+        name: myAvailabilitySet
         location: eastus
         resource_group: myResourceGroup
         state: absent

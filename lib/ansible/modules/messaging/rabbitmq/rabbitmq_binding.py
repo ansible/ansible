@@ -107,9 +107,9 @@ class RabbitMqBinding(object):
         self.destination_type = 'q' if self.module.params['destination_type'] == 'queue' else 'e'
         self.routing_key = self.module.params['routing_key']
         self.arguments = self.module.params['arguments']
-        self.verify = self.module.params['cacert']
-        self.cert = self.module.params['cert']
-        self.key = self.module.params['key']
+        self.verify = self.module.params['ca_cert']
+        self.cert = self.module.params['client_cert']
+        self.key = self.module.params['client_key']
         self.props = urllib_parse.quote(self.routing_key) if self.routing_key != '' else '~'
         self.base_url = '{0}://{1}:{2}/api/bindings'.format(self.login_protocol,
                                                             self.login_host,

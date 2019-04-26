@@ -10,45 +10,53 @@ from distutils.version import Version
 from ansible.module_utils.k8s.common import list_dict_str
 from ansible.module_utils.k8s.raw import KubernetesRawModule
 
-try:
-    from openshift import watch
-    from openshift.helper.exceptions import KubernetesException
-except ImportError:
-    # Handled in k8s common:
-    pass
-
 import re
 
 MAX_SUPPORTED_API_VERSION = 'v1alpha3'
 API_GROUP = 'kubevirt.io'
 
 
-VM_COMMON_ARG_SPEC = {
-    'name': {},
-    'force': {
-        'type': 'bool',
-        'default': False,
-    },
+# Put all args that (can) modify 'spec:' here:
+VM_SPEC_DEF_ARG_SPEC = {
     'resource_definition': {
-        'type': list_dict_str,
+        'type': 'dict',
         'aliases': ['definition', 'inline']
     },
-    'src': {
-        'type': 'path',
-    },
-    'namespace': {},
-    'api_version': {'type': 'str', 'default': '%s/%s' % (API_GROUP, MAX_SUPPORTED_API_VERSION), 'aliases': ['api', 'version']},
-    'merge_type': {'type': 'list', 'choices': ['json', 'merge', 'strategic-merge']},
-    'wait': {'type': 'bool', 'default': True},
-    'wait_timeout': {'type': 'int', 'default': 120},
     'memory': {'type': 'str'},
+    'memory_limit': {'type': 'str'},
     'cpu_cores': {'type': 'int'},
     'disks': {'type': 'list'},
     'labels': {'type': 'dict'},
     'interfaces': {'type': 'list'},
     'machine_type': {'type': 'str'},
     'cloud_init_nocloud': {'type': 'dict'},
+    'bootloader': {'type': 'str'},
+    'smbios_uuid': {'type': 'str'},
+    'cpu_model': {'type': 'str'},
+    'headless': {'type': 'str'},
+    'hugepage_size': {'type': 'str'},
+    'tablets': {'type': 'list'},
+    'cpu_limit': {'type': 'int'},
+    'cpu_shares': {'type': 'int'},
+    'cpu_features': {'type': 'list'},
 }
+# And other common args go here:
+VM_COMMON_ARG_SPEC = {
+    'name': {'required': True},
+    'namespace': {'required': True},
+    'state': {
+        'default': 'present',
+        'choices': ['present', 'absent'],
+    },
+    'force': {
+        'type': 'bool',
+        'default': False,
+    },
+    'merge_type': {'type': 'list', 'choices': ['json', 'merge', 'strategic-merge']},
+    'wait': {'type': 'bool', 'default': True},
+    'wait_timeout': {'type': 'int', 'default': 120},
+}
+VM_COMMON_ARG_SPEC.update(VM_SPEC_DEF_ARG_SPEC)
 
 
 def virtdict():
@@ -134,18 +142,6 @@ class KubeVirtRawModule(KubernetesRawModule):
             else:
                 yield (k, y[k])
 
-    def _create_stream(self, resource, namespace, wait_timeout):
-        """ Create a stream of events for the object """
-        w = None
-        stream = None
-        try:
-            w = watch.Watch()
-            w._api_client = self.client.client
-            stream = w.stream(resource.get, serialize=False, namespace=namespace, timeout_seconds=wait_timeout)
-        except KubernetesException as exc:
-            self.fail_json(msg='Failed to initialize watch: {0}'.format(exc.message))
-        return w, stream
-
     def get_resource(self, resource):
         try:
             existing = resource.get(name=self.name, namespace=self.namespace)
@@ -153,6 +149,54 @@ class KubeVirtRawModule(KubernetesRawModule):
             existing = None
 
         return existing
+
+    def _define_datavolumes(self, datavolumes, spec):
+        """
+        Takes datavoulmes parameter of Ansible and create kubevirt API datavolumesTemplateSpec
+        structure from it
+        """
+        if not datavolumes:
+            return
+
+        spec['dataVolumeTemplates'] = []
+        for dv in datavolumes:
+            # Add datavolume to datavolumetemplates spec:
+            dvt = virtdict()
+            dvt['metadata']['name'] = dv.get('name')
+            dvt['spec']['pvc'] = {
+                'accessModes': dv.get('pvc').get('accessModes'),
+                'resources': {
+                    'requests': {
+                        'storage': dv.get('pvc').get('storage'),
+                    }
+                }
+            }
+            dvt['spec']['source'] = dv.get('source')
+            spec['dataVolumeTemplates'].append(dvt)
+
+            # Add datavolume to disks spec:
+            if not spec['template']['spec']['domain']['devices']['disks']:
+                spec['template']['spec']['domain']['devices']['disks'] = []
+
+            spec['template']['spec']['domain']['devices']['disks'].append(
+                {
+                    'name': dv.get('name'),
+                    'disk': dv.get('disk', {'bus': 'virtio'}),
+                }
+            )
+
+            # Add datavolume to volumes spec:
+            if not spec['template']['spec']['volumes']:
+                spec['template']['spec']['volumes'] = []
+
+            spec['template']['spec']['volumes'].append(
+                {
+                    'dataVolume': {
+                        'name': dv.get('name')
+                    },
+                    'name': dv.get('name'),
+                }
+            )
 
     def _define_cloud_init(self, cloud_init_nocloud, template_spec):
         """
@@ -235,34 +279,82 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         disks = params.get('disks', [])
         memory = params.get('memory')
+        memory_limit = params.get('memory_limit')
         cpu_cores = params.get('cpu_cores')
+        cpu_model = params.get('cpu_model')
+        cpu_features = params.get('cpu_features')
         labels = params.get('labels')
+        datavolumes = params.get('datavolumes')
         interfaces = params.get('interfaces')
+        bootloader = params.get('bootloader')
         cloud_init_nocloud = params.get('cloud_init_nocloud')
         machine_type = params.get('machine_type')
+        headless = params.get('headless')
+        smbios_uuid = params.get('smbios_uuid')
+        hugepage_size = params.get('hugepage_size')
+        tablets = params.get('tablets')
+        cpu_shares = params.get('cpu_shares')
+        cpu_limit = params.get('cpu_limit')
         template_spec = template['spec']
 
         # Merge additional flat parameters:
         if memory:
             template_spec['domain']['resources']['requests']['memory'] = memory
 
+        if cpu_shares:
+            template_spec['domain']['resources']['requests']['cpu'] = cpu_shares
+
+        if cpu_limit:
+            template_spec['domain']['resources']['limits']['cpu'] = cpu_limit
+
+        if tablets:
+            for tablet in tablets:
+                tablet['type'] = 'tablet'
+            template_spec['domain']['devices']['inputs'] = tablets
+
+        if memory_limit:
+            template_spec['domain']['resources']['limits']['memory'] = memory_limit
+
+        if hugepage_size is not None:
+            template_spec['domain']['memory']['hugepages']['pageSize'] = hugepage_size
+
+        if cpu_features is not None:
+            template_spec['domain']['cpu']['features'] = cpu_features
+
         if cpu_cores is not None:
             template_spec['domain']['cpu']['cores'] = cpu_cores
 
+        if cpu_model:
+            template_spec['domain']['cpu']['model'] = cpu_model
+
         if labels:
-            template['metadata']['labels'] = labels
+            template['metadata']['labels'] = dict(self.merge_dicts(labels, template['metadata']['labels']))
 
         if machine_type:
             template_spec['domain']['machine']['type'] = machine_type
 
-        # Define cloud init disk if defined:
-        self._define_cloud_init(cloud_init_nocloud, template_spec)
+        if bootloader:
+            template_spec['domain']['firmware']['bootloader'] = {bootloader: {}}
+
+        if smbios_uuid:
+            template_spec['domain']['firmware']['uuid'] = smbios_uuid
+
+        if headless is not None:
+            template_spec['domain']['devices']['autoattachGraphicsDevice'] = not headless
 
         # Define disks
         self._define_disks(disks, template_spec)
 
+        # Define cloud init disk if defined:
+        # Note, that this must be called after _define_disks, so the cloud_init
+        # is not first in order and it's not used as boot disk:
+        self._define_cloud_init(cloud_init_nocloud, template_spec)
+
         # Define interfaces:
         self._define_interfaces(interfaces, template_spec)
+
+        # Define datavolumes:
+        self._define_datavolumes(datavolumes, definition['spec'])
 
         # Perform create/absent action:
         definition = dict(self.merge_dicts(self.resource_definitions[0], definition))

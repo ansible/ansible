@@ -48,6 +48,12 @@ options:
      description:
      - UUID of the virtual machine to manage if known. This is VMware's unique identifier.
      - This is required parameter, if C(name) is not supplied.
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    folder:
      description:
      - Absolute path to find an existing guest.
@@ -180,6 +186,7 @@ def main():
         name=dict(required=True, type='str'),
         folder=dict(type='str'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         state=dict(type='str', default='present',
                    choices=['absent', 'present']),
         attributes=dict(

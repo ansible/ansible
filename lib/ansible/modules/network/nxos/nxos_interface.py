@@ -590,14 +590,15 @@ def check_declarative_intent_params(module, want):
     failed_conditions = []
     have_neighbors = None
     for w in want:
+        if w['interface_type']:
+            continue
         want_tx_rate = w.get('tx_rate')
         want_rx_rate = w.get('rx_rate')
         want_neighbors = w.get('neighbors')
+        if not (want_tx_rate or want_rx_rate or want_neighbors):
+            continue
 
         time.sleep(module.params['delay'])
-
-        if w['interface_type']:
-            return
 
         cmd = [{'command': 'show interface {0}'.format(w['name']), 'output': 'text'}]
 

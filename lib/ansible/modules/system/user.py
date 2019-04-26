@@ -206,7 +206,9 @@ options:
             - Forces the use of "local" command alternatives on platforms that implement it.
             - This is useful in environments that use centralized authentification when you want to manipulate the local users
               (i.e. it uses C(luseradd) instead of C(useradd)).
-            - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
+            - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
+              exists somewhere other than C(/etc/passwd), this setting will not work properly.
+            - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
         type: bool
         default: no
         version_added: "2.4"
@@ -446,6 +448,7 @@ class User(object):
 
     platform = 'Generic'
     distribution = None
+    PASSWORDFILE = '/etc/passwd'
     SHADOWFILE = '/etc/shadow'
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
@@ -840,11 +843,35 @@ class User(object):
         return groups
 
     def user_exists(self):
-        try:
-            if pwd.getpwnam(self.name):
-                return True
-        except KeyError:
-            return False
+        # The pwd module does not distinguish between local and directory accounts.
+        # It's output cannot be used to determine whether or not an account exists locally.
+        # It returns True if the account exists locally or in the directory, so instead
+        # look in the local PASSWORD file for an existing account.
+        if self.local:
+            if not os.path.exists(self.PASSWORDFILE):
+                self.module.fail_json(msg="'local: true' specified but unable to find local account file {0} to parse.".format(self.PASSWORDFILE))
+
+            exists = False
+            name_test = '{0}:'.format(self.name)
+            with open(self.PASSWORDFILE, 'rb') as f:
+                reversed_lines = f.readlines()[::-1]
+                for line in reversed_lines:
+                    if line.startswith(to_bytes(name_test)):
+                        exists = True
+                        break
+
+            self.module.warn(
+                "'local: true' specified and user was not found in {file}. "
+                "The local user account may already exist if the local account database exists somewhere other than {file}.".format(file=self.PASSWORDFILE))
+
+            return exists
+
+        else:
+            try:
+                if pwd.getpwnam(self.name):
+                    return True
+            except KeyError:
+                return False
 
     def get_pwd_info(self):
         if not self.user_exists():
@@ -880,13 +907,19 @@ class User(object):
         if not self.user_exists():
             return passwd, expires
         elif self.SHADOWFILE:
-            # Read shadow file for user's encrypted password string
-            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
-                with open(self.SHADOWFILE, 'r') as f:
-                    for line in f:
-                        if line.startswith('%s:' % self.name):
-                            passwd = line.split(':')[1]
-                            expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
+            passwd, expires = self.parse_shadow_file()
+
+        return passwd, expires
+
+    def parse_shadow_file(self):
+        passwd = ''
+        expires = ''
+        if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+            with open(self.SHADOWFILE, 'r') as f:
+                for line in f:
+                    if line.startswith('%s:' % self.name):
+                        passwd = line.split(':')[1]
+                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
         return passwd, expires
 
     def get_ssh_key_path(self):
@@ -2299,6 +2332,7 @@ class AIX(User):
       - create_user()
       - remove_user()
       - modify_user()
+      - parse_shadow_file()
     """
 
     platform = 'AIX'
@@ -2439,6 +2473,50 @@ class AIX(User):
             return (rc, out + out2, err + err2)
         else:
             return (rc2, out + out2, err + err2)
+
+    def parse_shadow_file(self):
+        """Example AIX shadowfile data:
+        nobody:
+                password = *
+
+        operator1:
+                password = {ssha512}06$xxxxxxxxxxxx....
+                lastupdate = 1549558094
+
+        test1:
+                password = *
+                lastupdate = 1553695126
+
+        """
+
+        b_name = to_bytes(self.name)
+        if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+            with open(self.SHADOWFILE, 'rb') as bf:
+                b_lines = bf.readlines()
+
+            b_passwd_line = b''
+            b_expires_line = b''
+            for index, b_line in enumerate(b_lines):
+                # Get password and lastupdate lines which come after the username
+                if b_line.startswith(b'%s:' % b_name):
+                    b_passwd_line = b_lines[index + 1]
+                    b_expires_line = b_lines[index + 2]
+                    break
+
+            # Sanity check the lines because sometimes both are not present
+            if b' = ' in b_passwd_line:
+                b_passwd = b_passwd_line.split(b' = ', 1)[-1].strip()
+            else:
+                b_passwd = b''
+
+            if b' = ' in b_expires_line:
+                b_expires = b_expires_line.split(b' = ', 1)[-1].strip()
+            else:
+                b_expires = b''
+
+        passwd = to_native(b_passwd)
+        expires = to_native(b_expires) or -1
+        return passwd, expires
 
 
 class HPUX(User):
@@ -2584,6 +2662,145 @@ class HPUX(User):
 
         cmd.append(self.name)
         return self.execute_command(cmd)
+
+
+class BusyBox(User):
+    """
+    This is the BusyBox class for use on systems that have adduser, deluser,
+    and delgroup commands. It overrides the following methods:
+        - create_user()
+        - remove_user()
+        - modify_user()
+    """
+
+    def create_user(self):
+        cmd = [self.module.get_bin_path('adduser', True)]
+
+        cmd.append('-D')
+
+        if self.uid is not None:
+            cmd.append('-u')
+            cmd.append(self.uid)
+
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg='Group {0} does not exist'.format(self.group))
+            cmd.append('-G')
+            cmd.append(self.group)
+
+        if self.comment is not None:
+            cmd.append('-g')
+            cmd.append(self.comment)
+
+        if self.home is not None:
+            cmd.append('-h')
+            cmd.append(self.home)
+
+        if self.shell is not None:
+            cmd.append('-s')
+            cmd.append(self.shell)
+
+        if not self.create_home:
+            cmd.append('-H')
+
+        if self.skeleton is not None:
+            cmd.append('-k')
+            cmd.append(self.skeleton)
+
+        if self.system:
+            cmd.append('-S')
+
+        cmd.append(self.name)
+
+        rc, out, err = self.execute_command(cmd)
+
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        if self.password is not None:
+            cmd = [self.module.get_bin_path('chpasswd', True)]
+            cmd.append('--encrypted')
+            data = '{name}:{password}'.format(name=self.name, password=self.password)
+            rc, out, err = self.execute_command(cmd, data=data)
+
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Add to additional groups
+        if self.groups is not None and len(self.groups):
+            groups = self.get_groups_set()
+            add_cmd_bin = self.module.get_bin_path('adduser', True)
+            for group in groups:
+                cmd = [add_cmd_bin, self.name, group]
+                rc, out, err = self.execute_command(cmd)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        return rc, out, err
+
+    def remove_user(self):
+
+        cmd = [
+            self.module.get_bin_path('deluser', True),
+            self.name
+        ]
+
+        if self.remove:
+            cmd.append('--remove-home')
+
+        return self.execute_command(cmd)
+
+    def modify_user(self):
+        current_groups = self.user_group_membership()
+        groups = []
+        rc = None
+        out = ''
+        err = ''
+        info = self.user_info()
+        add_cmd_bin = self.module.get_bin_path('adduser', True)
+        remove_cmd_bin = self.module.get_bin_path('delgroup', True)
+
+        # Manage group membership
+        if self.groups is not None and len(self.groups):
+            groups = self.get_groups_set()
+            group_diff = set(current_groups).symmetric_difference(groups)
+
+            if group_diff:
+                for g in groups:
+                    if g in group_diff:
+                        add_cmd = [add_cmd_bin, self.name, g]
+                        rc, out, err = self.execute_command(add_cmd)
+                        if rc is not None and rc != 0:
+                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+                for g in group_diff:
+                    if g not in groups and not self.append:
+                        remove_cmd = [remove_cmd_bin, self.name, g]
+                        rc, out, err = self.execute_command(remove_cmd)
+                        if rc is not None and rc != 0:
+                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Manage password
+        if self.password is not None:
+            if info[1] != self.password:
+                cmd = [self.module.get_bin_path('chpasswd', True)]
+                cmd.append('--encrypted')
+                data = '{name}:{password}'.format(name=self.name, password=self.password)
+                rc, out, err = self.execute_command(cmd, data=data)
+
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        return rc, out, err
+
+
+class Alpine(BusyBox):
+    """
+    This is the Alpine User manipulation class. It inherits the BusyBox class
+    behaviors such as using adduser and deluser commands.
+    """
+    platform = 'Linux'
+    distribution = 'Alpine'
 
 
 def main():

@@ -29,6 +29,7 @@ yumdnf_argument_spec = dict(
         disable_plugin=dict(type='list', default=[]),
         disablerepo=dict(type='list', default=[]),
         download_only=dict(type='bool', default=False),
+        download_dir=dict(type='str', default=None),
         enable_plugin=dict(type='list', default=[]),
         enablerepo=dict(type='list', default=[]),
         exclude=dict(type='list', default=[]),
@@ -73,6 +74,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.disable_plugin = self.module.params['disable_plugin']
         self.disablerepo = self.module.params.get('disablerepo', [])
         self.download_only = self.module.params['download_only']
+        self.download_dir = self.module.params['download_dir']
         self.enable_plugin = self.module.params['enable_plugin']
         self.enablerepo = self.module.params.get('enablerepo', [])
         self.exclude = self.module.params['exclude']
@@ -99,12 +101,13 @@ class YumDnf(with_metaclass(ABCMeta, object)):
 
         # Fail if someone passed a space separated string
         # https://github.com/ansible/ansible/issues/46301
-        if any((' ' in name and '@' not in name and '==' not in name for name in self.names)):
-            module.fail_json(
-                msg='It appears that a space separated string of packages was passed in '
-                    'as an argument. To operate on several packages, pass a comma separated '
-                    'string of packages or a list of packages.'
-            )
+        for name in self.names:
+            if ' ' in name and not any(spec in name for spec in ['@', '>', '<', '=']):
+                module.fail_json(
+                    msg='It appears that a space separated string of packages was passed in '
+                        'as an argument. To operate on several packages, pass a comma separated '
+                        'string of packages or a list of packages.'
+                )
 
         # Sanity checking for autoremove
         if self.state is None:

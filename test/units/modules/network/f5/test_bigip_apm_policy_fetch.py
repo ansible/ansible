@@ -70,9 +70,11 @@ class TestParameters(unittest.TestCase):
             dest='/tmp/',
             force='yes',
             file='foo_export',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         )
         p = ModuleParameters(params=args)
         assert p.file == 'foo_export'
@@ -102,9 +104,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             file='foo_export',
             dest='/tmp/',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

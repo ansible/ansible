@@ -82,13 +82,6 @@ options:
       to Second Generation instances.
     required: false
     suboptions:
-      available:
-        description:
-        - The availability status of the failover replica. A false status indicates
-          that the failover replica is out of sync. The master can only failover to
-          the failover replica when the status is true.
-        required: false
-        type: bool
       name:
         description:
         - The name of the failover replica. If specified at instance creation, a failover
@@ -259,31 +252,51 @@ options:
           For MySQL instances, this field determines whether the instance is Second
           Generation (recommended) or First Generation.
         required: false
-      settings_version:
+      availability_type:
         description:
-        - The version of instance settings. This is a required field for update method
-          to make sure concurrent updates are handled properly. During update, use
-          the most recent settingsVersion value for this instance and do not try to
-          update this value.
+        - The availabilityType define if your postgres instance is run zonal or regional.
         required: false
+        choices:
+        - ZONAL
+        - REGIONAL
+      backup_configuration:
+        description:
+        - The daily backup configuration for the instance.
+        required: false
+        suboptions:
+          enabled:
+            description:
+            - Enable Autobackup for your instance.
+            required: false
+            type: bool
+          binary_log_enabled:
+            description:
+            - Whether binary log is enabled. If backup configuration is disabled,
+              binary log must be disabled as well. MySQL only.
+            required: false
+            type: bool
+          start_time:
+            description:
+            - Define the backup start time in UTC (HH:MM) .
+            required: false
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: "{{resource_name}}-2"
-      settings:
-        ip_configuration:
-          authorized_networks:
-          - name: google dns server
-            value: 8.8.8.8/32
-        tier: db-n1-standard-1
-      region: us-central1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: "{{resource_name}}-2"
+    settings:
+      ip_configuration:
+        authorized_networks:
+        - name: google dns server
+          value: 8.8.8.8/32
+      tier: db-n1-standard-1
+    region: us-central1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -538,6 +551,33 @@ settings:
         Generation (recommended) or First Generation.
       returned: success
       type: str
+    availabilityType:
+      description:
+      - The availabilityType define if your postgres instance is run zonal or regional.
+      returned: success
+      type: str
+    backupConfiguration:
+      description:
+      - The daily backup configuration for the instance.
+      returned: success
+      type: complex
+      contains:
+        enabled:
+          description:
+          - Enable Autobackup for your instance.
+          returned: success
+          type: bool
+        binaryLogEnabled:
+          description:
+          - Whether binary log is enabled. If backup configuration is disabled, binary
+            log must be disabled as well. MySQL only.
+          returned: success
+          type: bool
+        startTime:
+          description:
+          - Define the backup start time in UTC (HH:MM) .
+          returned: success
+          type: str
     settingsVersion:
       description:
       - The version of instance settings. This is a required field for update method
@@ -570,7 +610,7 @@ def main():
             backend_type=dict(type='str', choices=['FIRST_GEN', 'SECOND_GEN', 'EXTERNAL']),
             connection_name=dict(type='str'),
             database_version=dict(type='str', choices=['MYSQL_5_5', 'MYSQL_5_6', 'MYSQL_5_7', 'POSTGRES_9_6']),
-            failover_replica=dict(type='dict', options=dict(available=dict(type='bool'), name=dict(type='str'))),
+            failover_replica=dict(type='dict', options=dict(name=dict(type='str'))),
             instance_type=dict(type='str', choices=['CLOUD_SQL_INSTANCE', 'ON_PREMISES_INSTANCE', 'READ_REPLICA_INSTANCE']),
             ipv6_address=dict(type='str'),
             master_instance_name=dict(type='str'),
@@ -614,7 +654,10 @@ def main():
                         ),
                     ),
                     tier=dict(type='str'),
-                    settings_version=dict(type='int'),
+                    availability_type=dict(type='str', choices=['ZONAL', 'REGIONAL']),
+                    backup_configuration=dict(
+                        type='dict', options=dict(enabled=dict(type='bool'), binary_log_enabled=dict(type='bool'), start_time=dict(type='str'))
+                    ),
                 ),
             ),
         )
@@ -809,10 +852,10 @@ class InstanceFailoverreplica(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'available': self.request.get('available'), u'name': self.request.get('name')})
+        return remove_nones_from_dict({u'name': self.request.get('name')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'available': self.request.get(u'available'), u'name': self.request.get(u'name')})
+        return remove_nones_from_dict({u'name': self.request.get(u'name')})
 
 
 class InstanceIpaddressesArray(object):
@@ -927,7 +970,8 @@ class InstanceSettings(object):
             {
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
                 u'tier': self.request.get('tier'),
-                u'settingsVersion': self.request.get('settings_version'),
+                u'availabilityType': self.request.get('availability_type'),
+                u'backupConfiguration': InstanceBackupconfiguration(self.request.get('backup_configuration', {}), self.module).to_request(),
             }
         )
 
@@ -936,7 +980,8 @@ class InstanceSettings(object):
             {
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
                 u'tier': self.request.get(u'tier'),
-                u'settingsVersion': self.request.get(u'settingsVersion'),
+                u'availabilityType': self.request.get(u'availabilityType'),
+                u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
             }
         )
 
@@ -993,6 +1038,25 @@ class InstanceAuthorizednetworksArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'expirationTime': item.get(u'expirationTime'), u'name': item.get(u'name'), u'value': item.get(u'value')})
+
+
+class InstanceBackupconfiguration(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get('enabled'), u'binaryLogEnabled': self.request.get('binary_log_enabled'), u'startTime': self.request.get('start_time')}
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get(u'enabled'), u'binaryLogEnabled': self.request.get(u'binaryLogEnabled'), u'startTime': self.request.get(u'startTime')}
+        )
 
 
 if __name__ == '__main__':

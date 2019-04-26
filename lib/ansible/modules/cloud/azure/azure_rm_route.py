@@ -31,8 +31,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the route. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the route. Use C(present) to create or update and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -72,16 +72,16 @@ author:
 EXAMPLES = '''
     - name: Create a route
       azure_rm_route:
-        name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
+        name: myRoute
         address_prefix: 10.1.0.0/16
         next_hop_type: virtual_network_gateway
         route_table_name: table
 
     - name: Delete a route
       azure_rm_route:
-        name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
+        name: myRoute
         route_table_name: table
         state: absent
 '''

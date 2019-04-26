@@ -82,6 +82,12 @@ options:
     - This is required if C(name) is not supplied.
     - If virtual machine does not exists, then this parameter is ignored.
     - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
+  use_instance_uuid:
+    description:
+    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    default: no
+    type: bool
+    version_added: '2.8'
   template:
     description:
     - Template or existing virtual machine used to create new virtual machine.
@@ -177,10 +183,12 @@ options:
     - '     - C(thin) thin disk'
     - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
     - '     Default: C(None) thick disk, no eagerzero.'
-    - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
+    - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
+          then will select the less used datastore whose name contains this "disk.datastore" string.'
     - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
-    - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
+    - ' - C(autoselect_datastore) (bool): select the less used datastore. "disk.datastore" and "disk.autoselect_datastore"
+          will not be used if C(datastore) is specified outside this C(disk) configuration.'
     - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
     - '     - Available options are :'
     - '     - C(persistent): Changes are immediately and permanently written to the virtual disk. This is default.'
@@ -344,9 +352,9 @@ options:
   datastore:
     description:
     - Specify datastore or datastore cluster to provision virtual machine.
-    - 'This will take precedence over "disk.datastore" parameter.'
-    - This parameter is useful to override datastore or datastore cluster setting.
-    - For example, when user has different datastore or datastore cluster for templates and virtual machines.
+    - 'This parameter takes precedence over "disk.datastore" parameter.'
+    - 'This parameter can be used to override datastore or datastore cluster setting of the virtual machine when deployed
+      from the template.'
     - Please see example for more usage.
     version_added: '2.7'
   convert:
@@ -836,6 +844,7 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
         self.device_helper = PyVmomiDeviceHelper(self.module)
         self.configspec = None
+        self.relospec = None
         self.change_detected = False  # a change was detected and needs to be applied through reconfiguration
         self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.customspec = None
@@ -1389,6 +1398,7 @@ class PyVmomiHelper(PyVmomi):
                 nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
                 nic.device.backing.opaqueNetworkId = network_id
                 nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
+                nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -1405,7 +1415,13 @@ class PyVmomiHelper(PyVmomi):
                     nic_change_detected = True
 
             if nic_change_detected:
-                self.configspec.deviceChange.append(nic)
+                # Change to fix the issue found while configuring opaque network
+                # VMs cloned from a template with opaque network will get disconnected
+                # Replacing deprecated config parameter with relocation Spec
+                if isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
+                    self.relospec.deviceChange.append(nic)
+                else:
+                    self.configspec.deviceChange.append(nic)
                 self.change_detected = True
 
     def configure_vapp_properties(self, vm_obj):
@@ -1810,8 +1826,8 @@ class PyVmomiHelper(PyVmomi):
             if 'filename' in expected_disk_spec and expected_disk_spec['filename'] is not None:
                 self.add_existing_vmdk(vm_obj, expected_disk_spec, diskspec, scsi_ctl)
                 continue
-            elif vm_obj is None:
-                # We are creating new VM
+            elif vm_obj is None or self.params['template']:
+                # We are creating new VM or from Template
                 diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
 
             # which datastore?
@@ -2135,6 +2151,9 @@ class PyVmomiHelper(PyVmomi):
 
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
+        # create the relocation spec
+        self.relospec = vim.vm.RelocateSpec()
+        self.relospec.deviceChange = []
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
@@ -2159,13 +2178,10 @@ class PyVmomiHelper(PyVmomi):
         clone_method = None
         try:
             if self.params['template']:
-                # create the relocation spec
-                relospec = vim.vm.RelocateSpec()
-
                 # Only select specific host when ESXi hostname is provided
                 if self.params['esxi_hostname']:
-                    relospec.host = self.select_host()
-                relospec.datastore = datastore
+                    self.relospec.host = self.select_host()
+                self.relospec.datastore = datastore
 
                 # Convert disk present in template if is set
                 if self.params['convert']:
@@ -2181,22 +2197,22 @@ class PyVmomiHelper(PyVmomi):
                                 disk_locator.diskBackingInfo.diskMode = "persistent"
                             disk_locator.diskId = device.key
                             disk_locator.datastore = datastore
-                            relospec.disk.append(disk_locator)
+                            self.relospec.disk.append(disk_locator)
 
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
-                relospec.pool = resource_pool
+                self.relospec.pool = resource_pool
 
                 linked_clone = self.params.get('linked_clone')
                 snapshot_src = self.params.get('snapshot_src', None)
                 if linked_clone:
                     if snapshot_src is not None:
-                        relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+                        self.relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
                     else:
                         self.module.fail_json(msg="Parameter 'linked_src' and 'snapshot_src' are"
                                                   " required together for linked clone operation.")
 
-                clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
+                clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=self.relospec)
                 if self.customspec:
                     clonespec.customization = self.customspec
 
@@ -2306,7 +2322,9 @@ class PyVmomiHelper(PyVmomi):
     def reconfigure_vm(self):
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
-
+        # create the relocation spec
+        self.relospec = vim.vm.RelocateSpec()
+        self.relospec.deviceChange = []
         self.configure_guestid(vm_obj=self.current_vm_obj)
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
         self.configure_hardware_params(vm_obj=self.current_vm_obj)
@@ -2321,12 +2339,11 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.annotation = str(self.params['annotation'])
             self.change_detected = True
 
-        relospec = vim.vm.RelocateSpec()
         if self.params['resource_pool']:
-            relospec.pool = self.get_resource_pool()
+            self.relospec.pool = self.get_resource_pool()
 
-            if relospec.pool != self.current_vm_obj.resourcePool:
-                task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
+            if self.relospec.pool != self.current_vm_obj.resourcePool:
+                task = self.current_vm_obj.RelocateVM_Task(spec=self.relospec)
                 self.wait_for_task(task)
                 if task.info.state == 'error':
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'relocate'}
@@ -2521,6 +2538,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
@@ -2607,6 +2625,9 @@ def main():
             if not tmp_result["failed"]:
                 result["failed"] = False
             result['instance'] = tmp_result['instance']
+            if tmp_result["failed"]:
+                result["failed"] = True
+                result["msg"] = tmp_result["msg"]
         else:
             # This should not happen
             raise AssertionError()

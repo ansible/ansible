@@ -478,7 +478,7 @@ def gather_vm_facts(module, vm_params):
                 vm_facts['cdrom'].update(type="none")
             else:
                 vm_facts['cdrom'].update(type="iso")
-                vm_facts['cdrom'].update(iso=vm_vbd_params['VDI']['name_label'])
+                vm_facts['cdrom'].update(iso_name=vm_vbd_params['VDI']['name_label'])
 
     for vm_vif_params in vm_params['VIFs']:
         vm_guest_metrics_networks = vm_params['guest_metrics'].get('networks', {})
@@ -492,7 +492,8 @@ def gather_vm_facts(module, vm_params):
             "prefix": "",
             "netmask": "",
             "gateway": "",
-            "ip6": [vm_guest_metrics_networks[ipv6] for ipv6 in vm_guest_metrics_networks.keys() if ipv6.startswith("%s/ipv6/" % vm_vif_params['device'])],
+            "ip6": [vm_guest_metrics_networks[ipv6] for ipv6 in sorted(vm_guest_metrics_networks.keys()) if ipv6.startswith("%s/ipv6/" %
+                                                                                                                            vm_vif_params['device'])],
             "prefix6": "",
             "gateway6": "",
         }
@@ -575,7 +576,7 @@ def set_vm_power_state(module, vm_ref, power_state, timeout=300):
                     # hard_shutdown will halt VM regardless of current state.
                     xapi_session.xenapi.VM.hard_shutdown(vm_ref)
             elif power_state == "restarted":
-                # hard_restart will restart VM only if VM is in paused or running state.
+                # hard_reboot will restart VM only if VM is in paused or running state.
                 if vm_power_state_current in ["paused", "poweredon"]:
                     if not module.check_mode:
                         xapi_session.xenapi.VM.hard_reboot(vm_ref)
@@ -601,7 +602,7 @@ def set_vm_power_state(module, vm_ref, power_state, timeout=300):
                             if task_result:
                                 module.fail_json(msg="Guest shutdown task failed: '%s'!" % task_result)
                 else:
-                    module.fail_json(msg="Cannot shutdown guest when VM is in state '%s'." % vm_power_state_current)
+                    module.fail_json(msg="Cannot shutdown guest when VM is in state '%s'!" % vm_power_state_current)
             elif power_state == "rebootguest":
                 # running state is required for guest reboot.
                 if vm_power_state_current == "poweredon":
@@ -615,7 +616,7 @@ def set_vm_power_state(module, vm_ref, power_state, timeout=300):
                             if task_result:
                                 module.fail_json(msg="Guest reboot task failed: '%s'!" % task_result)
                 else:
-                    module.fail_json(msg="Cannot reboot guest when VM is in state '%s'." % vm_power_state_current)
+                    module.fail_json(msg="Cannot reboot guest when VM is in state '%s'!" % vm_power_state_current)
             else:
                 module.fail_json(msg="Requested VM power state '%s' is unsupported!" % power_state)
 
@@ -647,22 +648,24 @@ def wait_for_task(module, task_ref, timeout=300):
 
     result = ""
 
-    # If we have to wait indefinitely, make timeout larger than 0 so we can
+    # If we have to wait indefinitely, make time_left larger than 0 so we can
     # enter while loop.
     if timeout == 0:
-        timeout = 1
+        time_left = 1
+    else:
+        time_left = timeout
 
     try:
-        while timeout > 0:
+        while time_left > 0:
             task_status = xapi_session.xenapi.task.get_status(task_ref).lower()
 
             if task_status == "pending":
                 # Task is still running.
                 time.sleep(interval)
 
-                # We decrease timeout only if we don't wait indefinitely.
+                # We decrease time_left only if we don't wait indefinitely.
                 if timeout != 0:
-                    timeout -= interval
+                    time_left -= interval
 
                 continue
             elif task_status == "success":
@@ -710,7 +713,7 @@ def wait_for_vm_ip_address(module, vm_ref, timeout=300):
         vm_power_state = xapi_to_module_vm_power_state(xapi_session.xenapi.VM.get_power_state(vm_ref).lower())
 
         if vm_power_state != 'poweredon':
-            module.fail_json(msg="Cannot wait for VM IP address when VM is in state '%s'." % vm_power_state)
+            module.fail_json(msg="Cannot wait for VM IP address when VM is in state '%s'!" % vm_power_state)
 
         interval = 2
 
@@ -807,10 +810,11 @@ class XAPI(object):
                 hostname = "http://%s" % hostname
 
             try:
-                # ignore_ssl is supported in XenAPI.py 7.2 onward but there
-                # is no way to tell which version we are using. TypeError will
-                # be raised if ignore_ssl is not supported. Additionally,
-                # ignore_ssl requires Python 2.7.9 or newer.
+                # ignore_ssl is supported in XenAPI library from XenServer 7.2
+                # SDK onward but there is no way to tell which version we
+                # are using. TypeError will be raised if ignore_ssl is not
+                # supported. Additionally, ignore_ssl requires Python 2.7.9
+                # or newer.
                 cls._xapi_session = XenAPI.Session(hostname, ignore_ssl=ignore_ssl)
             except TypeError:
                 # Try without ignore_ssl.
@@ -827,6 +831,7 @@ class XAPI(object):
         # Disabling atexit should be used in special cases only.
         if disconnect_atexit:
             atexit.register(cls._xapi_session.logout)
+
         return cls._xapi_session
 
 
@@ -854,13 +859,11 @@ class XenServerObject(object):
             module: Reference to Ansible module object.
         """
         if not HAS_XENAPI:
-            module.fail_json(changed=False, msg="XenAPI.py required for this module! Please download XenServer SDK and copy XenAPI.py to your site-packages.")
+            module.fail_json(changed=False, msg=("XenAPI Python library is required for this module! "
+                                                 "Please download XenServer SDK and copy XenAPI.py to your Python site-packages. "
+                                                 "Check Notes section in module documentation for more info."))
 
-        if module:
-            self.module = module
-        else:
-            module.fail_json(msg="XenServerObject: Invalid module object passed!")
-
+        self.module = module
         self.xapi_session = XAPI.connect(module)
 
         try:

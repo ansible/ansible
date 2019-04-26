@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a target ssl proxy facts
+- name: " a target ssl proxy facts"
   gcp_compute_target_ssl_proxy_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -99,7 +100,7 @@ items:
       description:
       - A reference to the BackendService resource.
       returned: success
-      type: str
+      type: dict
     sslCertificates:
       description:
       - A list of SslCertificate resources that are used to authenticate connections
@@ -113,7 +114,7 @@ items:
         resource. If not set, the TargetSslProxy resource will not have any SSL policy
         configured.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################

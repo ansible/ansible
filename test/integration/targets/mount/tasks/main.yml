@@ -119,8 +119,6 @@
   shell: mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l
   register: remount_options
 
-- debug: var=remount_options
-
 - name: Make sure the filesystem now has the new opts
   assert:
     that:
@@ -278,7 +276,6 @@
       - "' 0 0' in optional_fields_content.stdout"
       - "1 == optional_fields_content.stdout_lines | length"
   when: ansible_system in ('Linux')
-
 
 - name: Block to test remounted option
   block:

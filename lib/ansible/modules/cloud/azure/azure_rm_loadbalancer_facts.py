@@ -39,21 +39,21 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Thomas Stringer (@tstringer)"
+    - "Thomas Stringer (@trstringer)"
 '''
 
 EXAMPLES = '''
     - name: Get facts for one load balancer
       azure_rm_loadbalancer_facts:
         name: Testing
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts for all load balancers
       azure_rm_loadbalancer_facts:
 
     - name: Get facts for all load balancers in a specific resource group
       azure_rm_loadbalancer_facts:
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts by tags
       azure_rm_loadbalancer_facts:

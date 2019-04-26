@@ -111,6 +111,9 @@
   assert:
     that:
       - account_deactivate_idempotent is not changed
+      # The next condition should be true for all conforming ACME servers.
+      # In case it is not true, it could be both an error in acme_account
+      # and in the ACME server.
       - account_deactivate_idempotent.account_uri is none
 
 - name: Validate that the account is gone (new account key)

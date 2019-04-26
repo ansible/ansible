@@ -33,8 +33,8 @@ options:
             - Name of the storage account to update or create.
     state:
         description:
-            - Assert the state of the storage account. Use 'present' to create or update a storage account and
-              'absent' to delete an account.
+            - Assert the state of the storage account. Use C(present) to create or update a storage account and
+              C(absent) to delete an account.
         default: present
         choices:
             - absent
@@ -181,7 +181,7 @@ state:
     sample: {
         "account_type": "Standard_RAGRS",
         "custom_domain": null,
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Storage/storageAccounts/clh0003",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/clh0003",
         "location": "eastus2",
         "name": "clh0003",
         "primary_endpoints": {

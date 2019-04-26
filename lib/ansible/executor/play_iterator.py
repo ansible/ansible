@@ -160,7 +160,7 @@ class PlayIterator:
         # the others.
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
-        setup_task.action = 'setup'
+        setup_task.action = 'gather_facts'
         setup_task.name = 'Gathering Facts'
         setup_task.args = {
             'gather_subset': gather_subset,
@@ -190,7 +190,7 @@ class PlayIterator:
 
         self._host_states = {}
         start_at_matched = False
-        batch = inventory.get_hosts(self._play.hosts)
+        batch = inventory.get_hosts(self._play.hosts, order=self._play.order)
         self.batch_size = len(batch)
         for host in batch:
             self._host_states[host.name] = HostState(blocks=self._blocks)
@@ -287,7 +287,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
@@ -305,7 +305,9 @@ class PlayIterator:
                         state.cur_regular_task = 0
                         state.cur_rescue_task = 0
                         state.cur_always_task = 0
-                        state.child_state = None
+                        state.tasks_child_state = None
+                        state.rescue_child_state = None
+                        state.always_child_state = None
 
             elif state.run_state == self.ITERATING_TASKS:
                 # clear the pending setup flag, since we're past that and it didn't fail
@@ -342,7 +344,7 @@ class PlayIterator:
                         task = block.block[state.cur_regular_task]
                         # if the current task is actually a child block, create a child
                         # state for us to recurse into on the next pass
-                        if isinstance(task, Block) or state.tasks_child_state is not None:
+                        if isinstance(task, Block):
                             state.tasks_child_state = HostState(blocks=[task])
                             state.tasks_child_state.run_state = self.ITERATING_TASKS
                             # since we've created the child state, clear the task
@@ -375,7 +377,7 @@ class PlayIterator:
                         state.did_rescue = True
                     else:
                         task = block.rescue[state.cur_rescue_task]
-                        if isinstance(task, Block) or state.rescue_child_state is not None:
+                        if isinstance(task, Block):
                             state.rescue_child_state = HostState(blocks=[task])
                             state.rescue_child_state.run_state = self.ITERATING_TASKS
                             task = None
@@ -416,7 +418,7 @@ class PlayIterator:
                                 block._role._completed[host.name] = True
                     else:
                         task = block.always[state.cur_always_task]
-                        if isinstance(task, Block) or state.always_child_state is not None:
+                        if isinstance(task, Block):
                             state.always_child_state = HostState(blocks=[task])
                             state.always_child_state.run_state = self.ITERATING_TASKS
                             task = None

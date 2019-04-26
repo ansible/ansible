@@ -43,4 +43,41 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
             for fcfile in glob.glob('/sys/class/fc_host/*/port_name'):
                 for line in get_file_lines(fcfile):
                     fc_facts['fibre_channel_wwn'].append(line.rstrip()[2:])
+        elif sys.platform.startswith('sunos'):
+            """
+            on solaris 10 or solaris 11 should use `fcinfo hba-port`
+            TBD (not implemented): on solaris 9 use `prtconf -pv`
+            """
+            cmd = module.get_bin_path('fcinfo')
+            cmd = cmd + " hba-port"
+            rc, fcinfo_out, err = module.run_command(cmd)
+            """
+            # fcinfo hba-port  | grep "Port WWN"
+            HBA Port WWN: 10000090fa1658de
+            """
+            if fcinfo_out:
+                for line in fcinfo_out.splitlines():
+                    if 'Port WWN' in line:
+                        data = line.split(' ')
+                        fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
+        elif sys.platform.startswith('aix'):
+            # get list of available fibre-channel devices (fcs)
+            cmd = module.get_bin_path('lsdev')
+            cmd = cmd + " -Cc adapter -l fcs*"
+            rc, lsdev_out, err = module.run_command(cmd)
+            if lsdev_out:
+                lscfg_cmd = module.get_bin_path('lscfg')
+                for line in lsdev_out.splitlines():
+                    # if device is available (not in defined state), get its WWN
+                    if 'Available' in line:
+                        data = line.split(' ')
+                        cmd = lscfg_cmd + " -vl %s" % data[0]
+                        rc, lscfg_out, err = module.run_command(cmd)
+                        # example output
+                        # lscfg -vpl fcs3 | grep "Network Address"
+                        #        Network Address.............10000090FA551509
+                        for line in lscfg_out.splitlines():
+                            if 'Network Address' in line:
+                                data = line.split('.')
+                                fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         return fc_facts

@@ -20,11 +20,12 @@ description:
 - Create or delete protection group snapshots on Pure Storage FlashArray.
 - Recovery of replicated snapshots on the replica target array is enabled.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   name:
     description:
     - The name of the source protection group.
+    type: str
     required: true
   suffix:
     description:
@@ -34,6 +35,7 @@ options:
     - Define whether the protection group snapshot should exist or not.
       Copy (added in 2.7) will create a full read/write clone of the
       snapshot.
+    type: str
     choices: [ absent, present, copy ]
     default: present
   eradicate:
@@ -44,6 +46,7 @@ options:
   restore:
     description:
     - Restore a specific volume from a protection group snapshot.
+    type: str
     version_added: 2.7
   overwrite:
     description:
@@ -55,6 +58,7 @@ options:
     description:
     - Volume to restore a specified volume to.
     - If not supplied this will default to the volume defined in I(restore)
+    type: str
     version_added: 2.8
 extends_documentation_fragment:
 - purestorage.fa
@@ -225,10 +229,10 @@ def main():
     array = get_system(module)
     pgroup = get_pgroup(module, array)
     if pgroup is None:
-        module.fail_json(msg="Protection Group {0} does not exist".format(module.params('pgroup')))
+        module.fail_json(msg="Protection Group {0} does not exist".format(module.params['name']))
     pgsnap = get_pgsnapshot(module, array)
     if pgsnap is None:
-        module.fail_json(msg="Selected volume {0} does not exist in the Protection Group".format(module.params('name')))
+        module.fail_json(msg="Selected volume {0} does not exist in the Protection Group".format(module.params['name']))
     if ":" in module.params['name']:
         rvolume = get_rpgsnapshot(module, array)
     else:

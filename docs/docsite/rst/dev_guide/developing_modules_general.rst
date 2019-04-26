@@ -119,8 +119,11 @@ To create a new module:
     original_message:
         description: The original name param that was passed in
         type: str
+        returned: always
     message:
         description: The output message that the sample module generates
+        type: str
+        returned: always
     '''
 
     from ansible.module_utils.basic import AnsibleModule
@@ -304,5 +307,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-Thank you to Thomas Stringer (`@tstringer <https://github.com/tstringer>`_) for contributing source
+Thank you to Thomas Stringer (`@trstringer <https://github.com/trstringer>`_) for contributing source
 material for this topic.

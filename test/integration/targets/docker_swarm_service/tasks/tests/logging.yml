@@ -1,0 +1,158 @@
+---
+
+- name: Registering service name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-logging' }}"
+
+- name: Registering service name
+  set_fact:
+    service_names: "{{ service_names }} + [service_name]"
+
+####################################################################
+## logging.driver ##################################################
+####################################################################
+
+- name: logging.driver
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    logging:
+      driver: json-file
+  register: logging_driver_1
+
+- name: logging.driver (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    logging:
+      driver: json-file
+  register: logging_driver_2
+
+- name: log_driver (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    log_driver: json-file
+  register: logging_driver_2b
+
+- name: logging.driver (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    logging:
+      driver: syslog
+  register: logging_driver_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - logging_driver_1 is changed
+      - logging_driver_2 is not changed
+      - logging_driver_2b is not changed
+      - logging_driver_3 is changed
+
+####################################################################
+## logging.options #################################################
+####################################################################
+
+- name: logging_options
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    logging:
+      driver: json-file
+      options:
+        labels: production_status
+        env: os,customer
+  register: logging_options_1
+
+- name: logging_options (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    logging:
+      driver: json-file
+      options:
+        env: os,customer
+        labels: production_status
+  register: logging_options_2
+
+- name: log_driver_options (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    log_driver: json-file
+    log_driver_options:
+      env: os,customer
+      labels: production_status
+  register: logging_options_2b
+
+- name: logging_options (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    logging:
+      driver: json-file
+      options:
+        env: os,customer
+        labels: production_status
+        max-file: "1"
+  register: logging_options_3
+
+- name: logging_options (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    logging:
+      driver: json-file
+      options: {}
+  register: logging_options_4
+
+- name: logging_options (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    logging:
+      driver: json-file
+      options: {}
+  register: logging_options_5
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - logging_options_1 is changed
+      - logging_options_2 is not changed
+      - logging_options_2b is not changed
+      - logging_options_3 is changed
+      - logging_options_4 is changed
+      - logging_options_5 is not changed

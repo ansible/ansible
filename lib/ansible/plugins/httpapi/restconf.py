@@ -41,8 +41,10 @@ options:
 
 import json
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.plugins.httpapi import HttpApiBase
 
 
@@ -54,7 +56,7 @@ class HttpApi(HttpApiBase):
         if data:
             data = json.dumps(data)
 
-        path = self.get_option('root_path') + message_kwargs.get('path', '')
+        path = '/'.join([self.get_option('root_path').rstrip('/'), message_kwargs.get('path', '').lstrip('/')])
 
         headers = {
             'Content-Type': message_kwargs.get('content_type') or CONTENT_TYPE,
@@ -62,18 +64,24 @@ class HttpApi(HttpApiBase):
         }
         response, response_data = self.connection.send(path, data, headers=headers, method=message_kwargs.get('method'))
 
-        return handle_response(response_data.read())
+        return handle_response(response, response_data)
 
 
-def handle_response(response):
-    if 'error' in response and 'jsonrpc' not in response:
-        error = response['error']
+def handle_response(response, response_data):
+    try:
+        response_data = json.loads(response_data.read())
+    except ValueError:
+        response_data = response_data.read()
 
-        error_text = []
-        for data in error['data']:
-            error_text.extend(data.get('errors', []))
-        error_text = '\n'.join(error_text) or error['message']
+    if isinstance(response, HTTPError):
+        if response_data:
+            if 'errors' in response_data:
+                errors = response_data['errors']['error']
+                error_text = '\n'.join((error['error-message'] for error in errors))
+            else:
+                error_text = response_data
 
-        raise ConnectionError(error_text, code=error['code'])
+            raise ConnectionError(error_text, code=response.code)
+        raise ConnectionError(to_text(response), code=response.code)
 
-    return response
+    return response_data

@@ -19,18 +19,21 @@ short_description: Manage volume snapshots on Pure Storage FlashArrays
 description:
 - Create or delete volumes and volume snapshots on Pure Storage FlashArray.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   name:
     description:
     - The name of the source volume.
+    type: str
     required: true
   suffix:
     description:
     - Suffix of snapshot name.
+    type: str
   target:
     description:
     - Name of target volume if creating from snapshot.
+    type: str
   overwrite:
     description:
     - Define whether to overwrite existing volume when creating from snapshot.
@@ -40,6 +43,7 @@ options:
     description:
     - Define whether the volume snapshot should exist or not.
     choices: [ absent, copy, present ]
+    type: str
     default: present
   eradicate:
     description:

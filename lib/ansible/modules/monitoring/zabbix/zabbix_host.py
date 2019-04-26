@@ -112,11 +112,12 @@ options:
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
-    tls_issuer:
+    ca_cert:
         description:
             - Required certificate issuer.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        aliases: [ tls_issuer ]
     tls_subject:
         description:
             - Required certificate subject.
@@ -642,7 +643,7 @@ def main():
             tls_accept=dict(type='int', default=1),
             tls_psk_identity=dict(type='str', required=False),
             tls_psk=dict(type='str', required=False),
-            tls_issuer=dict(type='str', required=False),
+            ca_cert=dict(type='str', required=False, aliases=['tls_issuer']),
             tls_subject=dict(type='str', required=False),
             inventory_zabbix=dict(required=False, type='dict'),
             timeout=dict(type='int', default=10),
@@ -678,7 +679,7 @@ def main():
     tls_accept = module.params['tls_accept']
     tls_psk_identity = module.params['tls_psk_identity']
     tls_psk = module.params['tls_psk']
-    tls_issuer = module.params['tls_issuer']
+    tls_issuer = module.params['ca_cert']
     tls_subject = module.params['tls_subject']
     inventory_zabbix = module.params['inventory_zabbix']
     status = module.params['status']

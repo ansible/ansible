@@ -127,7 +127,7 @@ options:
       type: bool
     state:
       description:
-        - Assert the state of the SQL Database. Use 'present' to create or update an SQL Database and 'absent' to delete it.
+        - Assert the state of the SQL Database. Use C(present) to create or update an SQL Database and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -135,6 +135,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -156,8 +157,8 @@ EXAMPLES = '''
       name: restoreddb
       location: eastus
       create_mode: restore
-      restorable_dropped_database_id: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/s
-                                      ervers/testsvr/restorableDroppedDatabases/testdb2,131444841315030000"
+      restorable_dropped_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/s
+                                       ervers/testsvr/restorableDroppedDatabases/testdb2,131444841315030000"
 
   - name: Create SQL Database in Copy Mode
     azure_rm_sqldatabase:
@@ -167,7 +168,7 @@ EXAMPLES = '''
       location: eastus
       create_mode: copy
       source_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/tests
-                          vr/databases/testdb"
+                           vr/databases/testdb"
 
 '''
 
@@ -210,7 +211,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMDatabases(AzureRMModuleBase):
+class AzureRMSqlDatabase(AzureRMModuleBase):
     """Configuration class for an Azure RM SQL Database resource"""
 
     def __init__(self):
@@ -301,19 +302,20 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.server_name = None
         self.name = None
         self.parameters = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                               supports_check_mode=True,
-                                               supports_tags=False)
+        super(AzureRMSqlDatabase, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                 supports_check_mode=True,
+                                                 supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
@@ -380,6 +382,9 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if (('edition' in self.parameters) and
                         (self.parameters['edition'] != old_response['edition'])):
                     self.to_do = Actions.Update
+                update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
+                if update_tags:
+                    self.tags = newtags
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the SQL Database instance")
@@ -388,6 +393,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 self.results['changed'] = True
                 return self.results
 
+            self.parameters['tags'] = self.tags
             response = self.create_update_sqldatabase()
 
             if not old_response:
@@ -489,7 +495,7 @@ def _snake_to_camel(snake, capitalize_first=False):
 
 def main():
     """Main execution"""
-    AzureRMDatabases()
+    AzureRMSqlDatabase()
 
 
 if __name__ == '__main__':

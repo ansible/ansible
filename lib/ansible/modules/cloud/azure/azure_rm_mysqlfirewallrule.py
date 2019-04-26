@@ -42,7 +42,7 @@ options:
             - The end IP address of the MySQL firewall rule. Must be IPv4 format.
     state:
         description:
-            - Assert the state of the MySQL firewall rule. Use 'present' to create or update a rule and 'absent' to ensure it is not present.
+            - Assert the state of the MySQL firewall rule. Use C(present) to create or update a rule and C(absent) to ensure it is not present.
         default: present
         choices:
             - absent
@@ -59,7 +59,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) MySQL firewall rule
     azure_rm_mysqlfirewallrule:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: rule1
       start_ip_address: 10.0.0.17
@@ -72,7 +72,8 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver/firewallRules/rule1
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testserver/fire
+             wallRules/rule1"
 '''
 
 import time
@@ -92,7 +93,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMFirewallRules(AzureRMModuleBase):
+class AzureRMMySqlFirewallRule(AzureRMModuleBase):
     """Configuration class for an Azure RM MySQL firewall rule resource"""
 
     def __init__(self):
@@ -132,9 +133,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMFirewallRules, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                   supports_check_mode=True,
-                                                   supports_tags=False)
+        super(AzureRMMySqlFirewallRule, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                       supports_check_mode=True,
+                                                       supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -267,7 +268,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMFirewallRules()
+    AzureRMMySqlFirewallRule()
 
 
 if __name__ == '__main__':

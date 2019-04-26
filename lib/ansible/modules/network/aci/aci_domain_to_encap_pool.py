@@ -20,14 +20,6 @@ description:
 notes:
 - The C(domain) and C(encap_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_encap_pool) can be used for these.
-seealso:
-- module: aci_domain
-- module: aci_encap_pool
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(infra:RsVlanNs).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.5'
 options:
   domain:
@@ -73,6 +65,14 @@ options:
     type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
+seealso:
+- module: aci_domain
+- module: aci_encap_pool
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:RsVlanNs).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -233,8 +233,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 VM_PROVIDER_MAPPING = dict(
     cloudfoundry='CloudFoundry',
@@ -265,11 +265,11 @@ POOL_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm']),
-        pool=dict(type='str', aliases=['pool_name']),
-        pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
+        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm']),
         pool_type=dict(type='str', required=True, choices=['vlan', 'vsan', 'vxlan']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
+        pool=dict(type='str', aliases=['pool_name']),  # Not required for querying all objects
+        pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
     )

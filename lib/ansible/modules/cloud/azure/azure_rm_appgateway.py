@@ -357,8 +357,8 @@ options:
                     - Redirect configuration resource of the application gateway
     state:
         description:
-            - Assert the state of the Public IP. Use 'present' to create or update a and
-              'absent' to delete.
+            - Assert the state of the Public IP. Use C(present) to create or update a and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -377,7 +377,7 @@ EXAMPLES = '''
 - name: Create instance of Application Gateway
   azure_rm_appgateway:
     resource_group: myResourceGroup
-    name: myappgateway
+    name: myAppGateway
     sku:
       name: standard_small
       tier: standard

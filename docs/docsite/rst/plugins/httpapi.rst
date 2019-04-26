@@ -18,7 +18,7 @@ others might be usable on a variety of platforms (RESTCONF).
 Adding httpapi plugins
 -------------------------
 
-You can extend Ansible to support other APIs by dropping a custom plugin into the ``httpapi_plugins`` directory.
+You can extend Ansible to support other APIs by dropping a custom plugin into the ``httpapi_plugins`` directory. See :ref:`developing_plugins_httpapi` for details.
 
 .. _using_httpapi:
 
@@ -51,6 +51,8 @@ Use ``ansible-doc -t httpapi <plugin name>`` to see detailed documentation and e
 
    :ref:`Ansible for Network Automation<network_guide>`
        An overview of using Ansible to automate networking devices.
+   :ref:`Developing network modules<developing_modules_network>`
+       How to develop network modules.
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_

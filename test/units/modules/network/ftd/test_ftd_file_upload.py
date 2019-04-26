@@ -1,30 +1,12 @@
-# Copyright (c) 2018 Cisco and/or its affiliates.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
 from __future__ import absolute_import
 
 import pytest
-
 from ansible.module_utils import basic
-from ansible.module_utils.network.ftd.common import HTTPMethod
-from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField
-from ansible.modules.network.ftd import ftd_file_upload
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
+
+from ansible.modules.network.ftd import ftd_file_upload
+from ansible.module_utils.network.ftd.fdm_swagger_client import OperationField
+from ansible.module_utils.network.ftd.common import HTTPMethod
 
 
 class TestFtdFileUpload(object):

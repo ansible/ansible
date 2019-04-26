@@ -45,13 +45,13 @@ author:
 EXAMPLES = '''
   - name: Get specific setting of PostgreSQL configuration
     azure_rm_postgresqlconfiguration_facts:
-      resource_group: testrg
+      resource_group: myResourceGroup
       server_name: testpostgresqlserver
       name: deadlock_timeout
 
   - name: Get all settings of PostgreSQL Configuration
     azure_rm_postgresqlconfiguration_facts:
-      resource_group: testrg
+      resource_group: myResourceGroup
       server_name: testpostgresqlserver
 '''
 

@@ -113,7 +113,7 @@ def main():
     argument_spec.update(
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True),
-        vrf=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
+        vrf=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         display_name=dict(type='str'),
         layer3_multicast=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),

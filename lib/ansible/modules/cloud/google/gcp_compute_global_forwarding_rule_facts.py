@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a global forwarding rule facts
+- name: " a global forwarding rule facts"
   gcp_compute_global_forwarding_rule_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -116,7 +117,7 @@ items:
       - This is used for internal load balancing.
       - "(not used for external load balancing) ."
       returned: success
-      type: str
+      type: dict
     ipVersion:
       description:
       - The IP Version that will be used by this forwarding rule. Valid options are
@@ -149,7 +150,7 @@ items:
         specified, the default network will be used.
       - This field is not used for external load balancing.
       returned: success
-      type: str
+      type: dict
     portRange:
       description:
       - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -184,7 +185,7 @@ items:
         if the network is in custom subnet mode, a subnetwork must be specified.
       - This field is not used for external load balancing.
       returned: success
-      type: str
+      type: dict
     region:
       description:
       - A reference to the region where the regional forwarding rule resides.

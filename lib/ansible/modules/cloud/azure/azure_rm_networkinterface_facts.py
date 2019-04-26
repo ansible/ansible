@@ -48,16 +48,16 @@ author:
 EXAMPLES = '''
     - name: Get facts for one network interface
       azure_rm_networkinterface_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: nic001
 
     - name: Get network interfaces within a resource group
       azure_rm_networkinterface_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Get network interfaces by tag
       azure_rm_networkinterface_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         tags:
           - testing
           - foo:bar
@@ -77,17 +77,17 @@ azure_networkinterfaces:
         },
         "enable_ip_forwarding": false,
         "etag": 'W/"59726bfc-08c4-44ed-b900-f6a559876a9d"',
-        "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic003",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nic003",
         "ip_configuration": {
             "name": "default",
             "private_ip_address": "10.10.0.4",
             "private_ip_allocation_method": "Dynamic",
             "public_ip_address": {
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/publicip001",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/publicip001",
                 "name": "publicip001"
             },
             "subnet": {
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/vnet001/subnets/subnet001",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vnet001/subnets/subnet001",
                 "name": "subnet001",
                 "virtual_network_name": "vnet001"
             }
@@ -96,7 +96,7 @@ azure_networkinterfaces:
         "mac_address": null,
         "name": "nic003",
         "network_security_group": {
-            "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001",
+            "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001",
             "name": "secgroup001"
         },
         "primary": null,
@@ -156,6 +156,10 @@ networkinterfaces:
                 primary:
                     description:
                         - Whether the ip configuration is the primary one in the list.
+                application_security_groups:
+                    description:
+                        - List of Application security groups.
+                    sample: /subscriptions/<subsid>/resourceGroups/<rg>/providers/Microsoft.Network/applicationSecurityGroups/myASG
         enable_accelerated_networking:
             description:
                 - Specifies whether the network interface should be created with the accelerated networking feature or not
@@ -217,7 +221,9 @@ def nic_to_dict(nic):
             load_balancer_backend_address_pools=([item.id for item in config.load_balancer_backend_address_pools]
                                                  if config.load_balancer_backend_address_pools else None),
             public_ip_address=config.public_ip_address.id if config.public_ip_address else None,
-            public_ip_allocation_method=config.public_ip_address.public_ip_allocation_method if config.public_ip_address else None
+            public_ip_allocation_method=config.public_ip_address.public_ip_allocation_method if config.public_ip_address else None,
+            application_security_groups=([asg.id for asg in config.application_security_groups]
+                                         if config.application_security_groups else None)
         ) for config in nic.ip_configurations
     ]
     config = nic.ip_configurations[0] if len(nic.ip_configurations) > 0 else None

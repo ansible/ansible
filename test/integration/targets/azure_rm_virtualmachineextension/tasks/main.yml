@@ -1,0 +1,181 @@
+- name: Create Random Storage Account Name
+  set_fact:
+    storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    address_prefixes: "10.0.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: testSubnet
+    address_prefix: "10.0.1.0/24"
+    virtual_network: testVnet
+
+- name: Create public IP address
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Dynamic
+    name: testPublicIP
+
+- name: Create Network Security Group that allows SSH
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group }}"
+    name: testNetworkSecurityGroup
+    rules:
+      - name: SSH
+        protocol: Tcp
+        destination_port_range: 22
+        access: Allow
+        priority: 1001
+        direction: Inbound
+
+- name: Create virtual network interface card
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: testNIC
+    virtual_network: testVnet
+    subnet: testSubnet
+    public_ip_name: testPublicIP
+    security_group_name: testNetworkSecurityGroup
+
+- name: create a storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ storage_account }}"
+    type: Standard_LRS
+
+- name: Create VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: testVM
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    network_interfaces: testNIC
+    storage_account_name: "{{ storage_account }}"
+    storage_container: osdisk
+    storage_blob: osdisk.vhd
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+
+- name: Create VM Extension
+  azure_rm_virtualmachineextension:
+    resource_group: "{{ resource_group }}"
+    name: testVMExtension
+    virtual_machine_name: testVM
+    publisher: Microsoft.Azure.Extensions
+    virtual_machine_extension_type: CustomScript
+    type_handler_version: 2.0
+    auto_upgrade_minor_version: true
+    settings: {"commandToExecute": "hostname"}
+  register: results
+
+- name: Assert that VM Extension ran
+  assert:
+    that: results.changed
+
+- name: Query extension
+  azure_rm_virtualmachineextension_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMExtension
+    virtual_machine_name: testVM
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['virtual_machine_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['location'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+- name: List extensions
+  azure_rm_virtualmachineextension_facts:
+    resource_group: "{{ resource_group }}"
+    virtual_machine_name: testVM
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['virtual_machine_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['location'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+- name: Delete VM Extension
+  azure_rm_virtualmachineextension:
+    resource_group: "{{ resource_group }}"
+    name: testVMExtension
+    virtual_machine_name: testVM
+    state: absent
+    publisher: Microsoft.Azure.Extensions
+    virtual_machine_extension_type: CustomScript
+    type_handler_version: 2.0
+    auto_upgrade_minor_version: true
+    settings: {"commandToExecute": "hostname"}
+  register: results
+
+- name: Assert that VM Extension deleted
+  assert:
+    that: results.changed
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: testVM
+    state: absent
+    remove_on_absent: ['all']
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    network_interfaces: testNIC
+    storage_container: osdisk
+    storage_blob: osdisk.vhd
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+
+- name: Delete a storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ storage_account }}"
+    type: Standard_LRS
+    state: absent
+    force_delete_nonempty: true
+
+- name: Delete Network Security Group that allows SSH
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group }}"
+    name: testNetworkSecurityGroup
+    state: absent
+
+- name: Delete virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    state: absent
+    address_prefixes: "10.0.0.0/16"

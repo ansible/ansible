@@ -29,6 +29,7 @@ options:
       - If path is not specified default system temporary directory (%TEMP%) will be used.
     type: path
     default: '%TEMP%'
+    aliases: [ dest ]
   prefix:
     description:
       - Prefix of file/directory name created by module.
@@ -59,7 +60,7 @@ EXAMPLES = r"""
 
 RETURN = r'''
 path:
-  description: Path to created file or directory.
+  description: The absolute path to the created file or directory.
   returned: success
   type: str
   sample: C:\Users\Administrator\AppData\Local\Temp\ansible.bMlvdk

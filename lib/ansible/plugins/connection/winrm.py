@@ -104,7 +104,6 @@ import traceback
 import json
 import tempfile
 import subprocess
-import xml.etree.ElementTree as ET
 
 HAVE_KERBEROS = False
 try:
@@ -116,13 +115,14 @@ except ImportError:
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type, PY3
 from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.hashing import secure_hash
-from ansible.utils.path import makedirs_safe
 from ansible.utils.display import Display
 
 # getargspec is deprecated in favour of getfullargspec in Python 3 but
@@ -451,7 +451,9 @@ class Connection(ConnectionBase):
                         self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
 
             except Exception as ex:
-                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % to_text(ex))
+                display.warning("ERROR DURING WINRM SEND INPUT - attempting to recover: %s %s"
+                                % (type(ex).__name__, to_text(ex)))
+                display.debug(traceback.format_exc())
                 stdin_push_failed = True
 
             # NB: this can hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
@@ -471,14 +473,22 @@ class Connection(ConnectionBase):
             display.vvvvvv('WINRM STDERR %s' % to_text(response.std_err), host=self._winrm_host)
 
             if stdin_push_failed:
-                stderr = to_bytes(response.std_err, encoding='utf-8')
-                if self.is_clixml(stderr):
-                    stderr = self.parse_clixml_stream(stderr)
+                # There are cases where the stdin input failed but the WinRM service still processed it. We attempt to
+                # see if stdout contains a valid json return value so we can ignore this error
+                try:
+                    filtered_output, dummy = _filter_non_json_lines(response.std_out)
+                    json.loads(filtered_output)
+                except ValueError:
+                    # stdout does not contain a return response, stdin input was a fatal error
+                    stderr = to_bytes(response.std_err, encoding='utf-8')
+                    if self.is_clixml(stderr):
+                        stderr = self.parse_clixml_stream(stderr)
 
-                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (to_native(response.std_out), to_native(stderr)))
+                    raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s'
+                                       % (to_native(response.std_out), to_native(stderr)))
 
             return response
-        except requests.exceptions.ConnectionError as exc:
+        except requests.exceptions.Timeout as exc:
             raise AnsibleConnectionFailure('winrm connection error: %s' % to_native(exc))
         finally:
             if command_id:
@@ -527,27 +537,14 @@ class Connection(ConnectionBase):
         result.std_err = to_bytes(result.std_err)
 
         # parse just stderr from CLIXML output
-        if self.is_clixml(result.std_err):
+        if result.std_err.startswith(b"#< CLIXML"):
             try:
-                result.std_err = self.parse_clixml_stream(result.std_err)
+                result.std_err = _parse_clixml(result.std_err)
             except Exception:
                 # unsure if we're guaranteed a valid xml doc- use raw output in case of error
                 pass
 
         return (result.status_code, result.std_out, result.std_err)
-
-    def is_clixml(self, value):
-        return value.startswith(b"#< CLIXML\r\n")
-
-    # hacky way to get just stdout- not always sure of doc framing here, so use with care
-    def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
-        clixml = ET.fromstring(clixml_doc.split(b"\r\n", 1)[-1])
-        namespace_match = re.match(r'{(.*)}', clixml.tag)
-        namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
-
-        strings = clixml.findall("./%sS" % namespace)
-        lines = [e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream_name]
-        return to_bytes('\r\n'.join(lines))
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
     def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
@@ -625,9 +622,9 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
+        # consistent with other connection plugins, we assume the caller has created the target dir
         display.vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         buffer_size = 2**19  # 0.5MB chunks
-        makedirs_safe(os.path.dirname(out_path))
         out_file = None
         try:
             offset = 0
@@ -670,7 +667,6 @@ class Connection(ConnectionBase):
                     else:
                         data = base64.b64decode(result.std_out.strip())
                     if data is None:
-                        makedirs_safe(out_path)
                         break
                     else:
                         if not out_file:

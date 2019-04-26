@@ -74,7 +74,7 @@ options:
         default: Default
     state:
         description:
-            - Assert the state of the PostgreSQL server. Use 'present' to create or update a server and 'absent' to delete it.
+            - Assert the state of the PostgreSQL server. Use C(present) to create or update a server and C(absent) to delete it.
         default: present
         choices:
             - present
@@ -92,7 +92,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) PostgreSQL Server
     azure_rm_postgresqlserver:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       name: testserver
       sku:
         name: B_Gen5_1
@@ -110,7 +110,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/12345678-1234-1234-1234-123412341234/resourceGroups/samplerg/providers/Microsoft.DBforPostgreSQL/servers/mysqlsrv1b6dd89593
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/mysqlsrv1b6dd89593
 version:
     description:
         - 'Server version. Possible values include: C(9.5), C(9.6), C(10)'
@@ -148,7 +148,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMServers(AzureRMModuleBase):
+class AzureRMPostgreSqlServers(AzureRMModuleBase):
     """Configuration class for an Azure RM PostgreSQL Server resource"""
 
     def __init__(self):
@@ -205,9 +205,9 @@ class AzureRMServers(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=True)
+        super(AzureRMPostgreSqlServers, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                       supports_check_mode=True,
+                                                       supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -373,7 +373,7 @@ class AzureRMServers(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMServers()
+    AzureRMPostgreSqlServers()
 
 
 if __name__ == '__main__':

@@ -42,7 +42,7 @@ options:
             - The end IP address of the PostgreSQL firewall rule. Must be IPv4 format.
     state:
         description:
-            - Assert the state of the PostgreSQL firewall rule. Use 'present' to create or update a PostgreSQL firewall rule and 'absent' to delete it.
+            - Assert the state of the PostgreSQL firewall rule. Use C(present) to create or update a PostgreSQL firewall rule and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -59,7 +59,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) PostgreSQL firewall rule
     azure_rm_postgresqlfirewallrule:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: rule1
       start_ip_address: 10.0.0.16
@@ -72,8 +72,8 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/firewallRule
-            s/rule1"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver
+             /firewallRules/rule1"
 '''
 
 import time
@@ -93,7 +93,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMFirewallRules(AzureRMModuleBase):
+class AzureRMPostgreSqlFirewallRules(AzureRMModuleBase):
     """Configuration class for an Azure RM PostgreSQL firewall rule resource"""
 
     def __init__(self):
@@ -133,9 +133,9 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMFirewallRules, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                   supports_check_mode=True,
-                                                   supports_tags=False)
+        super(AzureRMPostgreSqlFirewallRules, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                             supports_check_mode=True,
+                                                             supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -268,7 +268,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMFirewallRules()
+    AzureRMPostgreSqlFirewallRules()
 
 
 if __name__ == '__main__':

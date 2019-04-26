@@ -1,2 +1,0 @@
-bugfixes:
-  - user - properly remove expiration when set to a negative value (https://github.com/ansible/ansible/issues/47114)

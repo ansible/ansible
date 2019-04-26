@@ -48,8 +48,8 @@ options:
                ce. Possible values include: 'SystemAssigned'"
     state:
         description:
-            - Assert the state of the SQL server. Use 'present' to create or update a server and
-              'absent' to delete a server.
+            - Assert the state of the SQL server. Use C(present) to create or update a server and
+              C(absent) to delete a server.
         default: present
         choices:
             - absent
@@ -118,7 +118,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMServers(AzureRMModuleBase):
+class AzureRMSqlServer(AzureRMModuleBase):
     """Configuration class for an Azure RM SQL Server resource"""
 
     def __init__(self):
@@ -163,9 +163,9 @@ class AzureRMServers(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=True)
+        super(AzureRMSqlServer, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                               supports_check_mode=True,
+                                               supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -314,7 +314,7 @@ class AzureRMServers(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMServers()
+    AzureRMSqlServer()
 
 
 if __name__ == '__main__':

@@ -16,7 +16,7 @@ PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 export ANSIBLE_ROLES_PATH=../
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-less-than-1.10.16"
 source "${MYTMPDIR}/botocore-less-than-1.10.16/bin/activate"
-"${PYTHON}" -m pip install 'botocore<1.10.16' boto3
+"${PYTHON}" -m pip install 'botocore<1.10.16' 'boto3<1.7.16'
 ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/version_fail.yml "$@"
 
 # Run full test suite

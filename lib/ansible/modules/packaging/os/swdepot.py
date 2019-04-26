@@ -46,7 +46,7 @@ options:
 EXAMPLES = '''
 - swdepot:
     name: unzip-6.0
-    state: installed
+    state: present
     depot: 'repository:/path'
 
 - swdepot:

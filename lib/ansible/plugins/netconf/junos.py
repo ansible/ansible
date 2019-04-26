@@ -22,29 +22,29 @@ __metaclass__ = type
 import json
 import re
 
-from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.module_utils._text import to_text, to_native
+from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected
+from ansible.plugins.netconf import ensure_connected, ensure_ncclient
 
 try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml, new_ele, sub_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    HAS_NCCLIENT = True
+except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
 
 
 class Netconf(NetconfBase):
-
     def get_text(self, ele, tag):
         try:
             return to_text(ele.find(tag).text, errors='surrogate_then_replace').strip()
         except AttributeError:
             pass
 
+    @ensure_ncclient
     def get_device_info(self):
         device_info = dict()
         device_info['network_os'] = 'junos'
@@ -68,6 +68,7 @@ class Netconf(NetconfBase):
         """
         return self.rpc(name)
 
+    @ensure_ncclient
     @ensure_connected
     def load_configuration(self, format='xml', action='merge', target='candidate', config=None):
         """
@@ -101,6 +102,7 @@ class Netconf(NetconfBase):
         return json.dumps(result)
 
     @staticmethod
+    @ensure_ncclient
     def guess_network_os(obj):
         """
         Guess the remote network os name
@@ -165,6 +167,7 @@ class Netconf(NetconfBase):
     # below commit() is a workaround which build's raw `commit-configuration` xml with required tags and uses
     # ncclient generic rpc() method to execute rpc on remote host.
     # Remove below method after the issue in ncclient is fixed.
+    @ensure_ncclient
     @ensure_connected
     def commit(self, confirmed=False, check=False, timeout=None, comment=None, synchronize=False, at_time=None):
         """

@@ -8,6 +8,7 @@ __metaclass__ = type
 import fcntl
 import os
 import shlex
+
 from abc import abstractmethod, abstractproperty
 from functools import wraps
 
@@ -206,7 +207,7 @@ class ConnectionBase(AnsiblePlugin):
     @ensure_connect
     @abstractmethod
     def fetch_file(self, in_path, out_path):
-        """Fetch a file from remote to local"""
+        """Fetch a file from remote to local; callers are expected to have pre-created the directory chain for out_path"""
         pass
 
     @abstractmethod

@@ -63,9 +63,10 @@ options:
     description:
     - A reference to the network to which this router belongs.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: true
   bgp:
     description:
@@ -126,30 +127,30 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-router"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-router
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a router
   gcp_compute_router:
-      name: "test_object"
-      network: "{{ network }}"
-      bgp:
-        asn: 64514
-        advertise_mode: CUSTOM
-        advertised_groups:
-        - ALL_SUBNETS
-        advertised_ip_ranges:
-        - range: 1.2.3.4
-        - range: 6.7.0.0/16
-      region: us-central1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    network: "{{ network }}"
+    bgp:
+      asn: 64514
+      advertise_mode: CUSTOM
+      advertised_groups:
+      - ALL_SUBNETS
+      advertised_ip_ranges:
+      - range: 1.2.3.4
+      - range: 6.7.0.0/16
+    region: us-central1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -181,7 +182,7 @@ network:
   description:
   - A reference to the network to which this router belongs.
   returned: success
-  type: str
+  type: dict
 bgp:
   description:
   - BGP information specific to this router.
@@ -258,7 +259,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            network=dict(required=True),
+            network=dict(required=True, type='dict'),
             bgp=dict(
                 type='dict',
                 options=dict(

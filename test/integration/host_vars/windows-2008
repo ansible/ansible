@@ -1,0 +1,4 @@
+# force 2008 to use PSRP for the connection plugin
+ansible_connection: psrp
+ansible_psrp_auth: basic
+ansible_psrp_cert_validation: ignore
