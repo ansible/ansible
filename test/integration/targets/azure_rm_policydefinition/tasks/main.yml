@@ -1,6 +1,7 @@
 - name: Fix resource prefix
   set_fact:
     policy_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}testpolicy"
+    policy_set_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}testpolicyset"
   run_once: yes
 
 - name: Create a policy definition (Check Mode)
@@ -134,6 +135,140 @@
   assert:
     that:
       - output.changed
+
+- name: Create a policy set definition (Check Mode)
+  azure_rm_policysetdefinition:
+    name: "{{ policy_set_name }}"
+    policy_definitions: '[ 
+                          { 
+                            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf" 
+                          } 
+                        ]'
+    metadata:
+        fortesting: yes
+    policy_type: custom
+    description: "This policy set is built for testing"
+    display_name: "mytestpolicyset"
+  check_mode: yes
+  register: output
+
+- name: Assert creating policy set definition check mode
+  assert:
+    that:
+      - output.changed
+
+- name: Create a policy set definition
+  azure_rm_policysetdefinition:
+    name: "{{ policy_set_name }}"
+    policy_definitions: '[ 
+                          { 
+                            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf" 
+                          } 
+                        ]'
+    metadata:
+        fortesting: yes
+    policy_type: custom
+    description: "This policy set is built for testing"
+    display_name: "mytestpolicyset"
+  register: output
+
+- name: Assert creating policy set definition
+  assert:
+    that:
+      - output.changed
+
+- name: Get facts by subsription
+  azure_rm_policysetdefinition_facts:
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts['policysetdefinitions'] | length > 1
+
+- name: Get facts by name
+  azure_rm_policysetdefinition_facts:
+    name: "{{ policy_set_name }}"
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts['policysetdefinitions'] | length == 1
+      - facts['policysetdefinitions'][0]['id'] != None
+      - facts['policysetdefinitions'][0]['metadata'] != None
+      - facts['policysetdefinitions'][0]['policy_definitions'] != None
+
+- name: Update a policy set definition (idempontent)
+  azure_rm_policysetdefinition:
+    name: "{{ policy_set_name }}"
+    policy_definitions: '[ 
+                          { 
+                            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf" 
+                          } 
+                        ]'
+    metadata:
+        fortesting: yes
+    policy_type: custom
+    description: "This policy set is built for testing"
+    display_name: "mytestpolicyset"
+  register: output
+
+- name: Assert updating policy set definition
+  assert:
+    that:
+      - not output.changed
+
+- name: Update a policy set definition
+  azure_rm_policysetdefinition:
+    name: "{{ policy_set_name }}"
+    policy_definitions: '[ 
+                          { 
+                            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf" 
+                          } 
+                        ]'
+    metadata:
+        fortesting: nonono
+    policy_type: custom
+    description: "This policy set is built for testing"
+    display_name: "mytestpolicyset01"
+  register: output
+
+- name: Assert updating policy set definition
+  assert:
+    that:
+      - output.changed
+
+- name: Delete the policy set definition (Check Mode)
+  azure_rm_policysetdefinition:
+    name: "{{ policy_set_name }}"
+    state: absent
+  check_mode: yes
+  register: output
+
+- name: assert deleting policy set definition check mode
+  assert:
+    that: output.changed
+
+- name: Delete the policy set definition
+  azure_rm_policysetdefinition:
+    name: "{{ policy_set_name }}"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete the policy set definition (idempontent)
+  azure_rm_policysetdefinition:
+    name: "{{ policy_set_name }}"
+    state: absent
+  register: output
+
+- assert:
+    that:
+      - not output.changed
 
 - name: Delete the policy definition (Check Mode)
   azure_rm_policydefinition:
