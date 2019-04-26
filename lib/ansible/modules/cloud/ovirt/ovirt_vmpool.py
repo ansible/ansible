@@ -183,7 +183,7 @@ EXAMPLES = '''
     prestarted: 2
     vm_per_user: 1
 
-- name: Remove vmpool, note that all VMs in pool will be stopped and removed:
+- name: Remove vmpool, note that all VMs in pool will be stopped and removed
   ovirt_vmpool:
     state: absent
     name: myvmpool
@@ -269,7 +269,6 @@ class VmPoolsModule(BaseModule):
         super(VmPoolsModule, self).__init__(*args, **kwargs)
         self._initialization = None
 
-
     def build_entity(self):
         vm = self.param('vm')
         return otypes.VmPool(
@@ -291,7 +290,6 @@ class VmPoolsModule(BaseModule):
             ) if self._module.params['type'] else None,
             vm=self.build_vm(vm)
         )
-
 
     def build_vm(self, vm):
         return otypes.Vm(
@@ -319,7 +317,6 @@ class VmPoolsModule(BaseModule):
                 name=vm.get('timezone'),
             ) if vm.get('timezone') else None,
         )
-
 
     def get_initialization(self, vm):
         if self._initialization is not None:
@@ -380,7 +377,7 @@ class VmPoolsModule(BaseModule):
         if vm_param is not None and vm_param.get('nics') is not None:
             vms = self.get_vms(entity)
             for vm in vms:
-                self.__attach_nics(vm,vm_param)
+                self.__attach_nics(vm, vm_param)
 
     def __attach_nics(self, entity, vm_param):
         # Attach NICs to VM, if specified:
