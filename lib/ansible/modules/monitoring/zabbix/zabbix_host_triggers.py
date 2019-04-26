@@ -70,7 +70,7 @@ description:
    - This module allows you to see if a Zabbix host have no active alert to make actions on it.
      For this case use module Ansible 'fail' to exclude host in trouble.
    - Length of "triggers_ok" allow if template's triggers exist for Zabbix Host
-version_added: "2.8"
+version_added: "2.9"
 author:
     - "Stéphane Travassac (@stravassac)"
 requirements:
