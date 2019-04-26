@@ -141,8 +141,8 @@ def main():
         # Optional outputs
         all_facts = module.params.get('all_facts')
         if all_facts or module.params.get('accounts'):
-            accounts = (camel_dict_to_snake_dict(_)
-                        for _ in list_accounts(client))
+            accounts = (camel_dict_to_snake_dict(dummy)
+                        for dummy in list_accounts(client))
             result['ansible_facts']['organizations']['accounts'] = tuple(
                 accounts)
     except (BotoCoreError, ClientError) as e:
