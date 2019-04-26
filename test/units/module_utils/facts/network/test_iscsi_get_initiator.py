@@ -42,11 +42,11 @@ def test_get_iscsi_info(mocker):
     inst = iscsi.IscsiInitiatorNetworkCollector()
 
     mocker.patch('sys.platform', 'aix6')
-    module.run_command = Mock(return_value=(0, LSATTR_OUTPUT, ''))  # (rc, out, err)
+    mocker.patch.object(module, 'run_command', return_value=(0, LSATTR_OUTPUT, ''))
     aix_iscsi_expected = {"iscsi_iqn": "iqn.localhost.hostid.7f000002"}
     assert aix_iscsi_expected == inst.collect(module=module)
 
     mocker.patch('sys.platform', 'hp-ux')
-    module.run_command = Mock(return_value=(0, ISCSIUTIL_OUTPUT, ''))  # (rc, out, err)
+    mocker.patch.object(module, 'run_command', return_value=(0, ISCSIUTIL_OUTPUT, ''))
     hpux_iscsi_expected = {"iscsi_iqn": " iqn.2001-04.com.hp.stor:svcio"}
     assert hpux_iscsi_expected == inst.collect(module=module)

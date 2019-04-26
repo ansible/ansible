@@ -89,7 +89,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
         elif sys.platform.startswith('hp-ux'):
             hpuxcmd = "/opt/iscsi/bin/iscsiutil"
             # try to find it in the default PATH
-            cmd = get_bin_path('iscsiutil')
+            cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'], required=True)
             if not cmd:
                 cmd = hpuxcmd
             cmd += " -l"
