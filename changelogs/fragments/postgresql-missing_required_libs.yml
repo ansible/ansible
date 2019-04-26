@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql - added missing_required_libs, removed excess param mapping
