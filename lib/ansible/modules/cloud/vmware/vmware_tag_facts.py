@@ -86,17 +86,13 @@ results:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
-try:
-    from com.vmware.cis.tagging_client import Tag
-except ImportError:
-    pass
 
 
 class VmTagFactManager(VmwareRestClient):
     def __init__(self, module):
         """Constructor."""
         super(VmTagFactManager, self).__init__(module)
-        self.tag_service = Tag(self.connect)
+        self.tag_service = self.api_client.tagging.Tag
         self.global_tags = dict()
 
     def get_all_tags(self):
