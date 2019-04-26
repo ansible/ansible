@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix cannot get credential when `source_auth` set to `credential_file`.
