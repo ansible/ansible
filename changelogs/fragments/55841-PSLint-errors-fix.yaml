@@ -1,26 +1,8 @@
-bugfixes:
+minor_changes:
         - win_domain - Added a check for pending boot after role installation
+bugfixes:
         - Fixed PSlint warnings and more
-          - Did not fix - to not break
-            - PSUseApprovedVerbs - (https://docs.microsoft.com/en-us/powershell/developer/cmdlet/approved-verbs-for-windows-powershell-commands)
-            - PSProvideCommentHelp
-            - PSUseSingularNouns
-
-          - Command used to fill PSAvoidUsingEmptyCatchBlock
-            - Add-Warning -obj $result -message "Error during forest query initialization: $($_.Exception.Message)"
-
-          - commands used for PSAvoidUsingCmdletAliases and PSAvoidUsingWMICmdlet:
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/[[:space:]]*$//'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ | % / | ForEach-Object /'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ | ? / | Where-Object /'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ | where / | Where-Object /i'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ | select / | Select-Object /i'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ | foreach / | ForEach-Object /i'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/write-host/Write-Output/i'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ | sort / | Sort-Object /i'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/-WmiObject/-CIMInstance/i'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/-WmiInstance/-CIMInstance/i'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ sleep / Start-Sleep /i'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ | ?/ | Where-Object /'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ |? / | Where-Object /'
-            - find . -name "*.ps*1" -type f -print0 | xargs -0 sed -i 's/ |?/ | Where-Object /'
+        - Did not fix - to not break
+          - PSUseApprovedVerbs
+          - PSProvideCommentHelp
+          - PSUseSingularNouns
