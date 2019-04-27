@@ -101,6 +101,8 @@
       appliance_ip: 192.168.250.1
     delegate_to: localhost
     register: create_vlan
+    environment:
+      ANSIBLE_MERAKI_FORMAT: camelcase
 
   - debug:
       msg: '{{create_vlan}}'
@@ -167,7 +169,7 @@
 
   - assert:
       that:
-        - update_vlan.data.applianceIp == '192.168.250.2'
+        - update_vlan.data.appliance_ip == '192.168.250.2'
         - update_vlan.changed == True
 
   - name: Update VLAN with idempotency and check mode
@@ -295,8 +297,8 @@
   - assert:
       that:
         - update_vlan_remove_ip.changed == True
-        - update_vlan_remove_ip.data.fixedIpAssignments | length == 1
-        - update_vlan_remove_ip.data.reservedIpRanges | length == 1
+        - update_vlan_remove_ip.data.fixed_ip_assignments | length == 1
+        - update_vlan_remove_ip.data.reserved_ip_ranges | length == 1
 
   - name: Update VLAN with idempotency
     meraki_vlan:
@@ -355,7 +357,7 @@
 
   - assert:
       that:
-        - '"1.1.1.1" in update_vlan_dns_list.data.dnsNameservers'
+        - '"1.1.1.1" in update_vlan_dns_list.data.dns_nameservers'
         - update_vlan_dns_list.changed == True
 
   - name: Query all VLANs in network

@@ -32,6 +32,7 @@
 import os
 import re
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
+from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils._text import to_native, to_bytes, to_text
@@ -357,11 +358,13 @@ class MerakiModule(object):
             self.result['method'] = self.method
             self.result['url'] = self.url
         self.result.update(**kwargs)
-        try:
-            if self.params['output_format'] == 'camelcase':
-                self.module.deprecate("Ansible's Meraki modules will stop supporting camel case output in Ansible 2.12. Please update your playbooks.")
-        except KeyError:
-            self.result['data'] = self.sanitize_keys(self.result['data'])
+        if self.params['output_format'] == 'camelcase':
+            self.module.deprecate("Ansible's Meraki modules will stop supporting camel case output in Ansible 2.12. Please update your playbooks.")
+        else:
+            try:
+                self.result['data'] = camel_dict_to_snake_dict(self.result['data'])
+            except KeyError:
+                pass
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):
