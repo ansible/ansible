@@ -48,7 +48,7 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
             on solaris 10 or solaris 11 should use `fcinfo hba-port`
             TBD (not implemented): on solaris 9 use `prtconf -pv`
             """
-            cmd = module.get_bin_path('fcinfo')
+            cmd = module.get_bin_path('fcinfo', required=True)
             cmd = cmd + " hba-port"
             rc, fcinfo_out, err = module.run_command(cmd)
             """
@@ -62,11 +62,11 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                         fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         elif sys.platform.startswith('aix'):
             # get list of available fibre-channel devices (fcs)
-            cmd = module.get_bin_path('lsdev')
+            cmd = module.get_bin_path('lsdev', required=True)
             cmd = cmd + " -Cc adapter -l fcs*"
             rc, lsdev_out, err = module.run_command(cmd)
             if lsdev_out:
-                lscfg_cmd = module.get_bin_path('lscfg')
+                lscfg_cmd = module.get_bin_path('lscfg', required=True)
                 for line in lsdev_out.splitlines():
                     # if device is available (not in defined state), get its WWN
                     if 'Available' in line:
