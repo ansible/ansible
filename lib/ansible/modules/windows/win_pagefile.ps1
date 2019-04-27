@@ -48,7 +48,7 @@ if ($removeAll) {
 if ($null -ne $automatic) {
     # change autmoatic managed pagefile
     try {
-        $computerSystem = Get-CIMInstance -Class win32_computersystem -EnableAllPrivileges
+        $computerSystem = Get-CIMInstance -Class win32_computersystem
     } catch {
         Fail-Json $result "Failed to query WMI computer system object $($_.Exception.Message)"
     }
@@ -98,7 +98,7 @@ if ($state -eq "absent") {
     # Set pagefile
     if ($null -eq (Get-Pagefile $fullPath)) {
         try {
-            $pagefile = Set-CIMInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
+            $pagefile = New-CIMInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
         } catch {
             Fail-Json $result "Failed to create pagefile $($_.Exception.Message)"
         }
