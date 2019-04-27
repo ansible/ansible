@@ -1,7 +1,6 @@
 ---
 - name: create domain with invalid API key
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "wa9aerahhie0eekee9iaphoorovooyia"
     state: present
     domain: "{{ test_domain }}"
@@ -16,8 +15,7 @@
       - result is not successful
 
 - name: create domain over 250 chars
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: present
     domain: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com'
@@ -32,8 +30,7 @@
       - "'Zone domain must be less than 250 characters in length' in result.stderr"
 
 - name: create domain in non-existent zone
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: present
     domain: "{{ test_domain }}"
@@ -48,8 +45,7 @@
       - "'does not exist, cannot create domain.' in result.stderr"
 
 - name: create domain in non-unique zone
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: present
     domain: "{{ test_domain }}"
@@ -64,8 +60,7 @@
       - "'matches multiple zones, cannot create domain' in result.stderr"
 
 - name: test creating domain
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: present
     domain: "{{ test_domain }}"
@@ -80,8 +75,7 @@
       - result is successful
 
 - name: create domain
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: present
     domain: "{{ test_domain }}"
@@ -95,8 +89,7 @@
       - result is successful
 
 - name: create existing domain
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: present
     domain: "{{ test_domain }}"
@@ -109,8 +102,7 @@
       - result is not changed
 
 - name: test deleting domain
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: absent
     domain: "{{ test_domain }}"
@@ -125,8 +117,7 @@
       - result is successful
 
 - name: delete domain
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: absent
     domain: "{{ test_domain }}"
@@ -139,8 +130,7 @@
       - result is changed
 
 - name: delete non-existent domain
-  local_action:
-    module: memset_zone_domain
+  memset_zone_domain:
     api_key: "{{ api_key }}"
     state: absent
     domain: "{{ test_domain }}"

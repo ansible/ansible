@@ -97,7 +97,6 @@
       uplink_teaming_override: yes
       vendor_config_override: yes
       vlan_override: yes
-  delegate_to: localhost
   register: portgroup_create_result
 
 - name: ensure portgroup was created
@@ -119,7 +118,6 @@
     source_port_transmitted: 13
     source_port_received: 13
     destination_port: 12
-  delegate_to: localhost
   register: vspan_session_create_result
 
 - name: ensure session was created
@@ -136,7 +134,6 @@
     switch: dvswitch_0001
     name: "session_0001"
     state: "absent"
-  delegate_to: localhost
   register: vspan_session_delete_result
 
 - name: ensure session was deleted
