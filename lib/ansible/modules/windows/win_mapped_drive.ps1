@@ -602,7 +602,7 @@ try {
         # cache. If we don't do this then the drive will fail to map in the future as WNetAddConnection does not cache
         # the password and relies on the credential store.
         if ($null -ne $username -and $module.Result.changed -and -not $module.CheckMode) {
-            Set-ItemProperty -Path HKCU:\Network\$letter -Name UserName -Value "" -WhatIf:$module.CheckMode
+            Set-ItemProperty -LiteralPath HKCU:\Network\$letter -Name UserName -Value "" -WhatIf:$module.CheckMode
         }
 
         $module.Diff.after = @{

@@ -7,7 +7,7 @@
   check_mode: yes
 
 - name: get actual of create default pool check
-  win_command: powershell.exe "Import-Module WebAdministration; Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}"
+  win_command: powershell.exe "Import-Module WebAdministration; Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}"
   register: create_default_actual_check
   failed_when: False
 
@@ -24,7 +24,7 @@
   register: create_default
 
 - name: get actual of create default pool
-  win_command: powershell.exe "Import-Module WebAdministration; Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}"
+  win_command: powershell.exe "Import-Module WebAdministration; Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}"
   register: create_default_actual
   failed_when: False
 
@@ -156,7 +156,7 @@
   check_mode: yes
 
 - name: get actual status of pool check
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: stop_pool_actual_check
 
 - name: assert stop web pool check
@@ -172,7 +172,7 @@
   register: stop_pool
 
 - name: get actual status of pool
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: stop_pool_actual
 
 - name: assert stop web pool
@@ -188,7 +188,7 @@
   register: stop_pool_again
 
 - name: get actual status of pool again
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: stop_pool_actual_again
 
 - name: assert stop web pool again
@@ -205,7 +205,7 @@
   check_mode: yes
 
 - name: get actual status of pool check
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: start_pool_actual_check
 
 - name: assert start web pool check
@@ -221,7 +221,7 @@
   register: start_pool
 
 - name: get actual status of pool
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: start_pool_actual
 
 - name: assert start web pool
@@ -237,7 +237,7 @@
   register: start_pool_again
 
 - name: get actual status of pool again
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: start_pool_actual_again
 
 - name: assert start web pool again
@@ -253,7 +253,7 @@
   register: restart_pool
 
 - name: get actual status of pool
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: restart_pool_actual
 
 - name: assert restart web pool
@@ -275,7 +275,7 @@
   check_mode: yes
 
 - name: get actual status of pool check
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: restart_from_stop_pool_actual_check
 
 - name: assert restart from stopped web pool check
@@ -291,7 +291,7 @@
   register: restart_from_stop_pool
 
 - name: get actual status of pool
-  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -Path IIS:\AppPools\{{test_iis_webapppool_name}}).state"
+  win_command: powershell.exe "Import-Module WebAdministration; (Get-Item -LiteralPath IIS:\AppPools\{{test_iis_webapppool_name}}).state"
   register: restart_from_stop_pool_actual
 
 - name: assert restart from stopped web pool
@@ -312,7 +312,7 @@
 - name: get result of set web pool attribute that is a collection (check mode)
   win_shell: |
     Import-Module WebAdministration
-    (Get-ItemProperty -Path "IIS:\AppPools\{{test_iis_webapppool_name}}" -Name recycling.periodicRestart.schedule).Collection | ForEach-Object { $_.value.ToString() }
+    (Get-ItemProperty -LiteralPath "IIS:\AppPools\{{test_iis_webapppool_name}}" -Name recycling.periodicRestart.schedule).Collection | ForEach-Object { $_.value.ToString() }
   register: collection_change_result_check
 
 - name: assert results of set web pool attribute that is a collection (check mode)
@@ -332,7 +332,7 @@
 - name: get result of set web pool attribute that is a collection
   win_shell: |
     Import-Module WebAdministration
-    (Get-ItemProperty -Path "IIS:\AppPools\{{test_iis_webapppool_name}}" -Name recycling.periodicRestart.schedule).Collection | ForEach-Object { $_.value.ToString() }
+    (Get-ItemProperty -LiteralPath "IIS:\AppPools\{{test_iis_webapppool_name}}" -Name recycling.periodicRestart.schedule).Collection | ForEach-Object { $_.value.ToString() }
   register: collection_change_result
 
 - name: assert results of set web pool attribute that is a collection

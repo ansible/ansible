@@ -42,7 +42,7 @@
   register: install_actual
 
 - name: get package info of install package
-  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
+  win_shell: Get-Content -LiteralPath '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
   register: install_actual_info
 
 - name: assert install package
@@ -134,11 +134,11 @@
   register: install_multiple_actual
 
 - name: get info on package 1
-  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
+  win_shell: Get-Content -LiteralPath '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
   register: install_multiple_package1
 
 - name: get info on package 2
-  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package2 }}-1.0.0.txt' -Raw
+  win_shell: Get-Content -LiteralPath '{{ test_choco_path }}\{{ test_choco_package2 }}-1.0.0.txt' -Raw
   register: install_multiple_package2
 
 - name: assert install multiple packages with timeout
@@ -235,7 +235,7 @@
   register: install_params_actual
 
 - name: get info of install package with params
-  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.0.1.txt'
+  win_shell: Get-Content -LiteralPath '{{ test_choco_path }}\{{ test_choco_package1 }}-0.0.1.txt'
   register: install_params_info
 
 - name: assert install package with params
@@ -317,7 +317,7 @@
   register: install_source_name_actual
 
 - name: get result fo installed package with reference to source name info
-  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
+  win_shell: Get-Content -LiteralPath '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
   register: install_source_name_info
 
 - name: assert install package with reference to source name
@@ -334,7 +334,7 @@
   register: reinstalled_package
 
 - name: get result of reinstalled package without source override
-  win_shell: Get-Content -Path '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
+  win_shell: Get-Content -LiteralPath '{{ test_choco_path }}\{{ test_choco_package1 }}-0.1.0.txt' -Raw
   register: reinstalled_package_info
 
 - name: assert reinstall package without source override

@@ -84,11 +84,11 @@
     Import-Module RemoteDesktopServices;
     $cap_path = "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}"
     $cap = @{}
-    Get-ChildItem -Path "$cap_path" | foreach { $cap.Add($_.Name,$_.CurrentValue) }
+    Get-ChildItem -LiteralPath "$cap_path" | foreach { $cap.Add($_.Name,$_.CurrentValue) }
     $cap.DeviceRedirection = @{}
-    Get-ChildItem -Path "$cap_path\DeviceRedirection" | foreach { $cap.DeviceRedirection.Add($_.Name, ($_.CurrentValue -eq 1)) }
-    $cap.UserGroups = @(Get-ChildItem -Path "$cap_path\UserGroups" | Select -ExpandProperty Name)
-    $cap.ComputerGroups = @(Get-ChildItem -Path "$cap_path\ComputerGroups" | Select -ExpandProperty Name)
+    Get-ChildItem -LiteralPath "$cap_path\DeviceRedirection" | foreach { $cap.DeviceRedirection.Add($_.Name, ($_.CurrentValue -eq 1)) }
+    $cap.UserGroups = @(Get-ChildItem -LiteralPath "$cap_path\UserGroups" | Select -ExpandProperty Name)
+    $cap.ComputerGroups = @(Get-ChildItem -LiteralPath "$cap_path\ComputerGroups" | Select -ExpandProperty Name)
     $cap | ConvertTo-Json
   register: edit_cap_actual_json
 
@@ -128,7 +128,7 @@
   win_shell: |
     Import-Module RemoteDesktopServices;
     $cap_path = "RDS:\GatewayServer\CAP\{{ test_win_rds_cap_name }}"
-    Write-Host @(Get-ChildItem -Path "$cap_path\ComputerGroups" | Select -ExpandProperty Name).Count
+    Write-Host @(Get-ChildItem -LiteralPath "$cap_path\ComputerGroups" | Select -ExpandProperty Name).Count
   register: remove_computer_groups_cap_actual
 
 - name: assert results of remove all computer groups of CAP

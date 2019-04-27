@@ -276,7 +276,7 @@ ElseIf ((Get-Service "WinRM").Status -ne "Running")
 }
 
 # WinRM should be running; check that we have a PS session config.
-If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem WSMan:\localhost\Listener)))
+If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem -LiteralPath WSMan:\localhost\Listener)))
 {
   If ($SkipNetworkProfileCheck) {
     Write-Verbose "Enabling PS Remoting without checking Network profile."
@@ -298,18 +298,18 @@ Else
 # https://github.com/ansible/ansible/issues/42978
 $token_path = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
 $token_prop_name = "LocalAccountTokenFilterPolicy"
-$token_key = Get-Item -Path $token_path
+$token_key = Get-Item -LiteralPath $token_path
 $token_value = $token_key.GetValue($token_prop_name, $null)
 if ($token_value -ne 1) {
     Write-Verbose "Setting LocalAccountTOkenFilterPolicy to 1"
     if ($null -ne $token_value) {
-        Remove-ItemProperty -Path $token_path -Name $token_prop_name
+        Remove-ItemProperty -LiteralPath $token_path -Name $token_prop_name
     }
-    New-ItemProperty -Path $token_path -Name $token_prop_name -Value 1 -PropertyType DWORD > $null
+    New-ItemProperty -LiteralPath $token_path -Name $token_prop_name -Value 1 -PropertyType DWORD > $null
 }
 
 # Make sure there is a SSL listener.
-$listeners = Get-ChildItem WSMan:\localhost\Listener
+$listeners = Get-ChildItem -LiteralPath WSMan:\localhost\Listener
 If (!($listeners | Where-Object {$_.Keys -like "TRANSPORT=HTTPS"}))
 {
     # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
@@ -361,14 +361,14 @@ Else
 }
 
 # Check for basic authentication.
-$basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object {$_.Name -eq "Basic"}
+$basicAuthSetting = Get-ChildItem -LiteralPath WSMan:\localhost\Service\Auth | Where-Object {$_.Name -eq "Basic"}
 
 If ($DisableBasicAuth)
 {
     If (($basicAuthSetting.Value) -eq $true)
     {
         Write-Verbose "Disabling basic auth support."
-        Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $false
+        Set-Item -LiteralPath "WSMan:\localhost\Service\Auth\Basic" -Value $false
         Write-Log "Disabled basic auth support."
     }
     Else
@@ -381,7 +381,7 @@ Else
     If (($basicAuthSetting.Value) -eq $false)
     {
         Write-Verbose "Enabling basic auth support."
-        Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $true
+        Set-Item -LiteralPath "WSMan:\localhost\Service\Auth\Basic" -Value $true
         Write-Log "Enabled basic auth support."
     }
     Else
@@ -394,7 +394,7 @@ Else
 If ($EnableCredSSP)
 {
     # Check for CredSSP authentication
-    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object {$_.Name -eq "CredSSP"}
+    $credsspAuthSetting = Get-ChildItem -LiteralPath WSMan:\localhost\Service\Auth | Where-Object {$_.Name -eq "CredSSP"}
     If (($credsspAuthSetting.Value) -eq $false)
     {
         Write-Verbose "Enabling CredSSP auth support."

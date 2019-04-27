@@ -12,8 +12,8 @@ $result = @{
     changed = $false
 }
 
-$exe_directory = Split-Path -Path $exe -Parent
-$exe_filename = Split-Path -Path $exe -Leaf
+$exe_directory = Split-Path -LiteralPath $exe -Parent
+$exe_filename = Split-Path -LiteralPath $exe -Leaf
 $test_name = $null
 
 Function Assert-Equals($actual, $expected) {
@@ -30,9 +30,9 @@ Assert-Equals -actual $actual.stderr -expected ""
 Assert-Equals -actual $actual.executable -expected $exe
 
 $test_name = "exe in special char dir"
-$tmp_dir = Join-Path -Path $env:TEMP -ChildPath "ansible .ÅÑŚÌβŁÈ [$!@^&test(;)]"
+$tmp_dir = Join-Path -LiteralPath $env:TEMP -ChildPath "ansible .ÅÑŚÌβŁÈ [$!@^&test(;)]"
 try {
-    New-Item -Path $tmp_dir -ItemType Directory > $null
+    New-Item -LiteralPath $tmp_dir -ItemType Directory > $null
     $exe_special = Join-Path $tmp_dir -ChildPath "PrintArgv.exe"
     Copy-Item -LiteralPath $exe -Destination $exe_special
     $actual = Run-Command -command "`"$exe_special`" arg1 arg2 `"arg 3`""
@@ -98,7 +98,7 @@ Assert-Equals -actual $actual.stdout -expected "💩`n"
 Assert-Equals -actual $actual.stderr -expected ""
 
 $test_name = "test default environment variable"
-Set-Item -Path env:TESTENV -Value "test"
+Set-Item -LiteralPath env:TESTENV -Value "test"
 $actual = Run-Command -command "cmd.exe /c set"
 $env_present = $actual.stdout -split "`r`n" | Where-Object { $_ -eq "TESTENV=test" }
 if ($null -eq $env_present) {

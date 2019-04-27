@@ -47,7 +47,7 @@ Function SearchForError($cmd_output, $default_msg) {
     return $error_msg
 }
 
-if (-not (Test-Path -Path $src)) {
+if (-not (Test-Path -LiteralPath $src)) {
     Fail-Json $result "$src does not exist!"
 }
 

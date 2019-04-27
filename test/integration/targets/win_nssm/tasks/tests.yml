@@ -10,7 +10,7 @@
         $res.Dependencies = @(Get-WmiObject -Query "Associators of {Win32_Service.Name=""$service""} Where AssocClass=Win32_DependentService" | select -ExpandProperty Name)
         $res.Parameters = @{}
         $srvkey = "HKLM:\SYSTEM\CurrentControlSet\Services\$service\Parameters"
-        Get-Item "$srvkey" | Select-Object -ExpandProperty property | % { $res.Parameters.$_ = (Get-ItemProperty -Path "$srvkey" -Name $_).$_}
+        Get-Item "$srvkey" | Select-Object -ExpandProperty property | % { $res.Parameters.$_ = (Get-ItemProperty -LiteralPath "$srvkey" -Name $_).$_}
       } else {
         $res.Exists = $false
       }
@@ -272,8 +272,8 @@
     - mixed_params.changed == true
     - (mixed_params_actual.stdout|from_json).Exists == true
     - (mixed_params_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
-    # Expected value: bar -file.out output.bat -str "test\"quotes" foo true -path "C:\with space\\" (backslashes doubled for jinja)
-    - (mixed_params_actual.stdout|from_json).Parameters.AppParameters == 'bar -file.out output.bat -str "test\\"quotes" foo true -path "C:\\with space\\\\"'
+    # Expected value: bar -file.out output.bat -str "test\"quotes" foo true -LiteralPath "C:\with space\\" (backslashes doubled for jinja)
+    - (mixed_params_actual.stdout|from_json).Parameters.AppParameters == 'bar -file.out output.bat -str "test\\"quotes" foo true -LiteralPath "C:\\with space\\\\"'
 
 # deprecated in 2.12
 - name: install service with dict-as-string parameters (idempotent)
@@ -295,8 +295,8 @@
     - mixed_params_again.changed == false
     - (mixed_params_again_actual.stdout|from_json).Exists == true
     - (mixed_params_again_actual.stdout|from_json).Parameters.Application == "C:\Windows\System32\cmd.exe"
-    # Expected value: bar -file.out output.bat -str "test\"quotes" foo true -path "C:\with space\\" (backslashes doubled for jinja)
-    - (mixed_params_again_actual.stdout|from_json).Parameters.AppParameters == 'bar -file.out output.bat -str "test\\"quotes" foo true -path "C:\\with space\\\\"'
+    # Expected value: bar -file.out output.bat -str "test\"quotes" foo true -LiteralPath "C:\with space\\" (backslashes doubled for jinja)
+    - (mixed_params_again_actual.stdout|from_json).Parameters.AppParameters == 'bar -file.out output.bat -str "test\\"quotes" foo true -LiteralPath "C:\\with space\\\\"'
 
 - name: install service with list of parameters
   win_nssm:

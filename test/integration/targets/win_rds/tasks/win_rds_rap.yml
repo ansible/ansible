@@ -6,4 +6,4 @@
 
   always:
   - name: delete all RAPs
-    win_shell: Import-Module RemoteDesktopServices; Remove-Item -Path RDS:\GatewayServer\RAP\* -Recurse
+    win_shell: Import-Module RemoteDesktopServices; Remove-Item -LiteralPath RDS:\GatewayServer\RAP\* -Recurse

@@ -34,7 +34,7 @@ try {
     if (-not $physical_path) {
       Fail-Json $result "missing required arguments: path"
     }
-    if (-not (Test-Path -Path $physical_path)) {
+    if (-not (Test-Path -LiteralPath $physical_path)) {
       Fail-Json $result "specified folder must already exist: path"
     }
 
@@ -65,7 +65,7 @@ try {
 
     # Change Physical Path if needed
     if ($physical_path) {
-      if (-not (Test-Path -Path $physical_path)) {
+      if (-not (Test-Path -LiteralPath $physical_path)) {
         Fail-Json $result "specified folder must already exist: path"
       }
 

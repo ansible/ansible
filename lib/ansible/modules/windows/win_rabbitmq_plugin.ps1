@@ -59,12 +59,12 @@ function Get-RabbitmqPathFromRegistry
 
 function Get-RabbitmqBinPath($installation_path)
 {
-    $result = Join-Path -Path $installation_path -ChildPath 'bin'
+    $result = Join-Path -LiteralPath $installation_path -ChildPath 'bin'
     if (Test-Path $result) {
         return $result
     }
 
-    $result = Join-Path -Path $installation_path -ChildPath 'sbin'
+    $result = Join-Path -LiteralPath $installation_path -ChildPath 'sbin'
     if (Test-Path $result) {
         return $result
     }
@@ -107,7 +107,7 @@ if ($prefix) {
 }
 
 if ($rabbitmq_bin_path) {
-    $rabbitmq_plugins_cmd = "'$(Join-Path -Path $rabbitmq_bin_path -ChildPath "rabbitmq-plugins")'"
+    $rabbitmq_plugins_cmd = "'$(Join-Path -LiteralPath $rabbitmq_bin_path -ChildPath "rabbitmq-plugins")'"
 } else {
     $rabbitmq_plugins_cmd = "rabbitmq-plugins"
 }

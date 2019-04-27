@@ -79,8 +79,8 @@
     Import-Module RemoteDesktopServices;
     $rap_path = "RDS:\GatewayServer\RAP\{{ test_win_rds_rap_name }}"
     $rap = @{}
-    Get-ChildItem -Path "$rap_path" | foreach { $rap.Add($_.Name,$_.CurrentValue) }
-    $rap.UserGroups = @(Get-ChildItem -Path "$rap_path\UserGroups" | Select -ExpandProperty Name)
+    Get-ChildItem -LiteralPath "$rap_path" | foreach { $rap.Add($_.Name,$_.CurrentValue) }
+    $rap.UserGroups = @(Get-ChildItem -LiteralPath "$rap_path\UserGroups" | Select -ExpandProperty Name)
     $rap | ConvertTo-Json
   register: edit_rap_actual_json
 

@@ -296,7 +296,7 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
     $params = New-Object psobject
     If ($arguments.Length -gt 0)
     {
-        $params = Get-Content $arguments[0] | ConvertFrom-Json
+        $params = Get-Content -LiteralPath $arguments[0] | ConvertFrom-Json
     }
     Else {
         $params = $complex_args
@@ -361,8 +361,8 @@ Function Get-PendingRebootStatus
     Function returns true if computer has a pending reboot
 #>
     $featureData = Invoke-CimMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
-    $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
-    $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing"  -ErrorAction SilentlyContinue| Where-Object {$_.PSChildName -eq "RebootPending"}
+    $regData = Get-ItemProperty -LiteralPath "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
+    $CBSRebootStatus = Get-ChildItem -LiteralPath "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing"  -ErrorAction SilentlyContinue| Where-Object {$_.PSChildName -eq "RebootPending"}
     if(($featureData -and $featureData.RequiresReboot) -or $regData -or $CBSRebootStatus)
     {
         return $True

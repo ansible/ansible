@@ -83,7 +83,7 @@ Try {
     # Fix for error "New-Item : Index was outside the bounds of the array."
     # This is a bug in the New-WebSite commandlet. Apparently there must be at least one site configured in IIS otherwise New-WebSite crashes.
     # For more details, see http://stackoverflow.com/questions/3573889/ps-c-new-website-blah-throws-index-was-outside-the-bounds-of-the-array
-    $sites_list = get-childitem -Path IIS:\sites
+    $sites_list = Get-ChildItem -LiteralPath IIS:\sites
     if ($null -eq $sites_list) { $site_parameters.ID = 1 }
 
     $site = New-Website @site_parameters -Force
@@ -131,7 +131,7 @@ Try {
         }
 
         if((-not $parameter_value) -or ($parameter_value) -ne $_[1]) {
-          Set-ItemProperty -Path "IIS:\Sites\$($site.Name)" $_[0] $_[1]
+          Set-ItemProperty -LiteralPath "IIS:\Sites\$($site.Name)" $_[0] $_[1]
           $result.changed = $true
         }
       }

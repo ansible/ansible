@@ -62,7 +62,7 @@
     that:
     - cmdlet_error is failed
     - 'cmdlet_error.msg == "Unhandled exception while executing module: Cannot find drive. A drive with the name ''fake'' does not exist."'
-    - '"Get-Item -Path \"fake:\\path\"" in cmdlet_error.exception'
+    - '"Get-Item -LiteralPath \"fake:\\path\"" in cmdlet_error.exception'
 
 - name: test module with .NET exception
   test_fail:

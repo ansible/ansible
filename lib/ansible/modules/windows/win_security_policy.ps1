@@ -37,8 +37,8 @@ Function Run-SecEdit($arguments) {
     } catch {
         $stderr = $_.Exception.Message
     }
-    $log = Get-Content -Path $log_path
-    Remove-Item -Path $log_path -Force
+    $log = Get-Content -LiteralPath $log_path
+    Remove-Item -LiteralPath $log_path -Force
 
     $return = @{
         log = ($log -join "`n").Trim()
@@ -58,8 +58,8 @@ Function Export-SecEdit() {
     $export_result = Run-SecEdit -arguments @("/export", "/cfg", $secedit_ini_path, "/quiet")
 
     # check the return code and if the file has been populated, otherwise error out
-    if (($export_result.rc -ne 0) -or ((Get-Item -Path $secedit_ini_path).Length -eq 0)) {
-        Remove-Item -Path $secedit_ini_path -Force
+    if (($export_result.rc -ne 0) -or ((Get-Item -LiteralPath $secedit_ini_path).Length -eq 0)) {
+        Remove-Item -LiteralPath $secedit_ini_path -Force
         $result.rc = $export_result.rc
         $result.stdout = $export_result.stdout
         $result.stderr = $export_result.stderr
@@ -73,7 +73,7 @@ Function Export-SecEdit() {
 Function Import-SecEdit($ini) {
     $secedit_ini_path = [IO.Path]::GetTempFileName()
     $secedit_db_path = [IO.Path]::GetTempFileName()
-    Remove-Item -Path $secedit_db_path -Force # needs to be deleted for SecEdit.exe /import to work
+    Remove-Item -LiteralPath $secedit_db_path -Force # needs to be deleted for SecEdit.exe /import to work
 
     $ini_contents = ConvertTo-Ini -ini $ini
     Set-Content -Path $secedit_ini_path -Value $ini_contents
@@ -81,7 +81,7 @@ Function Import-SecEdit($ini) {
 
     $import_result = Run-SecEdit -arguments @("/configure", "/db", $secedit_db_path, "/cfg", $secedit_ini_path, "/quiet")
     $result.import_log = $import_result.log
-    Remove-Item -Path $secedit_ini_path -Force
+    Remove-Item -LiteralPath $secedit_ini_path -Force
     if ($import_result.rc -ne 0) {
         $result.rc = $import_result.rc
         $result.stdout = $import_result.stdout

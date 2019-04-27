@@ -17,7 +17,7 @@
     dest: '{{test_win_pester_path}}\Modules'
 
 - name: rename extracted zip to match module name
-  win_shell: Rename-Item -Path '{{test_win_pester_path}}\Modules\Pester-4.3.1' -NewName Pester
+  win_shell: Rename-Item -LiteralPath '{{test_win_pester_path}}\Modules\Pester-4.3.1' -NewName Pester
 
 - name: add custom Pester location to the PSModulePath
   win_path:

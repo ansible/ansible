@@ -34,7 +34,7 @@ function get-file
     $client.downloadfile($path, $local)
 }
 
-if (!(test-path $powershellpath))
+if (!(test-path -LiteralPath $powershellpath))
 {
     New-Item -ItemType directory -Path $powershellpath
 }

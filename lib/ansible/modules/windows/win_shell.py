@@ -97,11 +97,11 @@ EXAMPLES = r'''
 
 - name: Run multi-lined shell commands
   win_shell: |
-    $value = Test-Path -Path C:\temp
+    $value = Test-Path -LiteralPath C:\temp
     if ($value) {
-        Remove-Item -Path C:\temp -Force
+        Remove-Item -LiteralPath C:\temp -Force
     }
-    New-Item -Path C:\temp -ItemType Directory
+    New-Item -LiteralPath C:\temp -ItemType Directory
 
 - name: Retrieve the input based on stdin
   win_shell: '$string = [Console]::In.ReadToEnd(); Write-Output $string.Trim()'

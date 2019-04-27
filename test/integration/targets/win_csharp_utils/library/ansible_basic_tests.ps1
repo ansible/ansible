@@ -98,7 +98,7 @@ $tmpdir = $module.Tmpdir
 
 $tests = @{
     "Empty spec and no options - args file" = {
-        $args_file = Join-Path -Path $tmpdir -ChildPath "args-$(Get-Random).json"
+        $args_file = Join-Path -LiteralPath $tmpdir -ChildPath "args-$(Get-Random).json"
         [System.IO.File]::WriteAllText($args_file, '{ "ANSIBLE_MODULE_ARGS": {} }')
         $m = [Ansible.Basic.AnsibleModule]::Create(@($args_file), @{})
 
@@ -127,9 +127,9 @@ $tests = @{
     }
 
     "Internal param changes - args file" = {
-        $m_tmpdir = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        New-Item -Path $m_tmpdir -ItemType Directory > $null
-        $args_file = Join-Path -Path $tmpdir -ChildPath "args-$(Get-Random).json"
+        $m_tmpdir = Join-Path -LiteralPath $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -LiteralPath $m_tmpdir -ItemType Directory > $null
+        $args_file = Join-Path -LiteralPath $tmpdir -ChildPath "args-$(Get-Random).json"
         [System.IO.File]::WriteAllText($args_file, @"
 {
     "ANSIBLE_MODULE_ARGS": {
@@ -163,8 +163,8 @@ $tests = @{
     }
 
     "Internal param changes - complex_args" = {
-        $m_tmpdir = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        New-Item -Path $m_tmpdir -ItemType Directory > $null
+        $m_tmpdir = Join-Path -LiteralPath $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -LiteralPath $m_tmpdir -ItemType Directory > $null
         $complex_args = @{
             _ansible_check_mode = $true
             _ansible_debug = $true
@@ -1060,7 +1060,7 @@ test_no_log - Invoked with:
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
         try {
-            Get-Item -Path $null
+            Get-Item -LiteralPath $null
         } catch {
             $error_record = $_
         }
@@ -1122,7 +1122,7 @@ test_no_log - Invoked with:
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
         try {
-            Get-Item -Path $null
+            Get-Item -LiteralPath $null
         } catch {
             $error_record = $_
         }
@@ -1142,7 +1142,7 @@ test_no_log - Invoked with:
         $actual.failed | Assert-Equals -Expected $true
         $actual.msg | Assert-Equals -Expected "fail message"
         $actual.exception.Contains("Cannot bind argument to parameter 'Path' because it is null") | Assert-Equals -Expected $true
-        $actual.exception.Contains("+             Get-Item -Path `$null") | Assert-Equals -Expected $true
+        $actual.exception.Contains("+             Get-Item -LiteralPath `$null") | Assert-Equals -Expected $true
         $actual.exception.Contains("ScriptStackTrace:") | Assert-Equals -Expected $true
     }
 
@@ -1300,25 +1300,25 @@ test_no_log - Invoked with:
         $dir_security.AddAccessRule($ace)
         $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
 
-        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        New-Item -Path $remote_tmp -ItemType Directory > $null
+        $remote_tmp = Join-Path -LiteralPath $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -LiteralPath $remote_tmp -ItemType Directory > $null
         $complex_args = @{
             _ansible_remote_tmp = $remote_tmp.ToString()
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
 
         $actual_tmpdir = $m.Tmpdir
-        $parent_tmpdir = Split-Path -Path $actual_tmpdir -Parent
-        $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
+        $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
+        $tmpdir_name = Split-Path -LiteralPath $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
         $children.Count | Assert-Equals -Expected 1
-        $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
+        $actual_tmpdir_sd = (Get-Acl -LiteralPath $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
         $actual_tmpdir_sd | Assert-Equals -Expected $expected_sd
 
         try {
@@ -1326,8 +1326,8 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
         }
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $output.warnings.Count | Assert-Equals -Expected 0
     }
 
@@ -1344,25 +1344,25 @@ test_no_log - Invoked with:
         $dir_security.AddAccessRule($ace)
         $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
 
-        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        $remote_tmp = Join-Path -LiteralPath $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         $complex_args = @{
             _ansible_remote_tmp = $remote_tmp.ToString()
         }
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $false
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $false
 
         $actual_tmpdir = $m.Tmpdir
-        $parent_tmpdir = Split-Path -Path $actual_tmpdir -Parent
-        $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
+        $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
+        $tmpdir_name = Split-Path -LiteralPath $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
         $children.Count | Assert-Equals -Expected 1
-        $actual_remote_sd = (Get-Acl -Path $remote_tmp).GetSecurityDescriptorSddlForm("Access, Owner")
-        $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
+        $actual_remote_sd = (Get-Acl -LiteralPath $remote_tmp).GetSecurityDescriptorSddlForm("Access, Owner")
+        $actual_tmpdir_sd = (Get-Acl -LiteralPath $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
         $actual_remote_sd | Assert-Equals -Expected $expected_sd
         $actual_tmpdir_sd | Assert-Equals -Expected $expected_sd
 
@@ -1371,8 +1371,8 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
         }
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $output.warnings.Count | Assert-Equals -Expected 1
         $nt_account = $current_user.Translate([System.Security.Principal.NTAccount])
         $actual_warning = "Module remote_tmp $remote_tmp did not exist and was created with FullControl to $nt_account, "
@@ -1382,8 +1382,8 @@ test_no_log - Invoked with:
     }
 
     "Module tmp, keep remote files" = {
-        $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        New-Item -Path $remote_tmp -ItemType Directory > $null
+        $remote_tmp = Join-Path -LiteralPath $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
+        New-Item -LiteralPath $remote_tmp -ItemType Directory > $null
         $complex_args = @{
             _ansible_remote_tmp = $remote_tmp.ToString()
             _ansible_keep_remote_files = $true
@@ -1391,23 +1391,23 @@ test_no_log - Invoked with:
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
         $actual_tmpdir = $m.Tmpdir
-        $parent_tmpdir = Split-Path -Path $actual_tmpdir -Parent
-        $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
+        $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
+        $tmpdir_name = Split-Path -LiteralPath $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
 
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
             $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
         }
-        (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
-        (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
+        (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
         $output.warnings.Count | Assert-Equals -Expected 0
-        Remove-Item -Path $actual_tmpdir -Force -Recurse
+        Remove-Item -LiteralPath $actual_tmpdir -Force -Recurse
     }
 
     "Invalid argument spec key" = {

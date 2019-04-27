@@ -27,7 +27,7 @@
       $start = Get-Date
       $path = "HKLM:\SYSTEM\CurrentControlSet\Control\Winlogon\Notifications\Components\TrustedInstaller"
       $tries = 0
-      while ((Get-ItemProperty -Path $path -Name Events).Events.Contains("CreateSession")) {
+      while ((Get-ItemProperty -LiteralPath $path -Name Events).Events.Contains("CreateSession")) {
           $tries += 1
           Start-Sleep -Seconds 5
           if (((Get-Date) - $start).TotalSeconds -gt 180) {

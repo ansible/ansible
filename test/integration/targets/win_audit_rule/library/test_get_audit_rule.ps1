@@ -24,7 +24,7 @@ If (! (Test-Path $path) )
 }
 
 Function Get-CurrentAuditRules ($path) {
-    $ACL = Get-Acl -Path $path -Audit
+    $ACL = Get-Acl -LiteralPath $path -Audit
 
     $HT = Foreach ($Obj in $ACL.Audit)
     {

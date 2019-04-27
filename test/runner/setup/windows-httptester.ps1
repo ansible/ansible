@@ -20,7 +20,7 @@ $Hosts = $Hosts.Split('|')
 
 $ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
-$os_version = [Version](Get-Item -Path "$env:SystemRoot\System32\kernel32.dll").VersionInfo.ProductVersion
+$os_version = [Version](Get-Item -LiteralPath "$env:SystemRoot\System32\kernel32.dll").VersionInfo.ProductVersion
 Write-Verbose -Message "Configuring HTTP Tester on Windows $os_version for '$($Hosts -join "', '")'"
 
 Function Get-PmapperRuleBytes {
@@ -37,7 +37,7 @@ Function Get-PmapperRuleBytes {
 
     .PARAMETER ConnectAddress
     The hostname or IP to map the traffic to.
-
+teral
     .PARAMETER ConnectPort
     This port of ConnectAddress to map the traffic to.
     #>
@@ -116,10 +116,10 @@ if ($os_version -ge [Version]"6.2") {
     $s3_url = "https://s3.amazonaws.com/ansible-ci-files/ansible-test/pmapper-1.04.exe"
 
     # download the Port Mapper executable to a temporary directory
-    $pmapper_folder = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
-    $pmapper_exe = Join-Path -Path $pmapper_folder -ChildPath pmapper.exe
-    $pmapper_config = Join-Path -Path $pmapper_folder -ChildPath pmapper.dat
-    New-Item -Path $pmapper_folder -ItemType Directory > $null
+    $pmapper_folder = Join-Path -LiteralPath ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
+    $pmapper_exe = Join-Path -LiteralPath $pmapper_folder -ChildPath pmapper.exe
+    $pmapper_config = Join-Path -LiteralPath $pmapper_folder -ChildPath pmapper.dat
+    New-Item -LiteralPath $pmapper_folder -ItemType Directory > $null
 
     $stop = $false
     do {
@@ -165,8 +165,8 @@ if ($os_version -ge [Version]"6.2") {
 
 Write-Verbose -Message "Wait for current script at '$PSCommandPath' to be deleted before running cleanup"
 $fsw = New-Object -TypeName System.IO.FileSystemWatcher
-$fsw.Path = Split-Path -Path $PSCommandPath -Parent
-$fsw.Filter = Split-Path -Path $PSCommandPath -Leaf
+$fsw.Path = Split-Path -LiteralPath $PSCommandPath -Parent
+$fsw.Filter = Split-Path -LiteralPath $PSCommandPath -Leaf
 $fsw.WaitForChanged([System.IO.WatcherChangeTypes]::Deleted, 3600000) > $null
 Write-Verbose -Message "Script delete or timeout reached, cleaning up Windows httptester artifacts"
 
@@ -214,7 +214,7 @@ if ($os_version -ge [Version]"6.2") {
     do {
         try {
             Write-Verbose -Message "Cleanup temporary files for Port Mapper at '$pmapper_folder' - Attempt: $attempts"
-            Remove-Item -Path $pmapper_folder -Force -Recurse
+            Remove-Item -LiteralPath $pmapper_folder -Force -Recurse
             break
         } catch {
             Write-Verbose -Message "Cleanup temporary files for Port Mapper failed, waiting 5 seconds before trying again:$($_ | Out-String)"

@@ -25,8 +25,8 @@ if (Get-Module -Name DISM -ListAvailable) {
 } else {
     # Server 2008 R2 doesn't have the DISM module installed on the path, check the Windows ADK path
     $adk_root = [System.Environment]::ExpandEnvironmentVariables("%PROGRAMFILES(X86)%\Windows Kits\*\Assessment and Deployment Kit\Deployment Tools\amd64\DISM")
-    if (Test-Path -Path $adk_root) {
-        Import-Module -Name (Get-Item -Path $adk_root).FullName
+    if (Test-Path -LiteralPath $adk_root) {
+        Import-Module -Name (Get-Item -LiteralPath $adk_root).FullName
     } else {
         Fail-Json $result "The DISM PS module needs to be installed, this can be done through the windows-adk chocolately package"
     }
@@ -36,8 +36,8 @@ if (Get-Module -Name DISM -ListAvailable) {
 Function Extract-MSU($msu) {
     $temp_path = [IO.Path]::GetTempPath()
     $temp_foldername = [Guid]::NewGuid()
-    $output_path = Join-Path -Path $temp_path -ChildPath $temp_foldername
-    New-Item -Path $output_path -ItemType Directory | Out-Null
+    $output_path = Join-Path -LiteralPath $temp_path -ChildPath $temp_foldername
+    New-Item -LiteralPath $output_path -ItemType Directory | Out-Null
 
     $expand_args = @($msu, $output_path, "-F:*")
 
@@ -82,15 +82,15 @@ Function Get-HotfixMetadataFromName($name) {
 
 Function Get-HotfixMetadataFromFile($extract_path) {
     # MSU contents https://support.microsoft.com/en-us/help/934307/description-of-the-windows-update-standalone-installer-in-windows
-    $metadata_path = Get-ChildItem -Path $extract_path | Where-Object { $_.Extension -eq ".xml" }
+    $metadata_path = Get-ChildItem -LiteralPath $extract_path | Where-Object { $_.Extension -eq ".xml" }
     if ($null -eq $metadata_path) {
         Fail-Json $result "failed to get metadata xml inside MSU file, cannot get hotfix metadata required for this task"
     }
-    [xml]$xml = Get-Content -Path $metadata_path.FullName
+    [xml]$xml = Get-Content -LiteralPath $metadata_path.FullName
 
     $cab_source_filename = $xml.unattend.servicing.package.source.GetAttribute("location")
-    $cab_source_filename = Split-Path -Path $cab_source_filename -Leaf
-    $cab_file = Join-Path -Path $extract_path -ChildPath $cab_source_filename
+    $cab_source_filename = Split-Path -LiteralPath $cab_source_filename -Leaf
+    $cab_file = Join-Path -LiteralPath $extract_path -ChildPath $cab_source_filename
 
     try {
         $dism_package_info = Get-WindowsPackage -Online -PackagePath $cab_file
@@ -101,11 +101,11 @@ Function Get-HotfixMetadataFromFile($extract_path) {
         Fail-Json $result "hotfix package is not applicable for this server"
     }
 
-    $package_properties_path = Get-ChildItem -Path $extract_path | Where-Object { $_.Extension -eq ".txt" }
+    $package_properties_path = Get-ChildItem -LiteralPath $extract_path | Where-Object { $_.Extension -eq ".txt" }
     if ($null -eq $package_properties_path) {
         $hotfix_kb = "UNKNOWN"
     } else {
-        $package_ini = Get-Content -Path $package_properties_path.FullName
+        $package_ini = Get-Content -LiteralPath $package_properties_path.FullName
         $entry = $package_ini | Where-Object { $_.StartsWith("KB Article Number") }
         if ($null -eq $entry) {
             $hotfix_kb = "UNKNOWN"
@@ -192,7 +192,7 @@ if ($state -eq "absent") {
     if ($null -eq $source) {
         Fail-Json $result "source must be set when state=present"
     }
-    if (-not (Test-Path -Path $source -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
         Fail-Json $result "the path set for source $source does not exist or is not a file"
     }
 
@@ -232,7 +232,7 @@ if ($state -eq "absent") {
             $result.changed = $true
         }
     } finally {
-        Remove-Item -Path $extract_path -Force -Recurse
+        Remove-Item -LiteralPath $extract_path -Force -Recurse
     }
 }
 

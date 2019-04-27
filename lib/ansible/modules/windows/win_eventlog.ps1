@@ -34,7 +34,7 @@ function Get-EventLogDetail {
         # Associating file locations and sources with logs can only be done from the registry
 
         $root_key = "HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\{0}" -f $LogName
-        $log_root = Get-ChildItem -Path $root_key
+        $log_root = Get-ChildItem -LiteralPath $root_key
 
         foreach ($child in $log_root) {
             $source_name = $child.PSChildName
@@ -42,7 +42,7 @@ function Get-EventLogDetail {
             $hash_cursor = $log_details.sources.$source_name
 
             $source_root = "{0}\{1}" -f $root_key, $source_name
-            $resource_files = Get-ItemProperty -Path $source_root
+            $resource_files = Get-ItemProperty -LiteralPath $source_root
 
             $hash_cursor.category_file = $resource_files.CategoryMessageFile
             $hash_cursor.message_file = $resource_files.EventMessageFile

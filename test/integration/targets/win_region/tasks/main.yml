@@ -54,7 +54,7 @@
   check_mode: yes
 
 - name: get current location value
-  win_command: powershell (Get-ItemProperty -Path 'HKCU:\Control Panel\International\Geo').Nation
+  win_command: powershell (Get-ItemProperty -LiteralPath 'HKCU:\Control Panel\International\Geo').Nation
   register: actual_location
 
 - name: check assertion about location change in check mode
@@ -70,7 +70,7 @@
   register: location
 
 - name: get current location value
-  win_command: powershell (Get-ItemProperty -Path 'HKCU:\Control Panel\International\Geo').Nation
+  win_command: powershell (Get-ItemProperty -LiteralPath 'HKCU:\Control Panel\International\Geo').Nation
   register: actual_location
 
 - name: check assertion about location change

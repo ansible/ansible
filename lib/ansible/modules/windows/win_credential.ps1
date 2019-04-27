@@ -544,7 +544,7 @@ if ($null -ne $username -and $type -in @("domain_certificate", "generic_certific
     # Ensure the thumbprint is upper case with no spaces or hyphens
     $username = $username.ToUpperInvariant().Replace(" ", "").Replace("-", "")
 
-    $certificate = Get-Item -Path Cert:\CurrentUser\My\$username -ErrorAction SilentlyContinue
+    $certificate = Get-Item -LiteralPath Cert:\CurrentUser\My\$username -ErrorAction SilentlyContinue
     if ($null -eq $certificate) {
         $module.FailJson("Failed to find certificate with the thumbprint $username in the CurrentUser\My store")
     }

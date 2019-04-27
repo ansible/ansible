@@ -6,4 +6,4 @@
 
   always:
   - name: delete all CAPs
-    win_shell: Import-Module RemoteDesktopServices; Remove-Item -Path RDS:\GatewayServer\CAP\* -Recurse
+    win_shell: Import-Module RemoteDesktopServices; Remove-Item -LiteralPath RDS:\GatewayServer\CAP\* -Recurse

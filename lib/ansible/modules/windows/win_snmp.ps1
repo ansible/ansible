@@ -60,7 +60,7 @@ ForEach ($idx in (Get-Item $Managers_reg_key).Property) {
 
   If ($remove) {
     $result.changed = $True
-    Remove-ItemProperty -Path $Managers_reg_key -Name $idx -WhatIf:$check_mode
+    Remove-ItemProperty -LiteralPath $Managers_reg_key -Name $idx -WhatIf:$check_mode
   } Else {
     # Remember that this index is in use
     $indexes.Add([int]$idx) | Out-Null
@@ -88,7 +88,7 @@ ForEach ($community in (Get-Item $Communities_reg_key).Property) {
 
   If ($remove) {
     $result.changed = $True
-    Remove-ItemProperty -Path $Communities_reg_key -Name $community -WhatIf:$check_mode
+    Remove-ItemProperty -LiteralPath $Communities_reg_key -Name $community -WhatIf:$check_mode
   } Else {
     $result.community_strings.Add($community) | Out-Null
   }
@@ -106,7 +106,7 @@ If ($managers -Is [System.Collections.ArrayList]) {
       $next_index = $next_index + 1
       If (-Not $indexes.Contains($next_index)) {
         $result.changed = $True
-        New-ItemProperty -Path $Managers_reg_key -Name $next_index -Value "$manager" -WhatIf:$check_mode | Out-Null
+        New-ItemProperty -LiteralPath $Managers_reg_key -Name $next_index -Value "$manager" -WhatIf:$check_mode | Out-Null
         $result.permitted_managers.Add($manager) | Out-Null
         break
       }
@@ -118,7 +118,7 @@ If ($managers -Is [System.Collections.ArrayList]) {
 If ($communities -Is [System.Collections.ArrayList]) {
   ForEach ($community in $communities) {
     $result.changed = $True
-    New-ItemProperty -Path $Communities_reg_key -Name $community -PropertyType DWord -Value 4 -WhatIf:$check_mode | Out-Null
+    New-ItemProperty -LiteralPath $Communities_reg_key -Name $community -PropertyType DWord -Value 4 -WhatIf:$check_mode | Out-Null
     $result.community_strings.Add($community) | Out-Null
   }
 }

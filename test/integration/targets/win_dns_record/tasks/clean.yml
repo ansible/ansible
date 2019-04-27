@@ -9,7 +9,7 @@
     # win_file could also do this, but it would need to know where the
     # SystemRoot is located via fact gathering, which we cannot assume.
     Trap { If (-not $fail_on_missing) { continue } }
-    Remove-Item -Path $env:SystemRoot\system32\dns\$zone.dns
+    Remove-Item -LiteralPath $env:SystemRoot\system32\dns\$zone.dns
 
     $true  # so pipeline exits cleanly if an error was ignored above
   loop:

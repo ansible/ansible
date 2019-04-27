@@ -6,7 +6,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$path = Join-Path -Path ([System.IO.Path]::GetFullPath($env:TEMP)) -ChildPath '.ansible .ÅÑŚÌβŁÈ [$!@^&test(;)]'
+$path = Join-Path -LiteralPath ([System.IO.Path]::GetFullPath($env:TEMP)) -ChildPath '.ansible .ÅÑŚÌβŁÈ [$!@^&test(;)]'
 
 $folder_target = "$path\folder"
 $file_target = "$path\file"
@@ -20,9 +20,9 @@ if (Test-Path -LiteralPath $path) {
     # Remove-Item struggles with broken symlinks, rely on trusty rmdir instead
     Run-Command -command "cmd.exe /c rmdir /S /Q `"$path`"" > $null
 }
-New-Item -Path $path -ItemType Directory | Out-Null
-New-Item -Path $folder_target -ItemType Directory | Out-Null
-New-Item -Path $file_target -ItemType File | Out-Null
+New-Item -LiteralPath $path -ItemType Directory | Out-Null
+New-Item -LiteralPath $folder_target -ItemType Directory | Out-Null
+New-Item -LiteralPath $file_target -ItemType File | Out-Null
 Set-Content -LiteralPath $file_target -Value "a"
 
 Function Assert-Equals($actual, $expected) {

@@ -658,7 +658,7 @@
     path: "{{win_output_dir}}/test_linebreak.txt"
   register: result
 
-# (Get-FileHash -path C:\ansible\test\integration\targets\win_lineinfile\files\test_linebreak.txt -Algorithm sha1).hash.tolower()
+# (Get-FileHash -LiteralPath C:\ansible\test\integration\targets\win_lineinfile\files\test_linebreak.txt -Algorithm sha1).hash.tolower()
 - name: check win_stat file result
   assert:
     that:

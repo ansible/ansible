@@ -39,9 +39,9 @@ if ($null -ne $certificate)
     }
 
     # Get current certificate hash
-    $current_cert = (Get-Item -Path "RDS:\GatewayServer\SSLCertificate\Thumbprint").CurrentValue
+    $current_cert = (Get-Item -LiteralPath "RDS:\GatewayServer\SSLCertificate\Thumbprint").CurrentValue
     if ($current_cert -ne $certificate) {
-        Set-Item -Path "RDS:\GatewayServer\SSLCertificate\Thumbprint" -Value $certificate -WhatIf:$check_mode
+        Set-Item -LiteralPath "RDS:\GatewayServer\SSLCertificate\Thumbprint" -Value $certificate -WhatIf:$check_mode
         $diff_text += "-Certificate = $current_cert`n+Certificate = $certificate`n"
         $result.changed = $true
     }
@@ -53,13 +53,13 @@ if ($null -ne $max_connections)
     # TODO Use a more explicit value, maybe a string (ex: "max", "none" or "unlimited") ?
     If ($max_connections -eq -1)
     {
-        $max_connections = (Get-Item -Path "RDS:\GatewayServer\MaxConnectionsAllowed").CurrentValue
+        $max_connections = (Get-Item -LiteralPath "RDS:\GatewayServer\MaxConnectionsAllowed").CurrentValue
     }
 
     # Get current connections limit
-    $current_max_connections = (Get-Item -Path "RDS:\GatewayServer\MaxConnections").CurrentValue
+    $current_max_connections = (Get-Item -LiteralPath "RDS:\GatewayServer\MaxConnections").CurrentValue
     if ($current_max_connections -ne $max_connections) {
-        Set-Item -Path "RDS:\GatewayServer\MaxConnections" -Value $max_connections -WhatIf:$check_mode
+        Set-Item -LiteralPath "RDS:\GatewayServer\MaxConnections" -Value $max_connections -WhatIf:$check_mode
         $diff_text += "-MaxConnections = $current_max_connections`n+MaxConnections = $max_connections`n"
         $result.changed = $true
     }
@@ -67,12 +67,12 @@ if ($null -ne $max_connections)
 
 if ($null -ne $ssl_bridging)
 {
-    $current_ssl_bridging = (Get-Item -Path "RDS:\GatewayServer\SSLBridging").CurrentValue
+    $current_ssl_bridging = (Get-Item -LiteralPath "RDS:\GatewayServer\SSLBridging").CurrentValue
     # Convert the integer value to its representative string
     $current_ssl_bridging_str = $ssl_bridging_methods[$current_ssl_bridging]
 
     if ($current_ssl_bridging_str -ne $ssl_bridging) {
-        Set-Item -Path "RDS:\GatewayServer\SSLBridging" -Value ([array]::IndexOf($ssl_bridging_methods, $ssl_bridging)) -WhatIf:$check_mode
+        Set-Item -LiteralPath "RDS:\GatewayServer\SSLBridging" -Value ([array]::IndexOf($ssl_bridging_methods, $ssl_bridging)) -WhatIf:$check_mode
         $diff_text += "-SSLBridging = $current_ssl_bridging_str`n+SSLBridging = $ssl_bridging`n"
         $result.changed = $true
     }
@@ -80,12 +80,12 @@ if ($null -ne $ssl_bridging)
 
 if ($null -ne $enable_only_messaging_capable_clients)
 {
-    $current_enable_only_messaging_capable_clients = (Get-Item -Path "RDS:\GatewayServer\EnableOnlyMessagingCapableClients").CurrentValue
+    $current_enable_only_messaging_capable_clients = (Get-Item -LiteralPath "RDS:\GatewayServer\EnableOnlyMessagingCapableClients").CurrentValue
     # Convert the integer value to boolean
     $current_enable_only_messaging_capable_clients = $current_enable_only_messaging_capable_clients -eq 1
 
     if ($current_enable_only_messaging_capable_clients -ne $enable_only_messaging_capable_clients) {
-        Set-Item -Path "RDS:\GatewayServer\EnableOnlyMessagingCapableClients" -Value ([int]$enable_only_messaging_capable_clients) -WhatIf:$check_mode
+        Set-Item -LiteralPath "RDS:\GatewayServer\EnableOnlyMessagingCapableClients" -Value ([int]$enable_only_messaging_capable_clients) -WhatIf:$check_mode
         $diff_text += "-EnableOnlyMessagingCapableClients = $current_enable_only_messaging_capable_clients`n+EnableOnlyMessagingCapableClients = $enable_only_messaging_capable_clients`n"
         $result.changed = $true
     }

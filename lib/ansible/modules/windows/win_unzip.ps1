@@ -40,8 +40,8 @@ Function Extract-Zip($src, $dest) {
         $entry_target_path = [System.IO.Path]::Combine($dest, $archive_name)
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
-        if (-not (Test-Path -Path $entry_dir)) {
-            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+        if (-not (Test-Path -LiteralPath $entry_dir)) {
+            New-Item -LiteralPath $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
             $result.changed = $true
         }
 

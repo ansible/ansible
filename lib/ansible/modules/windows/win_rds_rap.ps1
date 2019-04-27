@@ -32,7 +32,7 @@ function Get-RAP([string] $name) {
     }
 
     # Fetch RAP properties
-    Get-ChildItem -Path $rap_path | ForEach-Object { $rap.Add($_.Name,$_.CurrentValue) }
+    Get-ChildItem -LiteralPath $rap_path | ForEach-Object { $rap.Add($_.Name,$_.CurrentValue) }
     # Convert boolean values
     $rap.Enabled = $rap.Status -eq 1
     $rap.Remove("Status")
@@ -54,7 +54,7 @@ function Get-RAP([string] $name) {
 
     # Fetch RAP user groups in Down-Level Logon format
     $rap.UserGroups = @(
-        Get-ChildItem -Path "$rap_path\UserGroups" |
+        Get-ChildItem -LiteralPath "$rap_path\UserGroups" |
             Select-Object -ExpandProperty Name |
             ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
     )
@@ -78,7 +78,7 @@ function Set-RAPPropertyValue {
     $rap_path = "RDS:\GatewayServer\RAP\$name"
 
     try {
-        Set-Item -Path "$rap_path\$property" -Value $value -ErrorAction stop
+        Set-Item -LiteralPath "$rap_path\$property" -Value $value -ErrorAction stop
     } catch {
         Fail-Json -obj $resultobj -message "Failed to set property $property of RAP ${name}: $($_.Exception.Message)"
     }
@@ -117,7 +117,7 @@ if ($null -ne $user_groups) {
 # Validate computer group parameter
 if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {
     Add-Warning -obj $result -message "Parameter 'computer_group' ignored because the computer_group_type is set to allow_any."
-} elseif ($computer_group_type -eq "rdg_group" -and -not (Test-Path -Path "RDS:\GatewayServer\GatewayManagedComputerGroups\$computer_group")) {
+} elseif ($computer_group_type -eq "rdg_group" -and -not (Test-Path -LiteralPath "RDS:\GatewayServer\GatewayManagedComputerGroups\$computer_group")) {
     Fail-Json -obj $result -message "$computer_group is not a valid gateway managed computer group"
 } elseif ($computer_group_type -eq "ad_network_resource_group") {
     $sid = Convert-ToSID -account_name $computer_group
@@ -143,11 +143,11 @@ if ($null -eq (Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyConti
 }
 
 # Check if a RAP with the given name already exists
-$rap_exist = Test-Path -Path "RDS:\GatewayServer\RAP\$name"
+$rap_exist = Test-Path -LiteralPath "RDS:\GatewayServer\RAP\$name"
 
 if ($state -eq 'absent') {
     if ($rap_exist) {
-        Remove-Item -Path "RDS:\GatewayServer\RAP\$name" -Recurse -WhatIf:$check_mode
+        Remove-Item -LiteralPath "RDS:\GatewayServer\RAP\$name" -Recurse -WhatIf:$check_mode
         $diff_text += "-[$name]"
         $result.changed = $true
     }

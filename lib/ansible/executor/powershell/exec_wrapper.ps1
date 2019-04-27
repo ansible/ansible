@@ -182,7 +182,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
         $min_os_version = [Version]$payload.min_os_version
         # Environment.OSVersion.Version is deprecated and may not return the
         # right version
-        $actual_os_version = [Version](Get-Item -Path $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion
+        $actual_os_version = [Version](Get-Item -LiteralPath $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion
 
         Write-AnsibleLog "INFO - checking if actual os version '$actual_os_version' is less than the min os version '$min_os_version'" "exec_wrapper"
         if ($actual_os_version -lt $min_os_version) {

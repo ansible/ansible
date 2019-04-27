@@ -11,7 +11,7 @@ $result = @{
 }
 
 $choco_app = Get-Command -Name choco.exe -CommandType Application
-$choco_config_path = "$(Split-Path -Path (Split-Path -Path $choco_app.Path))\config\chocolatey.config"
+$choco_config_path = "$(Split-Path -LiteralPath (Split-Path -LiteralPath $choco_app.Path))\config\chocolatey.config"
 
 [xml]$choco_config = Get-Content -LiteralPath $choco_config_path
 foreach ($xml_source in $choco_config.chocolatey.sources.GetEnumerator()) {

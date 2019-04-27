@@ -25,7 +25,7 @@
 
     $tmp_dir = '{{ win_find_dir }}'
     foreach ($directory in $directories) {
-        New-Item -Path "$tmp_dir\$directory" -ItemType Directory
+        New-Item -LiteralPath "$tmp_dir\$directory" -ItemType Directory
     }
 
     $normal_content = "abcdefg1234567"
@@ -44,20 +44,20 @@
         "hard-link-dest\file-abc.log"
     )
     foreach ($file in $normal_files) {
-        New-Item -Path "$tmp_dir\$file" -ItemType File
+        New-Item -LiteralPath "$tmp_dir\$file" -ItemType File
         [System.IO.File]::WriteAllText("$tmp_dir\$file", $normal_content)
     }
 
-    New-Item -Path "$tmp_dir\single\small.ps1" -ItemType File
+    New-Item -LiteralPath "$tmp_dir\single\small.ps1" -ItemType File
     [System.IO.File]::WriteAllText("$tmp_dir\single\small.ps1", "a")
 
-    New-Item -Path "$tmp_dir\date\new.ps1" -ItemType File
+    New-Item -LiteralPath "$tmp_dir\date\new.ps1" -ItemType File
     [System.IO.File]::WriteAllText("$tmp_dir\date\new.ps1", "random text for new date")
 
-    New-Item -Path "$tmp_dir\date\old.ps1" -ItemType File
+    New-Item -LiteralPath "$tmp_dir\date\old.ps1" -ItemType File
     [System.IO.File]::WriteAllText("$tmp_dir\date\old.ps1", "random text for old date")
 
-    New-Item -Path "$tmp_dir\single\large.ps1" -ItemType File
+    New-Item -LiteralPath "$tmp_dir\single\large.ps1" -ItemType File
     Set-Content -LiteralPath "$tmp_dir\single\large.ps1" -Value ('abcdefghijklmnopqrstuvwxyz' * 10000)
 
     $share_stat = Get-WmiObject -Class Win32_Share -Filter "name='folder-share'"

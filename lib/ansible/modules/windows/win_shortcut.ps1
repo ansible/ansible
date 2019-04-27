@@ -245,10 +245,10 @@ $windowstyles = @{
 $windowstyleids = @( "", "normal", "", "maximized", "", "", "", "minimized" )
 
 If ($state -eq "absent") {
-    If (Test-Path -Path $dest) {
+    If (Test-Path -LiteralPath $dest) {
         # If the shortcut exists, try to remove it
         Try {
-            Remove-Item -Path $dest -WhatIf:$module.CheckMode
+            Remove-Item -LiteralPath $dest -WhatIf:$module.CheckMode
         } Catch {
             # Report removal failure
             $module.FailJson("Failed to remove shortcut '$dest'. ($($_.Exception.Message))", $_)
@@ -270,8 +270,8 @@ If ($state -eq "absent") {
         If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
             $src = (Get-Command -Name $src -Type Application).Definition
         }
-        If (-not (Test-Path -Path $src -IsValid)) {
-            If (-not (Split-Path -Path $src -IsAbsolute)) {
+        If (-not (Test-Path -LiteralPath $src -IsValid)) {
+            If (-not (Split-Path -LiteralPath $src -IsAbsolute)) {
                 $module.FailJson("Source '$src' is not found in PATH and not a valid or absolute path.")
             }
         }
@@ -287,7 +287,7 @@ If ($state -eq "absent") {
 
         $target_path = $ShortCut.TargetPath
         If (($null -ne $src) -and ($ShortCut.TargetPath -ne $src)) {
-            if ((Test-Path -Path $dest) -and (-not $ShortCut.TargetPath)) {
+            if ((Test-Path -LiteralPath $dest) -and (-not $ShortCut.TargetPath)) {
                 # If the shortcut already exists but not on the COM object, we
                 # are dealing with a shell path like 'shell:RecycleBinFolder'.
                 $expanded_src = [Ansible.Shortcut.ShellLink]::GetDisplayNameFromPath($src)
@@ -358,7 +358,7 @@ If ($state -eq "absent") {
         }
     }
 
-    if ((Test-Path -Path $dest) -and $file_shortcut) {
+    if ((Test-Path -LiteralPath $dest) -and $file_shortcut) {
         # Only control the run_as_admin flag if using a File Shortcut
         $flags = [Ansible.Shortcut.ShellLink]::GetFlags($dest)
         if ($run_as_admin -and (-not $flags.HasFlag([Ansible.Shortcut.ShellLinkFlags]::RunAsUser))) {

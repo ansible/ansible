@@ -201,7 +201,7 @@
     SetScript: |
       Add-Type -AssemblyName System.DirectoryServices.AccountManagement
       $sid = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current.Sid.Value
-      Set-Content -Path "{{ remote_tmp_dir }}\runas.txt" -Value $sid
+      Set-Content -LiteralPath "{{ remote_tmp_dir }}\runas.txt" -Value $sid
     TestScript: $false
     PsDscRunAsCredential_username: '{{ ansible_user }}'
     PsDscRunAsCredential_password: '{{ ansible_password }}'

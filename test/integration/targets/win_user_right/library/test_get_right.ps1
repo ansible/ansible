@@ -24,8 +24,8 @@ Function Get-Username($sid) {
 
 $secedit_ini_path = [IO.Path]::GetTempFileName()
 &SecEdit.exe /export /cfg $secedit_ini_path /quiet
-$secedit_ini = Get-Content -Path $secedit_ini_path
-Remove-Item -Path $secedit_ini_path -Force
+$secedit_ini = Get-Content -LiteralPath $secedit_ini_path
+Remove-Item -LiteralPath $secedit_ini_path -Force
 
 foreach ($line in $secedit_ini) {
     if ($line.ToLower().StartsWith("$($name.ToLower()) = ")) {

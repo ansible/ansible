@@ -213,7 +213,7 @@ Function Set-UserLocale($culture) {
             $new_value = $wanted_values.$name
 
             if ($new_value -ne $old_value) {
-                Set-ItemProperty -Path $reg_key -Name $name -Value $new_value -WhatIf:$check_mode
+                Set-ItemProperty -LiteralPath $reg_key -Name $name -Value $new_value -WhatIf:$check_mode
                 $result.changed = $true
             }
         }
@@ -225,7 +225,7 @@ Function Set-SystemLocaleLegacy($unicode_language) {
     $current_language_value = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language').Default
     $wanted_language_value = '{0:x4}' -f ([System.Globalization.CultureInfo]$unicode_language).LCID
     if ($current_language_value -ne $wanted_language_value) {
-        Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language' -Name 'Default' -Value $wanted_language_value -WhatIf:$check_mode
+        Set-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language' -Name 'Default' -Value $wanted_language_value -WhatIf:$check_mode
         $result.changed = $true
         $result.restart_required = $true
     }
@@ -258,17 +258,17 @@ Function Set-SystemLocaleLegacy($unicode_language) {
     $wanted_mac_cp = $wanted_codepage_info.MacCodePage
 
     if ($current_a_cp -ne $wanted_a_cp) {
-        Set-ItemProperty -Path $codepage_path -Name 'ACP' -Value $wanted_a_cp -WhatIf:$check_mode
+        Set-ItemProperty -LiteralPath $codepage_path -Name 'ACP' -Value $wanted_a_cp -WhatIf:$check_mode
         $result.changed = $true
         $result.restart_required = $true
     }
     if ($current_oem_cp -ne $wanted_oem_cp) {
-        Set-ItemProperty -Path $codepage_path -Name 'OEMCP' -Value $wanted_oem_cp -WhatIf:$check_mode
+        Set-ItemProperty -LiteralPath $codepage_path -Name 'OEMCP' -Value $wanted_oem_cp -WhatIf:$check_mode
         $result.changed = $true
         $result.restart_required = $true
     }
     if ($current_mac_cp -ne $wanted_mac_cp) {
-        Set-ItemProperty -Path $codepage_path -Name 'MACCP' -Value $wanted_mac_cp -WhatIf:$check_mode
+        Set-ItemProperty -LiteralPath $codepage_path -Name 'MACCP' -Value $wanted_mac_cp -WhatIf:$check_mode
         $result.changed = $true
         $result.restart_required = $true
     }
@@ -311,9 +311,9 @@ if ($null -ne $location) {
             $result.changed = $true
         }
     } else {
-        $current_location = (Get-ItemProperty -Path 'HKCU:\Control Panel\International\Geo').Nation
+        $current_location = (Get-ItemProperty -LiteralPath 'HKCU:\Control Panel\International\Geo').Nation
         if ($current_location -ne $location) {
-            Set-ItemProperty -Path 'HKCU:\Control Panel\International\Geo' -Name 'Nation' -Value $location -WhatIf:$check_mode
+            Set-ItemProperty -LiteralPath 'HKCU:\Control Panel\International\Geo' -Name 'Nation' -Value $location -WhatIf:$check_mode
             $result.changed = $true
         }
     }

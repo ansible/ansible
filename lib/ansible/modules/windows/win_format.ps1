@@ -81,7 +81,7 @@ function Get-AnsibleVolume {
     }
     elseif ($null -ne $Path) {
         try {
-            $volume = Get-Volume -Path $Path
+            $volume = Get-Volume -LiteralPath $Path
         } catch {
             $module.FailJson("There was an error retrieving the volume using path $($Path): $($_.Exception.Message)", $_)
         }

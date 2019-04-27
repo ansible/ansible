@@ -98,7 +98,7 @@ $result = @{
     changed = $false
 }
 
-If (-Not (Test-Path -Path $dest -PathType Leaf)){
+If (-Not (Test-Path -LiteralPath $dest -PathType Leaf)){
     Fail-Json $result "Specified path $dest does not exist or is not a file."
 }
 

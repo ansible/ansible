@@ -52,7 +52,7 @@ $bootstrap_wrapper = {
     trap {
         $wrapper_path = "$($env:TEMP)\ansible-async-wrapper-error-$(Get-Date -Format "yyyy-MM-ddTHH-mm-ss.ffffZ").txt"
         $error_msg = "Error while running the async exec wrapper`r`n$($_ | Out-String)`r`n$($_.ScriptStackTrace)"
-        Set-Content -Path $wrapper_path -Value $error_msg
+        Set-Content -LiteralPath $wrapper_path -Value $error_msg
         break
     }
 
@@ -143,7 +143,7 @@ try {
 
     Write-AnsibleLog "INFO - writing initial async results to '$results_path'" "async_wrapper"
     $result_json = ConvertTo-Json -InputObject $result -Depth 99 -Compress
-    Set-Content $results_path -Value $result_json
+    Set-Content -LiteralPath $results_path -Value $result_json
 
     Write-AnsibleLog "INFO - waiting for async process to connect to named pipe for 5 seconds" "async_wrapper"
     $wait_async = $pipe.BeginWaitForConnection($null, $null)

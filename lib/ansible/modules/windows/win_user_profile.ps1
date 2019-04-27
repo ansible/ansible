@@ -81,12 +81,12 @@ Function Get-ExpectedProfilePath {
         $msg = Get-LastWin32ExceptionMessage -Error ([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())
         $module.FailJson("Failed to determine profile path with the base name '$BaseName': $msg")
     }
-    $profile_path = Join-Path -Path $raw_profile_path.ToString() -ChildPath $BaseName
+    $profile_path = Join-Path -LiteralPath $raw_profile_path.ToString() -ChildPath $BaseName
 
     return $profile_path
 }
 
-$profiles = Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList"
+$profiles = Get-ChildItem -LiteralPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList"
 
 if ($state -eq "absent") {
     if ($null -ne $username) {
@@ -97,7 +97,7 @@ if ($state -eq "absent") {
         $expected_profile_path = Get-ExpectedProfilePath -BaseName $name
 
         $user_profiles = $profiles | Where-Object {
-            $profile_path = (Get-ItemProperty -Path $_.PSPath -Name ProfileImagePath).ProfileImagePath
+            $profile_path = (Get-ItemProperty -LiteralPath $_.PSPath -Name ProfileImagePath).ProfileImagePath
             $profile_path -eq $expected_profile_path
         }
 
@@ -107,7 +107,7 @@ if ($state -eq "absent") {
     }
 
     foreach ($user_profile in $user_profiles) {
-        $profile_path = (Get-ItemProperty -Path $user_profile.PSPath -Name ProfileImagePath).ProfileImagePath
+        $profile_path = (Get-ItemProperty -LiteralPath $user_profile.PSPath -Name ProfileImagePath).ProfileImagePath
         if (-not $module.CheckMode) {
             $res = [Ansible.WinUserProfile.NativeMethods]::DeleteProfileW($user_profile.PSChildName, [IntPtr]::Zero,
                 [IntPtr]::Zero)
@@ -155,7 +155,7 @@ if ($state -eq "absent") {
         $module.Result.changed = $true
         $module.Result.path = $profile_path
     } else {
-        $module.Result.path = (Get-ItemProperty -Path $user_profile.PSPath -Name ProfileImagePath).ProfileImagePath
+        $module.Result.path = (Get-ItemProperty -LiteralPath $user_profile.PSPath -Name ProfileImagePath).ProfileImagePath
     }
 }
 

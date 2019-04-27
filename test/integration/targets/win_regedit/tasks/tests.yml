@@ -489,7 +489,7 @@
   win_shell: |
     $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
-    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    Test-Path -LiteralPath HKLM:\ANSIBLE\NewKey
     [GC]::Collect()
     [GC]::WaitForPendingFinalizers()
     &reg.exe unload HKLM\ANSIBLE > $null
@@ -513,7 +513,7 @@
   win_shell: |
     $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
-    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    Test-Path -LiteralPath HKLM:\ANSIBLE\NewKey
     [GC]::Collect()
     [GC]::WaitForPendingFinalizers()
     &reg.exe unload HKLM\ANSIBLE > $null
@@ -552,7 +552,7 @@
 - name: get result of set hive key property (check mode)
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
-    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    $prop = Get-ItemProperty -LiteralPath HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
     }
@@ -579,7 +579,7 @@
 - name: get result of set hive key property
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
-    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    $prop = Get-ItemProperty -LiteralPath HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
     }
@@ -620,7 +620,7 @@
 - name: get result of remove hive key property (check mode)
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
-    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    $prop = Get-ItemProperty -LiteralPath HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
     }
@@ -645,7 +645,7 @@
 - name: get result of remove hive key property
   win_shell: |
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
-    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    $prop = Get-ItemProperty -LiteralPath HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
     }
@@ -685,7 +685,7 @@
   win_shell: |
     $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
-    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    Test-Path -LiteralPath HKLM:\ANSIBLE\NewKey
     [GC]::Collect()
     [GC]::WaitForPendingFinalizers()
     &reg.exe unload HKLM\ANSIBLE > $null
@@ -710,7 +710,7 @@
   win_shell: |
     $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
-    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    Test-Path -LiteralPath HKLM:\ANSIBLE\NewKey
     [GC]::Collect()
     [GC]::WaitForPendingFinalizers()
     &reg.exe unload HKLM\ANSIBLE > $null

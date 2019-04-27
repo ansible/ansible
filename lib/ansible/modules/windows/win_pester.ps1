@@ -85,7 +85,7 @@ If (Test-Path -LiteralPath $path -PathType Leaf) {
     }
 } else {
     # Run Pester tests against all the .ps1 file in the local folder
-    $files = Get-ChildItem -Path $path | Where-Object {$_.extension -eq ".ps1"}
+    $files = Get-ChildItem -LiteralPath $path | Where-Object {$_.extension -eq ".ps1"}
 
     if ($check_mode) {
         $result.output = "Run pester test(s) who are in the folder: $path"

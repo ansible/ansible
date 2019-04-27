@@ -57,7 +57,7 @@
   check_mode: yes
 
 - name: get result of import pem certificate (check)
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_pem_result_check
 
 - name: assert results of import pem certificate (check)
@@ -74,7 +74,7 @@
   register: import_pem
 
 - name: get result of import pem certificate
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_pem_result
 
 - name: assert results of import pem certificate
@@ -103,7 +103,7 @@
   check_mode: yes
 
 - name: get result of remove certificate based on thumbprint (check)
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: remove_thumbprint_result_check
 
 - name: assert results of remove certificate based on thumbprint (check)
@@ -120,7 +120,7 @@
   register: remove_thumbprint
 
 - name: get result of remove certificate based on thumbprint
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: remove_thumbprint_result
 
 - name: assert results of remove certificate based on thumbprint
@@ -149,7 +149,7 @@
   check_mode: yes
 
 - name: get result of import der certificate (check)
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_der_result_check
 
 - name: assert results of import der certificate (check)
@@ -166,7 +166,7 @@
   register: import_der
 
 - name: get result of import der certificate
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_der_result
 
 - name: assert results of import der certificate
@@ -195,7 +195,7 @@
   check_mode: yes
 
 - name: get result of remove certificate based on path (check)
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: remove_path_result_check
 
 - name: assert results of remove certificate based on path (check)
@@ -212,7 +212,7 @@
   register: remove_path
 
 - name: get result of remove certificate based on path
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: remove_path_result
 
 - name: assert results of remove certificate based on path
@@ -241,11 +241,11 @@
   check_mode: yes
 
 - name: get result of subj in p7b chain (check)
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_pem_p7b_subj_result_check
 
 - name: get result of root in p7b chain (check)
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{root_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{root_thumbprint}}" }) { $true } else { $false }
   register: import_pem_p7b_root_result_check
 
 - name: assert results of import PEM encoded p7b chain (check)
@@ -265,11 +265,11 @@
   register: import_pem_p7b
 
 - name: get result of subj in p7b chain
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_pem_p7b_subj_result
 
 - name: get result of root in p7b chain
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{root_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{root_thumbprint}}" }) { $true } else { $false }
   register: import_pem_p7b_root_result
 
 - name: assert results of import PEM encoded p7b chain
@@ -311,11 +311,11 @@
   check_mode: yes
 
 - name: get result of subj in p7b chain in custom store (check)
-  win_shell: if (Get-ChildItem -Path Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_der_p7b_subj_result_check
 
 - name: get result of root in p7b chain in custom store (check)
-  win_shell: if (Get-ChildItem -Path Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{root_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{root_thumbprint}}" }) { $true } else { $false }
   register: import_der_p7b_root_result_check
 
 - name: assert results of import DER encoded p7b chain into custom store (check)
@@ -337,11 +337,11 @@
   register: import_der_p7b
 
 - name: get result of subj in p7b chain in custom store
-  win_shell: if (Get-ChildItem -Path Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_der_p7b_subj_result
 
 - name: get result of root in p7b chain in custom store
-  win_shell: if (Get-ChildItem -Path Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{root_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{root_thumbprint}}" }) { $true } else { $false }
   register: import_der_p7b_root_result
 
 - name: assert results of import DER encoded p7b chain into custom store
@@ -391,7 +391,7 @@
   check_mode: yes
 
 - name: get results of import pfx without password and non exportable (check)
-  win_shell: if (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_pfx_without_pass_result_check
 
 - name: assert results of import pfx without password and non exportable (check)
@@ -410,7 +410,7 @@
   register: import_pfx_without_pass
 
 - name: get results of import pfx without password and non exportable
-  win_shell: (Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }).PrivateKey.CspKeyContainerInfo.Exportable
+  win_shell: (Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }).PrivateKey.CspKeyContainerInfo.Exportable
   vars: *become_vars
   register: import_pfx_without_pass_result
 
@@ -455,7 +455,7 @@
   check_mode: yes
 
 - name: get results of import pfx with password (check)
-  win_shell: if (Get-ChildItem -Path Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
+  win_shell: if (Get-ChildItem -LiteralPath Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }) { $true } else { $false }
   register: import_pfx_with_pass_result_check
 
 - name: assert results of import pfx with password (check)
@@ -476,7 +476,7 @@
   register: import_pfx_with_pass
 
 - name: get results of import pfx with password
-  win_shell: (Get-ChildItem -Path Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }).PrivateKey.CspKeyContainerInfo.Exportable
+  win_shell: (Get-ChildItem -LiteralPath Cert:\CurrentUser\TrustedPeople | Where-Object { $_.Thumbprint -eq "{{subj_thumbprint}}" }).PrivateKey.CspKeyContainerInfo.Exportable
   vars: *become_vars
   register: import_pfx_with_pass_result
 

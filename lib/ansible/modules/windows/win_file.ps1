@@ -18,7 +18,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "a
 # used in template/copy when dest is the path to a dir and source is a file
 $original_basename = Get-AnsibleParam -obj $params -name "_original_basename" -type "str"
 if ((Test-Path -LiteralPath $path -PathType Container) -and ($null -ne $original_basename)) {
-    $path = Join-Path -Path $path -ChildPath $original_basename
+    $path = Join-Path -LiteralPath $path -ChildPath $original_basename
 }
 
 $result = @{
@@ -121,7 +121,7 @@ if (Test-Path -LiteralPath $path) {
     # If state is not supplied, test the $path to see if it looks like
     # a file or a folder and set state to file or folder
     if ($null -eq $state) {
-        $basename = Split-Path -Path $path -Leaf
+        $basename = Split-Path -LiteralPath $path -Leaf
         if ($basename.length -gt 0) {
            $state = "file"
         } else {
@@ -131,7 +131,7 @@ if (Test-Path -LiteralPath $path) {
 
     if ($state -eq "directory") {
         try {
-            New-Item -Path $path -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -LiteralPath $path -ItemType Directory -WhatIf:$check_mode | Out-Null
         } catch {
             if ($_.CategoryInfo.Category -eq "ResourceExists") {
                 $fileinfo = Get-Item -LiteralPath $_.CategoryInfo.TargetName

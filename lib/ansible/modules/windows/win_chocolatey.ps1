@@ -289,7 +289,7 @@ Function Install-Chocolatey {
         $module.ExitJson()
     }
 
-    if (-not (Test-Path -Path $choco_app.Path)) {
+    if (-not (Test-Path -LiteralPath $choco_app.Path)) {
         $module.FailJson("Failed to find choco.exe, make sure it is added to the PATH or the env var 'ChocolateyInstall' is set")
     }
 

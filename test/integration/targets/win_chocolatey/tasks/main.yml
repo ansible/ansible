@@ -35,13 +35,13 @@
     $install_src = "$root_path\tools\chocolateyinstall.ps1"
     $uninstall_src = "$root_path\tools\chocolateyUninstall.ps1"
 
-    New-Item -Path $packages_path -ItemType Directory > $null
-    New-Item -Path $packages_path_override -ItemType Directory > $null
+    New-Item -LiteralPath $packages_path -ItemType Directory > $null
+    New-Item -LiteralPath $packages_path_override -ItemType Directory > $null
 
     foreach ($package in $packages) {
         $package_dir = "$root_path\$($package.name)-$($package.version)"
-        New-Item -Path $package_dir -ItemType Directory > $null
-        New-Item -Path "$package_dir\tools" -ItemType Directory > $null
+        New-Item -LiteralPath $package_dir -ItemType Directory > $null
+        New-Item -LiteralPath "$package_dir\tools" -ItemType Directory > $null
 
         if ($package.override) {
             $out_path = $packages_path_override
@@ -67,10 +67,10 @@
         [System.IO.File]::WriteAllText("$package_dir\tools\chocolateyUninstall.ps1", $uninstall_text, $utf8_bom)
 
         &choco.exe pack --out $out_path --no-progress --limit-output "$package_dir\$($package.name).nuspec"
-        Remove-Item -Path $package_dir -Force -Recurse > $null
+        Remove-Item -LiteralPath $package_dir -Force -Recurse > $null
     }
-    Remove-Item -Path "$root_path\tools" -Force -Recurse > $null
-    Remove-Item -Path $nuspec_src > $null
+    Remove-Item -LiteralPath "$root_path\tools" -Force -Recurse > $null
+    Remove-Item -LiteralPath $nuspec_src > $null
 
 - name: set up Chocolatey sources
   win_chocolatey_source:

@@ -50,7 +50,7 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 	}
 
 	Try {
-		Remove-Item -Path $temppath -Force -WhatIf:$check_mode;
+		Remove-Item -LiteralPath $temppath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot remove temporary file: $temppath ($($_.Exception.Message))";

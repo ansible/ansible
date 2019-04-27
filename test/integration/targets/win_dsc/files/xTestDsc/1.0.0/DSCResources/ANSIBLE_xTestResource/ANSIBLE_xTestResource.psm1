@@ -141,11 +141,11 @@ Function Set-TargetResource
         }
     }
 
-    if (Test-Path -Path $Path) {
-        Remove-Item -Path $Path -Force > $null
+    if (Test-Path -LiteralPath $Path) {
+        Remove-Item -LiteralPath $Path -Force > $null
     }
-    New-Item -Path $Path -ItemType File > $null
-    Set-Content -Path $Path -Value (ConvertTo-Json -InputObject $info -Depth 10) > $null
+    New-Item -LiteralPath $Path -ItemType File > $null
+    Set-Content -LiteralPath $Path -Value (ConvertTo-Json -InputObject $info -Depth 10) > $null
     Write-Verbose -Message "set verbose"
     Write-Warning -Message "set warning"
 }

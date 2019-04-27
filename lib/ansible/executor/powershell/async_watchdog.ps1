@@ -9,7 +9,7 @@ param(
 trap {
     $watchdog_path = "$($env:TEMP)\ansible-async-watchdog-error-$(Get-Date -Format "yyyy-MM-ddTHH-mm-ss.ffffZ").txt"
     $error_msg = "Error while running the async exec wrapper`r`n$(Format-AnsibleException -ErrorRecord $_)"
-    Set-Content -Path $watchdog_path -Value $error_msg
+    Set-Content -LiteralPath $watchdog_path -Value $error_msg
     break
 }
 
@@ -28,12 +28,12 @@ $resultfile_path = $payload.async_results_path
 $max_exec_time_sec = $payload.async_timeout_sec
 
 Write-AnsibleLog "INFO - deserializing existing result file args at: '$resultfile_path'" "async_watchdog"
-if (-not (Test-Path -Path $resultfile_path)) {
+if (-not (Test-Path -LiteralPath $resultfile_path)) {
     $msg = "result file at '$resultfile_path' does not exist"
     Write-AnsibleLog "ERROR - $msg" "async_watchdog"
     throw $msg
 }
-$result_json = Get-Content -Path $resultfile_path -Raw
+$result_json = Get-Content -LiteralPath $resultfile_path -Raw
 Write-AnsibleLog "INFO - result file json is: $result_json" "async_watchdog"
 $result = ConvertFrom-AnsibleJson -InputObject $result_json
 
@@ -88,7 +88,7 @@ if ($job_async_result.IsCompleted) {
     }
 
     $result_json = ConvertTo-Json -InputObject $result -Depth 99 -Compress
-    Set-Content -Path $resultfile_path -Value $result_json
+    Set-Content -LiteralPath $resultfile_path -Value $result_json
 
     Write-AnsibleLog "INFO - wrote output to $resultfile_path" "async_watchdog"
 } else {
@@ -99,7 +99,7 @@ if ($job_async_result.IsCompleted) {
     $result.failed = $true
     $result.msg = "timed out waiting for module completion"
     $result_json = ConvertTo-Json -InputObject $result -Depth 99 -Compress
-    Set-Content -Path $resultfile_path -Value $result_json
+    Set-Content -LiteralPath $resultfile_path -Value $result_json
 
     Write-AnsibleLog "INFO - wrote timeout to '$resultfile_path'" "async_watchdog"
 }

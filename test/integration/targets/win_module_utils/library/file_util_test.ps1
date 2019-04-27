@@ -34,7 +34,7 @@ Function Get-PagefilePath() {
 $pagefile = Get-PagefilePath
 if ($pagefile) {
     # Test-AnsiblePath Hidden system file
-    $actual = Test-AnsiblePath -Path $pagefile
+    $actual = Test-AnsiblePath -LiteralPath $pagefile
     Assert-Equals -actual $actual -expected $true
 
     # Get-AnsibleItem file
@@ -45,29 +45,29 @@ if ($pagefile) {
 }
 
 # Test-AnsiblePath File that doesn't exist
-$actual = Test-AnsiblePath -Path C:\fakefile
+$actual = Test-AnsiblePath -LiteralPath C:\fakefile
 Assert-Equals -actual $actual -expected $false
 
 # Test-AnsiblePath Directory that doesn't exist
-$actual = Test-AnsiblePath -Path C:\fakedirectory
+$actual = Test-AnsiblePath -LiteralPath C:\fakedirectory
 Assert-Equals -actual $actual -expected $false
 
 # Test-AnsiblePath file in non-existant directory
-$actual = Test-AnsiblePath -Path C:\fakedirectory\fakefile.txt
+$actual = Test-AnsiblePath -LiteralPath C:\fakedirectory\fakefile.txt
 Assert-Equals -actual $actual -expected $false
 
 # Test-AnsiblePath Normal directory
-$actual = Test-AnsiblePath -Path C:\Windows
+$actual = Test-AnsiblePath -LiteralPath C:\Windows
 Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath Normal file
-$actual = Test-AnsiblePath -Path C:\Windows\System32\kernel32.dll
+$actual = Test-AnsiblePath -LiteralPath C:\Windows\System32\kernel32.dll
 Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath fails with wildcard
 $failed = $false
 try {
-    Test-AnsiblePath -Path C:\Windows\*.exe
+    Test-AnsiblePath -LiteralPath C:\Windows\*.exe
 } catch {
     $failed = $true
     Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"Illegal characters in path.`""
@@ -75,15 +75,15 @@ try {
 Assert-Equals -actual $failed -expected $true
 
 # Test-AnsiblePath on non file PS Provider object
-$actual = Test-AnsiblePath -Path Cert:\LocalMachine\My
+$actual = Test-AnsiblePath -LiteralPath Cert:\LocalMachine\My
 Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath on environment variable
-$actual = Test-AnsiblePath -Path env:SystemDrive
+$actual = Test-AnsiblePath -LiteralPath env:SystemDrive
 Assert-Equals -actual $actual -expected $true
 
 # Test-AnsiblePath on environment variable that does not exist
-$actual = Test-AnsiblePath -Path env:FakeEnvValue
+$actual = Test-AnsiblePath -LiteralPath env:FakeEnvValue
 Assert-Equals -actual $actual -expected $false
 
 # Get-AnsibleItem doesn't exist with -ErrorAction SilentlyContinue param

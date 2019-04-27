@@ -9,7 +9,7 @@
     if (Test-Path -LiteralPath $tmp_dir) {
         Remove-Item -LiteralPath $tmp_dir -Force -Recurse
     }
-    New-Item -Path $tmp_dir -ItemType Directory > $null
+    New-Item -LiteralPath $tmp_dir -ItemType Directory > $null
 
     Add-Type -AssemblyName System.DirectoryServices.AccountManagement
     $current_sid = ([System.DirectoryServices.AccountManagement.UserPrincipal]::Current).Sid
@@ -48,7 +48,7 @@
 
     Set-Acl -LiteralPath $tmp_dir -AclObject $sd
 
-    New-Item -Path "$tmp_dir\folder" -ItemType Directory > $null
+    New-Item -LiteralPath "$tmp_dir\folder" -ItemType Directory > $null
     Set-Content -LiteralPath "$tmp_dir\folder\file.txt" -Value 'a'
 
     $system_sid.Value

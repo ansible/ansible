@@ -45,13 +45,13 @@ Function Get-ChocolateyConfig {
     # structure 'configKey = configValue | description', if the key or value
     # contains a = or |, it will make it quite hard to easily parse it,
     # compared to reading an XML file that already delimits these values
-    $choco_config_path = "$(Split-Path -Path (Split-Path -Path $choco_app.Path))\config\chocolatey.config"
-    if (-not (Test-Path -Path $choco_config_path)) {
+    $choco_config_path = "$(Split-Path -LiteralPath (Split-Path -LiteralPath $choco_app.Path))\config\chocolatey.config"
+    if (-not (Test-Path -LiteralPath $choco_config_path)) {
         Fail-Json -obj $result -message "Expecting Chocolatey config file to exist at '$choco_config_path'"
     }
 
     try {
-        [xml]$choco_config = Get-Content -Path $choco_config_path
+        [xml]$choco_config = Get-Content -LiteralPath $choco_config_path
     } catch {
         Fail-Json -obj $result -message "Failed to parse Chocolatey config file at '$choco_config_path': $($_.Exception.Message)"
     }

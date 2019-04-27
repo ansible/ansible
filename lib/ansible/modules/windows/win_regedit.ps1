@@ -119,8 +119,8 @@ if ($path -notmatch "^HK(CC|CR|CU|LM|U):\\") {
 }
 
 # Add a warning if the path does not contains a \ and is not the leaf path
-$registry_path = (Split-Path -Path $path -NoQualifier).Substring(1)  # removes the hive: and leading \
-$registry_leaf = Split-Path -Path $path -Leaf
+$registry_path = (Split-Path -LiteralPath $path -NoQualifier).Substring(1)  # removes the hive: and leading \
+$registry_leaf = Split-Path -LiteralPath $path -Leaf
 if ($registry_path -ne $registry_leaf -and -not $registry_path.Contains('\')) {
     $msg = "path is not using '\' as a separator, support for '/' as a separator will be removed in a future Ansible version"
     Add-DeprecationWarning -obj $result -message $msg -version 2.12
@@ -437,7 +437,7 @@ if ($type -in @("binary", "none")) {
 # convert the type string to the .NET class
 $type = [System.Enum]::Parse([Microsoft.Win32.RegistryValueKind], $type, $true)
 
-$registry_hive = switch(Split-Path -Path $path -Qualifier) {
+$registry_hive = switch(Split-Path -LiteralPath $path -Qualifier) {
     "HKCR:" { [Microsoft.Win32.Registry]::ClassesRoot }
     "HKCC:" { [Microsoft.Win32.Registry]::CurrentConfig }
     "HKCU:" { [Microsoft.Win32.Registry]::CurrentUser }
@@ -463,7 +463,7 @@ try {
             Fail-Json -obj $result -message "failed to enable SeBackupPrivilege and SeRestorePrivilege for the current process: $($_.Exception.Message)"
         }
 
-        if (Test-Path -Path HKLM:\ANSIBLE) {
+        if (Test-Path -LiteralPath HKLM:\ANSIBLE) {
             Add-Warning -obj $result -message "hive already loaded at HKLM:\ANSIBLE, had to unload hive for win_regedit to continue"
             try {
                 [Ansible.WinRegedit.Hive]::UnloadHive("ANSIBLE")

@@ -170,10 +170,10 @@ Function Convert-ToPropertyValue($pool, $attribute_key, $attribute_value) {
 if ($null -eq (Get-Module -Name "WebAdministration" -ErrorAction SilentlyContinue)) {
     Import-Module WebAdministration
     $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll
-    Add-Type -Path $web_admin_dll_path
+    Add-Type -LiteralPath $web_admin_dll_path
 }
 
-$pool = Get-Item -Path IIS:\AppPools\$name -ErrorAction SilentlyContinue
+$pool = Get-Item -LiteralPath IIS:\AppPools\$name -ErrorAction SilentlyContinue
 if ($state -eq "absent") {
     # Remove pool if present
     if ($pool) {
@@ -197,7 +197,7 @@ if ($state -eq "absent") {
         $result.changed = $true
         # If in check mode this pool won't actually exists so skip it
         if (-not $check_mode) {
-            $pool = Get-Item -Path IIS:\AppPools\$name
+            $pool = Get-Item -LiteralPath IIS:\AppPools\$name
         }
     }
 
@@ -207,27 +207,27 @@ if ($state -eq "absent") {
         $new_raw_value = $attribute.Value
         $new_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $new_raw_value
 
-        $current_raw_value = Get-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
+        $current_raw_value = Get-ItemProperty -LiteralPath IIS:\AppPools\$name -Name $attribute_key -ErrorAction SilentlyContinue
         $current_value = Convert-ToPropertyValue -pool $pool -attribute_key $attribute_key -attribute_value $current_raw_value
 
         $changed = Compare-Values -current $current_value -new $new_value
         if ($changed -eq $true) {
             if ($new_value -is [Array]) {
                 try {
-                    Clear-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -WhatIf:$check_mode
+                    Clear-ItemProperty -LiteralPath IIS:\AppPools\$name -Name $attribute_key -WhatIf:$check_mode
                 } catch {
                     Fail-Json -obj $result -message "Failed to clear attribute to Web App Pool $name. Attribute: $attribute_key, Exception: $($_.Exception.Message)"
                 }
                 foreach ($value in $new_value) {
                     try {
-                        New-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value @{value=$value} -WhatIf:$check_mode > $null
+                        New-ItemProperty -LiteralPath IIS:\AppPools\$name -Name $attribute_key -Value @{value=$value} -WhatIf:$check_mode > $null
                     } catch {
                         Fail-Json -obj $result -message "Failed to add new attribute to Web App Pool $name. Attribute: $attribute_key, Value: $value, Exception: $($_.Exception.Message)"
                     }
                 }
             } else {
                 try {
-                    Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
+                    Set-ItemProperty -LiteralPath IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
                 } catch {
                     Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
                 }
@@ -272,7 +272,7 @@ if ($state -eq "absent") {
 }
 
 # Get all the current attributes for the pool
-$pool = Get-Item -Path IIS:\AppPools\$name -ErrorAction SilentlyContinue
+$pool = Get-Item -LiteralPath IIS:\AppPools\$name -ErrorAction SilentlyContinue
 $elements = @("attributes", "cpu", "failure", "processModel", "recycling")
 
 foreach ($element in $elements)  {

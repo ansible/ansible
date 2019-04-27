@@ -46,7 +46,7 @@ if ($state -eq "present") {
         $install_args.IncludeManagementTools = $include_management_tools
         $install_args.Confirm = $false
         if ($source) {
-            if (-not (Test-Path -Path $source)) {
+            if (-not (Test-Path -LiteralPath $source)) {
                 Fail-Json -obj $result -message "Failed to find source path $source for feature install"
             }
             $install_args.Source = $source

@@ -943,9 +943,9 @@ $tests = @{
 }
 
 try {
-    $tmp_dir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
-    New-Item -Path $tmp_dir -ItemType Directory > $null
-    $acl = Get-Acl -Path $tmp_dir
+    $tmp_dir = Join-Path -LiteralPath ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
+    New-Item -LiteralPath $tmp_dir -ItemType Directory > $null
+    $acl = Get-Acl -LiteralPath $tmp_dir
     $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
         New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList ([System.Security.Principal.WellKnownSidType]::WorldSid, $null)
         [System.Security.AccessControl.FileSystemRights]::FullControl,
@@ -954,10 +954,10 @@ try {
         [System.Security.AccessControl.AccessControlType]::Allow
     )
     $acl.AddAccessRule($ace)
-    Set-Acl -Path $tmp_dir -AclObject $acl
+    Set-Acl -LiteralPath $tmp_dir -AclObject $acl
 
-    $tmp_script = Join-Path -Path $tmp_dir -ChildPath "whoami.ps1"
-    Set-Content -Path $tmp_script -Value $test_whoami
+    $tmp_script = Join-Path -LiteralPath $tmp_dir -ChildPath "whoami.ps1"
+    Set-Content -LiteralPath $tmp_script -Value $test_whoami
 
     foreach ($user in $standard_user, $admin_user) {
         $user_obj = $adsi.Children | Where-Object { $_.SchemaClassName -eq "User" -and $_.Name -eq $user }
@@ -998,7 +998,7 @@ try {
         &$test_impl.Value
     }
 } finally {
-    Remove-Item -Path $tmp_dir -Force -Recurse
+    Remove-Item -LiteralPath $tmp_dir -Force -Recurse
     foreach ($user in $standard_user, $admin_user) {
         $user_obj = $adsi.Children | Where-Object { $_.SchemaClassName -eq "User" -and $_.Name -eq $user }
         $adsi.Delete("User", $user_obj.Name.Value)

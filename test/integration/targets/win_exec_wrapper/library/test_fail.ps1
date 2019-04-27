@@ -38,7 +38,7 @@ if ($data -eq "normal") {
 } elseif ($data -eq "error") {
     Write-Error -Message $data
 } elseif ($data -eq "cmdlet_error") {
-    Get-Item -Path "fake:\path"
+    Get-Item -LiteralPath "fake:\path"
 } elseif ($data -eq "dotnet_exception") {
     [System.IO.Path]::GetFullPath($null)
 } elseif ($data -eq "function_throw") {

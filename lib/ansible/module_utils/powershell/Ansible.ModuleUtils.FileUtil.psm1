@@ -23,7 +23,7 @@ Function Test-AnsiblePath {
     } catch [NotSupportedException] {
         # When testing a path like Cert:\LocalMachine\My, System.IO.File will
         # not work, we just revert back to using Test-Path for this
-        return Test-Path -Path $Path
+        return Test-Path -LiteralPath $Path
     }
 
     if ([Int32]$file_attributes -eq -1) {

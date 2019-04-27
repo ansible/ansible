@@ -313,7 +313,7 @@ Function Invoke-DscMethod {
 # win_dsc is unique in that is builds the arg spec based on DSC Resource input. To get this info
 # we need to read the resource_name and module_version value which is done outside of Ansible.Basic
 if ($args.Length -gt 0) {
-    $params = Get-Content -Path $args[0] | ConvertFrom-Json
+    $params = Get-Content -LiteralPath $args[0] | ConvertFrom-Json
 } else {
     $params = $complex_args
 }

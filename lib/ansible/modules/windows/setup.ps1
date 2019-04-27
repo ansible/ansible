@@ -12,11 +12,11 @@ Function Get-CustomFacts {
     $factpath = $null
   )
 
-  if (-not (Test-Path -Path $factpath)) {
+  if (-not (Test-Path -LiteralPath $factpath)) {
     Fail-Json $result "The path $factpath does not exist. Typo?"
   }
 
-  $FactsFiles = Get-ChildItem -Path $factpath | Where-Object -FilterScript {($PSItem.PSIsContainer -eq $false) -and ($PSItem.Extension -eq '.ps1')}
+  $FactsFiles = Get-ChildItem -LiteralPath $factpath | Where-Object -FilterScript {($PSItem.PSIsContainer -eq $false) -and ($PSItem.Extension -eq '.ps1')}
 
   foreach ($FactsFile in $FactsFiles) {
       $out = & $($FactsFile.FullName)
@@ -404,7 +404,7 @@ if($gather_subset.Contains('windows_domain')) {
 
 if($gather_subset.Contains('winrm')) {
 
-    $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse -ErrorAction SilentlyContinue | `
+    $winrm_https_listener_parent_paths = Get-ChildItem -LiteralPath WSMan:\localhost\Listener -Recurse -ErrorAction SilentlyContinue | `
         Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | Select-Object PSParentPath
     if ($winrm_https_listener_parent_paths -isnot [array]) {
        $winrm_https_listener_parent_paths = @($winrm_https_listener_parent_paths)
@@ -417,7 +417,7 @@ if($gather_subset.Contains('winrm')) {
 
     $https_listeners = @()
     foreach ($winrm_https_listener_path in $winrm_https_listener_paths) {
-        $https_listeners += Get-ChildItem -Path "WSMan:\localhost\Listener$winrm_https_listener_path"
+        $https_listeners += Get-ChildItem -LiteralPath "WSMan:\localhost\Listener$winrm_https_listener_path"
     }
 
     $winrm_cert_thumbprints = @()
@@ -428,7 +428,7 @@ if($gather_subset.Contains('winrm')) {
     $winrm_cert_expiry = @()
     foreach ($winrm_cert_thumbprint in $winrm_cert_thumbprints) {
         Try {
-            $winrm_cert_expiry += Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object Thumbprint -EQ $winrm_cert_thumbprint.Value.ToString().ToUpper() | Select-Object NotAfter
+            $winrm_cert_expiry += Get-ChildItem -LiteralPath Cert:\LocalMachine\My | Where-Object Thumbprint -EQ $winrm_cert_thumbprint.Value.ToString().ToUpper() | Select-Object NotAfter
         } Catch {
             Add-Warning -obj $result -message "Error during certificate expiration retrieval"
        }

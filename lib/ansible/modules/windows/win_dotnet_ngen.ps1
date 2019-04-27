@@ -19,7 +19,7 @@ $result = @{
 Function Invoke-Ngen($architecture="") {
     $cmd = "$($env:windir)\Microsoft.NET\Framework$($architecture)\v4.0.30319\ngen.exe"
 
-    if (Test-Path -Path $cmd) {
+    if (Test-Path -LiteralPath $cmd) {
         $arguments = "update /force"
         if ($check_mode) {
             $ngen_result = @{

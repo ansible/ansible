@@ -43,7 +43,7 @@ function Get-CAP([string] $name) {
     }
 
     # Fetch CAP properties
-    Get-ChildItem -Path $cap_path | ForEach-Object { $cap.Add($_.Name,$_.CurrentValue) }
+    Get-ChildItem -LiteralPath $cap_path | ForEach-Object { $cap.Add($_.Name,$_.CurrentValue) }
     # Convert boolean values
     $cap.Enabled = $cap.Status -eq 1
     $cap.Remove("Status")
@@ -55,16 +55,16 @@ function Get-CAP([string] $name) {
 
     # Fetch CAP device redirection settings
     $cap.DeviceRedirection = @{}
-    Get-ChildItem -Path "$cap_path\DeviceRedirection" | ForEach-Object { $cap.DeviceRedirection.Add($_.Name, ($_.CurrentValue -eq 1)) }
+    Get-ChildItem -LiteralPath "$cap_path\DeviceRedirection" | ForEach-Object { $cap.DeviceRedirection.Add($_.Name, ($_.CurrentValue -eq 1)) }
 
     # Fetch CAP user and computer groups in Down-Level Logon format
     $cap.UserGroups = @(
-        Get-ChildItem -Path "$cap_path\UserGroups" |
+        Get-ChildItem -LiteralPath "$cap_path\UserGroups" |
             Select-Object -ExpandProperty Name |
             ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
     )
     $cap.ComputerGroups = @(
-        Get-ChildItem -Path "$cap_path\ComputerGroups" |
+        Get-ChildItem -LiteralPath "$cap_path\ComputerGroups" |
             Select-Object -ExpandProperty Name |
             ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
     )
@@ -88,7 +88,7 @@ function Set-CAPPropertyValue {
     $cap_path = "RDS:\GatewayServer\CAP\$name"
 
     try {
-        Set-Item -Path "$cap_path\$property" -Value $value -ErrorAction Stop
+        Set-Item -LiteralPath "$cap_path\$property" -Value $value -ErrorAction Stop
     } catch {
         Fail-Json -obj $resultobj -message "Failed to set property $property of CAP ${name}: $($_.Exception.Message)"
     }
@@ -151,11 +151,11 @@ if ($null -eq (Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyConti
 }
 
 # Check if a CAP with the given name already exists
-$cap_exist = Test-Path -Path "RDS:\GatewayServer\CAP\$name"
+$cap_exist = Test-Path -LiteralPath "RDS:\GatewayServer\CAP\$name"
 
 if ($state -eq 'absent') {
     if ($cap_exist) {
-        Remove-Item -Path "RDS:\GatewayServer\CAP\$name" -Recurse -WhatIf:$check_mode
+        Remove-Item -LiteralPath "RDS:\GatewayServer\CAP\$name" -Recurse -WhatIf:$check_mode
         $diff_text += "-[$name]"
         $result.changed = $true
     }
@@ -213,7 +213,7 @@ if ($state -eq 'absent') {
 
         if ($null -ne $order -and $order -ne $cap.EvaluationOrder) {
             # Order cannot be greater than the total number of existing CAPs (InvalidArgument exception)
-            $cap_count =  (Get-ChildItem -Path "RDS:\GatewayServer\CAP").Count
+            $cap_count =  (Get-ChildItem -LiteralPath "RDS:\GatewayServer\CAP").Count
             if($order -gt $cap_count) {
                 Add-Warning -obj $result -message "Given value '$order' for parameter 'order' is greater than the number of existing CAPs. The actual order will be capped to '$cap_count'."
                 $order = $cap_count
@@ -226,7 +226,7 @@ if ($state -eq 'absent') {
 
         if ($null -ne $session_timeout -and ($session_timeout -ne $cap.SessionTimeout -or $session_timeout_action -ne $cap.SessionTimeoutAction)) {
             try {
-                Set-Item -Path "RDS:\GatewayServer\CAP\$name\SessionTimeout" `
+                Set-Item -LiteralPath "RDS:\GatewayServer\CAP\$name\SessionTimeout" `
                     -Value $session_timeout `
                     -SessionTimeoutAction ([array]::IndexOf($session_timeout_actions_set, $session_timeout_action)) `
                     -ErrorAction Stop `
