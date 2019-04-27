@@ -41,7 +41,7 @@ Function Extract-Zip($src, $dest) {
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
         if (-not (Test-Path -LiteralPath $entry_dir)) {
-            New-Item -LiteralPath $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
             $result.changed = $true
         }
 

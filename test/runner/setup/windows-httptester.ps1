@@ -119,7 +119,7 @@ if ($os_version -ge [Version]"6.2") {
     $pmapper_folder = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
     $pmapper_exe = Join-Path -Path $pmapper_folder -ChildPath pmapper.exe
     $pmapper_config = Join-Path -Path $pmapper_folder -ChildPath pmapper.dat
-    New-Item -LiteralPath $pmapper_folder -ItemType Directory > $null
+    New-Item -Path $pmapper_folder -ItemType Directory > $null
 
     $stop = $false
     do {

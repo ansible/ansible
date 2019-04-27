@@ -24,7 +24,7 @@
     )
 
     foreach ($directory in $directories) {
-        New-Item -LiteralPath "{{win_stat_dir}}\$directory" -ItemType Directory
+        New-Item -Path "{{win_stat_dir}}\$directory" -ItemType Directory
     }
 
     $normal_content = "abc"
@@ -39,7 +39,7 @@
         "link-dest\file.txt"
     )
     foreach ($file in $normal_files) {
-        New-Item -LiteralPath "{{win_stat_dir}}\$file" -ItemType File
+        New-Item -Path "{{win_stat_dir}}\$file" -ItemType File
         [System.IO.File]::WriteAllText("{{win_stat_dir}}\$file", $normal_content)
     }
 

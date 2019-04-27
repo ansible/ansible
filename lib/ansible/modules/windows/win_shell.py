@@ -101,7 +101,7 @@ EXAMPLES = r'''
     if ($value) {
         Remove-Item -LiteralPath C:\temp -Force
     }
-    New-Item -LiteralPath C:\temp -ItemType Directory
+    New-Item -Path C:\temp -ItemType Directory
 
 - name: Retrieve the input based on stdin
   win_shell: '$string = [Console]::In.ReadToEnd(); Write-Output $string.Trim()'

@@ -131,7 +131,7 @@ if (Test-Path -LiteralPath $path) {
 
     if ($state -eq "directory") {
         try {
-            New-Item -LiteralPath $path -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -Path $path -ItemType Directory -WhatIf:$check_mode | Out-Null
         } catch {
             if ($_.CategoryInfo.Category -eq "ResourceExists") {
                 $fileinfo = Get-Item -LiteralPath $_.CategoryInfo.TargetName

@@ -128,7 +128,7 @@ $tests = @{
 
     "Internal param changes - args file" = {
         $m_tmpdir = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        New-Item -LiteralPath $m_tmpdir -ItemType Directory > $null
+        New-Item -Path $m_tmpdir -ItemType Directory > $null
         $args_file = Join-Path -Path $tmpdir -ChildPath "args-$(Get-Random).json"
         [System.IO.File]::WriteAllText($args_file, @"
 {
@@ -164,7 +164,7 @@ $tests = @{
 
     "Internal param changes - complex_args" = {
         $m_tmpdir = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        New-Item -LiteralPath $m_tmpdir -ItemType Directory > $null
+        New-Item -Path $m_tmpdir -ItemType Directory > $null
         $complex_args = @{
             _ansible_check_mode = $true
             _ansible_debug = $true
@@ -1301,7 +1301,7 @@ test_no_log - Invoked with:
         $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
 
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        New-Item -LiteralPath $remote_tmp -ItemType Directory > $null
+        New-Item -Path $remote_tmp -ItemType Directory > $null
         $complex_args = @{
             _ansible_remote_tmp = $remote_tmp.ToString()
         }
@@ -1383,7 +1383,7 @@ test_no_log - Invoked with:
 
     "Module tmp, keep remote files" = {
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
-        New-Item -LiteralPath $remote_tmp -ItemType Directory > $null
+        New-Item -Path $remote_tmp -ItemType Directory > $null
         $complex_args = @{
             _ansible_remote_tmp = $remote_tmp.ToString()
             _ansible_keep_remote_files = $true

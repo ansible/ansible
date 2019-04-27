@@ -108,7 +108,7 @@
     - wait_remove_existing_file.wait_attempts > 1
 
 - name: run async task to create file after a timeout
-  win_shell: Start-Sleep -Seconds 5; New-Item -LiteralPath '{{test_win_wait_for_path}}\test.txt' -Type File
+  win_shell: Start-Sleep -Seconds 5; New-Item -Path '{{test_win_wait_for_path}}\test.txt' -Type File
   async: 30
   poll: 0
 

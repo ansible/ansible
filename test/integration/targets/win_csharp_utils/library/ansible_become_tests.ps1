@@ -944,7 +944,7 @@ $tests = @{
 
 try {
     $tmp_dir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
-    New-Item -LiteralPath $tmp_dir -ItemType Directory > $null
+    New-Item -Path $tmp_dir -ItemType Directory > $null
     $acl = Get-Acl -LiteralPath $tmp_dir
     $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
         New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList ([System.Security.Principal.WellKnownSidType]::WorldSid, $null)

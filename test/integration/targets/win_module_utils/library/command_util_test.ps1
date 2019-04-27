@@ -32,7 +32,7 @@ Assert-Equals -actual $actual.executable -expected $exe
 $test_name = "exe in special char dir"
 $tmp_dir = Join-Path -Path $env:TEMP -ChildPath "ansible .ÅÑŚÌβŁÈ [$!@^&test(;)]"
 try {
-    New-Item -LiteralPath $tmp_dir -ItemType Directory > $null
+    New-Item -Path $tmp_dir -ItemType Directory > $null
     $exe_special = Join-Path $tmp_dir -ChildPath "PrintArgv.exe"
     Copy-Item -LiteralPath $exe -Destination $exe_special
     $actual = Run-Command -command "`"$exe_special`" arg1 arg2 `"arg 3`""

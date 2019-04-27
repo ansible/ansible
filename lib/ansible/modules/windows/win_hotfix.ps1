@@ -37,7 +37,7 @@ Function Extract-MSU($msu) {
     $temp_path = [IO.Path]::GetTempPath()
     $temp_foldername = [Guid]::NewGuid()
     $output_path = Join-Path -Path $temp_path -ChildPath $temp_foldername
-    New-Item -LiteralPath $output_path -ItemType Directory | Out-Null
+    New-Item -Path $output_path -ItemType Directory | Out-Null
 
     $expand_args = @($msu, $output_path, "-F:*")
 

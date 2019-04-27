@@ -29,7 +29,7 @@ foreach ($package in $packages) {
     if (Test-Path -LiteralPath $tmp_dir) {
         Remove-Item -LiteralPath $tmp_dir -Force -Recurse
     }
-    New-Item -LiteralPath $tmp_dir -ItemType Directory > $null
+    New-Item -Path $tmp_dir -ItemType Directory > $null
 
     try {
         if ($package.ContainsKey("prerelease")) {

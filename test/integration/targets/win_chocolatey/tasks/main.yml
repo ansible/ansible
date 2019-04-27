@@ -35,13 +35,13 @@
     $install_src = "$root_path\tools\chocolateyinstall.ps1"
     $uninstall_src = "$root_path\tools\chocolateyUninstall.ps1"
 
-    New-Item -LiteralPath $packages_path -ItemType Directory > $null
-    New-Item -LiteralPath $packages_path_override -ItemType Directory > $null
+    New-Item -Path $packages_path -ItemType Directory > $null
+    New-Item -Path $packages_path_override -ItemType Directory > $null
 
     foreach ($package in $packages) {
         $package_dir = "$root_path\$($package.name)-$($package.version)"
-        New-Item -LiteralPath $package_dir -ItemType Directory > $null
-        New-Item -LiteralPath "$package_dir\tools" -ItemType Directory > $null
+        New-Item -Path $package_dir -ItemType Directory > $null
+        New-Item -Path "$package_dir\tools" -ItemType Directory > $null
 
         if ($package.override) {
             $out_path = $packages_path_override

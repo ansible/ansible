@@ -72,7 +72,7 @@ Function Copy-File($source, $dest) {
             Fail-Json -obj $result -message "cannot copy file from '$source' to '$dest': object at dest parent dir is not a folder"
         } elseif (-not (Test-Path -LiteralPath $file_dir)) {
             # directory doesn't exist, need to create
-            New-Item -LiteralPath $file_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
             $diff += "+$file_dir\`n"
         }
 
@@ -112,7 +112,7 @@ Function Copy-Folder($source, $dest) {
             Fail-Json -obj $result -message "cannot copy folder from '$source' to '$dest': dest is already a file"
         }
 
-        New-Item -LiteralPath $dest -ItemType Container -WhatIf:$check_mode | Out-Null
+        New-Item -Path $dest -ItemType Container -WhatIf:$check_mode | Out-Null
         $diff += "+$dest\`n"
         $result.changed = $true
     }
@@ -177,7 +177,7 @@ Function Extract-Zip($src, $dest) {
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
         if (-not (Test-Path -LiteralPath $entry_dir)) {
-            New-Item -LiteralPath $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
         }
 
         if ($is_dir -eq $false) {
@@ -191,7 +191,7 @@ Function Extract-Zip($src, $dest) {
 
 Function Extract-ZipLegacy($src, $dest) {
     if (-not (Test-Path -LiteralPath $dest)) {
-        New-Item -LiteralPath $dest -ItemType Directory -WhatIf:$check_mode | Out-Null
+        New-Item -Path $dest -ItemType Directory -WhatIf:$check_mode | Out-Null
     }
     $shell = New-Object -ComObject Shell.Application
     $zip = $shell.NameSpace($src)
@@ -210,7 +210,7 @@ Function Extract-ZipLegacy($src, $dest) {
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
         if (-not (Test-Path -LiteralPath $entry_dir)) {
-            New-Item -LiteralPath $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
+            New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
         }
 
         if ($is_dir -eq $false -and (-not $check_mode)) {
@@ -379,7 +379,7 @@ if ($copy_mode -eq "query") {
         if (Test-Path -LiteralPath $parent_dir -PathType Leaf) {
             Fail-Json -obj $result -message "object at destination parent dir '$parent_dir' is currently a file"
         } elseif (-not (Test-Path -LiteralPath $parent_dir -PathType Container)) {
-            New-Item -LiteralPath $parent_dir -ItemType Directory | Out-Null
+            New-Item -Path $parent_dir -ItemType Directory | Out-Null
         }
     } else {
         $remote_dest = $dest

@@ -15,10 +15,10 @@
     if (Test-Path -LiteralPath $tmp_dir) {
         Remove-Item -LiteralPath $tmp_dir -Force -Recurse
     }
-    New-Item -LiteralPath $tmp_dir -ItemType Directory
+    New-Item -Path $tmp_dir -ItemType Directory
 
     foreach ($folder in $folders) {
-        New-Item -LiteralPath "$tmp_dir\$folder" -ItemType Directory
+        New-Item -Path "$tmp_dir\$folder" -ItemType Directory
     }
     $files = @(
         "folder\file.txt",
