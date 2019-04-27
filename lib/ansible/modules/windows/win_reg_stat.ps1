@@ -74,7 +74,7 @@ if ($path -notmatch "^HK(CC|CR|CU|LM|U):\\") {
     Fail-Json -obj $result -message "path: $path is not a valid registry path, see module documentation for examples."
 }
 
-$registry_path = (Split-Path -LiteralPath $path -NoQualifier).Substring(1)  # removes the hive: and leading \
+$registry_path = (Split-Path -Path $path -NoQualifier).Substring(1)  # removes the hive: and leading \
 $registry_hive = switch(Split-Path -Path $path -Qualifier) {
     "HKCR:" { [Microsoft.Win32.Registry]::ClassesRoot }
     "HKCC:" { [Microsoft.Win32.Registry]::CurrentConfig }
