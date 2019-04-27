@@ -1141,7 +1141,7 @@ test_no_log - Invoked with:
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = @{}}
         $actual.failed | Assert-Equals -Expected $true
         $actual.msg | Assert-Equals -Expected "fail message"
-        $actual.exception.Contains("Cannot bind argument to parameter 'Path' because it is null") | Assert-Equals -Expected $true
+        $actual.exception.Contains("Cannot bind argument to parameter 'LiteralPath' because it is null") | Assert-Equals -Expected $true
         $actual.exception.Contains("+             Get-Item -LiteralPath `$null") | Assert-Equals -Expected $true
         $actual.exception.Contains("ScriptStackTrace:") | Assert-Equals -Expected $true
     }
