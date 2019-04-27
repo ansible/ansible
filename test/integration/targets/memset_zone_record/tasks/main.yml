@@ -1,6 +1,5 @@
 - name: create record with incorrect API key
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "wa9aerahhie0eekee9iaphoorovooyia"
     state: present
     zone: "{{ test_zone }}"
@@ -15,8 +14,7 @@
       - result is not successful
 
 - name: create record in non-existent zone
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "a-non-existent-zone"
@@ -32,8 +30,7 @@
       - result is not successful
 
 - name: create record in non-unique zone
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "{{ duplicate_zone }}"
@@ -49,8 +46,7 @@
       - result is not successful
 
 - name: create record with invalid priority
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "{{ test_zone }}"
@@ -68,8 +64,7 @@
       - result is not successful
 
 - name: create record with address longer than 250 chars
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "{{ test_zone }}"
@@ -86,8 +81,7 @@
       - result is not successful
 
 - name: create record longer than 63 chars
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "{{ test_zone }}"
@@ -104,8 +98,7 @@
       - result is not successful
 
 - name: create record which cannot have relative enabled
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "{{ test_zone }}"
@@ -122,8 +115,7 @@
       - result is not successful
 
 - name: test creating valid A record
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "{{ test_zone }}"
@@ -140,8 +132,7 @@
       - result is successful
 
 - name: actually create valid A record
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "{{ test_zone }}"
@@ -157,8 +148,7 @@
       - result is successful
 
 - name: create valid SPF record
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: present
     zone: "{{ test_zone }}"
@@ -173,8 +163,7 @@
       - result is successful
 
 - name: test deleting A record
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: absent
     zone: "{{ test_zone }}"
@@ -191,8 +180,7 @@
       - result is successful
 
 - name: actually delete A record
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: absent
     zone: "{{ test_zone }}"
@@ -208,8 +196,7 @@
       - result is successful
 
 - name: delete SPF record
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: absent
     zone: "{{ test_zone }}"
@@ -224,8 +211,7 @@
       - result is successful
 
 - name: delete non-existent SPF record
-  local_action:
-    module: memset_zone_record
+  memset_zone_record:
     api_key: "{{ api_key }}"
     state: absent
     zone: "{{ test_zone }}"

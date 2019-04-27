@@ -1,8 +1,7 @@
 ---
 
 - name: "test: create host with many options set"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -51,8 +50,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: try to create the same host with the same settings"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -101,8 +99,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change visible_name"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -116,8 +113,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change visible_name (again)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -131,8 +127,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change description"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -146,8 +141,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change description (again)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -161,8 +155,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change host groups (adding one group)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -179,8 +172,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change host groups (remove one group)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -196,8 +188,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change host groups (add one group using force=no)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -214,8 +205,7 @@
 
 
 - name: "test: change host groups (check whether we are at three groups)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -232,8 +222,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change host groups (attempt to remove all host groups)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -249,8 +238,7 @@
           - "zabbix_host1 is failed"
 
 - name: "test: change host linked templates (same as before)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -266,8 +254,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change host linked templates (add one template)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -284,8 +271,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change host linked templates (add one template, using force=no)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -301,8 +287,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change host linked templates (make sure we are at 4 templates)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -320,8 +305,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change host linked templates (remove all templates)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -336,8 +320,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change host linked templates (check we have no templates left)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -352,8 +335,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change host status"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -367,8 +349,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change host status (again)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -382,8 +363,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change host inventory mode"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -397,8 +377,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change host inventory mode"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -412,8 +391,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change host inventory data (one field)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -434,8 +412,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change host inventory data (again)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -456,8 +433,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: remove host proxy"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -471,8 +447,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: add host proxy"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -486,8 +461,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: add host proxy (again)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -501,8 +475,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change tls settings"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -521,8 +494,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change tls settings (again)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -541,8 +513,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change interface settings (remove one)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -562,8 +533,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change interface settings (again)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -583,8 +553,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: change interface settings (add one interface using force=no)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -605,8 +574,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: change interface settings (verify that we are at two interfaces)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -632,8 +600,7 @@
           - "not zabbix_host1 is changed"
 
 - name: "test: add IPMI settings"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -650,8 +617,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: add IPMI settings again"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -668,8 +634,7 @@
           - "zabbix_host1 is not changed"
 
 - name: "test: verify that an empty change is idempotent"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -682,8 +647,7 @@
           - "zabbix_host1 is not changed"
 
 - name: "test: IPMI set default values"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -700,8 +664,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: IPMI set default values (again)"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -718,8 +681,7 @@
           - "zabbix_host1 is not changed"
 
 - name: "test: attempt to delete host created earlier"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
@@ -733,8 +695,7 @@
           - "zabbix_host1 is changed"
 
 - name: "test: attempt deleting a non-existant host"
-  local_action:
-    module: zabbix_host
+  zabbix_host:
     server_url: "{{ zabbix_server_url }}"
     login_user: "{{ zabbix_login_user }}"
     login_password: "{{ zabbix_login_password }}"
