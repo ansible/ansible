@@ -9,12 +9,12 @@
 
 Function Remove-Pagefile($path, $whatif)
 {
-    Get-WmiObject Win32_PageFileSetting | WHERE { $_.Name -eq $path } | Remove-WmiObject -WhatIf:$whatif
+    Get-CIMInstance Win32_PageFileSetting | Where-Object { $_.Name -eq $path } | Remove-CIMInstance -WhatIf:$whatif
 }
 
 Function Get-Pagefile($path)
 {
-    Get-WmiObject Win32_PageFileSetting | WHERE { $_.Name -eq $path }
+    Get-CIMInstance Win32_PageFileSetting | Where-Object { $_.Name -eq $path }
 }
 
 ########
@@ -31,16 +31,16 @@ $override =  Get-AnsibleParam -obj $params -name "override" -type "bool" -defaul
 $removeAll = Get-AnsibleParam -obj $params -name "remove_all" -type "bool" -default $false
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "query" -validateset "present","absent","query"
 $systemManaged = Get-AnsibleParam -obj $params -name "system_managed" -type "bool" -default $false
-$testPath = Get-AnsibleParam -obj $params -name "test_path" -type "bool" -default $true
+#$testPath = Get-AnsibleParam -obj $params -name "test_path" -type "bool" -default $true
 
 $result = @{
     changed = $false
 }
 
 if ($removeAll) {
-    $currentPageFiles = Get-WmiObject Win32_PageFileSetting
+    $currentPageFiles = Get-CIMInstance Win32_PageFileSetting
     if ($null -ne $currentPageFiles) {
-        $currentPageFiles | Remove-WmiObject -WhatIf:$check_mode | Out-Null
+        $currentPageFiles | Remove-CIMInstance -WhatIf:$check_mode | Out-Null
         $result.changed = $true
     }
 }
@@ -48,7 +48,7 @@ if ($removeAll) {
 if ($null -ne $automatic) {
     # change autmoatic managed pagefile
     try {
-        $computerSystem = Get-WmiObject -Class win32_computersystem -EnableAllPrivileges
+        $computerSystem = Get-CIMInstance -Class win32_computersystem -EnableAllPrivileges
     } catch {
         Fail-Json $result "Failed to query WMI computer system object $($_.Exception.Message)"
     }
@@ -98,7 +98,7 @@ if ($state -eq "absent") {
     # Set pagefile
     if ($null -eq (Get-Pagefile $fullPath)) {
         try {
-            $pagefile = Set-WmiInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
+            $pagefile = Set-CIMInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
         } catch {
             Fail-Json $result "Failed to create pagefile $($_.Exception.Message)"
         }
@@ -122,7 +122,7 @@ if ($state -eq "absent") {
                 }
                 $pagingFilesValues += "$fullPath $initialSize $maximumSize"
                 try {
-                    Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" "PagingFiles" $pagingFilesValues
+                    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" "PagingFiles" $pagingFilesValues
                 } catch {
                     Fail-Json $result "Failed to set pagefile settings to the registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
                 }
@@ -135,7 +135,7 @@ if ($state -eq "absent") {
 
     if ($null -eq $drive) {
         try {
-            $pagefiles = Get-WmiObject Win32_PageFileSetting
+            $pagefiles = Get-CIMInstance Win32_PageFileSetting
         } catch {
             Fail-Json $result "Failed to query all pagefiles $($_.Exception.Message)"
         }
@@ -161,7 +161,7 @@ if ($state -eq "absent") {
 
     # Get automatic managed pagefile state
     try {
-        $result.automatic_managed_pagefiles = (Get-WmiObject -Class win32_computersystem).AutomaticManagedPagefile
+        $result.automatic_managed_pagefiles = (Get-CIMInstance -Class win32_computersystem).AutomaticManagedPagefile
     } catch {
         Fail-Json $result "Failed to query automatic managed pagefile state $($_.Exception.Message)"
     }

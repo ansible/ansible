@@ -27,7 +27,6 @@ if ($diff_mode) {
 }
 
 Function Run-SecEdit($arguments) {
-    $rc = $null
     $stdout = $null
     $stderr = $null
     $log_path = [IO.Path]::GetTempFileName()

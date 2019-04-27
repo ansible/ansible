@@ -9,8 +9,6 @@ Set-StrictMode -Version 2
 
 $ErrorActionPreference = "Stop"
 
-$log_path = $null
-
 Function Write-DebugLog {
     Param(
     [string]$msg
@@ -21,6 +19,9 @@ Function Write-DebugLog {
     $msg = "$date_str $msg"
 
     Write-Debug $msg
+
+    $log_path = $null
+    $log_path = Get-AnsibleParam -obj $params -name "log_path"
 
     if($log_path) {
         Add-Content $log_path $msg
@@ -93,7 +94,7 @@ Function Get-HostnameMatch {
 }
 
 Function Is-DomainJoined {
-    return (Get-WmiObject Win32_ComputerSystem).PartOfDomain
+    return (Get-CIMInstance Win32_ComputerSystem).PartOfDomain
 }
 
 Function Join-Domain {
@@ -137,7 +138,7 @@ Function Join-Domain {
 }
 
 Function Get-Workgroup {
-    return (Get-WmiObject Win32_ComputerSystem).Workgroup
+    return (Get-CIMInstance Win32_ComputerSystem).Workgroup
 }
 
 Function Set-Workgroup {
@@ -147,7 +148,7 @@ Function Set-Workgroup {
 
     Write-DebugLog ("Calling JoinDomainOrWorkgroup with workgroup {0}" -f $workgroup_name)
     try {
-        $swg_result = (Get-WmiObject -ClassName Win32_ComputerSystem).JoinDomainOrWorkgroup($workgroup_name)
+        $swg_result = (Get-CIMInstance -ClassName Win32_ComputerSystem).JoinDomainOrWorkgroup($workgroup_name)
     } catch {
         Fail-Json -obj $result -message "failed to call Win32_ComputerSystem.JoinDomainOrWorkgroup($workgroup_name): $($_.Exception.Message)"
     }
@@ -170,7 +171,7 @@ Function Join-Workgroup {
 
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
         try {
-            $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
+            Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
         } catch {
             Fail-Json -obj $result -message "failed to remove computer from domain: $($_.Exception.Message)"
         }
@@ -178,7 +179,7 @@ Function Join-Workgroup {
 
     # we're already on a workgroup- change it.
     Else {
-        $swg_result = Set-Workgroup $workgroup_name
+        Set-Workgroup $workgroup_name
     }
 }
 
@@ -199,7 +200,6 @@ $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
 
-$log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
 
 If ($state -eq "domain") {
@@ -213,8 +213,6 @@ Else { # workgroup
     }
 }
 
-
-$global:log_path = $log_path
 
 Try {
 
@@ -252,7 +250,7 @@ Try {
                         $join_args.domain_ou_path = $domain_ou_path
                     }
 
-                    $join_result = Join-Domain @join_args
+                    Join-Domain @join_args
 
                     # this change requires a reboot
                     $result.reboot_required = $true
@@ -267,7 +265,7 @@ Try {
                         $rename_args.DomainCredential = $domain_cred
                     }
 
-                    $rename_result = Rename-Computer @rename_args
+                    Rename-Computer @rename_args
 
                     # this change requires a reboot
                     $result.reboot_required = $true
@@ -290,14 +288,14 @@ Try {
             If(-not $_ansible_check_mode) {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
-                    $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
+                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
 
                     # this change requires a reboot
                     $result.reboot_required = $true
                 }
                 If(-not $hostname_match) {
                     Write-DebugLog ("setting hostname to {0}" -f $hostname)
-                    $rename_result = Rename-Computer -NewName $hostname
+                    Rename-Computer -NewName $hostname
 
                     # this change requires a reboot
                     $result.reboot_required = $true

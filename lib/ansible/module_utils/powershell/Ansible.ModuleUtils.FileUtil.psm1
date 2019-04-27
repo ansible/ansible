@@ -11,6 +11,7 @@ result from that.
 
 Function Test-AnsiblePath {
     [CmdletBinding()]
+    [OutputType([System.Boolean])]
     Param(
         [Parameter(Mandatory=$true)][string]$Path
     )

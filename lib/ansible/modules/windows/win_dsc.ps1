@@ -374,7 +374,9 @@ if ($resource.Module) {
 # engine updates the metadata propery. We don't care about any errors here
 try {
     Invoke-DscResource -Method Get -Property @{Fake="Fake"} @dsc_args > $null
-} catch {}
+} catch {
+    Add-Warning -obj $result -message "Error during Invoke-DscResource: $($_.Exception.Message)"
+}
 
 # Dynamically build the option spec based on the resource_name specified and create the module object
 $spec = Get-OptionSpec -ClassName $resource.ResourceType

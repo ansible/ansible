@@ -42,7 +42,7 @@ Function Find-WebPiCmd
 Function Test-IsInstalledFromWebPI
 {
     [CmdletBinding()]
-
+    [OutputType([System.Boolean])]
     param(
         [Parameter(Mandatory=$true, Position=0)]
         [string]$package

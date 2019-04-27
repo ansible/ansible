@@ -17,7 +17,7 @@ Function Ensure-Prereqs {
         # NOTE: AD-Domain-Services includes: RSAT-AD-AdminCenter, RSAT-AD-Powershell and RSAT-ADDS-Tools
         $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
         # FUTURE: Check if reboot necessary
-        return $true
+        return (-Not $awf.RestartNeeded)
     }
     return $false
 }
@@ -75,7 +75,10 @@ try {
     $forest_context = New-Object -TypeName System.DirectoryServices.ActiveDirectory.DirectoryContext -ArgumentList Forest, $dns_domain_name
     $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetForest($forest_context)
 } catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
-} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryOperationException] { }
+    Add-Warning -obj $result -message "Error during forest query initialization: $($_.Exception.Message)"
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryOperationException] { i
+    Add-Warning -obj $result -message "Error during forest query initialization: $($_.Exception.Message)"
+}
 
 if (-not $forest) {
     $result.changed = $true

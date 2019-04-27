@@ -65,7 +65,7 @@ If ($nobanner -eq $true) {
 
 # Support running on local system if no hostname is specified
 If ($hostnames) {
-    $hostname_argument = ($hostnames | sort -Unique) -join ','
+    $hostname_argument = ($hostnames | Sort-Object -Unique) -join ','
     $arguments.Add("\\$hostname_argument")
 }
 

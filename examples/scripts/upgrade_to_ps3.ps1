@@ -20,15 +20,15 @@
 
 if ($PSVersionTable.psversion.Major -ge 3)
 {
-    write-host "Powershell 3 Installed already; You don't need this"
+    Write-Output "Powershell 3 Installed already; You don't need this"
     Exit
 }
 
 $powershellpath = "C:\powershell"
 
-function download-file
+function get-file
 {
-    param ([string]$path, [string]$local)
+    param ([string]$Filepath, [string]$local)
     $client = new-object system.net.WebClient
     $client.Headers.Add("user-agent", "PowerShell")
     $client.downloadfile($path, $local)
@@ -55,7 +55,7 @@ if (!(test-path $powershellpath))
 # If the Operating System is above 6.2, then you already have PowerShell Version > 3
 if ([Environment]::OSVersion.Version.Major -gt 6)
 {
-    write-host "OS is new; upgrade not needed."
+    Write-Output "OS is new; upgrade not needed."
     Exit
 }
 
@@ -88,6 +88,6 @@ else
 }
 
 $FileName = $DownLoadUrl.Split('/')[-1]
-download-file $downloadurl "$powershellpath\$filename"
+get-file $downloadurl "$powershellpath\$filename"
 
 Start-Process -FilePath "$powershellpath\$filename" -ArgumentList /quiet

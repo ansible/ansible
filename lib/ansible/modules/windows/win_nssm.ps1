@@ -190,6 +190,7 @@ function Update-NssmServiceParameter {
 }
 
 function Test-NssmServiceExists {
+    [OutputType([System.Boolean])]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]

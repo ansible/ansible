@@ -81,7 +81,7 @@ Foreach ($group in $ACL.Audit)
     #exit here if any existing rule matches defined rule, otherwise exit below
     #with no matches
     If (
-        ($group | select -expand "*Rights") -eq $rights -and
+        ($group | Select-Object -expand "*Rights") -eq $rights -and
         $group.AuditFlags -eq $flags -and
         $group.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]) -eq $SID -and
         $group.InheritanceFlags -eq $inherit -and

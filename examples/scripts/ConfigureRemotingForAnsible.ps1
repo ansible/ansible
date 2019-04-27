@@ -79,7 +79,7 @@ Function Write-VerboseLog
     Write-Log $Message
 }
 
-Function Write-HostLog
+Function Write-OutputLog
 {
     $Message = $args[0]
     Write-Output $Message
@@ -170,7 +170,7 @@ Function Enable-GlobalHttpFirewallAccess
 
     # try to find/enable the default rule first
     $add_rule = $false
-    $matching_rules = $fw.Rules | ? { $_.Name -eq "Windows Remote Management (HTTP-In)" }
+    $matching_rules = $fw.Rules | Where-Object { $_.Name -eq "Windows Remote Management (HTTP-In)" }
     $rule = $null
     If ($matching_rules) {
         If ($matching_rules -isnot [Array]) {
@@ -180,7 +180,7 @@ Function Enable-GlobalHttpFirewallAccess
         Else {
             # try to find one with the All or Public profile first
             Write-Verbose "Found multiple existing HTTP firewall rules..."
-            $rule = $matching_rules | % { $_.Profiles -band 4 }[0]
+            $rule = $matching_rules | ForEach-Object { $_.Profiles -band 4 }[0]
 
             If (-not $rule -or $rule -is [Array]) {
                 Write-Verbose "Editing an arbitrary single HTTP firewall rule (multiple existed)"
@@ -310,11 +310,11 @@ if ($token_value -ne 1) {
 
 # Make sure there is a SSL listener.
 $listeners = Get-ChildItem WSMan:\localhost\Listener
-If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
+If (!($listeners | Where-Object {$_.Keys -like "TRANSPORT=HTTPS"}))
 {
     # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
     $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
-    Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+    Write-OutputLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
 
     # Create the hashtables of settings to be used.
     $valueset = @{
@@ -341,7 +341,7 @@ Else
 
         # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
         $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
-        Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+        Write-OutputLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
 
         $valueset = @{
             CertificateThumbprint = $thumbprint
@@ -394,7 +394,7 @@ Else
 If ($EnableCredSSP)
 {
     # Check for CredSSP authentication
-    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "CredSSP"}
+    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object {$_.Name -eq "CredSSP"}
     If (($credsspAuthSetting.Value) -eq $false)
     {
         Write-Verbose "Enabling CredSSP auth support."

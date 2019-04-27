@@ -92,7 +92,7 @@ Assert-Equals -actual $actual.stdout -expected "stdout `r`n"
 Assert-Equals -actual $actual.stderr -expected "stderr `r`n"
 
 $test_name = "Test UTF8 output from stdout stream"
-$actual = Run-Command -command "powershell.exe -ExecutionPolicy ByPass -Command `"Write-Host '💩'`""
+$actual = Run-Command -command "powershell.exe -ExecutionPolicy ByPass -Command `"Write-Output '💩'`""
 Assert-Equals -actual $actual.rc -expected 0
 Assert-Equals -actual $actual.stdout -expected "💩`n"
 Assert-Equals -actual $actual.stderr -expected ""
@@ -124,7 +124,7 @@ begin {
     `$current_input = [string]`$input
     `$string += `$current_input
 } end {
-    Write-Host `$string
+    Write-Output `$string
 }
 "@
 $encoded_wrapper = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($wrapper))

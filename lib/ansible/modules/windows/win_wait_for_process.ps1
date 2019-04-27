@@ -63,6 +63,7 @@ if ($owner -and ("IncludeUserName" -notin (Get-Command -Name Get-Process).Parame
 
 Function Get-FilteredProcesses {
     [cmdletbinding()]
+    [OutputType([System.Object[]])]
     Param(
         [String]
         $Owner,

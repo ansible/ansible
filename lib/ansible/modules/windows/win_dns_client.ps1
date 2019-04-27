@@ -24,6 +24,7 @@ Function Write-DebugLog {
 
     Write-Debug $msg
 
+    $log_path = Get-AnsibleParam $params "log_path"
     if($log_path) {
         Add-Content $log_path $msg
     }
@@ -47,7 +48,7 @@ Function Get-NetAdapterLegacy {
         @{Name="ifIndex"; Expression={$_.DeviceID}}
     )
 
-    $res = Get-WmiObject @wmiargs | Select-Object -Property $wmiprop
+    $res = Get-CIMInstance @wmiargs | Select-Object -Property $wmiprop
 
     If(@($res).Count -eq 0 -and -not $Name.Contains("*")) {
         throw "Get-NetAdapterLegacy: No Win32_NetworkAdapter objects found with property 'NetConnectionID' equal to '$Name'"
@@ -66,7 +67,7 @@ Function Get-DnsClientServerAddressLegacy {
 
     $idx = Get-NetAdapter -Name $InterfaceAlias | Select-Object -ExpandProperty ifIndex
 
-    $adapter_config = Get-WmiObject Win32_NetworkAdapterConfiguration -Filter "Index=$idx"
+    $adapter_config = Get-CIMInstance Win32_NetworkAdapterConfiguration -Filter "Index=$idx"
 
     return @(
         # IPv4 values
@@ -90,7 +91,7 @@ Function Set-DnsClientServerAddressLegacy {
 
     $idx = Get-NetAdapter -Name $InterfaceAlias | Select-Object -ExpandProperty ifIndex
 
-    $adapter_config = Get-WmiObject Win32_NetworkAdapterConfiguration -Filter "Index=$idx"
+    $adapter_config = Get-CIMInstance Win32_NetworkAdapterConfiguration -Filter "Index=$idx"
 
     If($ResetServerAddresses) {
         $res = $adapter_config.SetDNSServerSearchOrder()
@@ -179,14 +180,13 @@ $ipv4_addresses = Get-AnsibleParam $params "ipv4_addresses" -FailIfEmpty $result
 
 If($ipv4_addresses -is [string]) {
     If($ipv4_addresses.Length -gt 0) {
-        $ipv4_address = @($ipv4_addresses)
+        $ipv4_addresses = @($ipv4_addresses)
     }
     Else {
         $ipv4_addresses = @()
     }
 }
 
-$global:log_path = Get-AnsibleParam $params "log_path"
 $check_mode = Get-AnsibleParam $params "_ansible_check_mode" -Default $false
 
 Try {
@@ -206,7 +206,7 @@ Try {
 
     Write-DebugLog ("Validating IP addresses ({0})" -f ($ipv4_addresses -join ", "))
 
-    $invalid_addresses = @($ipv4_addresses | ? { -not (Validate-IPAddress $_) })
+    $invalid_addresses = @($ipv4_addresses | Where-Object { -not (Validate-IPAddress $_) })
 
     If($invalid_addresses.Count -gt 0) {
         throw "Invalid IP address(es): ({0})" -f ($invalid_addresses -join ", ")

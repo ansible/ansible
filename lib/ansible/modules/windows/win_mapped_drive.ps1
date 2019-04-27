@@ -359,7 +359,7 @@ namespace Ansible.MappedDrive
                                 continue;
                             else if (res != ERROR_SUCCESS)
                                 throw new Win32Exception((int)res, "WNetEnumResourceW()");
-                            lpcCount = lpcCount < 0 ? 0 : lpcCount;
+                            lpcCount = lpcCount < 0 Where-Object 0 : lpcCount;
 
                             NativeHelpers.NETRESOURCEW[] rawResources = new NativeHelpers.NETRESOURCEW[lpcCount];
                             PtrToStructureArray(rawResources, buffer.DangerousGetHandle());
