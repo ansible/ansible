@@ -19,7 +19,7 @@ $audit_flags = Get-AnsibleParam -obj $params -name "audit_flags" -type "list" -d
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset 'present','absent'
 
 #Make sure target path is valid
-If (-not (Test-Path -LiteralPath $path) )
+If (-not (Test-Path -Path $path) )
 {
     Fail-Json -obj $result -message "defined path ($path) is not found/invalid"
 }
