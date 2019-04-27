@@ -148,7 +148,7 @@ Function Set-Workgroup {
 
     Write-DebugLog ("Calling JoinDomainOrWorkgroup with workgroup {0}" -f $workgroup_name)
     try {
-        $swg_result = (Get-CIMInstance -ClassName Win32_ComputerSystem).JoinDomainOrWorkgroup($workgroup_name)
+        $swg_result = Get-CimInstance Win32_ComputerSystem | Invoke-CimMethod -MethodName JoinDomainOrWorkgroup -Arguments @{Name="$workgroup_name"};
     } catch {
         Fail-Json -obj $result -message "failed to call Win32_ComputerSystem.JoinDomainOrWorkgroup($workgroup_name): $($_.Exception.Message)"
     }
