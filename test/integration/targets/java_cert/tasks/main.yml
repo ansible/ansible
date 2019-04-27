@@ -3,8 +3,7 @@
   copy: src="{{ test_pkcs12_path }}" dest="{{output_dir}}/{{ test_pkcs12_path }}"
 
 - name: import pkcs12
-  local_action:
-     module: java_cert
+  java_cert:
      pkcs12_path: "{{output_dir}}/{{ test_pkcs12_path }}"
      pkcs12_password: changeit
      pkcs12_alias: default
@@ -20,8 +19,7 @@
     - result_success is successful
 
 - name: import pkcs12 with wrong password
-  local_action:
-     module: java_cert
+  java_cert:
      pkcs12_path: "{{output_dir}}/{{ test_pkcs12_path }}"
      pkcs12_password: wrong_pass
      pkcs12_alias: default
@@ -39,8 +37,7 @@
     - result_wrong_pass is failed
 
 - name: test fail on mutually exclusive params
-  local_action:
-     module: java_cert
+  java_cert:
      cert_path: ca.crt
      pkcs12_path: "{{output_dir}}/{{ test_pkcs12_path }}"
      cert_alias: default

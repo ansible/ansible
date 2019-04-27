@@ -1,7 +1,6 @@
 ---
 - name: query API with invalid API key
-  local_action:
-    module: memset_server_facts
+  memset_server_facts:
     api_key: 'wa9aerahhie0eekee9iaphoorovooyia'
     name: 'testyaa1'
   ignore_errors: true
@@ -14,8 +13,7 @@
       - result is not successful
 
 - name: request server facts
-  local_action:
-    module: memset_server_facts
+  memset_server_facts:
     api_key: "{{ api_key }}"
     name: 'testyaa1'
   register: result
