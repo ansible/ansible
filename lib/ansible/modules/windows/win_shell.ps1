@@ -119,7 +119,7 @@ try {
 
 # TODO: decode CLIXML stderr output (and other streams?)
 $result.stdout = $command_result.stdout
-$result.stderr = Cleanse-Stderr $command_result.stderr 
+$result.stderr = Cleanse-Stderr $command_result.stderr
 $result.rc = $command_result.rc
 
 $end_datetime = [DateTime]::UtcNow

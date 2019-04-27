@@ -319,7 +319,7 @@ if ($null -ne $name) {
                 }
                 $result.$property += $item_info
             }
-        }    
+        }
     } else {
         $result.task_exists = $false
     }

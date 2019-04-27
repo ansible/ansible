@@ -93,7 +93,7 @@ Function New-LegacySelfSignedCert
         [int]$ValidDays = 1095
     )
 
-    $hostnonFQDN = $env:computerName 
+    $hostnonFQDN = $env:computerName
     $hostFQDN = [System.Net.Dns]::GetHostByName(($env:computerName)).Hostname
     $SignatureAlgorithm = "SHA256"
 
@@ -363,9 +363,9 @@ Else
 # Check for basic authentication.
 $basicAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object {$_.Name -eq "Basic"}
 
-If ($DisableBasicAuth) 
+If ($DisableBasicAuth)
 {
-    If (($basicAuthSetting.Value) -eq $true) 
+    If (($basicAuthSetting.Value) -eq $true)
     {
         Write-Verbose "Disabling basic auth support."
         Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $false
@@ -375,8 +375,8 @@ If ($DisableBasicAuth)
     {
         Write-Verbose "Basic auth is already disabled."
     }
-} 
-Else 
+}
+Else
 {
     If (($basicAuthSetting.Value) -eq $false)
     {

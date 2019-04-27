@@ -157,7 +157,7 @@ Function Set-DnsClientAddresses
     )
 
     Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ($ipv4_addresses -join ", "))
-    
+
     If ($null -eq $ipv4_addresses) {
         Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ResetServerAddress
     }
@@ -166,7 +166,7 @@ Function Set-DnsClientAddresses
     # this silently ignores invalid IPs, so we validate parseability ourselves up front...
         Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ServerAddresses $ipv4_addresses
     }
-    
+
     # TODO: implement IPv6
 }
 

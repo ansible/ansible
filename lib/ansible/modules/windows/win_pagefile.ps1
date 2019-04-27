@@ -46,7 +46,7 @@ if ($removeAll) {
 }
 
 if ($null -ne $automatic) {
-    # change autmoatic managed pagefile 
+    # change autmoatic managed pagefile
     try {
         $computerSystem = Get-WmiObject -Class win32_computersystem -EnableAllPrivileges
     } catch {

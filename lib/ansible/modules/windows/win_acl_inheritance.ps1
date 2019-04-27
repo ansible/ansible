@@ -19,7 +19,7 @@ $reorganize = Get-AnsibleParam -obj $params "reorganize" -type "bool" -default $
 If (-Not (Test-Path -LiteralPath $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
 }
- 
+
 Try {
     $objACL = Get-ACL -LiteralPath $path
     # AreAccessRulesProtected - $false if inheritance is set ,$true if inheritance is not set
@@ -63,5 +63,5 @@ Try {
 } Catch {
     Fail-Json $result "an error occurred when attempting to disable inheritance: $($_.Exception.Message)"
 }
- 
+
 Exit-Json $result

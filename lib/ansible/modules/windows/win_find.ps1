@@ -48,11 +48,11 @@ namespace Ansible.Command {
         [DllImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern int GetFinalPathNameByHandle(IntPtr handle, [In, Out] StringBuilder path, int bufLen, int flags);
 
-        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)] 
-        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess, 
+        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess,
         int dwShareMode, IntPtr SecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, IntPtr hTemplateFile);
 
-        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink) { 
+        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink) {
             SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero);
             if(directoryHandle.IsInvalid)
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -63,9 +63,9 @@ namespace Ansible.Command {
             if (size<0)
                 throw new Win32Exception(Marshal.GetLastWin32Error()); // The remarks section of GetFinalPathNameByHandle mentions the return being prefixed with "\\?\" // More information about "\\?\" here -> http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
             if (path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\')
-                return path.ToString().Substring(4); 
-            else 
-                return path.ToString(); 
+                return path.ToString().Substring(4);
+            else
+                return path.ToString();
         }
     }
 }
@@ -177,7 +177,7 @@ Function Assert-Size($info) {
         $size_pattern = '^(-?\d+)(b|k|m|g|t)?$'
         $match = $size -match $size_pattern
         if ($match) {
-            [int]$specified_size = $matches[1] 
+            [int]$specified_size = $matches[1]
             if ($null -eq $matches[2]) {
                 $chosen_byte = 'b'
             } else {
@@ -259,7 +259,7 @@ Function Get-FileStat($file) {
             $isshared = $true
             $file_stat.sharename = $share_info.Name
         }
-        
+
         # only get the size of a directory if there are files (not directories) inside the folder
         # Get-ChildItem -LiteralPath does not work properly on older OS', use .NET instead
         $dir_files = @()
@@ -350,7 +350,7 @@ foreach ($path in $paths_to_check) {
     $result.examined = $new_examined
 
     if ($info -ne $false) {
-        $files = $result.Files        
+        $files = $result.Files
         $files += $info
 
         $new_matched = $result.matched + 1

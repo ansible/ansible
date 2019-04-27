@@ -30,7 +30,7 @@ Function Get-MachineSid {
     # admin account (ends with -500) and lops it off to get the machine sid.
 
     $admins_sid = "S-1-5-32-544"
-    $admin_group = ([Security.Principal.SecurityIdentifier]$admins_sid).Translate([Security.Principal.NTAccount]).Value 
+    $admin_group = ([Security.Principal.SecurityIdentifier]$admins_sid).Translate([Security.Principal.NTAccount]).Value
 
     Add-Type -AssemblyName System.DirectoryServices.AccountManagement
     $principal_context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
@@ -134,7 +134,7 @@ $osversion = [Environment]::OSVersion
 
 if($gather_subset.Contains('all_ipv4_addresses') -or $gather_subset.Contains('all_ipv6_addresses')) {
     $netcfg = Get-LazyCimInstance Win32_NetworkAdapterConfiguration
-    
+
     # TODO: split v4/v6 properly, return in separate keys
     $ips = @()
     Foreach ($ip in $netcfg.IPAddress) {
@@ -254,7 +254,7 @@ if($gather_subset.Contains('interfaces')) {
         $guid_key = "InterfaceGUID"
         $name_key = "Name"
     } else {
-        $net_adapters = Get-LazyCimInstance Win32_NetworkAdapter        
+        $net_adapters = Get-LazyCimInstance Win32_NetworkAdapter
         $guid_key = "GUID"
         $name_key = "NetConnectionID"
     }
@@ -453,14 +453,14 @@ if($gather_subset.Contains('virtual')) {
             $machine_role="guest"
         }
 
-        "VirtualBox" { 
-            $machine_type="VirtualBox" 
+        "VirtualBox" {
+            $machine_type="VirtualBox"
             $machine_role="guest"
         }
 
         "HVM domU" {
             $machine_type="Xen"
-            $machine_role="guest" 
+            $machine_role="guest"
         }
 
         default {
@@ -468,7 +468,7 @@ if($gather_subset.Contains('virtual')) {
             $machine_role="NA"
         }
     }
-    
+
     $ansible_facts += @{
         ansible_virtualization_role = $machine_role
         ansible_virtualization_type = $machine_type

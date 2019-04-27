@@ -327,7 +327,7 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are uninstalling an msi
-                if ( -Not $log_path ) { 
+                if ( -Not $log_path ) {
                     $temp_path = [System.IO.Path]::GetTempPath()
                     $log_file = [System.IO.Path]::GetRandomFileName()
                     $log_path = Join-Path -Path $temp_path -ChildPath $log_file
@@ -421,7 +421,7 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are installing an msi
-                if ( -Not $log_path ) { 
+                if ( -Not $log_path ) {
                     $temp_path = [System.IO.Path]::GetTempPath()
                     $log_file = [System.IO.Path]::GetRandomFileName()
                     $log_path = Join-Path -Path $temp_path -ChildPath $log_file

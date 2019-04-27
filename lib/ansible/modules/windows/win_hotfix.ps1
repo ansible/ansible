@@ -49,7 +49,7 @@ Function Extract-MSU($msu) {
     if ($LASTEXITCODE -ne 0) {
         Fail-Json $result "failed to run expand.exe $($expand_args): RC = $LASTEXITCODE"
     }
-    
+
     return $output_path
 }
 
@@ -87,7 +87,7 @@ Function Get-HotfixMetadataFromFile($extract_path) {
         Fail-Json $result "failed to get metadata xml inside MSU file, cannot get hotfix metadata required for this task"
     }
     [xml]$xml = Get-Content -Path $metadata_path.FullName
-    
+
     $cab_source_filename = $xml.unattend.servicing.package.source.GetAttribute("location")
     $cab_source_filename = Split-Path -Path $cab_source_filename -Leaf
     $cab_file = Join-Path -Path $extract_path -ChildPath $cab_source_filename

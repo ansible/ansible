@@ -165,7 +165,7 @@ if ($secedit_ini.$section.ContainsKey($key)) {
     if ($diff_mode) {
         $result.diff.prepared = @"
 [$section]
-+$key = $value        
++$key = $value
 "@
     }
     $secedit_ini.$section.$key = $value

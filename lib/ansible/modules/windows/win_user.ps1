@@ -14,7 +14,7 @@ $LOGON32_PROVIDER_DEFAULT = 0
 $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
 
 function Get-User($user) {
-    $adsi.Children | where {$_.SchemaClassName -eq 'user' -and $_.Name -eq $user }
+    $adsi.Children | Where-Object {$_.SchemaClassName -eq 'user' -and $_.Name -eq $user }
     return
 }
 
@@ -27,7 +27,7 @@ function Get-UserFlag($user, $flag) {
     }
 }
 
-function Set-UserFlag($user, $flag) { 
+function Set-UserFlag($user, $flag) {
     $user.UserFlags = ($user.UserFlags[0] -BOR $flag)
 }
 
@@ -36,7 +36,7 @@ function Clear-UserFlag($user, $flag) {
 }
 
 function Get-Group($grp) {
-    $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
+    $adsi.Children | Where-Object { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
     return
 }
 
@@ -140,7 +140,7 @@ If ($null -ne $groups) {
     ElseIf ($groups -isnot [System.Collections.IList]) {
         Fail-Json $result "groups must be a string or array"
     }
-    $groups = $groups | ForEach { ([string]$_).Trim() } | Where { $_ }
+    $groups = $groups | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ }
     If ($null -eq $groups) {
         $groups = @()
     }
@@ -219,9 +219,9 @@ If ($state -eq 'present') {
             $user_obj.SetInfo()
         }
         If ($null -ne $groups) {
-            [string[]]$current_groups = $user_obj.Groups() | ForEach { $_.GetType().InvokeMember("Name", "GetProperty", $null, $_, $null) }
+            [string[]]$current_groups = $user_obj.Groups() | ForEach-Object { $_.GetType().InvokeMember("Name", "GetProperty", $null, $_, $null) }
             If (($groups_action -eq "remove") -or ($groups_action -eq "replace")) {
-                ForEach ($grp in $current_groups) {
+                Foreach ($grp in $current_groups) {
                     If ((($groups_action -eq "remove") -and ($groups -contains $grp)) -or (($groups_action -eq "replace") -and ($groups -notcontains $grp))) {
                         $group_obj = Get-Group $grp
                         If ($group_obj) {
@@ -235,7 +235,7 @@ If ($state -eq 'present') {
                 }
             }
             If (($groups_action -eq "add") -or ($groups_action -eq "replace")) {
-                ForEach ($grp in $groups) {
+                Foreach ($grp in $groups) {
                     If ($current_groups -notcontains $grp) {
                         $group_obj = Get-Group $grp
                         If ($group_obj) {
@@ -286,7 +286,7 @@ try {
         $result.account_locked = $user_obj.IsAccountLocked
         $result.sid = (New-Object System.Security.Principal.SecurityIdentifier($user_obj.ObjectSid.Value, 0)).Value
         $user_groups = @()
-        ForEach ($grp in $user_obj.Groups()) {
+        Foreach ($grp in $user_obj.Groups()) {
             $group_result = @{
                 name = $grp.GetType().InvokeMember("Name", "GetProperty", $null, $grp, $null)
                 path = $grp.GetType().InvokeMember("ADsPath", "GetProperty", $null, $grp, $null)

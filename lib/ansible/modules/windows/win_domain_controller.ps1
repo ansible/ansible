@@ -41,14 +41,14 @@ Function Get-MissingFeatures {
     }
 
     $missing_features = @($features | Where-Object InstallState -ne Installed)
-    
+
     return ,$missing_features # no, the comma's not a typo- allows us to return an empty array
 }
 
 Function Ensure-FeatureInstallation {
     # ensure RSAT-ADDS and AD-Domain-Services features are installed
 
-    Write-DebugLog "Ensuring required Windows features are installed..." 
+    Write-DebugLog "Ensuring required Windows features are installed..."
     $feature_result = Install-WindowsFeature $required_features
 
     If(-not $feature_result.Success) {

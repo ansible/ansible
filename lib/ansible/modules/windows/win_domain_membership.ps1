@@ -47,11 +47,11 @@ Function Get-DomainMembershipMatch {
     }
     catch [System.Security.Authentication.AuthenticationException] {
         Write-DebugLog "Failed to get computer domain.  Attempting a different method."
-        Add-Type -AssemblyName System.DirectoryServices.AccountManagement            
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement
         $user_principal = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
         If ($user_principal.ContextType -eq "Machine") {
             $current_dns_domain = (Get-CimInstance -ClassName Win32_ComputerSystem -Property Domain).Domain
-            
+
             $domain_match = $current_dns_domain -eq $dns_domain_name
 
             Write-DebugLog ("current domain {0} matches {1}: {2}" -f $current_dns_domain, $dns_domain_name, $domain_match)
@@ -154,7 +154,7 @@ Function Set-Workgroup {
 
     if ($swg_result.ReturnValue -ne 0) {
         Fail-Json -obj $result -message "failed to set workgroup through WMI, return value: $($swg_result.ReturnValue)"
-    
+
     return $swg_result}
 }
 

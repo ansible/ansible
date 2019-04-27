@@ -654,7 +654,7 @@ if ($state -eq "absent") {
                     if (($new_keyword -cne $existing_keyword) -or ($new_value -ne $existing_value)) {
                         $attribute_changed = $true
                         break
-                    } 
+                    }
                 }
             }
 
