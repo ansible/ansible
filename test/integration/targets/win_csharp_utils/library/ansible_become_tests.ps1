@@ -943,7 +943,7 @@ $tests = @{
 }
 
 try {
-    $tmp_dir = Join-Path -LiteralPath ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
+    $tmp_dir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
     New-Item -LiteralPath $tmp_dir -ItemType Directory > $null
     $acl = Get-Acl -LiteralPath $tmp_dir
     $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
@@ -956,7 +956,7 @@ try {
     $acl.AddAccessRule($ace)
     Set-Acl -LiteralPath $tmp_dir -AclObject $acl
 
-    $tmp_script = Join-Path -LiteralPath $tmp_dir -ChildPath "whoami.ps1"
+    $tmp_script = Join-Path -Path $tmp_dir -ChildPath "whoami.ps1"
     Set-Content -LiteralPath $tmp_script -Value $test_whoami
 
     foreach ($user in $standard_user, $admin_user) {

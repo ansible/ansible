@@ -119,7 +119,7 @@ Function Copy-Folder($source, $dest) {
 
     $child_items = Get-ChildItem -LiteralPath $source -Force
     foreach ($child_item in $child_items) {
-        $dest_child_path = Join-Path -LiteralPath $dest -ChildPath $child_item.Name
+        $dest_child_path = Join-Path -Path $dest -ChildPath $child_item.Name
         if ($child_item.PSIsContainer) {
             $diff += (Copy-Folder -source $child_item.Fullname -dest $dest_child_path)
         } else {
@@ -239,7 +239,7 @@ if ($copy_mode -eq "query") {
         $filename = $file.dest
         $local_checksum = $file.checksum
 
-        $filepath = Join-Path -LiteralPath $dest -ChildPath $filename
+        $filepath = Join-Path -Path $dest -ChildPath $filename
         if (Test-Path -LiteralPath $filepath -PathType Leaf) {
             if ($force) {
                 $checksum = Get-FileChecksum -path $filepath
@@ -257,7 +257,7 @@ if ($copy_mode -eq "query") {
     foreach ($directory in $directories) {
         $dirname = $directory.dest
 
-        $dirpath = Join-Path -LiteralPath $dest -ChildPath $dirname
+        $dirpath = Join-Path -Path $dest -ChildPath $dirname
         $parent_dir = [System.IO.Path]::GetDirectoryName($dirpath)
         if (Test-Path -LiteralPath $parent_dir -PathType Leaf) {
             Fail-Json -obj $result -message "cannot copy folder to dest '$dirpath': object at parent directory path is already a file"
@@ -315,7 +315,7 @@ if ($copy_mode -eq "query") {
             $diff = ""
             $child_files = Get-ChildItem -LiteralPath $src -Force
             foreach ($child_file in $child_files) {
-                $dest_child_path = Join-Path -LiteralPath $dest -ChildPath $child_file.Name
+                $dest_child_path = Join-Path -Path $dest -ChildPath $child_file.Name
                 if ($child_file.PSIsContainer) {
                     $diff += Copy-Folder -source $child_file.FullName -dest $dest_child_path
                 } else {
@@ -324,7 +324,7 @@ if ($copy_mode -eq "query") {
             }
         } else {
             # copying the folder and it's contents to dest
-            $dest = Join-Path -LiteralPath $dest -ChildPath (Get-Item -LiteralPath $src -Force).Name
+            $dest = Join-Path -Path $dest -ChildPath (Get-Item -LiteralPath $src -Force).Name
             $result.dest = $dest
             $diff = Copy-Folder -source $src -dest $dest
         }
@@ -336,7 +336,7 @@ if ($copy_mode -eq "query") {
         $result.original_basename = $source_basename
 
         if ($dest.EndsWith("/") -or $dest.EndsWith("`\")) {
-            $dest = Join-Path -LiteralPath $dest -ChildPath (Get-Item -LiteralPath $src -Force).Name
+            $dest = Join-Path -Path $dest -ChildPath (Get-Item -LiteralPath $src -Force).Name
             $result.dest = $dest
         } else {
             # check if the parent dir exists, this is only done if src is a
@@ -372,7 +372,7 @@ if ($copy_mode -eq "query") {
 
     # the dest parameter is a directory, we need to append original_basename
     if ($dest.EndsWith("/") -or $dest.EndsWith("`\") -or (Test-Path -LiteralPath $dest -PathType Container)) {
-        $remote_dest = Join-Path -LiteralPath $dest -ChildPath $original_basename
+        $remote_dest = Join-Path -Path $dest -ChildPath $original_basename
         $parent_dir = Split-Path -LiteralPath $remote_dest
 
         # when dest ends with /, we need to create the destination directories

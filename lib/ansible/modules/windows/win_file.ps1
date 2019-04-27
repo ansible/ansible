@@ -18,7 +18,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "a
 # used in template/copy when dest is the path to a dir and source is a file
 $original_basename = Get-AnsibleParam -obj $params -name "_original_basename" -type "str"
 if ((Test-Path -LiteralPath $path -PathType Container) -and ($null -ne $original_basename)) {
-    $path = Join-Path -LiteralPath $path -ChildPath $original_basename
+    $path = Join-Path -Path $path -ChildPath $original_basename
 }
 
 $result = @{

@@ -46,12 +46,12 @@ $tmp_dir = $module.Tmpdir
 
 $tests = @{
     "Test backup file with missing file" = {
-        $actual = Backup-File -Path (Join-Path -LiteralPath $tmp_dir -ChildPath "missing")
+        $actual = Backup-File -Path (Join-Path -Path $tmp_dir -ChildPath "missing")
         $actual | Assert-Equals -Expected $null
     }
 
     "Test backup file in check mode" = {
-        $orig_file = Join-Path -LiteralPath $tmp_dir -ChildPath "file-check.txt"
+        $orig_file = Join-Path -Path $tmp_dir -ChildPath "file-check.txt"
         Set-Content -LiteralPath $orig_file -Value "abc"
         $actual = Backup-File -Path $orig_file -WhatIf
 
@@ -65,7 +65,7 @@ $tests = @{
 
     "Test backup file" = {
         $content = "abc"
-        $orig_file = Join-Path -LiteralPath $tmp_dir -ChildPath "file.txt"
+        $orig_file = Join-Path -Path $tmp_dir -ChildPath "file.txt"
         Set-Content -LiteralPath $orig_file -Value $content
         $actual = Backup-File -Path $orig_file
 

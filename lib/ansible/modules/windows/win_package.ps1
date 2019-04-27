@@ -330,7 +330,7 @@ if ($state -eq "absent") {
                 if ( -Not $log_path ) {
                     $temp_path = [System.IO.Path]::GetTempPath()
                     $log_file = [System.IO.Path]::GetRandomFileName()
-                    $log_path = Join-Path -LiteralPath $temp_path -ChildPath $log_file
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
                     $cleanup_artifacts += $log_path
                 }
 
@@ -424,7 +424,7 @@ if ($state -eq "absent") {
                 if ( -Not $log_path ) {
                     $temp_path = [System.IO.Path]::GetTempPath()
                     $log_file = [System.IO.Path]::GetRandomFileName()
-                    $log_path = Join-Path -LiteralPath $temp_path -ChildPath $log_file
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
                     $cleanup_artifacts += $log_path
                 }
 

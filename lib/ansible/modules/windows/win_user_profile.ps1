@@ -81,7 +81,7 @@ Function Get-ExpectedProfilePath {
         $msg = Get-LastWin32ExceptionMessage -Error ([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())
         $module.FailJson("Failed to determine profile path with the base name '$BaseName': $msg")
     }
-    $profile_path = Join-Path -LiteralPath $raw_profile_path.ToString() -ChildPath $BaseName
+    $profile_path = Join-Path -Path $raw_profile_path.ToString() -ChildPath $BaseName
 
     return $profile_path
 }

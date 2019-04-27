@@ -116,9 +116,9 @@ if ($os_version -ge [Version]"6.2") {
     $s3_url = "https://s3.amazonaws.com/ansible-ci-files/ansible-test/pmapper-1.04.exe"
 
     # download the Port Mapper executable to a temporary directory
-    $pmapper_folder = Join-Path -LiteralPath ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
-    $pmapper_exe = Join-Path -LiteralPath $pmapper_folder -ChildPath pmapper.exe
-    $pmapper_config = Join-Path -LiteralPath $pmapper_folder -ChildPath pmapper.dat
+    $pmapper_folder = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
+    $pmapper_exe = Join-Path -Path $pmapper_folder -ChildPath pmapper.exe
+    $pmapper_config = Join-Path -Path $pmapper_folder -ChildPath pmapper.dat
     New-Item -LiteralPath $pmapper_folder -ItemType Directory > $null
 
     $stop = $false

@@ -259,7 +259,7 @@ Function Invoke-DownloadFile {
         param($Response, $Stream)
 
         # Download the file to a temporary directory so we can compare it
-        $tmp_dest = Join-Path -LiteralPath $Module.Tmpdir -ChildPath ([System.IO.Path]::GetRandomFileName())
+        $tmp_dest = Join-Path -Path $Module.Tmpdir -ChildPath ([System.IO.Path]::GetRandomFileName())
         $fs = [System.IO.File]::Create($tmp_dest)
         try {
             $Stream.CopyTo($fs)
@@ -348,9 +348,9 @@ if (Test-Path -LiteralPath $dest -PathType Container) {
     $basename = Split-Path -Path $uri.LocalPath -Leaf
     if ($uri.LocalPath -and $uri.LocalPath -ne '/' -and $basename) {
         $url_basename = Split-Path -Path $uri.LocalPath -Leaf
-        $dest = Join-Path -LiteralPath $dest -ChildPath $url_basename
+        $dest = Join-Path -Path $dest -ChildPath $url_basename
     } else {
-        $dest = Join-Path -LiteralPath $dest -ChildPath $uri.Host
+        $dest = Join-Path -Path $dest -ChildPath $uri.Host
     }
 
     # Ensure we have a string instead of a PS object to avoid serialization issues

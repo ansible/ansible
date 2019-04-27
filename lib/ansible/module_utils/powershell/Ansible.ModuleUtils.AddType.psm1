@@ -113,7 +113,7 @@ Function Add-CSharpType {
                 }
                 $assembly_path = $match.Groups["Name"]
                 if (-not ([System.IO.Path]::IsPathRooted($assembly_path))) {
-                    $assembly_path = Join-Path -LiteralPath $lib_assembly_location -ChildPath $assembly_path
+                    $assembly_path = Join-Path -Path $lib_assembly_location -ChildPath $assembly_path
                 }
                 $assemblies.Add([Microsoft.CodeAnalysis.MetadataReference]::CreateFromFile($assembly_path)) > $null
             }

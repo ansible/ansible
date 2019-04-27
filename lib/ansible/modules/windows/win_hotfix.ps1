@@ -36,7 +36,7 @@ if (Get-Module -Name DISM -ListAvailable) {
 Function Extract-MSU($msu) {
     $temp_path = [IO.Path]::GetTempPath()
     $temp_foldername = [Guid]::NewGuid()
-    $output_path = Join-Path -LiteralPath $temp_path -ChildPath $temp_foldername
+    $output_path = Join-Path -Path $temp_path -ChildPath $temp_foldername
     New-Item -LiteralPath $output_path -ItemType Directory | Out-Null
 
     $expand_args = @($msu, $output_path, "-F:*")
@@ -90,7 +90,7 @@ Function Get-HotfixMetadataFromFile($extract_path) {
 
     $cab_source_filename = $xml.unattend.servicing.package.source.GetAttribute("location")
     $cab_source_filename = Split-Path -Path $cab_source_filename -Leaf
-    $cab_file = Join-Path -LiteralPath $extract_path -ChildPath $cab_source_filename
+    $cab_file = Join-Path -Path $extract_path -ChildPath $cab_source_filename
 
     try {
         $dism_package_info = Get-WindowsPackage -Online -PackagePath $cab_file
