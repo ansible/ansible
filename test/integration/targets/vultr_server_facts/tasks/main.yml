@@ -9,7 +9,7 @@
 
 # Servers can only be destroyed 5 min after creation
 - name: wait for 5 min until VM is absent
-  local_action: wait_for
+  wait_for:
   when: result is changed
 
 - name: test gather vultr server facts - empty resources
