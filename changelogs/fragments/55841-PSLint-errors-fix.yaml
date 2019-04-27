@@ -1,6 +1,5 @@
-minor_changes:
-        - win_domain - Added a check for pending boot after role installation
 bugfixes:
+        - win_domain - Added a check for pending boot after role installation
         - Fixed PSlint warnings and more
           - Did not fix - to not break
             - PSUseApprovedVerbs - (https://docs.microsoft.com/en-us/powershell/developer/cmdlet/approved-verbs-for-windows-powershell-commands)
