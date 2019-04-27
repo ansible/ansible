@@ -327,7 +327,7 @@ namespace Ansible.CredentialManager
                 TargetName = TargetName,
                 Comment = Comment,
                 LastWritten = new NativeHelpers.FILETIME(),
-                CredentialBlobSize = (UInt32)(Secret == null Where-Object 0 : Secret.Length),
+                CredentialBlobSize = (UInt32)(Secret == null ? 0 : Secret.Length),
                 CredentialBlob = IntPtr.Zero, // Must be allocated and freed outside of this to ensure no memory leaks
                 Persist = Persist,
                 AttributeCount = (UInt32)(Attributes.Count),
@@ -360,7 +360,7 @@ namespace Ansible.CredentialManager
                         {
                             Keyword = attribute.Keyword,
                             Flags = attribute.Flags,
-                            ValueSize = (UInt32)(attribute.Value == null Where-Object 0 : attribute.Value.Length),
+                            ValueSize = (UInt32)(attribute.Value == null ? 0 : attribute.Value.Length),
                             Value = attributeBuffer.DangerousGetHandle(),
                         };
                         int attributeStructLength = Marshal.SizeOf(typeof(NativeHelpers.CREDENTIAL_ATTRIBUTE));
@@ -710,4 +710,3 @@ if ($state -eq "absent") {
 }
 
 $module.ExitJson()
-
