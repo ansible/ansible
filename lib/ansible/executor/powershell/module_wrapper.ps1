@@ -83,9 +83,9 @@ if ($Modules) {
     }
 }
 
-# redefine Write-Output to dump to output instead of failing
+# redefine Write-Host to dump to output instead of failing
 # lots of scripts still use it
-$ps.AddScript('Function Write-Output($msg) { Write-Output -InputObject $msg }').AddStatement() > $null
+$ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').AddStatement() > $null
 
 # add the scripts and run
 foreach ($script in $Scripts) {
