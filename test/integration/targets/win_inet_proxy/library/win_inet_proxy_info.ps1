@@ -193,7 +193,7 @@ namespace Ansible.WinINetProxyInfo
                 NativeHelpers.PER_CONN_FLAGS flags = (NativeHelpers.PER_CONN_FLAGS)connFlags.Value.dwValue;
 
                 AutoConfigUrl = flags.HasFlag(NativeHelpers.PER_CONN_FLAGS.PROXY_TYPE_AUTO_PROXY_URL)
-                    Where-Object Marshal.PtrToStringUni(autoConfigUrl.Value.pszValue) : null;
+                    ? Marshal.PtrToStringUni(autoConfigUrl.Value.pszValue) : null;
                 AutoDetect = flags.HasFlag(NativeHelpers.PER_CONN_FLAGS.PROXY_TYPE_AUTO_DETECT);
                 if (flags.HasFlag(NativeHelpers.PER_CONN_FLAGS.PROXY_TYPE_PROXY))
                 {
