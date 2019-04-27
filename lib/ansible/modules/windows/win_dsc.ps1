@@ -5,7 +5,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
-#Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Version 5
 
 Function ConvertTo-ArgSpecType {
@@ -376,7 +375,6 @@ if ($resource.Module) {
 try {
     Invoke-DscResource -Method Get -Property @{Fake="Fake"} @dsc_args > $null
 } catch {
-    $module.warn("Error during Invoke-DscResource: $_")
 }
 
 # Dynamically build the option spec based on the resource_name specified and create the module object
