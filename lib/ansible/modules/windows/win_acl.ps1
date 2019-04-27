@@ -91,7 +91,7 @@ $inherit = Get-AnsibleParam -obj $params -name "inherit" -type "str"
 $propagation = Get-AnsibleParam -obj $params -name "propagation" -type "str" -default "None" -validateset "InheritOnly","None","NoPropagateInherit"
 
 # We mount the HKCR, HKU, and HKCC registry hives so PS can access them
-$path_qualifier = Split-Path -LiteralPath $path -Qualifier
+$path_qualifier = Split-Path -Path $path -Qualifier
 if ($path_qualifier -eq "HKCR:" -and (-not (Test-Path -LiteralPath HKCR:\))) {
     New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT > $null
 }

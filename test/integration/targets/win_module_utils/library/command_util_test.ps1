@@ -12,7 +12,7 @@ $result = @{
     changed = $false
 }
 
-$exe_directory = Split-Path -LiteralPath $exe -Parent
+$exe_directory = Split-Path -Path $exe -Parent
 $exe_filename = Split-Path -Path $exe -Leaf
 $test_name = $null
 

@@ -1309,7 +1309,7 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $true
 
         $actual_tmpdir = $m.Tmpdir
-        $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
+        $parent_tmpdir = Split-Path -Path $actual_tmpdir -Parent
         $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
@@ -1352,7 +1352,7 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equals -Expected $false
 
         $actual_tmpdir = $m.Tmpdir
-        $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
+        $parent_tmpdir = Split-Path -Path $actual_tmpdir -Parent
         $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
@@ -1391,7 +1391,7 @@ test_no_log - Invoked with:
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 
         $actual_tmpdir = $m.Tmpdir
-        $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
+        $parent_tmpdir = Split-Path -Path $actual_tmpdir -Parent
         $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp

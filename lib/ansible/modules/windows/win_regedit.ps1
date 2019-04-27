@@ -437,7 +437,7 @@ if ($type -in @("binary", "none")) {
 # convert the type string to the .NET class
 $type = [System.Enum]::Parse([Microsoft.Win32.RegistryValueKind], $type, $true)
 
-$registry_hive = switch(Split-Path -LiteralPath $path -Qualifier) {
+$registry_hive = switch(Split-Path -Path $path -Qualifier) {
     "HKCR:" { [Microsoft.Win32.Registry]::ClassesRoot }
     "HKCC:" { [Microsoft.Win32.Registry]::CurrentConfig }
     "HKCU:" { [Microsoft.Win32.Registry]::CurrentUser }

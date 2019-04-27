@@ -75,7 +75,7 @@ if ($path -notmatch "^HK(CC|CR|CU|LM|U):\\") {
 }
 
 $registry_path = (Split-Path -LiteralPath $path -NoQualifier).Substring(1)  # removes the hive: and leading \
-$registry_hive = switch(Split-Path -LiteralPath $path -Qualifier) {
+$registry_hive = switch(Split-Path -Path $path -Qualifier) {
     "HKCR:" { [Microsoft.Win32.Registry]::ClassesRoot }
     "HKCC:" { [Microsoft.Win32.Registry]::CurrentConfig }
     "HKCU:" { [Microsoft.Win32.Registry]::CurrentUser }
@@ -123,4 +123,3 @@ try {
 }
 
 Exit-Json -obj $result
-

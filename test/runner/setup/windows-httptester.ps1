@@ -165,7 +165,7 @@ if ($os_version -ge [Version]"6.2") {
 
 Write-Verbose -Message "Wait for current script at '$PSCommandPath' to be deleted before running cleanup"
 $fsw = New-Object -TypeName System.IO.FileSystemWatcher
-$fsw.Path = Split-Path -LiteralPath $PSCommandPath -Parent
+$fsw.Path = Split-Path -Path $PSCommandPath -Parent
 $fsw.Filter = Split-Path -Path $PSCommandPath -Leaf
 $fsw.WaitForChanged([System.IO.WatcherChangeTypes]::Deleted, 3600000) > $null
 Write-Verbose -Message "Script delete or timeout reached, cleaning up Windows httptester artifacts"

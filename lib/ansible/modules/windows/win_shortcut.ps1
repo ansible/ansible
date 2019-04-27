@@ -271,7 +271,7 @@ If ($state -eq "absent") {
             $src = (Get-Command -Name $src -Type Application).Definition
         }
         If (-not (Test-Path -LiteralPath $src -IsValid)) {
-            If (-not (Split-Path -LiteralPath $src -IsAbsolute)) {
+            If (-not (Split-Path -Path $src -IsAbsolute)) {
                 $module.FailJson("Source '$src' is not found in PATH and not a valid or absolute path.")
             }
         }

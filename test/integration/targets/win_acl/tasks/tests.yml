@@ -5,7 +5,7 @@
     test_ace_cmd: |
       # Overcome bug in Set-Acl/Get-Acl for registry paths and -LiteralPath
       New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS > $null
-      Push-Location -LiteralPath (Split-Path -LiteralPath $path -Qualifier)
+      Push-Location -LiteralPath (Split-Path -Path $path -Qualifier)
       $rights_key = if ((Get-Item -LiteralPath $path -Force).PSProvider.Name -eq "Registry") {
           "RegistryRights"
       } else {
