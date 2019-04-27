@@ -181,7 +181,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
             if ($null -ne $credential) {
                 # Test-Path doesn't support supplying -Credentials, need to create PSDrive before testing
                 $file_path = Split-Path -LiteralPath $path
-                $file_name = Split-Path -LiteralPath $path -Leaf
+                $file_name = Split-Path -Path $path -Leaf
                 try {
                     New-PSDrive -Name win_package -PSProvider FileSystem -Root $file_path -Credential $credential -Scope Script
                 } catch {
@@ -307,7 +307,7 @@ if ($state -eq "absent") {
             # If path is on a network and we specify credentials or path is a
             # URL and not an MSI we need to get a temp local copy
             if ($program_metadata.location_type -eq [LocationType]::Unc -and $null -ne $credential) {
-                $file_name = Split-Path -LiteralPath $path -Leaf
+                $file_name = Split-Path -Path $path -Leaf
                 $local_path = [System.IO.Path]::GetRandomFileName()
                 Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode
                 $cleanup_artifacts += $local_path
@@ -404,7 +404,7 @@ if ($state -eq "absent") {
             # If path is on a network and we specify credentials or path is a
             # URL and not an MSI we need to get a temp local copy
             if ($program_metadata.location_type -eq [LocationType]::Unc -and $null -ne $credential) {
-                $file_name = Split-Path -LiteralPath $path -Leaf
+                $file_name = Split-Path -Path $path -Leaf
                 $local_path = [System.IO.Path]::GetRandomFileName()
                 Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode
                 $cleanup_artifacts += $local_path

@@ -121,7 +121,7 @@ if (Test-Path -LiteralPath $path) {
     # If state is not supplied, test the $path to see if it looks like
     # a file or a folder and set state to file or folder
     if ($null -eq $state) {
-        $basename = Split-Path -LiteralPath $path -Leaf
+        $basename = Split-Path -Path $path -Leaf
         if ($basename.length -gt 0) {
            $state = "file"
         } else {

@@ -144,7 +144,7 @@ Function Get-ChecksumFromUri {
 
         $read_stream = New-Object -TypeName System.IO.StreamReader -ArgumentList $Stream
         $web_checksum = $read_stream.ReadToEnd()
-        $basename = (Split-Path -LiteralPath $SourceUri.LocalPath -Leaf)
+        $basename = (Split-Path -h $SourceUri.LocalPath -Leaf)
         $basename = [regex]::Escape($basename)
         $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+\.?\/?\\?" + $basename + "\s*$")
         if (-not $web_checksum_str) {
@@ -345,9 +345,9 @@ if (-not $validate_certs) {
 # Use last part of url for dest file name if a directory is supplied for $dest
 if (Test-Path -LiteralPath $dest -PathType Container) {
     $uri = [System.Uri]$url
-    $basename = Split-Path -LiteralPath $uri.LocalPath -Leaf
+    $basename = Split-Path -Path $uri.LocalPath -Leaf
     if ($uri.LocalPath -and $uri.LocalPath -ne '/' -and $basename) {
-        $url_basename = Split-Path -LiteralPath $uri.LocalPath -Leaf
+        $url_basename = Split-Path -Path $uri.LocalPath -Leaf
         $dest = Join-Path -LiteralPath $dest -ChildPath $url_basename
     } else {
         $dest = Join-Path -LiteralPath $dest -ChildPath $uri.Host
@@ -421,4 +421,3 @@ if ((-not $module.Result.ContainsKey("checksum_dest")) -and (Test-Path -LiteralP
 }
 
 $module.ExitJson()
-

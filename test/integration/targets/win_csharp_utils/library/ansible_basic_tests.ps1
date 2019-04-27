@@ -1310,7 +1310,7 @@ test_no_log - Invoked with:
 
         $actual_tmpdir = $m.Tmpdir
         $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
-        $tmpdir_name = Split-Path -LiteralPath $actual_tmpdir -Leaf
+        $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
@@ -1353,7 +1353,7 @@ test_no_log - Invoked with:
 
         $actual_tmpdir = $m.Tmpdir
         $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
-        $tmpdir_name = Split-Path -LiteralPath $actual_tmpdir -Leaf
+        $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
@@ -1392,7 +1392,7 @@ test_no_log - Invoked with:
 
         $actual_tmpdir = $m.Tmpdir
         $parent_tmpdir = Split-Path -LiteralPath $actual_tmpdir -Parent
-        $tmpdir_name = Split-Path -LiteralPath $actual_tmpdir -Leaf
+        $tmpdir_name = Split-Path -Path $actual_tmpdir -Leaf
 
         $parent_tmpdir | Assert-Equals -Expected $remote_tmp
         $tmpdir_name.StartSwith("ansible-moduletmp-") | Assert-Equals -Expected $true
@@ -2377,4 +2377,3 @@ try {
 }
 
 Exit-Module
-

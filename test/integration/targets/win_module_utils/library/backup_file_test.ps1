@@ -58,7 +58,7 @@ $tests = @{
         (Test-Path -LiteralPath $actual) | Assert-Equals -Expected $false
 
         $parent_dir = Split-Path -LiteralPath $actual
-        $backup_file = Split-Path -LiteralPath $actual -Leaf
+        $backup_file = Split-Path -Path $actual -Leaf
         $parent_dir | Assert-Equals -Expected $tmp_dir
         ($backup_file -match "^file-check\.txt\.$pid\.\d{8}-\d{6}\.bak$") | Assert-Equals -Expected $true
     }
@@ -72,7 +72,7 @@ $tests = @{
         (Test-Path -LiteralPath $actual) | Assert-Equals -Expected $true
 
         $parent_dir = Split-Path -LiteralPath $actual
-        $backup_file = Split-Path -LiteralPath $actual -Leaf
+        $backup_file = Split-Path -Path $actual -Leaf
         $parent_dir | Assert-Equals -Expected $tmp_dir
         ($backup_file -match "^file\.txt\.$pid\.\d{8}-\d{6}\.bak$") | Assert-Equals -Expected $true
         (Get-Content -LiteralPath $actual -Raw) | Assert-Equals -Expected "$content`r`n"

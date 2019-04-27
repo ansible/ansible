@@ -120,7 +120,7 @@ if ($path -notmatch "^HK(CC|CR|CU|LM|U):\\") {
 
 # Add a warning if the path does not contains a \ and is not the leaf path
 $registry_path = (Split-Path -LiteralPath $path -NoQualifier).Substring(1)  # removes the hive: and leading \
-$registry_leaf = Split-Path -LiteralPath $path -Leaf
+$registry_leaf = Split-Path -Path $path -Leaf
 if ($registry_path -ne $registry_leaf -and -not $registry_path.Contains('\')) {
     $msg = "path is not using '\' as a separator, support for '/' as a separator will be removed in a future Ansible version"
     Add-DeprecationWarning -obj $result -message $msg -version 2.12
@@ -492,4 +492,3 @@ try {
 }
 
 Exit-Json $result
-

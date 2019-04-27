@@ -13,7 +13,7 @@ $result = @{
 }
 
 $exe_directory = Split-Path -LiteralPath $exe -Parent
-$exe_filename = Split-Path -LiteralPath $exe -Leaf
+$exe_filename = Split-Path -Path $exe -Leaf
 $test_name = $null
 
 Function Assert-Equals($actual, $expected) {

@@ -89,7 +89,7 @@ Function Get-HotfixMetadataFromFile($extract_path) {
     [xml]$xml = Get-Content -LiteralPath $metadata_path.FullName
 
     $cab_source_filename = $xml.unattend.servicing.package.source.GetAttribute("location")
-    $cab_source_filename = Split-Path -LiteralPath $cab_source_filename -Leaf
+    $cab_source_filename = Split-Path -Path $cab_source_filename -Leaf
     $cab_file = Join-Path -LiteralPath $extract_path -ChildPath $cab_source_filename
 
     try {
