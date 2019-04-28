@@ -113,11 +113,11 @@ RETURN = '''
 from ansible.module_utils.hwc_utils import (Config, HwcModule, get_region,
                                             HwcClientException, navigate_value,
                                             HwcClientException404,
+                                            wait_to_finish,
                                             remove_nones_from_dict, build_path,
                                             remove_empty_from_dict,
                                             are_dicts_different)
 import re
-import time
 
 ###############################################################################
 # Main
@@ -374,44 +374,47 @@ def wait_for_completion(op_uri, timeout, allowed_states,
                         complete_states, config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
-    end = time.time() + timeout
-    while time.time() <= end:
+
+    def _refresh_status():
+        r = None
         try:
-            op_result = fetch_resource(module, client, op_uri)
+            r = fetch_resource(module, client, op_uri)
         except Exception:
-            time.sleep(1.0)
-            continue
+            return None, ""
 
+        status = ""
         try:
-            status = navigate_value(op_result, ['vpc', 'status'])
+            status = navigate_value(r, ['vpc', 'status'])
         except Exception:
-            pass
-        else:
-            if status not in allowed_states:
-                module.fail_json(
-                    msg="Invalid async operation status %s" % status)
-            if status in complete_states:
-                return op_result
+            return None, ""
 
-        time.sleep(1.0)
+        return r, status
 
-    module.fail_json(msg="Timeout to wait completion.")
+    try:
+        return wait_to_finish(complete_states, allowed_states,
+                              _refresh_status, timeout)
+    except Exception as ex:
+        module.fail_json(msg=str(ex))
 
 
 def wait_for_delete(module, client, link):
-    end = time.time() + 60 * int(
-        module.params['timeouts']['delete'].rstrip('m'))
-    while time.time() <= end:
+
+    def _refresh_status():
         try:
             client.get(link)
         except HwcClientException404:
-            return
+            return True, "Done"
+
         except Exception:
-            pass
+            return None, ""
 
-        time.sleep(1.0)
+        return True, "Pending"
 
-    module.fail_json(msg="Timeout to wait for deletion to be complete.")
+    timeout = 60 * int(module.params['timeouts']['delete'].rstrip('m'))
+    try:
+        return wait_to_finish(["Done"], ["Pending"], _refresh_status, timeout)
+    except Exception as ex:
+        module.fail_json(msg=str(ex))
 
 
 class VpcRoutesArray(object):
