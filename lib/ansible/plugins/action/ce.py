@@ -19,7 +19,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command', 'ce_facts']
+CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command']
 
 
 class ActionModule(ActionNetworkModule):
@@ -89,7 +89,7 @@ class ActionModule(ActionNetworkModule):
             out = conn.get_prompt()
             while to_text(out, errors='surrogate_then_replace').strip().endswith(']'):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                conn.exec_command('return')
+                conn.send_command('exit')
                 out = conn.get_prompt()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
