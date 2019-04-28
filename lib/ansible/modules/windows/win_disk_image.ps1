@@ -32,7 +32,7 @@ If($state -eq "present") {
         # the actual mount is async, so the CIMInstance result may not immediately contain the data we need
         $retry_count = 0
         While(-not $di.Attached -and $retry_count -lt 5) {
-          Sleep -Seconds 1 | Out-Null
+          Start-Sleep -Seconds 1 | Out-Null
           $di = $di | Get-DiskImage
           $retry_count++
         }

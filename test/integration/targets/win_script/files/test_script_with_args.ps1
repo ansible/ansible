@@ -3,5 +3,5 @@
 
 foreach ($i in $args)
 {
-    Write-Host $i;
+    Write-Output $i;
 }

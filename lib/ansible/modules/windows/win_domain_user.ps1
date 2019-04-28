@@ -176,11 +176,14 @@ If ($state -eq 'present') {
             $attribute_name = $attribute.Name
             $attribute_value = $attribute.Value
 
-            $valid_property = [bool]($user_obj.PSobject.Properties.name -eq $attribute_name)
-            if ($valid_property) {
-                $existing_value = $user_obj.$attribute_name
-                if ($existing_value -cne $attribute_value) {
-                    $replace_attributes.$attribute_name = $attribute_value
+                $valid_property = [bool]($user_obj.PSobject.Properties.name -eq $attribute_name)
+                if ($valid_property) {
+                    $existing_value = $user_obj.$attribute_name
+                    if ($existing_value -cne $attribute_value) {
+                        $replace_attributes.$attribute_name = $attribute_value
+                    }
+                } else {
+                    $add_attributes.$attribute_name = $attribute_value
                 }
             } else {
                 $add_attributes.$attribute_name = $attribute_value
