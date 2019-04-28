@@ -110,7 +110,7 @@ update_time:
 ###############################################################################
 
 from ansible.module_utils.hwc_utils import (Config, HwcModule, build_path,
-                                            HwcClientException, navigate_hash,
+                                            HwcClientException, navigate_value,
                                             remove_nones_from_dict, get_region,
                                             remove_empty_from_dict,
                                             are_dicts_different)
@@ -236,7 +236,13 @@ def get_resource(config, result):
     module = config.module
     client = config.client(get_region(module), "smn", "project")
 
-    d = {'topic_urn': navigate_hash(result, ['topic_urn'])}
+    v = ""
+    try:
+        v = navigate_value(result, ['topic_urn'])
+    except Exception as ex:
+        module.fail_json(msg=str(ex))
+
+    d = {'topic_urn': v}
     url = build_path(module, 'notifications/topics/{topic_urn}', d)
 
     return fetch_resource(module, client, url)

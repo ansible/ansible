@@ -20,21 +20,6 @@ from ansible.module_utils.basic import (AnsibleModule, env_fallback,
 from ansible.module_utils._text import to_text
 
 
-def navigate_hash(source, path, default=None):
-    if not (source and path):
-        return None
-
-    key = path[0]
-    path = path[1:]
-    if key not in source:
-        return default
-    result = source[key]
-    if path:
-        return navigate_hash(result, path, default)
-    else:
-        return result
-
-
 def remove_empty_from_dict(obj):
     return _DictClean(
         obj,
@@ -73,6 +58,16 @@ def are_dicts_different(expect, actual):
             expect_vals[k] = v
 
     return DictComparison(expect_vals) != DictComparison(actual_vals)
+
+
+class HwcModuleException(Exception):
+    def __init__(self, message):
+        super(HwcModuleException, self).__init__()
+
+        self._message = message
+
+    def __str__(self):
+        return "[HwcClientException] message=%s" % self._message
 
 
 class HwcClientException(Exception):
@@ -116,9 +111,9 @@ def session_method_wrapper(f):
         code = r.status_code
         if code not in [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]:
             msg = ""
-            for i in [['message'], ['error', 'message']]:
+            for i in ['message', 'error.message']:
                 try:
-                    msg = navigate_hash(result, i)
+                    msg = navigate_value(result, i)
                     break
                 except Exception:
                     pass
@@ -385,6 +380,42 @@ class _DictClean(object):
             if self.keep_it(v1):
                 r.append(v1)
         return r
+
+
+def navigate_value(data, index, array_index=None):
+    if array_index and (not isinstance(array_index, dict)):
+        raise HwcModuleException("array_index must be dict")
+
+    d = data
+    for n in range(len(index)):
+        if not isinstance(d, dict):
+            raise HwcModuleException(
+                "can't navigate value from a non-dict object")
+
+        i = index[n]
+        if i not in d:
+            raise HwcModuleException(
+                "navigate value failed: key(%s) is not exist in dict" % i)
+        d = d[i]
+
+        if not array_index:
+            continue
+
+        k = ".".join(index[: (n + 1)])
+        if k not in array_index:
+            continue
+
+        if not isinstance(d, list):
+            raise HwcModuleException(
+                "can't navigate value from a non-list object")
+
+        j = array_index.get(k)
+        if j >= len(d):
+            raise HwcModuleException(
+                "navigate value failed: the index is out of list")
+        d = d[j]
+
+    return d
 
 
 def build_path(module, path, kv=None):

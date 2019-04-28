@@ -111,7 +111,7 @@ RETURN = '''
 ###############################################################################
 
 from ansible.module_utils.hwc_utils import (Config, HwcModule, get_region,
-                                            HwcClientException, navigate_hash,
+                                            HwcClientException, navigate_value,
                                             HwcClientException404,
                                             remove_nones_from_dict, build_path,
                                             remove_empty_from_dict,
@@ -195,8 +195,12 @@ def create(config, link):
         module.fail_json(msg=msg)
 
     wait_done = wait_for_operation(config, 'create', r)
+    v = ""
+    try:
+        v = navigate_value(wait_done, ['vpc', 'id'])
+    except Exception as ex:
+        module.fail_json(msg=str(ex))
 
-    v = navigate_hash(wait_done, ['vpc', 'id'])
     url = build_path(module, 'vpcs/{op_id}', {'op_id': v})
     return fetch_resource(module, client, url)
 
@@ -343,7 +347,12 @@ def response_to_hash(module, response):
 
 def wait_for_operation(config, op_type, op_result):
     module = config.module
-    op_id = navigate_hash(op_result, ['vpc', 'id'])
+    op_id = ""
+    try:
+        op_id = navigate_value(op_result, ['vpc', 'id'])
+    except Exception as ex:
+        module.fail_json(msg=str(ex))
+
     url = build_path(module, "vpcs/{op_id}", {'op_id': op_id})
     timeout = 60 * int(module.params['timeouts'][op_type].rstrip('m'))
     states = {
@@ -373,23 +382,20 @@ def wait_for_completion(op_uri, timeout, allowed_states,
             time.sleep(1.0)
             continue
 
-        raise_if_errors(op_result, module)
-
-        status = navigate_hash(op_result, ['vpc', 'status'])
-        if status not in allowed_states:
-            module.fail_json(msg="Invalid async operation status %s" % status)
-        if status in complete_states:
-            return op_result
+        try:
+            status = navigate_value(op_result, ['vpc', 'status'])
+        except Exception:
+            pass
+        else:
+            if status not in allowed_states:
+                module.fail_json(
+                    msg="Invalid async operation status %s" % status)
+            if status in complete_states:
+                return op_result
 
         time.sleep(1.0)
 
     module.fail_json(msg="Timeout to wait completion.")
-
-
-def raise_if_errors(response, module):
-    errors = navigate_hash(response, [])
-    if errors:
-        module.fail_json(msg=navigate_hash(response, []))
 
 
 def wait_for_delete(module, client, link):
