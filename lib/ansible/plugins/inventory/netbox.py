@@ -44,7 +44,7 @@ DOCUMENTATION = '''
                 - If True, it adds the device or virtual machine interface information in host vars.
             default: False
             type: boolean
-            version_added: "2.8"
+            version_added: "2.9"
         token:
             required: True
             description: NetBox token.
@@ -308,6 +308,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_tags(self, host):
         return host["tags"]
 
+    def extract_ipaddresses(self, host):
+        try:
+            if self.interfaces:
+                if 'device_role' in host:
+                    url = urljoin(self.api_endpoint, "/api/ipam/ip-addresses/?limit=0&device_id=%s" % (to_text(host["id"])))
+                elif 'role' in host:
+                    url = urljoin(self.api_endpoint, "/api/ipam/ip-addresses/?limit=0&virtual_machine_id=%s" % (to_text(host["id"])))
+                ipaddress_lookup = self.get_resource_list(api_url=url)
+
+                return ipaddress_lookup
+        except Exception:
+            return
+
     def extract_interfaces(self, host):
         try:
             if self.interfaces:
@@ -316,6 +329,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 elif 'role' in host:
                     url = urljoin(self.api_endpoint, "/api/virtualization/interfaces/?limit=0&virtual_machine_id=%s" % (to_text(host["id"])))
                 interface_lookup = self.get_resource_list(api_url=url)
+
+                # Collect all IP Addresses associated with the device
+                device_ipaddresses = self.extract_ipaddresses(host)
+
+                # Attach the found IP Addresses record to the interface
+                for interface in interface_lookup:
+                    interface_ip = [ipaddress for ipaddress in device_ipaddresses if ipaddress["interface"]["id"] == interface["id"]]
+                    interface["ip-addresses"] = interface_ip
+
                 return interface_lookup
         except Exception:
             return
