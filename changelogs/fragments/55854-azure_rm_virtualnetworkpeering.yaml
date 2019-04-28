@@ -1,0 +1,2 @@
+bugfixes:
+    - azure_rm_virtualnetworkpeering - fix cross subscriptions virtual network peering. (https://github.com/ansible/ansible/pull/55854)
