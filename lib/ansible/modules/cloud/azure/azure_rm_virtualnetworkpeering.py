@@ -289,20 +289,22 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
 
         return self.results
 
-    def format_vnet_id(self):
-        if isinstance(self.remote_virtual_network, dict) and \
-            self.remote_virtual_network.get('name') and self.remote_virtual_network.get('resource_group'):
-            remote_vnet_id = format_resource_id(self.remote_virtual_network['name'],
+    def format_vnet_id(self, vnet):
+        if isinstance(vnet, dict) and vnet.get('name') and vnet.get('resource_group'):
+            remote_vnet_id = format_resource_id(vnet['name'],
                                                 self.subscription_id,
                                                 'Microsoft.Network',
                                                 'virtualNetworks',
-                                                self.remote_virtual_network['resource_group'])
-        elif isinstance(self.remote_virtual_network, str) and not is_valid_resource_id(self.remote_virtual_network):
-            remote_vnet_id = format_resource_id(self.remote_virtual_network['name'],
-                                                self.subscription_id,
-                                                'Microsoft.Network',
-                                                'virtualNetworks',
-                                                self.resoruce_group)
+                                                vnet['resource_group'])
+        elif isinstance(vnet, str):
+            if is_valid_resource_id(vnet):
+                remote_vnet_id = vnet
+            else:
+                remote_vnet_id = format_resource_id(vnet,
+                                                    self.subscription_id,
+                                                    'Microsoft.Network',
+                                                    'virtualNetworks',
+                                                    self.resource_group)
         else:
             self.fail("remote_virtual_network could be a valid resource id, dict of name and resource_group, name of virtual network in same resource group.")
         return remote_vnet_id
