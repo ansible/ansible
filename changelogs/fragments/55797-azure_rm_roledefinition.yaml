@@ -1,0 +1,2 @@
+bugfixes:
+    - azure_rm_roledefinition - fix a small error in build scope. (https://github.com/ansible/ansible/pull/55797)
