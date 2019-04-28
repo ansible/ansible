@@ -1,0 +1,81 @@
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- name: New instance with 2 security groups
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-security-groups"
+    image_id: "{{ ec2_ami_image[aws_region] }}"
+    vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+    tags:
+      TestId: "{{ resource_prefix }}"
+    instance_type: t2.micro
+    wait: false
+    security_groups:
+      - "{{ sg.group_id }}"
+      - "{{ sg2.group_id }}"
+    <<: *aws_connection_info
+  register: security_groups_test
+
+- name: Recreate same instance with 2 security groups ( Idempotency )
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-security-groups"
+    image_id: "{{ ec2_ami_image[aws_region] }}"
+    vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+    tags:
+      TestId: "{{ resource_prefix }}"
+    instance_type: t2.micro
+    wait: false
+    security_groups:
+      - "{{ sg.group_id }}"
+      - "{{ sg2.group_id }}"
+    <<: *aws_connection_info
+  register: security_groups_test_idempotency
+
+- name: Gather ec2 facts to check SGs have been added
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-security-groups"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: dual_sg_instance_facts
+  until: dual_sg_instance_facts.instances | length > 0
+  retries: 10
+
+- name: Remove secondary security group from instance
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-security-groups"
+    image_id: "{{ ec2_ami_image[aws_region] }}"
+    vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+    tags:
+      TestId: "{{ resource_prefix }}"
+    instance_type: t2.micro
+    security_groups:
+      - "{{ sg.group_id }}"
+    <<: *aws_connection_info
+  register: remove_secondary_security_group
+
+- name: Gather ec2 facts to check seconday SG has been removed
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-security-groups"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: single_sg_instance_facts
+  until: single_sg_instance_facts.instances | length > 0
+  retries: 10
+
+- assert:
+    that:
+    - security_groups_test is not failed
+    - security_groups_test is changed
+    - security_groups_test_idempotency is not changed
+    - remove_secondary_security_group is changed
+    - single_sg_instance_facts.instances.0.security_groups | length == 1
+    - dual_sg_instance_facts.instances.0.security_groups | length == 2
+
