@@ -116,6 +116,7 @@ except ImportError:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 from msrestazure.tools import is_valid_resource_id
 
+
 def virtual_network_to_dict(vnet):
     '''
     Convert a virtual network object to a dict.
@@ -308,7 +309,6 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
         else:
             self.fail("remote_virtual_network could be a valid resource id, dict of name and resource_group, name of virtual network in same resource group.")
         return remote_vnet_id
-
 
     def check_update(self, exisiting_vnet_peering):
         if self.allow_forwarded_traffic != exisiting_vnet_peering['allow_forwarded_traffic']:
