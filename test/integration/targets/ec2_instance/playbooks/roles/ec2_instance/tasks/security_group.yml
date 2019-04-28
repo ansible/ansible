@@ -78,4 +78,3 @@
     - remove_secondary_security_group is changed
     - single_sg_instance_facts.instances.0.security_groups | length == 1
     - dual_sg_instance_facts.instances.0.security_groups | length == 2
-
