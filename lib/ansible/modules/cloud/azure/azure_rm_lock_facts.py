@@ -34,12 +34,14 @@ options:
             - "'/subscriptions/{subscriptionId}' for subscriptions."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources."
+            - Can get all locks with 'child scope' for this resource, use 'managed_resource_id' in response for further management.
     resource_group:
         description:
             - Resource group name where need to manage the lock.
             - The lock is in the resource group level.
             - Cannot be set mutal with C(managed_resource_id).
             - Query subscription if both C(managed_resource_id) and C(resource_group) not defined.
+            - Can get all locks with 'child scope' in this resource_group, use the 'managed_resource_id' in response for further management.
 
 extends_documentation_fragment:
     - azure
@@ -108,6 +110,7 @@ locks:
 '''  # NOQA
 
 import json
+import re
 from ansible.module_utils.common.dict_transformations import _camel_to_snake
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
@@ -166,7 +169,8 @@ class AzureRMLockFacts(AzureRMModuleBase):
         resp = dict(
             id=lock['id'],
             name=lock['name'],
-            level=_camel_to_snake(lock['properties']['level'])
+            level=_camel_to_snake(lock['properties']['level']),
+            managed_resource_id=re.sub('/providers/Microsoft.Authorization/locks/.+', '', lock['id'])
         )
         if lock['properties'].get('notes'):
             resp['notes'] = lock['properties']['notes']
