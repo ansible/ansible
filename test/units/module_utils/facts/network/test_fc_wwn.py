@@ -83,12 +83,11 @@ def test_get_fc_wwn_info(mocker):
     module = Mock()
     inst = fc_wwn.FcWwnInitiatorFactCollector()
 
-    mocker.patch('sys.platform', 'aix6')
     mocker.patch.object(module, 'get_bin_path', side_effect=mock_get_bin_path)
     mocker.patch.object(module, 'run_command', side_effect=mock_run_command)
-    aix_wwn_expected = {"fibre_channel_wwn": ['10000090FA551508']}
-    assert inst.collect(module=module) == aix_wwn_expected
 
-    mocker.patch('sys.platform', 'sunos5')
-    sunos_wwn_expected = {"fibre_channel_wwn": ['10000090fa1658de']}
-    assert inst.collect(module=module) == sunos_wwn_expected
+    d = {'aix6': ['10000090FA551508'], 'sunos5': ['10000090fa1658de']}
+    for key, value in d.items():
+        mocker.patch('sys.platform', key)
+        wwn_expected = {"fibre_channel_wwn": value}
+        assert wwn_expected == inst.collect(module=module)
