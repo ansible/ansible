@@ -20,7 +20,7 @@
 
 - name: Ensure tests home exists
   file:
-    path: /home/tests
+    path: "{{ remote_tmp_dir }}/tests"
     state: directory
 
 - include_tasks: mongod_teardown.yml
@@ -47,7 +47,7 @@
 - name: Ensure is_primary script exists on host
   copy:
     src: js/is_primary.js
-    dest: /home/tests/is_primary.js
+    dest: "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
@@ -205,7 +205,7 @@
     members: "localhost:3001,localhost:3002,localhost:3003"
 
 - name: Ensure host reaches primary before proceeding 3001
-  command: mongo admin --port 3001 /home/tests/is_primary.js
+  command: mongo admin --port 3001 "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001

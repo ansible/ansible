@@ -20,7 +20,7 @@
 
 - name: Ensure tests home exists
   file:
-    path: /home/tests
+    path: "{{ remote_tmp_dir }}/tests"
     state: directory
 
 - include_tasks: mongod_teardown.yml
@@ -83,18 +83,18 @@
      - "localhost:4000"
 
 - name: Launch mongos
-  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath /home/tests/mongos.log --port 27017 --fork
+  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath "{{ remote_tmp_dir }}/tests/mongos.log" --port 27017 --fork
 
 - name: Ensure is_primary script exists on host
   copy:
     src: js/is_primary.js
-    dest: /home/tests/is_primary.js
+    dest: "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Ensure host reaches primary before proceeding 3001
-  command: mongo admin --port 3001 /home/tests/is_primary.js
+  command: mongo admin --port 3001 "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Ensure host reaches primary before proceeding 3004
-  command: mongo admin --port 3004 /home/tests/is_primary.js
+  command: mongo admin --port 3004 "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Add shard 1
   mongodb_shard:
@@ -223,13 +223,13 @@
      - "localhost:4000"
 
 - name: Ensure host reaches primary before proceeding 3001
-  command: mongo admin --port 3001 /home/tests/is_primary.js
+  command: mongo admin --port 3001 "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Ensure host reaches primary before proceeding 3004
-  command: mongo admin --port 3004 /home/tests/is_primary.js
+  command: mongo admin --port 3004 "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Ensure host reaches primary before proceeding 4000
-  command: mongo admin --port 4000 /home/tests/is_primary.js
+  command: mongo admin --port 4000 "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Add mongodb admin user to each shard 3.4+
   mongodb_user:
@@ -323,13 +323,13 @@
   script: /root/ensure_primary.sh 3004
 
 - name: Ensure host reaches primary before proceeding 3001
-  command: mongo admin --port 3001 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} /home/tests/is_primary.js
+  command: mongo admin --port 3001 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Ensure host reaches primary before proceeding 3004
-  command: mongo admin --port 3004 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} /home/tests/is_primary.js
+  command: mongo admin --port 3004 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Launch mongos
-  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath /home/tests/mongos.log --port 27017 --fork --keyFile {{ remote_tmp_dir }}/my.key
+  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath "{{ remote_tmp_dir }}/mongos.log" --port 27017 --fork --keyFile {{ remote_tmp_dir }}/my.key
 
 - pause:
     seconds: 10
