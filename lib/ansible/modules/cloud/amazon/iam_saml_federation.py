@@ -15,12 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
 module: iam_saml_federation
 version_added: "2.9"
 short_description: maintain iam saml federation configuration.
-requires: [ boto3 ]
+requirements:
+    - boto3
 description:
     - Provides a mechanism to manage AWS IAM SAML Identity Federation providers (create/update/delete metadata).
 options:
@@ -68,9 +73,16 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+changed:
+    description: If any changes have been made to the SAML Provider.
+    type: bool
+    returned: always
+    sample:
+        changed: false
 saml_provider_arn:
     description: The ARN of the SAML Identity Provider that was created/modified.
-    type: string
+    type: str
+    returned: I(state=present)
     sample: "arn:aws:iam::123456789012:saml-provider/my_saml_provider"
 '''
 
@@ -132,7 +144,7 @@ class SAMLProviderManager:
 
     def create_or_update_saml_provider(self, name, metadata):
         if not metadata:
-            self.module.fail_json(changed=changed, msg="saml_metadata_document must be defined for present state")
+            self.module.fail_json(msg="saml_metadata_document must be defined for present state")
 
         res = {'changed': False}
         try:
