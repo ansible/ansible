@@ -102,6 +102,10 @@ You can also combine multiple conditions to specify this behavior as follows::
         - '"No such" not in result.stdout'
         - result.rc == 0
 
+Multiple conditions are joined with a boolean `AND`.
+This example will fail if both conditions are true.
+If only one condition is satisfied, this task will pass.
+
 .. _override_the_changed_result:
 
 Overriding The Changed Result
