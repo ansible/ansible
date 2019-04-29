@@ -2776,8 +2776,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 9001
-    - 9002
+    - '9001'
+    - '9002'
   register: published_ports_1
 
 - name: published_ports (idempotency)
@@ -2787,8 +2787,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 9002
-    - 9001
+    - '9002'
+    - '9001'
   register: published_ports_2
 
 - name: published_ports (less published_ports)
@@ -2798,7 +2798,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 9002
+    - '9002'
   register: published_ports_3
 
 - name: published_ports (more published_ports)
@@ -2808,8 +2808,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 9002
-    - 9003
+    - '9002'
+    - '9003'
     force_kill: yes
   register: published_ports_4
 
