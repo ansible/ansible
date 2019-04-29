@@ -256,7 +256,7 @@ queries:
 import itertools
 import re
 import traceback
-from hashlib import md5, pbkdf2_hmac, sha256
+from hashlib import md5, sha256
 import hmac
 from base64 import b64decode, b64encode
 
@@ -281,6 +281,16 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.saslprep import saslprep
 
+try:
+    # pbkdf2_hmac is missing on python 2.6, we can safely assume,
+    # that postresql 10 capable intance have at least python 2.7 installed
+    from hashlib import pbkdf2_hmac
+except ImportError:
+    pbkdf2_found = False
+else:
+    pbkdf2_found = True
+
+
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 FLAGS_BY_VERSION = {'BYPASSRLS': 90500}
 
@@ -295,7 +305,6 @@ PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
                              REPLICATION='rolreplication', BYPASSRLS='rolbypassrls')
 
 SCRAM_SHA256_REGEX = r'^SCRAM-SHA-256\$(\d+):([A-Za-z0-9+\/=]+)\$([A-Za-z0-9+\/=]+):([A-Za-z0-9+\/=]+)$'
-
 executed_queries = []
 
 
@@ -367,6 +376,7 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
         # `SCRAM-SHA-256$<iteration count>:<salt>$<StoredKey>:<ServerKey>`
         # for reference, see https://www.postgresql.org/docs/10/catalog-pg-authid.html
         elif current_role_attrs['rolpassword'] is not None \
+                and pbkdf2_found \
                 and re.match(SCRAM_SHA256_REGEX, current_role_attrs['rolpassword']):
 
             r = re.match(SCRAM_SHA256_REGEX, current_role_attrs['rolpassword'])
@@ -389,9 +399,9 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
 
                 if serverKeyVerifier.digest() != serverKey:
                     pwchanging = True
-            except:
+            except Exception as e:
                 # We assume the password is not scram encrypted
-                # or we cannot check it properly
+                # or we cannot check it properly, e.g. due to missing dependencies
                 pwchanging = True
         # 32: MD5 hashes are represented as a sequence of 32 hexadecimal digits
         #  3: The size of the 'md5' prefix
