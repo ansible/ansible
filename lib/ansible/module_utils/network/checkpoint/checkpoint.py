@@ -82,10 +82,11 @@ def delete_api_call_object(connection, api_call_object, payload):
 
 
 # check if the object the user inserted is equals to the object in the checkpoint DB
-def needs_update(payload, api_call_object):
-    # we implement this as new API call for checkpoint, so ignore this function for now.
-    return True
+def equals(connection, api_call_object, payload):
+    payloadForEquals = {'type': api_call_object, 'params': payload}
+    code, response = connection.send_request('/web_api/equals', payloadForEquals)
 
+    return code, response
 
 # run the api command
 def run_api_command(connection, command, payload):
@@ -139,12 +140,15 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
     payload = get_payload_from_user_parameters(module, user_parameters)
     file_name_plural = "checkpoint_" + api_call_object.replace("_", "-") + "s"
     connection = Connection(module._socket_path)
-    code, response = get_api_call_object(connection, api_call_object, unique_payload_for_get)
+    code, response = equals(connection, api_call_object, payload)
+    # if code is 400 (bad request) or 500 (internal error) - fail
+    if code == 400 or code == 500:
+        module.fail_json(msg=response)
     result = {'changed': False}
 
     if module.params['state'] == 'present':
         if code == 200:
-            if needs_update(payload, response):
+            if not response['equals']:
                 code, response = set_api_call_object(connection, api_call_object, payload)
                 if code != 200:
                     module.fail_json(msg=response)
@@ -155,6 +159,7 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
                 result['changed'] = True
                 result[file_name_plural] = response
             else:
+                # objects are equals and there is no need for set request
                 pass
         elif code == 404:
             code, response = add_api_call_object(connection, api_call_object, payload)
@@ -171,12 +176,13 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
             code, response = delete_api_call_object(connection, api_call_object, payload)
             if code != 200:
                 module.fail_json(msg=response)
-                
+
             if module.params['auto_publish_session']:
                 publish(connection)
 
             result['changed'] = True
         elif code == 404:
+            # no need to delete because object dose not exist
             pass
 
     result['checkpoint_session_uid'] = connection.get_session_uid()
