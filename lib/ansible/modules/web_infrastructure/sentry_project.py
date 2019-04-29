@@ -19,7 +19,7 @@ module: sentry_project
 short_description: Manage Sentry project
 description:
     - Manage the state of a project in Sentry.
-version_added: "2.8"
+version_added: "2.9"
 
 options:
   api_token:
@@ -125,9 +125,9 @@ def main():
     team = module.params['team']
     url = urlparse(module.params['url'])
     if not url.scheme:
-      url = "https://{0}".format(url.path)
+        url = "https://{0}".format(url.path)
     else:
-      url = url.geturl()
+        url = url.geturl()
 
     def does_project_exist(project_name, organization, team, api_token):
         response, info = fetch_url(
