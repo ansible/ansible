@@ -40,7 +40,7 @@ class TestVaultCli(unittest.TestCase):
         self.tty_patcher.stop()
 
     def test_parse_empty(self):
-        cli = VaultCLI([])
+        cli = VaultCLI(['vaultcli'])
         self.assertRaises(SystemExit,
                           cli.parse)
 
