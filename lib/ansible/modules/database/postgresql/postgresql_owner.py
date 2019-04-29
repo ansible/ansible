@@ -150,19 +150,27 @@ queries:
 '''
 
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
 
 
 class PgOwnership(object):
+    """
+    If you want to add handling of a new type of database objects:
+    1. Add a specific method for this like self.__set_db_owner(), etc.
+    2. Add a condition with a check of ownership for new type objects to self.__is_owner()
+    3. Add a condition with invocation of the specific method to self.set_owner()
+    4. Add the information to the module documentation
+    That's all.
+    """
     def __init__(self, module, cursor, role):
         self.module = module
         self.cursor = cursor
@@ -337,9 +345,7 @@ class PgOwnership(object):
                 res = self.cursor.fetchall()
                 return res
             return True
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-        except psycopg2.ProgrammingError as e:
+        except Exception as e:
             self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
         return False
 
@@ -372,50 +378,14 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
     new_owner = module.params['new_owner']
     obj_name = module.params['obj_name']
     obj_type = module.params['obj_type']
     reassign_owned_by = module.params['reassign_owned_by']
     fail_on_role = module.params['fail_on_role']
-    sslrootcert = module.params['ca_cert']
-    session_role = module.params['session_role']
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != '' and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 '
-                             'in order to user the ssl_rootcert parameter')
-
-    db_connection = connect_to_db(module, kw, autocommit=False)
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
+    db_connection = connect_to_db(module, autocommit=False)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############
     # Create the object and do main job:
