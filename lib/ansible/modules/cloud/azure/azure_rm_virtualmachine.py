@@ -176,17 +176,32 @@ options:
         default: Linux
     data_disks:
         description:
+<<<<<<< b72834726012e5dd3bf9c7c8e2ba2cedbfa3d1c9
             - List of data disks.
+=======
+            - Describes list of data disks.
+            - This list cannot be changed after creation currently, use M(azure_rm_manageddisk) to manage the data disk.
+>>>>>>> add data disk support
         version_added: "2.4"
         suboptions:
             lun:
                 description:
                     - The logical unit number for data disk.
+<<<<<<< b72834726012e5dd3bf9c7c8e2ba2cedbfa3d1c9
                 default: 0
+=======
+                    - This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
+                required: true
+>>>>>>> add data disk support
                 version_added: "2.4"
             disk_size_gb:
                 description:
                     - The initial disk size in GB for blank data disks.
+<<<<<<< b72834726012e5dd3bf9c7c8e2ba2cedbfa3d1c9
+=======
+                    - This value cannot be larger than 1023 GB.
+                required: true
+>>>>>>> add data disk support
                 version_added: "2.4"
             managed_disk_type:
                 description:
@@ -194,6 +209,7 @@ options:
                 choices:
                     - Standard_LRS
                     - StandardSSD_LRS
+                    - UltraSSD_LRS
                     - Premium_LRS
                 version_added: "2.4"
             storage_account_name:
@@ -217,10 +233,24 @@ options:
                 description:
                     - Type of data disk caching.
                 choices:
+                    - empty
+                    - Empty
+                    - read_only
                     - ReadOnly
+                    - read_write
                     - ReadWrite
-                default: ReadOnly
                 version_added: "2.4"
+            create_option:
+                description:
+                    - Specifies how the virtual machine should be created.
+                    - C(attach) is used when using a specialized disk to create the virtual machine.
+                    - C(from_image) is used when using an image to create the virtual machine.
+                choices:
+                    - empty
+                    - attach
+                    - from_image
+                default: empty
+                version_added: "2.9"
     public_ip_allocation_method:
         description:
             - Allocation method for the public IP of the VM.
@@ -764,6 +794,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import to_native, to_bytes
+from ansible.module_utils.common.dict_transformations import _snake_to_camel
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name, format_resource_id
 
 
@@ -780,6 +811,18 @@ def extract_names_from_blob_uri(blob_uri, storage_suffix):
         raise Exception("unable to parse blob uri '%s'" % blob_uri)
     extracted_names = m.groupdict()
     return extracted_names
+
+
+data_disk_spec = dict(
+    lun=dict(type='int', required=True),
+    disk_size_gb=dict(type='int', required=True),
+    managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'UltraSSD_LRS', 'Premium_LRS']),
+    storage_account_name=dict(type='str'),
+    storage_container_name=dict(type='str', default='vhds'),
+    storage_blob_name=dict(type='str'),
+    caching=dict(type='str', choices=['empty', 'Empty', 'read_only', 'ReadOnly', 'read_write', 'ReadWrite']),
+    create_option=dict(type='str', choices=['empty', 'attach', 'from_image'], default='empty')
+)
 
 
 class AzureRMVirtualMachine(AzureRMModuleBase):
@@ -821,7 +864,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
             generalized=dict(type='bool', default=False),
-            data_disks=dict(type='list'),
+            data_disks=dict(type='list', elements='dict', options=data_disk_spec),
             plan=dict(type='dict'),
             zones=dict(type='list'),
             accept_terms=dict(type='bool', default=False),
@@ -1357,45 +1400,46 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             if not data_disk.get('managed_disk_type'):
                                 if not data_disk.get('storage_blob_name'):
                                     data_disk['storage_blob_name'] = self.name + '-data-' + str(count) + '.vhd'
-                                    count += 1
 
+                                # construct vhd uri
                                 if data_disk.get('storage_account_name'):
                                     data_disk_storage_account = self.get_storage_account(data_disk['storage_account_name'])
-                                else:
+                                elif not default_storage_account:
                                     data_disk_storage_account = self.create_default_storage_account()
                                     self.log("data disk storage account:")
                                     self.log(self.serialize_obj(data_disk_storage_account, 'StorageAccount'), pretty_print=True)
-
-                                if not data_disk.get('storage_container_name'):
-                                    data_disk['storage_container_name'] = 'vhds'
+                                    default_storage_account = data_disk_storage_account  # store for use by future data disks if necessary
+                                else:
+                                    data_disk_storage_account = default_storage_account
 
                                 data_disk_requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(
                                     data_disk_storage_account.name,
                                     self._cloud_environment.suffixes.storage_endpoint,
-                                    data_disk['storage_container_name'],
+                                    data_disk.get('storage_container_name') or 'vhds',
                                     data_disk['storage_blob_name']
                                 )
 
-                            if not data_disk.get('managed_disk_type'):
                                 data_disk_managed_disk = None
                                 disk_name = data_disk['storage_blob_name']
                                 data_disk_vhd = self.compute_models.VirtualHardDisk(uri=data_disk_requested_vhd_uri)
+                                count += 1
                             else:
                                 data_disk_vhd = None
                                 data_disk_managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=data_disk['managed_disk_type'])
                                 disk_name = self.name + "-datadisk-" + str(count)
                                 count += 1
 
-                            data_disk['caching'] = data_disk.get(
-                                'caching', 'ReadOnly'
-                            )
-
+                            # create_option
+                            data_disk_create_option = getattr(self.compute_models.DiskCreateOptionTypes, data_disk.get('create_option') or 'empty')
+                            # caching
+                            data_disk['caching'] = data_disk.get('caching', 'ReadOnly')
+                            data_disk['caching'] = _snake_to_camel(data_disk['caching'], capitalize_first=True)
                             data_disks.append(self.compute_models.DataDisk(
                                 lun=data_disk['lun'],
                                 name=disk_name,
                                 vhd=data_disk_vhd,
                                 caching=data_disk['caching'],
-                                create_option=self.compute_models.DiskCreateOptionTypes.empty,
+                                create_option=data_disk_create_option,
                                 disk_size_gb=data_disk['disk_size_gb'],
                                 managed_disk=data_disk_managed_disk,
                             ))
