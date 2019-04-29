@@ -206,13 +206,7 @@ options:
           - Resource ID.
       public_ip_address:
         description:
-          - >-
-            Reference of the PublicIP resource. This field is a mandatory input
-            if subnet is not null.
-        suboptions:
-          id:
-            description:
-              - Resource ID.
+          - Resource ID.
       name:
         description:
           - >-
@@ -300,8 +294,7 @@ EXAMPLES = '''
           /subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group
           }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name
           }}/subnets/{{ subnet_name }}
-        public_ip_address:
-          id: >-
+        public_ip_address: >-
             /subscriptions/{{ subscription_id }}/resourceGroups/{{
             resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{
             public_ip_address_name }}
@@ -537,23 +530,19 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='str'
                     ),
                     subnet=dict(
-                        type='str',
+                        type='raw',
                         disposition='subnet/id',
-                        pattern=('//subscriptions/{{ subscription_id }}/resourceGroups'
+                        pattern=('/subscriptions/{{ subscription_id }}/resourceGroups'
                                  '/{{ resource_group }}/providers/Microsoft.Network'
                                  '/virtualNetworks/{{ virtual_network_name }}/subnets'
                                  '/{{ name }}')
                     ),
                     public_ip_address=dict(
-                        type='dict',
-                        options=dict(
-                            id=dict(
-                                type='str',
-                                pattern=('//subscriptions/{{ subscription_id }}'
-                                         '/resourceGroups/{{ resource_group }}/providers'
-                                         '/Microsoft.Network/publicIPAddresses/{{ name }}')
-                            )
-                        )
+                        type='raw',
+                        disposition='public_ip_address/id',
+                        pattern=('/subscriptions/{{ subscription_id }}'
+                                 '/resourceGroups/{{ resource_group }}/providers'
+                                 '/Microsoft.Network/publicIPAddresses/{{ name }}')
                     ),
                     name=dict(
                         type='str'
@@ -619,7 +608,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             if self.check_mode:
                 return self.results
             response = self.create_update_resource()
-            self.results['response'] = response
         elif self.to_do == Actions.Delete:
             self.results['changed'] = True
             if self.check_mode:
@@ -629,10 +617,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             self.results['changed'] = False
             response = old_response
 
-        # if response:
-            # self.results["name"] = response["name"]
-            # self.results["type"] = response["type"]
-            # self.results["etag"] = response["etag"]
+        if response:
+            self.results["id"] = response["id"]
+            self.results["provisioning_state"] = response["provisioning_state"]
 
         return self.results
 

@@ -19,7 +19,6 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
             param = body.get(name)
             if not param:
                 continue
-
             # check if pattern needs to be used
             pattern = spec[name].get('pattern', None)
             if pattern:
@@ -35,10 +34,11 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                 # should fail if level is > 0?
                 parts.pop(0)
             target_dict = body
+            elem = body.pop(name)
             while len(parts) > 1:
                 target_dict = target_dict.setdefault(parts.pop(0), {})
             targetName = parts[0] if parts[0] != '*' else name
-            target_dict[targetName] = body.pop(name)
+            target_dict[targetName] = elem
             if spec[name].get('options'):
                 self.inflate_parameters(spec[name].get('options'), target_dict[targetName], level + 1)
 

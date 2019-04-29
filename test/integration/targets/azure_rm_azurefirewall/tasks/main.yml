@@ -169,12 +169,10 @@
         name: netrulecoll
     ip_configurations:
       - subnet:
-          id:
-            virtual_network_name: "{{ virtual_network_name }}"
-            name: "{{ subnet_name }}"
+          virtual_network_name: "{{ virtual_network_name }}"
+          name: "{{ subnet_name }}"
         public_ip_address:
-          id:
-            name: "{{ public_ipaddress_name }}"
+          name: "{{ public_ipaddress_name }}"
         name: azureFirewallIpConfiguration
   register: output
 
@@ -243,12 +241,10 @@
         name: netrulecoll
     ip_configurations:
       - subnet:
-          id:
-            virtual_network_name: "{{ virtual_network_name }}"
-            name: "{{ subnet_name }}"
+          virtual_network_name: "{{ virtual_network_name }}"
+          name: "{{ subnet_name }}"
         public_ip_address:
-          id:
-            name: "{{ public_ipaddress_name }}"
+          name: "{{ public_ipaddress_name }}"
         name: azureFirewallIpConfiguration
   register: output
 
