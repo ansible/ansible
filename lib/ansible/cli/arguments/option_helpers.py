@@ -178,14 +178,14 @@ def version(prog=None):
 # Functions to add pre-canned options to an OptionParser
 #
 
-def create_base_parser(usage="", desc=None, epilog=None, prog=None):
+def create_base_parser(prog, usage="", desc=None, epilog=None):
     """
     Create an options parser for all ansible scripts
     """
     # base opts
     parser = argparse.ArgumentParser(
         prog=prog,
-         formatter_class=SortingHelpFormatter,
+        formatter_class=SortingHelpFormatter,
         epilog=epilog,
         description=desc,
         conflict_handler='resolve',

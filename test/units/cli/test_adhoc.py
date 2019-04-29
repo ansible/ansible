@@ -14,8 +14,11 @@ from ansible.errors import AnsibleOptionsError
 
 def test_parse():
     """ Test adhoc parse"""
-    adhoc_cli = AdHocCLI(['ansible'])
-    with pytest.raises(SystemExit) as exec_info:
+    with pytest.raises(ValueError, match='A non-empty list for args is required'):
+        adhoc_cli = AdHocCLI([])
+
+    adhoc_cli = AdHocCLI(['ansibletest'])
+    with pytest.raises(SystemExit):
         adhoc_cli.parse()
 
 
