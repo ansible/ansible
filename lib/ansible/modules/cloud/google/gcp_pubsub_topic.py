@@ -142,7 +142,8 @@ def create(module, link):
 
 
 def update(module, link):
-    module.fail_json(msg="Topic cannot be edited")
+    delete(module, self_link(module))
+    create(module, self_link(module))
 
 
 def delete(module, link):
