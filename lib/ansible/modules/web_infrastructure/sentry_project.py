@@ -124,9 +124,10 @@ def main():
     state = module.params['state']
     team = module.params['team']
     url = urlparse(module.params['url'])
-
     if not url.scheme:
-        url = "https://{0}".format(url.path)
+      url = "https://{0}".format(url.path)
+    else:
+      url = url.geturl()
 
     def does_project_exist(project_name, organization, team, api_token):
         response, info = fetch_url(
