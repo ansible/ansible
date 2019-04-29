@@ -56,18 +56,18 @@ HBA Port WWN: 10000090fa1658de
 
 
 def mock_get_bin_path(cmd, required=False):
+    result = None
     if cmd == 'lsdev':
         result = '/usr/sbin/lsdev'
     elif cmd == 'lscfg':
         result = '/usr/sbin/lscfg'
     elif cmd == 'fcinfo':
         result = '/usr/sbin/fcinfo'
-    else:
-        result = '/no/such/command'
     return result
 
 
 def mock_run_command(cmd):
+    rc = 0
     if 'lsdev' in cmd:
         result = LSDEV_OUTPUT
     elif 'lscfg' in cmd:
@@ -75,8 +75,9 @@ def mock_run_command(cmd):
     elif 'fcinfo' in cmd:
         result = FCINFO_OUTPUT
     else:
+        rc = 1
         result = 'Error'
-    return (0, result, '')
+    return (rc, result, '')
 
 
 def test_get_fc_wwn_info(mocker):
