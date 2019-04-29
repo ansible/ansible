@@ -30,11 +30,7 @@ from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.connection import Connection
 
 
-checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool'),
-                                policy_package=dict(type='str'),
-                                auto_install_policy=dict(type='bool'),
-                                targets=dict(type='list')
-                                )
+checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool'))
 
 
 # publish the session
@@ -55,14 +51,6 @@ def discard(connection, uid=None):
         payload = {'uid': uid}
 
     connection.send_request('/web_api/discard', payload)
-
-
-# install policy of session
-def install_policy(connection, policy_package, targets):
-    payload = {'policy-package': policy_package,
-               'targets': targets}
-
-    connection.send_request('/web_api/install-policy', payload)
 
 
 # get the object from checkpoint DB, if exist
@@ -134,6 +122,8 @@ def api_command(module, command, user_parameters):
 def api_call_facts(module, api_call_object, user_parameters):
     payload = get_payload_from_user_parameters(module, user_parameters)
     file_name_plural = "checkpoint_" + api_call_object.replace("_", "-") + "s"
+
+    # if there is neither name nor uid, the API command will be in plural version (e.g. show-hosts instead of show-host)
     if payload.get("name") is None and payload.get("uid") is None:
         api_call_object += "s"
     connection = Connection(module._socket_path)
@@ -156,11 +146,11 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
         if code == 200:
             if needs_update(payload, response):
                 code, response = set_api_call_object(connection, api_call_object, payload)
+                if code != 200:
+                    module.fail_json(msg=response)
+
                 if module.params['auto_publish_session']:
                     publish(connection)
-
-                    if module.params['auto_install_policy']:
-                        install_policy(connection, module.params['policy_package'], module.params['targets'])
 
                 result['changed'] = True
                 result[file_name_plural] = response
@@ -174,11 +164,7 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
             if module.params['auto_publish_session']:
                 publish(connection)
 
-                if module.params['auto_install_policy']:
-                    install_policy(connection, module.params['policy_package'], module.params['targets'])
-
             result['changed'] = True
-            result['to delete2'] = 'to delete2'
             result[file_name_plural] = response
     else:
         if code == 200:
@@ -188,9 +174,6 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
                 
             if module.params['auto_publish_session']:
                 publish(connection)
-
-                if module.params['auto_install_policy']:
-                    install_policy(connection, module.params['policy_package'], module.params['targets'])
 
             result['changed'] = True
         elif code == 404:

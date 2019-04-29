@@ -127,24 +127,7 @@ options:
       - State of the access rule (present or absent). Defaults to present.
     type: str
     required: True
-  auto_publish_session:
-    description:
-      - Publish the current session if changes have been performed
-        after task completes.
-    type: bool
-  auto_install_policy:
-    description:
-      - Install the package policy if changes have been performed
-        after the task completes.
-    type: bool
-  policy_package:
-    description:
-      - Package policy name to be installed.
-    type: str
-  targets:
-    description:
-      - Targets to install the package policy on.
-    type: list
+extends_documentation_fragment: checkpoint
 """
 
 EXAMPLES = """
