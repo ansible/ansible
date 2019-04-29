@@ -71,16 +71,16 @@ server_version:
   sample: { major: 10, minor: 1 }
 '''
 
-
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -118,11 +118,8 @@ class PgPing(object):
             res = self.cursor.fetchall()
             if res:
                 return res
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-            self.cursor.close()
         except Exception as e:
-            self.module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+            self.module.fail_json("Unable to execute '%s': %s" % (query, to_native(e)))
 
         return False
 
@@ -141,35 +138,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
-    sslrootcert = module.params["ca_cert"]
-
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
-                             'to user the ca_cert parameter')
-
     # Set some default values:
     cursor = False
     db_connection = False
@@ -179,16 +147,10 @@ def main():
         server_version=dict(),
     )
 
-    try:
-        db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least '
-                                 'version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-    except Exception as e:
-        module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+    db_connection = connect_to_db(module, fail_on_conn=False)
+
+    if db_connection is not None:
+        cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Do job:
     pg_ping = PgPing(module, cursor)
