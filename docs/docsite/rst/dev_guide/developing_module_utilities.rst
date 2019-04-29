@@ -51,19 +51,24 @@ please see the `source code for module_utils <https://github.com/ansible/ansible
 
 .. include:: shared_snippets/licensing.txt
 
-- ``basic.py`` - General definitions and helper utilities for Ansible modules.
-- ``facts/`` - Folder containing helper functions for modules that return facts. See `PR 23012 <https://github.com/ansible/ansible/pull/23012>`_ for more information.
-- ``ismount.py`` - Contains single helper function that fixes os.path.ismount
+- ``api.py`` - Supports generic API modules
+- ``basic.py`` - General definitions and helper utilities for Ansible modules
+- ``common/dict_transformations.py`` - Helper functions for dictionary transformations
+- ``common/file.py`` - Helper functions for working with files
+- ``distro/_distro.py`` - General utilities for accessing OS distribution information
+- ``facts/`` - Directory of utilities for modules that return facts. See `PR 23012 <https://github.com/ansible/ansible/pull/23012>`_ for more information
+- ``ismount.py`` - Single helper function that fixes os.path.ismount
+- ``json_utils.py`` - Utilities for filtering unrelated output around module JSON output, like leading and trailing lines
 - ``known_hosts.py`` - utilities for working with known_hosts file
 - ``network/common/config.py`` - Configuration utility functions for use by networking modules
-- ``network/common/netconf.py`` - Definitions and helper functions for modules that use Netconf transport.
-- ``network/common/parsing.py`` - Definitions and helper functions for Network modules.
+- ``network/common/netconf.py`` - Definitions and helper functions for modules that use Netconf transport
+- ``network/common/parsing.py`` - Definitions and helper functions for Network modules
 - ``network/common/network.py`` - Functions for running commands on networking devices
 - ``network/common/utils.py`` - Defines commands and comparison operators and other utilises for use in networking modules
-- ``powershell/`` - Utilities for working with Microsoft Windows clients
-- ``pycompat24.py`` - Exception workaround for Python 2.4.
-- ``service.py`` - Contains utilities to enable modules to work with Linux services (placeholder, not in use).
+- ``powershell/`` - Directory of utilities for working with Microsoft Windows clients
+- ``pycompat24.py`` - Exception workaround for Python 2.4
+- ``service.py`` - Utilities to enable modules to work with Linux services (placeholder, not in use)
 - ``shell.py`` - Functions to allow modules to create shells and work with shell commands
-- ``six/__init__.py`` - Bundled copy of the `Six Python library <https://pythonhosted.org/six/>`_ to aid in writing code compatible with both Python 2 and Python 3.
+- ``six/__init__.py`` - Bundled copy of the `Six Python library <https://pythonhosted.org/six/>`_ to aid in writing code compatible with both Python 2 and Python 3
 - ``splitter.py`` - String splitting and manipulation utilities for working with Jinja2 templates
 - ``urls.py`` - Utilities for working with http and https requests
