@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pn_fabric_local
-author: "Pluribus Networks (devops@pluribusnetworks.com)"
+author: "Pluribus Networks (@rajaspachipulusu17)"
 version_added: "2.9"
 short_description: CLI command to modify fabric-local
 description:
@@ -31,7 +31,6 @@ options:
     required: True
     type: str
     choices: ['update']
-    type: str
   pn_fabric_network:
     description:
       - fabric administration network.
