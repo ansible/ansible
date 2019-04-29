@@ -160,18 +160,14 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+# Basic provisioning example
 - ecs_service:
     state: present
     name: console-test-service
     cluster: new_cluster
     task_definition: 'new_cluster-task:1'
     desired_count: 0
-
-# Basic provisioning example
-- ecs_service:
-    name: default
-    state: present
-    cluster: new_cluster
 
 - name: create ECS service on VPC network
   ecs_service:
