@@ -251,7 +251,8 @@ EXAMPLES = '''
       key1: value1
     application_rule_collections:
       - priority: '110'
-        action: {}
+        action:
+          type: Deny
         rules:
           - name: rule1
             description: Deny inbound rule
@@ -266,7 +267,8 @@ EXAMPLES = '''
         name: apprulecoll
     nat_rule_collections:
       - priority: '112'
-        action: {}
+        action:
+          type: Dnat
         rules:
           - name: DNAT-HTTPS-traffic
             description: D-NAT all outbound web traffic for inspection
@@ -283,7 +285,8 @@ EXAMPLES = '''
         name: natrulecoll
     network_rule_collections:
       - priority: '112'
-        action: {}
+        action:
+          type: Deny
         rules:
           - name: L4-traffic
             description: Block traffic based on source IPs and ports
@@ -453,13 +456,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     ),
                     rules=dict(
                         type='list',
-                        comparison='',
-                        disposition='*',
                         options=dict(
                             name=dict(
-                                type='str',
-                                comparison='',
-                                disposition='*'
+                                type='str'
                             ),
                             description=dict(
                                 type='str'
@@ -491,14 +490,13 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             ),
             network_rule_collections=dict(
                 type='list',
-                comparison='',
-                disposition='/*',
+                disposition='/',
                 options=dict(
                     id=dict(
                         type='str'
                     ),
                     priority=dict(
-                        type='number',
+                        type='number'
                     ),
                     action=dict(
                         type='dict',
@@ -550,9 +548,10 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         options=dict(
                             id=dict(
                                 type='str',
-                                pattern=('/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}'
-                                         '/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name }}'
-                                         '/subnets/{{ name }}')
+                                pattern=('//subscriptions/{{ subscription_id }}'
+                                         '/resourceGroups/{{ resource_group }}/providers'
+                                         '/Microsoft.Network/virtualNetworks'
+                                         '/{{ virtual_network_name }}/subnets/{{ name }}')
                             )
                         )
                     ),
@@ -561,8 +560,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         options=dict(
                             id=dict(
                                 type='str',
-                                pattern=('/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}'
-                                         '/providers/Microsoft.Network/publicIPAddresses/{{ name }}')
+                                pattern=('//subscriptions/{{ subscription_id }}'
+                                         '/resourceGroups/{{ resource_group }}/providers'
+                                         '/Microsoft.Network/publicIPAddresses/{{ name }}')
                             )
                         )
                     ),
