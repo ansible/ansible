@@ -349,7 +349,7 @@ def update(module, pipeline_url, headers):
 
     url = "/".join([pipeline_url, module.params['pipeline_id']])
 
-    for key in ['pipeline_id', 'title', 'description', 'source']:
+    for key in ['title', 'description', 'source']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
 
