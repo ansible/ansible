@@ -129,9 +129,6 @@
     shard: "{{ mongodb_replicaset2 }}"
     state: absent
 
-#- pause:
-#    seconds: 10
-
 - name: Get replicaset info
   command: mongo admin --eval "sh.status()" --port 27017
   register: mongo_output
@@ -331,8 +328,11 @@
 - name: Launch mongos
   command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath "{{ remote_tmp_dir }}/mongos.log" --port 27017 --fork --keyFile {{ remote_tmp_dir }}/my.key
 
-- pause:
-    seconds: 10
+- name: Wait for mongos to become active
+  wait_for:
+    host: localhost
+    port: 4000
+    delay: 1
 
 - name: Add shard 1
   mongodb_shard:

@@ -6,8 +6,19 @@
   command: pkill mongos
   ignore_errors: true
 
-- pause:
-    seconds: 5
+- name: Ensure mongod instances have drained
+  wait_for:
+    host: localhost
+    port: "{{ item }}"
+    state: drained
+  with_items:
+    - 3001
+    - 3002
+    - 3003
+    - 3004
+    - 3005
+    - 3006
+    - 4000
 
 - name: Remove all mongod folders
   file:
