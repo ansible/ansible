@@ -109,11 +109,10 @@ update_time:
 # Imports
 ###############################################################################
 
-from ansible.module_utils.hwc_utils import (Config, HwcModule, build_path,
-                                            HwcClientException, navigate_value,
-                                            remove_nones_from_dict, get_region,
-                                            remove_empty_from_dict,
-                                            are_different_dicts)
+from ansible.module_utils.hwc_utils import (Config, HwcClientException,
+                                            HwcModule, navigate_value,
+                                            are_different_dicts, is_empty_value,
+                                            build_path, get_region)
 import re
 
 ###############################################################################
@@ -287,18 +286,27 @@ def self_link(module):
 
 
 def create_resource_opts(module):
-    request = remove_empty_from_dict({
-        u'display_name': module.params.get('display_name'),
-        u'name': module.params.get('name')
-    })
-    return request
+    params = dict()
+
+    v = module.params.get('display_name')
+    if not is_empty_value(v):
+        params["display_name"] = v
+
+    v = module.params.get('name')
+    if not is_empty_value(v):
+        params["name"] = v
+
+    return params
 
 
 def update_resource_opts(module):
-    request = remove_nones_from_dict({
-        u'display_name': module.params.get('display_name')
-    })
-    return request
+    params = dict()
+
+    v = module.params.get('display_name')
+    if not is_empty_value(v):
+        params["display_name"] = v
+
+    return params
 
 
 def _get_resource_editable_properties(module):

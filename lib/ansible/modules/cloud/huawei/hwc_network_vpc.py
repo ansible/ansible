@@ -110,13 +110,11 @@ RETURN = '''
 # Imports
 ###############################################################################
 
-from ansible.module_utils.hwc_utils import (Config, HwcModule, get_region,
-                                            HwcClientException, navigate_value,
-                                            HwcClientException404,
-                                            wait_to_finish,
-                                            remove_nones_from_dict, build_path,
-                                            remove_empty_from_dict,
-                                            are_different_dicts)
+from ansible.module_utils.hwc_utils import (Config, HwcClientException,
+                                            HwcClientException404, HwcModule,
+                                            are_different_dicts, is_empty_value,
+                                            wait_to_finish, get_region,
+                                            build_path, navigate_value)
 import re
 
 ###############################################################################
@@ -129,7 +127,8 @@ def main():
 
     module = HwcModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            state=dict(
+                default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             cidr=dict(required=True, type='str')
         ),
@@ -273,7 +272,8 @@ def get_id_by_name(config):
         elif len(ids) == 1:
             return ids[0]
         else:
-            module.fail_json(msg="Multiple resources with same name are found.")
+            module.fail_json(
+                msg="Multiple resources with same name are found.")
     elif none_values:
         module.fail_json(
             msg="Can not find id by name because url includes None.")
@@ -308,18 +308,37 @@ def self_link(module):
 
 
 def resource_to_create(module):
-    request = remove_empty_from_dict({
-        u'name': module.params.get('name'),
-        u'cidr': module.params.get('cidr')
-    })
-    return {'vpc': request}
+    params = dict()
+
+    v = module.params.get('cidr')
+    if not is_empty_value(v):
+        params["cidr"] = v
+
+    v = module.params.get('name')
+    if not is_empty_value(v):
+        params["name"] = v
+
+    if not params:
+        return params
+
+    params = {"vpc": params}
+
+    return params
 
 
 def resource_to_update(module):
-    request = remove_nones_from_dict({
-        u'cidr': module.params.get('cidr')
-    })
-    return {'vpc': request}
+    params = dict()
+
+    v = module.params.get('cidr')
+    if not is_empty_value(v):
+        params["cidr"] = v
+
+    if not params:
+        return params
+
+    params = {"vpc": params}
+
+    return params
 
 
 def _get_editable_properties(module):

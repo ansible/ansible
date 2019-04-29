@@ -21,31 +21,6 @@ from ansible.module_utils.basic import (AnsibleModule, env_fallback,
 from ansible.module_utils._text import to_text
 
 
-def remove_empty_from_dict(obj):
-    return _DictClean(
-        obj,
-        lambda v: v is not None and v != {} and v != []
-    )()
-
-
-def remove_nones_from_dict(obj):
-    return _DictClean(obj, lambda v: v is not None)()
-
-
-def replace_resource_dict(item, value):
-    """ Handles the replacement of dicts with values ->
-    the needed value for HWC API"""
-    if isinstance(item, list):
-        items = []
-        for i in item:
-            items.append(replace_resource_dict(i, value))
-        return items
-    else:
-        if not item:
-            return item
-        return item.get(value)
-
-
 class HwcModuleException(Exception):
     def __init__(self, message):
         super(HwcModuleException, self).__init__()
@@ -349,39 +324,6 @@ class _DictComparison(object):
             return False
 
 
-class _DictClean(object):
-    def __init__(self, obj, func):
-        self.obj = obj
-        self.keep_it = func
-
-    def __call__(self):
-        return self._clean_dict(self.obj)
-
-    def _clean_dict(self, obj):
-        r = {}
-        for k, v in obj.items():
-            v1 = v
-            if isinstance(v, dict):
-                v1 = self._clean_dict(v)
-            elif isinstance(v, list):
-                v1 = self._clean_list(v)
-            if self.keep_it(v1):
-                r[k] = v1
-        return r
-
-    def _clean_list(self, obj):
-        r = []
-        for v in obj:
-            v1 = v
-            if isinstance(v, dict):
-                v1 = self._clean_dict(v)
-            elif isinstance(v, list):
-                v1 = self._clean_list(v)
-            if self.keep_it(v1):
-                r.append(v1)
-        return r
-
-
 def wait_to_finish(target, pending, refresh, timeout, min_interval=1, delay=3):
     is_last_time = False
     not_found_times = 0
@@ -485,6 +427,10 @@ def get_region(module):
         return module.params['region']
 
     return module.params['project_name'].split("_")[0]
+
+
+def is_empty_value(v):
+    return (not v)
 
 
 def are_different_dicts(dict1, dict2):
