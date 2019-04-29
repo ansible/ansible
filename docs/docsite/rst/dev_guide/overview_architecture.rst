@@ -34,7 +34,7 @@ Plugins
 Inventory
 =========
 
-By default, Ansible represents what machines it manages using a simple INI file that puts all of your managed machines in groups of your own choosing.
+By default, Ansible represents the machines it manages in a file (INI, YAML, etc.) that puts all of your managed machines in groups of your own choosing.
 
 To add new machines, there is no additional SSL signing server involved, so there's never any hassle deciding why a particular machine didn't get linked up due to obscure NTP or DNS issues.
 
@@ -117,9 +117,9 @@ has finished executing. Ansible loads modules, module utilities, and plugins in 
       /path/to/roles/myrole/module_utils
       /path/to/roles/myrole/plugins
 
-4. Directories specified in ``ansible.cfg`` or by the various
-   ``DEFAULT_*_PATH`` environment variables, including the paths for the
-   various plugin types:
+4. Directories specified as default paths in ``ansible.cfg`` or by the related
+   environment variables, including the paths for the various plugin types. See :ref:`ansible_configuration_settings` for more information.
+   Sample ``ansible.cfg`` fields:
 
    .. code-block:: bash
 
@@ -127,6 +127,15 @@ has finished executing. Ansible loads modules, module utilities, and plugins in 
       DEFAULT_MODULE_UTILS_PATH
       DEFAULT_CACHE_PLUGIN_PATH
       DEFAULT_FILTER_PLUGIN_PATH
+
+   Sample environment variables:
+
+   .. code-block:: bash
+
+      ANSIBLE_LIBRARY
+      ANSIBLE_MODULE_UTILS
+      ANSIBLE_CACHE_PLUGINS
+      ANSIBLE_FILTER_PLUGINS
 
 5. The standard directories that ship as part of the Ansible distribution.
 
@@ -137,4 +146,4 @@ has finished executing. Ansible loads modules, module utilities, and plugins in 
    For example, if you have a file named ``basic.py`` in a user-specified
    directory, it will override the standard ``ansible.module_utils.basic``.
 
-   If you have more than one module, module utility, or plugin with the same name in different user-specified directories, the order of commands at the command line and the order of includes and roles in your playbooks will affect which one is found and used on that particular run.
+   If you have more than one module, module utility, or plugin with the same name in different user-specified directories, the order of commands at the command line and the order of includes and roles in each play will affect which one is found and used on that particular play.
