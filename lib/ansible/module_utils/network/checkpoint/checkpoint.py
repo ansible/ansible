@@ -183,7 +183,9 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
     else:
         if code == 200:
             code, response = delete_api_call_object(connection, api_call_object, payload)
-
+            if code != 200:
+                module.fail_json(msg=response)
+                
             if module.params['auto_publish_session']:
                 publish(connection)
 
