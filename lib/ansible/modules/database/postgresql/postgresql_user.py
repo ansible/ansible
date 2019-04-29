@@ -45,16 +45,18 @@ options:
   password:
     description:
     - Set the user's password, before 1.4 this was required.
-    - Password can be passed unhashed or hashed (MD5-hashed).
+    - Password can be passed unhashed or hashed (MD5-hashed or SCRAM-SHA256-hashed).
     - Unhashed password will automatically be hashed when saved into the
       database if C(encrypted) parameter is set, otherwise it will be save in
       plain text format.
-    - When passing a hashed password it must be generated with the format
+    - When passing an MD5-hashed password it must be generated with the format
       C('str["md5"] + md5[ password + username ]'), resulting in a total of
       35 characters. An easy way to do this is C(echo "md5$(echo -n
       'verysecretpasswordJOE' | md5sum | awk '{print $1}')").
     - Note that if the provided password string is already in MD5-hashed
       format, then it is used as-is, regardless of C(encrypted) parameter.
+    - When passing a SCRAM-hashed password it must be in internal PostgreSQL format,
+      see https://www.postgresql.org/docs/10/catalog-pg-authid.html for reference.
     type: str
   db:
     description:
@@ -157,6 +159,10 @@ notes:
   Use NOLOGIN role_attr_flags to change this behaviour.
 - If you specify PUBLIC as the user (role), then the privilege changes will apply to all users (roles).
   You may not specify password or role_attr_flags when the PUBLIC user is specified.
+- The ca_cert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
+- SCRAM-hashed passwords require PostgreSQL version 10 or newer. Module does
+  not perform any version check, so on previous versions the whole hashed
+  string will be used as password.
 seealso:
 - module: postgresql_privs
 - module: postgresql_membership
@@ -164,6 +170,10 @@ seealso:
 - name: PostgreSQL database roles
   description: Complete reference of the PostgreSQL database roles documentation.
   link: https://www.postgresql.org/docs/current/user-manag.html
+
+requirements:
+- psycopg2
+
 author:
 - Ansible Core Team
 extends_documentation_fragment: postgres
@@ -186,6 +196,14 @@ EXAMPLES = r'''
     password: md59543f1d82624df2b31672ec0f7050460
     role_attr_flags: CREATEDB,NOSUPERUSER
 
+# Create user with password if it does not exist or update its password
+- name: Create appclient user with SCRAM-hashed password
+  postgresql_user:
+    name: appclient
+    password: "SCRAM-SHA-256$4096:RmnRFDvK0XWNYCTInV61ww==$WPAaJG/7Kn1BImfxsOYfeZsZ3u4YRgRbnepAYg18LvU=:L0AnLYOUvfUWdho5OlHn/v67EfcpOcjAvjuBNT0TPrU="
+    no_password_changes: no
+
+# Remove test user privileges from acme
 - name: Connect to acme database and remove test user privileges from there
   postgresql_user:
     db: acme
@@ -261,6 +279,7 @@ from ansible.module_utils.postgres import (
 )
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.saslprep import saslprep
 
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 FLAGS_BY_VERSION = {'BYPASSRLS': 90500}
@@ -287,109 +306,6 @@ class InvalidFlagsError(Exception):
 class InvalidPrivsError(Exception):
     pass
 
-
-class NoSaslPrepError(Exception):
-    pass
-
-# ===========================================
-# Helper utility functions
-#
-
-
-"""An implementation of RFC4013 SASLprep.
-This code is mostly (apart from utils methods) a copy of
-https://github.com/mongodb/mongo-python-driver/blob/master/pymongo/saslprep.py
-"""
-
-import sys
-
-try:
-    import stringprep
-except ImportError:
-    HAVE_STRINGPREP = False
-
-    def saslprep(data):
-        """SASLprep dummy"""
-        if isinstance(data, text_type):
-            raise NoSaslPrepError("The stringprep module is not available.")
-        return data
-else:
-    HAVE_STRINGPREP = True
-    import unicodedata
-    # RFC4013 section 2.3 prohibited output.
-    _PROHIBITED = (
-        # A strict reading of RFC 4013 requires table c12 here, but
-        # characters from it are mapped to SPACE in the Map step. Can
-        # normalization reintroduce them somehow?
-        stringprep.in_table_c12,
-        stringprep.in_table_c21_c22,
-        stringprep.in_table_c3,
-        stringprep.in_table_c4,
-        stringprep.in_table_c5,
-        stringprep.in_table_c6,
-        stringprep.in_table_c7,
-        stringprep.in_table_c8,
-        stringprep.in_table_c9)
-
-    def saslprep(data, prohibit_unassigned_code_points=True):
-        """An implementation of RFC4013 SASLprep.
-        :Parameters:
-          - `data`: The string to SASLprep. Unicode strings
-            (python 2.x unicode, 3.x str) are supported. Byte strings
-            (python 2.x str, 3.x bytes) are ignored.
-          - `prohibit_unassigned_code_points`: True / False. RFC 3454
-            and RFCs for various SASL mechanisms distinguish between
-            `queries` (unassigned code points allowed) and
-            `stored strings` (unassigned code points prohibited). Defaults
-            to ``True`` (unassigned code points are prohibited).
-        :Returns:
-        The SASLprep'ed version of `data`.
-        """
-        if not isinstance(data, text_type):
-            return data
-
-        if prohibit_unassigned_code_points:
-            prohibited = _PROHIBITED + (stringprep.in_table_a1,)
-        else:
-            prohibited = _PROHIBITED
-
-        # RFC3454 section 2, step 1 - Map
-        # RFC4013 section 2.1 mappings
-        # Map Non-ASCII space characters to SPACE (U+0020). Map
-        # commonly mapped to nothing characters to, well, nothing.
-        in_table_c12 = stringprep.in_table_c12
-        in_table_b1 = stringprep.in_table_b1
-        data = u"".join(
-            [u"\u0020" if in_table_c12(elt) else elt
-             for elt in data if not in_table_b1(elt)])
-
-        # RFC3454 section 2, step 2 - Normalize
-        # RFC4013 section 2.2 normalization
-        data = unicodedata.ucd_3_2_0.normalize('NFKC', data)
-
-        in_table_d1 = stringprep.in_table_d1
-        if in_table_d1(data[0]):
-            if not in_table_d1(data[-1]):
-                # RFC3454, Section 6, #3. If a string contains any
-                # RandALCat character, the first and last characters
-                # MUST be RandALCat characters.
-                raise ValueError("SASLprep: failed bidirectional check")
-            # RFC3454, Section 6, #2. If a string contains any RandALCat
-            # character, it MUST NOT contain any LCat character.
-            prohibited = prohibited + (stringprep.in_table_d2,)
-        else:
-            # RFC3454, Section 6, #3. Following the logic of #3, if
-            # the first character is not a RandALCat, no other character
-            # can be either.
-            prohibited = prohibited + (in_table_d1,)
-
-        # RFC3454 section 2, step 3 and 4 - Prohibit and check bidi
-        for char in data:
-            if any(in_table(char) for in_table in prohibited):
-                raise ValueError(
-                    "SASLprep: failed prohibited character check")
-
-        return data
 
 # ===========================================
 # PostgreSQL module specific support methods.
@@ -459,13 +375,13 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
                 it = int(r.group(1))
                 salt = b64decode(r.group(2))
                 serverKey = b64decode(r.group(4))
-                # we'll never need this, used only for server auth in SCRAM
+                # we'll never need `storedKey` as it is only used for server auth in SCRAM
                 # storedKey = b64decode(r.group(3))
 
                 # from RFC5802 https://tools.ietf.org/html/rfc5802#section-3
                 # SaltedPassword  := Hi(Normalize(password), salt, i)
                 # ServerKey       := HMAC(SaltedPassword, "Server Key")
-                normalizedPassword = saslprep(to_text(password))
+                normalizedPassword = saslprep(password)
                 saltedPassword = pbkdf2_hmac('sha256', to_bytes(normalizedPassword), salt, it)
 
                 serverKeyVerifier = hmac.new(saltedPassword, digestmod=sha256)
