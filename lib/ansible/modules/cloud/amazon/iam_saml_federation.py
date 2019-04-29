@@ -198,8 +198,7 @@ class SAMLProviderManager:
             res['changed'] = True
             if not self.module.check_mode:
                 try:
-                    resp = self._delete_saml_provider(arn)
-                    changed = True
+                    self._delete_saml_provider(arn)
                 except botocore.exceptions.ClientError as e:
                     res['msg'] = str(e)
                     res['debug'] = [arn]
