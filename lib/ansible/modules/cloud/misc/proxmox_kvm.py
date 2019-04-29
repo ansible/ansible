@@ -110,6 +110,7 @@ options:
         'virtio3', 'virtio4', 'virtio5', 'virtio6', 'virtio7', 'virtio8', 'virtio9', 'virtio10', 'virtio11',
         'virtio12', 'virtio13', 'virtio14', 'virtio15', 'sata0', 'sata1', 'sata2', 'sata3', 'sata4', 'sata5',
         'efidisk0']
+    version_added: "2.9"
   force:
     description:
       - Allow to force stop VM.
