@@ -121,19 +121,16 @@ queries:
 
 import traceback
 
-PSYCOPG2_IMP_ERR = None
 try:
-    import psycopg2
-    import psycopg2.extras
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 executed_queries = []
@@ -231,49 +228,14 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
-
     schema = module.params["schema"]
     owner = module.params["owner"]
     state = module.params["state"]
-    sslrootcert = module.params["ca_cert"]
     cascade_drop = module.params["cascade_drop"]
-    session_role = module.params["session_role"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "database": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(
-            msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
-
-    db_connection = connect_to_db(module, kw, autocommit=True)
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
+    db_connection = connect_to_db(module, autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     try:
         if module.check_mode:
@@ -302,6 +264,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
+    db_connection.close()
     module.exit_json(changed=changed, schema=schema, queries=executed_queries)
 
 
