@@ -90,18 +90,21 @@ options:
         required: false
       group:
         description:
-        - This instance group defines the list of instances that serve traffic. Member
-          virtual machine instances from each instance group must live in the same
-          zone as the instance group itself.
-        - No two backends in a backend service are allowed to use same Instance Group
-          resource.
+        - The fully-qualified URL of an Instance Group or Network Endpoint Group resource.
+          In case of instance group this defines the list of instances that serve
+          traffic. Member virtual machine instances from each instance group must
+          live in the same zone as the instance group itself. No two backends in a
+          backend service are allowed to use same Instance Group resource.
+        - For Network Endpoint Groups this defines list of endpoints. All endpoints
+          of Network Endpoint Group must be hosted on instances located in the same
+          zone as the Network Endpoint Group.
+        - Backend service can not contain mix of Instance Group and Network Endpoint
+          Group backends.
+        - Note that you must specify an Instance Group or Network Endpoint Group resource
+          using the fully-qualified URL, rather than a partial URL.
         - When the BackendService has load balancing scheme INTERNAL, the instance
-          group must be in a zone within the same region as the BackendService.
-        - 'This field represents a link to a InstanceGroup resource in GCP. It can
-          be specified in two ways. First, you can place a dictionary with key ''selfLink''
-          and value of your resource''s selfLink Alternatively, you can add `register:
-          name-of-resource` to a gcp_compute_instance_group task and then set this
-          group field to "{{ name-of-resource }}"'
+          group must be within the same region as the BackendService. Network Endpoint
+          Groups are not supported for INTERNAL load balancing scheme.
         required: false
       max_connections:
         description:
@@ -391,15 +394,23 @@ backends:
       type: str
     group:
       description:
-      - This instance group defines the list of instances that serve traffic. Member
-        virtual machine instances from each instance group must live in the same zone
-        as the instance group itself.
-      - No two backends in a backend service are allowed to use same Instance Group
-        resource.
+      - The fully-qualified URL of an Instance Group or Network Endpoint Group resource.
+        In case of instance group this defines the list of instances that serve traffic.
+        Member virtual machine instances from each instance group must live in the
+        same zone as the instance group itself. No two backends in a backend service
+        are allowed to use same Instance Group resource.
+      - For Network Endpoint Groups this defines list of endpoints. All endpoints
+        of Network Endpoint Group must be hosted on instances located in the same
+        zone as the Network Endpoint Group.
+      - Backend service can not contain mix of Instance Group and Network Endpoint
+        Group backends.
+      - Note that you must specify an Instance Group or Network Endpoint Group resource
+        using the fully-qualified URL, rather than a partial URL.
       - When the BackendService has load balancing scheme INTERNAL, the instance group
-        must be in a zone within the same region as the BackendService.
+        must be within the same region as the BackendService. Network Endpoint Groups
+        are not supported for INTERNAL load balancing scheme.
       returned: success
-      type: dict
+      type: str
     maxConnections:
       description:
       - The max number of simultaneous connections for the group. Can be used with
@@ -656,7 +667,7 @@ def main():
                     balancing_mode=dict(default='UTILIZATION', type='str', choices=['UTILIZATION', 'RATE', 'CONNECTION']),
                     capacity_scaler=dict(default=1.0, type='str'),
                     description=dict(type='str'),
-                    group=dict(type='dict'),
+                    group=dict(type='str'),
                     max_connections=dict(type='int'),
                     max_connections_per_instance=dict(type='int'),
                     max_rate=dict(type='int'),
@@ -923,7 +934,7 @@ class BackendServiceBackendsArray(object):
                 u'balancingMode': item.get('balancing_mode'),
                 u'capacityScaler': item.get('capacity_scaler'),
                 u'description': item.get('description'),
-                u'group': replace_resource_dict(item.get(u'group', {}), 'selfLink'),
+                u'group': item.get('group'),
                 u'maxConnections': item.get('max_connections'),
                 u'maxConnectionsPerInstance': item.get('max_connections_per_instance'),
                 u'maxRate': item.get('max_rate'),
