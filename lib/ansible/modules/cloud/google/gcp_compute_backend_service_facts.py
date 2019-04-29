@@ -107,15 +107,23 @@ items:
           type: str
         group:
           description:
-          - This instance group defines the list of instances that serve traffic.
-            Member virtual machine instances from each instance group must live in
-            the same zone as the instance group itself.
-          - No two backends in a backend service are allowed to use same Instance
-            Group resource.
+          - The fully-qualified URL of an Instance Group or Network Endpoint Group
+            resource. In case of instance group this defines the list of instances
+            that serve traffic. Member virtual machine instances from each instance
+            group must live in the same zone as the instance group itself. No two
+            backends in a backend service are allowed to use same Instance Group resource.
+          - For Network Endpoint Groups this defines list of endpoints. All endpoints
+            of Network Endpoint Group must be hosted on instances located in the same
+            zone as the Network Endpoint Group.
+          - Backend service can not contain mix of Instance Group and Network Endpoint
+            Group backends.
+          - Note that you must specify an Instance Group or Network Endpoint Group
+            resource using the fully-qualified URL, rather than a partial URL.
           - When the BackendService has load balancing scheme INTERNAL, the instance
-            group must be in a zone within the same region as the BackendService.
+            group must be within the same region as the BackendService. Network Endpoint
+            Groups are not supported for INTERNAL load balancing scheme.
           returned: success
-          type: dict
+          type: str
         maxConnections:
           description:
           - The max number of simultaneous connections for the group. Can be used
