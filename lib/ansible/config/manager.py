@@ -12,7 +12,7 @@ import sys
 import stat
 import tempfile
 import traceback
-from collections import namedtuple, Mapping
+from collections import namedtuple
 
 from yaml import load as yaml_load
 try:
