@@ -84,7 +84,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
             if cmd:
                 cmd += " -E -l iscsi0"
                 rc, out, err = module.run_command(cmd)
-                if out:
+                if rc == 0 and out:
                     line = self.findstr(out, 'initiator_name')
                     iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
         elif sys.platform.startswith('hp-ux'):
