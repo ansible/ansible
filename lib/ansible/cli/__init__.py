@@ -61,6 +61,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         Base init method for all command line programs
         """
 
+        if not args:
+            raise ValueError('A non-empty list for args is required')
+
         self.args = args
         self.parser = None
         self.callback = callback
@@ -275,7 +278,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible.arguments.option_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
-        self.parser = opt_help.create_base_parser(usage=usage, desc=desc, epilog=epilog)
+        self.parser = opt_help.create_base_parser(os.path.basename(self.args[0]), usage=usage, desc=desc, epilog=epilog, )
 
     @abstractmethod
     def post_process_args(self, options):
