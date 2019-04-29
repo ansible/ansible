@@ -630,9 +630,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             response = old_response
 
         if response:
-self.results["name"] = response["name"]
-self.results["type"] = response["type"]
-self.results["etag"] = response["etag"]
+            # self.results["name"] = response["name"]
+            # self.results["type"] = response["type"]
+            # self.results["etag"] = response["etag"]
 
         return self.results
 
