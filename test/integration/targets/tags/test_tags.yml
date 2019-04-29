@@ -1,8 +1,7 @@
 ---
 - name: verify tags work as expected
-  hosts: localhost
+  hosts: testhost
   gather_facts: False
-  connection: local
   vars:
     the_tags:
       - tag3
