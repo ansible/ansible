@@ -203,13 +203,7 @@ options:
           - Resource ID.
       subnet:
         description:
-          - >-
-            Reference of the subnet resource. This resource must be named
-            'AzureFirewallSubnet'.
-        suboptions:
-          id:
-            description:
-              - Resource ID.
+          - Resource ID.
       public_ip_address:
         description:
           - >-
@@ -302,11 +296,10 @@ EXAMPLES = '''
               - '8443'
         name: netrulecoll
     ip_configurations:
-      - subnet:
-          id: >-
-            /subscriptions/{{ subscription_id }}/resourceGroups/{{
-            resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
-            virtual_network_name }}/subnets/{{ subnet_name }}
+      - subnet: >-
+          /subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group
+          }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name
+          }}/subnets/{{ subnet_name }}
         public_ip_address:
           id: >-
             /subscriptions/{{ subscription_id }}/resourceGroups/{{
@@ -544,16 +537,12 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='str'
                     ),
                     subnet=dict(
-                        type='dict',
-                        options=dict(
-                            id=dict(
-                                type='str',
-                                pattern=('//subscriptions/{{ subscription_id }}'
-                                         '/resourceGroups/{{ resource_group }}/providers'
-                                         '/Microsoft.Network/virtualNetworks'
-                                         '/{{ virtual_network_name }}/subnets/{{ name }}')
-                            )
-                        )
+                        type='str',
+                        disposition='subnet/id',
+                        pattern=('//subscriptions/{{ subscription_id }}/resourceGroups'
+                                 '/{{ resource_group }}/providers/Microsoft.Network'
+                                 '/virtualNetworks/{{ virtual_network_name }}/subnets'
+                                 '/{{ name }}')
                     ),
                     public_ip_address=dict(
                         type='dict',
@@ -640,10 +629,10 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             self.results['changed'] = False
             response = old_response
 
-        # if response:
-        #    self.results["name"] = response["name"]
-        #    self.results["type"] = response["type"]
-        #    self.results["etag"] = response["etag"]
+        if response:
+self.results["name"] = response["name"]
+self.results["type"] = response["type"]
+self.results["etag"] = response["etag"]
 
         return self.results
 
@@ -653,7 +642,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                                                          azure_firewall_name=self.name,
                                                                          parameters=self.body)
             if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
-                response = self.get_poller_result(response)
+               response = self.get_poller_result(response)
         except CloudError as exc:
             self.log('Error attempting to create the AzureFirewall instance.')
             self.fail('Error creating the AzureFirewall instance: {0}'.format(str(exc)))
@@ -677,7 +666,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             response = self.mgmt_client.azure_firewalls.get(resource_group_name=self.resource_group,
                                                             azure_firewall_name=self.name)
         except CloudError as e:
-            return False
+           return False
         return response.as_dict()
 
 
