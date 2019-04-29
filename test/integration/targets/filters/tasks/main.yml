@@ -294,6 +294,15 @@
           - "result.msg.startswith('The task includes an option with an undefined variable')"
 
     - set_fact:
+        combined: "{{ foo | combine({'key2': {'nested': [undef_variable]}})}}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
         key2: is_defined
 
     - set_fact:

@@ -48,6 +48,7 @@ from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
@@ -290,20 +291,6 @@ def mandatory(a):
             name = ''
         raise AnsibleFilterError("Mandatory variable %s not defined." % name)
     return a
-
-
-def recursive_check_defined(item):
-    from jinja2.runtime import Undefined
-
-    if isinstance(item, MutableMapping):
-        for key in item:
-            recursive_check_defined(item[key])
-    elif isinstance(item, list):
-        for i in item:
-            recursive_check_defined(i)
-    else:
-        if isinstance(item, Undefined):
-            raise AnsibleFilterError("{0} is undefined".format(item))
 
 
 def combine(*terms, **kwargs):
