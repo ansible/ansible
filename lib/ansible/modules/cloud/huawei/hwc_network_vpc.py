@@ -116,7 +116,7 @@ from ansible.module_utils.hwc_utils import (Config, HwcModule, get_region,
                                             wait_to_finish,
                                             remove_nones_from_dict, build_path,
                                             remove_empty_from_dict,
-                                            are_dicts_different)
+                                            are_different_dicts)
 import re
 
 ###############################################################################
@@ -156,7 +156,8 @@ def main():
         if state == 'present':
             expect = _get_editable_properties(module)
             current_state = response_to_hash(module, fetch)
-            if are_dicts_different(expect, current_state):
+            current = {"cidr": current_state["cidr"]}
+            if are_different_dicts(expect, current):
                 if not module.check_mode:
                     fetch = update(config, self_link(module))
                     fetch = response_to_hash(module, fetch.get('vpc'))
@@ -316,19 +317,15 @@ def resource_to_create(module):
 
 def resource_to_update(module):
     request = remove_nones_from_dict({
-        u'name': module.params.get('name'),
         u'cidr': module.params.get('cidr')
     })
     return {'vpc': request}
 
 
 def _get_editable_properties(module):
-    request = remove_nones_from_dict({
-        "name": module.params.get("name"),
+    return {
         "cidr": module.params.get("cidr"),
-    })
-
-    return request
+    }
 
 
 def response_to_hash(module, response):
@@ -340,7 +337,8 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'cidr': response.get(u'cidr'),
         u'status': response.get(u'status'),
-        u'routes': VpcRoutesArray(response.get(u'routes', []), module).from_response(),
+        u'routes': VpcRoutesArray(
+            response.get(u'routes', []), module).from_response(),
         u'enable_shared_snat': response.get(u'enable_shared_snat')
     }
 

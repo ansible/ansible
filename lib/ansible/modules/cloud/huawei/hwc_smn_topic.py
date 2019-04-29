@@ -113,7 +113,7 @@ from ansible.module_utils.hwc_utils import (Config, HwcModule, build_path,
                                             HwcClientException, navigate_value,
                                             remove_nones_from_dict, get_region,
                                             remove_empty_from_dict,
-                                            are_dicts_different)
+                                            are_different_dicts)
 import re
 
 ###############################################################################
@@ -153,7 +153,8 @@ def main():
         if state == 'present':
             expect = _get_resource_editable_properties(module)
             current_state = response_to_hash(module, fetch)
-            if are_dicts_different(expect, current_state):
+            current = {'display_name': current_state['display_name']}
+            if are_different_dicts(expect, current):
                 if not module.check_mode:
                     fetch = update(config)
                     fetch = response_to_hash(module, fetch)
@@ -301,9 +302,9 @@ def update_resource_opts(module):
 
 
 def _get_resource_editable_properties(module):
-    return remove_nones_from_dict({
+    return {
         "display_name": module.params.get("display_name"),
-    })
+    }
 
 
 def response_to_hash(module, response):

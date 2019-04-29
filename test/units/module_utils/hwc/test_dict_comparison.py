@@ -21,7 +21,7 @@ import os
 import sys
 
 from units.compat import unittest
-from ansible.module_utils.hwc_utils import DictComparison
+from ansible.module_utils.hwc_utils import are_different_dicts
 
 
 class HwcDictComparisonTestCase(unittest.TestCase):
@@ -30,9 +30,8 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             'foo': 'bar',
             'test': 'original'
         }
-        d = DictComparison(value1)
-        d_ = d
-        self.assertTrue(d == d_)
+
+        self.assertFalse(are_different_dicts(value1, value1))
 
     def test_simple_different(self):
         value1 = {
@@ -46,12 +45,10 @@ class HwcDictComparisonTestCase(unittest.TestCase):
         value3 = {
             'test': 'original'
         }
-        dict1 = DictComparison(value1)
-        dict2 = DictComparison(value2)
-        dict3 = DictComparison(value3)
-        self.assertFalse(dict1 == dict2)
-        self.assertFalse(dict1 == dict3)
-        self.assertFalse(dict2 == dict3)
+
+        self.assertTrue(are_different_dicts(value1, value2))
+        self.assertTrue(are_different_dicts(value1, value3))
+        self.assertTrue(are_different_dicts(value2, value3))
 
     def test_nested_dictionaries_no_difference(self):
         value1 = {
@@ -63,9 +60,8 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             },
             'test': 'original'
         }
-        d = DictComparison(value1)
-        d_ = d
-        self.assertTrue(d == d_)
+
+        self.assertFalse(are_different_dicts(value1, value1))
 
     def test_nested_dictionaries_with_difference(self):
         value1 = {
@@ -95,12 +91,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             }
         }
 
-        dict1 = DictComparison(value1)
-        dict2 = DictComparison(value2)
-        dict3 = DictComparison(value3)
-        self.assertFalse(dict1 == dict2)
-        self.assertFalse(dict1 == dict3)
-        self.assertFalse(dict2 == dict3)
+        self.assertTrue(are_different_dicts(value1, value2))
+        self.assertTrue(are_different_dicts(value1, value3))
+        self.assertTrue(are_different_dicts(value2, value3))
 
     def test_arrays_strings_no_difference(self):
         value1 = {
@@ -109,9 +102,8 @@ class HwcDictComparisonTestCase(unittest.TestCase):
                 'bar'
             ]
         }
-        d = DictComparison(value1)
-        d_ = d
-        self.assertTrue(d == d_)
+
+        self.assertFalse(are_different_dicts(value1, value1))
 
     def test_arrays_strings_with_difference(self):
         value1 = {
@@ -133,12 +125,9 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             ]
         }
 
-        dict1 = DictComparison(value1)
-        dict2 = DictComparison(value2)
-        dict3 = DictComparison(value3)
-        self.assertFalse(dict1 == dict2)
-        self.assertFalse(dict1 == dict3)
-        self.assertFalse(dict2 == dict3)
+        self.assertTrue(are_different_dicts(value1, value2))
+        self.assertTrue(are_different_dicts(value1, value3))
+        self.assertTrue(are_different_dicts(value2, value3))
 
     def test_arrays_dicts_with_no_difference(self):
         value1 = {
@@ -152,9 +141,8 @@ class HwcDictComparisonTestCase(unittest.TestCase):
                 }
             ]
         }
-        d = DictComparison(value1)
-        d_ = d
-        self.assertTrue(d == d_)
+
+        self.assertFalse(are_different_dicts(value1, value1))
 
     def test_arrays_dicts_with_difference(self):
         value1 = {
@@ -184,9 +172,7 @@ class HwcDictComparisonTestCase(unittest.TestCase):
                 }
             ]
         }
-        dict1 = DictComparison(value1)
-        dict2 = DictComparison(value2)
-        dict3 = DictComparison(value3)
-        self.assertFalse(dict1 == dict2)
-        self.assertFalse(dict1 == dict3)
-        self.assertFalse(dict2 == dict3)
+
+        self.assertTrue(are_different_dicts(value1, value2))
+        self.assertTrue(are_different_dicts(value1, value3))
+        self.assertTrue(are_different_dicts(value2, value3))
