@@ -116,15 +116,13 @@ def opts_docs(cli_class_name, cli_module_name):
     # instantiate each cli and ask its options
     cli_klass = getattr(__import__("ansible.cli.%s" % cli_module_name,
                                    fromlist=[cli_class_name]), cli_class_name)
-    cli = cli_klass([])
+    cli = cli_klass([cli_name])
 
     # parse the common options
     try:
         cli.init_parser()
     except Exception:
         pass
-
-    cli.parser.prog = cli_name
 
     # base/common cli info
     docs = {
