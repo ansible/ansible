@@ -863,11 +863,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                                 with open(full_path, 'rb') as cert_file:
                                     b_cert = cert_file.read()
                                 if HAS_SSLCONTEXT:
-                                    cadata.extend(
-                                        ssl.PEM_cert_to_DER_cert(
-                                            to_native(b_cert, errors='surrogate_or_strict')
+                                    try:
+                                        cadata.extend(
+                                            ssl.PEM_cert_to_DER_cert(
+                                                to_native(b_cert, errors='surrogate_or_strict')
+                                            )
                                         )
-                                    )
+                                    except ValueError:
+                                        continue
                                 else:
                                     os.write(tmp_fd, b_cert)
                                     os.write(tmp_fd, b'\n')
