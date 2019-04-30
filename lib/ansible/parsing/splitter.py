@@ -38,6 +38,15 @@ _ESCAPE_SEQUENCE_RE = re.compile(r'''
     | \\[\\'"abfnrtv]  # Single-character escapes
     )'''.format(_HEXCHAR * 8, _HEXCHAR * 4, _HEXCHAR * 2), re.UNICODE | re.VERBOSE)
 
+_COMMAND_ARGS = (
+    'stdin',
+    'creates',
+    'removes',
+    'chdir',
+    'executable',
+    'warn',
+)
+
 
 def _decode_escapes(s):
     def decode_match(match):
@@ -89,7 +98,7 @@ def parse_kv(args, check_raw=False):
 
                 # FIXME: make the retrieval of this list of shell/command
                 #        options a function, so the list is centralized
-                if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn'):
+                if check_raw and k not in _COMMAND_ARGS:
                     raw_params.append(orig_x)
                 else:
                     options[k.strip()] = unquote(v.strip())

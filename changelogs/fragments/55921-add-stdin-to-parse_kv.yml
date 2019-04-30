@@ -1,0 +1,2 @@
+bugfixes:
+  - Support `stdin` parameter when parsing k=v arguments to command, shell, etc (https://github.com/ansible/ansible/issues/55918)

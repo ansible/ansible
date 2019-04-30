@@ -30,10 +30,12 @@ SPLIT_DATA = (
         {u'_raw_params': u'a'}),
     (u'a=b',
         [u'a=b'],
-        {u'a': u'b'}),
+        {u'a': u'b'},
+        {'_raw_params': 'a=b'}),
     (u'a="foo bar"',
         [u'a="foo bar"'],
-        {u'a': u'foo bar'}),
+        {u'a': u'foo bar'},
+        {'_raw_params': 'a="foo bar"'}),
     (u'"foo bar baz"',
         [u'"foo bar baz"'],
         {u'_raw_params': '"foo bar baz"'}),
@@ -94,10 +96,21 @@ SPLIT_DATA = (
     (u'One\n  Two\n    Three\n',
         [u'One\n ', u'Two\n   ', u'Three\n'],
         {u'_raw_params': u'One\n  Two\n    Three\n'}),
+    (u'stdin="this is a test" One Two Three',
+        [u'stdin="this is a test"', 'One', 'Two', 'Three'],
+        {'stdin': 'this is a test', '_raw_params': 'One Two Three'},
+        {'stdin': 'this is a test', '_raw_params': 'One Two Three'}),
+    (u'a=b c d',
+        [u'a=b', u'c', u'd'],
+        {'a': 'b', '_raw_params': 'c d'},
+        {'_raw_params': 'a=b c d'}),
 )
 
 SPLIT_ARGS = ((test[0], test[1]) for test in SPLIT_DATA)
 PARSE_KV = ((test[0], test[2]) for test in SPLIT_DATA)
+PARSE_KV_RAW = ((test[0], test[3])
+                for test in SPLIT_DATA
+                if len(test) == 4)
 
 
 @pytest.mark.parametrize("args, expected", SPLIT_ARGS)
@@ -108,3 +121,8 @@ def test_split_args(args, expected):
 @pytest.mark.parametrize("args, expected", PARSE_KV)
 def test_parse_kv(args, expected):
     assert parse_kv(args) == expected
+
+
+@pytest.mark.parametrize("args, expected", PARSE_KV_RAW)
+def test_parse_kv_check_raw(args, expected):
+    assert parse_kv(args, check_raw=True) == expected
