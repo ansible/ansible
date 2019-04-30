@@ -44,7 +44,7 @@ options:
     shard_duration:
         description:
             - Determines the size of a shard group
-        version_added: 2.8
+        version_added: 2.9
     default:
         description:
             - Sets the retention policy as default retention policy
