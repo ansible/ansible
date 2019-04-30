@@ -590,13 +590,13 @@ def main():
     if not check_size_format(part_start):
         module.fail_json(
             msg="The argument 'part_start' doesn't respect required format."
-            "Valid units are %s." % ', '.join(parted_units),
+                "Valid units are %s." % ', '.join(parted_units),
             err=parse_unit(part_start)
         )
     if not check_size_format(part_end):
         module.fail_json(
             msg="The argument 'part_end' doesn't respect required format."
-            "Valid units are %s." % ', '.join(parted_units),
+                "Valid units are %s." % ', '.join(parted_units),
             err=parse_unit(part_end)
         )
 
