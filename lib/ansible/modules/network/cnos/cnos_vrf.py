@@ -247,7 +247,7 @@ def map_config_to_obj(module):
                         if '!' not in intName and 'Interfaces' not in intName:
                             obj['interfaces'].append(intName.strip().lower())
                 objs.append(obj)
-    else:            
+    else:
         module.fail_json(msg='Could not fetch VRF details from device')
     return objs
 
