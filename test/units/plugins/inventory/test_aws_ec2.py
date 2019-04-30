@@ -29,7 +29,8 @@ boto3 = pytest.importorskip('boto3')
 botocore = pytest.importorskip('botocore')
 
 from ansible.errors import AnsibleError
-from ansible.plugins.inventory.aws_ec2 import InventoryModule, instance_data_filter_to_boto_attr
+from ansible.plugins.loader import inventory_loader
+from ansible.plugins.inventory.aws_ec2 import instance_data_filter_to_boto_attr
 
 instances = {
     u'Instances': [
@@ -112,7 +113,9 @@ instances = {
 
 @pytest.fixture(scope="module")
 def inventory():
-    return InventoryModule()
+    inventory = inventory_loader.get('aws_ec2')
+    inventory.set_options(direct={'plugin': 'aws_ec2'})
+    return inventory
 
 
 def test_compile_values(inventory):
@@ -129,10 +132,10 @@ def test_get_boto_attr_chain(inventory):
 
 
 def test_boto3_conn(inventory):
-    inventory._options = {"aws_profile": "first_precedence",
-                          "aws_access_key": "test_access_key",
-                          "aws_secret_key": "test_secret_key",
-                          "aws_security_token": "test_security_token"}
+    inventory.set_option("aws_profile", "first_precedence")
+    inventory.set_option("aws_access_key", "test_access_key")
+    inventory.set_option("aws_secret_key", "test_secret_key")
+    inventory.set_option("aws_security_token", "test_security_token")
     inventory._set_credentials()
     with pytest.raises(AnsibleError) as error_message:
         for connection, region in inventory._boto3_conn(regions=['us-east-1']):
@@ -141,7 +144,7 @@ def test_boto3_conn(inventory):
 
 def test_get_hostname_default(inventory):
     instance = instances['Instances'][0]
-    assert inventory._get_hostname(instance, hostnames=None) == "ec2-12-345-67-890.compute-1.amazonaws.com"
+    assert inventory._get_hostname(instance, hostnames=['dns-name', 'private-dns-name']) == "ec2-12-345-67-890.compute-1.amazonaws.com"
 
 
 def test_get_hostname(inventory):
@@ -151,10 +154,10 @@ def test_get_hostname(inventory):
 
 
 def test_set_credentials(inventory):
-    inventory._options = {'aws_access_key': 'test_access_key',
-                          'aws_secret_key': 'test_secret_key',
-                          'aws_security_token': 'test_security_token',
-                          'aws_profile': 'test_profile'}
+    inventory.set_option('aws_access_key', 'test_access_key')
+    inventory.set_option('aws_secret_key', 'test_secret_key')
+    inventory.set_option('aws_security_token', 'test_security_token')
+    inventory.set_option('aws_profile', 'test_profile')
     inventory._set_credentials()
 
     assert inventory.boto_profile == "test_profile"
@@ -164,12 +167,6 @@ def test_set_credentials(inventory):
 
 
 def test_insufficient_credentials(inventory):
-    inventory._options = {
-        'aws_access_key': None,
-        'aws_secret_key': None,
-        'aws_security_token': None,
-        'aws_profile': None
-    }
     with pytest.raises(AnsibleError) as error_message:
         inventory._set_credentials()
         assert "Insufficient boto credentials found" in error_message
