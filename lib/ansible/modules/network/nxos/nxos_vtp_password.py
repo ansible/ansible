@@ -189,6 +189,7 @@ def get_vtp_password(module):
 
     return str(password)
 
+
 def main():
     argument_spec = dict(
         vtp_password=dict(type='str', no_log=True),
