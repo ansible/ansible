@@ -63,7 +63,9 @@ the handler from running, such as a host becoming unreachable.)
 Controlling What Defines Failure
 ````````````````````````````````
 
-Suppose the error code of a command is meaningless and to tell if there
+Ansible lets you define what "failure" means in each task. Ansible joins lists of multiple conditions for failure with an implicit ``and`` - if you want any one of multiple conditions to trigger a failure, you must define them in a string with an explicit ``or`` operator.
+
+Sometimes the error code of a command is meaningless and to tell if there
 is a failure what really matters is the output of the command, for instance
 if the string "FAILED" is in the output.
 
@@ -93,18 +95,18 @@ In previous version of Ansible, this can still be accomplished as follows::
         msg: "the command failed"
       when: "'FAILED' in command_result.stderr"
 
-You can also combine multiple conditions to specify this behavior as follows::
+You can also combine multiple conditions for failure. This example will fail if both conditions are true::
 
     - name: Check if a file exists in temp and fail task if it does
       command: ls /tmp/this_should_not_be_here
       register: result
       failed_when:
-        - '"No such" not in result.stdout'
         - result.rc == 0
+        - '"No such" not in result.stdout'
 
-Multiple conditions are joined with a boolean `AND`.
-This example will fail if both conditions are true.
-If only one condition is satisfied, this task will pass.
+ If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to::
+
+      failed_when: result.rc == 0 or "No such" not in result.stdout
 
 .. _override_the_changed_result:
 
@@ -172,7 +174,7 @@ Blocks only deal with 'failed' status of a task. A bad task definition or an unr
         - debug:
             msg: 'I caught an error, can do stuff here to fix it, :-)'
 
-This will 'revert' the failed status of the outer ``block`` task for the run and the play will continue as if it had succeeded. 
+This will 'revert' the failed status of the outer ``block`` task for the run and the play will continue as if it had succeeded.
 See :ref:`block_error_handling` for more examples.
 
 .. seealso::
@@ -189,5 +191,3 @@ See :ref:`block_error_handling` for more examples.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
