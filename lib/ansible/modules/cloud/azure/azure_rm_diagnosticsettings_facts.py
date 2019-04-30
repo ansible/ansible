@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 ---
 module: azure_rm_diagnosticsettings_facts
 version_added: "2.9"
@@ -41,7 +41,7 @@ author:
 
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 - name: Get facts for a specific diagnostic setting
   azure_rm_diagnosticsettings_facts:
     name: fanqiuipdiagnostic
@@ -83,47 +83,47 @@ labs:
                 - The list of logs settings.
             returned: always
             type: list
-            sample:'[
-                {
-                    "category": "DDoSProtectionNotifications",
-                    "enabled": false,
-                    "retention_policy": {
-                        "days": 0,
-                        "enabled": false
-                    }
-                },
-                {
-                    "category": "DDoSMitigationFlowLogs",
-                    "enabled": true,
-                    "retention_policy": {
-                        "days": 6,
-                        "enabled": true
-                    }
-                },
-                {
-                    "category": "DDoSMitigationReports",
-                    "enabled": true,
-                    "retention_policy": {
-                        "days": 3,
-                        "enabled": true
-                    }
-                }
-            ]'
+            sample: '[
+                        {
+                            "category": "DDoSProtectionNotifications",
+                            "enabled": false,
+                            "retention_policy": {
+                                "days": 0,
+                                "enabled": false
+                            }
+                        },
+                        {
+                            "category": "DDoSMitigationFlowLogs",
+                            "enabled": true,
+                            "retention_policy": {
+                                "days": 6,
+                                "enabled": true
+                            }
+                        },
+                        {
+                            "category": "DDoSMitigationReports",
+                            "enabled": true,
+                            "retention_policy": {
+                                "days": 3,
+                                "enabled": true
+                            }
+                        }
+                    ]'
         metrics:
             description:
                 - The list of metric settings.
             returned: always
             type: list
             sample: '[
-                {
-                    "category": "AllMetrics",
-                    "enabled": false,
-                    "retention_policy": {
-                        "days": 0,
-                        "enabled": false
-                    }
-                }
-            ]'
+                        {
+                            "category": "AllMetrics",
+                            "enabled": false,
+                            "retention_policy": {
+                                "days": 0,
+                                "enabled": false
+                            }
+                        }
+                    ]'
 category:
     description: A list of dictionaries containing facts for diagnostic setting category.
     returned: when I(show_category) is set to true
@@ -131,7 +131,7 @@ category:
     contains:
         category_type:
             description:
-                - The type of the diagnostic settings category. Possible values include: 'Metrics', 'Logs'
+                - The type of the diagnostic settings category. Possible values include 'Metrics' and 'Logs'
             returned: always
             type: str
             example: "Logs"
@@ -162,6 +162,7 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
 
 class AzureRMDiagnosticSettingsFacts(AzureRMModuleBase):
 

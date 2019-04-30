@@ -52,7 +52,7 @@ options:
         description:
             - The list of metric settings.
             - Each type of resourse has its own designed metric
-        type: dict
+        type: list
         suboptions:
             time_grain:
                 description:
@@ -82,7 +82,7 @@ options:
         description:
             - The list of logs settings.
             - Each type of resourse has its own designed logs
-        type: dict
+        type: list
         suboptions:
             category:
                 description:
@@ -122,7 +122,8 @@ EXAMPLES = '''
   azure_rm_diagnosticsettings:
     name: myipdiagnostic
     target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
-    storage_account_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorage"
+    storage_account_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/
+                         resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
     logs:
     - category: DDoSMitigationReports
       enabled: yes
@@ -138,7 +139,7 @@ EXAMPLES = '''
         days: 3
 
 - name: Delete diagnostic settings
-  azure_rm_diagnosticsettings
+  azure_rm_diagnosticsettings:
     name: myipdiagnostic
     target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
     state: absent
@@ -175,14 +176,15 @@ metrics_spec = dict(
     time_grain=dict(type='str'),
     category=dict(type='str'),
     enabled=dict(type='bool'),
-    retention_policy=dict(type='dict',options=retention_policy_spec)
+    retention_policy=dict(type='dict', options=retention_policy_spec)
 )
 
 logs_spec = dict(
     category=dict(type='str'),
     enabled=dict(type='bool'),
-    retention_policy=dict(type='dict',options=retention_policy_spec)
+    retention_policy=dict(type='dict', options=retention_policy_spec)
 )
+
 
 class AzureRMDiagnosticSettings(AzureRMModuleBase):
 
@@ -232,7 +234,6 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
             changed=False,
             id=None
         )
-
 
         self.name = None
         self.state = None
@@ -313,8 +314,8 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
             results.storage_account_id = params.storage_account_id
 
         if params.service_bus_rule_id and results.service_bus_rule_id != params.service_bus_rule_id:
-                changed = True
-                results.service_bus_rule_id = params.service_bus_rule_id
+            changed = True
+            results.service_bus_rule_id = params.service_bus_rule_id
 
         if params.event_hub_authorization_rule_id and results.event_hub_authorization_rule_id != params.event_hub_authorization_rule_id:
             changed = True
