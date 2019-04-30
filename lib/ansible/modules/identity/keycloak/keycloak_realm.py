@@ -26,12 +26,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Philippe Gauthier (philippe.gauthier@inspq.qc.ca"
 module: keycloak_realm
 short_description: Configure a realm in Keycloak
 description:
   - This module creates, removes or update Keycloak realms.
-version_added: "2.8"
+version_added: "2.9"
 options:
   realm:
     description:
@@ -319,17 +318,19 @@ extends_documentation_fragment:
     - keycloak
 notes:
   - module does not modify realm name.
+author: 
+    - Philippe Gauthier (philippe.gauthier@inspq.qc.ca)
 '''
 
 EXAMPLES = '''
     - name: Create a realm
       keycloak_realm:
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: realm1
         name: "realm1"
         namehtml: "The first Realm"
-        url: "http://localhost:8080/auth"
-        username: "admin"
-        password: "admin"
         smtpServer: 
           replyToDisplayName: root
           starttls: ""
@@ -352,17 +353,20 @@ EXAMPLES = '''
 
     - name: Re-create the realm realm1
       keycloak_realm:
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: realm1
         name: "realm1"
         namehtml: "The first Realm"
-        url: "http://localhost:8080/auth"
-        username: "admin"
-        password: "admin"
         state : present
         force: yes
 
     - name: Remove a the realm realm1.
       keycloak_realm:
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         name: realm1
         state: absent
 '''

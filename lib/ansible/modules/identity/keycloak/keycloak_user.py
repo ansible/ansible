@@ -24,12 +24,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Etienne Sadio (etienne.sadio@inspq.qc.ca)"
 module: keycloak_user
 short_description: create and Configure a user in Keycloak
 description:
     - This module creates, removes or update Keycloak users.
-version_added: "2.8"
+version_added: "2.9"
 options:
     realm:
         description:
@@ -81,7 +80,7 @@ options:
             - client Authenticator Type.
         required: false
         type: list
-        subOptions:
+        suboptions:
             clientId:
                 description:
                 - Client ID of the client role. Not the technical id of the client.
@@ -148,14 +147,16 @@ extends_documentation_fragment:
     - keycloak
 notes:
     - module does not modify userId.
+author: 
+    - Etienne Sadio (etienne.sadio@inspq.qc.ca)
 '''
 
 EXAMPLES = '''
     - name: Create a user user1
       keycloak_user:
-        url: http://localhost:8080
-        masterUsername: admin
-        masterpassword: password
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         username: user1
         firstName: user1
@@ -187,9 +188,9 @@ EXAMPLES = '''
 
     - name: Re-create a User
       keycloak_user:
-        url: http://localhost:8080
-        masterUsername: admin
-        masterpassword: password
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         username: user1
         firstName: user1
@@ -222,9 +223,9 @@ EXAMPLES = '''
 
     - name: Remove User.
       keycloak_user:
-        url: http://localhost:8080
-        masterUsername: admin
-        masterpassword: password
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         username: user1
         state: absent

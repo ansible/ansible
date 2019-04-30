@@ -24,12 +24,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Philippe Gauthier (philippe.gauthier@inspq.qc.ca)"
 module: keycloak_identity_provider
 short_description: Configure an identity provider in Keycloak
 description:
   - This module creates, removes or update Keycloak identity provider.
-version_added: "1.1"
+version_added: "2.9"
 options:
   realm:
     description:
@@ -110,15 +109,17 @@ extends_documentation_fragment:
     - keycloak
 notes:
   - module does not modify identity provider alias.
+author: 
+    - Philippe Gauthier (philippe.gauthier@inspq.qc.ca)
 '''
 
 EXAMPLES = '''
     - name: Create IdP1 fully configured with idp user attribute mapper and a role mapper
       keycloak_identity_provider:
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: "master"
-        url: "http://localhost:8080/auth"
-        username: "admin"
-        password: "password"  
         alias: "IdP1"
         displayName: "My super dooper IdP"
         providerId: "oidc"
@@ -148,10 +149,10 @@ EXAMPLES = '''
 
     - name: Re-create the Idp1 without mappers. The existing Idp will be deleted.
       keycloak_identity_provider:
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: "master"
-        url: "http://localhost:8080/auth"
-        username: "admin"
-        password: "password"  
         alias: "IdP1"
         displayName: "My super dooper IdP"
         providerId: "oidc"
@@ -168,10 +169,10 @@ EXAMPLES = '''
 
     - name: Remove a the Idp IdP1.
       keycloak_identity_provider:
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: "master"
-        url: "http://localhost:8080/auth"
-        username: "admin"
-        password: "password"  
         alias: IdP1
         state: absent
 '''
@@ -183,7 +184,7 @@ idp:
   type: dict
 mappers:
   description: List of idp's mappers
-  returnd: on success
+  returned: on success
   type: list
 msg:
   description: Error message if it is the case
