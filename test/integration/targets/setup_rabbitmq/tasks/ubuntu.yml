@@ -22,14 +22,9 @@
 - name: Add Erlang Solutions repository
   apt_repository: repo="deb https://packages.erlang-solutions.com/ubuntu {{ ansible_distribution_release }} contrib" filename='erlang-solutions' state=present update_cache=yes
 
-- name: Add RabbitMQ public GPG key
-  apt_key: url=https://www.rabbitmq.com/rabbitmq-release-signing-key.asc state=present
-
-- name: Add RabbitMQ repository
-  apt_repository: repo='deb https://dl.bintray.com/rabbitmq/debian {{ ansible_distribution_release }} main' filename='rabbitmq' state=present update_cache=yes
-
 - name: Install RabbitMQ Server
-  apt: name=rabbitmq-server state=latest
+  apt:
+    deb: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/rabbitmq-server_3.7.14-1_all.deb
 
 - name: Start RabbitMQ service
   service: name=rabbitmq-server state=started
