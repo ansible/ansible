@@ -154,6 +154,7 @@ class PlayIterator:
         gather_subset = self._play.gather_subset
         gather_timeout = self._play.gather_timeout
         fact_path = self._play.fact_path
+        gather_network_resources = self._play.gather_network_resources
 
         setup_block = Block(play=self._play)
         # Gathering facts with run_once would copy the facts from one host to
@@ -164,6 +165,7 @@ class PlayIterator:
         setup_task.name = 'Gathering Facts'
         setup_task.args = {
             'gather_subset': gather_subset,
+            'gather_network_resources': gather_network_resources,
         }
 
         # Unless play is specifically tagged, gathering should 'always' run

@@ -907,6 +907,19 @@ DEFAULT_NETCONF_PLUGIN_PATH:
   ini:
   - {key: netconf_plugins, section: defaults}
   type: pathspec
+DEFAULT_GATHER_NETWORK_RESOURCES:
+  name: Gather network resources subset
+  default: ['all']
+  description:
+      - Set the `gather_network_resources` option for the M(setup) task in the implicit fact gathering.
+        See the module documentation for specifics.
+      - "It does **not** apply to user defined M(setup) tasks."
+  env: [{name: ANSIBLE_GATHER_NETWORK_RESOURCES}]
+  ini:
+    - key: gather_network_resources
+      section: defaults
+  version_added: "2.9"
+  type: list
 DEFAULT_NO_LOG:
   name: No log
   default: False

@@ -58,6 +58,7 @@ class Play(Base, Taggable, CollectionSearch):
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset = FieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
+    _gather_network_resources = FieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
     _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
     # Variable Attributes
