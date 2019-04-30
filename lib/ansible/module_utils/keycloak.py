@@ -1301,7 +1301,7 @@ class KeycloakAPI(object):
         except Exception as e:
             self.module.fail_json(msg='Could not delete component %s in realm %s: %s'
                                       % (component_id, realm, str(e)))
-        
+
     def sync_user_storage(self, component_id, action, realm='master'):
         """
         Synchronize LDAP user storage component with Keycloak.
@@ -1316,7 +1316,7 @@ class KeycloakAPI(object):
         except Exception as e:
             self.module.fail_json(msg='Could not synchronize component %s action %s in realm %s: %s'
                                       % (component_id, action, realm, str(e)))
-            
+
     def add_idp_endpoints(self, idPConfiguration, url):
         """
         This function extract OpenID connect endpoints from the identity provider's openid-configuration URL.
@@ -1344,7 +1344,7 @@ class KeycloakAPI(object):
         except Exception, e:
             self.module.fail_json(msg='Could not get IdP configuration from endpoint %s: %s'
                                       % (url, str(e)))
-    
+
     def delete_all_idp_mappers(self, alias, realm='master'):
         """
         Delete all mappers for an identity provider
