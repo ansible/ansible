@@ -893,6 +893,48 @@ class RedfishUtils(object):
         result["entries"] = fan_results
         return result
 
+    def get_chassis_thermals(self):
+        result = {}
+        sensors = []
+        key = "Thermal"
+
+        # Get these entries, but does not fail if not found
+        properties = ['Name', 'PhysicalContext', 'UpperThresholdCritical',
+                      'UpperThresholdFatal', 'UpperThresholdNonCritical',
+                      'LowerThresholdCritical', 'LowerThresholdFatal',
+                      'LowerThresholdNonCritical', 'MaxReadingRangeTemp',
+                      'MinReadingRangeTemp', 'ReadingCelsius', 'RelatedItem',
+                      'SensorNumber']
+
+        # Go through list
+        for chassis_uri in self.chassis_uri_list:
+            response = self.get_request(self.root_uri + chassis_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+            if key in data:
+                thermal_uri = data[key]["@odata.id"]
+                response = self.get_request(self.root_uri + thermal_uri)
+                if response['ret'] is False:
+                    return response
+                result['ret'] = True
+                data = response['data']
+                if "Temperatures" in data:
+                    for sensor in data[u'Temperatures']:
+                        sensor_result = {}
+                        for property in properties:
+                            if property in sensor:
+                                if sensor[property] is not None:
+                                    sensor_result[property] = sensor[property]
+                        sensors.append(sensor_result)
+
+        if sensors is None:
+            return {'ret': False, 'msg': 'Key Temperatures was not found.'}
+
+        result['entries'] = sensors
+        return result
+
     def get_cpu_inventory(self, systems_uri):
         result = {}
         cpu_list = []
