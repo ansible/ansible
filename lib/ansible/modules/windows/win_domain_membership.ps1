@@ -171,7 +171,7 @@ Function Join-Workgroup {
 
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
         try {
-            Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force | Out-Null
+            Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force > $null
         } catch {
             Fail-Json -obj $result -message "failed to remove computer from domain: $($_.Exception.Message)"
         }
@@ -179,7 +179,7 @@ Function Join-Workgroup {
 
     # we're already on a workgroup- change it.
     Else {
-        Set-Workgroup $workgroup_name | Out-Null
+        Set-Workgroup $workgroup_name > $null
     }
 }
 
@@ -249,7 +249,7 @@ Try {
                         $join_args.domain_ou_path = $domain_ou_path
                     }
 
-                    Join-Domain @join_args | Out-Null
+                    Join-Domain @join_args > $null
 
                     # this change requires a reboot
                     $result.reboot_required = $true
@@ -264,7 +264,7 @@ Try {
                         $rename_args.DomainCredential = $domain_cred
                     }
 
-                    Rename-Computer @rename_args | Out-Null
+                    Rename-Computer @rename_args > $null
 
                     # this change requires a reboot
                     $result.reboot_required = $true
@@ -287,14 +287,14 @@ Try {
             If(-not $_ansible_check_mode) {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
-                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password | Out-Null
+                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password > $null
 
                     # this change requires a reboot
                     $result.reboot_required = $true
                 }
                 If(-not $hostname_match) {
                     Write-DebugLog ("setting hostname to {0}" -f $hostname)
-                    Rename-Computer -NewName $hostname | Out-Null
+                    Rename-Computer -NewName $hostname > $null
 
                     # this change requires a reboot
                     $result.reboot_required = $true

@@ -29,7 +29,6 @@ lib/ansible/modules/windows/win_domain_controller.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_domain_controller.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_domain_membership.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_domain_membership.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_domain_membership.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_dotnet_ngen.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_dsc.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_eventlog.ps1 PSCustomUseLiteralPath
