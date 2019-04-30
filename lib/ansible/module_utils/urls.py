@@ -32,6 +32,7 @@ for users making use of a module. If possible, avoid third party libraries by us
 this code instead.
 '''
 
+import atexit
 import base64
 import functools
 import netrc
@@ -763,6 +764,15 @@ def build_ssl_validation_error(hostname, port, paths, exc=None):
     raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
 
 
+def atexit_remove_file(filename):
+    if os.path.exists(filename):
+        try:
+            os.unlink(filename)
+        except Exception:
+            # just ignore if we cannot delete, things should be ok
+            pass
+
+
 class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     A custom handler class for SSL validation.
@@ -867,6 +877,9 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         if HAS_SSLCONTEXT:
             default_verify_paths = ssl.get_default_verify_paths()
             paths_checked[:0] = [default_verify_paths.capath]
+
+        if tmp_path:
+            atexit.register(atexit_remove_file, tmp_path)
 
         return (tmp_path, cadata, paths_checked)
 
@@ -976,13 +989,6 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             build_ssl_validation_error(self.hostname, self.port, paths_checked, e)
         except socket.error as e:
             raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
-
-        try:
-            # cleanup the temp file created, don't worry
-            # if it fails for some reason
-            os.remove(tmp_ca_cert_path)
-        except Exception:
-            pass
 
         return req
 
