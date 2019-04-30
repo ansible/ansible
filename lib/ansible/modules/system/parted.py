@@ -525,7 +525,7 @@ def check_size_format(size_str):
     Checks if the input string is an allowed size
     """
     size, unit = parse_unit(size_str)
-    return unit in parted_units
+    return unit in map(str.lower, parted_units)
 
 
 def main():
