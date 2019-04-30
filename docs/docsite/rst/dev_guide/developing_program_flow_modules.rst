@@ -5,8 +5,7 @@
 Ansible module architecture
 ***************************
 
-If you're working on Ansible's Core code, or writing an Ansible module, this deep dive helps you understand how Ansible's program flow executes
-modules. If you're just using Ansible Modules in playbooks, you can skip this section.
+If you're working on Ansible's Core code, writing an Ansible module, or developing an action plugin, this deep dive helps you understand how Ansible's program flow executes. If you're just using Ansible Modules in playbooks, you can skip this section.
 
 .. contents::
    :local:
@@ -24,7 +23,7 @@ these are for backwards compatibility and others are to enable flexibility.
 Action plugins
 --------------
 
-Action plugins look like modules to anyone writing a playbook. They are documented as modules. However, they behave differently on the back end. Action plugins always execute on the controller.
+Action plugins look like modules to anyone writing a playbook. Usage documentation for most action plugins lives inside a module of the same name. Some action plugins do all the work, with the module providing only documentation. Some action plugins execute modules. The ``normal`` action plugin executes modules that don't have special action plugins. Action plugins always execute on the controller.
 
 Some action plugins do all their work on the controller. For
 example, the :ref:`debug <debug_module>` action plugin (which prints text for
@@ -44,7 +43,7 @@ into its final location, sets file permissions, and so on.
 New-style modules
 -----------------
 
-All of the modules that ship with Ansible fall into this category. All official modules (shipped with Ansible) use either Python or PowerShell.
+All of the modules that ship with Ansible fall into this category. While you can write modules in any language, all official modules (shipped with Ansible) use either Python or PowerShell.
 
 New-style modules have the arguments to the module embedded inside of them in
 some manner. Old-style modules must copy a separate file over to the
