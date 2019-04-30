@@ -83,7 +83,7 @@ def ensure_type(value, value_type, origin=None):
     if value_type:
         value_type = value_type.lower()
 
-    elif value is not None:
+    if value is not None:
         if value_type in ('boolean', 'bool'):
             value = boolean(value, strict=False)
 
