@@ -126,6 +126,12 @@ from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
+import datetime
+def logit(msg):
+    with open('/tmp/alog.txt', 'a') as of:
+        d = datetime.datetime.now().replace(microsecond=0).isoformat()
+        of.write("---- %s ----\n%s\n" % (d,msg))
+
 
 # Output options are 'text' or 'json'
 def execute_show_command(module, command, output='text'):
@@ -201,8 +207,10 @@ def parse_show_install(data):
         21       lcn9k                7.0(3)F3(2)    7.0(3)F2(2)           yes
         21        bios                     v01.70         v01.70            no
     """
+    logit("data before massage:\n%s" % data)
     if len(data) > 0:
         data = massage_install_data(data)
+    logit("data after massage:\n%s" % data)
     ud = {'raw': data}
     ud['processed'] = []
     ud['disruptive'] = False
@@ -221,6 +229,8 @@ def parse_show_install(data):
         elif data >= 500:
             ud['server_error'] = True
         elif data == -32603:
+            ud['server_error'] = True
+        elif data == 1:
             ud['server_error'] = True
         return ud
     else:
