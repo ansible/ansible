@@ -661,7 +661,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=N
         """
 
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
-            if HAS_SSLCONTEXT:
+            if not HAS_SSLCONTEXT:
                 handler = maybe_add_ssl_handler(newurl, validate_certs, ca_path=ca_path)
                 if handler:
                     urllib_request._opener.add_handler(handler)
