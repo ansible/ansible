@@ -455,12 +455,11 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
         in place of HTTPSHandler
         '''
 
-        def __init__(self, client_cert=None, client_key=None, unix_socket=None, ssl_handler=None, **kwargs):
+        def __init__(self, client_cert=None, client_key=None, unix_socket=None, **kwargs):
             urllib_request.HTTPSHandler.__init__(self, **kwargs)
             self.client_cert = client_cert
             self.client_key = client_key
             self._unix_socket = unix_socket
-            self._ssl_handler = ssl_handler
 
         def https_open(self, req):
             return self.do_open(self._build_https_connection, req)
