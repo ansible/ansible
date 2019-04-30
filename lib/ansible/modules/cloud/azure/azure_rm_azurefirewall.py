@@ -629,7 +629,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                                                          azure_firewall_name=self.name,
                                                                          parameters=self.body)
             if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
-               response = self.get_poller_result(response)
+                response = self.get_poller_result(response)
         except CloudError as exc:
             self.log('Error attempting to create the AzureFirewall instance.')
             self.fail('Error creating the AzureFirewall instance: {0}'.format(str(exc)))
@@ -653,7 +653,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             response = self.mgmt_client.azure_firewalls.get(resource_group_name=self.resource_group,
                                                             azure_firewall_name=self.name)
         except CloudError as e:
-           return False
+            return False
         return response.as_dict()
 
 
