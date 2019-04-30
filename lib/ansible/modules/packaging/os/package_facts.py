@@ -195,7 +195,7 @@ class APT(LibMgr):
         ''' we expect the python bindings installed, but if there is apt/apt-get give warning about missing bindings'''
         we_have_lib = super(APT, self).is_available()
         if not we_have_lib:
-            for exe in ('apt-get', 'apt'):
+            for exe in ('apt', 'apt-get'):
                 if get_bin_path(exe):
                     self.warnings.append('Found "%s" but python bindings are missing, so we cannot get package information.' % exe)
                     break
