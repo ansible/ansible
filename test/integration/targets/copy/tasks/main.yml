@@ -3,7 +3,7 @@
     - name: Create a local temporary directory
       shell: mktemp -d /tmp/ansible_test.XXXXXXXXX
       register: tempfile_result
-      connection: local
+      delegate_to: localhost
 
     - set_fact:
         local_temp_dir: '{{ tempfile_result.stdout }}'
@@ -66,13 +66,13 @@
       file:
         path: '{{ local_temp_dir }}'
         state: absent
-      connection: local
+      delegate_to: localhost
 
     - name: Remove symbolic link
       file:
         path: '{{ role_path }}/files/subdir/subdir1/{{ item.key }}'
         state: absent
-      connection: local
+      delegate_to: localhost
       with_dict: "{{ symlinks }}"
 
     - name: Remote unprivileged remote user
