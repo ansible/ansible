@@ -24,13 +24,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Philippe Gauthier (philippe.gauthier@inspq.qc.ca"
 module: keycloak_role
 short_description: Configure a role in Keycloak
 description:
     - This module creates, removes or update Keycloak realm level role.
     - For client level role, use keycloak_client module.
-version_added: "2.8"
+version_added: "2.9"
 options:
     realm:
         description:
@@ -66,7 +65,7 @@ options:
             - List of roles to include to the composite realm role.
             - If the composite role is a client role, the clientId (not id of the client) must be specified.
         required: false
-        subOptions:
+        suboptions:
             name:
                 description:
                     - Name of the role. This can be the name of a REALM role or a client role.
@@ -92,14 +91,16 @@ extends_documentation_fragment:
     - keycloak
 notes:
     - module does not modify role name.
+author: 
+    - Philippe Gauthier (philippe.gauthier@inspq.qc.ca)
 '''
 
 EXAMPLES = '''
     - name: Create the composite realm role role1 with composite roles.
       keycloak_role:
-        url: http://localhost:8080
-        username: admin
-        password: password
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         name: role1
         description: Super composite role
@@ -112,9 +113,9 @@ EXAMPLES = '''
 
     - name: Re-create realm role role1
       keycloak_role:
-        url: http://localhost:8080
-        username: admin
-        password: password
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         name: role1
         description: Super composite role
@@ -128,9 +129,9 @@ EXAMPLES = '''
 
     - name: Remove realm role role1.
       keycloak_role:
-        url: http://localhost:8080
-        username: admin
-        password: admin
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         name: role1
         state: absent

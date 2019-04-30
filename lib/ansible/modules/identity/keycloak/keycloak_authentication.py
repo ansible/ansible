@@ -24,13 +24,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Philippe Gauthier (philippe.gauthier@inspq.qc.ca"
 module: keycloak_authentication
 short_description: Configure authentication in Keycloak
 description:
     - This module actually can only make a copy of an existing authentication flow, add an execution to it and configure it.
     - It can also delete the flow.
-version_added: "2.3"
+version_added: "2.9"
 options:
     realm:
         description:
@@ -68,14 +67,16 @@ extends_documentation_fragment:
     - keycloak
 notes:
     - This module has very limited functions at the moment. Please contribute if you need more...
+author: 
+    - Philippe Gauthier (philippe.gauthier@inspq.qc.ca)
 '''
 
 EXAMPLES = '''
     - name: Create an authentication flow from first broker login and add an execution to it.
       keycloak_authentication:
-        url: http://localhost:8080
-        username: admin
-        password: password
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         alias: "Copy of first broker login"
         copyFrom: "first broker login"
@@ -96,9 +97,9 @@ EXAMPLES = '''
 
     - name: Re-create the authentication flow
       keycloak_authentication:
-        url: http://localhost:8080
-        username: admin
-        password: password
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         alias: "Copy of first broker login"
         copyFrom: "first broker login"
@@ -114,9 +115,9 @@ EXAMPLES = '''
 
     - name: Remove authentication.
       keycloak_authentication:
-        url: http://localhost:8080
-        username: admin
-        password: admin
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         alias: "Copy of first broker login"
         state: absent

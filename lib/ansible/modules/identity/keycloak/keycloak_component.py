@@ -24,7 +24,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Philippe Gauthier (philippe.gauthier@inspq.qc.ca"
 module: keycloak_component
 short_description: Configure a component in Keycloak
 description:
@@ -99,14 +98,17 @@ options:
         required: false
 extends_documentation_fragment:
     - keycloak
+
+author: 
+    - Philippe Gauthier (philippe.gauthier@inspq.qc.ca)
 '''
 
 EXAMPLES = '''
     - name: Create a LDAP User Storage provider. A full sync of users and a fedToKeycloak sync for group mappers will be triggered.
       keycloak_component:
-        url: http://localhost:8080/auth
-        username: admin
-        password: admin
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         name: ActiveDirectory
         providerId: ldap
@@ -169,9 +171,9 @@ EXAMPLES = '''
 
     - name: Re-create LDAP User Storage provider.
       keycloak_component:
-        url: http://localhost:8080/auth
-        username: admin
-        password: admin
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         name: ActiveDirectory
         providerId: ldap
@@ -233,9 +235,9 @@ EXAMPLES = '''
         
     - name: Remove User Storage Provider.
       keycloak_component:
-        url: http://localhost:8080/auth
-        username: admin
-        password: admin
+        auth_keycloak_url: http://localhost:8080/auth
+        auth_sername: admin
+        auth_password: password
         realm: master
         name: ActiveDirectory
         providerId: ldap
