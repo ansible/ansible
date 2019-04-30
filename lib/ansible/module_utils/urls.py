@@ -801,7 +801,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             with open(to_bytes(self.ca_path, errors='surrogate_or_strict'), 'rb') as f:
                 if HAS_SSLCONTEXT:
                     cadata.extend(
-                       ssl.PEM_cert_to_DER_cert(
+                        ssl.PEM_cert_to_DER_cert(
                             to_native(f.read(), errors='surrogate_or_strict')
                         )
                     )
