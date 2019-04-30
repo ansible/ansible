@@ -158,6 +158,7 @@ api_url:
 """
 import json
 import logging
+import re
 from pprint import pformat
 
 from ansible.module_utils.basic import AnsibleModule
@@ -168,18 +169,6 @@ HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 }
-
-
-class IgnoreDictValueCase(dict):
-    """Allows comparison between dictionaries to be case insensitive."""
-
-    def __eq__(self, other):
-        if len(self) != len(other):
-            return False
-        return all([str(self.get(key)).lower() == str(other[key]).lower() for key in other.keys()])
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 class Host(object):
@@ -213,6 +202,7 @@ class Host(object):
 
         self.post_body = dict()
         self.all_hosts = list()
+        self.host_obj = dict()
         self.newPorts = list()
         self.portsForUpdate = list()
         self.portsForRemoval = list()
@@ -246,8 +236,13 @@ class Host(object):
         # Fix port representation if they are provided with colons
         if self.ports is not None:
             for port in self.ports:
-                if port['type'] != 'iscsi':
-                    port['port'] = port['port'].replace(':', '')
+                port['label'] = port['label'].lower()
+                port['type'] = port['type'].lower()
+                port['port'] = port['port'].lower()
+
+                # Determine whether address is 16-byte WWPN and, if so, remove
+                if re.match(r'^(0x)?[0-9a-f]{16}$', port['port'].replace(':', '')):
+                    port['port'] = port['port'].replace(':', '').replace('0x', '')
 
     @property
     def valid_host_type(self):
@@ -258,8 +253,6 @@ class Host(object):
         except Exception as err:
             self.module.fail_json(
                 msg="Failed to get host types. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
-
-        self._logger.debug(host_types)
 
         try:
             match = list(filter(lambda host_type: host_type['index'] == self.host_type_index, host_types))[0]
@@ -351,7 +344,9 @@ class Host(object):
         """Determine if the requested host exists
         As a side effect, set the full list of defined hosts in 'all_hosts', and the target host in 'host_obj'.
         """
+        match = False
         all_hosts = list()
+
         try:
             (rc, all_hosts) = request(self.url + 'storage-systems/%s/hosts' % self.ssid, url_password=self.pwd,
                                       url_username=self.user, validate_certs=self.certs, headers=HEADERS)
@@ -359,25 +354,27 @@ class Host(object):
             self.module.fail_json(
                 msg="Failed to determine host existence. Array Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
-        self.all_hosts = all_hosts
-
         # Augment the host objects
         for host in all_hosts:
-            # Augment hostSidePorts with their ID (this is an omission in the API)
-            host_side_ports = host['hostSidePorts']
-            initiators = dict((port['label'], port['id']) for port in host['initiators'])
-            ports = dict((port['label'], port['id']) for port in host['ports'])
-            ports.update(initiators)
-            for port in host_side_ports:
-                if port['label'] in ports:
-                    port['id'] = ports[port['label']]
+            for port in host['hostSidePorts']:
+                port['type'] = port['type'].lower()
+                port['address'] = port['address'].lower()
+                port['label'] = port['label'].lower()
 
-        try:  # Try to grab the host object
-            self.host_obj = list(filter(lambda host: host['label'] == self.name, all_hosts))[0]
-            return True
-        except IndexError:
-            # Host with the name passed in does not exist
-            return False
+            # Augment hostSidePorts with their ID (this is an omission in the API)
+            ports = dict((port['label'], port['id']) for port in host['ports'])
+            ports.update((port['label'], port['id']) for port in host['initiators'])
+
+            for host_side_port in host['hostSidePorts']:
+                if host_side_port['label'] in ports:
+                    host_side_port['id'] = ports[host_side_port['label']]
+
+            if host['label'] == self.name:
+                self.host_obj = host
+                match = True
+
+        self.all_hosts = all_hosts
+        return match
 
     @property
     def needs_update(self):
@@ -386,7 +383,8 @@ class Host(object):
         (newPorts), on self.
         """
         changed = False
-        if self.host_obj["clusterRef"] != self.group_id or self.host_obj["hostTypeIndex"] != self.host_type_index:
+        if (self.host_obj["clusterRef"].lower() != self.group_id.lower() or
+                self.host_obj["hostTypeIndex"] != self.host_type_index):
             self._logger.info("Either hostType or the clusterRef doesn't match, an update is required.")
             changed = True
 
@@ -396,17 +394,17 @@ class Host(object):
         if self.ports:
             for port in self.ports:
                 for current_host_port_id in current_host_ports.keys():
-                    if IgnoreDictValueCase(port) == current_host_ports[current_host_port_id]:
+                    if port == current_host_ports[current_host_port_id]:
                         current_host_ports.pop(current_host_port_id)
                         break
 
-                    elif port["port"].lower() == current_host_ports[current_host_port_id]["port"].lower():
+                    elif port["port"] == current_host_ports[current_host_port_id]["port"]:
                         if self.port_on_diff_host(port) and not self.force_port:
-                            self.module.fail_json(msg="The port you specified:\n%s\n is associated with a different host. "
-                                                      "Specify force_port as True or try a different port spec" % port)
+                            self.module.fail_json(msg="The port you specified [%s] is associated with a different host."
+                                                      " Specify force_port as True or try a different port spec" % port)
 
-                        if (port["label"].lower() != current_host_ports[current_host_port_id]["label"].lower() or
-                                port["type"].lower() != current_host_ports[current_host_port_id]["type"].lower()):
+                        if (port["label"] != current_host_ports[current_host_port_id]["label"] or
+                                port["type"] != current_host_ports[current_host_port_id]["type"]):
                             current_host_ports.pop(current_host_port_id)
                             self.portsForUpdate.append({"portRef": current_host_port_id, "port": port["port"],
                                                         "label": port["label"], "hostRef": self.host_obj["hostRef"]})
@@ -419,25 +417,6 @@ class Host(object):
 
         return changed
 
-    def get_ports_on_host(self):
-        """Retrieve the hostPorts that are defined on the target host
-        :return: a list of hostPorts with their labels and ids
-        Example:
-        [
-            {
-                'name': 'hostPort1',
-                'id': '0000000000000000000000'
-            }
-        ]
-        """
-        ret = dict()
-        for host in self.all_hosts:
-            if host['name'] == self.name:
-                ports = host['hostSidePorts']
-                for port in ports:
-                    ret[port['address']] = {'label': port['label'], 'id': port['id'], 'address': port['address']}
-        return ret
-
     def port_on_diff_host(self, arg_port):
         """ Checks to see if a passed in port arg is present on a different host """
         for host in self.all_hosts:
@@ -449,12 +428,6 @@ class Host(object):
                         self.other_host = host
                         return True
         return False
-
-    def get_port(self, label, address):
-        for host in self.all_hosts:
-            for port in host['hostSidePorts']:
-                if port['label'] == label or port['address'] == address:
-                    return port
 
     def update_host(self):
         self._logger.info("Beginning the update for host=%s.", self.name)
