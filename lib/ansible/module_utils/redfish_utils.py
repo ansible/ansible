@@ -630,6 +630,35 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
+    def get_firmware_update_capabilities(self):
+        result = {}
+        response = self.get_request(self.root_uri + self.update_uri)
+        if response['ret'] is False:
+            return response
+
+        result['ret'] = True
+
+        result['entries'] = {}
+
+        data = response['data']
+
+        if "Actions" in data:
+            actions = data['Actions']
+            if len(actions) > 0:
+                for key in actions.keys():
+                    action = actions.get(key)
+                    if 'title' in action:
+                        title = action['title']
+                    else:
+                        title = key
+                    result['entries'][title] = action.get('TransferProtocol@Redfish.AllowableValues',
+                                                          ["Key TransferProtocol@Redfish.AllowableValues not found"])
+            else:
+                return {'ret': "False", 'msg': "Actions list is empty."}
+        else:
+            return {'ret': "False", 'msg': "Key Actions not found."}
+        return result
+
     def get_firmware_inventory(self):
         result = {}
         response = self.get_request(self.root_uri + self.firmware_uri)
@@ -727,16 +756,14 @@ class RedfishUtils(object):
         boot_options_dict = {}
         for member in members:
             if '@odata.id' not in member:
-                return {'ret': False,
-                        'msg': "@odata.id not found in BootOptions"}
+                return {'ret': False, 'msg': "@odata.id not found in BootOptions"}
             boot_option_uri = member['@odata.id']
             response = self.get_request(self.root_uri + boot_option_uri)
             if response['ret'] is False:
                 return response
             data = response['data']
             if 'BootOptionReference' not in data:
-                return {'ret': False,
-                        'msg': "BootOptionReference not found in BootOption"}
+                return {'ret': False, 'msg': "BootOptionReference not found in BootOption"}
             boot_option_ref = data['BootOptionReference']
 
             # fetch the props to display for this boot device
