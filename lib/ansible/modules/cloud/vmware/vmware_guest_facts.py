@@ -229,7 +229,8 @@ def main():
         properties=dict(type='list')
     )
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']])
+                           required_one_of=[['name', 'uuid']],
+                           supports_check_mode=True)
 
     if module.params.get('folder'):
         # FindByInventoryPath() does not require an absolute path
