@@ -14,6 +14,8 @@ DOCUMENTATION = r'''
     requirements:
         - python >= 2.7
         - linode_api4 >= 2.0.0
+    extends_documentation_fragment:
+        - constructed
     description:
         - Reads inventories from the Linode API v4.
         - Uses a YAML configuration file that ends with linode.(yml|yaml).
@@ -29,14 +31,6 @@ DOCUMENTATION = r'''
             required: true
             env:
                 - name: LINODE_ACCESS_TOKEN
-        instance_access:
-          description: How to access the instance. Variable used as ansible_host.
-          default: label
-          choices:
-            - label
-            - public_ip
-            - private_ip
-          required: false
         regions:
           description: Populate inventory with instances in this region.
           default: []
@@ -47,6 +41,8 @@ DOCUMENTATION = r'''
           default: []
           type: list
           required: false
+    strict:
+    compose:
 '''
 
 EXAMPLES = r'''
@@ -56,11 +52,12 @@ plugin: linode
 # Example with regions, types, groups and access token
 plugin: linode
 access_token: foobar
-instance_access: label
 regions:
   - eu-west
 types:
   - g5-standard-2
+compose:
+  ansible_host: private_ip
 '''
 
 import os
@@ -68,7 +65,7 @@ import ipaddress
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 
 
 try:
@@ -78,7 +75,7 @@ except ImportError:
     raise AnsibleError('the Linode dynamic inventory plugin requires linode_api4.')
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable):
 
     NAME = 'linode'
 
@@ -160,45 +157,27 @@ class InventoryModule(BaseInventoryPlugin):
         for instance in self.instances:
             self.inventory.add_host(instance.label, group=instance.group)
 
-    def _add_hostvars_for_instances(self, instance_access):
+    def _add_hostvars_for_instances(self):
         """Add hostvars for instances in the dynamic inventory."""
         for instance in self.instances:
-            if instance_access == 'public_ip':
-                host_identifier = self._get_instance_ip(instance, private=False)
-            elif instance_access == 'private_ip':
-                host_identifier = self._get_instance_ip(instance, private=True)
-            elif instance_access == 'label':
-                host_identifier = instance.label
-            else:
-                raise AnsibleError(
-                    'Instance Access setting is not valid'
-                )
-
-            self.inventory.set_variable(
-                instance.label,
-                'public_ip',
-                self._get_instance_ip(instance, private=False)
-            )
-
-            self.inventory.set_variable(
-                instance.label,
-                'private_ip',
-                self._get_instance_ip(instance, private=True)
-            )
-
-            self.inventory.set_variable(
-                instance.label,
-                'ansible_host',
-                host_identifier
-            )
 
             hostvars = instance._raw_json
+
+            hostvars['private_ip'] = self._get_instance_ip(instance, private=True)
+            hostvars['public_ip'] = self._get_instance_ip(instance, private=False)
+
             for hostvar_key in hostvars:
                 self.inventory.set_variable(
                     instance.label,
                     hostvar_key,
                     hostvars[hostvar_key]
                 )
+
+            # Use constructed if applicable
+            strict = self.get_option('strict')
+
+            # Composed variables
+            self._set_composite_vars(self.get_option('compose'), hostvars, instance.label, strict=strict)
 
     def _validate_option(self, name, desired_type, option_value):
         """Validate user specified configuration data against types."""
@@ -228,10 +207,6 @@ class InventoryModule(BaseInventoryPlugin):
                 'type_to_be': list,
                 'value': config_data.get('types', [])
             },
-            'instance_access': {
-                'type_to_be': str,
-                'value': config_data.get('instance_access', 'label')
-            },
         }
 
         for name in options:
@@ -243,9 +218,8 @@ class InventoryModule(BaseInventoryPlugin):
 
         regions = options['regions']['value']
         types = options['types']['value']
-        instance_access = options['instance_access']['value']
 
-        return regions, types, instance_access
+        return regions, types
 
     def verify_file(self, path):
         """Verify the Linode configuration file."""
@@ -264,9 +238,9 @@ class InventoryModule(BaseInventoryPlugin):
         self._get_instances_inventory()
 
         config_data = self._read_config_data(path)
-        regions, types, instance_access = self._get_user_options(config_data)
+        regions, types = self._get_user_options(config_data)
         self._filter_by_config(regions, types)
 
         self._add_groups()
         self._add_instances_to_groups()
-        self._add_hostvars_for_instances(instance_access)
+        self._add_hostvars_for_instances()
