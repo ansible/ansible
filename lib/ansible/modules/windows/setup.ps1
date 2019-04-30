@@ -226,7 +226,7 @@ if($gather_subset.Contains('env')) {
 if($gather_subset.Contains('facter')) {
     # See if Facter is on the System Path
     Try {
-        Get-Command facter -ErrorAction Stop
+        Get-Command facter -ErrorAction Stop | Out-Null
         $facter_installed = $true
     } Catch {
         $facter_installed = $false

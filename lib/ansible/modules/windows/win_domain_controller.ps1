@@ -213,7 +213,7 @@ Try {
                 if ($site_name) {
                     $install_params.SiteName = $site_name
                 }
-                Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params | Out-Null
 
                 Write-DebugLog "Installation complete, trying to start the Netlogon service"
                 # The Netlogon service is set to auto start but is not started. This is
@@ -258,7 +258,7 @@ Try {
             $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
 
             Write-DebugLog "Uninstalling domain controller..."
-            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
+            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred | Out-Null
             Write-DebugLog "Uninstallation complete, needs reboot..."
         }
         default { throw ("invalid state {0}" -f $state) }

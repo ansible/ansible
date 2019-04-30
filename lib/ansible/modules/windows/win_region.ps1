@@ -126,7 +126,7 @@ Function Get-ValidGeoIds($cultures) {
            $geo_id = [System.Globalization.RegionInfo]$culture.Name
            $geo_ids += $geo_id.GeoId
        } catch {
-           Add-Warning -obj $result -message "Error during RegionInfo enumeration: $($_.Exception.Message)"
+           Out-Null
        }
    }
    $geo_ids

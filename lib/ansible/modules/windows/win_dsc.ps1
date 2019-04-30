@@ -375,7 +375,7 @@ if ($resource.Module) {
 try {
     Invoke-DscResource -Method Get -Property @{Fake="Fake"} @dsc_args > $null
 } catch {
-    Out-Null;
+    Out-Null
 }
 
 # Dynamically build the option spec based on the resource_name specified and create the module object

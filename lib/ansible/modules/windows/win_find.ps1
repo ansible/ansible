@@ -251,7 +251,8 @@ Function Get-FileStat($file) {
             $lnk_source = [Ansible.Command.SymLinkHelper]::GetSymbolicLinkTarget($file)
             $file_stat.lnk_source = $lnk_source
         } catch {
-            Add-Warning -obj $result -message "symlink source retrieval error: $($_.Exception.Message)"
+            #Add-Warning -obj $result -message "symlink source retrieval error: $($_.Exception.Message)"
+            Out-Null
         }
     } elseif ($file.PSIsContainer) {
         $isdir = $true

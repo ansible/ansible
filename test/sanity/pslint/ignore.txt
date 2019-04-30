@@ -95,3 +95,6 @@ test/integration/targets/win_script/files/test_script_removes_file.ps1 PSCustomU
 test/integration/targets/win_stat/library/test_symlink_file.ps1 PSCustomUseLiteralPath
 test/integration/targets/win_user_right/library/test_get_right.ps1 PSCustomUseLiteralPath
 test/runner/setup/windows-httptester.ps1 PSCustomUseLiteralPath
+test/integration/targets/win_script/files/test_script.ps1 PSAvoidUsingWriteHost
+test/integration/targets/win_script/files/test_script_with_args.ps1 PSAvoidUsingWriteHost
+test/integration/targets/win_script/files/test_script_with_splatting.ps1 PSAvoidUsingWriteHost
