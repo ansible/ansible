@@ -25,6 +25,8 @@ options:
   ipadefaultemaildomain:
     description: Default e-mail domain for new users.
     aliases: ["emaildomain"]
+  ipadomainresolutionorder:
+    description: colon-separated list of domains used for short name qualification
 extends_documentation_fragment: ipa.documentation
 version_added: "2.7"
 '''
@@ -70,12 +72,15 @@ class ConfigIPAClient(IPAClient):
         return self._post_json(method='config_mod', name=name, item=item)
 
 
-def get_config_dict(ipadefaultloginshell=None, ipadefaultemaildomain=None):
+def get_config_dict(ipadefaultloginshell=None, ipadefaultemaildomain=None, ipadomainresolutionorder=None):
     config = {}
     if ipadefaultloginshell is not None:
         config['ipadefaultloginshell'] = ipadefaultloginshell
     if ipadefaultemaildomain is not None:
         config['ipadefaultemaildomain'] = ipadefaultemaildomain
+    if ipadomainresolutionorder is not None:
+        config['ipadomainresolutionorder'] = ipadomainresolutionorder
+
 
     return config
 
@@ -88,6 +93,7 @@ def ensure(module, client):
     module_config = get_config_dict(
         ipadefaultloginshell=module.params.get('ipadefaultloginshell'),
         ipadefaultemaildomain=module.params.get('ipadefaultemaildomain'),
+        ipadomainresolutionorder=module.params.get('ipadomainresolutionorder'),
     )
     ipa_config = client.config_show()
     diff = get_config_diff(client, ipa_config, module_config)
@@ -110,6 +116,7 @@ def main():
     argument_spec.update(
         ipadefaultloginshell=dict(type='str', aliases=['loginshell']),
         ipadefaultemaildomain=dict(type='str', aliases=['emaildomain']),
+        ipadomainresolutionorder=dict(type='str'),
     )
 
     module = AnsibleModule(
