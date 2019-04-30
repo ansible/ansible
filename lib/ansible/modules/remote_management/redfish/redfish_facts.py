@@ -137,6 +137,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get firmware update capability information
+    redfish_facts:
+      category: Update
+      command: GetFirmwareUpdateCapabilities
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in all categories
     redfish_facts:
       category: all
@@ -164,7 +172,7 @@ CATEGORY_COMMANDS_ALL = {
                 "GetBiosAttributes", "GetBootOrder"],
     "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisThermals"],
     "Accounts": ["ListUsers"],
-    "Update": ["GetFirmwareInventory"],
+    "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
 }
 
@@ -293,6 +301,8 @@ def main():
             for command in command_list:
                 if command == "GetFirmwareInventory":
                     result["firmware"] = rf_utils.get_firmware_inventory()
+                elif command == "GetFirmwareUpdateCapabilities":
+                    result["firmware_update_capabilities"] = rf_utils.get_firmware_update_capabilities()
 
         elif category == "Manager":
             # execute only if we find a Manager service resource
