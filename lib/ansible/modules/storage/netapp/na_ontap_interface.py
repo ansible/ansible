@@ -162,8 +162,6 @@ class NetAppOntapInterface(object):
     def __init__(self):
 
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
-<<<<<<< HEAD
-<<<<<<< HEAD
         self.argument_spec.update(dict(
             state=dict(required=False, choices=[
                        'present', 'absent'], default='present'),
