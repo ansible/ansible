@@ -180,7 +180,6 @@ class APT(LibMgr):
 
     def __init__(self):
         self._cache = None
-        self.warnings = []
         super(APT, self).__init__()
 
     @property
