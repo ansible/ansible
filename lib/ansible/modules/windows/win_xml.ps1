@@ -259,7 +259,7 @@ if ($changed) {
     } else {
         $summary = "$type changed"
     }
-    Save-ChangedXml $xmlorig $result $summary $check_mode $backup
+    Save-ChangedXml -xmlorig $xmlorig -result $result -summary $summary -check_mode $check_mode -backup $backup
 }
 
 Exit-Json $result
