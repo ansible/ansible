@@ -953,7 +953,7 @@ def main():
             try:
                 vmid = get_nextvmid(module, proxmox)
             except Exception as e:
-                module.fail_json(msg="Can't get the next vimd for VM {0} automatically. Ensure your cluster state is good".format(name))
+                module.fail_json(msg="Can't get the next vmid for VM {0} automatically. Ensure your cluster state is good".format(name))
         else:
             try:
                 if not clone:
@@ -979,7 +979,7 @@ def main():
             try:
                 newid = get_nextvmid(module, proxmox)
             except Exception as e:
-                module.fail_json(msg="Can't get the next vimd for VM {0} automatically. Ensure your cluster state is good".format(name))
+                module.fail_json(msg="Can't get the next vmid for VM {0} automatically. Ensure your cluster state is good".format(name))
         else:
             vm = get_vm(proxmox, newid)
             if vm:
@@ -990,13 +990,13 @@ def main():
             settings(module, proxmox, vmid, node, name, timeout, delete=delete)
             module.exit_json(changed=True, msg="Settings has deleted on VM {0} with vmid {1}".format(name, vmid))
         except Exception as e:
-            module.fail_json(msg='Unable to delete settings on VM {0} with vimd {1}: '.format(name, vmid) + str(e))
+            module.fail_json(msg='Unable to delete settings on VM {0} with vmid {1}: '.format(name, vmid) + str(e))
     elif revert is not None:
         try:
             settings(module, proxmox, vmid, node, name, timeout, revert=revert)
             module.exit_json(changed=True, msg="Settings has reverted on VM {0} with vmid {1}".format(name, vmid))
         except Exception as e:
-            module.fail_json(msg='Unable to revert settings on VM {0} with vimd {1}: Maybe is not a pending task...   '.format(name, vmid) + str(e))
+            module.fail_json(msg='Unable to revert settings on VM {0} with vmid {1}: Maybe is not a pending task...   '.format(name, vmid) + str(e))
 
     if state == 'present':
         try:
@@ -1086,9 +1086,9 @@ def main():
                 module.exit_json(changed=True, msg="VM %s with vmid %s deployed.%s" % (name, vmid, template_msg), **results)
         except Exception as e:
             if update:
-                module.fail_json(msg="Unable to update vm {0} with vimd {1}=".format(name, vmid) + str(e))
+                module.fail_json(msg="Unable to update vm {0} with vmid {1}=".format(name, vmid) + str(e))
             elif clone is not None:
-                module.fail_json(msg="Unable to clone vm {0} from vimd {1}=".format(name, vmid) + str(e))
+                module.fail_json(msg="Unable to clone vm {0} from vmid {1}=".format(name, vmid) + str(e))
             else:
                 module.fail_json(msg="creation of %s VM %s with vmid %s failed with exception=%s" % (VZ_TYPE, name, vmid, e))
 
