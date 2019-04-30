@@ -195,6 +195,21 @@ EXAMPLES = '''
           disk:
             bus: virtio
 
+- name: Create virtual machine with datavolume
+  kubevirt_vm:
+    name: myvm
+    namespace: default
+    memory: 1024Mi
+    datavolumes:
+      - name: mydv
+        source:
+          http:
+            url: https://url/disk.qcow2
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          storage: 5Gi
+
 - name: Remove virtual machine 'myvm'
   kubevirt_vm:
       state: absent
