@@ -29,6 +29,7 @@ import traceback
 
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 try:
     import cryptography
@@ -46,7 +47,7 @@ try:
     HAS_CURRENT_CRYPTOGRAPHY = (LooseVersion(CRYPTOGRAPHY_VERSION) >= LooseVersion('1.5'))
     if HAS_CURRENT_CRYPTOGRAPHY:
         _cryptography_backend = cryptography.hazmat.backends.default_backend()
-except Exception as _:
+except Exception as dummy:
     HAS_CURRENT_CRYPTOGRAPHY = False
 
 
@@ -90,7 +91,7 @@ def write_file(module, dest, content):
     except Exception as err:
         try:
             f.close()
-        except Exception as e:
+        except Exception as dummy:
             pass
         os.remove(tmpsrc)
         raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
@@ -101,7 +102,7 @@ def write_file(module, dest, content):
     if not os.path.exists(tmpsrc):
         try:
             os.remove(tmpsrc)
-        except Exception as e:
+        except Exception as dummy:
             pass
         raise ModuleFailException("Source %s does not exist" % (tmpsrc))
     if not os.access(tmpsrc, os.R_OK):
@@ -174,7 +175,7 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
         except Exception as err:
             try:
                 f.close()
-            except Exception as e:
+            except Exception as dummy:
                 pass
             raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
         f.close()
@@ -824,44 +825,11 @@ class ACMEAccount(object):
 
 
 def _normalize_ip(ip):
-    if ':' not in ip:
-        # For IPv4 addresses: remove trailing zeros per nibble
-        ip = '.'.join([nibble.lstrip('0') or '0' for nibble in ip.split('.')])
+    try:
+        return to_native(compat_ipaddress.ip_address(to_text(ip)).compressed)
+    except ValueError:
+        # We don't want to error out on something IPAddress() can't parse
         return ip
-    # For IPv6 addresses:
-    # 1. Make them lowercase and split
-    ip = ip.lower()
-    i = ip.find('::')
-    if i >= 0:
-        front = ip[:i].split(':') or []
-        back = ip[i + 2:].split(':') or []
-        ip = front + ['0'] * (8 - len(front) - len(back)) + back
-    else:
-        ip = ip.split(':')
-    # 2. Remove trailing zeros per nibble
-    ip = [nibble.lstrip('0') or '0' for nibble in ip]
-    # 3. Find longest consecutive sequence of zeros
-    zeros_start = -1
-    zeros_length = -1
-    current_start = -1
-    for i, nibble in enumerate(ip):
-        if nibble == '0':
-            if current_start < 0:
-                current_start = i
-        elif current_start >= 0:
-            if i - current_start > zeros_length:
-                zeros_start = current_start
-                zeros_length = i - current_start
-            current_start = -1
-    if current_start >= 0:
-        if 8 - current_start > zeros_length:
-            zeros_start = current_start
-            zeros_length = 8 - current_start
-    # 4. If the sequence has at least two elements, contract
-    if zeros_length >= 2:
-        return ':'.join(ip[:zeros_start]) + '::' + ':'.join(ip[zeros_start + zeros_length:])
-    # 5. If not, return full IP
-    return ':'.join(ip)
 
 
 def openssl_get_csr_identifiers(openssl_binary, module, csr_filename):
@@ -910,7 +878,7 @@ def cryptography_get_csr_identifiers(module, csr_filename):
                 if isinstance(name, cryptography.x509.DNSName):
                     identifiers.add(('dns', name.value))
                 elif isinstance(name, cryptography.x509.IPAddress):
-                    identifiers.add(('ip', _normalize_ip(str(name.value))))
+                    identifiers.add(('ip', name.value.compressed))
                 else:
                     raise ModuleFailException('Found unsupported SAN identifier {0}'.format(name))
     return identifiers
@@ -952,7 +920,7 @@ def set_crypto_backend(module):
     elif backend == 'cryptography':
         try:
             cryptography.__version__
-        except Exception as _:
+        except Exception as dummy:
             module.fail_json(msg='Cannot find cryptography module!')
         HAS_CURRENT_CRYPTOGRAPHY = True
     else:

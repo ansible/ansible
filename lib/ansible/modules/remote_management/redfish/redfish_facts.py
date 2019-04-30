@@ -137,6 +137,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get firmware update capability information
+    redfish_facts:
+      category: Update
+      command: GetFirmwareUpdateCapabilities
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in all categories
     redfish_facts:
       category: all
@@ -162,9 +170,9 @@ CATEGORY_COMMANDS_ALL = {
                 "GetMemoryInventory", "GetNicInventory",
                 "GetStorageControllerInventory", "GetDiskInventory",
                 "GetBiosAttributes", "GetBootOrder"],
-    "Chassis": ["GetFanInventory", "GetPsuInventory"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisThermals"],
     "Accounts": ["ListUsers"],
-    "Update": ["GetFirmwareInventory"],
+    "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
 }
 
@@ -271,6 +279,8 @@ def main():
                     result["fan"] = rf_utils.get_fan_inventory()
                 elif command == "GetPsuInventory":
                     result["psu"] = rf_utils.get_psu_inventory()
+                elif command == "GetChassisThermals":
+                    result["thermals"] = rf_utils.get_chassis_thermals()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
@@ -291,6 +301,8 @@ def main():
             for command in command_list:
                 if command == "GetFirmwareInventory":
                     result["firmware"] = rf_utils.get_firmware_inventory()
+                elif command == "GetFirmwareUpdateCapabilities":
+                    result["firmware_update_capabilities"] = rf_utils.get_firmware_update_capabilities()
 
         elif category == "Manager":
             # execute only if we find a Manager service resource

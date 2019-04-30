@@ -907,13 +907,19 @@ class User(object):
         if not self.user_exists():
             return passwd, expires
         elif self.SHADOWFILE:
-            # Read shadow file for user's encrypted password string
-            if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
-                with open(self.SHADOWFILE, 'r') as f:
-                    for line in f:
-                        if line.startswith('%s:' % self.name):
-                            passwd = line.split(':')[1]
-                            expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
+            passwd, expires = self.parse_shadow_file()
+
+        return passwd, expires
+
+    def parse_shadow_file(self):
+        passwd = ''
+        expires = ''
+        if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+            with open(self.SHADOWFILE, 'r') as f:
+                for line in f:
+                    if line.startswith('%s:' % self.name):
+                        passwd = line.split(':')[1]
+                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
         return passwd, expires
 
     def get_ssh_key_path(self):
@@ -2326,6 +2332,7 @@ class AIX(User):
       - create_user()
       - remove_user()
       - modify_user()
+      - parse_shadow_file()
     """
 
     platform = 'AIX'
@@ -2466,6 +2473,50 @@ class AIX(User):
             return (rc, out + out2, err + err2)
         else:
             return (rc2, out + out2, err + err2)
+
+    def parse_shadow_file(self):
+        """Example AIX shadowfile data:
+        nobody:
+                password = *
+
+        operator1:
+                password = {ssha512}06$xxxxxxxxxxxx....
+                lastupdate = 1549558094
+
+        test1:
+                password = *
+                lastupdate = 1553695126
+
+        """
+
+        b_name = to_bytes(self.name)
+        if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
+            with open(self.SHADOWFILE, 'rb') as bf:
+                b_lines = bf.readlines()
+
+            b_passwd_line = b''
+            b_expires_line = b''
+            for index, b_line in enumerate(b_lines):
+                # Get password and lastupdate lines which come after the username
+                if b_line.startswith(b'%s:' % b_name):
+                    b_passwd_line = b_lines[index + 1]
+                    b_expires_line = b_lines[index + 2]
+                    break
+
+            # Sanity check the lines because sometimes both are not present
+            if b' = ' in b_passwd_line:
+                b_passwd = b_passwd_line.split(b' = ', 1)[-1].strip()
+            else:
+                b_passwd = b''
+
+            if b' = ' in b_expires_line:
+                b_expires = b_expires_line.split(b' = ', 1)[-1].strip()
+            else:
+                b_expires = b''
+
+        passwd = to_native(b_passwd)
+        expires = to_native(b_expires) or -1
+        return passwd, expires
 
 
 class HPUX(User):

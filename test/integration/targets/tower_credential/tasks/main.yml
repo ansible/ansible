@@ -1,9 +1,11 @@
 - name: create a tempdir for an SSH key
-  local_action: shell mktemp -d
+  shell: mktemp -d
+  delegate_to: localhost
   register: tempdir
 
 - name: Generate a local SSH key
-  local_action: "shell ssh-keygen -b 2048 -t rsa -f {{ tempdir.stdout }}/id_rsa -q -N 'passphrase'"
+  shell: "ssh-keygen -b 2048 -t rsa -f {{ tempdir.stdout }}/id_rsa -q -N 'passphrase'"
+  delegate_to: localhost
 
 - name: Read the generated key
   set_fact:

@@ -181,7 +181,8 @@ def create(module, link):
 
 
 def update(module, link):
-    module.fail_json(msg="Database cannot be edited")
+    delete(module, self_link(module))
+    create(module, collection(module))
 
 
 def delete(module, link):

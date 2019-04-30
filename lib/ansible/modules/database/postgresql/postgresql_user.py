@@ -70,30 +70,6 @@ options:
     type: bool
     aliases:
     - fail_on_role
-  port:
-    description:
-    - Database port to connect to.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - Password for U(login_user) used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
   priv:
     description:
     - "Slash-separated PostgreSQL privileges string: C(priv1/priv2), where
@@ -150,30 +126,27 @@ options:
     default: 'no'
     type: bool
     version_added: '2.0'
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-    version_added: '2.3'
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s). If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    version_added: '2.3'
-    aliases: [ ssl_rootcert ]
   conn_limit:
     description:
     - Specifies the user (role) connection limit.
     type: int
     version_added: '2.4'
-
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    type: str
+    default: prefer
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
+    version_added: '2.3'
+  ca_cert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
+    aliases: [ ssl_rootcert ]
+    version_added: '2.3'
 notes:
 - The module creates a user (role) with login privilege by default.
   Use NOLOGIN role_attr_flags to change this behaviour.
@@ -194,6 +167,7 @@ requirements:
 
 author:
 - Ansible Core Team
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -260,18 +234,17 @@ import re
 import traceback
 from hashlib import md5
 
-PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
-    import psycopg2.extras
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
 
@@ -374,7 +347,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
     if user == 'PUBLIC':
@@ -816,67 +789,20 @@ def main():
     password = module.params["password"]
     state = module.params["state"]
     fail_on_user = module.params["fail_on_user"]
-    db = module.params["db"]
-    session_role = module.params["session_role"]
-    if db == '' and module.params["priv"] is not None:
+    if module.params['db'] == '' and module.params["priv"] is not None:
         module.fail_json(msg="privileges require a database to be specified")
-    privs = parse_privs(module.params["priv"], db)
+    privs = parse_privs(module.params["priv"], module.params["db"])
     no_password_changes = module.params["no_password_changes"]
     if module.params["encrypted"]:
         encrypted = "ENCRYPTED"
     else:
         encrypted = "UNENCRYPTED"
     expires = module.params["expires"]
-    sslrootcert = module.params["ca_cert"]
     conn_limit = module.params["conn_limit"]
     role_attr_flags = module.params["role_attr_flags"]
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
-
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(
-            msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
-
-    try:
-        db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(
-                msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="Unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    except Exception as e:
-        module.fail_json(msg="Unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
+    db_connection = connect_to_db(module, warn_db_default=False)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     try:
         role_attr_flags = parse_role_attrs(cursor, role_attr_flags)

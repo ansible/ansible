@@ -305,9 +305,9 @@ EXAMPLES = '''
   nios_member:
     host_name: member01.localdomain
     vip_setting:
-      address: 192.168.1.100
-      subnet_mask: 255.255.255.0
-      gateway: 192.168.1.1
+      - address: 192.168.1.100
+        subnet_mask: 255.255.255.0
+        gateway: 192.168.1.1
     config_addr_type: IPV4
     platform: VNIOS
     comment: "Created by Ansible"
@@ -321,9 +321,9 @@ EXAMPLES = '''
   nios_member:
     host_name: memberha.localdomain
     vip_setting:
-      address: 192.168.1.100
-      subnet_mask: 255.255.255.0
-      gateway: 192.168.1.1
+      - address: 192.168.1.100
+        subnet_mask: 255.255.255.0
+        gateway: 192.168.1.1
     config_addr_type: IPV4
     platform: VNIOS
     enable_ha: true
@@ -346,14 +346,14 @@ EXAMPLES = '''
   nios_member:
     name: member01.localdomain
     pre_provisioning:
-      hardware_info:
-        - hwmodel: IB-VM-820
-          hwtype: IB-VNIOS
-      licenses:
-        - dns
-        - dhcp
-        - enterprise
-        - vnios
+      - hardware_info:
+         - hwmodel: IB-VM-820
+           hwtype: IB-VNIOS
+        licenses:
+         - dns
+         - dhcp
+         - enterprise
+         - vnios
     comment: "Updated by Ansible"
     state: present
     provider:
@@ -403,23 +403,23 @@ def main():
 
     lan2_port_spec = dict(
         enabled=dict(type='bool'),
-        network_setting=dict(type='dict', elements='dict', options=ipv4_spec),
-        v6_network_setting=dict(type='dict', elements='dict', options=ipv6_spec),
+        network_setting=dict(type='list', elements='dict', options=ipv4_spec),
+        v6_network_setting=dict(type='list', elements='dict', options=ipv6_spec),
     )
 
     ha_port_spec = dict(
         ha_ip_address=dict(),
-        ha_port_setting=dict(type='dict', elements='dict', options=port_spec),
-        lan_port_setting=dict(type='dict', elements='dict', options=port_spec),
+        ha_port_setting=dict(type='list', elements='dict', options=port_spec),
+        lan_port_setting=dict(type='list', elements='dict', options=port_spec),
         mgmt_lan=dict(),
         mgmt_ipv6addr=dict(),
     )
 
     node_spec = dict(
-        lan2_physical_setting=dict(type='dict', elements='dict', options=port_spec),
-        lan_ha_port_setting=dict(type='dict', elements='dict', options=ha_port_spec),
-        mgmt_network_setting=dict(type='dict', elements='dict', options=ipv4_spec),
-        v6_mgmt_network_setting=dict(type='dict', elements='dict', options=ipv6_spec),
+        lan2_physical_setting=dict(type='list', elements='dict', options=port_spec),
+        lan_ha_port_setting=dict(type='list', elements='dict', options=ha_port_spec),
+        mgmt_network_setting=dict(type='list', elements='dict', options=ipv4_spec),
+        v6_mgmt_network_setting=dict(type='list', elements='dict', options=ipv6_spec),
     )
 
     mgmt_port_spec = dict(
@@ -452,22 +452,22 @@ def main():
 
     ib_spec = dict(
         host_name=dict(required=True, aliases=['name'], ib_req=True),
-        vip_setting=dict(type='dict', elements='dict', options=ipv4_spec),
-        ipv6_setting=dict(type='dict', elements='dict', options=ipv6_spec),
+        vip_setting=dict(type='list', elements='dict', options=ipv4_spec),
+        ipv6_setting=dict(type='list', elements='dict', options=ipv6_spec),
         config_addr_type=dict(default='IPV4'),
         comment=dict(),
         enable_ha=dict(type='bool', default=False),
         router_id=dict(type='int'),
         lan2_enabled=dict(type='bool', default=False),
-        lan2_port_setting=dict(type='dict', elements='dict', options=lan2_port_spec),
+        lan2_port_setting=dict(type='list', elements='dict', options=lan2_port_spec),
         platform=dict(default='INFOBLOX'),
         node_info=dict(type='list', elements='dict', options=node_spec),
-        mgmt_port_setting=dict(type='dict', elements='dict', options=mgmt_port_spec),
+        mgmt_port_setting=dict(type='list', elements='dict', options=mgmt_port_spec),
         upgrade_group=dict(default='Default'),
         use_syslog_proxy_setting=dict(type='bool'),
         external_syslog_server_enable=dict(type='bool'),
         syslog_servers=dict(type='list', elements='dict', options=syslog_spec),
-        pre_provisioning=dict(type='dict', elements='dict', options=pre_prov_spec),
+        pre_provisioning=dict(type='list', elements='dict', options=pre_prov_spec),
         extattrs=dict(type='dict'),
         create_token=dict(type='bool', default=False),
     )

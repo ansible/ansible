@@ -29,7 +29,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import wrap_var
+from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
 
 display = Display()
@@ -203,11 +203,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                             environment=final_environment)
                 break
             except InterpreterDiscoveryRequiredError as idre:
-                self._discovered_interpreter = discover_interpreter(
+                self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
                     action=self,
                     interpreter_name=idre.interpreter_name,
                     discovery_mode=idre.discovery_mode,
-                    task_vars=task_vars)
+                    task_vars=task_vars))
 
                 # update the local task_vars with the discovered interpreter (which might be None);
                 # we'll propagate back to the controller in the task result
@@ -968,6 +968,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['deprecations'] = []
             data['deprecations'].extend(self._discovery_deprecation_warnings)
 
+        # mark the entire module results untrusted as a template right here, since the current action could
+        # possibly template one of these values.
+        data = wrap_var(data)
+
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
@@ -978,9 +982,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 display.warning(w)
 
             data = json.loads(filtered_output)
-
-            if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                data['ansible_facts'] = wrap_var(data['ansible_facts'])
             data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error

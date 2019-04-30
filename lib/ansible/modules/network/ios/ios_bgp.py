@@ -18,7 +18,7 @@ DOCUMENTATION = """
 ---
 module: ios_bgp
 version_added: "2.8"
-author: "Nilashish Chakraborty (@nilashishc)"
+author: "Nilashish Chakraborty (@NilashishC)"
 short_description: Configure global BGP protocol settings on Cisco IOS.
 description:
   - This module provides configuration management of global BGP parameters

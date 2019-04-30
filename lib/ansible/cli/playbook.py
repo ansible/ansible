@@ -10,8 +10,8 @@ import stat
 
 from ansible import context
 from ansible.cli import CLI
-from ansible.cli.arguments import optparse_helpers as opt_help
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.cli.arguments import option_helpers as opt_help
+from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.block import Block
@@ -46,25 +46,23 @@ class PlaybookCLI(CLI):
         opt_help.add_module_options(self.parser)
 
         # ansible playbook specific opts
-        self.parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-                               help="list all tasks that would be executed")
-        self.parser.add_option('--list-tags', dest='listtags', action='store_true',
-                               help="list all available tags")
-        self.parser.add_option('--step', dest='step', action='store_true',
-                               help="one-step-at-a-time: confirm each task before running")
-        self.parser.add_option('--start-at-task', dest='start_at_task',
-                               help="start the playbook at the task matching this name")
+        self.parser.add_argument('--list-tasks', dest='listtasks', action='store_true',
+                                 help="list all tasks that would be executed")
+        self.parser.add_argument('--list-tags', dest='listtags', action='store_true',
+                                 help="list all available tags")
+        self.parser.add_argument('--step', dest='step', action='store_true',
+                                 help="one-step-at-a-time: confirm each task before running")
+        self.parser.add_argument('--start-at-task', dest='start_at_task',
+                                 help="start the playbook at the task matching this name")
+        self.parser.add_argument('args', help='Playbook(s)', metavar='playbook', nargs='+')
 
-    def post_process_args(self, options, args):
-        options, args = super(PlaybookCLI, self).post_process_args(options, args)
-
-        if len(args) == 0:
-            raise AnsibleOptionsError("You must specify a playbook file to run")
+    def post_process_args(self, options):
+        options = super(PlaybookCLI, self).post_process_args(options)
 
         display.verbosity = options.verbosity
-        self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
+        self.validate_conflicts(options, runas_opts=True, fork_opts=True)
 
-        return options, args
+        return options
 
     def run(self):
 

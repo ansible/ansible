@@ -8,7 +8,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import glob
-import imp
 import os
 import os.path
 import pkgutil
@@ -27,6 +26,12 @@ from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_P
 from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlatMapLoader, is_collection_ref
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
+
+try:
+    import importlib.util
+    imp = None
+except ImportError:
+    import imp
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -51,7 +56,7 @@ def add_all_plugin_dirs(path):
                 if os.path.isdir(plugin_path):
                     obj.add_directory(to_text(plugin_path))
     else:
-        display.warning("Ignoring invalid path provided to plugin path: %s is not a directory" % to_native(path))
+        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_native(path))
 
 
 def get_shell_plugin(shell_type=None, executable=None):
@@ -85,6 +90,13 @@ def get_shell_plugin(shell_type=None, executable=None):
         setattr(shell, 'executable', executable)
 
     return shell
+
+
+def add_dirs_to_loader(which_loader, paths):
+
+    loader = getattr(sys.modules[__name__], '%s_loader' % which_loader)
+    for path in paths:
+        loader.add_directory(path, with_subdir=True)
 
 
 class PluginLoader:
@@ -435,6 +447,7 @@ class PluginLoader:
         #       looks like _get_paths() never forces a cache refresh so if we expect
         #       additional directories to be added later, it is buggy.
         for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
+            display.debug('trying %s' % path)
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
@@ -527,9 +540,15 @@ class PluginLoader:
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            with open(to_bytes(path), 'rb') as module_file:
-                # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
-                module = imp.load_source(to_native(full_name), to_native(path), module_file)
+            if imp is None:
+                spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                sys.modules[full_name] = module
+            else:
+                with open(to_bytes(path), 'rb') as module_file:
+                    # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
+                    module = imp.load_source(to_native(full_name), to_native(path), module_file)
         return module
 
     def _update_object(self, obj, name, path):

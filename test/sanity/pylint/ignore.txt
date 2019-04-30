@@ -3,7 +3,6 @@ lib/ansible/cli/console.py blacklisted-name
 lib/ansible/compat/selectors/_selectors2.py blacklisted-name
 lib/ansible/executor/playbook_executor.py blacklisted-name
 lib/ansible/executor/task_queue_manager.py blacklisted-name
-lib/ansible/module_utils/acme.py blacklisted-name
 lib/ansible/module_utils/facts/network/linux.py blacklisted-name
 lib/ansible/module_utils/network/edgeswitch/edgeswitch_interface.py duplicate-string-formatting-argument
 lib/ansible/module_utils/urls.py blacklisted-name
@@ -24,8 +23,8 @@ lib/ansible/modules/cloud/google/gce_net.py blacklisted-name
 lib/ansible/modules/cloud/google/gce_pd.py blacklisted-name
 lib/ansible/modules/cloud/google/gce_snapshot.py blacklisted-name
 lib/ansible/modules/cloud/google/gce_tag.py blacklisted-name
-lib/ansible/modules/cloud/google/gcp_backend_service.py blacklisted-name
-lib/ansible/modules/cloud/google/gcp_healthcheck.py blacklisted-name
+lib/ansible/modules/cloud/google/_gcp_backend_service.py blacklisted-name
+lib/ansible/modules/cloud/google/_gcp_healthcheck.py blacklisted-name
 lib/ansible/modules/cloud/lxc/lxc_container.py blacklisted-name
 lib/ansible/modules/files/copy.py blacklisted-name
 lib/ansible/modules/files/patch.py blacklisted-name

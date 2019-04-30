@@ -376,6 +376,8 @@ You can specify the name of the variable for each loop using ``loop_var`` with `
 
 .. note:: If Ansible detects that the current loop is using a variable which has already been defined, it will raise an error to fail the task.
 
+Extended loop variables
+-----------------------
 .. versionadded:: 2.8
 
 As of Ansible 2.8 you can get extended loop information using the ``extended`` option to loop control. This option will expose the following information.
@@ -400,6 +402,8 @@ Variable                    Description
       loop_control:
         extended: yes
 
+Accessing the name of your loop_var
+-----------------------------------
 .. versionadded:: 2.8
 
 As of Ansible 2.8 you can get the name of the value provided to ``loop_control.loop_var`` using the ``ansible_loop_var`` variable
