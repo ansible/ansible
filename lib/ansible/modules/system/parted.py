@@ -525,7 +525,7 @@ def check_size_format(size_str):
     Checks if the input string is an allowed size
     """
     size, unit = parse_unit(size_str)
-    return unit in map(str.lower, parted_units)
+    return unit.lower() in map(str.lower, parted_units)
 
 
 def main():
@@ -590,13 +590,13 @@ def main():
     if not check_size_format(part_start):
         module.fail_json(
             msg="The argument 'part_start' doesn't respect required format."
-                "The size unit is case sensitive.",
+            "Valid units are %s." % ', '.join(parted_units),
             err=parse_unit(part_start)
         )
     if not check_size_format(part_end):
         module.fail_json(
             msg="The argument 'part_end' doesn't respect required format."
-                "The size unit is case sensitive.",
+            "Valid units are %s." % ', '.join(parted_units),
             err=parse_unit(part_end)
         )
 
