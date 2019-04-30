@@ -743,7 +743,6 @@ def main():
     meta_args = dict(
         state=dict(default='present', choices=['present', 'absent']),
         realm=dict(type='str', default='master'),
-        
         id=dict(type='str'),
         client_id=dict(type='str', aliases=['clientId']),
         name=dict(type='str'),
@@ -800,7 +799,7 @@ def main():
 
     # convert module parameters to client representation parameters (if they belong in there)
     client_params = [x for x in module.params
-                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm', 'url','force'] and
+                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm', 'url', 'force'] and
                      module.params.get(x) is not None]
     keycloak_argument_spec().keys()
     # See whether the client already exists in Keycloak
@@ -870,7 +869,7 @@ def main():
         client_secret = kc.get_client_secret_by_id(after_client['id'], realm=realm)
         if client_secret is not None:
             result['clientSecret'] = client_secret
-            
+
         result['msg'] = 'Client %s has been created.' % updated_client['clientId']
         module.exit_json(**result)
     else:
