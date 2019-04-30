@@ -510,6 +510,7 @@ options:
                     name:
                         description:
                             - Name of the role. It can be a realm role name or a client role name.
+        version_added: "2.9"
 extends_documentation_fragment:
     - keycloak
 
@@ -726,7 +727,7 @@ def main():
         protocol=dict(type='str', choices=['openid-connect', 'saml']),
         protocolMapper=dict(type='str'),
         config=dict(type='dict'),
-        state=dict(type='str', choices=['absent','present'], default='present'),
+        state=dict(type='str', choices=['absent', 'present'], default='present'),
     )
     clientrolecomposites_spec = dict(
         name=dict(type='str'),
@@ -737,7 +738,7 @@ def main():
         description=dict(type='str'),
         composite=dict(type='bool'),
         composites=dict(type='list', elements='dict', options=clientrolecomposites_spec),
-        state=dict(type='str', choices=['absent','present'], default='present'),
+        state=dict(type='str', choices=['absent', 'present'], default='present'),
     )
     meta_args = dict(
         state=dict(default='present', choices=['present', 'absent']),
@@ -748,7 +749,7 @@ def main():
         name=dict(type='str'),
         description=dict(type='str'),
         root_url=dict(type='str', aliases=['rootUrl']),
-        admin_url=dict(type='str', aliases=['adminUrl','url']),
+        admin_url=dict(type='str', aliases=['adminUrl', 'url']),
         base_url=dict(type='str', aliases=['baseUrl']),
         surrogate_auth_required=dict(type='bool', aliases=['surrogateAuthRequired']),
         enabled=dict(type='bool'),
@@ -779,7 +780,7 @@ def main():
         use_template_mappers=dict(type='bool', aliases=['useTemplateMappers']),
         protocol_mappers=dict(type='list', elements='dict', options=protmapper_spec, aliases=['protocolMappers']),
         authorization_settings=dict(type='dict', aliases=['authorizationSettings']),
-        client_roles=dict(type='list', elements='dict', options=clientroles_spec, aliases=['clientRoles','roles']),
+        client_roles=dict(type='list', elements='dict', options=clientroles_spec, aliases=['clientRoles', 'roles']),
         force=dict(type='bool', default=False),
     )
     argument_spec.update(meta_args)
@@ -799,7 +800,7 @@ def main():
 
     # convert module parameters to client representation parameters (if they belong in there)
     client_params = [x for x in module.params
-                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm','username','password','url','force'] and
+                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm', 'url','force'] and
                      module.params.get(x) is not None]
     keycloak_argument_spec().keys()
     # See whether the client already exists in Keycloak
