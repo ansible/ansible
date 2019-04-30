@@ -218,8 +218,6 @@ import copy
 import traceback
 
 from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
-
-from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 from ansible.module_utils.kubevirt import (
     virtdict,
     KubeVirtRawModule,
@@ -238,7 +236,7 @@ VM_ARG_SPEC = {
     },
     'datavolumes': {'type': 'list'},
     'template': {'type': 'str'},
-    'template_parameters': {'type': 'dict'},
+    'template_parameters': {'type': 'dict', 'default': {}},
 }
 
 # Which params (can) modify 'spec:' contents of a VM:
@@ -317,11 +315,31 @@ class KubeVirtVM(KubeVirtRawModule):
 
         return changed, k8s_obj
 
+    def _process_template_defaults(self, proccess_template, processedtemplate, defaults):
+        def set_template_default(default_name, default_name_index, definition_spec):
+            default_value = proccess_template['metadata']['annotations'][default_name]
+            if default_value:
+                values = definition_spec[default_name_index]
+                default_values = [d for d in values if d.get('name') == default_value]
+                defaults[default_name_index] = default_values
+                if definition_spec[default_name_index] is None:
+                    definition_spec[default_name_index] = []
+                definition_spec[default_name_index].extend([d for d in values if d.get('name') != default_value])
+
+        devices = processedtemplate['spec']['template']['spec']['domain']['devices']
+        spec = processedtemplate['spec']['template']['spec']
+
+        set_template_default('defaults.template.cnv.io/disk', 'disks', devices)
+        set_template_default('defaults.template.cnv.io/volume', 'volumes', spec)
+        set_template_default('defaults.template.cnv.io/nic', 'interfaces', devices)
+        set_template_default('defaults.template.cnv.io/network', 'networks', spec)
+
     def construct_definition(self, kind, our_state, ephemeral):
         definition = virtdict()
         processedtemplate = {}
 
         # Construct the API object definition:
+        defaults = {'disks': [], 'volumes': [], 'interfaces': [], 'networks': []}
         vm_template = self.params.get('template')
         if vm_template:
             # Find the template the VM should be created from:
@@ -338,14 +356,16 @@ class KubeVirtVM(KubeVirtRawModule):
             processedtemplates_res = self.client.resources.get(api_version='template.openshift.io/v1', kind='Template', name='processedtemplates')
             processedtemplate = processedtemplates_res.create(proccess_template.to_dict()).to_dict()['objects'][0]
 
+            # Process defaults of the template:
+            self._process_template_defaults(proccess_template, processedtemplate, defaults)
+
         if not ephemeral:
             definition['spec']['running'] = our_state == 'running'
         template = definition if ephemeral else definition['spec']['template']
         template['metadata']['labels']['vm.cnv.io/name'] = self.params.get('name')
-        dummy, definition = self.construct_vm_definition(kind, definition, template)
-        definition = dict(self.merge_dicts(processedtemplate, definition))
+        dummy, definition = self.construct_vm_definition(kind, definition, template, defaults)
 
-        return definition
+        return self.merge_dicts(definition, processedtemplate)
 
     def execute_module(self):
         # Parse parameters specific to this module:

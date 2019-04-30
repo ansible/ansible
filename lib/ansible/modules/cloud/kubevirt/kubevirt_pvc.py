@@ -435,7 +435,7 @@ class KubevirtPVC(KubernetesRawModule):
             spec['volumeName'] = self.params.get('volume_name')
 
         # 'resource_definition:' has lower priority than module parameters
-        definition = dict(KubeVirtRawModule.merge_dicts(self.resource_definitions[0], definition))
+        definition = KubeVirtRawModule.merge_dicts(self.resource_definitions[0], definition)
 
         self.client = self.get_api_client()
         resource = self.find_resource(KIND, API, fail=True)
