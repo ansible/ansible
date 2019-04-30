@@ -1037,7 +1037,6 @@ def main():
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
             separate_git_dir=dict(type='path'),
-            tmp_dir=dict(default=None, type='path'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare')],
         supports_check_mode=True
