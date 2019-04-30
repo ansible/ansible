@@ -162,7 +162,7 @@ CATEGORY_COMMANDS_ALL = {
                 "GetMemoryInventory", "GetNicInventory",
                 "GetStorageControllerInventory", "GetDiskInventory",
                 "GetBiosAttributes", "GetBootOrder"],
-    "Chassis": ["GetFanInventory", "GetPsuInventory"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisThermals"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
@@ -271,6 +271,8 @@ def main():
                     result["fan"] = rf_utils.get_fan_inventory()
                 elif command == "GetPsuInventory":
                     result["psu"] = rf_utils.get_psu_inventory()
+                elif command == "GetChassisThermals":
+                    result["thermals"] = rf_utils.get_chassis_thermals()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
