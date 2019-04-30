@@ -277,3 +277,37 @@
   loop: "{{ hostvars|dict2items }}"
   loop_control:
     label: "{{ item.key }}"
+
+- name: Ensure combining two dictionaries containing undefined variables provides a helpful error
+  block:
+    - set_fact:
+        foo:
+          key1: value1
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': undef_variable}) }}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': {'nested': [undef_variable]}})}}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
+        key2: is_defined
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': key2}) }}"
+
+    - assert:
+        that:
+          - "combined.key2 == 'is_defined'"
