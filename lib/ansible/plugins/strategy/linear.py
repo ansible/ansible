@@ -375,8 +375,9 @@ class StrategyModule(StrategyBase):
 
                         except AnsibleError as e:
                             for host in included_file._hosts:
-                                self._tqm._failed_hosts[host.name] = True
-                                iterator.mark_host_failed(host)
+                                if host.name not in self._tqm._failed_hosts:
+                                    self._tqm._failed_hosts[host.name] = True
+                                    iterator.mark_host_failed(host)
                             display.error(to_text(e), wrap_text=False)
                             include_failure = True
                             continue

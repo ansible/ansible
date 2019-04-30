@@ -822,8 +822,9 @@ class StrategyBase:
             # and increment the stats for this host
             for host in included_file._hosts:
                 tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
-                iterator.mark_host_failed(host)
-                self._tqm._failed_hosts[host.name] = True
+                if host.name not in self._tqm._failed_hosts:
+                    iterator.mark_host_failed(host)
+                    self._tqm._failed_hosts[host.name] = True
                 self._tqm._stats.increment('failures', host.name)
                 self._tqm.send_callback('v2_runner_on_failed', tr)
             return []
@@ -924,8 +925,9 @@ class StrategyBase:
                                 break
                 except AnsibleError as e:
                     for host in included_file._hosts:
-                        iterator.mark_host_failed(host)
-                        self._tqm._failed_hosts[host.name] = True
+                        if host.name not in self._tqm._failed_hosts:
+                            iterator.mark_host_failed(host)
+                            self._tqm._failed_hosts[host.name] = True
                     display.warning(to_text(e))
                     continue
 

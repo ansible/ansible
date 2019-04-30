@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix executing the rescue section for includes in loops (https://github.com/ansible/ansible/issues/23161)

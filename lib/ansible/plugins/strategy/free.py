@@ -226,8 +226,10 @@ class StrategyModule(StrategyBase):
                             new_blocks = self._load_included_file(included_file, iterator=iterator)
                     except AnsibleError as e:
                         for host in included_file._hosts:
-                            iterator.mark_host_failed(host)
-                        display.warning(to_text(e))
+                            if host.name not in self._tqm._failed_hosts:
+                                self._tqm._failed_hosts[host.name] = True
+                                iterator.mark_host_failed(host)
+                        display.error(to_text(e), wrap_text=False)
                         continue
 
                     for new_block in new_blocks:
