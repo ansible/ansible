@@ -955,7 +955,7 @@ class RedfishUtils(object):
             else:
                 return {'ret': False, 'msg': 'Key Power not found.'}
 
-        result['chassis_power'] = chassis_power_results
+        result['entries'] = chassis_power_results
         return result
 
     def get_chassis_thermals(self):
