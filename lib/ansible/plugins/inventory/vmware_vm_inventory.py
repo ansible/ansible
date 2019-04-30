@@ -411,6 +411,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 # VMware does not provide a way to uniquely identify VM by its name
                 # i.e. there can be two virtual machines with same name
                 # Appending "_" and VMware UUID to make it unique
+                if not vm_obj.obj.config:
+                    # Sometime orphaned VMs return no configurations
+                    continue
+
                 current_host = vm_obj_property.val + "_" + vm_obj.obj.config.uuid
 
                 if current_host not in hostvars:

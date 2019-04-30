@@ -1,0 +1,2 @@
+minor_changes:
+- Skip orphan VMs from inventory while running vmware_vm_inventory as VMs does not return any facts (https://github.com/ansible/ansible/pull/55929).
