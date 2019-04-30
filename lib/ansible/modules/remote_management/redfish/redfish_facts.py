@@ -282,7 +282,7 @@ def main():
                 elif command == "GetChassisThermals":
                     result["thermals"] = rf_utils.get_chassis_thermals()
                 elif command == "GetChassisPower":
-                    result["power"] = rf_utils.get_chassis_power()
+                    result["chassis_power"] = rf_utils.get_chassis_power()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
