@@ -169,12 +169,6 @@ options:
               can be separated from working tree.
         version_added: "2.7"
 
-    tmp_dir:
-        description:
-            - The optional path to place the temporary files / folder of working
-              /tmp is used if empty.
-        version_added: "2.7"
-
 requirements:
     - git>=1.7.1 (the command line tool)
 
@@ -229,12 +223,6 @@ EXAMPLES = '''
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git
-
-# Example clone a repo with using other path than default /tmp directory
-- git:
-    repo: https://github.com/ansible/ansible-examples.git
-    dest: /src/ansible-examples
-    tmp_dir: /home/ansible/fix_problem_of_tmp_mounted_with_no_exec_flag_for_obvious_security_reasons
 '''
 
 RETURN = '''
@@ -372,15 +360,15 @@ def write_ssh_wrapper(module):
         # make sure we have full permission to the module_dir, which
         # may not be the case if we're sudo'ing to a non-root user
         if os.access(module_dir, os.W_OK | os.R_OK | os.X_OK):
-            if module.params['tmp_dir'] is not None:
-                fd, wrapper_path = tempfile.mkstemp(prefix=module.params['tmp_dir'] + '/')
+            if module._tmpdir is not None:
+                fd, wrapper_path = tempfile.mkstemp(prefix=module._tmpdir + '/')
             else:
                 fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
         else:
             raise OSError
     except (IOError, OSError):
-        if module.params['tmp_dir'] is not None:
-            fd, wrapper_path = tempfile.mkstemp(prefix=module.params['tmp_dir'] + '/')
+        if module._tmpdir is not None:
+            fd, wrapper_path = tempfile.mkstemp(prefix=module._tmpdir + '/')
         else:
             fd, wrapper_path = tempfile.mkstemp()
     fh = os.fdopen(fd, 'w+b')
@@ -991,8 +979,8 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
         # If git archive file exists, then compare it with new git archive file.
         # if match, do nothing
         # if does not match, then replace existing with temp archive file.
-        if module.params['tmp_dir'] is not None:
-            tempdir = tempfile.mkdtemp(prefix=module.params['tmp_dir'] + '/')
+        if module._tmpdir is not None:
+            tempdir = tempfile.mkdtemp(prefix=module._tmpdir + '/')
         else:
             tempdir = tempfile.mkdtemp()
         new_archive_dest = os.path.join(tempdir, repo_name)
