@@ -63,11 +63,12 @@ class GalaxyCLI(CLI):
         offline.add_argument('--offline', dest='offline', default=False, action='store_true',
                              help="Don't query the galaxy API when creating roles")
 
+        default_roles_path = C.config.get_configuration_definition('DEFAULT_ROLES_PATH').get('default', '')
         roles_path = opt_help.argparse.ArgumentParser(add_help=False)
         roles_path.add_argument('-p', '--roles-path', dest='roles_path', type=opt_help.unfrack_path(pathsep=True),
                                 default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
-                                help='The path to the directory containing your roles. The default is the roles_path '
-                                     'configured in your ansible.cfg file (/etc/ansible/roles if not configured)')
+                                help='The path to the directory containing your roles. The default is the first writable one'
+                                     'configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
         force = opt_help.argparse.ArgumentParser(add_help=False)
         force.add_argument('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')

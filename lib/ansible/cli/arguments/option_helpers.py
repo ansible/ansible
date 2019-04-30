@@ -282,8 +282,9 @@ def add_meta_options(parser):
 
 def add_module_options(parser):
     """Add options for commands that load modules"""
+    module_path = C.config.get_configuration_definition('DEFAULT_MODULE_PATH').get('default', '')
     parser.add_argument('-M', '--module-path', dest='module_path', default=None,
-                        help="prepend colon-separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
+                        help="prepend colon-separated path(s) to module library (default=%s)" % module_path,
                         type=unfrack_path(pathsep=True), action=PrependListAction)
 
 
