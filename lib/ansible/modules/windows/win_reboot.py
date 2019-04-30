@@ -17,14 +17,14 @@ version_added: "2.1"
 options:
   pre_reboot_delay:
     description:
-    - Seconds for shutdown to wait before requesting reboot
+    - Seconds to wait before reboot. Passed as a parameter to the reboot command.
     type: int
     default: 2
     aliases: [ pre_reboot_delay_sec ]
   post_reboot_delay:
     description:
-    - Seconds to wait after the reboot was successful and the connection was re-established
-    - This is useful if you want wait for something to settle despite your connection already working
+    - Seconds to wait after the reboot command was successful before attempting to validate the system rebooted successfully.
+    - This is useful if you want wait for something to settle despite your connection already working.
     type: int
     default: 0
     version_added: '2.4'
@@ -39,8 +39,8 @@ options:
     aliases: [ shutdown_timeout_sec ]
   reboot_timeout:
     description:
-    - Maximum seconds to wait for machine to re-appear on the network and respond to a test command
-    - This timeout is evaluated separately for both network appearance and test command success (so maximum clock time is actually twice this value)
+    - Maximum seconds to wait for machine to re-appear on the network and respond to a test command.
+    - This timeout is evaluated separately for both reboot verification and test command success so maximum clock time is actually twice this value.
     type: int
     default: 600
     aliases: [ reboot_timeout_sec ]
