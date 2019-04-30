@@ -118,6 +118,30 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Create diagnostic settings for IP
+  azure_rm_diagnosticsettings:
+    name: myipdiagnostic
+    target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
+    storage_account_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorage"
+    logs:
+    - category: DDoSMitigationReports
+      enabled: yes
+      retention_policy:
+        enabled: yes
+        days: 3
+    metrics:
+    - category: AllMetrics
+      enabled: yes
+      time_grain: PT1H
+      retention_policy:
+        enabled: yes
+        days: 3
+
+- name: Delete diagnostic settings
+  azure_rm_diagnosticsettings
+    name: myipdiagnostic
+    target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
+    state: absent
 '''
 
 RETURN = '''
@@ -125,7 +149,8 @@ id:
     description: diagnostic setting resource path.
     type: str
     returned: success
-    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/images/myImage"
+    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/
+              microsoft.network/publicipaddresses/myip/providers/microsoft.insights/diagnosticSettings/myipdiagnostic"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
@@ -146,14 +171,14 @@ retention_policy_spec = dict(
     days=dict(type='int')
 )
 
-logs_spec = dict(
+metrics_spec = dict(
+    time_grain=dict(type='str'),
     category=dict(type='str'),
     enabled=dict(type='bool'),
     retention_policy=dict(type='dict',options=retention_policy_spec)
 )
 
-metrics_spec = dict(
-    time_grain=dict(type='str'),
+logs_spec = dict(
     category=dict(type='str'),
     enabled=dict(type='bool'),
     retention_policy=dict(type='dict',options=retention_policy_spec)
@@ -243,37 +268,24 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
                                              resource_group=self.target.get('resource_group'))
         self.target = resource_id
         if self.state == 'present':
-            def create_metric_instance(params):
-                metric = params.copy()
-                metric['category'] = metric.get('category', None)
-                metric['time_grain'] = timedelta(minutes=metric.get('time_grain', 0))
-                metric['enabled'] = metric.get('enabled', False)
-                if metric.get('retention_policy', None):
-                    metric['retention_policy'] = RetentionPolicy(enabled=metric.get('retention_policy').get('enabled', False),
-                                                                 days=metric.get('retention_policy').get('days', 0))
+            def create_metric_or_log_instance(params, metric_or_log):
+                data = params.copy()
+                data['category'] = data.get('category', None)
+                data['enabled'] = data.get('enabled', None)
+                if data.get('retention_policy', None):
+                    data['retention_policy'] = RetentionPolicy(enabled=data.get('retention_policy').get('enabled', False),
+                                                               days=data.get('retention_policy').get('days', 0))
                 else:
-                    metric['retention_policy'] = RetentionPolicy(enabled=False,
-                                                                 days=0)
-                return MetricSettings(**metric)
-
-            def create_log_instance(params):
-                log = params.copy()
-                log['category'] = log.get('category', None)
-                log['enabled'] = log.get('enabled', False)
-                if log.get('retention_policy', None):
-                    log['retention_policy'] = RetentionPolicy(enabled=log.get('retention_policy').get('enabled', False),
-                                                              days=log.get('retention_policy').get('days', 0))
-                else:
-                    log['retention_policy'] = RetentionPolicy(enabled=False,
-                                                              days=0)
-                return LogSettings(**log)
+                    data['retention_policy'] = None
+                data['time_grain'] = data.get('time_grain', None)
+                return metric_or_log(**data)
 
             parameters = DiagnosticSettingsResource(storage_account_id=self.storage_account_id,
                                                     service_bus_rule_id=self.service_bus_rule_id,
                                                     event_hub_authorization_rule_id=self.event_hub_authorization_rule_id,
                                                     event_hub_name=self.event_hub_name,
-                                                    metrics=[create_metric_instance(p) for p in self.metrics or []],
-                                                    logs=[create_log_instance(p) for p in self.logs or []],
+                                                    metrics=[create_metric_or_log_instance(p, MetricSettings) for p in self.metrics or []],
+                                                    logs=[create_metric_or_log_instance(p, LogSettings) for p in self.logs or []],
                                                     workspace_id=self.workspace_id)
 
             if not results:
@@ -289,10 +301,10 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
         elif results:
             changed = True
             if not self.check_mode:
-                self.delete_diagnostic_settings()
-        
+                results = self.delete_diagnostic_settings()
+
         self.results['changed'] = changed
-        self.results['id'] = results if results else None
+        self.results['id'] = results['id'] if results else None
         return self.results
 
     def check_status(self, changed, results, params):
@@ -313,23 +325,31 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
             results.event_hub_name = params.event_hub_name
 
         if params.metrics:
-            params_set = set([str(x.as_dict()) for x in params.metrics or []])
-            results_set = set([str(x.as_dict()) for x in results.metrics or []])
-            if not params_set.issubset(results_set):
-                changed = True
-                results.metrics = params.metrics
+            changed, results.metrics = self.update_metrics_or_logs(params=params.metrics, results=results.metrics, changed=changed)
 
         if params.logs:
-            params_set = set([str(x.as_dict()) for x in params.logs or []])
-            results_set = set([str(x.as_dict()) for x in results.logs or []])
-            if not params_set.issubset(results_set):
-                changed = True
-                results.logs = params.logs
+            changed, results.logs = self.update_metrics_or_logs(params=params.logs, results=results.logs, changed=changed)
 
         if params.workspace_id and results.workspace_id != params.workspace_id:
             changed = True
             results.workspace_id = params.workspace_id
 
+        return changed, results
+
+    def update_metrics_or_logs(self, params, results, changed):
+        results_name_dict = dict()
+        for idx, val in enumerate(results):
+            results_name_dict[val.category] = idx
+        for val in params:
+            if results_name_dict.get(val.category, None) is not None:
+                if val.enabled is not None and val.enabled != results[results_name_dict.get(val.category)].enabled:
+                    changed = True
+                    results[results_name_dict.get(val.category)].enabled = val.enabled
+                if val.retention_policy is not None and val.retention_policy != results[results_name_dict.get(val.category)].retention_policy:
+                    changed = True
+                    results[results_name_dict.get(val.category)].retention_policy = val.retention_policy
+            else:
+                self.fail("Incrorrect metric or log category! Please check the exsitence of the category for this resource.")
         return changed, results
 
     def get_diagnostic_settings(self):
