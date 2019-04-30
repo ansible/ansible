@@ -91,6 +91,8 @@ options:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
               ignored. Needs I(git>=1.9.1) to work correctly.
+            - If you want to use this option as the same behavior as v2.8 or earlier,
+              you need to set C(yes) to C(single_branch) as well.
         version_added: "1.2"
     clone:
         description:
@@ -178,6 +180,13 @@ options:
         default: []
         version_added: "2.9"
 
+    single_branch:
+        description:
+            - Clone only the history leading to the tip of a single branch.
+              This requires C(git) version>=1.7.10 to be installed.
+        type: bool
+        version_added: "2.10"
+
 requirements:
     - git>=1.7.1 (the command line tool)
 
@@ -232,6 +241,13 @@ EXAMPLES = '''
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git
+
+# Example clone a repo with --depth and --no-single-branch option
+- git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /srv/checkout
+    depth: 1
+    single_branch: no
 '''
 
 RETURN = '''
@@ -454,7 +470,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist):
+          reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -492,6 +508,12 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             needs_separate_git_dir_fallback = True
         else:
             cmd.append('--separate-git-dir=%s' % separate_git_dir)
+
+    if single_branch is not None:
+        if single_branch:
+            cmd.append('--single-branch')
+        else:
+            cmd.append('--no-single-branch')
 
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
@@ -1060,6 +1082,7 @@ def main():
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
             separate_git_dir=dict(type='path'),
+            single_branch=dict(type='bool'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare')],
         supports_check_mode=True
@@ -1084,6 +1107,7 @@ def main():
     umask = module.params['umask']
     archive = module.params['archive']
     separate_git_dir = module.params['separate_git_dir']
+    single_branch = module.params['single_branch']
 
     result = dict(changed=False, warnings=list())
 
@@ -1152,6 +1176,10 @@ def main():
         result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
+    if single_branch is not None and git_version_used < LooseVersion('1.7.10'):
+        result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
+        single_branch = None
+
     recursive = module.params['recursive']
     track_submodules = module.params['track_submodules']
 
@@ -1172,7 +1200,8 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec,
+              verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo

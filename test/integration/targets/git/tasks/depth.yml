@@ -10,6 +10,7 @@
     repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
+    single_branch: yes
 
 - name: DEPTH | try to access earlier commit
   command: "git checkout {{git_shallow_head_1.stdout}}"

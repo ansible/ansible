@@ -1,0 +1,55 @@
+# test code for single_branch with separate git dir updating
+# see: https://github.com/ansible/ansible/issues/55707
+
+- name: SINGLE_BRANCH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: SINGLE_BRANCH | Clone example git repo with --single-branch
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}//shallow_branches'
+    dest: '{{ checkout_dir }}'
+    single_branch: yes
+
+- name: SINGLE_BRANCH | git checkout test-branch
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    version: test_branch
+  register: clone_branch
+  ignore_errors: yes
+
+- name: SINGLE_BRANCH | check git checkout test-branch failed
+  assert:
+    that:
+      - clone_branch is failed
+
+- name: SINGLE_BRANCH | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: SINGLE_BRANCH | Clone example git repo with --no-single-branch
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}//shallow_branches'
+    dest: '{{ checkout_dir }}'
+    single_branch: no
+
+- name: SINGLE_BRANCH | git checkout test-branch
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    version: test_branch
+  register: clone_branch
+  ignore_errors: yes
+
+- name: SINGLE_BRANCH | check git checkout test-branch succeeded
+  assert:
+    that:
+      - clone_branch is succeeded
+
+- name: SINGLE_BRANCH | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
