@@ -30,18 +30,6 @@
     state: present
     update_cache: yes
 
-- name: Add RabbitMQ public GPG key
-  apt_key:
-    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/rabbitmq-release-signing-key.asc
-    state: present
-
-- name: Add RabbitMQ repository
-  apt_repository:
-    repo: "deb https://dl.bintray.com/rabbitmq/debian {{ ansible_distribution_release }} main"
-    filename: rabbitmq
-    state: present
-    update_cache: yes
-
 # Required by the rabbitmq modules that uses the management API
 - name: Install requests
   pip:
@@ -49,8 +37,7 @@
 
 - name: Install RabbitMQ Server
   apt:
-    name: rabbitmq-server
-    state: latest
+    deb: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/rabbitmq-server_3.7.14-1_all.deb
 
 - name: Install RabbitMQ TLS dependencies
   apt:
