@@ -1,2 +1,2 @@
 bugfixes:
-  - Allow options that are type boolean to default to None rather than only True or False.
+  - Allow config options that are type boolean to default to None rather than only True or False.
