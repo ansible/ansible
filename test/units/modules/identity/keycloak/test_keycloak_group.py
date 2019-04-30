@@ -21,9 +21,9 @@ from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
 class KeycloakGroupTestCase(ModuleTestCase):
     userStorageComponent = {
-        "url": "http://localhost:18081",
-        "username": "admin",
-        "password": "admin",
+        "auth_keycloak_url": "http://localhost:18081/auth",
+        "auth_username": "admin",
+        "auth_password": "admin",
         "realm": "master",
         "state": "present",
         "name": "forGroupUnitTests",
@@ -66,10 +66,10 @@ class KeycloakGroupTestCase(ModuleTestCase):
         "force": False
     }
     groupNotChanged = {
-            "username":"admin", 
-            "password":"admin",
+            "auth_username":"admin", 
+            "auth_password":"admin",
             "realm":"master",
-            "url":"http://localhost:18081/auth",
+            "auth_keycloak_url":"http://localhost:18081/auth",
             "name":"test_group_not_changed",
             "attributes": {
                 "attr1":["value1"],
@@ -89,10 +89,10 @@ class KeycloakGroupTestCase(ModuleTestCase):
             "force":False
         }
     modifyGroup = {
-            "username":"admin", 
-            "password":"admin",
+            "auth_username":"admin", 
+            "auth_password":"admin",
             "realm":"master",
-            "url":"http://localhost:18081/auth",
+            "auth_keycloak_url":"http://localhost:18081/auth",
             "name":"test_modify_group",
             "attributes": {
                 "attr1":["value1"],
@@ -113,10 +113,10 @@ class KeycloakGroupTestCase(ModuleTestCase):
             "force":False
         }
     deleteGroup = {
-            "username":"admin", 
-            "password":"admin",
+            "auth_username":"admin", 
+            "auth_password":"admin",
             "realm":"master",
-            "url":"http://localhost:18081/auth",
+            "auth_keycloak_url":"http://localhost:18081/auth",
             "name":"test_delete_group",
             "attributes": {
                 "attr1":["value1"],
@@ -126,10 +126,10 @@ class KeycloakGroupTestCase(ModuleTestCase):
             "force":False
         }
     groupModifyForce = {
-            "username":"admin", 
-            "password":"admin",
+            "auth_username":"admin", 
+            "auth_password":"admin",
             "realm":"master",
-            "url":"http://localhost:18081/auth",
+            "auth_keycloak_url":"http://localhost:18081/auth",
             "name":"test_group_modify_force",
             "attributes": {
                 "attr1":["value1"],
@@ -175,10 +175,10 @@ class KeycloakGroupTestCase(ModuleTestCase):
         
     def test_create_group_with_attibutes_dict(self):
         toCreate = {
-            "username":"admin", 
-            "password":"admin",
+            "auth_username":"admin", 
+            "auth_password":"admin",
             "realm":"master",
-            "url":"http://localhost:18081/auth",
+            "auth_keycloak_url":"http://localhost:18081/auth",
             "name":"test_create_group_with_attibutes_dict",
             "attributes": {
                 "attr1":["value1"],
@@ -211,10 +211,10 @@ class KeycloakGroupTestCase(ModuleTestCase):
         
     def test_create_group_with_attributes_list(self):
         toCreate = {
-            "username":"admin", 
-            "password":"admin",
+            "auth_username":"admin", 
+            "auth_password":"admin",
             "realm":"master",
-            "url":"http://localhost:18081/auth",
+            "auth_keycloak_url":"http://localhost:18081/auth",
             "name":"test_create_group_with_attributes_list",
             "attributes": {
                 "attr1":["value1"],
@@ -257,10 +257,10 @@ class KeycloakGroupTestCase(ModuleTestCase):
 
     def test_create_group_with_attributes_dict_and_attributes_list(self):
         toCreate = {
-            "username":"admin", 
-            "password":"admin",
+            "auth_username":"admin", 
+            "auth_password":"admin",
             "realm":"master",
-            "url":"http://localhost:18081/auth",
+            "auth_keycloak_url":"http://localhost:18081/auth",
             "name":"test_create_group_with_attributes_dict_and_attributes_list",
             "attributes": {
                 "attr1":["value1"],
@@ -309,10 +309,10 @@ class KeycloakGroupTestCase(ModuleTestCase):
 
     def test_create_group_with_user_storage_sync(self):
         toCreate = {
-            "username":"admin", 
-            "password":"admin",
+            "auth_username":"admin", 
+            "auth_password":"admin",
             "realm":"master",
-            "url":"http://localhost:18081/auth",
+            "auth_keycloak_url":"http://localhost:18081/auth",
             "name":"test_create_group_with_user_storage_sync",
             "syncLdapMappers": True, 
             "state":"present",

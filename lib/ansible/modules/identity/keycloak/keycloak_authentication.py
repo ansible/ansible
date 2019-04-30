@@ -147,9 +147,6 @@ def main():
     """
     argument_spec = keycloak_argument_spec()
     meta_args = dict(
-            url=dict(type='str', required=True),
-            username=dict(type='str', required=True),
-            password=dict(required=True),
             realm=dict(type='str', required=True),
             alias=dict(type='str', required=True),
             providerId=dict(type='str'),

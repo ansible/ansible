@@ -46,6 +46,7 @@ URL_CLIENT_SECRET = "{url}/admin/realms/{realm}/clients/{id}/client-secret"
 
 URL_CLIENTTEMPLATE = "{url}/admin/realms/{realm}/client-templates/{id}"
 URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
+
 URL_GROUPS = "{url}/admin/realms/{realm}/groups"
 URL_GROUP = "{url}/admin/realms/{realm}/groups/{groupid}"
 URL_GROUP_CLIENT_ROLE_MAPPING = "{url}/admin/realms/{realm}/groups/{groupid}/role-mappings/clients/{clientid}"
@@ -55,9 +56,20 @@ URL_COMPONENTS = "{url}/admin/realms/{realm}/components"
 URL_COMPONENT = "{url}/admin/realms/{realm}/components/{id}"
 URL_COMPONENT_BY_NAME_TYPE_PARENT = "{url}/admin/realms/{realm}/components?name={name}&type={type}&parent={parent}"
 URL_SUB_COMPONENTS = "{url}/admin/realms/{realm}/components?parent={parent}"
+
+URL_USERS = "{url}/admin/realms/{realm}/users"
+URL_USER = "{url}/admin/realms/{realm}/users/{id}"
+URL_USER_ROLE_MAPPINGS = "{url}/admin/realms/{realm}/users/{id}/role-mappings"
+URL_USER_REALM_ROLE_MAPPINGS = "{url}/admin/realms/{realm}/users/{id}/role-mappings/realm"
+URL_USER_CLIENTS_ROLE_MAPPINGS = "{url}/admin/realms/{realm}/users/{id}/role-mappings/clients"
+URL_USER_CLIENT_ROLE_MAPPINGS = "{url}/admin/realms/{realm}/users/{id}/role-mappings/clients/{client_id}"
+URL_USER_GROUPS = "{url}/admin/realms/{realm}/users/{id}/groups"
+URL_USER_GROUP = "{url}/admin/realms/{realm}/users/{id}/groups/{group_id}"
+
 URL_USER_STORAGE = "{url}/admin/realms/{realm}/user-storage"
 URL_USER_STORAGE_SYNC = "{url}/admin/realms/{realm}/user-storage/{id}/sync?action={action}"
 URL_USER_STORAGE_MAPPER_SYNC = "{url}/admin/realms/{realm}/user-storage/{parentid}/mappers/{id}/sync?direction={direction}"
+
 URL_AUTHENTICATION_FLOWS = "{url}/admin/realms/{realm}/authentication/flows"
 URL_AUTHENTICATION_FLOW = "{url}/admin/realms/{realm}/authentication/flows/{id}"
 URL_AUTHENTICATION_FLOW_COPY = "{url}/admin/realms/{realm}/authentication/flows/{copyfrom}/copy"
@@ -74,6 +86,7 @@ URL_IDP_MAPPER = "{url}/admin/realms/{realm}/identity-provider/instances/{alias}
 URL_REALMS = "{url}/admin/realms"
 URL_REALM = "{url}/admin/realms/{realm}"
 URL_REALM_EVENT_CONFIG = "{url}/admin/realms/{realm}/events/config"
+
 URL_REALM_ROLES = "{url}/admin/realms/{realm}/roles"
 URL_REALM_ROLE = "{url}/admin/realms/{realm}/roles/{name}"
 URL_REALM_ROLE_COMPOSITES = "{url}/admin/realms/{realm}/roles/{name}/composites"
@@ -89,8 +102,8 @@ def keycloak_argument_spec():
         auth_client_id=dict(type='str', default='admin-cli'),
         auth_realm=dict(type='str', default='master'),
         auth_client_secret=dict(type='str', default=None),
-        auth_username=dict(type='str', aliases=['username'], required=True),
-        auth_password=dict(type='str', aliases=['password'], required=True, no_log=True),
+        auth_username=dict(type='str', required=True),
+        auth_password=dict(type='str', required=True, no_log=True),
         validate_certs=dict(type='bool', default=True)
     )
 
@@ -906,12 +919,12 @@ class KeycloakAPI(object):
             components = json.load(open_url(componentSvcBaseUrl + '?type=' + LDAPUserStorageProviderType, method='GET', headers=self.restheaders))
             for component in components:
                 # Get all sub components of type group-ldap-mapper
-                subComponents = json.load(open_url(componentSvcBaseUrl, method='GET', headers=self.restheaders, params={"parent": component["id"], "providerId": "group-ldap-mapper"}))
+                subComponents = json.load(open_url(componentSvcBaseUrl + "?parent=" + component["id"] + "&providerId=group-ldap-mapper", method='GET', headers=self.restheaders))
                 # For each group mappers
                 for subComponent in subComponents:
                     if subComponent["providerId"] == 'group-ldap-mapper':
                         # Sync groups
-                        open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync", method='POST', headers=self.restheaders, params={"direction": direction}) 
+                        open_url(userStorageBaseUrl + '/' + subComponent["parentId"] + "/mappers/" + subComponent["id"] + "/sync?direction=" + direction, method='POST', headers=self.restheaders) 
         except Exception as e:
             self.module.fail_json(msg="Unable to sync ldap groups %s: %s" % (direction, str(e)))
 
@@ -1644,7 +1657,8 @@ class KeycloakAPI(object):
     def search_realm_role_by_name(self, name, realm="master"):
         """
         Search a REALM role by its name.
-        :param name: Name of the realm to find
+        :param name: Name of the realm role to find
+        :param realm: Realm
         :return: Realm role representation. An empty dict is returned when role have not been found
         """
         try:
@@ -1834,3 +1848,310 @@ class KeycloakAPI(object):
         except Exception ,e :
             self.module.fail_json(msg='Could not create or update realm role %s composites in realm %s: %s'
                                       % (newRoleRepresentation["name"], realm, str(e)))
+
+    def get_user_by_id(self, user_id, realm='master'):
+        """
+        Get a User by its ID.
+        :param user_id: ID of the user.
+        :param realm: Realm
+        :return: Representation of the user.
+        """
+        try:
+            user_url = URL_USER.format(url=self.baseurl,realm=realm,id=user_id) 
+            userRepresentation = json.load(open_url(user_url, method='GET', headers=self.restheaders))
+            return userRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+
+    def search_user_by_username(self, username, realm="master"):
+        """
+        Search a user by its username.
+        :param username: User name to find
+        :return: User representation. An empty dict is returned when role have not been found
+        """
+        try:
+            userrep = {}
+            url_search_user_by_username = URL_USERS.format(url=self.baseurl, realm=realm) + '?username=' + username         
+            listUsers = json.load(open_url(url_search_user_by_username, method='GET',headers=self.restheaders))
+            for user in listUsers:
+                if user['username'] == username:
+                    userrep = user
+                    break
+            return userrep
+        except Exception ,e :
+            self.module.fail_json(msg='Could not search for user %s in realm %s: %s'
+                                      % (username, realm, str(e)))
+            
+    def create_user(self, newUserRepresentation, realm='master'):
+        """
+        Create a new User.
+        :param newUserRepresentation: Representation of the user to create
+        :param realm: Realm
+        :return: Representation of the user created.
+        """
+        try:
+            users_url = URL_USERS.format(url=self.baseurl,realm=realm) 
+            open_url(users_url, method='POST', headers=self.restheaders, data=json.dumps(newUserRepresentation))
+            userRepresentation = self.search_user_by_username(username=newUserRepresentation['username'], realm=realm)
+            return userRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not create user %s in realm %s: %s'
+                                      % (newUserRepresentation['username'], realm, str(e)))
+
+    def update_user(self, newUserRepresentation, realm='master'):
+        """
+        Update a User.
+        :param newUserRepresentation: Representation of the user to update. This representation must include the ID of the user.
+        :param realm: Realm
+        :return: Representation of the updated user.
+        """
+        try:
+            user_url = URL_USER.format(url=self.baseurl,realm=realm,id=newUserRepresentation["id"]) 
+            open_url(user_url, method='PUT', headers=self.restheaders, data=json.dumps(newUserRepresentation))
+            userRepresentation = self.get_user_by_id(user_id=newUserRepresentation['id'], realm=realm)
+            return userRepresentation
+        except Exception ,e :
+            self.module.fail_json(msg='Could not update user %s in realm %s: %s'
+                                      % (newUserRepresentation['username'], realm, str(e)))
+
+    def delete_user(self, user_id, realm='master'):
+        """
+        Delete a User.
+        :param user_id: ID of the user to be deleted
+        :param realm: Realm
+        :return: HTTP response.
+        """
+        try:
+            user_url = URL_USER.format(url=self.baseurl,realm=realm,id=user_id) 
+            return open_url(user_url, method='DELETE', headers=self.restheaders)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not delete user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+
+    def get_user_realm_roles(self, user_id, realm='master'):
+        """
+        Get realm roles for a user.
+        :param user_id: User ID
+        :param realm: Realm
+        :return: Representation of the realm roles.
+        """
+        try:
+            role_mappings_url = URL_USER_ROLE_MAPPINGS.format(url=self.baseurl,realm=realm,id=user_id) 
+            role_mappings = json.load(open_url(role_mappings_url, method='GET', headers=self.restheaders))
+            realmRoles = []
+            for roleMapping in role_mappings["realmMappings"]:
+                realmRoles.append(roleMapping["name"])
+            return realmRoles
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get role mappings for user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+
+    def update_user_realm_roles(self, user_id, realmRolesRepresentation, realm='master'):
+        """
+        Update realm roles for a user.
+        :param user_id: User ID
+        :param realm: Realm
+        :return: Representation of the realm roles.
+        """
+        try:
+            role_mappings_url = URL_USER_REALM_ROLE_MAPPINGS.format(url=self.baseurl,realm=realm,id=user_id) 
+            return open_url(role_mappings_url, method='POST', headers=self.restheaders, data=json.dumps(realmRolesRepresentation))
+        except Exception ,e :
+            self.module.fail_json(msg='Could not update realm role mappings for user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+
+    def get_user_client_roles(self, user_id, realm='master'):
+        """
+        Get client roles for a user.
+        :param user_id: User ID
+        :param realm: Realm
+        :return: Representation of the client roles.
+        """
+        try:
+            clientRoles = []
+            role_mappings_url = URL_USER_ROLE_MAPPINGS.format(url=self.baseurl,realm=realm,id=user_id) 
+            userMappings = json.load(open_url(role_mappings_url, method='GET', headers=self.restheaders))
+            for clientMapping in userMappings["clientMappings"].keys():
+                clientRole = {}
+                clientRole["clientId"] = userMappings["clientMappings"][clientMapping]["client"]
+                roles = []
+                for role in userMappings["clientMappings"][clientMapping]["mappings"]:
+                    roles.append(role["name"])
+                clientRole["roles"] = roles
+                clientRoles.append(clientRole)
+            return clientRoles
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get role mappings for user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+
+    def delete_user_client_roles(self, user_id, client_id, realm='master'):
+        """
+        Delete client roles for a user.
+        :param user_id: User ID
+        :param client_id: Client ID for client roles to delete.
+        :param realm: Realm
+        :return: HTTP Response.
+        """
+        try:
+            role_mappings_url = URL_USER_CLIENT_ROLE_MAPPINGS.format(url=self.baseurl,realm=realm,id=user_id,client_id=client_id) 
+            return open_url(role_mappings_url, method='DELETE', headers=self.restheaders)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not delete client role mappings for user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+
+    def create_user_client_roles(self, user_id, client_id, rolesToAssing, realm='master'):
+        """
+        Delete client roles for a user.
+        :param user_id: User ID
+        :param client_id: Client ID for client roles to create.
+        :param rolesToAssing: Representation of the client roles to create.
+        :param realm: Realm
+        :return: HTTP Response.
+        """
+        try:
+            role_mappings_url = URL_USER_CLIENT_ROLE_MAPPINGS.format(url=self.baseurl,realm=realm,id=user_id,client_id=client_id) 
+            return open_url(role_mappings_url, method='POST', headers=self.restheaders,data=json.dumps(rolesToAssing))
+        except Exception ,e :
+            self.module.fail_json(msg='Could not create client role mappings for user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+            
+    def get_user_groups(self, user_id, realm='master'):
+        """
+        Get groups for a user.
+        :param user_id: User ID
+        :param realm: Realm
+        :return: Representation of the client groups.
+        """
+        try:
+            groups = []
+            user_groups_url = URL_USER_GROUPS.format(url=self.baseurl,realm=realm,id=user_id) 
+            userGroups = json.load(open_url(user_groups_url, method='GET', headers=self.restheaders))
+            for userGroup in userGroups:
+                groups.append(userGroup["name"])
+            return groups
+        except Exception ,e :
+            self.module.fail_json(msg='Could not get groups for user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+
+    def add_user_in_group(self, user_id, group_id, realm='master'):
+        """
+        Add a user to a group.
+        :param user_id: User ID
+        :param group_id: Group Id to add the user to.
+        :param realm: Realm
+        :return: HTTP Response
+        """
+        try:
+            user_group_url = URL_USER_GROUP.format(url=self.baseurl,realm=realm,id=user_id,group_id=group_id) 
+            return open_url(user_group_url, method='PUT', headers=self.restheaders)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not add user %s in group %s in realm %s: %s'
+                                      % (user_id, group_id, realm, str(e)))
+
+    def remove_user_from_group(self, user_id, group_id, realm='master'):
+        """
+        Remove a user from a group for a user.
+        :param user_id: User ID
+        :param group_id: Group Id to add the user to.
+        :param realm: Realm
+        :return: HTTP response
+        """
+        try:
+            user_group_url = URL_USER_GROUP.format(url=self.baseurl,realm=realm,id=user_id,group_id=group_id) 
+            return open_url(user_group_url, method='DETETE', headers=self.restheaders)
+        except Exception ,e :
+            self.module.fail_json(msg='Could not remove user %s from group %s in realm %s: %s'
+                                      % (user_id, group_id, realm, str(e)))
+            
+    def assing_roles_to_user(self, user_id, userRealmRoles, userClientRoles, realm='master'):
+        """
+        Assign roles to a user.
+        :param user_id: user ID to whom assign roles.
+        :param userRealmRoles: Realm roles to assign to user.
+        :param userClientRoles: Client roles to assign to user.
+        :param realm: Realm
+        :return: True is user's role have changed, False otherwise.
+        """
+        try:
+            # Get the new created user realm roles
+            newUserRealmRoles = self.get_user_realm_roles(user_id=user_id,realm=realm)
+            # Get the new created user client roles
+            newUserClientRoles =  self.get_user_client_roles(user_id=user_id, realm=realm)
+
+            changed = False
+            # Assign Realm Roles
+            realmRolesRepresentation = []
+            # Get all realm roles
+            allRealmRoles = self.get_realm_roles(realm=realm)
+            for realmRole in userRealmRoles:
+                # Look for existing role into user representation
+                if not realmRole in newUserRealmRoles:
+                    roleid = None
+                    # Find the role id
+                    for role in allRealmRoles:
+                        if role["name"] == realmRole:
+                            roleid = role["id"]
+                            break
+                    if roleid is not None:
+                        realmRoleRepresentation = {}
+                        realmRoleRepresentation["id"] = roleid
+                        realmRoleRepresentation["name"] = realmRole
+                        realmRolesRepresentation.append(realmRoleRepresentation)
+            if len(realmRolesRepresentation) > 0 :
+                # Assign Role
+                self.update_user_realm_roles(user_id=user_id, realmRolesRepresentation=realmRolesRepresentation, realm=realm)
+                changed = True
+            # Assign clients roles if they need changes           
+            if not isDictEquals(userClientRoles, newUserClientRoles):
+                for clientToAssingRole in userClientRoles:
+                    # Get the client roles
+                    client_id = self.get_client_by_clientid(client_id=clientToAssingRole["clientId"], realm=realm)['id']
+                    clientRoles = self.get_client_roles(client_id=client_id, realm=realm)
+                    if clientRoles != {}:
+                    
+                        rolesToAssing = []
+                        for roleToAssing in clientToAssingRole["roles"]:
+                            newRole = {}
+                            # Find his Id
+                            for clientRole in clientRoles:
+                                if clientRole["name"] == roleToAssing:
+                                    newRole["id"] = clientRole["id"]
+                                    newRole["name"] = roleToAssing
+                                    rolesToAssing.append(newRole)
+                        if len(rolesToAssing) > 0:
+                            # Delete exiting client Roles
+                            self.delete_user_client_roles(user_id=user_id, client_id=client_id, realm=realm)
+                            # Assign Role
+                            self.create_user_client_roles(user_id=user_id, client_id=client_id, rolesToAssing=rolesToAssing, realm=realm)
+                            changed = True
+                    
+            return changed             
+        except Exception ,e :
+            self.module.fail_json(msg='Could not assign roles to user %s in realm %s: %s'
+                                      % (user_id, realm, str(e)))
+
+    def update_user_groups_membership(self, newUserRepresentation, realm='master'):
+        """
+        Update user's group membership
+        :param newUserRepresentation: Representation of the user. This representation must include the ID.
+        :param realm: Realm
+        :return: True if group membership has been changed. False Otherwise.
+        """
+        changed = False
+        try:
+            newUserGroups = self.get_user_groups(user_id=newUserRepresentation['id'], realm=realm)
+            # If group membership need to be changed
+            if not isDictEquals(newUserRepresentation["groups"], newUserGroups):
+                #set user groups
+                if "groups" in newUserRepresentation and newUserRepresentation['groups'] is not None:
+                    for userGroups in newUserRepresentation["groups"]:
+                        # Get groups Available
+                        groups = self.get_groups(realm=realm)
+                        for group in groups:
+                            if "name" in group and group["name"] == userGroups:
+                                self.add_user_in_group(user_id=newUserRepresentation["id"], group_id=group["id"], realm=realm)
+                                changed = True
+            return changed
+        except Exception ,e :
+            raise e

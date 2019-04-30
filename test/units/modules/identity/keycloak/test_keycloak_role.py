@@ -61,10 +61,10 @@ class KeycloakRoleTestCase(ModuleTestCase):
     headers = ""
     roleSvcBaseUrl = ""
     toCreateRole = {
-        "username":"admin", 
-        "password":"admin",
+        "auth_username":"admin", 
+        "auth_password":"admin",
         "realm":"master",
-        "url":"http://localhost:18081/auth",
+        "auth_keycloak_url":"http://localhost:18081/auth",
         "name":"test_create_role",
         "description":"Test create role",
         "composite":True,
@@ -84,10 +84,10 @@ class KeycloakRoleTestCase(ModuleTestCase):
         "force":False
     }
     toDoNotChangeRole = {
-        "username":"admin", 
-        "password":"admin",
+        "auth_username":"admin", 
+        "auth_password":"admin",
         "realm":"master",
-        "url":"http://localhost:18081/auth",
+        "auth_keycloak_url":"http://localhost:18081/auth",
         "name":"test_role_not_changed",
         "description":"Test role not changed",
         "composite":True,
@@ -107,10 +107,10 @@ class KeycloakRoleTestCase(ModuleTestCase):
         "force":False
     }
     toDoNotChangeRoleForce = {
-        "username":"admin", 
-        "password":"admin",
+        "auth_username":"admin", 
+        "auth_password":"admin",
         "realm":"master",
-        "url":"http://localhost:18081/auth",
+        "auth_keycloak_url":"http://localhost:18081/auth",
         "name":"test_role_modify_force",
         "description":"test_role_modify_force",
         "composite":True,
@@ -130,10 +130,10 @@ class KeycloakRoleTestCase(ModuleTestCase):
         "force":False
     }
     toChangeRole = {
-        "username":"admin", 
-        "password":"admin",
+        "auth_username":"admin", 
+        "auth_password":"admin",
         "realm":"master",
-        "url":"http://localhost:18081/auth",
+        "auth_keycloak_url":"http://localhost:18081/auth",
         "name":"test_modify_role",
         "description":"Test modify role",
         "composite":True,
@@ -153,10 +153,10 @@ class KeycloakRoleTestCase(ModuleTestCase):
         "force":False
     }
     toDeleteRole = {
-        "username":"admin", 
-        "password":"admin",
+        "auth_username":"admin", 
+        "auth_password":"admin",
         "realm":"master",
-        "url":"http://localhost:18081/auth",
+        "auth_keycloak_url":"http://localhost:18081/auth",
         "name":"test_delete_role",
         "description":"Test delete role",
         "composite":True,
@@ -177,10 +177,10 @@ class KeycloakRoleTestCase(ModuleTestCase):
     }
 
     toChangeRoleTwoRoles = {
-        "username":"admin", 
-        "password":"admin",
+        "auth_username":"admin", 
+        "auth_password":"admin",
         "realm":"master",
-        "url":"http://localhost:18081/auth",
+        "auth_keycloak_url":"http://localhost:18081/auth",
         "name":"test_modify_role_two_client_role_with_same_name",
         "description":"Test modify role two client roles with same name",
         "composite":True,
@@ -198,7 +198,7 @@ class KeycloakRoleTestCase(ModuleTestCase):
         "force":False
     }
 
-    roleExcudes = ["url","username","password","state","force","realm","composites","_ansible_keep_remote_files","_ansible_remote_tmp"]
+    roleExcudes = ["auth_keycloak_url","auth_username","auth_password","state","force","realm","composites","_ansible_keep_remote_files","_ansible_remote_tmp"]
 
     def setUp(self):
         super(KeycloakRoleTestCase, self).setUp()
