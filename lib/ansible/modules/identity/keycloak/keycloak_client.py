@@ -367,7 +367,13 @@ options:
                       other than by the source of the mappers and its parent class(es). An example is given
                       below. It is easiest to obtain valid config values by dumping an already-existing
                       protocol mapper configuration through check-mode in the I(existing) field.
-
+            state:
+                description:
+                    - Desired state of the protocol mappers. 
+                      If present, the mapper will be added or updated. 
+                      If absent, the mapper will be removed
+                choices: [absent, present]
+                default: present
     attributes:
         description:
             - A dict of further attributes for this client. This can contain various configuration
@@ -473,7 +479,37 @@ options:
                 description:
                     - For OpenID-Connect clients, client certificate for validating JWT issued by
                       client and signed by its key, base64-encoded.
-
+    client_roles:
+        description:
+            - List of roles and their composites for the client. 
+              Client roles can be added, updated or removed depending it's state.
+        aliases: 
+            - clientRoles
+            - roles
+        type: list
+        suboptions:
+            name:
+                description:
+                    - Name of the role
+            description:
+                description:
+                    - Description of the role
+            composite:
+                description:
+                    - Is the role is a composite or not.
+                type: bool
+                default: False if no composites are includes, True if compistes are included
+            composites:
+                description:
+                    - List of composite roles
+                type: list
+                suboptions:
+                    id:
+                        description:
+                            - clientId of the client if the composite is a client role.
+                    name:
+                        description:
+                            - Name of the role. It can be a realm role name or a client role name.
 extends_documentation_fragment:
     - keycloak
 
@@ -574,6 +610,19 @@ EXAMPLES = '''
         name: role list
         protocol: saml
         protocolMapper: saml-role-list-mapper
+      - config: 
+          multivalued: False
+          userinfo.token.claim": True
+          user.attribute: Test2
+          id.token.claim: True
+          access.token.claim: True
+          claim.name: test2
+          jsonType.label: String
+        name: thismappermustbedeleted
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: False
+        state: absent
     attributes:
       saml.authnstatement: True
       saml.client.signature: True
@@ -590,6 +639,20 @@ EXAMPLES = '''
       use.jwks.url: true
       jwks.url: JWKS_URL_FOR_CLIENT_AUTH_JWT
       jwt.credential.certificate: JWT_CREDENTIAL_CERTIFICATE_FOR_CLIENT_AUTH
+    client_roles:
+      - name: role1
+        description: This is the first role
+        composite: False
+      - name: role2
+        description: This is the second role.
+        composite: True
+        composites:
+          - name: realmRole1
+          - id: clientId1
+            name: clientRole1
+      - name: roleToBeDeleted
+        description: This role need to be deleted
+        state: absent
 '''
 
 RETURN = '''
@@ -663,18 +726,29 @@ def main():
         protocol=dict(type='str', choices=['openid-connect', 'saml']),
         protocolMapper=dict(type='str'),
         config=dict(type='dict'),
+        state=dict(type='str', choices=['absent','present'], default='present'),
     )
-
+    clientrolecomposites_spec = dict(
+        name=dict(type='str'),
+        id=dict(type='str'),
+    )
+    clientroles_spec = dict(
+        name=dict(type='str'),
+        description=dict(type='str'),
+        composite=dict(type='bool'),
+        composites=dict(type='list', elements='dict', options=clientrolecomposites_spec),
+        state=dict(type='str', choices=['absent','present'], default='present'),
+    )
     meta_args = dict(
         state=dict(default='present', choices=['present', 'absent']),
         realm=dict(type='str', default='master'),
-
+        
         id=dict(type='str'),
         client_id=dict(type='str', aliases=['clientId']),
         name=dict(type='str'),
         description=dict(type='str'),
         root_url=dict(type='str', aliases=['rootUrl']),
-        admin_url=dict(type='str', aliases=['adminUrl']),
+        admin_url=dict(type='str', aliases=['adminUrl','url']),
         base_url=dict(type='str', aliases=['baseUrl']),
         surrogate_auth_required=dict(type='bool', aliases=['surrogateAuthRequired']),
         enabled=dict(type='bool'),
@@ -694,7 +768,7 @@ def main():
         authorization_services_enabled=dict(type='bool', aliases=['authorizationServicesEnabled']),
         public_client=dict(type='bool', aliases=['publicClient']),
         frontchannel_logout=dict(type='bool', aliases=['frontchannelLogout']),
-        protocol=dict(type='str', choices=['openid-connect', 'saml']),
+        protocol=dict(type='str', choices=['openid-connect', 'saml'], default='openid-connect'),
         attributes=dict(type='dict'),
         full_scope_allowed=dict(type='bool', aliases=['fullScopeAllowed']),
         node_re_registration_timeout=dict(type='int', aliases=['nodeReRegistrationTimeout']),
@@ -705,6 +779,8 @@ def main():
         use_template_mappers=dict(type='bool', aliases=['useTemplateMappers']),
         protocol_mappers=dict(type='list', elements='dict', options=protmapper_spec, aliases=['protocolMappers']),
         authorization_settings=dict(type='dict', aliases=['authorizationSettings']),
+        client_roles=dict(type='list', elements='dict', options=clientroles_spec, aliases=['clientRoles','roles']),
+        force=dict(type='bool', default=False),
     )
     argument_spec.update(meta_args)
 
@@ -723,7 +799,7 @@ def main():
 
     # convert module parameters to client representation parameters (if they belong in there)
     client_params = [x for x in module.params
-                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm'] and
+                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm','username','password','url','force'] and
                      module.params.get(x) is not None]
     keycloak_argument_spec().keys()
     # See whether the client already exists in Keycloak
@@ -755,6 +831,8 @@ def main():
         if client_param == 'protocol_mappers':
             new_param_value = [dict((k, v) for k, v in x.items() if x[k] is not None) for x in new_param_value]
 
+        if client_param == 'roles':
+            client_param = 'client_roles'
         changeset[camel(client_param)] = new_param_value
 
     # Whether creating or updating a client, take the before-state and merge the changeset into it
@@ -788,7 +866,10 @@ def main():
         after_client = kc.get_client_by_clientid(updated_client['clientId'], realm=realm)
 
         result['end_state'] = sanitize_cr(after_client)
-
+        client_secret = kc.get_client_secret_by_id(after_client['id'], realm=realm)
+        if client_secret is not None:
+            result['clientSecret'] = client_secret
+            
         result['msg'] = 'Client %s has been created.' % updated_client['clientId']
         module.exit_json(**result)
     else:
@@ -807,6 +888,9 @@ def main():
             kc.update_client(cid, updated_client, realm=realm)
 
             after_client = kc.get_client_by_id(cid, realm=realm)
+            client_secret = kc.get_client_secret_by_id(cid, realm=realm)
+            if client_secret is not None:
+                result['clientSecret'] = client_secret
             if before_client == after_client:
                 result['changed'] = False
             if module._diff:
