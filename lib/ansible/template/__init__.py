@@ -178,6 +178,20 @@ def _count_newlines_from_end(in_str):
         return i
 
 
+def recursive_check_defined(item):
+    from jinja2.runtime import Undefined
+
+    if isinstance(item, MutableMapping):
+        for key in item:
+            recursive_check_defined(item[key])
+    elif isinstance(item, list):
+        for i in item:
+            recursive_check_defined(i)
+    else:
+        if isinstance(item, Undefined):
+            raise AnsibleFilterError("{0} is undefined".format(item))
+
+
 class AnsibleUndefined(StrictUndefined):
     '''
     A custom Undefined class, which returns further Undefined objects on access,
