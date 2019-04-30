@@ -547,7 +547,7 @@ def execute_touch(path, follow, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     changed = False
-    result = {'dest': path}
+    result = {'dest': path, 'path': path}
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
