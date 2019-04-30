@@ -1,0 +1,156 @@
+- name: Prepare random number
+  set_fact:
+    pip_name: "pip{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    storage_account: "storage{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    diagnostic_name: "diagnostic{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: '{{ pip_name }}'
+    resource_group: '{{ resource_group }}'
+
+- name: Get facts for one Public IP
+  azure_rm_publicipaddress_facts:
+    name: '{{ pip_name }}'
+    resource_group: '{{ resource_group }}'
+  register: pipoutput
+
+- name: Create new storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}" 
+    name: "{{ storage_account }}"
+    account_type: Standard_LRS
+    tags:
+        test: test
+        galaxy: galaxy
+  register: storage
+
+- name: Create diagnostic settings for IP (check mode)
+  azure_rm_diagnosticsettings: 
+    name: '{{ diagnostic_name }}'
+    target: '{{ pipoutput[0].id }}'
+    storage_account_id: '{{ storage.id }}'
+    logs:
+    - category: DDoSProtectionNotifications
+      enabled: yes
+      retention_policy:
+        enabled: yes
+        days: 2
+  check_mode: yes
+  register: output
+
+- name: Assert Create diagnostic settings for IP (check mode)
+  assert:
+      that:
+        - output.changed
+
+- name: Create diagnostic settings for IP
+  azure_rm_diagnosticsettings: 
+    name: '{{ diagnostic_name }}'
+    target: '{{ pipoutput[0].id }}'
+    storage_account_id: '{{ storage.id }}'
+    logs:
+    - category: DDoSProtectionNotifications
+      enabled: yes
+      retention_policy:
+        enabled: yes
+        days: 2
+  check_mode: yes
+  register: output
+
+- name: Assert Create diagnostic settings for IP
+  assert:
+      that:
+        - output.changed
+
+- name: Update diagnostic settings for IP
+  azure_rm_diagnosticsettings: 
+    name: '{{ diagnostic_name }}'
+    target: '{{ pipoutput[0].id }}'
+    storage_account_id: '{{ storage.id }}'
+    logs:
+    - category: DDoSProtectionNotifications
+      enabled: yes
+      retention_policy:
+        enabled: yes
+        days: 4
+  check_mode: yes
+  register: output
+
+- name: Assert Update diagnostic settings for IP
+  assert:
+      that:
+        - output.changed
+
+- name: Update diagnostic settings for IP (idempotence)
+  azure_rm_diagnosticsettings: 
+    name: '{{ diagnostic_name }}'
+    target: '{{ pipoutput[0].id }}'
+    storage_account_id: '{{ storage.id }}'
+    logs:
+    - category: DDoSProtectionNotifications
+      enabled: false
+      retention_policy:
+        enabled: yes
+        days: 4
+  check_mode: yes
+  register: output
+
+- name: Assert Update diagnostic settings for IP (idempotence)
+  assert:
+      that:
+        - not output.changed
+
+- name: Gather facts for diagnostic settings
+  azure_rm_diagnosticsettings_facts: 
+    target: '{{ pipoutput[0].id }}'
+    show_category: true
+  register: output
+
+- name: Assert Gather facts for diagnostic settings
+  assert:
+      that:
+        - not output.changed
+        - output.category != None
+        - output.diagnosticsettings[0]['id'] != None
+        - output.diagnosticsettings[0]['name'] != None
+        - output.diagnosticsettings[0]['storage_account_id'] != None
+        - output.diagnosticsettings[0]['logs'] != None
+        - output.diagnosticsettings[0]['metrics'] != None
+
+- name: Delete diagnostic settings for IP
+  azure_rm_diagnosticsettings: 
+    name: '{{ diagnostic_name }}'
+    target: '{{ pipoutput[0].id }}'
+    state: absent
+  register: output
+
+- name: Assert Delete diagnostic settings for IP
+  assert:
+      that:
+        - output.changed
+
+- name: Delete diagnostic settings for IP (idempotence)
+  azure_rm_diagnosticsettings: 
+    name: '{{ diagnostic_name }}'
+    target: '{{ pipoutput[0].id }}'
+    state: absent
+  register: output
+
+- name: Assert Delete diagnostic settings for IP (idempotence)
+  assert:
+      that:
+        - not output.changed
+
+- name: delete public ip
+  azure_rm_publicipaddress:
+    name: '{{ pip_name }}'
+    resource_group: '{{ resource_group }}'
+    state: absent
+
+- name: delete storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ storage_account }}"
+    state: absent
