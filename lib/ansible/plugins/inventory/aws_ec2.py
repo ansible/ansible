@@ -38,7 +38,9 @@ DOCUMENTATION = '''
               - You can use the options specified in U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options).
               - To use tags as hostnames use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
           type: list
-          default: []
+          default:
+            - dns-name
+            - private-dns-name
         filters:
           description:
               - A dictionary of filter value pairs.
@@ -72,6 +74,11 @@ DOCUMENTATION = '''
           type: bool
           default: False
           version_added: '2.8'
+        allow_unsafe_hostnames:
+          description:
+            - Toggle to enable sanitization of hostnames. In 2.13 the default will switch to False.
+          type: bool
+          version_added: '2.9'
 '''
 
 EXAMPLES = '''
@@ -141,6 +148,7 @@ compose:
 
 import re
 
+from ansible.constants import INVALID_VARIABLE_NAMES
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
@@ -456,9 +464,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param hostnames: a list of hostname destination variables in order of preference
             :return the preferred identifer for the host
         '''
-        if not hostnames:
-            hostnames = ['dns-name', 'private-dns-name']
-
         hostname = None
         for preference in hostnames:
             if 'tag' in preference:
@@ -470,10 +475,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if hostname:
                 break
         if hostname:
-            if ':' in to_text(hostname):
-                return self._sanitize_group_name((to_text(hostname)))
+            hostname = to_text(hostname)
+            allow_unsafe_hostnames = self.get_option('allow_unsafe_hostnames')
+            if ':' in hostname or allow_unsafe_hostnames is False:
+                return self._sanitize_group_name(hostname)
             else:
-                return to_text(hostname)
+                invalid_chars = self._get_invalid_characters(hostname)
+                if invalid_chars and allow_unsafe_hostnames is None:
+                    safe_hostname = self._sanitize_group_name(hostname)
+                    msg = 'In 2.13 the invalid character(s) "%s" in host name (%s) will be sanitized by default (to %s). ' \
+                          'Set `allow_unsafe_hostname` to True to retain the current behavior without this warning or to False ' \
+                          'to use the future default' % (to_text(set(invalid_chars)), hostname, safe_hostname)
+                    display.deprecated(msg, version='2.13')
+                return hostname
 
     def _query(self, regions, filters, strict_permissions):
         '''
@@ -598,6 +612,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
             self._cache[cache_key] = results
+
+    def _get_invalid_characters(self, name):
+        if not self.get_option('use_contrib_script_compatible_sanitization'):
+            return INVALID_VARIABLE_NAMES.findall(name)
+        else:
+            return re.compile(r"[^A-Za-z0-9\_\-]").findall(name)
 
     @staticmethod
     def _legacy_script_compatible_group_sanitization(name):
