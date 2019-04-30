@@ -58,9 +58,10 @@ Get Involved
 *  For a list of email lists, IRC channels and Working Groups, see the
    `Communication page <https://docs.ansible.com/ansible/latest/community/communication.html>`_
 
-Branch Info
+Branch and Build Info
 ===========
 
+*  An explanation of how to run the source code can be found `here <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#running-from-source>`_.
 *  The ``devel`` branch corresponds to the release actively under development.
 *  The ``stable-2.X`` branches correspond to stable releases.
 *  For information about the active branches see the
