@@ -142,3 +142,166 @@
   assert:
     that:
       - sha1_checksum.stat.checksum == 'de86f79b409383447cf4cf112b20af8ffffcfdbf'
+
+# features added ansible 2.8
+# count
+
+- name: count logger nodes in log4j.xml
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: //logger
+    count: yes
+  register: logger_node_count
+
+- name: verify node count
+  assert:
+    that:
+      - logger_node_count.count == 5
+
+# multiple attribute change
+- name: ensure //logger/level value attributes are set to debug
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '//logger/level[@value="error"]'
+    type: attribute
+    attribute: value
+    fragment: debug
+    count: yes
+  register: logger_level_value_attrs
+ 
+- name: verify //logger/level value attributes
+  assert:
+    that:
+      - logger_level_value_attrs.count == 4
+      - logger_level_value_attrs.changed == true
+      - logger_level_value_attrs.msg == 'attribute changed'
+
+- name: ensure //logger/level value attributes are set to debug (idempotency)
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '//logger/level[@value="error"]'
+    type: attribute
+    attribute: value
+    fragment: debug
+    count: yes
+  register: logger_level_value_attrs_again
+ 
+- name: verify //logger/level value attributes again (idempotency)
+  assert:
+    that:
+      - logger_level_value_attrs_again.count == 0
+      - logger_level_value_attrs_again.changed == false
+      - logger_level_value_attrs_again.msg == 'The supplied xpath did not match any nodes.  If this is unexpected, check your xpath is valid for the xml file at supplied path.'
+
+# multiple text nodes
+- name: ensure test books.xml is present
+  win_copy:
+    src: books.xml
+    dest: '{{ win_output_dir }}\books.xml'
+
+- name: demonstrate multi text replace by replacing all title text elements
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //works/title
+    type: text
+    fragment: _TITLE_TEXT_REMOVED_BY_WIN_XML_MODULE_
+    count: yes
+  register: multi_text
+
+- name: verify multi text change
+  assert:
+    that:
+      - multi_text.changed == true
+      - multi_text.count == 5
+      - multi_text.msg == 'text changed'
+
+- name: demonstrate multi text replace by replacing all title text elements again (idempotency)
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //works/title
+    type: text
+    fragment: _TITLE_TEXT_REMOVED_BY_WIN_XML_MODULE_
+    count: yes
+  register: multi_text_again
+
+- name: verify multi text again change (idempotency)
+  assert:
+    that:
+      - multi_text_again.changed == false
+      - multi_text_again.count == 5
+      - multi_text_again.msg == 'not changed'
+
+# multiple element 
+
+#- name: ensure a fresh test books.xml is present
+#  win_copy:
+#    src: books.xml
+#    dest: '{{ win_output_dir }}\books.xml'
+
+- name: demonstrate multi element should append new information element from fragment
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //works/title
+    type: element
+    fragment: <information>This element added by ansible</information>
+    count: yes
+  register: multi_element
+
+- name: verify multi element
+  assert:
+    that:
+      - multi_element.changed == true
+      - multi_element.count == 5
+      - multi_element.msg == 'element changed'
+
+- name: demonstrate multi element unchanged (idempotency)
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //works/title
+    type: element
+    fragment: <information>This element added by ansible</information>
+    count: yes
+  register: multi_element_again
+
+- name: verify multi element again (idempotency)
+  assert:
+    that:
+      - multi_element_again.changed == false
+      - multi_element_again.count == 5
+      - multi_element_again.msg == 'not changed'
+
+# multiple attributes on differing parent nodes
+
+- name: ensure all attribute lang=nl
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //@lang
+    type: attribute
+    attribute: lang
+    fragment: nl
+    count: yes
+  register: multi_attr
+
+- name: verify multi attribute
+  assert:
+    that:
+      - multi_attr.changed == true
+      - multi_attr.count == 6
+      - multi_attr.msg == 'attribute changed'
+
+- name: ensure all attribute lang=nl (idempotency)
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //@lang
+    type: attribute
+    attribute: lang
+    fragment: nl
+    count: yes
+  register: multi_attr_again
+
+- name: verify multi attribute (idempotency)
+  assert:
+    that:
+      - multi_attr_again.changed == false
+      - multi_attr_again.count == 6
+      - multi_attr_again.msg == 'not changed'
