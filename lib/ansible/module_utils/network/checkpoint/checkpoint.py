@@ -88,6 +88,7 @@ def equals(connection, api_call_object, payload):
 
     return code, response
 
+
 # run the api command
 def run_api_command(connection, command, payload):
     code, response = connection.send_request('/web_api/' + command, payload)
