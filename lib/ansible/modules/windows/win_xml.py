@@ -31,7 +31,7 @@ options:
         - When set to C(yes), return the number of nodes matched by I(xpath).
         type: bool
         default: false
-        version_added: 2.8
+        version_added: 2.9
     backup:
         description:
         - Determine whether a backup should be created.
@@ -41,7 +41,7 @@ options:
         default: no
     fragment:
         description:
-        - The string representation of the XML fragment expected at xpath.  Since ansible 2.8 not required when I(state=absent), or when I(count=yes).
+        - The string representation of the XML fragment expected at xpath.  Since ansible 2.9 not required when I(state=absent), or when I(count=yes).
         type: str
         required: false
         aliases: [ xmlstring ]
@@ -57,7 +57,7 @@ options:
         type: str
         default: present
         choices: [ present, absent ]
-        version_added: 2.8
+        version_added: 2.9
     type:
         description:
         - The type of XML node you are working with.
