@@ -99,7 +99,7 @@ DOCUMENTATION = '''
                 - List of namespaces. If not specified, will fetch all virtual machines for all namespaces user is authorized
                     to access.
                 type: list
-            network_name:
+            interface_name:
                 description:
                 - In case of multiple network attached to virtual machine, define which interface should be returned as primary IP
                     address.
@@ -135,7 +135,7 @@ plugin: kubevirt
 connections:
   - namespaces:
       - vms
-    network_name: myovsnetwork
+    interface_name: mynic1
 '''
 
 import json
@@ -170,7 +170,7 @@ class InventoryModule(K8sInventoryModule):
                     namespaces = connection['namespaces']
                 else:
                     namespaces = self.get_available_namespaces(client)
-                interface_name = connection.get('network_name')
+                interface_name = connection.get('interface_name')
                 api_version = connection.get('api_version', API_VERSION)
                 annotation_variable = connection.get('annotation_variable', 'ansible')
                 for namespace in namespaces:
