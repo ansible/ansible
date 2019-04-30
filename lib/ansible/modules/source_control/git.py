@@ -223,6 +223,12 @@ EXAMPLES = '''
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git
+
+# Example clone a repo with using other path than default /tmp directory
+- git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    tmp_dir: /home/ansible/fix_problem_of_tmp_mounted_with_no_exec_flag_for_obvious_security_reasons
 '''
 
 RETURN = '''
@@ -354,17 +360,23 @@ def get_submodule_update_params(module, git_path, cwd):
     return params
 
 
-def write_ssh_wrapper():
+def write_ssh_wrapper(module):
     module_dir = get_module_path()
     try:
         # make sure we have full permission to the module_dir, which
         # may not be the case if we're sudo'ing to a non-root user
         if os.access(module_dir, os.W_OK | os.R_OK | os.X_OK):
-            fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
+            if module.params['tmp_dir'] is not None:
+                fd, wrapper_path = tempfile.mkstemp(prefix=module.params['tmp_dir'] + '/')
+            else:
+                fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
         else:
             raise OSError
     except (IOError, OSError):
-        fd, wrapper_path = tempfile.mkstemp()
+        if module.params['tmp_dir'] is not None:
+            fd, wrapper_path = tempfile.mkstemp(prefix=module.params['tmp_dir'] + '/')
+        else:
+            fd, wrapper_path = tempfile.mkstemp()
     fh = os.fdopen(fd, 'w+b')
     template = b("""#!/bin/sh
 if [ -z "$GIT_SSH_OPTS" ]; then
@@ -973,7 +985,10 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
         # If git archive file exists, then compare it with new git archive file.
         # if match, do nothing
         # if does not match, then replace existing with temp archive file.
-        tempdir = tempfile.mkdtemp()
+        if module.params['tmp_dir'] is not None:
+            tempdir = tempfile.mkdtemp(prefix=module.params['tmp_dir'] + '/')
+        else:
+            tempdir = tempfile.mkdtemp()
         new_archive_dest = os.path.join(tempdir, repo_name)
         new_archive = new_archive_dest + '.' + archive_fmt
         git_archive(git_path, module, dest, new_archive, archive_fmt, version)
@@ -1028,6 +1043,7 @@ def main():
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
             separate_git_dir=dict(type='path'),
+            tmp_dir=dict(default=None, type='path'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare')],
         supports_check_mode=True
@@ -1109,7 +1125,7 @@ def main():
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
-    ssh_wrapper = write_ssh_wrapper()
+    ssh_wrapper = write_ssh_wrapper(module)
     set_git_ssh(ssh_wrapper, key_file, ssh_opts)
     module.add_cleanup_file(path=ssh_wrapper)
 
