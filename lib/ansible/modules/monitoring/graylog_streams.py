@@ -215,12 +215,100 @@ RETURN = '''
 json:
   description: The JSON response from the Graylog API
   returned: always
-  type: str
-msg:
-  description: The HTTP message from the request
-  returned: always
-  type: str
-  sample: OK (unknown bytes)
+  type: complex
+  contains:
+    title:
+      description: Stream title.
+      returned: success
+      type: str
+      sample: 'Windows Logs'
+    alert_conditions:
+      description: Alert conditions.
+      returned: success
+      type: dict
+      sample: |
+        [
+            {
+                "created_at": "2018-10-18T18:40:21.582+0000",
+                "creator_user_id": "admin",
+                "id": "cc43d4e7-e7b2-4abc-7c44-4b29cadaf364",
+                "parameters": {
+                    "backlog": 1,
+                    "grace": 0,
+                    "repeat_notifications": true,
+                    "threshold": 0,
+                    "threshold_type": "MORE",
+                    "time": 1
+                },
+                "title": "Failed Logon",
+                "type": "message_count"
+            }
+        ]
+    alert_receivers:
+        description: Alert receivers.
+        returned: success
+        type: dict
+        sample: '{ "emails": [], "users": [] }'
+    content_pack:
+        description: Content pack.
+        returned: success
+        type: str
+        sample: null
+    created_at:
+        description: Stream creation time.
+        returned: success
+        type: str
+        sample: "2018-10-17T15:29:20.735Z"
+    creator_user_id:
+        description: Stream creator.
+        returned: success
+        type: str
+        sample: "admin"
+    description:
+        description: Stream description.
+        returned: success
+        type: str
+        sample: "Stream for Windows logs"
+    disabled:
+        description: Whether or not the stream is enabled.
+        returned: success
+        type: bool
+        sample: false
+    id:
+        description: Stream ID.
+        returned: success
+        type: str
+        sample: "5bc7666089675c7f7d7f08d7"
+    index_set_id:
+        description: Index set ID associated with the stream.
+        returned: success
+        type: str
+        sample: "4bc7444089575c7f7d7f08d7"
+    is_default:
+        description: Whether or not it is the default stream.
+        returned: success
+        type: bool
+        sample: false
+    matching_type:
+        description: Stream rule matching type.
+        returned: success
+        type: str
+        sample: "AND"
+    outputs:
+        description: Stream outputs.
+        returned: success
+        type: dict
+        sample: []
+    remove_matches_from_default_stream:
+        description: Whether or messages are removed from the default stream.
+        returned: success
+        type: bool
+        sample: false
+    rules:
+        description: Rules associated with the stream.
+        returned: success
+        type: dict
+        sample: []
 status:
   description: The HTTP status code from the request
   returned: always
