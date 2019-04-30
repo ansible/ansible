@@ -169,6 +169,12 @@ options:
               can be separated from working tree.
         version_added: "2.7"
 
+    tmp_dir:
+        description:
+            - The optional path to place the temporary files / folder of working
+              /tmp is used if empty.
+        version_added: "2.7"
+
 requirements:
     - git>=1.7.1 (the command line tool)
 
