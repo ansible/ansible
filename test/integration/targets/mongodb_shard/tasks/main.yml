@@ -82,6 +82,14 @@
     members:
      - "localhost:4000"
 
+- name: Get config server replset mongo_output
+  command: mongo admin --port 4000 --eval "rs.status();"
+  register: cfg_replset_output
+
+- name: Assert that replset is a config server
+  assert:
+    that: "'\"configsvr\" : true' in cfg_replset_output.stdout"
+
 - name: Launch mongos
   command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath "{{ remote_tmp_dir }}/tests/mongos.log" --port 27017 --fork
 
