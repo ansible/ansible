@@ -6,6 +6,7 @@
 - block:
     - set_fact:
         wait_namespace: wait
+
     - name: ensure namespace exists
       k8s:
         definition:
@@ -20,14 +21,14 @@
           apiVersion: v1
           kind: Pod
           metadata:
-            name: "{{ wait_pod_name }}"
+            name: "{{ k8s_pod_name }}"
             namespace: "{{ wait_namespace }}"
-          spec: "{{ wait_pod_spec }}"
+          spec: "{{ k8s_pod_spec }}"
         wait: yes
       vars:
-        wait_pod_name: wait-pod
-        wait_pod_image: alpine:3.8
-        wait_pod_command:
+        k8s_pod_name: wait-pod
+        k8s_pod_image: alpine:3.8
+        k8s_pod_command:
           - sleep
           - "10000"
       register: wait_pod
@@ -49,13 +50,13 @@
           spec:
             selector:
               matchLabels:
-                app: "{{ wait_pod_name }}"
-            template: "{{ wait_pod_template }}"
+                app: "{{ k8s_pod_name }}"
+            template: "{{ k8s_pod_template }}"
         wait: yes
         wait_timeout: 180
       vars:
-        wait_pod_name: wait-ds
-        wait_pod_image: gcr.io/kuar-demo/kuard-amd64:1
+        k8s_pod_name: wait-ds
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:1
       register: ds
 
     - name: check that daemonset wait worked
@@ -74,15 +75,15 @@
           spec:
             selector:
               matchLabels:
-                app: "{{ wait_pod_name }}"
+                app: "{{ k8s_pod_name }}"
             updateStrategy:
               type: RollingUpdate
-            template: "{{ wait_pod_template }}"
+            template: "{{ k8s_pod_template }}"
         wait: yes
         wait_timeout: 180
       vars:
-        wait_pod_name: wait-ds
-        wait_pod_image: gcr.io/kuar-demo/kuard-amd64:2
+        k8s_pod_name: wait-ds
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:2
       register: update_ds_check_mode
 
     - name: check that check_mode returned changed
@@ -101,15 +102,15 @@
           spec:
             selector:
               matchLabels:
-                app: "{{ wait_pod_name }}"
+                app: "{{ k8s_pod_name }}"
             updateStrategy:
               type: RollingUpdate
-            template: "{{ wait_pod_template }}"
+            template: "{{ k8s_pod_template }}"
         wait: yes
         wait_timeout: 180
       vars:
-        wait_pod_name: wait-ds
-        wait_pod_image: gcr.io/kuar-demo/kuard-amd64:2
+        k8s_pod_name: wait-ds
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:3
       register: ds
 
     - name: get updated pods
@@ -125,7 +126,7 @@
       assert:
         that:
           - ds.result.status.currentNumberScheduled == ds.result.status.desiredNumberScheduled
-          - updated_ds_pods.resources[0].spec.containers[0].image.endswith(":2")
+          - updated_ds_pods.resources[0].spec.containers[0].image.endswith(":3")
 
     - name: add a crashing pod
       k8s:
@@ -133,15 +134,15 @@
           apiVersion: v1
           kind: Pod
           metadata:
-            name: "{{ wait_pod_name }}"
+            name: "{{ k8s_pod_name }}"
             namespace: "{{ wait_namespace }}"
-          spec: "{{ wait_pod_spec }}"
+          spec: "{{ k8s_pod_spec }}"
         wait: yes
         wait_timeout: 30
       vars:
-        wait_pod_name: wait-crash-pod
-        wait_pod_image: alpine:3.8
-        wait_pod_command:
+        k8s_pod_name: wait-crash-pod
+        k8s_pod_image: alpine:3.8
+        k8s_pod_command:
           - /bin/false
       register: crash_pod
       ignore_errors: yes
@@ -157,14 +158,14 @@
           apiVersion: v1
           kind: Pod
           metadata:
-            name: "{{ wait_pod_name }}"
+            name: "{{ k8s_pod_name }}"
             namespace: "{{ wait_namespace }}"
-          spec: "{{ wait_pod_spec }}"
+          spec: "{{ k8s_pod_spec }}"
         wait: yes
         wait_timeout: 30
       vars:
-        wait_pod_name: wait-no-image-pod
-        wait_pod_image: i_made_this_up:and_this_too
+        k8s_pod_name: wait-no-image-pod
+        k8s_pod_image: i_made_this_up:and_this_too
       register: no_image_pod
       ignore_errors: yes
 
@@ -185,13 +186,13 @@
             replicas: 3
             selector:
               matchLabels:
-                app: "{{ wait_pod_name }}"
-            template: "{{ wait_pod_template }}"
+                app: "{{ k8s_pod_name }}"
+            template: "{{ k8s_pod_template }}"
         wait: yes
       vars:
-        wait_pod_name: wait-deploy
-        wait_pod_image: gcr.io/kuar-demo/kuard-amd64:1
-        wait_pod_ports:
+        k8s_pod_name: wait-deploy
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:1
+        k8s_pod_ports:
           - containerPort: 8080
             name: http
             protocol: TCP
@@ -215,13 +216,13 @@
             replicas: 3
             selector:
               matchLabels:
-                app: "{{ wait_pod_name }}"
-            template: "{{ wait_pod_template }}"
+                app: "{{ k8s_pod_name }}"
+            template: "{{ k8s_pod_template }}"
         wait: yes
       vars:
-        wait_pod_name: wait-deploy
-        wait_pod_image: gcr.io/kuar-demo/kuard-amd64:2
-        wait_pod_ports:
+        k8s_pod_name: wait-deploy
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:2
+        k8s_pod_ports:
           - containerPort: 8080
             name: http
             protocol: TCP
@@ -277,14 +278,14 @@
             namespace: "{{ wait_namespace }}"
           spec:
             selector:
-              app: "{{ wait_pod_name }}"
+              app: "{{ k8s_pod_name }}"
             ports:
               - port: 8080
                 targetPort: 8080
                 protocol: TCP
         wait: yes
       vars:
-        wait_pod_name: wait-deploy
+        k8s_pod_name: wait-deploy
       register: service
 
     - name: assert that waiting for service works
@@ -304,13 +305,13 @@
             replicas: 3
             selector:
               matchLabels:
-                app: "{{ wait_pod_name }}"
-            template: "{{ wait_pod_template }}"
+                app: "{{ k8s_pod_name }}"
+            template: "{{ k8s_pod_template }}"
         wait: yes
       vars:
-        wait_pod_name: wait-crash-deploy
-        wait_pod_image: alpine:3.8
-        wait_pod_command:
+        k8s_pod_name: wait-crash-deploy
+        k8s_pod_image: alpine:3.8
+        k8s_pod_command:
           - /bin/false
       register: wait_crash_deploy
       ignore_errors: yes

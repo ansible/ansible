@@ -12,10 +12,10 @@
 
 - pip:
     name:
-      - openshift==0.8.1
+      - openshift==0.8.8
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: no
 
 - include_tasks: validate_not_installed.yml
   vars:
@@ -29,11 +29,11 @@
 
 - pip:
     name:
-      - openshift==0.8.1
+      - openshift==0.8.8
       - kubernetes-validate==1.12.0
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: no
 
 - include_tasks: validate_installed.yml
   vars:
@@ -52,7 +52,7 @@
       - kubernetes==6.0.0
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: no
 
 - include_tasks: older_openshift_fail.yml
   vars:
@@ -68,10 +68,10 @@
 
 - pip:
     name:
-      - openshift==0.8.1
+      - openshift==0.8.8
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: no
 
 - include_tasks: full_test.yml
   vars:
