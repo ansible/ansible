@@ -120,8 +120,9 @@ EXAMPLES = '''
       logConfiguration:
         logDriver: awslogs
         options:
-          awslogs-group: ecs
+          awslogs-group: /ecs/test-cluster-taskdef
           awslogs-region: us-west-2
+          awslogs-stream-prefix: ecs
     - name: busybox
       command:
         - >
