@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # coding: utf-8
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -9,9 +8,13 @@ __metaclass__ = type
 
 
 import argparse
+import os.path
 import sys
 
 from jinja2 import Environment, DictLoader
+
+# Pylint doesn't understand Python3 namespace modules.
+from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 
 PORTING_GUIDE_TEMPLATE = """
@@ -106,16 +109,6 @@ JINJA_ENV = Environment(
 )
 
 
-def parse_args(args):
-    parser = argparse.ArgumentParser(description="Generate a fresh porting guide template")
-    parser.add_argument("--version", dest="version", type=str, required=True, action='store',
-                        help="Version of Ansible to write the porting guide for")
-
-    args = parser.parse_args(args)
-
-    return args
-
-
 def generate_porting_guide(version):
     template = JINJA_ENV.get_template('porting_guide')
 
@@ -133,13 +126,17 @@ def write_guide(version, guide_content):
         out_file.write(guide_content)
 
 
-def main():
-    args = parse_args(sys.argv[1:])
+class PortingGuideCommand(Command):
+    name = 'porting-guide'
 
-    guide_content = generate_porting_guide(args.version)
+    @classmethod
+    def init_parser(cls, add_parser):
+        parser = add_parser(cls.name, description="Generate a fresh porting guide template")
+        parser.add_argument("--version", dest="version", type=str, required=True, action='store',
+                            help="Version of Ansible to write the porting guide for")
 
-    write_guide(args.version, guide_content)
-
-
-if __name__ == '__main__':
-    main()
+    @staticmethod
+    def main(args):
+        guide_content = generate_porting_guide(args.version)
+        write_guide(args.version, guide_content)
+        return 0
