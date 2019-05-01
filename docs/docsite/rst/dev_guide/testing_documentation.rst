@@ -10,17 +10,27 @@ Before you submit a module for inclusion in the main Ansible repo, you must test
 
 To check the HTML output of your module documentation:
 
-#. Save your completed module file into the correct directory: ``lib/ansible/modules/$CATEGORY/my_code.py``.
-#. Move to the docsite directory: ``cd /path/to/ansible/docs/docsite/``.
-#. Run the command to build the docs for your module: ``MODULES=my_code make webdocs``.
-#. View the HTML page at ``file:///path/to/ansible/docs/docsite/_build/html/my_code_module.html``.
+#. Ensure working :ref:`development environment <environment_setup>`.
+#. Install required Python packages (drop '--user' in venv/virtualenv):
 
-To build the HTML documentation for multiple modules, use a comma-separated list of module names: ``MODULES=my_code,my_other_code make webdocs``.
+   .. code-block:: bash
 
-To ensure that your documentation matches your ``argument_spec``, run the ``validate-modules`` test.
+      pip install --user -r requirements.txt
+      pip install --user -r docs/docsite/requirements.txt
 
-.. code-block:: bash
+#. Ensure your module is in the correct directory: ``lib/ansible/modules/$CATEGORY/mymodule.py``.
+#. Build HTML from your module documentation: ``MODULES=mymodule make webdocs``.
+#. To build the HTML documentation for multiple modules, use a comma-separated list of module names: ``MODULES=mymodule,mymodule2 make webdocs``.
+#. View the HTML page at ``file:///path/to/docs/docsite/_build/html/modules/mymodule_module.html``.
 
-   # If you don't already, ensure you are using your local checkout
-   source hacking/env-setup
-   ./test/sanity/validate-modules/validate-modules --arg-spec --warnings  lib/ansible/modules/$CATEGORY/my_code.py
+To ensure that your module documentation matches your ``argument_spec``:
+
+#. Install required Python packages (drop '--user' in venv/virtualenv):
+
+   .. code-block:: bash
+
+      pip install --user -r test/runner/requirements/sanity.txt
+
+#. run the ``validate-modules`` test::
+
+   ./test/sanity/validate-modules/validate-modules --arg-spec --warnings lib/ansible/modules/$CATEGORY/mymodule.py
