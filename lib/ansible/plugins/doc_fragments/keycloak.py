@@ -26,7 +26,7 @@ options:
         description:
             - Keycloak realm name to authenticate to for API access.
         type: str
-        required: true
+        default: master
 
     auth_client_secret:
         description:
