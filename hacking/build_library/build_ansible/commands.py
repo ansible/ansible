@@ -20,7 +20,7 @@ class Command:
     @staticmethod
     @abstractproperty
     def name():
-        """Name of the command.  The same as the string is is invoked with"""
+        """Name of the command.  The same as the string is invoked with"""
 
     @staticmethod
     @abstractmethod
