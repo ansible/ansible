@@ -1,0 +1,2 @@
+minor_changes:
+    - openstack inventory plugin - add all_projects option
