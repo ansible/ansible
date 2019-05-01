@@ -224,6 +224,10 @@ summary:
     description: Gives a summary of distributions, streaming distributions and origin access identities.
     returned: as default or if summary is true
     type: dict
+DistributionId:
+    description: Returns id of found distribution
+    returned: always
+    type: string
 '''
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
