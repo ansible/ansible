@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # coding: utf-8
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -12,12 +11,17 @@ import argparse
 import asyncio
 import datetime
 import hashlib
+import os.path
 import sys
 from collections import UserString
 from distutils.version import LooseVersion
 
 import aiohttp
 from jinja2 import Environment, DictLoader
+
+# Pylint doesn't understand Python3 namespace modules.
+from ..commands import Command  # pylint: disable=relative-beyond-top-level
+
 
 # pylint: disable=
 VERSION_FRAGMENT = """
@@ -31,7 +35,7 @@ VERSION_FRAGMENT = """
 """
 
 LONG_TEMPLATE = """
-{% set plural = True if versions | length == 1 else False %}
+{% set plural = False if versions | length == 1 else True %}
 {% set latest_ver = (versions | sort(attribute='ver_obj'))[-1] %}
 
 To: ansible-devel@googlegroups.com, ansible-project@googlegroups.com, ansible-announce@googlegroups.com
@@ -66,7 +70,7 @@ What's new in {{ version_str }}
 {{ '-' * (14 + version_str | length) }}
 
 {% filter wordwrap %}
-{% if plural %}This release is a{% else %}These releases are{% endif %} maintenance release{% if plural %}s{% endif %} containing numerous bugfixes. The full {% if versions | length <= 1 %} changelog is{% else %} changelogs are{% endif %} at:
+{% if plural %}These releases are{% else %}This release is a{% endif %} maintenance release{% if plural %}s{% endif %} containing numerous bugfixes. The full {% if plural %} changelogs are{% else %} changelog is{% endif %} at:
 {% endfilter %}
 
 
@@ -116,15 +120,16 @@ Thanks!
 # proper wrapping to occur
 
 SHORT_TEMPLATE = """
+{% set plural = False if versions | length == 1 else True %}
 @ansible
 {{ version_str }}
-{% if versions | length > 1 %}
+{% if plural %}
   have
 {% else %}
   has
 {% endif %}
 been released! Get
-{% if versions | length > 1 %}
+{% if plural %}
 them
 {% else %}
 it
@@ -152,19 +157,7 @@ class VersionStr(UserString):
         self.ver_obj = LooseVersion(string)
 
 
-def parse_args(args):
-    parser = argparse.ArgumentParser(description="Generate email and twitter announcements"
-                                                 " from template")
-    parser.add_argument("--version", dest="versions", type=str, required=True, action='append',
-                        help="Versions of Ansible to announce")
-    parser.add_argument("--name", type=str, required=True, help="Real name to use on emails")
-    parser.add_argument("--email-out", type=str, default="-",
-                        help="Filename to place the email announcement into")
-    parser.add_argument("--twitter-out", type=str, default="-",
-                        help="Filename to place the twitter announcement into")
-
-    args = parser.parse_args(args)
-
+def transform_args(args):
     # Make it possible to sort versions in the jinja2 templates
     new_versions = []
     for version in args.versions:
@@ -285,15 +278,29 @@ def write_message(filename, message):
         sys.stdout.write(message)
 
 
-def main():
-    args = parse_args(sys.argv[1:])
+class ReleaseAnnouncementCommand(Command):
+    name = 'release-announcement'
 
-    twitter_message = generate_short_message(args.versions)
-    email_message = generate_long_message(args.versions, args.name)
+    @classmethod
+    def init_parser(cls, add_parser):
+        parser = add_parser(cls.name,
+                            description="Generate email and twitter announcements from template")
 
-    write_message(args.twitter_out, twitter_message)
-    write_message(args.email_out, email_message)
+        parser.add_argument("--version", dest="versions", type=str, required=True, action='append',
+                            help="Versions of Ansible to announce")
+        parser.add_argument("--name", type=str, required=True, help="Real name to use on emails")
+        parser.add_argument("--email-out", type=str, default="-",
+                            help="Filename to place the email announcement into")
+        parser.add_argument("--twitter-out", type=str, default="-",
+                            help="Filename to place the twitter announcement into")
 
+    @staticmethod
+    def main(args):
+        args = transform_args(args)
 
-if __name__ == '__main__':
-    main()
+        twitter_message = generate_short_message(args.versions)
+        email_message = generate_long_message(args.versions, args.name)
+
+        write_message(args.twitter_out, twitter_message)
+        write_message(args.email_out, email_message)
+        return 0

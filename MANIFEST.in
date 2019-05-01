@@ -25,3 +25,5 @@ include changelogs/CHANGELOG*.rst
 include contrib/README.md
 recursive-include contrib/inventory *
 exclude test/sanity/code-smell/botmeta.*
+recursive-include hacking/build_library *.py
+include hacking/build-ansible
