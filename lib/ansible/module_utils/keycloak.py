@@ -35,8 +35,6 @@ import urllib
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.keycloak_utils import isDictEquals
-from ansible.module_utils.keycloak_utils import keycloak2ansibleClientRoles
 
 URL_TOKEN = "{url}/realms/{realm}/protocol/openid-connect/token"
 URL_CLIENT = "{url}/admin/realms/{realm}/clients/{id}"
@@ -111,6 +109,93 @@ def keycloak_argument_spec():
 
 def camel(words):
     return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
+
+
+def isDictEquals(dict1, dict2, exclude=None):
+    """
+    This function compare if tthe first parameter structure, is included in the second.
+    The function use every elements of dict1 and validates they are present in the dict2 structure.
+    The two structure does not need to be equals for that function to return true.
+    Each elements are compared recursively.
+    :param dict1:
+        type:
+            dict for the initial call, can be dict, list, bool, int or str for recursive calls
+        description:
+            reference structure
+    :param dict2:
+        type:
+            dict for the initial call, can be dict, list, bool, int or str for recursive calls
+        description:
+            structure to compare with first parameter.
+    :param exclude:
+        type:
+            list
+        description:
+            Key to exclude from the comparison.
+        default: None
+    :return:
+        type:
+            bool
+        description:
+            Return True if all element of dict 1 are present in dict 2, return false otherwise.
+    """
+    try:
+        if type(dict1) is list and type(dict2) is list:
+            if len(dict1) == 0 and len(dict2) == 0:
+                return True
+            for item1 in dict1:
+                found = False
+                if type(item1) is list:
+                    found1 = False
+                    for item2 in dict2:
+                        if isDictEquals(item1, item2, exclude):
+                            found1 = True
+                    if found1:
+                        found = True
+                elif type(item1) is dict:
+                    found1 = False
+                    for item2 in dict2:
+                        if isDictEquals(item1, item2, exclude):
+                            found1 = True
+                    if found1:
+                        found = True
+                else:
+                    if item1 not in dict2:
+                        return False
+                    else:
+                        found = True
+                if not found:
+                    return False
+            return found
+        elif type(dict1) is dict and type(dict2) is dict:
+            if len(dict1) == 0 and len(dict2) == 0:
+                return True
+            for key in dict1:
+                if not (exclude and key in exclude):
+                    if not isDictEquals(dict1[key], dict2[key], exclude):
+                        return False
+            return True
+        else:
+            return dict1 == dict2
+    except KeyError:
+        return False
+
+
+def ansible2keycloakClientRoles(ansibleClientRoles):
+    keycloakClientRoles = {}
+    for clientRoles in ansibleClientRoles:
+        keycloakClientRoles[clientRoles["clientid"]] = clientRoles["roles"]
+    return keycloakClientRoles
+
+
+def keycloak2ansibleClientRoles(keycloakClientRoles):
+    ansibleClientRoles = []
+    for client in keycloakClientRoles.keys():
+        role = {}
+        role["clientid"] = client
+        role["roles"] = keycloakClientRoles[client]
+        ansibleClientRoles.append(role)
+    return ansibleClientRoles
 
 
 class KeycloakAPI(object):
