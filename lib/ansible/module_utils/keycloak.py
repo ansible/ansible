@@ -1438,7 +1438,7 @@ class KeycloakAPI(object):
                                  headers=self.restheaders,
                                  data=json.dumps(newSubComponent))
                         # Check if users and groups synchronization is needed
-                        if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers is not "no":
+                        if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers != "no":
                             # Get subcomponents
                             subComponents = self.get_component_by_name_provider_and_parent(
                                 name=newSubComponent["name"],
@@ -1513,7 +1513,7 @@ class KeycloakAPI(object):
                                 changed = True
                             newSubComponentFound = True
                             # If sync is needed for the subcomponent
-                            if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers is not "no":
+                            if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers != "no":
                                 # Do the sync
                                 sync_url = URL_USER_STORAGE_MAPPER_SYNC.format(
                                     url=self.baseurl,
@@ -1538,7 +1538,7 @@ class KeycloakAPI(object):
                                  data=json.dumps(newSubComponent))
                         changed = True
                         # Sync LDAP for group mappers
-                        if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers is not "no":
+                        if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers != "no":
                             # Get subcomponents
                             subComponents = self.get_component_by_name_provider_and_parent(
                                 name=newSubComponent["name"],
