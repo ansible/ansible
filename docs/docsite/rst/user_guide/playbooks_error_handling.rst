@@ -91,7 +91,7 @@ In previous version of Ansible, this can still be accomplished as follows::
         msg: "the command failed"
       when: "'FAILED' in command_result.stderr"
 
-You can also combine multiple conditions for failure. This example will fail if both conditions are true::
+You can also combine multiple conditions for failure. This task will fail if both conditions are true::
 
     - name: Check if a file exists in temp and fail task if it does
       command: ls /tmp/this_should_not_be_here
