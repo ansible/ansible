@@ -50,7 +50,7 @@ Get Involved
    code to Ansible.
 *  Join a `Working Group
    <https://github.com/ansible/community/wiki>`_, an organized community devoted to a specific technology domain or platform.
-*  Submit proposed a code update through a pull request to the ``devel`` branch.
+*  Submit a proposed code update through a pull request to the ``devel`` branch.
 *  Talk to us before making larger changes
    to avoid duplicate efforts. This not only helps everyone
    know what is going on, it also helps save time and effort if we decide
@@ -63,8 +63,8 @@ Branch Info
 
 *  The ``devel`` branch corresponds to the release actively under development.
 *  The ``stable-2.X`` branches correspond to stable releases.
-*  For information about the active branches see the
-   `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page.
+*  Create a branch based on ``devel`` and set up a `dev environment <https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#common-environment-setup>`_ if you want to open a PR.
+*  See the `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page for information about active branches.
 
 Roadmap
 =======
