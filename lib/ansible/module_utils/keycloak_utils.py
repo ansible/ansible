@@ -29,7 +29,7 @@
 import requests
 
 
-def isDictEquals(dict1, dict2, exclude=[]):
+def isDictEquals(dict1, dict2, exclude=None):
     '''
 Fonction: isDictEquals
 Description:    Cette fonction compare deux structures. Elle utilise tous les étéments de la structure
@@ -99,19 +99,17 @@ Retour:
                         return False
             return True
         else:
-            if type(dict1) == bool and (type(dict2) == str or type(dict2) == unicode):
-                return dict1 == str2bool(dict2.decode("utf-8"))
-            if type(dict2) == bool and (type(dict1) == str or type(dict1) == unicode):
-                return dict2 == str2bool(dict1.decode("utf-8"))
+            if type(dict1) == bool and type(dict2) != bool:
+                return dict1 == str2bool(dict2)
+            if type(dict2) == bool and type(dict1) != bool:
+                return dict2 == str2bool(dict1)
             return dict1 == dict2
     except KeyError:
         return False
 
 
 def str2bool(value):
-    if type(value) == unicode:
-        return value.decode("utf-8").lower() in ("yes", "true")
-    return value.lower() in ("yes", "true")
+    return value.decode("utf-8").lower() in ("yes", "true")
 
 
 def login(url, username, password):
