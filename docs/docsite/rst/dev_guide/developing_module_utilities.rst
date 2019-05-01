@@ -55,6 +55,10 @@ please see the `source code for module_utils <https://github.com/ansible/ansible
 - ``basic.py`` - General definitions and helper utilities for Ansible modules
 - ``common/dict_transformations.py`` - Helper functions for dictionary transformations
 - ``common/file.py`` - Helper functions for working with files
+- ``common/text/`` - Helper functions for converting and formatting text.
+- ``common/parameters.py`` - Helper functions for dealing with module parameters
+- ``common/sys_info.py`` - Functions for getting distribution and platform information
+- ``common/validation.py`` - Helper functions for validating module parameters against a module argument spec
 - ``distro/_distro.py`` - General utilities for accessing OS distribution information
 - ``facts/`` - Directory of utilities for modules that return facts. See `PR 23012 <https://github.com/ansible/ansible/pull/23012>`_ for more information
 - ``ismount.py`` - Single helper function that fixes os.path.ismount
