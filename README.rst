@@ -63,7 +63,7 @@ Branch Info
 
 *  The ``devel`` branch corresponds to the release actively under development.
 *  The ``stable-2.X`` branches correspond to stable releases.
-*  Create a branch based on ``devel`` and set up a `dev environment <https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#common-environment-setup`_ if you want to open a PR.
+*  Create a branch based on ``devel`` and set up a `dev environment <https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#common-environment-setup>`_ if you want to open a PR.
 *  See the `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page for information about active branches.
 
 Roadmap
