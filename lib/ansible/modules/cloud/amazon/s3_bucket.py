@@ -326,6 +326,7 @@ def create_or_update_bucket(s3_client, module, location):
 
     module.exit_json(changed=changed, name=name, **result)
 
+
 def bucket_exists(s3_client, bucket_name):
     # head_bucket appeared to be really inconsistent, so we use list_buckets instead,
     # and loop over all the buckets, even if we know it's less performant :(
