@@ -101,6 +101,9 @@
     - name: delete CodeBuild project
       aws_codebuild:
         name: "{{ output.project.name }}"
+        source:
+          type: CODEPIPELINE
+          buildspec: ''
         state: absent
         <<: *aws_connection_info
       async: 300
