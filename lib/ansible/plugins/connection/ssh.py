@@ -18,13 +18,13 @@ DOCUMENTATION = '''
     author: ansible (@core)
     version_added: historical
     options:
-      host:
+      remote_addr:
           description: Hostname/ip to connect to.
           default: '{{inventory_hostname}}'
           vars:
                - name: ansible_host
                - name: ansible_ssh_host
-          alias: ['remote_addr']
+          alias: ['host']
       host_key_checking:
           description: Determines if ssh should check host keys
           type: boolean
@@ -259,6 +259,18 @@ DOCUMENTATION = '''
         vars:
           - name: ansible_scp_if_ssh
             version_added: '2.7'
+      ssh_transfer_method:
+        version_added: '2.9'
+        description:
+           - "Preferred method to use when transferring files over ssh"
+           - Setting to smart will try them until one succeeds or they all fail
+           - If not set it will fallback to scp_if_ssh
+        choices: ['sftp', 'scp', 'dd', 'smart']
+        env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
+        ini:
+            - {key: transfer_method, section: ssh_connection}
+        vars:
+          - name: ansible_ssh_transfer_method
       use_tty:
         version_added: '2.5'
         default: 'yes'

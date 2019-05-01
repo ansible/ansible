@@ -71,12 +71,14 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('ssh', pc, new_stdin)
+        conn.set_options()
         conn._build_command('ssh')
 
     def test_plugins_connection_ssh_exec_command(self):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('ssh', pc, new_stdin)
+        conn.set_options()
 
         conn._build_command = MagicMock()
         conn._build_command.return_value = 'ssh something something'
@@ -93,6 +95,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         new_stdin = StringIO()
 
         conn = connection_loader.get('ssh', pc, new_stdin)
+        conn.set_options()
         conn.set_become_plugin(become_loader.get('sudo'))
 
         conn.check_password_prompt = MagicMock()
@@ -345,6 +348,7 @@ def mock_run_env(request, mocker):
     new_stdin = StringIO()
 
     conn = connection_loader.get('ssh', pc, new_stdin)
+    conn.set_options()
     conn.set_become_plugin(become_loader.get('sudo'))
     conn._send_initial_data = MagicMock()
     conn._examine_output = MagicMock()
