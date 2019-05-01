@@ -225,7 +225,7 @@ summary:
     returned: as default or if summary is true
     type: dict
 result:
-    description:i >
+    description: >
         Result dict not nested under the cloudfront id to access results of module without the knowledge of that id
         as figuring out the DistributionId is usually the reason one uses this module in the first place.
     returned: always
