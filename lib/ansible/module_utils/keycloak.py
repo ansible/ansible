@@ -1563,6 +1563,7 @@ class KeycloakAPI(object):
                     idPConfiguration["authorizationUrl"] = openIdConfig["authorization_endpoint"]
                 if 'end_session_endpoint' in openIdConfig.keys():
                     idPConfiguration["logoutUrl"] = openIdConfig["end_session_endpoint"]
+            return openIdConfig
         except Exception, e:
             self.module.fail_json(msg='Could not get IdP configuration from endpoint %s: %s'
                                   % (url, str(e)))
