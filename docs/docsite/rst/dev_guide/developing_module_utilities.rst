@@ -59,7 +59,6 @@ please see the `source code for module_utils <https://github.com/ansible/ansible
 - ``common/parameters.py`` - Helper functions for dealing with module parameters
 - ``common/sys_info.py`` - Functions for getting distribution and platform information
 - ``common/validation.py`` - Helper functions for validating module parameters against a module argument spec
-- ``distro/_distro.py`` - General utilities for accessing OS distribution information
 - ``facts/`` - Directory of utilities for modules that return facts. See `PR 23012 <https://github.com/ansible/ansible/pull/23012>`_ for more information
 - ``ismount.py`` - Single helper function that fixes os.path.ismount
 - ``json_utils.py`` - Utilities for filtering unrelated output around module JSON output, like leading and trailing lines
