@@ -1197,7 +1197,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.get_option('remote_user')), host=self.get_options('host'))
+        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.get_option('remote_user')), host=self.get_option('remote_addr'))
 
         if getattr(self._shell, "_IS_WINDOWS", False):
             # Become method 'runas' is done in the wrapper that is executed,
