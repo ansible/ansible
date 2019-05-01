@@ -224,10 +224,12 @@ summary:
     description: Gives a summary of distributions, streaming distributions and origin access identities.
     returned: as default or if summary is true
     type: dict
-DistributionId:
-    description: Returns id of found distribution
+result:
+    description:i >
+        Result dict not nested under the cloudfront id to access results of module without the knowledge of that id
+        as figuring out the DistributionId is usually the reason one uses this module in the first place.
     returned: always
-    type: string
+    type: dict
 '''
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
