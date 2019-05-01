@@ -106,8 +106,6 @@ Retour:
             return dict1 == dict2
     except KeyError:
         return False
-    except Exception, e:
-        raise e
 
 
 def str2bool(value):
