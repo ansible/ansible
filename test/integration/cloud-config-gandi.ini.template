@@ -1,0 +1,12 @@
+# This is the configuration template for ansible-test Gandi integration tests.
+#
+# You do not need this template if you are:
+#
+# 1) Running integration tests without using ansible-test.
+#
+# If you want to test against the Gandi public API,
+# fill in the value below and save this file without the .template extension.
+# This will cause ansible-test to use the given configuration.
+
+[default]
+gandi_api_key: @API_KEY

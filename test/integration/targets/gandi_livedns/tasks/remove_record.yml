@@ -1,0 +1,67 @@
+# Copyright: (c) 2019 Gregory Thiemonge <gregory.thiemonge@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test remove a dns record in check mode
+  gandi_livedns:
+    api_key: "{{ gandi_api_key }}"
+    name: "{{ item.name | default(omit) }}"
+    domain: "{{ gandi_livedns_domain_name }}"
+    values: "{{ item.update_values | default(item['values']) }}"
+    type: "{{ item.type | default(omit) }}"
+    state: absent
+  check_mode: yes
+  register: result
+- name: verify test remove a dns record in check mode
+  assert:
+    that:
+    - result is changed
+    - result.record['values'] == {{ item.update_values | default(item['values']) }}
+    - result.record.name == "{{ item.name | default("") }}"
+    - result.record.type == "{{ item.type | default('@') }}"
+    - result.record.ttl == {{ item.update_ttl | default(10800) }}
+
+- name: test remove a dns record
+  gandi_livedns:
+    api_key: "{{ gandi_api_key }}"
+    name: "{{ item.name | default(omit) }}"
+    domain: "{{ gandi_livedns_domain_name }}"
+    values: "{{ item.update_values | default(item['values']) }}"
+    type: "{{ item.type | default(omit) }}"
+    state: absent
+  register: result
+- name: verify test remove a dns record
+  assert:
+    that:
+    - result is changed
+    - result.record['values'] == {{ item.update_values | default(item['values']) }}
+    - result.record.name == "{{ item.name | default("") }}"
+    - result.record.type == "{{ item.type | default('@') }}"
+    - result.record.ttl == {{ item.update_ttl | default(10800) }}
+
+- name: test remove a dns record idempotence
+  gandi_livedns:
+    api_key: "{{ gandi_api_key }}"
+    name: "{{ item.name | default(omit) }}"
+    domain: "{{ gandi_livedns_domain_name }}"
+    values: "{{ item.update_values | default(item['values']) }}"
+    type: "{{ item.type | default(omit) }}"
+    state: absent
+  register: result
+- name: verify test remove a dns record idempotence
+  assert:
+    that:
+    - result is not changed
+
+- name: test remove second dns record idempotence
+  gandi_livedns:
+    api_key: "{{ gandi_api_key }}"
+    name: "{{ item.name | default(omit) }}"
+    domain: "{{ gandi_livedns_domain_name }}"
+    values: "{{ item['values'] }}"
+    type: "{{ item.type | default(omit) }}"
+    state: absent
+  register: result
+- name: verify test remove a dns record idempotence
+  assert:
+    that:
+    - result is not changed
