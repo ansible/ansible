@@ -645,7 +645,11 @@ class KeycloakAPI(object):
                             headers=self.restheaders))
                     for roleComposite in clientRole["composites"]:
                         if roleComposite['clientRole']:
-                            roleCompositeClient = json.load(open_url(clientSvcBaseUrl + '/' + roleComposite['containerId'], method='GET', headers=self.restheaders))
+                            roleCompositeClient = json.load(
+                                open_url(
+                                    clientSvcBaseUrl + '/' + roleComposite['containerId'],
+                                    method='GET',
+                                    headers=self.restheaders))
                             roleComposite["clientId"] = roleCompositeClient["clientId"]
             clientRepresentation['clientRoles'] = clientRolesRepresentation
         except Exception as e:
@@ -968,10 +972,18 @@ class KeycloakAPI(object):
             componentSvcBaseUrl = URL_COMPONENTS.format(url=self.baseurl, realm=realm)
             userStorageBaseUrl = URL_USER_STORAGE.format(url=self.baseurl, realm=realm)
             # Get all components of type org.keycloak.storage.UserStorageProvider
-            components = json.load(open_url(componentSvcBaseUrl + '?type=' + LDAPUserStorageProviderType, method='GET', headers=self.restheaders))
+            components = json.load(
+                open_url(
+                    componentSvcBaseUrl + '?type=' + LDAPUserStorageProviderType,
+                    method='GET',
+                    headers=self.restheaders))
             for component in components:
                 # Get all sub components of type group-ldap-mapper
-                subComponents = json.load(open_url(componentSvcBaseUrl + "?parent=" + component["id"] + "&providerId=group-ldap-mapper", method='GET', headers=self.restheaders))
+                subComponents = json.load(
+                    open_url(
+                        componentSvcBaseUrl + "?parent=" + component["id"] + "&providerId=group-ldap-mapper",
+                        method='GET',
+                        headers=self.restheaders))
                 # For each group mappers
                 for subComponent in subComponents:
                     if subComponent["providerId"] == 'group-ldap-mapper':
@@ -1515,7 +1527,6 @@ class KeycloakAPI(object):
         except Exception, e:
             self.module.fail_json(msg='Could not get IdP configuration from endpoint %s: %s'
                                   % (url, str(e)))
-
 
     def delete_all_idp_mappers(self, alias, realm='master'):
         """
