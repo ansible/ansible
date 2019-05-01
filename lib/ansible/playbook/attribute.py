@@ -52,7 +52,8 @@ class Attribute:
         :kwarg isa: The type of the attribute.  Allowable values are a string
             representation of any yaml basic datatype, python class, or percent.
             (Enforced at post-validation time).
-        :kwarg private: (not used)
+        :kwarg private: Hides the attribute from being documented.
+                        TODO: it should also should prevent it from being user settable
         :kwarg default: Default value if unspecified in the YAML document.
         :kwarg required: Whether or not the YAML document must contain this field.
             If the attribute is None when post-validated, an error will be raised.
