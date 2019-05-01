@@ -511,6 +511,12 @@ options:
                         description:
                             - Name of the role. It can be a realm role name or a client role name.
         version_added: "2.9"
+    force:
+        type: bool
+        description:
+            - If true, existing client will be deleted an re-created.
+        default: False
+        version_added: "2.9"
 extends_documentation_fragment:
     - keycloak
 

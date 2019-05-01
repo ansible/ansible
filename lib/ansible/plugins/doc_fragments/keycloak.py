@@ -14,8 +14,6 @@ options:
             - URL to the Keycloak instance.
         type: str
         required: true
-        aliases:
-          - url
 
     auth_client_id:
         description:
@@ -40,16 +38,12 @@ options:
             - Username to authenticate for API access with.
         type: str
         required: true
-        aliases:
-          - username
 
     auth_password:
         description:
             - Password to authenticate for API access with.
         type: str
         required: true
-        aliases:
-          - password
 
     validate_certs:
         description:
