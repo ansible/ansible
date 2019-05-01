@@ -990,7 +990,7 @@ class Connection(ConnectionBase):
                 if states[state] == 'awaiting_prompt':
                     if self._flags['become_prompt']:
                         display.debug('Sending become_password in response to prompt')
-                        stdin.write(to_bytes(self.become.become_pass) + b'\n')
+                        stdin.write(to_bytes(self.become.get_option('become_pass')) + b'\n')
                         # On python3 stdin is a BufferedWriter, and we don't have a guarantee
                         # that the write will happen without a flush
                         stdin.flush()
