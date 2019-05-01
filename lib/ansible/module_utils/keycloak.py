@@ -1514,7 +1514,8 @@ class KeycloakAPI(object):
                     idPConfiguration["logoutUrl"] = openIdConfig["end_session_endpoint"]
         except Exception, e:
             self.module.fail_json(msg='Could not get IdP configuration from endpoint %s: %s'
-                                      % (url, str(e)))
+                                  % (url, str(e)))
+
 
     def delete_all_idp_mappers(self, alias, realm='master'):
         """
