@@ -189,20 +189,19 @@ The ``normal`` action plugin executes the module on the remote host. It is
 the primary coordinator of much of the work to actually execute the module on
 the managed machine.
 
-* It creates a connection to the managed machine by
-  instantiating a ``Connection`` class according to the inventory
-  configuration for that host.
-* It adds any internal Ansible variables to the module's parameters (for
+* It loads the appropriate connection plugin for the task, which then transfers
+  or executes as needed to create a connection to that host.
+* It adds any internal Ansible properties to the module's parameters (for
   instance, the ones that pass along ``no_log`` to the module).
-* It creates any temporary files on the remote machine and
+* It works with other plugins (connection, shell, become, other action plugins)
+  to create any temporary files on the remote machine and
   cleans up afterwards.
 * It pushes the module and module parameters to the
   remote host, although the :ref:`module_common <flow_executor_module_common>`
   code described in the next section decides which format
   those will take.
-* It handles any special cases regarding modules (for instance, various
-  complications around Windows modules that must have the same names as Python
-  modules, so that internal calling of modules from other Action Plugins work.)
+* It handles any special cases regarding modules (for instance, async
+  execution, or complications around Windows modules that must have the same names as Python modules, so that internal calling of modules from other Action Plugins work.)
 
 Much of this functionality comes from the `BaseAction` class,
 which lives in :file:`plugins/action/__init__.py`. It uses the
