@@ -753,7 +753,7 @@ def main():
         name=dict(type='str'),
         description=dict(type='str'),
         root_url=dict(type='str', aliases=['rootUrl']),
-        admin_url=dict(type='str', aliases=['adminUrl', 'url']),
+        admin_url=dict(type='str', aliases=['adminUrl']),
         base_url=dict(type='str', aliases=['baseUrl']),
         surrogate_auth_required=dict(type='bool', aliases=['surrogateAuthRequired']),
         enabled=dict(type='bool'),
