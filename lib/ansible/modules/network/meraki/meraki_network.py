@@ -62,6 +62,12 @@ options:
         description:
         - Timezone associated to network.
         - See U(https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a list of valid timezones.
+    enable_vlans:
+        description:
+        - Boolean value specifying whether VLANs should be supported on a network.
+        - Requires C(net_name) or C(net_id) to be specified.
+        type: bool
+        version_added: '2.9'
     disable_my_meraki:
         description: >
             - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
@@ -109,6 +115,13 @@ EXAMPLES = r'''
       - appliance
     timezone: America/Chicago
     tags: production, chicago
+- name: Enable VLANs on a network
+  meraki_network:
+    auth_key: abc12345
+    state: query
+    org_name: YourOrg
+    net_name: MyNet
+    enable_vlans: yes
   delegate_to: localhost
 '''
 
@@ -198,6 +211,7 @@ def main():
         net_name=dict(type='str', aliases=['name', 'network']),
         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
         disable_my_meraki=dict(type='bool'),
+        enable_vlans=dict(type='bool'),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -215,9 +229,13 @@ def main():
     create_urls = {'network': '/organizations/{org_id}/networks'}
     update_urls = {'network': '/networks/{net_id}'}
     delete_urls = {'network': '/networks/{net_id}'}
+    enable_vlans_urls = {'network': '/networks/{net_id}/vlansEnabledState'}
+    get_vlan_status_urls = {'network': '/networks/{net_id}/vlansEnabledState'}
     meraki.url_catalog['create'] = create_urls
     meraki.url_catalog['update'] = update_urls
     meraki.url_catalog['delete'] = delete_urls
+    meraki.url_catalog['enable_vlans'] = enable_vlans_urls
+    meraki.url_catalog['status_vlans'] = get_vlan_status_urls
 
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id parameters are required')
@@ -226,6 +244,9 @@ def main():
             meraki.fail_json(msg='net_name or net_id is required for present or absent states')
     if meraki.params['net_name'] and meraki.params['net_id']:
         meraki.fail_json(msg='net_name and net_id are mutually exclusive')
+    if not meraki.params['net_name'] and not meraki.params['net_id']:
+        if meraki.params['enable_vlans']:
+            meraki.fail_json(msg="The parameter 'enable_vlans' requires 'net_name' or 'net_id' to be specified")
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -295,10 +316,25 @@ def main():
                 if meraki.status == 200:
                     meraki.result['data'] = r
                     meraki.result['changed'] = True
-            else:
+
+            else:  # Update existing network
                 net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
-                # meraki.fail_json(msg="HERE", net=net, payload=payload)
-                if meraki.is_update_required(net, payload):
+                if meraki.params['enable_vlans'] is not None:
+                    status_path = meraki.construct_path('status_vlans', net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets))
+                    status = meraki.request(status_path, method='GET')
+                    payload = {'enabled': meraki.params['enable_vlans']}
+                    if meraki.is_update_required(status, payload):
+                        path = meraki.construct_path('enable_vlans',
+                                                     net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets))
+                        r = meraki.request(path,
+                                           method='PUT',
+                                           payload=json.dumps(payload))
+                        if meraki.status == 200:
+                            meraki.result['data'] = r
+                            meraki.result['changed'] = True
+                    else:
+                        meraki.result['data'] = status
+                elif meraki.is_update_required(net, payload):
                     path = meraki.construct_path('update',
                                                  net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
                                                  )
