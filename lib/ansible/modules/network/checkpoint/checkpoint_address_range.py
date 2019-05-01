@@ -26,74 +26,66 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_network
-short_description: Manages network objects on Checkpoint over Web Services API
+module: checkpoint_address_range
+short_description: Manages address_range objects on Checkpoint over Web Services API
 description:
-  - Manages network objects on Checkpoint devices including creating, updating, removing network objects.
+  - Manages address_range objects on Checkpoint devices including creating, updating, removing address_range objects.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
-  subnet:
+  ip_address_first:
     description:
-      - IPv4 or IPv6 network address. If both addresses are required use subnet4 and subnet6 fields explicitly.
+      - First IP address in the range. If both IPv4 and IPv6 address ranges are required, use the ipv4-address-first and
+        the ipv6-address-first fields instead.
     type: str
-  subnet4:
+  ipv4_address_first:
     description:
-      - IPv4 network address.
+      - First IPv4 address in the range.
     type: str
-  subnet6:
+  ipv6_address_first:
     description:
-      - IPv6 network address.
+      - First IPv6 address in the range.
     type: str
-  mask_length:
+  ip_address_last:
     description:
-      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields
-        explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
-    type: int
-  mask_length4:
+      - Last IP address in the range. If both IPv4 and IPv6 address ranges are required, use the ipv4-address-first and
+        the ipv6-address-first fields instead.
+    type: str
+  ipv4_address_last:
     description:
-      - IPv4 network mask length.
-    type: int
-  mask_length6:
+      - Last IPv4 address in the range.
+    type: str
+  ipv6_address_last:
     description:
-      - IPv6 network mask length.
-    type: int
-  subnet_mask:
-    description:
-      - IPv4 network mask.
+      - Last IPv6 address in the range.
     type: str
   nat_settings:
     description:
       - NAT settings.
     type: dict
-  broadcast:
-    description:
-      - Allow broadcast address inclusion.
-    type: str
-    choices: ['disallow', 'allow']
 extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
-- name: Add network object
-  checkpoint_network:
-    name: "New Network 1"
-    subnet: "192.0.2.0"
-    subnet_mask : "255.255.255.0"
+- name: Add address_range object
+  checkpoint_address_range:
+    name: "New address_range 1"
+    ip-address-first: "192.0.2.1"
+    ip-address-last: "192.0.2.10"
     state: present
 
 
-- name: Delete network object
-  checkpoint_network:
-    name: "New Network 1"
+- name: Delete address_range object
+  checkpoint_address_range:
+    name: "New Address Range 1"
     state: absent
 """
 
 RETURN = """
-checkpoint_networks:
-  description: The checkpoint network object created or updated.
-  returned: always, except when deleting the network.
+checkpoint_address_ranges:
+  description: The checkpoint address_range object created or updated.
+  returned: always, except when deleting the address_range.
   type: dict
 """
 
@@ -103,15 +95,13 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
-        subnet=dict(type='str'),
-        subnet4=dict(type='str'),
-        subnet6=dict(type='str'),
-        mask_length=dict(type='int'),
-        mask_length4=dict(type='int'),
-        mask_length6=dict(type='int'),
-        subnet_mask=dict(type='str'),
-        nat_settings=dict(type='dict'),
-        broadcast=dict(type='str', choices=['disallow', 'allow'])
+        ip_address_first=dict(type='str'),
+        ipv4_address_first=dict(type='str'),
+        ipv6_address_first=dict(type='str'),
+        ip_address_last=dict(type='int'),
+        ipv4_address_last=dict(type='int'),
+        ipv6_address_last=dict(type='int'),
+        nat_settings=dict(type='dict')
     )
     argument_spec.update(checkpoint_argument_spec)
     user_parameters = list(argument_spec.keys())

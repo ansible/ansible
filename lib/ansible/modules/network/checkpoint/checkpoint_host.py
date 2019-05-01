@@ -17,50 +17,82 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
-
+                    'supported_by': 'host'}
 
 DOCUMENTATION = """
 ---
 module: checkpoint_host
 short_description: Manages host objects on Checkpoint over Web Services API
 description:
-  - Manages host objects on Checkpoint devices including creating, updating, removing access rules objects.
+  - Manages host objects on Checkpoint devices including creating, updating, removing host objects.
     All operations are performed over Web Services API.
-version_added: "2.8"
-author: "Ansible by Red Hat (@rcarrillocruz)"
+version_added: "2.9"
+author: "Or Soffer (@chkp-orso)"
 options:
-  name:
+  type:
     description:
-      - Name of the access rule.
+      - Type of the object.
     type: str
-    required: True
-  ip_address:
+  domain:
     description:
-      - IP address of the host object.
-    type: str
-  state:
+      - Information about the domain the object belongs to.
+    type: dict
+  groups:
     description:
-      - State of the access rule (present or absent). Defaults to present.
+      - How much details are returned depends on the details-level field of the request. This table shows the level of
+        detail shown when details-level is set to standard.
+    type: list
+  icon:
+    description:
+      - Object icon.
     type: str
-    default: present
-extends_documentation_fragment: checkpoint
+  interfaces:
+    description:
+      - Host interfaces.
+    type: int
+  ipv4_address:
+    description:
+      - IPv4 host address.
+    type: str
+  ipv6_address:
+    description:
+      - IPv6 host address.
+    type: str
+  meta_info:
+    description:
+      - Object metadata.
+    type: dict
+  nat_settings:
+    description:
+      - NAT settings.
+    type: dict
+  read_only:
+    description:
+      - Indicates whether the object is read-only.
+    type: bool
+  host_servers:
+    description:
+      - Servers Configuration.
+    type: str
+extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
-- name: Create host object
+- name: Add host object
   checkpoint_host:
-    name: attacker
-    ip_address: 192.168.0.15
+    name: "New Host 1"
+    ip-address: "192.0.2.1"
+    state: present
+
 
 - name: Delete host object
   checkpoint_host:
-    name: attacker
+    name: "New Host 1"
     state: absent
 """
 
@@ -68,122 +100,34 @@ RETURN = """
 checkpoint_hosts:
   description: The checkpoint host object created or updated.
   returned: always, except when deleting the host.
-  type: list
+  type: dict
 """
 
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import Connection
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, publish
-import json
-
-
-def get_host(module, connection):
-    name = module.params['name']
-
-    payload = {'name': name}
-
-    code, response = connection.send_request('/web_api/show-host', payload)
-
-    return code, response
-
-
-def create_host(module, connection):
-    name = module.params['name']
-    ip_address = module.params['ip_address']
-
-    payload = {'name': name,
-               'ip-address': ip_address}
-
-    code, response = connection.send_request('/web_api/add-host', payload)
-
-    return code, response
-
-
-def update_host(module, connection):
-    name = module.params['name']
-    ip_address = module.params['ip_address']
-
-    payload = {'name': name,
-               'ip-address': ip_address}
-
-    code, response = connection.send_request('/web_api/set-host', payload)
-
-    return code, response
-
-
-def delete_host(module, connection):
-    name = module.params['name']
-
-    payload = {'name': name}
-
-    code, response = connection.send_request('/web_api/delete-host', payload)
-
-    return code, response
-
-
-def needs_update(module, host):
-    res = False
-
-    if module.params['ip_address'] != host['ipv4-address']:
-        res = True
-
-    return res
+from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, api_call
 
 
 def main():
     argument_spec = dict(
-        name=dict(type='str', required=True),
         ip_address=dict(type='str'),
-        state=dict(type='str', default='present')
+        ipv4_address=dict(type='str'),
+        ipv6_address=dict(type='str'),
+        interfaces=dict(type='list'),
+        nat_settings=dict(type='dict'),
+        host_servers=dict(type='dict')
     )
     argument_spec.update(checkpoint_argument_spec)
+    user_parameters = list(argument_spec.keys())
+    user_parameters.remove('auto_publish_session')
+    user_parameters.remove('state')
 
-    required_if = [('state', 'present', 'ip_address')]
-    module = AnsibleModule(argument_spec=argument_spec)
-    connection = Connection(module._socket_path)
-    code, response = get_host(module, connection)
-    result = {'changed': False}
+    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
+                           mutually_exclusive=[['name', 'uid']])
+    api_call_object = "host"
 
-    if module.params['state'] == 'present':
-        if code == 200:
-            if needs_update(module, response):
-                code, response = update_host(module, connection)
-                if code != 200:
-                    module.fail_json(msg=response)
-                if module.params['auto_publish_session']:
-                    publish(connection)
+    unique_payload_for_get = {'name': module.params['name']} if module.params['name'] else {'uid': module.params['uid']}
 
-                result['changed'] = True
-                result['checkpoint_hosts'] = response
-            else:
-                pass
-        elif code == 404:
-            code, response = create_host(module, connection)
-            if code != 200:
-                module.fail_json(msg=response)
-            if module.params['auto_publish_session']:
-                publish(connection)
-
-            result['changed'] = True
-            result['checkpoint_hosts'] = response
-    else:
-        if code == 200:
-            # Handle deletion
-            code, response = delete_host(module, connection)
-            if code != 200:
-                module.fail_json(msg=response)
-
-            if module.params['auto_publish_session']:
-                publish(connection)
-
-            result['changed'] = True
-            result['checkpoint_hosts'] = response
-        elif code == 404:
-            pass
-
-    result['checkpoint_session_uid'] = connection.get_session_uid()
-    module.exit_json(**result)
+    api_call(module, api_call_object, user_parameters, unique_payload_for_get)
 
 
 if __name__ == '__main__':

@@ -26,26 +26,36 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_network_facts
-short_description: Get network objects facts on Checkpoint over Web Services API
+module: checkpoint_group_facts
+short_description: Get group objects facts on Checkpoint over Web Services API
 description:
-  - Get network objects facts on Checkpoint devices.
+  - Get group objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
+  show_as_ranges:
+    description:
+      - When true, the group's matched content is displayed as ranges of IP addresses rather than network objects.
+        Objects that are not represented using IP addresses are presented as objects.
+        The 'members' parameter is omitted from the response and instead the 'ranges' parameter is displayed.
+    type: bool
+  dereference_group_members:
+    description:
+      - Indicates whether to dereference "members" field by details level for every object in reply.
+    type: bool
 extends_documentation_fragment: checkpoint_facts
 """
 
 EXAMPLES = """
-- name: Get network object facts
-  checkpoint_network_facts:
-    name: "New Network 1"
+- name: Get group object facts
+  checkpoint_group_facts:
+    name: "New Group 1"
 """
 
 RETURN = """
-ansible_networks:
-  description: The checkpoint network object facts.
+ansible_groups:
+  description: The checkpoint group object facts.
   returned: always.
   type: dict
 """
@@ -55,12 +65,15 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 
 def main():
-    argument_spec = dict()
+    argument_spec = dict(
+        show_as_ranges=dict(type='bool'),
+        dereference_group_members=dict(type='bool')
+    )
     argument_spec.update(checkpoint_argument_spec_for_facts)
     user_parameters = list(argument_spec.keys())
 
     module = AnsibleModule(argument_spec=argument_spec)
-    api_call_object = "network"
+    api_call_object = "group"
 
     api_call_facts(module, api_call_object, user_parameters)
 

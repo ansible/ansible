@@ -26,10 +26,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_network_facts
-short_description: Get network objects facts on Checkpoint over Web Services API
+module: checkpoint_address_range_facts
+short_description: Get address_range objects facts on Checkpoint over Web Services API
 description:
-  - Get network objects facts on Checkpoint devices.
+  - Get address_range objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -38,14 +38,14 @@ extends_documentation_fragment: checkpoint_facts
 """
 
 EXAMPLES = """
-- name: Get network object facts
-  checkpoint_network_facts:
-    name: "New Network 1"
+- name: Get address_range object facts
+  checkpoint_address_range_facts:
+    name: "New address_range 1"
 """
 
 RETURN = """
-ansible_networks:
-  description: The checkpoint network object facts.
+ansible_address_ranges:
+  description: The checkpoint address_range object facts.
   returned: always.
   type: dict
 """
@@ -60,7 +60,7 @@ def main():
     user_parameters = list(argument_spec.keys())
 
     module = AnsibleModule(argument_spec=argument_spec)
-    api_call_object = "network"
+    api_call_object = "address_range"
 
     api_call_facts(module, api_call_object, user_parameters)
 

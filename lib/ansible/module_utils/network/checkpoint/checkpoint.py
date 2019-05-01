@@ -30,7 +30,35 @@ from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.connection import Connection
 
 
-checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool'))
+checkpoint_argument_spec = dict(
+        name=dict(type='str'),
+        uid=dict(type='str'),
+        tags=dict(type='list'),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise',
+                                        'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray',
+                                        'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue',
+                                        'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
+                                        'red', 'sienna', 'yellow']),
+        comments=dict(type='str'),
+        details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+        groups=dict(type='list'),
+        ignore_warnings=dict(type='bool'),
+        ignore_errors=dict(type='bool'),
+        new_name=dict(type='str'),
+        auto_publish_session=dict(type='bool'),
+        state=dict(type='str', required=True)
+)
+
+checkpoint_argument_spec_for_facts = dict(
+        name=dict(type='str'),
+        uid=dict(type='str'),
+        details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+        limit=dict(type='int'),
+        offset=dict(type='int'),
+        order=dict(type='list'),
+        show_membership=dict(type='bool')
+)
 
 
 # publish the session
