@@ -1,0 +1,2 @@
+minor_changes:
+  - "meraki_network - Add support for enabling or disabling VLANs on a network."
