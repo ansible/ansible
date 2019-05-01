@@ -99,7 +99,7 @@ def keycloak_argument_spec():
     return dict(
         auth_keycloak_url=dict(type='str', required=True),
         auth_client_id=dict(type='str', default='admin-cli'),
-        auth_realm=dict(type='str', required=True),
+        auth_realm=dict(type='str', default='master'),
         auth_client_secret=dict(type='str', default=None),
         auth_username=dict(type='str', required=True),
         auth_password=dict(type='str', required=True, no_log=True),
