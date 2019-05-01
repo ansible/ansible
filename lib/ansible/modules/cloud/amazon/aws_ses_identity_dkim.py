@@ -15,7 +15,7 @@ short_description: Manages SES email and domain identity
 description:
     - This module allows a user to enable DKIM settings on an existing SES identity. It will also return
       the identity tokens for you to add to DNS.
-version_added: "2.8"
+version_added: "2.9"
 author: Stefan Horning (@stefanhorning)
 
 options:
