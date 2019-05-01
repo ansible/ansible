@@ -5,6 +5,23 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.0rc2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2019-05-01
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Ansible.Basic - Fix issue when deserilizing a JSON string that is not a dictionary - https://github.com/ansible/ansible/pull/55691
+- Be sure to use the active state when checking for any_errors_fatal
+- re allow empty plays for now, but add deprecation msg.
+
 v2.8.0rc1
 =========
 

@@ -1513,3 +1513,11 @@ releases:
     - win_reboot-psrp-command.yaml
     - win_region-format.yaml
     release_date: '2019-04-25'
+  2.8.0rc2:
+    codename: How Many More Times
+    fragments:
+    - 55515-use-active-state-for-any_errors_fatal.yaml
+    - bad_empty_play.yml
+    - ps-basic-json.yaml
+    - v2.8.0rc2_summary.yaml
+    release_date: '2019-05-01'
