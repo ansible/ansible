@@ -19,7 +19,7 @@ notes:
     - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/codepipeline.html)
 description:
     - Create or delete a CodePipeline on AWS.
-version_added: "2.8"
+version_added: "2.9"
 author:
     - Stefan Horning (@stefanhorning) <horning@mediapeers.com>
 requirements: [ botocore, boto3 ]
@@ -245,7 +245,7 @@ def describe_pipeline(client, name, version, module):
     except is_boto3_error_code('PipelineNotFoundException'):
         return pipeline
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
-            module.fail_json_aws(e)
+        module.fail_json_aws(e)
 
 
 def main():
