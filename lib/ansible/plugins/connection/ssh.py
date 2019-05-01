@@ -282,6 +282,24 @@ DOCUMENTATION = '''
         vars:
           - name: ansible_ssh_use_tty
             version_added: '2.7'
+      timeout:
+        name: SSH connection timeout
+        default: 10
+        description: This is the for connection plugins to use.
+        env:
+            - name: ANSIBLE_TIMEOUT
+            - name: ANSIBLE_SSH_TIMEOUT
+              version_added: '2.9'
+        ini:
+            - section: defaults
+              key: timeout
+            - section: ssh_connection
+              key: timeout
+              version_added: '2.9'
+        vars:
+            - name: ansible_timeout
+            - name: ansible_ssh_timeout
+        type: integer
 '''
 
 import errno
