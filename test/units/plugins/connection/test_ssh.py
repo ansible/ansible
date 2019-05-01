@@ -223,7 +223,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         mock_ospe.return_value = True
         conn._build_command.return_value = 'some command to run'
         conn._bare_run.return_value = (0, '', '')
-        conn.host = "some_host"
+        conn.set_option('remote_addr') = "some_host"
 
         C.ANSIBLE_SSH_RETRIES = 9
 
@@ -280,7 +280,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         conn._build_command.return_value = 'some command to run'
         conn._bare_run.return_value = (0, '', '')
-        conn.host = "some_host"
+        conn.set_option('remote_addr') = "some_host"
 
         C.ANSIBLE_SSH_RETRIES = 9
 
@@ -523,8 +523,9 @@ class TestSSHConnectionRun(object):
 @pytest.mark.usefixtures('mock_run_env')
 class TestSSHConnectionRetries(object):
     def test_incorrect_password(self, monkeypatch):
-        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
-        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 5)
+        self.conn.set_option('host_key_checking', False)
+        self.conn.set_option('retries', 5)
+
         monkeypatch.setattr('time.sleep', lambda x: None)
 
         self.mock_popen_res.stdout.read.side_effect = [b'']
@@ -550,8 +551,8 @@ class TestSSHConnectionRetries(object):
         assert self.mock_popen.call_count == 1
 
     def test_retry_then_success(self, monkeypatch):
-        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
-        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
+        self.conn.set_option('host_key_checking', False)
+        self.conn.set_option('retries', 3)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -581,8 +582,8 @@ class TestSSHConnectionRetries(object):
         assert b_stderr == b'my_stderr'
 
     def test_multiple_failures(self, monkeypatch):
-        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
-        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 9)
+        self.conn.set_option('host_key_checking', False)
+        self.conn.set_option('retries', 9)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -606,8 +607,8 @@ class TestSSHConnectionRetries(object):
         assert self.mock_popen.call_count == 10
 
     def test_abitrary_exceptions(self, monkeypatch):
-        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
-        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 9)
+        self.conn.set_option('host_key_checking', False)
+        self.conn.set_option('retries', 9)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -621,8 +622,8 @@ class TestSSHConnectionRetries(object):
         assert self.mock_popen.call_count == 10
 
     def test_put_file_retries(self, monkeypatch):
-        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
-        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
+        self.conn.set_option('host_key_checking', False)
+        self.conn.set_option('retries', 3)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
         monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
@@ -652,8 +653,8 @@ class TestSSHConnectionRetries(object):
         assert self.mock_popen.call_count == 2
 
     def test_fetch_file_retries(self, monkeypatch):
-        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
-        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
+        self.conn.set_option('host_key_checking', False)
+        self.conn.set_option('retries', 3)
 
         monkeypatch.setattr('time.sleep', lambda x: None)
         monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)

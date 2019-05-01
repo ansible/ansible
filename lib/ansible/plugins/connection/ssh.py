@@ -580,7 +580,7 @@ class Connection(ConnectionBase):
             were added.  It will be displayed with a high enough verbosity.
         .. note:: This function does its work via side-effect.  The b_command list has the new arguments appended.
         """
-        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.get_option('host'))
+        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.get_option('remote_addr'))
         b_command += b_args
 
     def _build_command(self, binary, *other_args):
@@ -704,11 +704,7 @@ class Connection(ConnectionBase):
                     raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
 
                 if not self.control_path:
-                    self.control_path = self._create_control_path(
-                        self.host,
-                        self.port,
-                        self.user
-                    )
+                    self.set_option('control_path', self._create_control_path(self.host, self.port, self.user))
                 b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
@@ -880,11 +876,11 @@ class Connection(ConnectionBase):
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
                 display.debug(u'Initial state: %s: %s' % (states[state], prompt))
-            elif self.become and self.become.success_key:
+            elif self.become and self.become.success:
                 # We're requesting escalation without a password, so we have to
                 # detect success/failure before sending any initial data.
                 state = states.index('awaiting_escalation')
-                display.debug(u'Initial state: %s: %s' % (states[state], self.become.success_key))
+                display.debug(u'Initial state: %s: %s' % (states[state], self.become.success))
 
         # We store accumulated stdout and stderr output from the process here,
         # but strip any privilege escalation prompt/confirmation lines first.
