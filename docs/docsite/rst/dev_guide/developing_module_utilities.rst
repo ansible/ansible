@@ -46,7 +46,7 @@ Standard module utilities
 Ansible ships with an extensive library of ``module_utils`` files.
 You can find the module
 utility source code in the ``lib/ansible/module_utils`` directory under
-your main Ansible path. We've described the most widely-used utilities below. For more details on any specific module utility,
+your main Ansible path. We've described the most widely used utilities below. For more details on any specific module utility,
 please see the `source code for module_utils <https://github.com/ansible/ansible/tree/devel/lib/ansible/module_utils>`_.
 
 .. include:: shared_snippets/licensing.txt
