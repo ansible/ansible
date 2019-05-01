@@ -177,6 +177,10 @@ class APT(LibMgr):
 
     LIB = 'apt'
 
+    def __init__(self):
+        self._cache = None
+        super(APT, self).__init__()
+
     @property
     def pkg_cache(self):
         if self._cache:
