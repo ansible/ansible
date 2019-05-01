@@ -228,15 +228,15 @@ diff:
     description: An object describing the state before and after the task.
     returned: sometimes
     type: dict
-    sample: 
-      after: 
+    sample:
+      after:
         path: file.txt
         state: absent
       before:
         path: file.txt
         state: file
 state:
-    description: 
+    description:
       - Equal to the nature of the path after the task is complete.
       - If the state argument is touch, the returned state value will be one of file, directory, link or absent.
       - If the state argument is not touch, the state returned on success equals the state argument.
