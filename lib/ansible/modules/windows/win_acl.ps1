@@ -167,8 +167,9 @@ $state = Get-Attr $params "state" "present" -validateSet "present","absent" -res
 $inherit = Get-Attr $params "inherit" ""
 $propagation = Get-Attr $params "propagation" "None" -validateSet "None","NoPropagateInherit","InheritOnly" -resultobj $result
 
-# We mount the HKCR, HKU, and HKCC registry hives so PS can access them
-$path_qualifier = Split-Path -Path $path -Qualifier
+# We mount the HKCR, HKU, and HKCC registry hives so PS can access them.
+# Network paths have no qualifiers so we use -EA SilentlyContinue to ignore that
+$path_qualifier = Split-Path -Path $path -Qualifier -ErrorAction SilentlyContinue
 if ($path_qualifier -eq "HKCR:" -and (-not (Test-Path -LiteralPath HKCR:\))) {
     New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT > $null
 }
@@ -197,8 +198,10 @@ ElseIf ($inherit -eq "") {
 }
 
 # Bug in Set-Acl, Get-Acl where -LiteralPath only works for the Registry provider if the location is in that root
-# qualifier.
-Push-Location -LiteralPath $path_qualifier
+# qualifier. We also don't have a qualifier for a network path so only change if not null
+if ($null -ne $path_qualifier) {
+    Push-Location -LiteralPath $path_qualifier
+}
 
 Try {
     SetPrivilegeTokens
@@ -295,7 +298,9 @@ Catch {
 }
 Finally {
     # Make sure we revert the location stack to the original path just for cleanups sake
-    Pop-Location
+    if ($null -ne $path_qualifier) {
+        Pop-Location
+    }
 }
 
 Exit-Json $result
