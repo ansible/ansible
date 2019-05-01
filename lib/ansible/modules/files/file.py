@@ -52,7 +52,8 @@ options:
     description:
     - Path of the file to link to.
     - This applies only to C(state=link) and C(state=hard).
-    - Will accept absolute, relative and non-existing paths.
+    - Will accept absolute and non-existing paths.
+    - Will accept relative paths unless state=hard.
     - Relative paths are relative to the file being created (C(path)) which is how
       the Unix command C(ln -s SRC DEST) treats relative paths.
     type: path
