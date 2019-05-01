@@ -91,7 +91,6 @@ The first PR should include the following files:
 * ``lib/ansible/modules/$category/$topic/$yourfirstmodule.py`` - A single module. *Required new file*
 * ``lib/ansible/plugins/doc_fragments/$topic.py`` - Code documentation, such as details regarding common arguments. *Optional new file*
 * ``lib/ansible/module_utils/$topic.py`` - Code shared between more than one module, such as common arguments. *Optional new file*
-*  ``docs/docsite/rst/dev_guide/developing_module_utilities.rst`` - Document your new `module_utils` file. *Optional update to existing file*
 
 And that's it.
 
