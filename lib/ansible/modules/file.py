@@ -215,7 +215,7 @@ EXAMPLES = r'''
 '''
 RETURN = r'''
 dest:
-    description: Destination file/path, equal to the value passed to I(path).
+    description: Destination file/path, equal to the value passed to I(dest).
     returned: state=touch, state=hard, state=link
     type: str
     sample: /path/to/file.txt
@@ -224,6 +224,25 @@ path:
     returned: state=absent, state=directory, state=file
     type: str
     sample: /path/to/file.txt
+diff:
+    description: An object describing the state before and after the task.
+    returned: sometimes
+    type: dict
+    sample: 
+      after: 
+        path: file.txt
+        state: absent
+      before:
+        path: file.txt
+        state: file
+state:
+    description: 
+      - Equal to the nature of the path after the task is complete.
+      - If the state argument is touch, the returned state value will be one of file, directory, link or absent.
+      - If the state argument is not touch, the state returned on success equals the state argument.
+    returned: Always
+    type: str
+    sample: file
 '''
 
 import errno
