@@ -77,11 +77,11 @@ options:
       - Describes the default server-side encryption to apply to new objects in the bucket.
         In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitly.
     choices: [ 'none', 'AES256', 'aws:kms' ]
-    version_added: "2.6"
+    version_added: "2.9"
   encryption_key_id:
     description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms. If
                  not specified then it will default to the AWS provided KMS key.
-    version_added: "2.6"
+    version_added: "2.9"
 extends_documentation_fragment:
     - aws
     - ec2
