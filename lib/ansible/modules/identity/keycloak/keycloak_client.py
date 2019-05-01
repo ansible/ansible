@@ -4,6 +4,8 @@
 # Copyright (c) 2017, Eike Frost <ei@kefro.st>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
+from ansible.module_utils.basic import AnsibleModule
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -369,8 +371,8 @@ options:
                       protocol mapper configuration through check-mode in the I(existing) field.
             state:
                 description:
-                    - Desired state of the protocol mappers. 
-                      If present, the mapper will be added or updated. 
+                    - Desired state of the protocol mappers.
+                      If present, the mapper will be added or updated.
                       If absent, the mapper will be removed
                 choices: [absent, present]
                 default: present
@@ -481,9 +483,9 @@ options:
                       client and signed by its key, base64-encoded.
     client_roles:
         description:
-            - List of roles and their composites for the client. 
+            - List of roles and their composites for the client.
               Client roles can be added, updated or removed depending it's state.
-        aliases: 
+        aliases:
             - clientRoles
             - roles
         type: list
@@ -611,7 +613,7 @@ EXAMPLES = '''
         name: role list
         protocol: saml
         protocolMapper: saml-role-list-mapper
-      - config: 
+      - config:
           multivalued: False
           userinfo.token.claim": True
           user.attribute: Test2
@@ -691,9 +693,6 @@ end_state:
         }
     }
 '''
-
-from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
-from ansible.module_utils.basic import AnsibleModule
 
 
 def sanitize_cr(clientrep):
