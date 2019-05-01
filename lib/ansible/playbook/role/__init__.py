@@ -209,14 +209,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
-        if self._role_vars is None:
-            self._role_vars = dict()
         elif not isinstance(self._role_vars, dict):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
-        if self._default_vars is None:
-            self._default_vars = dict()
         elif not isinstance(self._default_vars, dict):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
@@ -275,17 +271,18 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         data = {}
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
-            # Valid extensions and ordering for roles is hard-coded to maintain
-            # role portability
+            # Valid extensions and ordering for roles is hard-coded to maintain portability
             extensions = ['.yml', '.yaml', '.json']
-            # If no <main> is specified by the user, look for files with
-            # extensions before bare name. Otherwise, look for bare name first.
+
+            # look for files w/o extensions before/after bare name depending on it being set or not
+            # keep 'main' as original to figure out errors if no files found
             if main is None:
                 _main = 'main'
                 extensions.append('')
             else:
                 _main = main
                 extensions.insert(0, '')
+
             found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
             if found_files:
                 for found in found_files:
@@ -297,6 +294,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                             display.warning("Skipping '%s' vars file as it didn't produce a dictionary but a '%s'" % (to_text(found), type(new_data)))
             elif main is not None:
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
+
         return data
 
     def _load_dependencies(self):
