@@ -110,7 +110,6 @@ class PlayContext(Base):
     _sftp_extra_args = FieldAttribute(isa='string')
     _scp_extra_args = FieldAttribute(isa='string')
     _ssh_extra_args = FieldAttribute(isa='string')
-    _ssh_transfer_method = FieldAttribute(isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
 
     # ???
     _connection_lockfd = FieldAttribute(isa='int')

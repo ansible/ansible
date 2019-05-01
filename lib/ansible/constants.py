@@ -159,7 +159,6 @@ MAGIC_VARIABLE_MAPPING = dict(
     sftp_extra_args=('ansible_sftp_extra_args', ),
     scp_extra_args=('ansible_scp_extra_args', ),
     ssh_extra_args=('ansible_ssh_extra_args', ),
-    ssh_transfer_method=('ansible_ssh_transfer_method', ),
 
     # docker TODO: remove
     docker_extra_args=('ansible_docker_extra_args', ),

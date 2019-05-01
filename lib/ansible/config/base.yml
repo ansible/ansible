@@ -1041,16 +1041,6 @@ DEFAULT_SQUASH_ACTIONS:
     why: Loop squashing is deprecated and this configuration will no longer be used
     version: "2.11"
     alternatives: a list directly with the module argument
-DEFAULT_SSH_TRANSFER_METHOD:
-  # TODO: move to ssh plugin
-  default:
-  description: 'unused?'
-  #  - "Preferred method to use when transferring files over ssh"
-  #  - Setting to smart will try them until one succeeds or they all fail
-  #choices: ['sftp', 'scp', 'dd', 'smart']
-  env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
-  ini:
-  - {key: transfer_method, section: ssh_connection}
 DEFAULT_STDOUT_CALLBACK:
   name: Main display callback plugin
   default: default
