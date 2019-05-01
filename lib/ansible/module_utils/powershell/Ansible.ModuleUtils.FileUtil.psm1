@@ -1,43 +1,54 @@
 # Copyright (c) 2017 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-<#
-Test-Path/Get-Item cannot find/return info on files that are locked like
-C:\pagefile.sys. These 2 functions are designed to work with these files and
-provide similar functionality with the normal cmdlets with as minimal overhead
-as possible. They work by using Get-ChildItem with a filter and return the
-result from that.
-#>
+#AnsibleRequires -CSharpUtil Ansible.IO
 
 Function Test-AnsiblePath {
+    <#
+    .SYNOPSIS
+    Checks if the item at Path exists or not.
+
+    .PARAMETER Path
+    The path to the item to check for its existence.
+
+    .NOTES
+    This is mean to replace Test-Path as it works with special files like pagefile.sys and files exceeding MAX_PATH.
+    #>
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$true)][string]$Path
     )
-    # Replacement for Test-Path
-    try {
-        $file_attributes = [System.IO.File]::GetAttributes($Path)
-    } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
-        return $false
-    } catch [NotSupportedException] {
-        # When testing a path like Cert:\LocalMachine\My, System.IO.File will
-        # not work, we just revert back to using Test-Path for this
+
+    # When testing a path like Cert:\LocalMachine\My, our C# functions will
+    # not work, we just revert back to using Test-Path for this
+    $ps_providers = (Get-PSDrive).Name | Where-Object {
+        $_ -notmatch "^[A-Za-z]$" -and $Path.StartsWith("$($_):", $true, [System.Globalization.CultureInfo]::InvariantCulture)
+    }
+    if ($null -ne $ps_providers) {
         return Test-Path -Path $Path
     }
 
-    if ([Int32]$file_attributes -eq -1) {
-        return $false
-    } else {
+    try {
+        [Ansible.IO.FileSystem]::GetFileAttributeData($Path) > $null
         return $true
+    } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
+        return $false
     }
 }
 
 Function Get-AnsibleItem {
+    <#
+    .SYNOPSIS
+    Replacement for Get-Item to work with special files that are locked like pagefile.sys.
+
+    .PARAMETER Path
+    The path to the file to get the info for.
+    #>
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$true)][string]$Path
     )
-    # Replacement for Get-Item
+
     try {
         $file_attributes = [System.IO.File]::GetAttributes($Path)
     } catch {

@@ -36,6 +36,24 @@
     that:
     - ansible_become_tests.data == "success"
 
+- name: test Ansible.IO.cs
+  ansible_io_tests:
+  register: ansible_io_tests
+
+- name: assert test Ansible.IO.cs
+  assert:
+    that:
+    - ansible_io_tests.data == "success"
+
+- name: test Ansible.Link.cs
+  ansible_link_tests:
+  register: ansible_link_tests
+
+- name: assert test Ansible.Link.cs
+  assert:
+    that:
+    - ansible_link_tests.data == "success"
+
 - name: test Ansible.Process.cs
   ansible_process_tests:
   register: ansible_process_tests

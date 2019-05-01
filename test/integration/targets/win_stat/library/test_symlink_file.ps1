@@ -15,13 +15,11 @@ $result = @{
 
 if ($state -eq "absent") {
     if (Test-Path -Path $src) {
-        Load-LinkUtils
         Remove-Link -link_path $src
         $result.changed = $true
     }
 } else {
     if (-not (Test-Path -Path $src)) {
-        Load-LinkUtils
         New-Link -link_path $src -link_target $target -link_type "link"
         $result.changed = $true
     }

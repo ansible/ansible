@@ -1,170 +1,490 @@
 #!powershell
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
+#AnsibleRequires -CSharpUtil Ansible.IO
 #Requires -Module Ansible.ModuleUtils.LinkUtil
-#Requires -Module Ansible.ModuleUtils.CommandUtil
 
-$ErrorActionPreference = 'Stop'
+$module = [Ansible.Basic.AnsibleModule]::Create($args, @{})
 
-$path = Join-Path -Path ([System.IO.Path]::GetFullPath($env:TEMP)) -ChildPath '.ansible .ÅÑŚÌβŁÈ [$!@^&test(;)]'
+$path = [Ansible.IO.Path]::Combine($module.Tmpdir, '.ansible ÅÑŚÌβŁÈ [$!@^&test(;)]')
 
-$folder_target = "$path\folder"
-$file_target = "$path\file"
-$symlink_file_path = "$path\file-symlink"
-$symlink_folder_path = "$path\folder-symlink"
-$hardlink_path = "$path\hardlink"
-$hardlink_path_2 = "$path\hardlink2"
-$junction_point_path = "$path\junction"
+Function Assert-Equals {
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)][AllowNull()]$Actual,
+        [Parameter(Mandatory=$true, Position=0)][AllowNull()]$Expected
+    )
 
-if (Test-Path -LiteralPath $path) {
-    # Remove-Item struggles with broken symlinks, rely on trusty rmdir instead
-    Run-Command -command "cmd.exe /c rmdir /S /Q `"$path`"" > $null
-}
-New-Item -Path $path -ItemType Directory | Out-Null
-New-Item -Path $folder_target -ItemType Directory | Out-Null
-New-Item -Path $file_target -ItemType File | Out-Null
-Set-Content -LiteralPath $file_target -Value "a"
+    $matched = $false
+    if ($Actual -is [System.Collections.ArrayList] -or $Actual -is [Array]) {
+        $Actual.Count | Assert-Equals -Expected $Expected.Count
+        for ($i = 0; $i -lt $Actual.Count; $i++) {
+            $actual_value = $Actual[$i]
+            $expected_value = $Expected[$i]
+            Assert-Equals -Actual $actual_value -Expected $expected_value
+        }
+        $matched = $true
+    } else {
+        $matched = $Actual -ceq $Expected
+    }
 
-Function Assert-Equals($actual, $expected) {
-    if ($actual -ne $expected) {
-        Fail-Json @{} "actual != expected`nActual: $actual`nExpected: $expected"
+    if (-not $matched) {
+        if ($Actual -is [PSObject]) {
+            $Actual = $Actual.ToString()
+        }
+
+        $call_stack = (Get-PSCallStack)[1]
+        $module.Result.test = $test
+        $module.Result.actual = $Actual
+        $module.Result.expected = $Expected
+        $module.Result.line = $call_stack.ScriptLineNumber
+        $module.Result.method = $call_stack.Position.Text
+
+        $module.FailJson("AssertionError: actual != expected")
     }
 }
 
-Function Assert-True($expression, $message) {
-    if ($expression -ne $true) {
-        Fail-Json @{} $message
+Function Set-AnsibleContent {
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$true)][System.String]$Path,
+        [Parameter(Mandatory=$true)][System.String]$Value
+    )
+
+    $file_h = [Ansible.IO.FileSystem]::CreateFile($Path, "Create", "Write", "None", "None")
+
+    try {
+        $fs = New-Object -TypeName System.IO.FileStream -ArgumentList $file_h, "Write"
+
+        try {
+            $bytes = [System.Text.Encoding]::UTF8.GetBytes($Value)
+            $fs.Write($bytes, 0, $bytes.Length)
+        } finally {
+            $fs.Dispose()
+        }
+    } finally {
+        $file_h.Dispose()
     }
 }
 
-# need to manually set this
-Load-LinkUtils
+Function Get-AnsibleContent {
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$true)][System.String]$Path
+    )
 
-# path is not a link
-$no_link_result = Get-Link -link_path $path
-Assert-True -expression ($null -eq $no_link_result) -message "did not return null result for a non link"
+    $file_h = [Ansible.IO.FileSystem]::CreateFile($Path, "Open", "Read", "None", "None")
 
-# fail to create hard link pointed to a directory
-try {
-    New-Link -link_path "$path\folder-hard" -link_target $folder_target -link_type "hard"
-    Assert-True -expression $false -message "creation of hard link should have failed if target was a directory"
-} catch {
-    Assert-Equals -actual $_.Exception.Message -expected "cannot set the target for a hard link to a directory"
+    try {
+        $fs = New-Object -TypeName System.IO.FileStream -ArgumentList $file_h, "Read"
+
+        try {
+            $bytes = New-Object -TypeName byte[] -ArgumentList $fs.Length
+            $fs.Read($bytes, 0, $bytes.Length)
+            [System.Text.Encoding]::UTF8.GetString($bytes)
+        } finally {
+            $fs.Dispose()
+        }
+    } finally {
+        $file_h.Dispose()
+    }
 }
 
-# fail to create a junction point pointed to a file
-try {
-    New-Link -link_path "$path\junction-fail" -link_target $file_target -link_type "junction"
-    Assert-True -expression $false -message "creation of junction point should have failed if target was a file"
-} catch {
-    Assert-Equals -actual $_.Exception.Message -expected "cannot set the target for a junction point to a file"
+Function Clear-Directory {
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory=$true)][System.String]$Path
+    )
+
+    if ([Ansible.IO.FileSystem]::DirectoryExists($Path)) {
+        [Ansible.IO.FileSystem]::RemoveDirectory($Path, $true)
+    }
+    [Ansible.IO.FileSystem]::CreateDirectory($Path)
 }
 
-# fail to create a symbolic link with non-existent target
-try {
-    New-Link -link_path "$path\symlink-fail" -link_target "$path\fake-folder" -link_type "link"
-    Assert-True -expression $false -message "creation of symbolic link should have failed if target did not exist"
-} catch {
-    Assert-Equals -actual $_.Exception.Message -expected "link_target '$path\fake-folder' does not exist, cannot create link"
+$tests = [Ordered]@{
+    "Get-Link with normal directory" = {
+        $actual = Get-Link -Path $test_path
+        $actual | Assert-Equals -Expected $null
+    }
+
+    "Fail to create hard link to a non-existant target" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source.txt")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target.txt")
+
+        $failed = $false
+        try {
+            New-Link -Path $source -TargetPath $target -Type hard
+        } catch {
+            $_.Exception.Message | Assert-Equals -Expected "link target '$target' does not exist, cannot create hard link"
+            $failed = $true
+        }
+        $failed | Assert-Equals -Expected $true
+    }
+
+    "Fail to create hard link to a directory" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source.txt")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target.txt")
+        [Ansible.IO.FileSystem]::CreateDirectory($target)
+
+        $failed = $false
+        try {
+            New-Link -Path $source -TargetPath $target -Type hard
+        } catch {
+            $_.Exception.Message | Assert-Equals -Expected "cannot set the target for a hard link to a directory"
+            $failed = $true
+        }
+        $failed | Assert-Equals -Expected $true
+    }
+
+    "Fail to create junction point to a file" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target.txt")
+        Set-AnsibleContent -Path $target -Value "abc"
+
+        $failed = $false
+        try {
+            New-Link -Path $source -TargetPath $target -Type junction
+        } catch {
+            $_.Exception.Message | Assert-Equals -Expected "cannot set the target for a junction point to a file"
+            $failed = $true
+        }
+        $failed | Assert-Equals -Expected $true
+    }
+
+    "Create a relative symlink" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target")
+        [Ansible.IO.FileSystem]::CreateDirectory($target)
+
+        # First try with -WhatIf
+        New-Link -Path $source -TargetPath target -Type link -WhatIf
+        [Ansible.IO.FileSystem]::Exists($source) | Assert-Equals -Expected $false
+
+        New-Link -Path $source -TargetPath target -Type link
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        $actual = Get-Link -Path $source
+        $actual.Type | Assert-Equals -Expected "SymbolicLink"
+        $actual.SubstituteName | Assert-Equals -Expected "target"
+        $actual.PrintName | Assert-Equals -Expected "target"
+        $actual.TargetPath | Assert-Equals -Expected "target"
+        $actual.AbsolutePath | Assert-Equals -Expected $target
+        $actual.HardTargets | Assert-Equals -Expected $null
+
+        # Delete link with -WhatIf
+        Remove-Link -Path $source -WhatIf
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        Remove-Link -Path $source
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $false
+    }
+
+    "Create a file symbolic link" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target")
+        Set-AnsibleContent -Path $target -Value "abc"
+
+        New-Link -Path $source -TargetPath $target -Type link -WhatIf
+        [Ansible.IO.FileSystem]::Exists($source) | Assert-Equals -Expected $false
+
+        New-Link -Path $source -TargetPath $target -Type link
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $true
+
+
+        if ($test_path.StartsWith("\\?\")) {
+            $expected_sub_name = "\??\$($target.Substring(4))"
+        } elseif ($test_path.StartsWith("\\")) {
+            $expected_sub_name = "\??\UNC\$($target.Substring(2))"
+        } else {
+            $expected_sub_name = "\??\$target"
+        }
+
+        $actual = Get-Link -Path $source
+        $actual.Type | Assert-Equals -Expected "SymbolicLink"
+        $actual.SubstituteName | Assert-Equals -Expected $expected_sub_name
+        $actual.PrintName | Assert-Equals -Expected $target
+        $actual.TargetPath | Assert-Equals -Expected $target
+        $actual.AbsolutePath | Assert-Equals -Expected $target
+        $actual.HardTargets | Assert-Equals -Expected $null
+
+        Remove-Link -Path $source -WhatIf
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $true
+
+        Remove-Link -Path $source
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $false
+    }
+
+    "Create a file symbolic link to missing target" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source.txt")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target.txt")
+
+        New-Link -Path $source -TargetPath $target -Type link -WhatIf
+        [Ansible.IO.FileSystem]::Exists($source) | Assert-Equals -Expected $false
+
+        New-Link -Path $source -TargetPath $target -Type link
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $true
+
+        if ($test_path.StartsWith("\\?\")) {
+            $expected_sub_name = "\??\$($target.Substring(4))"
+        } elseif ($test_path.StartsWith("\\")) {
+            $expected_sub_name = "\??\UNC\$($target.Substring(2))"
+        } else {
+            $expected_sub_name = "\??\$target"
+        }
+
+        $actual = Get-Link -Path $source
+        $actual.Type | Assert-Equals -Expected "SymbolicLink"
+        $actual.SubstituteName | Assert-Equals -Expected $expected_sub_name
+        $actual.PrintName | Assert-Equals -Expected $target
+        $actual.TargetPath | Assert-Equals -Expected $target
+        $actual.AbsolutePath | Assert-Equals -Expected $target
+        $actual.HardTargets | Assert-Equals -Expected $null
+
+        Remove-Link -Path $source -WhatIf
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $true
+
+        Remove-Link -Path $source
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $false
+    }
+
+    "Create a directory symbolic link" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target")
+        [Ansible.IO.FileSystem]::CreateDirectory($target)
+
+        New-Link -Path $source -TargetPath $target -Type link -WhatIf
+        [Ansible.IO.FileSystem]::Exists($source) | Assert-Equals -Expected $false
+
+        New-Link -Path $source -TargetPath $target -Type link
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        if ($test_path.StartsWith("\\?\")) {
+            $expected_sub_name = "\??\$($target.Substring(4))"
+        } elseif ($test_path.StartsWith("\\")) {
+            $expected_sub_name = "\??\UNC\$($target.Substring(2))"
+        } else {
+            $expected_sub_name = "\??\$target"
+        }
+
+        $actual = Get-Link -Path $source
+        $actual.Type | Assert-Equals -Expected "SymbolicLink"
+        $actual.SubstituteName | Assert-Equals -Expected $expected_sub_name
+        $actual.PrintName | Assert-Equals -Expected $target
+        $actual.TargetPath | Assert-Equals -Expected $target
+        $actual.AbsolutePath | Assert-Equals -Expected $target
+        $actual.HardTargets | Assert-Equals -Expected $null
+
+        Remove-Link -Path $source -WhatIf
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        Remove-Link -Path $source
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $false
+    }
+
+    "Create directory symbolic link to missing target" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target")
+
+        New-Link -Path $source -TargetPath $target -Type link -WhatIf
+        [Ansible.IO.FileSystem]::Exists($source) | Assert-Equals -Expected $false
+
+        New-Link -Path $source -TargetPath $target -Type link
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        if ($test_path.StartsWith("\\?\")) {
+            $expected_sub_name = "\??\$($target.Substring(4))"
+        } elseif ($test_path.StartsWith("\\")) {
+            $expected_sub_name = "\??\UNC\$($target.Substring(2))"
+        } else {
+            $expected_sub_name = "\??\$target"
+        }
+
+        $actual = Get-Link -Path $source
+        $actual.Type | Assert-Equals -Expected "SymbolicLink"
+        $actual.SubstituteName | Assert-Equals -Expected $expected_sub_name
+        $actual.PrintName | Assert-Equals -Expected $target
+        $actual.TargetPath | Assert-Equals -Expected $target
+        $actual.AbsolutePath | Assert-Equals -Expected $target
+        $actual.HardTargets | Assert-Equals -Expected $null
+
+        Remove-Link -Path $source -WhatIf
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        Remove-Link -Path $source
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $false
+    }
+
+    "Create a junction point" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target")
+        [Ansible.IO.FileSystem]::CreateDirectory($target)
+
+        New-Link -Path $source -TargetPath $target -Type junction -WhatIf
+        [Ansible.IO.FileSystem]::Exists($source) | Assert-Equals -Expected $false
+
+        New-Link -Path $source -TargetPath $target -Type junction
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        if ($test_path.StartsWith("\\?\")) {
+            $expected_sub_name = "\??\$($target.Substring(4))"
+        } elseif ($test_path.StartsWith("\\")) {
+            $expected_sub_name = "\??\\\$($target.Substring(2))"
+        } else {
+            $expected_sub_name = "\??\$target"
+        }
+
+        $actual = Get-Link -Path $source
+        $actual.Type | Assert-Equals -Expected "JunctionPoint"
+        $actual.SubstituteName | Assert-Equals -Expected $expected_sub_name
+        $actual.PrintName | Assert-Equals -Expected $target
+        $actual.TargetPath | Assert-Equals -Expected $target
+        $actual.AbsolutePath | Assert-Equals -Expected $target
+        $actual.HardTargets | Assert-Equals -Expected $null
+
+        Remove-Link -Path $source -WhatIf
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        Remove-Link -Path $source
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $false
+    }
+
+    "Create a junction point to missing target" = {
+        $source = [Ansible.IO.Path]::Combine($test_path, "source")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target")
+
+        New-Link -Path $source -TargetPath $target -Type junction -WhatIf
+        [Ansible.IO.FileSystem]::Exists($source) | Assert-Equals -Expected $false
+
+        New-Link -Path $source -TargetPath $target -Type junction
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        if ($test_path.StartsWith("\\?\")) {
+            $expected_sub_name = "\??\$($target.Substring(4))"
+        } elseif ($test_path.StartsWith("\\")) {
+            $expected_sub_name = "\??\\\$($target.Substring(2))"
+        } else {
+            $expected_sub_name = "\??\$target"
+        }
+
+        $actual = Get-Link -Path $source
+        $actual.Type | Assert-Equals -Expected "JunctionPoint"
+        $actual.SubstituteName | Assert-Equals -Expected $expected_sub_name
+        $actual.PrintName | Assert-Equals -Expected $target
+        $actual.TargetPath | Assert-Equals -Expected $target
+        $actual.AbsolutePath | Assert-Equals -Expected $target
+        $actual.HardTargets | Assert-Equals -Expected $null
+
+        Remove-Link -Path $source -WhatIf
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $true
+
+        Remove-Link -Path $source
+        [Ansible.IO.FileSystem]::DirectoryExists($source) | Assert-Equals -Expected $false
+    }
+
+    "Create a hard link" = {
+        if ($test_path.StartsWith("\\")) {
+            # Cannot enumerate hard links over network path
+            return
+        }
+        $source = [Ansible.IO.Path]::Combine($test_path, "source")
+        $target = [Ansible.IO.Path]::Combine($test_path, "target")
+        Set-AnsibleContent -Path $target -Value "abc"
+
+        New-Link -Path $source -TargetPath $target -Type hard -WhatIf
+        [Ansible.IO.FileSystem]::Exists($source) | Assert-Equals -Expected $false
+
+        New-Link -Path $source -TargetPath $target -Type hard
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $true
+
+        $actual = Get-Link -Path $source
+        $actual.Type | Assert-Equals -Expected "HardLink"
+        $actual.SubstituteName | Assert-Equals -Expected $null
+        $actual.PrintName | Assert-Equals -Expected $null
+        $actual.TargetPath | Assert-Equals -Expected $null
+        $actual.AbsolutePath | Assert-Equals -Expected $null
+        $hard_targets = $actual.HardTargets | Sort-Object
+
+        $hard_targets.Length | Assert-Equals -Expected 2
+        $hard_targets[0] | Assert-Equals -Expected $source
+        $hard_targets[1] | Assert-Equals -Expected $target
+        Get-AnsibleContent -Path $source | Assert-Equals -Expected "abc"
+
+        # Create a 2nd hard link
+        $link2 = [Ansible.IO.Path]::Combine($test_path, "source2")
+        New-Link -Path $link2 -TargetPath $target -Type hard
+        [Ansible.IO.FileSystem]::FileExists($link2) | Assert-Equals -Expected $true
+
+        $actual = Get-Link -Path $link2
+        $hard_targets = $actual.HardTargets | Sort-Object
+        $hard_targets.Length | Assert-Equals -Expected 3
+        $hard_targets[0] | Assert-Equals -Expected $source
+        $hard_targets[1] | Assert-Equals -Expected $link2
+        $hard_targets[2] | Assert-Equals -Expected $target
+        Get-AnsibleContent -Path $link2 | Assert-Equals -Expected "abc"
+
+        Remove-Link -Path $source -WhatIf
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $true
+
+        Remove-Link -Path $source
+        [Ansible.IO.FileSystem]::FileExists($source) | Assert-Equals -Expected $false
+
+        $actual = Get-Link -Path $link2
+        $actual.HardTargets.Length | Assert-Equals -Expected 2
+    }
+
+    "Remove-Link with normal file" = {
+        $file_path = [Ansible.IO.Path]::Combine($test_path, "file.txt")
+        Set-AnsibleContent -Path $file_path -Value "abc"
+
+        Remove-Link -Path $file_path
+
+        # Because the file is not a link it won't be deleted
+        [Ansible.IO.FileSystem]::FileExists($file_path) | Assert-Equals -Expected $true
+    }
+
+    "Remove-Link with normal directory" = {
+        $dir_path = [Ansible.IO.Path]::Combine($test_path, "directory")
+        [Ansible.IO.FileSystem]::CreateDirectory($dir_path)
+
+        Remove-Link -Path $dir_path
+
+        # Because the dir is not a link it won't be deleted
+        [Ansible.IO.FileSystem]::DirectoryExists($dir_path) | Assert-Equals -Expected $true
+    }
 }
 
-# create recursive symlink
-Run-Command -command "cmd.exe /c mklink /D symlink-rel folder" -working_directory $path | Out-Null
-$rel_link_result = Get-Link -link_path "$path\symlink-rel"
-Assert-Equals -actual $rel_link_result.Type -expected "SymbolicLink"
-Assert-Equals -actual $rel_link_result.SubstituteName -expected "folder"
-Assert-Equals -actual $rel_link_result.PrintName -expected "folder"
-Assert-Equals -actual $rel_link_result.TargetPath -expected "folder"
-Assert-Equals -actual $rel_link_result.AbsolutePath -expected $folder_target
-Assert-Equals -actual $rel_link_result.HardTargets -expected $null
+foreach ($test_impl in $tests.GetEnumerator()) {
+    # Run each test with
+    #     1. A normal path
+    #     2. A path that exceeds MAX_PATH
+    #     3. A UNC path
+    #     4. A UNC path that exceeds MAX_PATH
 
-# create a symbolic file test
-New-Link -link_path $symlink_file_path -link_target $file_target -link_type "link"
-$file_link_result = Get-Link -link_path $symlink_file_path
-Assert-Equals -actual $file_link_result.Type -expected "SymbolicLink"
-Assert-Equals -actual $file_link_result.SubstituteName -expected "\??\$file_target"
-Assert-Equals -actual $file_link_result.PrintName -expected $file_target
-Assert-Equals -actual $file_link_result.TargetPath -expected $file_target
-Assert-Equals -actual $file_link_result.AbsolutePath -expected $file_target
-Assert-Equals -actual $file_link_result.HardTargets -expected $null
+    # Normal path
+    $test_path = [Ansible.IO.Path]::Combine($path, "short")
+    Clear-Directory -Path $test_path
+    $test = $test_impl.Key
+    &$test_impl.Value
 
-# create a symbolic link folder test
-New-Link -link_path $symlink_folder_path -link_target $folder_target -link_type "link"
-$folder_link_result = Get-Link -link_path $symlink_folder_path
-Assert-Equals -actual $folder_link_result.Type -expected "SymbolicLink"
-Assert-Equals -actual $folder_link_result.SubstituteName -expected "\??\$folder_target"
-Assert-Equals -actual $folder_link_result.PrintName -expected $folder_target
-Assert-Equals -actual $folder_link_result.TargetPath -expected $folder_target
-Assert-Equals -actual $folder_link_result.AbsolutePath -expected $folder_target
-Assert-Equals -actual $folder_link_result.HardTargets -expected $null
+    # Local MAX_PATHi
+    $test_path = [Ansible.IO.Path]::Combine("\\?\$path", "a" * 255)
+    Clear-Directory -Path $test_path
+    $test = "$($test_impl.Key) - MAX_PATH"
+    &$test_impl.Value
 
-# create a junction point test
-New-Link -link_path $junction_point_path -link_target $folder_target -link_type "junction"
-$junction_point_result = Get-Link -link_path $junction_point_path
-Assert-Equals -actual $junction_point_result.Type -expected "JunctionPoint"
-Assert-Equals -actual $junction_point_result.SubstituteName -expected "\??\$folder_target"
-Assert-Equals -actual $junction_point_result.PrintName -expected $folder_target
-Assert-Equals -actual $junction_point_result.TargetPath -expected $folder_target
-Assert-Equals -actual $junction_point_result.AbsolutePath -expected $folder_target
-Assert-Equals -actual $junction_point_result.HardTargets -expected $null
+    # UNC Path
+    $unc_path = [Ansible.IO.Path]::Combine("localhost", "$($path.Substring(0, 1))$", $path.Substring(3))
+    $test_path = [Ansible.IO.Path]::Combine("\\$unc_path", "short")
+    Clear-Directory -Path $test_path
+    $test = "$($test_impl.Key) - UNC Path"
+    &$test_impl.Value
 
-# create a hard link test
-New-Link -link_path $hardlink_path -link_target $file_target -link_type "hard"
-$hardlink_result = Get-Link -link_path $hardlink_path
-Assert-Equals -actual $hardlink_result.Type -expected "HardLink"
-Assert-Equals -actual $hardlink_result.SubstituteName -expected $null
-Assert-Equals -actual $hardlink_result.PrintName -expected $null
-Assert-Equals -actual $hardlink_result.TargetPath -expected $null
-Assert-Equals -actual $hardlink_result.AbsolutePath -expected $null
-if ($hardlink_result.HardTargets[0] -ne $hardlink_path -and $hardlink_result.HardTargets[1] -ne $hardlink_path) {
-    Assert-True -expression $false -message "file $hardlink_path is not a target of the hard link"
+    # UNC MAX_PATH
+    $test_path = [Ansible.IO.Path]::Combine("\\?\UNC\$unc_path", "a" * 255)
+    Clear-Directory -Path $test_path
+    $test = "$($test_impl.Key) - UNC MAX_PATH"
+    &$test_impl.Value
 }
-if ($hardlink_result.HardTargets[0] -ne $file_target -and $hardlink_result.HardTargets[1] -ne $file_target) {
-    Assert-True -expression $false -message "file $file_target is not a target of the hard link"
-}
-Assert-equals -actual (Get-Content -LiteralPath $hardlink_path -Raw) -expected (Get-Content -LiteralPath $file_target -Raw)
 
-# create a new hard link and verify targets go to 3
-New-Link -link_path $hardlink_path_2 -link_target $file_target -link_type "hard"
-$hardlink_result_2 = Get-Link -link_path $hardlink_path
-Assert-True -expression ($hardlink_result_2.HardTargets.Count -eq 3) -message "did not return 3 targets for the hard link, actual $($hardlink_result_2.Targets.Count)"
-
-# check if broken symbolic link still works
-Remove-Item -LiteralPath $folder_target -Force | Out-Null
-$broken_link_result = Get-Link -link_path $symlink_folder_path
-Assert-Equals -actual $broken_link_result.Type -expected "SymbolicLink"
-Assert-Equals -actual $broken_link_result.SubstituteName -expected "\??\$folder_target"
-Assert-Equals -actual $broken_link_result.PrintName -expected $folder_target
-Assert-Equals -actual $broken_link_result.TargetPath -expected $folder_target
-Assert-Equals -actual $broken_link_result.AbsolutePath -expected $folder_target
-Assert-Equals -actual $broken_link_result.HardTargets -expected $null
-
-# check if broken junction point still works
-$broken_junction_result = Get-Link -link_path $junction_point_path
-Assert-Equals -actual $broken_junction_result.Type -expected "JunctionPoint"
-Assert-Equals -actual $broken_junction_result.SubstituteName -expected "\??\$folder_target"
-Assert-Equals -actual $broken_junction_result.PrintName -expected $folder_target
-Assert-Equals -actual $broken_junction_result.TargetPath -expected $folder_target
-Assert-Equals -actual $broken_junction_result.AbsolutePath -expected $folder_target
-Assert-Equals -actual $broken_junction_result.HardTargets -expected $null
-
-# delete file symbolic link
-Remove-Link -link_path $symlink_file_path
-Assert-True -expression (-not (Test-Path -LiteralPath $symlink_file_path)) -message "failed to delete file symbolic link"
-
-# delete folder symbolic link
-Remove-Link -link_path $symlink_folder_path
-Assert-True -expression (-not (Test-Path -LiteralPath $symlink_folder_path)) -message "failed to delete folder symbolic link"
-
-# delete junction point
-Remove-Link -link_path $junction_point_path
-Assert-True -expression (-not (Test-Path -LiteralPath $junction_point_path)) -message "failed to delete junction point"
-
-# delete hard link
-Remove-Link -link_path $hardlink_path
-Assert-True -expression (-not (Test-Path -LiteralPath $hardlink_path)) -message "failed to delete hard link"
-
-# cleanup after tests
-Run-Command -command "cmd.exe /c rmdir /S /Q `"$path`"" > $null
-
-Exit-Json @{ data = "success" }
+$module.Result.data = "success"
+$module.ExitJson()

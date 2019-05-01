@@ -70,7 +70,7 @@ try {
     Test-AnsiblePath -Path C:\Windows\*.exe
 } catch {
     $failed = $true
-    Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"Illegal characters in path.`""
+    Assert-Equals -actual $_.Exception.InnerException.Message -expected "Illegal characters in path."
 }
 Assert-Equals -actual $failed -expected $true
 

@@ -1266,12 +1266,57 @@ namespace Ansible.Basic
 
         private void CleanupFiles(object s, EventArgs ev)
         {
+            // The builtin .NET methods to manage files choke on certain scenarios. We check if the Ansible.IO util
+            // has been loaded and use that if possible. Because this is extra code to ship around we only use it if
+            // the module or reference module_util already relies on this. We fallback to the System.IO namespace.
+            MethodInfo fileExists = null;
+            MethodInfo fileDelete = null;
+            MethodInfo dirExists = null;
+            MethodInfo dirDelete = null;
+
+            Type ansibleIO = Type.GetType("Ansible.IO.FileSystem");
+            BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Static;
+            if (ansibleIO != null)
+            {
+                fileExists = ansibleIO.GetMethod("FileExists", bindingFlags);
+                fileDelete = ansibleIO.GetMethod("DeleteFile", bindingFlags);
+                dirExists = ansibleIO.GetMethod("DirectoryExists", bindingFlags);
+                dirDelete = ansibleIO.GetMethod("RemoveDirectory", bindingFlags);
+            }
+
+            // If we can't find any of the methods above we just use the builtin .NET method instead.
+            if (fileExists == null || fileDelete == null || dirExists == null || dirDelete == null)
+            {
+                fileExists = typeof(File).GetMethod("Exists", bindingFlags);
+                fileDelete = typeof(File).GetMethod("Delete", bindingFlags);
+                dirExists = typeof(Directory).GetMethod("Exists", bindingFlags);
+                dirDelete = typeof(Directory).GetMethod(
+                    "Delete",
+                    bindingFlags,
+                    null,
+                    new Type[] { typeof(string), typeof(bool) },
+                    null
+                );
+            }
+
             foreach (string path in cleanupFiles)
             {
-                if (File.Exists(path))
-                    File.Delete(path);
-                else if (Directory.Exists(path))
-                    Directory.Delete(path, true);
+                // Even when using Ansible.IO to check and delete files, it still needs the \\?\ prefix to be able to
+                // manage paths that exceed MAX_PATH. We check whether the path to delete is an absolute path and
+                // prepend the prefix if necessary.
+                string tmpPath = path;
+                if (ansibleIO != null && Path.IsPathRooted(tmpPath) && !tmpPath.StartsWith(@"\\?\"))
+                {
+                    if (tmpPath.StartsWith(@"\\"))  // UNC Path
+                        tmpPath = String.Format(@"\\?\UNC\{0}", tmpPath.Substring(2));
+                    else
+                        tmpPath = String.Format(@"\\?\{0}", tmpPath);
+                }
+
+                if ((bool)fileExists.Invoke(null, new object[]{ tmpPath }))
+                    fileDelete.Invoke(null, new object[]{ tmpPath });
+                else if ((bool)dirExists.Invoke(null, new object[]{ tmpPath }))
+                    dirDelete.Invoke(null, new object[]{ tmpPath, true });
             }
             cleanupFiles = new List<string>();
         }
