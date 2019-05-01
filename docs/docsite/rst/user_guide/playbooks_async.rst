@@ -21,7 +21,7 @@ In this case, however, `async` explicitly sets the timeout you wish to apply to 
 
 To launch a task asynchronously, specify its maximum runtime
 and how frequently you would like to poll for status.  The default
-poll value is 15 seconds if you do not specify a value for `poll`::
+poll value is set by the ``DEFAULT_POLL_INTERVAL`` setting if you do not specify a value for `poll`::
 
     ---
 
