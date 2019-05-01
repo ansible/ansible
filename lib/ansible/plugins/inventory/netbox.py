@@ -39,6 +39,12 @@ DOCUMENTATION = '''
                   region, site, role, platform, and/or tenant. Please check official netbox docs for more info.
             default: False
             type: boolean
+        interfaces:
+            description:
+                - If True, it adds the device or virtual machine interface information in host vars.
+            default: False
+            type: boolean
+            version_added: "2.9"
         token:
             required: True
             description: NetBox token.
@@ -208,7 +214,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
             "config_context": self.extract_config_context,
-            "manufacturers": self.extract_manufacturer
+            "manufacturers": self.extract_manufacturer,
+            "interfaces": self.extract_interfaces
         }
 
     def extract_disk(self, host):
@@ -297,6 +304,40 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_tags(self, host):
         return host["tags"]
+
+    def extract_ipaddresses(self, host):
+        try:
+            if self.interfaces:
+                if 'device_role' in host:
+                    url = urljoin(self.api_endpoint, "/api/ipam/ip-addresses/?limit=0&device_id=%s" % (to_text(host["id"])))
+                elif 'role' in host:
+                    url = urljoin(self.api_endpoint, "/api/ipam/ip-addresses/?limit=0&virtual_machine_id=%s" % (to_text(host["id"])))
+                ipaddress_lookup = self.get_resource_list(api_url=url)
+
+                return ipaddress_lookup
+        except Exception:
+            return
+
+    def extract_interfaces(self, host):
+        try:
+            if self.interfaces:
+                if 'device_role' in host:
+                    url = urljoin(self.api_endpoint, "/api/dcim/interfaces/?limit=0&device_id=%s" % (to_text(host["id"])))
+                elif 'role' in host:
+                    url = urljoin(self.api_endpoint, "/api/virtualization/interfaces/?limit=0&virtual_machine_id=%s" % (to_text(host["id"])))
+                interface_lookup = self.get_resource_list(api_url=url)
+
+                # Collect all IP Addresses associated with the device
+                device_ipaddresses = self.extract_ipaddresses(host)
+
+                # Attach the found IP Addresses record to the interface
+                for interface in interface_lookup:
+                    interface_ip = [ipaddress for ipaddress in device_ipaddresses if ipaddress["interface"]["id"] == interface["id"]]
+                    interface["ip-addresses"] = interface_ip
+
+                return interface_lookup
+        except Exception:
+            return
 
     def refresh_platforms_lookup(self):
         url = self.api_endpoint + "/api/dcim/platforms/?limit=0"
@@ -452,6 +493,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.timeout = self.get_option("timeout")
         self.validate_certs = self.get_option("validate_certs")
         self.config_context = self.get_option("config_context")
+        self.interfaces = self.get_option("interfaces")
         self.headers = {
             'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
