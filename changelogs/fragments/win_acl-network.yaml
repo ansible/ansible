@@ -1,0 +1,2 @@
+bugfixes:
+- win_acl - Fix qualifier parser when using UNC paths - https://github.com/ansible/ansible/issues/55875

@@ -171,6 +171,48 @@
     that:
     - not remove_deny_right_again is changed
 
+- name: add write rights to Guest - network
+  win_acl:
+    path: '{{ test_acl_network_path }}'
+    type: allow
+    user: Guests
+    rights: Write
+  register: allow_right
+
+- name: get result of add write rights to Guest - network
+  win_shell: '$path = ''{{ test_acl_path }}''; {{ test_ace_cmd }}'
+  register: allow_right_actual
+
+- name: assert add write rights to Guest - network
+  assert:
+    that:
+    - allow_right is changed
+    - (allow_right_actual.stdout|from_json)|count == 1
+    - (allow_right_actual.stdout|from_json)[0].identity == 'BUILTIN\Guests'
+    - (allow_right_actual.stdout|from_json)[0].inheritance_flags == 'ContainerInherit, ObjectInherit'
+    - (allow_right_actual.stdout|from_json)[0].propagation_flags == 'None'
+    - (allow_right_actual.stdout|from_json)[0].rights == 'Write, Synchronize'
+    - (allow_right_actual.stdout|from_json)[0].type == 'Allow'
+
+- name: remove write rights from Guest - network
+  win_acl:
+    path: '{{ test_acl_network_path }}'
+    type: allow
+    user: Guests
+    rights: Write
+    state: absent
+  register: remove_right
+
+- name: get result of remove write rights from Guest - network
+  win_shell: '$path = ''{{ test_acl_path }}''; {{ test_ace_cmd }}'
+  register: remove_right_actual
+
+- name: assert remove write rights from Guest
+  assert:
+    that:
+    - remove_right is changed
+    - remove_right_actual.stdout_lines == ["[", "", "]"]
+
 - name: add write rights to Guest - registry
   win_acl:
     path: '{{ test_acl_reg_path }}'
