@@ -20,7 +20,7 @@ To check the HTML output of your module documentation:
 
 #. Ensure your module is in the correct directory: ``lib/ansible/modules/$CATEGORY/mymodule.py``.
 #. Build HTML from your module documentation: ``MODULES=mymodule make webdocs``.
-#. To build the HTML documentation for multiple modules, use a comma-separated list of module names: ``MODULES=$mymodule,$mymodule2 make webdocs``.
+#. To build the HTML documentation for multiple modules, use a comma-separated list of module names: ``MODULES=mymodule,mymodule2 make webdocs``.
 #. View the HTML page at ``file:///path/to/docs/docsite/_build/html/modules/mymodule_module.html``.
 
 To ensure that your module documentation matches your ``argument_spec``:
