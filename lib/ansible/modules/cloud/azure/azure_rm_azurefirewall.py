@@ -40,9 +40,6 @@ options:
       - Collection of application rule collections used by Azure Firewall.
     type: list
     suboptions:
-      id:
-        description:
-          - Resource ID.
       priority:
         description:
           - Priority of the application rule collection resource.
@@ -90,9 +87,6 @@ options:
       - Collection of NAT rule collections used by Azure Firewall.
     type: list
     suboptions:
-      id:
-        description:
-          - Resource ID.
       priority:
         description:
           - Priority of the NAT rule collection resource.
@@ -148,9 +142,6 @@ options:
       - Collection of network rule collections used by Azure Firewall.
     type: list
     suboptions:
-      id:
-        description:
-          - Resource ID.
       priority:
         description:
           - Priority of the network rule collection resource.
@@ -198,9 +189,6 @@ options:
       - IP configuration of the Azure Firewall resource.
     type: list
     suboptions:
-      id:
-        description:
-          - Resource ID.
       subnet:
         description:
           - Resource ID.
@@ -295,9 +283,9 @@ EXAMPLES = '''
           }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name
           }}/subnets/{{ subnet_name }}
         public_ip_address: >-
-            /subscriptions/{{ subscription_id }}/resourceGroups/{{
-            resource_group }}/providers/Microsoft.Network/publicIPAddresses/{{
-            public_ip_address_name }}
+          /subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group
+          }}/providers/Microsoft.Network/publicIPAddresses/{{
+          public_ip_address_name }}
         name: azureFirewallIpConfiguration
 - name: Delete Azure Firewall
   azure_rm_azurefirewall:
@@ -308,23 +296,9 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-name:
+id:
   description:
-    - Resource name.
-  returned: always
-  type: str
-  sample: null
-type:
-  description:
-    - Resource type.
-  returned: always
-  type: str
-  sample: null
-etag:
-  description:
-    - >-
-      Gets a unique read-only string that changes whenever the resource is
-      updated.
+    - Resource ID.
   returned: always
   type: str
   sample: null
@@ -376,9 +350,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 type='list',
                 disposition='/',
                 options=dict(
-                    id=dict(
-                        type='str'
-                    ),
                     priority=dict(
                         type='number'
                     ),
@@ -424,9 +395,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 type='list',
                 disposition='/',
                 options=dict(
-                    id=dict(
-                        type='str'
-                    ),
                     priority=dict(
                         type='number'
                     ),
@@ -478,9 +446,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 type='list',
                 disposition='/',
                 options=dict(
-                    id=dict(
-                        type='str'
-                    ),
                     priority=dict(
                         type='number'
                     ),
@@ -526,13 +491,10 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 type='list',
                 disposition='/',
                 options=dict(
-                    id=dict(
-                        type='str'
-                    ),
                     subnet=dict(
                         type='raw',
                         disposition='subnet/id',
-                        pattern=('/subscriptions/{{ subscription_id }}/resourceGroups'
+                        pattern=('//subscriptions/{{ subscription_id }}/resourceGroups'
                                  '/{{ resource_group }}/providers/Microsoft.Network'
                                  '/virtualNetworks/{{ virtual_network_name }}/subnets'
                                  '/{{ name }}')
@@ -540,9 +502,9 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     public_ip_address=dict(
                         type='raw',
                         disposition='public_ip_address/id',
-                        pattern=('/subscriptions/{{ subscription_id }}'
-                                 '/resourceGroups/{{ resource_group }}/providers'
-                                 '/Microsoft.Network/publicIPAddresses/{{ name }}')
+                        pattern=('//subscriptions/{{ subscription_id }}/resourceGroups'
+                                 '/{{ resource_group }}/providers/Microsoft.Network'
+                                 '/publicIPAddresses/{{ name }}')
                     ),
                     name=dict(
                         type='str'
@@ -618,8 +580,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             response = old_response
 
         if response:
-            self.results["id"] = response["id"]
-            self.results["provisioning_state"] = response["provisioning_state"]
+           self.results["id"] = response["id"]
 
         return self.results
 
