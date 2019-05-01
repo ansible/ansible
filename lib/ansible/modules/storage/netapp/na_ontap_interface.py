@@ -98,6 +98,12 @@ options:
        migration capability is disabled automatically
     type: bool
 
+  force_subnet_association:
+    description:
+       Set this to true to acquire the address from the named subnet and assign the subnet to the LIF.
+    type: bool
+    version_added: '2.9'
+
   protocols:
     description:
     - Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
@@ -171,7 +177,8 @@ class NetAppOntapInterface(object):
             admin_status=dict(required=False, choices=['up', 'down']),
             subnet_name=dict(required=False, type='str'),
             is_auto_revert=dict(required=False, type='bool', default=None),
-            protocols=dict(required=False, type='list')
+            protocols=dict(required=False, type='list'),
+            force_subnet_association=dict(required=False, type='bool', default=None)
         ))
 
         self.module = AnsibleModule(
@@ -245,6 +252,8 @@ class NetAppOntapInterface(object):
             options['is-auto-revert'] = 'true' if parameters['is_auto_revert'] is True else 'false'
         if parameters.get('admin_status') is not None:
             options['administrative-status'] = parameters['admin_status']
+        if parameters.get('force_subnet_association') is not None:
+            options['force-subnet-association'] = 'true' if parameters['force_subnet_association'] else 'false'
 
     def set_protocol_option(self, required_keys):
         """ set protocols for create """
