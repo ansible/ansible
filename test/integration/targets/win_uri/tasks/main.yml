@@ -429,3 +429,17 @@
     that:
     - not request_status_code_comma.changed
     - request_status_code_comma.status_code == 202
+
+# https://github.com/ansible/ansible/issues/55294
+- name: get json content that is an array
+  win_uri:
+    url: https://{{httpbin_host}}/base64/{{ '[{"abc":"def"}]' | b64encode }}
+    return_content: yes
+  register: content_array
+
+- name: assert content of json array
+  assert:
+    that:
+    - not content_array is changed
+    - content_array.content == '[{"abc":"def"}]'
+    - content_array.json == [{"abc":"def"}]
