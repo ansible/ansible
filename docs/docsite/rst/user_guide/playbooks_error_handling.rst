@@ -63,13 +63,9 @@ the handler from running, such as a host becoming unreachable.)
 Controlling What Defines Failure
 ````````````````````````````````
 
-Ansible lets you define what "failure" means in each task. Ansible joins lists of multiple conditions for failure with an implicit ``and`` - if you want any one of multiple conditions to trigger a failure, you must define them in a string with an explicit ``or`` operator.
+Ansible lets you define what "failure" means in each task using the ``failed_when`` conditional. As with all conditionals in Ansible, lists of multiple ``failed_when`` conditions are joined with an implicit ``and``, meaning the task only fails when *all* conditions are met. If you want to trigger a failure when any of the conditions is met, you must define the conditions in a string with an explicit ``or`` operator.
 
-Sometimes the error code of a command is meaningless and to tell if there
-is a failure what really matters is the output of the command, for instance
-if the string "FAILED" is in the output.
-
-Ansible provides a way to specify this behavior as follows::
+You may check for failure by searching for a word or phrase in the output of a command::
 
     - name: Fail task when the command error output prints FAILED
       command: /usr/bin/example-command -x -y -z
