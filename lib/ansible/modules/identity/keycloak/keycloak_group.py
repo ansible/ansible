@@ -75,10 +75,63 @@ options:
         description:
             - A dict of key/value pairs to set as custom attributes for the group.
             - Values may be single values (e.g. a string) or a list of strings.
+    attributes_list:
+        type: list
+        description:
+            - A dict of key/value pairs list to set as custom attributes for the group.
+            - Those attributes will be added to attributes dict.
+            - The purpose of this option is to be able tu user Ansible variable as attribute name.
+        suboptions:
+            name:
+                description:
+                    - Name of the attribute
+                type: str
+            value:
+                description:
+                    - Value of the attribute
+                type: str
+        version_added: 2.9
 
+    realmRoles:
+        type: list
+        description:
+            - List of realm roles to assign to the group.
+        version_added: 2.9
+    clientRoles:
+        type: list
+        description:
+            - List of client roles to assign to group.
+        suboptions:
+            clientid:
+                type: str
+                description:
+                    - Client Id of the client role
+            roles:
+                type: list
+                description:
+                    - List of roles for this client to assing to group
+        version_added: 2.9
+    path:
+        description:
+            Group path
+        version_added: 2.9
+    syncLdapMappers:
+        type: bool
+        description:
+            - If true, groups will be synchronized between Keycloak and LDAP.
+            - All user storages defined as user federation will be synchronized.
+            - A sync is done from LDAP to Keycloak before doing the job and from Keycloak to LDAP after.
+        default: False
+        version_added: 2.9
+    force:
+        type: bool
+        description:
+            - If true and the group already exist on the Keycloak server, it will be deleted and re-created with the new specification.
+        default: False
+        version_added: 2.9
 notes:
-    - Presently, the I(realmRoles), I(clientRoles) and I(access) attributes returned by the Keycloak API
-      are read-only for groups. This limitation will be removed in a later version of this module.
+    - Presently, the I(access) attribute returned by the Keycloak API is read-only for groups.
+      This version of this module now support the I(realmRoles), I(clientRoles) as read-write attributes.
 
 extends_documentation_fragment:
     - keycloak
@@ -152,6 +205,29 @@ EXAMPLES = '''
             - individual
             - list
             - items
+    attributes_list:
+        - name: '{{ an_ansible_variable }}'
+          value: '{{ another_ansible_variable }}'
+        - name: attrib4
+          value: value4
+  delegate_to: localhost
+
+- name: Create a keycloak group with some roles
+  keycloak_group:
+    auth_client_id: admin-cli
+    auth_keycloak_url: https://auth.example.com/auth
+    auth_realm: master
+    auth_username: USERNAME
+    auth_password: PASSWORD
+    name: my_group_with_roles
+    realmRoles:
+        - admin
+        - another-realm-role
+    clientRoles:
+        clientid: master-realm
+        roles:
+            - manage-users
+            - view-identity-providers
   delegate_to: localhost
 '''
 
@@ -223,7 +299,13 @@ def main():
         realm=dict(default='master'),
         id=dict(type='str'),
         name=dict(type='str'),
-        attributes=dict(type='dict')
+        attributes=dict(type='dict'),
+        path=dict(type='str'),
+        attributes_list=dict(type='list'),
+        realmRoles=dict(type='list'),
+        clientRoles=dict(type='list'),
+        syncLdapMappers=dict(type='bool', default=False),
+        force=dict(type='bool', default=False),
     )
 
     argument_spec.update(meta_args)
@@ -242,9 +324,18 @@ def main():
     gid = module.params.get('id')
     name = module.params.get('name')
     attributes = module.params.get('attributes')
+    # Add attribute received as a list to the attributes dict
+    kc.add_attributes_list_to_attributes_dict(module.params.get('attributes_list'), attributes)
+    syncLdapMappers = module.params.get('syncLdapMappers')
+    groupRealmRoles = module.params.get('realmRoles')
+    groupClientRoles = module.params.get('clientRoles')
+    force = module.params.get('force')
 
     before_group = None         # current state of the group, for merging.
 
+    # Synchronize LDAP group to Keycloak if syncLdapMappers is true
+    if syncLdapMappers:
+        kc.sync_ldap_groups("fedToKeycloak", realm=realm)
     # does the group already exist?
     if gid is None:
         before_group = kc.get_group_by_name(name, realm=realm)
@@ -259,11 +350,10 @@ def main():
     if attributes is not None:
         for key, val in module.params['attributes'].items():
             module.params['attributes'][key] = [val] if not isinstance(val, list) else val
-
+    excludes = ['state', 'realm', 'force', 'attributes_list', 'realmRoles', 'clientRoles', 'syncLdapMappers']
     group_params = [x for x in module.params
-                    if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm'] and
+                    if x not in list(keycloak_argument_spec().keys()) + excludes and
                     module.params.get(x) is not None]
-
     # build a changeset
     changeset = {}
     for param in group_params:
@@ -299,6 +389,12 @@ def main():
 
         # do it for real!
         kc.create_group(updated_group, realm=realm)
+        # Assing roles to group
+        kc.assing_roles_to_group(groupRepresentation=updated_group, groupRealmRoles=groupRealmRoles, groupClientRoles=groupClientRoles, realm=realm)
+        # Sync Keycloak groups to User Storages if syncLdapMappers is true
+        if syncLdapMappers:
+            kc.sync_ldap_groups("keycloakToFed", realm=realm)
+
         after_group = kc.get_group_by_name(name, realm)
 
         result['group'] = after_group
@@ -308,7 +404,7 @@ def main():
     else:
         if state == 'present':
             # no changes
-            if updated_group == before_group:
+            if updated_group == before_group and not force:
                 result['changed'] = False
                 result['group'] = updated_group
                 result['msg'] = "No changes required to group {name}.".format(name=before_group['name'])
@@ -323,10 +419,32 @@ def main():
             if module.check_mode:
                 module.exit_json(**result)
 
-            # do the update
-            kc.update_group(updated_group, realm=realm)
+            if force:
+                # delete for real
+                gid = before_group['id']
+                kc.delete_group(groupid=gid, realm=realm)
+                # remove id
+                del(updated_group['id'])
+                if "realmRoles" in updated_group:
+                    del(updated_group['realmRoles'])
+                if "clientRoles" in updated_group:
+                    del(updated_group['clientRoles'])
 
-            after_group = kc.get_group_by_groupid(updated_group['id'], realm=realm)
+                # create it again
+                kc.create_group(updated_group, realm=realm)
+            else:
+                # do the update
+                kc.update_group(updated_group, realm=realm)
+            # Assing roles to group
+            kc.assing_roles_to_group(groupRepresentation=updated_group, groupRealmRoles=groupRealmRoles, groupClientRoles=groupClientRoles, realm=realm)
+            # Sync Keycloak groups to User Storages if syncLdapMappers is true
+            if syncLdapMappers:
+                kc.sync_ldap_groups("keycloakToFed", realm=realm)
+
+            if force:
+                after_group = kc.get_group_by_name(name, realm)
+            else:
+                after_group = kc.get_group_by_groupid(updated_group['id'], realm=realm)
 
             result['group'] = after_group
             result['msg'] = "Group {id} has been updated".format(id=after_group['id'])
@@ -345,6 +463,9 @@ def main():
             # delete for real
             gid = before_group['id']
             kc.delete_group(groupid=gid, realm=realm)
+            # Sync Keycloak groups to User Storages if syncLdapMappers is true
+            if syncLdapMappers:
+                kc.sync_ldap_groups("keycloakToFed", realm=realm)
 
             result['changed'] = True
             result['msg'] = "Group {name} has been deleted".format(name=before_group['name'])
