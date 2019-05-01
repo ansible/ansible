@@ -292,7 +292,6 @@ def create_or_update_bucket(s3_client, module, location):
 
         result['tags'] = current_tags_dict
 
-
     # Encryption
     if hasattr(s3_client, "get_bucket_encryption"):
         try:
@@ -322,6 +321,8 @@ def create_or_update_bucket(s3_client, module, location):
                 module.fail_json_aws(e, msg="Failed to set bucket encryption")
             current_encryption = wait_encryption_is_applied(module, s3_client, name, expected_encryption)
             changed = True
+
+        result['encryption'] = current_encryption
 
     module.exit_json(changed=changed, name=name, **result)
 
@@ -640,7 +641,9 @@ def main():
         )
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec, required_if=[['encryption', 'aws:kms', ['encryption_key_id']]])
+    module = AnsibleAWSModule(
+        argument_spec=argument_spec, required_if=[['encryption', 'aws:kms', ['encryption_key_id']]]
+    )
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
