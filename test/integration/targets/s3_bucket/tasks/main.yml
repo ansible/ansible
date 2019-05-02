@@ -273,7 +273,7 @@
         that:
           - not output.changed
     # ============================================================
-    - name: Create bucket with AES256 encryption
+    - name: Create bucket with AES256 encryption enabled
       s3_bucket:
         name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
         state: present
