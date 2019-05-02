@@ -136,7 +136,7 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      
+
   - name: Get chassis inventory
     redfish_facts:
       category: Chassis
