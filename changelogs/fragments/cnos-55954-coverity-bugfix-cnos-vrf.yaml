@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fixing bug after running modules against coverity.
