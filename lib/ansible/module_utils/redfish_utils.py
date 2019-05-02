@@ -786,6 +786,39 @@ class RedfishUtils(object):
     def get_multi_boot_order(self):
         return self.aggregate(self.get_boot_order)
 
+    def get_boot_override(self, systems_uri):
+        result = {}
+
+        properties = ["BootSourceOverrideEnabled", "BootSourceOverrideTarget",
+                      "BootSourceOverrideMode", "UefiTargetBootSourceOverride", "BootSourceOverrideTarget@Redfish.AllowableValues"]
+
+        response = self.get_request(self.root_uri + systems_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if 'Boot' not in data:
+            return {'ret': False, 'msg': "Key Boot not found"}
+
+        boot = data['Boot']
+
+        boot_overrides = {}
+        if "BootSourceOverrideEnabled" in boot:
+            if boot["BootSourceOverrideEnabled"] is not False:
+                for property in properties:
+                    if property in boot:
+                        if boot[property] is not None:
+                            boot_overrides[property] = boot[property]
+        else:
+            return {'ret': False, 'msg': "No boot override is enabled."}
+
+        result['entries'] = boot_overrides
+        return result
+
+    def get_multi_boot_override(self):
+        return self.aggregate(self.get_boot_override)
+
     def set_bios_default_settings(self):
         result = {}
         key = "Bios"
@@ -1216,7 +1249,7 @@ class RedfishUtils(object):
             ret = inventory.pop('ret') and ret
             if 'entries' in inventory:
                 entries.append(({'resource_uri': resource_uri},
-                               inventory['entries']))
+                                inventory['entries']))
         return dict(ret=ret, entries=entries)
 
     def get_psu_inventory(self):
