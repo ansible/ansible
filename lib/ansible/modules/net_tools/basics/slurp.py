@@ -52,8 +52,8 @@ EXAMPLES = r'''
         src: /proc/mounts
      register: mounts
 
-    - name: display contents (needs to decode)
-      debug:
+   - name: display contents (needs to decode)
+     debug:
         msg: "{{ mounts['content'] | b64decode }}"
 
 - name: Display large file but read in 64k chunks
