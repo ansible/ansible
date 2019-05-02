@@ -288,12 +288,13 @@ def copy_file_from_remote(module, local, local_file_directory, file_system='boot
     try:
         child = pexpect.spawn('ssh ' + username + '@' + hostname + ' -p' + str(port))
         # response could be unknown host addition or Password
-        index = child.expect(['yes', '(?i)Password'])
+        index = child.expect(['yes', '(?i)Password', '#'])
         if index == 0:
             child.sendline('yes')
             child.expect('(?i)Password')
-        child.sendline(password)
-        child.expect('#')
+        if index == 1:
+            child.sendline(password)
+            child.expect('#')
         ldir = '/'
         if local_file_directory:
             dir_array = local_file_directory.split('/')
