@@ -100,9 +100,22 @@ You can also combine multiple conditions for failure. This task will fail if bot
         - result.rc == 0
         - '"No such" not in result.stdout'
 
- If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to::
+If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to::
 
       failed_when: result.rc == 0 or "No such" not in result.stdout
+
+If you have too many conditions to fit neatly into one line, you can split it into a multi-line yaml value with ``>``::
+
+
+    - name: example of many failed_when conditions with OR
+      shell: "./myBinary"
+      register: ret
+      failed_when: >
+        ("No such file or directory" in ret.stdout) or
+        ("Cannot open" in ret.stdout) or
+        ("Operation not supported" in ret.stdout) or
+        ("File Exists" in ret.stdout) or
+        ("command not found" in ret.stderr)
 
 .. _override_the_changed_result:
 
