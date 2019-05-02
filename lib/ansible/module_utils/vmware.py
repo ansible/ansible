@@ -514,10 +514,11 @@ def connect_to_api(module, disconnect_atexit=True):
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
                              'python or use validate_certs=false.')
 
-    ssl_context = None
-    if not validate_certs and hasattr(ssl, 'SSLContext'):
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        ssl_context.verify_mode = ssl.CERT_NONE
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    if validate_certs:
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context.check_hostname = True
+        ssl_context.load_default_certs()
 
     service_instance = None
     try:
