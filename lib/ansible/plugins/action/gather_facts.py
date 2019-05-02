@@ -8,7 +8,7 @@ import os
 import time
 
 from ansible import constants as C
-from ansilbe.executor.module_common import get_action_args_with_defaults
+from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import combine_vars
 

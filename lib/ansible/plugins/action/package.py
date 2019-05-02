@@ -18,7 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleAction, AnsibleActionFail
-from ansilbe.executor.module_common import get_action_args_with_defaults
+from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
