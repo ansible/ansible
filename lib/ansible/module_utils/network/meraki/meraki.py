@@ -87,6 +87,9 @@ class MerakiModule(object):
         self.status = None
         self.url = None
 
+        # rate limiting statistics
+        self.retry = 0
+
         # If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary
         self.get_urls = {'organizations': '/organizations',
                          'network': '/organizations/{org_id}/networks',
@@ -337,8 +340,7 @@ class MerakiModule(object):
             built_path += self.encode_url_params(params)
         return built_path
 
-    def request(self, path, method=None, payload=None):
-        """Generic HTTP method for Meraki requests."""
+    def make_http_request(self, path, method=None, payload=None):
         self.path = path
         self.define_protocol()
 
@@ -354,21 +356,29 @@ class MerakiModule(object):
                                )
         self.response = info['msg']
         self.status = info['status']
+        if self.status == 429:
+            if self.retry == 10:
+                self.fail_json(msg="Rate limiter retry count of 10 met, aborting.")
+            self.module.warn("Rate limiter triggered - retry count {0}".format(self.retry))
+            time.sleep(5)
+            self.retry += 1
+            return self.make_http_request(path, method, payload)
+        return resp, info
 
-        if self.status >= 500:
+    def request(self, path, method=None, payload=None):
+        """Generic HTTP method for Meraki requests."""
+        self.path = path
+        self.define_protocol()
+
+        response, info = self.make_http_request(path, method, payload)
+
+        if info['status'] >= 500:
             self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info))
-        elif self.status == 429:
-            if self.request_attempts == 10:
-                self.fail_json(msg="API request attempted 10 times. Failing...")
-            self.module.warn("Meraki API rate limit reached - pausing before retry number {0}".format(self.request_attempts))
-            time.sleep(random.uniform(0.5, 5.0))
-            self.request_attempts += 1
-            resp, info = self.request(path, method=method, payload=payload)
-        elif self.status >= 300:
+        elif info['status']>= 300:
             self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info),
                            body=json.loads(to_native(info['body'])))
         try:
-            return json.loads(to_native(resp.read()))
+            return json.loads(to_native(response.read()))
         except Exception:
             pass
 
