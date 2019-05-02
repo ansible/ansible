@@ -967,6 +967,30 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
 
+    def get_chassis_inventory(self):
+        result = {}
+        chassis_results = []
+
+        # Get these entries, but does not fail if not found
+        properties = ['ChassisType', 'PartNumber', 'AssetTag',
+                      'Manufacturer', 'IndicatorLED', 'SerialNumber', 'Model']
+
+        # Go through list
+        for chassis_uri in self.chassis_uri_list:
+            response = self.get_request(self.root_uri + chassis_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+            chassis_result = {}
+            for property in properties:
+                if property in data:
+                    chassis_result[property] = data[property]
+            chassis_results.append(chassis_result)
+
+        result["entries"] = chassis_results
+        return result
+
     def get_fan_inventory(self):
         result = {}
         fan_results = []
