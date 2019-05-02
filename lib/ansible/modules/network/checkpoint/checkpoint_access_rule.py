@@ -71,7 +71,7 @@ options:
       - State of the access rule (present or absent). Defaults to present.
     type: str
     default: present
-extends_documentation_fragment: checkpoint
+extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """

@@ -33,7 +33,6 @@ description:
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
-options:
 extends_documentation_fragment: checkpoint_facts
 """
 
