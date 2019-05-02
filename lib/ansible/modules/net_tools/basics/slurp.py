@@ -90,6 +90,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             src=dict(type='path', required=True, aliases=['path']),
+            chunk=dict(type='int'),
         ),
         supports_check_mode=True,
     )
