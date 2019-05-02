@@ -137,6 +137,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get chassis inventory
+    redfish_facts:
+      category: Chassis
+      command: GetChassisInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in the Manager category
     redfish_facts:
       category: Manager
@@ -178,7 +186,7 @@ CATEGORY_COMMANDS_ALL = {
                 "GetMemoryInventory", "GetNicInventory",
                 "GetStorageControllerInventory", "GetDiskInventory",
                 "GetBiosAttributes", "GetBootOrder", "GetBootOverride"],
-    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals", "GetChassisInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
@@ -293,6 +301,8 @@ def main():
                     result["thermals"] = rf_utils.get_chassis_thermals()
                 elif command == "GetChassisPower":
                     result["chassis_power"] = rf_utils.get_chassis_power()
+                elif command == "GetChassisInventory":
+                    result["chassis"] = rf_utils.get_chassis_inventory()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
