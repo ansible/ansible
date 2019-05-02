@@ -44,6 +44,7 @@ options:
   flexvol_name:
     description:
     - The name of the FlexVol the qtree should exist on. Required when C(state=present).
+    required: true
 
   vserver:
     description:
