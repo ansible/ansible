@@ -38,7 +38,7 @@ class TestFabricLocalModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_fabric_advertisement_network': 'mgmt-only',
                          'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = ' switch sw01 fabric-local-modify  fabric-advertisement-network mgmt-only'
+        expected_cmd = ' switch sw01 fabric-local-modify  fabric-network mgmt fabric-advertisement-network mgmt-only'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_fabric_local_modify_t2(self):
