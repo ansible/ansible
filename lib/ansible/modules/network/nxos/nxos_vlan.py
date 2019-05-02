@@ -496,8 +496,7 @@ def parse_vlan_non_structured(module, netcfg, vlans):
             if name_match:
                 name = name_match.group(1)
                 obj['name'] = name
-
-                state_match = re.search(r'{0}\s*{1}\s*(\S+)'.format(vlan_id, name), vlan, re.M)
+                state_match = re.search(r'{0}\s*{1}\s*(\S+)'.format(vlan_id, re.escape(name)), vlan, re.M)
                 if state_match:
                     vlan_state_match = state_match.group(1)
                     if vlan_state_match == 'suspended':
@@ -518,7 +517,7 @@ def parse_vlan_non_structured(module, netcfg, vlans):
 
                     vlan = ','.join(vlan.splitlines())
                     interfaces = list()
-                    intfs_match = re.search(r'{0}\s*{1}\s*{2}\s*(.*)'.format(vlan_id, name, vlan_state_match),
+                    intfs_match = re.search(r'{0}\s*{1}\s*{2}\s*(.*)'.format(vlan_id, re.escape(name), vlan_state_match),
                                             vlan, re.M)
                     if intfs_match:
                         intfs = intfs_match.group(1)
