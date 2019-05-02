@@ -23,19 +23,21 @@ options:
   pn_cliswitch:
     description:
       - Target switch to run the CLI on.
-    required: False
+    required: true
     type: str
   state:
     description:
       - State the action to perform. Use C(update) to modify the fabric-local.
-    required: True
+    required: false
     type: str
     choices: ['update']
+    default: 'update'
   pn_fabric_network:
     description:
       - fabric administration network.
     required: false
     choices: ['in-band', 'mgmt', 'vmgmt']
+    default: 'mgmt'
   pn_vlan:
     description:
       - VLAN assigned to fabric.
@@ -57,13 +59,11 @@ EXAMPLES = """
 - name: Fabric local module
   pn_fabric_local:
     pn_cliswitch: "sw01"
-    state: "update"
     pn_vlan: "500"
 
 - name: Fabric local module
   pn_fabric_local:
     pn_cliswitch: "sw01"
-    state: "update"
     pn_fabric_advertisement_network: "mgmt-only"
 """
 
@@ -100,9 +100,9 @@ def main():
 
     argument_spec = dict(
         pn_cliswitch=dict(required=True, type='str'),
-        state=dict(required=True, type='str', choices=state_map.keys()),
+        state=dict(required=False, type='str', choices=state_map.keys(), default='update'),
         pn_fabric_network=dict(required=False, type='str',
-                               choices=['mgmt', 'in-band', 'vmgmt']),
+                               choices=['mgmt', 'in-band', 'vmgmt'], default='mgmt'),
         pn_vlan=dict(required=False, type='str'),
         pn_control_network=dict(required=False, type='str',
                                 choices=['in-band', 'mgmt', 'vmgmt']),
