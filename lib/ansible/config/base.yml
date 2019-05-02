@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Ansible Project
+ll
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 ALLOW_WORLD_READABLE_TMPFILES:
@@ -852,7 +852,7 @@ DEFAULT_LIBVIRT_LXC_NOSECLABEL:
   env:
   - name: LIBVIRT_LXC_NOSECLABEL
     deprecated:
-      why: environment variables without "ANSIBLE_" prefix are deprecated
+      why: environment variables without `ANSIBLE_` prefix are deprecated
       version: "2.12"
       alternatives: the "ANSIBLE_LIBVIRT_LXC_NOSECLABEL" environment variable
   - name: ANSIBLE_LIBVIRT_LXC_NOSECLABEL
@@ -1342,7 +1342,7 @@ DISPLAY_SKIPPED_HOSTS:
   env:
   - name: DISPLAY_SKIPPED_HOSTS
     deprecated:
-      why: environment variables without "ANSIBLE_" prefix are deprecated
+      why: environment variables without `ANSIBLE_` prefix are deprecated
       version: "2.12"
       alternatives: the "ANSIBLE_DISPLAY_SKIPPED_HOSTS" environment variable
   - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
@@ -1697,7 +1697,7 @@ NETWORK_GROUP_MODULES:
   env:
   - name: NETWORK_GROUP_MODULES
     deprecated:
-      why: environment variables without "ANSIBLE_" prefix are deprecated
+      why: environment variables without `ANSIBLE_` prefix are deprecated
       version: "2.12"
       alternatives: the "ANSIBLE_NETWORK_GROUP_MODULES" environment variable
   - name: ANSIBLE_NETWORK_GROUP_MODULES
