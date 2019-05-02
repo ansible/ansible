@@ -112,10 +112,8 @@ If you have too many conditions to fit neatly into one line, you can split it in
       register: ret
       failed_when: >
         ("No such file or directory" in ret.stdout) or
-        ("Cannot open" in ret.stdout) or
-        ("Operation not supported" in ret.stdout) or
-        ("File Exists" in ret.stdout) or
-        ("command not found" in ret.stderr)
+        (ret.stderr != '') or
+        (ret.rc == 10)
 
 .. _override_the_changed_result:
 
