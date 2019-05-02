@@ -203,12 +203,11 @@ def main():
             datacenter_obj = None
             if datacenter:
                 datacenter_obj = pyv.find_datacenter_by_name(datacenter)
+                if not datacenter_obj:
+                    module.fail_json(msg="Unable to find the datacenter %(datacenter)s" % module.params)
 
             cluster = module.params['cluster_name']
             if cluster:
-                if datacenter and not datacenter_obj:
-                    module.fail_json(msg="Unable to find the datacenter %(datacenter)s" % module.params)
-
                 cluster_obj = pyv.find_cluster_by_name(cluster_name=cluster, datacenter_name=datacenter_obj)
                 if not cluster_obj:
                     msg = "Unable to find the cluster %(cluster_name)s"
