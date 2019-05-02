@@ -43,8 +43,8 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_address_ranges:
-  description: The checkpoint address_range object facts.
+api_result:
+  description: The checkpoint object facts.
   returned: always.
   type: dict
 """

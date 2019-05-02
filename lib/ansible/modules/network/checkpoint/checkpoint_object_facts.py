@@ -64,10 +64,10 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_hosts:
+api_result:
   description: The checkpoint object facts.
   returned: always.
-  type: list
+  type: dict
 """
 
 

@@ -43,8 +43,8 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_networks:
-  description: The checkpoint network object facts.
+api_result:
+  description: The checkpoint object facts.
   returned: always.
   type: dict
 """

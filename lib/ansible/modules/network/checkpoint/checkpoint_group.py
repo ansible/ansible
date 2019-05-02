@@ -55,9 +55,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-checkpoint_groups:
-  description: The checkpoint group object created or updated.
-  returned: always, except when deleting the group.
+api_result:
+  description: The checkpoint object created or updated.
+  returned: always, except when deleting the object.
   type: dict
 """
 

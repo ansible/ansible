@@ -16,13 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import (absolute_import, division, print_function)
 
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
@@ -31,37 +33,69 @@ short_description: Get host objects facts on Checkpoint over Web Services API
 description:
   - Get host objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
-version_added: "2.9"
-author: "Or Soffer (@chkp-orso)"
-extends_documentation_fragment: checkpoint_facts
+version_added: "2.8"
+author: "Ansible by Red Hat (@rcarrillocruz)"
+options:
+  name:
+    description:
+      - Name of the host object. If name is not provided, UID is required.
+    type: str
+  uid:
+    description:
+      - UID of the host object. If UID is not provided, name is required.
+    type: str
 """
 
 EXAMPLES = """
 - name: Get host object facts
   checkpoint_host_facts:
-    name: "New Host 1"
+    name: attacker
 """
 
 RETURN = """
-ansible_hosts:
-  description: The checkpoint host object facts.
+api_result:
+  description: The checkpoint object facts.
   returned: always.
   type: dict
 """
 
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_facts, api_call_facts
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.six.moves.urllib.error import HTTPError
+import json
+
+
+def get_host(module, connection):
+    name = module.params['name']
+    uid = module.params['uid']
+
+    if uid:
+        payload = {'uid': uid}
+    elif name:
+        payload = {'name': name}
+
+    code, result = connection.send_request('/web_api/show-host', payload)
+
+    return code, result
 
 
 def main():
-    argument_spec = dict()
-    argument_spec.update(checkpoint_argument_spec_for_facts)
-    user_parameters = list(argument_spec.keys())
+    argument_spec = dict(
+        name=dict(type='str'),
+        uid=dict(type='str'),
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec)
-    api_call_object = "host"
+    required_one_of = [('name', 'uid')]
+    module = AnsibleModule(argument_spec=argument_spec, required_one_of=required_one_of)
+    connection = Connection(module._socket_path)
 
-    api_call_facts(module, api_call_object, user_parameters)
+    code, response = get_host(module, connection)
+
+    if code == 200:
+        module.exit_json(ansible_facts=dict(checkpoint_hosts=response))
+    else:
+        module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
 
 
 if __name__ == '__main__':

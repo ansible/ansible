@@ -83,9 +83,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-checkpoint_address_ranges:
-  description: The checkpoint address_range object created or updated.
-  returned: always, except when deleting the address_range.
+api_result:
+  description: The checkpoint object created or updated.
+  returned: always, except when deleting the object.
   type: dict
 """
 
@@ -98,9 +98,9 @@ def main():
         ip_address_first=dict(type='str'),
         ipv4_address_first=dict(type='str'),
         ipv6_address_first=dict(type='str'),
-        ip_address_last=dict(type='int'),
-        ipv4_address_last=dict(type='int'),
-        ipv6_address_last=dict(type='int'),
+        ip_address_last=dict(type='str'),
+        ipv4_address_last=dict(type='str'),
+        ipv6_address_last=dict(type='str'),
         nat_settings=dict(type='dict')
     )
     argument_spec.update(checkpoint_argument_spec)

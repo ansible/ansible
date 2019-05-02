@@ -91,9 +91,9 @@ EXAMPLES = """
 """
 
 RETURN = """
-checkpoint_networks:
-  description: The checkpoint network object created or updated.
-  returned: always, except when deleting the network.
+api_result:
+  description: The checkpoint object created or updated.
+  returned: always, except when deleting the object.
   type: dict
 """
 

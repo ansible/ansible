@@ -59,10 +59,10 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_facts:
-  description: The checkpoint access rule object facts.
+api_result:
+  description: The checkpoint object facts.
   returned: always.
-  type: list
+  type: dict
 """
 
 

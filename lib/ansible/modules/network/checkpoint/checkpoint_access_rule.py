@@ -71,7 +71,6 @@ options:
       - State of the access rule (present or absent). Defaults to present.
     type: str
     default: present
-extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
@@ -83,7 +82,6 @@ EXAMPLES = """
     source: attacker
     destination: Any
     action: Drop
-
 - name: Delete access rule
   checkpoint_access_rule:
     layer: Network
@@ -91,10 +89,10 @@ EXAMPLES = """
 """
 
 RETURN = """
-checkpoint_access_rules:
-  description: The checkpoint access rule object created or updated.
-  returned: always, except when deleting the access rule.
-  type: list
+api_result:
+  description: The checkpoint object created or updated.
+  returned: always, except when deleting the object.
+  type: dict
 """
 
 
@@ -196,7 +194,6 @@ def main():
         enabled=dict(type='bool', default=True),
         state=dict(type='str', default='present')
     )
-    argument_spec.update(checkpoint_argument_spec)
 
     required_if = [('state', 'present', ('layer', 'position'))]
     module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
