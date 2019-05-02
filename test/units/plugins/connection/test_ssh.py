@@ -282,11 +282,11 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.return_value = (0, '', '')
         conn.set_option('remote_addr', "some_host")
 
-        C.ANSIBLE_SSH_RETRIES = 9
+        conn.set_option('retries', 9)
 
         # Test with C.DEFAULT_SCP_IF_SSH set to smart
         # Test when SFTP works
-        C.DEFAULT_SCP_IF_SSH = 'smart'
+        conn.set_option('scp_if_ssh', 'smart')
         expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.set_options({})
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
@@ -299,7 +299,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.side_effect = None
 
         # test with C.DEFAULT_SCP_IF_SSH enabled
-        C.DEFAULT_SCP_IF_SSH = True
+        conn.set_option('scp_if_ssh', True)
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
 
@@ -307,7 +307,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._bare_run.assert_called_with('some command to run', None, checkrc=False)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
-        C.DEFAULT_SCP_IF_SSH = False
+        conn.set_option('scp_if_ssh', False)
         expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._bare_run.assert_called_with('some command to run', expected_in_data, checkrc=False)
