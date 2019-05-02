@@ -163,7 +163,7 @@ options:
             - '    - C(enabled) (bool): indicates if source MAC address learning is allowed. (default: False)'
             - '    - C(limit) (int): The maximum number of MAC addresses that can be learned.  (default: None)'
             - '    - C(limit_policy) (string): The default switching policy after MAC limit is exceeded. (default: None)'
-            - '        - choices: [allow, drop, None]'
+            - '        - choices: [ALLOW, DROP, None]'
         required: False
         version_added: '2.9'
         default: {
@@ -726,7 +726,7 @@ def main():
                             allow_unicast_flooding=dict(type='bool', default=None),
                             enabled=dict(type='bool', default=False),
                             limit=dict(type='int', default=None),
-                            limit_policy=dict(type='str', choices=['allow', 'drop', None], default=None),
+                            limit_policy=dict(type='str', choices=['ALLOW', 'DROP', None], default=None),
                         ),
                         default=dict(allow_unicast_flooding=None, enabled=False, limit=None, limit_policy=None),
                     ),
