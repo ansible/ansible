@@ -170,7 +170,7 @@ CATEGORY_COMMANDS_ALL = {
                 "GetMemoryInventory", "GetNicInventory",
                 "GetStorageControllerInventory", "GetDiskInventory",
                 "GetBiosAttributes", "GetBootOrder"],
-    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisThermals"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
@@ -281,6 +281,8 @@ def main():
                     result["psu"] = rf_utils.get_psu_inventory()
                 elif command == "GetChassisThermals":
                     result["thermals"] = rf_utils.get_chassis_thermals()
+                elif command == "GetChassisPower":
+                    result["chassis_power"] = rf_utils.get_chassis_power()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
