@@ -223,7 +223,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         mock_ospe.return_value = True
         conn._build_command.return_value = 'some command to run'
         conn._bare_run.return_value = (0, '', '')
-        conn.set_option('remote_addr') = "some_host"
+        conn.set_option('remote_addr', "some_host")
 
         C.ANSIBLE_SSH_RETRIES = 9
 
@@ -280,7 +280,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         conn._build_command.return_value = 'some command to run'
         conn._bare_run.return_value = (0, '', '')
-        conn.set_option('remote_addr') = "some_host"
+        conn.set_option('remote_addr', "some_host")
 
         C.ANSIBLE_SSH_RETRIES = 9
 
