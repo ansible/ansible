@@ -1,0 +1,2 @@
+bugfixes:
+    - For package_facts, correct information about apt being missing and fix missing attribute.
