@@ -144,8 +144,7 @@ def main():
     argument_spec.update(meta_args)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           required_one_of=([['alias']]))
+                           supports_check_mode=True)
 
     result = dict(changed=False, msg='', flow={})
     kc = KeycloakAPI(module)
