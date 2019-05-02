@@ -129,17 +129,18 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
-<<<<<<< HEAD
   - name: Get boot override information
     redfish_facts:
       category: Systems
       command: GetBootOverride
-=======
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      
   - name: Get chassis inventory
     redfish_facts:
       category: Chassis
       command: GetChassisInventory
->>>>>>> 981cba59b8... Add GetChassisInventory command to redfish_facts
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -296,15 +297,12 @@ def main():
                     result["fan"] = rf_utils.get_fan_inventory()
                 elif command == "GetPsuInventory":
                     result["psu"] = rf_utils.get_psu_inventory()
-<<<<<<< HEAD
                 elif command == "GetChassisThermals":
                     result["thermals"] = rf_utils.get_chassis_thermals()
                 elif command == "GetChassisPower":
                     result["chassis_power"] = rf_utils.get_chassis_power()
-=======
                 elif command == "GetChassisInventory":
                     result["chassis"] = rf_utils.get_chassis_inventory()
->>>>>>> 981cba59b8... Add GetChassisInventory command to redfish_facts
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
