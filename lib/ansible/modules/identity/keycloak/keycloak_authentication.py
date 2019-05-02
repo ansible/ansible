@@ -67,7 +67,7 @@ extends_documentation_fragment:
     - keycloak
 
 author:
-    - Philippe Gauthier (philippe.gauthier@inspq.qc.ca)
+    - Philippe Gauthier (@elfelip)
 '''
 
 EXAMPLES = '''
