@@ -81,6 +81,7 @@ from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_arg
 from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.basic import AnsibleModule
 
+
 def get_platform_id(module):
     info = get_capabilities(module).get('device_info', {})
     return (info.get('network_os_platform', ''))
