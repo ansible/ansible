@@ -312,7 +312,7 @@ files:
   $modules/network/edgeswitch/: f-bor
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: trishnaguha
-  $modules/network/exos/: rdvencioneck
+  $modules/network/exos/: rdvencioneck $team_extreme
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
     maintainers: caphrim007 wojtek0806
@@ -754,7 +754,7 @@ files:
     support: network
     maintainers: $team_networking
   $module_utils/network/exos:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $module_utils/network/f5:
     maintainers: caphrim007 wojtek0806
   $module_utils/f5_utils.py:
@@ -1031,7 +1031,7 @@ files:
     support: network
     maintainers: $team_networking
   $plugins/cliconf/exos.py:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $plugins/cliconf/ios.py:
     <<: *ios
     maintainers: $team_networking $team_ios
@@ -1148,6 +1148,8 @@ files:
     maintainers: $team_networking
     labels: networking
   $plugins/httpapi/ftd.py: *ftd
+  $plugins/httpapi/exos.py:
+    maintainers: $team_extreme
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
@@ -1271,7 +1273,7 @@ files:
     support: network
     maintainers: $team_networking
   $plugins/terminal/exos.py:
-    maintainers: rdvencioneck
+    maintainers: rdvencioneck $team_extreme
   $plugins/terminal/ios.py:
     <<: *ios
     maintainers: $team_networking $team_ios
@@ -1470,7 +1472,7 @@ macros:
   team_digital_ocean: aluvenko, BondAnthony, mgregson
   team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet WojciechowskiPiotr
   team_e_spirit: MatrixCrawler getjack
-  team_extreme: bigmstone LindsayHill
+  team_extreme: bigmstone LindsayHill ujwalkomarla
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_ftd: annikulin
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
