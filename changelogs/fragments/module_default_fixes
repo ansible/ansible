@@ -1,0 +1,2 @@
+bugfixes:
+	- fixed module defaults precedence, refactored into function and use in some action plugins to match actual module used.
