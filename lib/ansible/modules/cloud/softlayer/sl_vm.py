@@ -63,6 +63,9 @@ options:
     description:
       - Amount of memory to be assigned to new virtual instance.
     required: true
+  flavor:
+    description:
+      - Specify which SoftLayer flavor template to use instead of cpus and memory.
   disks:
     description:
       - List of disk sizes to be assigned to new virtual instance.
