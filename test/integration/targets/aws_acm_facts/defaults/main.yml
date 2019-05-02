@@ -1,0 +1,5 @@
+---
+# defaults file for aws_acm_facts
+
+acm_domain: 'xxx.org'
+acm_arn: 'arn:aws:acm:{{ aws_region }}:123123000:certificate/57979100-e35a-4eda-a301-1aaaa12311'

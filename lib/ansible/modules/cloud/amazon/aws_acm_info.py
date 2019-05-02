@@ -17,7 +17,7 @@ options:
   certificate_arn:
     description:
       - The ARN of the certificate to get infos on
-    version_added: "2.8"
+    version_added: "2.9"
   domain_name:
     description:
       - The domain name of an ACM certificate to limit the search to
