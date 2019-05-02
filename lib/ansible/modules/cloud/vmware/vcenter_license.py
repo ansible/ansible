@@ -42,6 +42,16 @@ options:
     - The hostname of the ESXi server to which the specified license will be assigned.
     - This parameter is optional.
     version_added: '2.8'
+  datacenter:
+    description:
+    - The datacenter name to use for the operation.
+    type: str
+    version_added: '2.9'
+  cluster_name:
+    description:
+    - Name of the cluster to apply vSAN license.
+    type: str
+    version_added: '2.9'
 notes:
 - This module will also auto-assign the current vCenter to the license key
   if the product matches the license key, and vCenter us currently assigned
@@ -81,6 +91,17 @@ EXAMPLES = r'''
     license: f600d-21ae3-5592b-249e0-dd502
     state: present
   delegate_to: localhost
+
+- name: Add vSAN license and assign to the given cluster
+  vcenter_license:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ datacenter_name }}'
+    cluster_name: '{{ cluster_name }}'
+    license: f600d-21ae3-5592b-249e0-dd502
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -95,9 +116,8 @@ licenses:
 
 try:
     from pyVmomi import vim
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -131,6 +151,8 @@ def main():
         license=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['absent', 'present']),
         esxi_hostname=dict(type='str'),
+        datacenter=dict(type='str'),
+        cluster_name=dict(type='str'),
     ))
 
     module = AnsibleModule(
@@ -177,8 +199,24 @@ def main():
         if key is not None:
             lam = lm.licenseAssignmentManager
             assigned_license = None
+            datacenter = module.params['datacenter']
+            datacenter_obj = None
+            if datacenter:
+                datacenter_obj = pyv.find_datacenter_by_name(datacenter)
+                if not datacenter_obj:
+                    module.fail_json(msg="Unable to find the datacenter %(datacenter)s" % module.params)
+
+            cluster = module.params['cluster_name']
+            if cluster:
+                cluster_obj = pyv.find_cluster_by_name(cluster_name=cluster, datacenter_name=datacenter_obj)
+                if not cluster_obj:
+                    msg = "Unable to find the cluster %(cluster_name)s"
+                    if datacenter:
+                        msg += " in datacenter %(datacenter)s"
+                    module.fail_json(msg=msg % module.params)
+                entityId = cluster_obj._moId
             # assign to current vCenter, if esxi_hostname is not specified
-            if module.params['esxi_hostname'] is None:
+            elif module.params['esxi_hostname'] is None:
                 entityId = pyv.content.about.instanceUuid
                 # if key name not contain "VMware vCenter Server"
                 if pyv.content.about.name not in key.name:
