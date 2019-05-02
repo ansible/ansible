@@ -209,11 +209,11 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
-        elif not isinstance(self._role_vars, dict):
+        if not isinstance(self._role_vars, dict):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
-        elif not isinstance(self._default_vars, dict):
+        if not isinstance(self._default_vars, dict):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         # load the role's other files, if they exist
