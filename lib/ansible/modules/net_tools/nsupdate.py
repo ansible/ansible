@@ -117,7 +117,7 @@ EXAMPLES = '''
   nsupdate:
     key_name: "nsupdate"
     key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
-    server: "10.1.1.1"    
+    server: "10.1.1.1"
     record: "1.1.168.192.in-addr.arpa."
     type: "PTR"
     value: "ansible.example.org."
@@ -127,7 +127,7 @@ EXAMPLES = '''
   nsupdate:
     key_name: "nsupdate"
     key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
-    server: "10.1.1.1"    
+    server: "10.1.1.1"
     record: "1.1.168.192.in-addr.arpa."
     type: "PTR"
     state: absent
