@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_file_copy fix passwordless workflow (https://github.com/ansible/ansible/pull/55441).
