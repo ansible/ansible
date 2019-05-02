@@ -94,8 +94,8 @@ class Scaleway(object):
         }
         self.name = None
 
-    def get_resources(self):
-        results = self.get('/%s' % self.name)
+    def get_resources(self, params=None):
+        results = self.get('/%s' % self.name, params=params)
 
         if not results.ok:
             raise ScalewayException('Error fetching {0} ({1}) [{2}: {3}]'.format(
@@ -163,9 +163,11 @@ class Scaleway(object):
 SCALEWAY_LOCATION = {
     'par1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
     'EMEA-FR-PAR1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": 'https://cp-par1.scaleway.com'},
+    'fr-par-1': {'name': 'Paris 1', 'country': 'FR', "api_endpoint": "https://api.scaleway.com"},
 
     'ams1': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
-    'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'}
+    'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
+    'nl-ams-1': {'name': 'Amsterdam', 'country': 'NL', "api_endpoint": "https://api.scaleway.com"}
 }
 
 SCALEWAY_ENDPOINT = "https://api-world.scaleway.com"

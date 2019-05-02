@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -30,17 +31,27 @@ options:
     description:
     - Scaleway compute zone
     required: true
+  name:
+    version_added: "2.8"
+    description: Name of the image
+  architecture:
+    version_added: "2.8"
+    description: Architecture of the instance
     choices:
-      - ams1
-      - EMEA-NL-EVS
-      - par1
-      - EMEA-FR-PAR1
+      - x86_64
+      - arm
+  most_recent:
+    version_added: "2.8"
+    description: Return most recent image if multiple exist.
 '''
 
 EXAMPLES = r'''
-- name: Gather Scaleway images facts
+- name: Get the most recent image for an Ubuntu Bionic on architecture x86_64 in Paris (fr-par-1)
   scaleway_image_facts:
-    region: par1
+    region: fr-par-1
+    most_recent: yes
+    name: Ubuntu Bionic
+    architecture: x86_64
 '''
 
 RETURN = r'''
@@ -103,15 +114,29 @@ def main():
     argument_spec = scaleway_argument_spec()
     argument_spec.update(dict(
         region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
+        name=dict(),
+        architecture=dict(choices=["arm", "x86_64"]),
+        most_recent=dict(type="bool", default=False)
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
+    params = {}
+    if module.params["architecture"]:
+        params["arch"] = module.params["architecture"]
+
+    if module.params["name"]:
+        params["name"] = module.params["name"]
+
+    if module.params["most_recent"]:
+        params["only_current"] = 1
+
     try:
         module.exit_json(
-            ansible_facts={'scaleway_image_facts': ScalewayImageFacts(module).get_resources()}
+            changed=False,
+            ansible_facts={'scaleway_image_facts': ScalewayImageFacts(module).get_resources(params=params)}
         )
     except ScalewayException as exc:
         module.fail_json(msg=exc.message)

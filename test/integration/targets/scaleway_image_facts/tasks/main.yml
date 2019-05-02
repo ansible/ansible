@@ -1,30 +1,114 @@
-# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_image_facts
+# Region
 
-
-- name: Get image informations and register it in a variable
+- name: region=par1
   scaleway_image_facts:
-    region: par1
-  register: images
+    region: fr-par-1
+  register: par1_images
 
-- name: Display images variable
-  debug:
-    var: images
+- name: Assert on par1_images
+  assert:
+    that:
+      - par1_images is success
+
+- name: region=ams1
+  scaleway_image_facts:
+    region: nl-ams-1
+  register: ams1_images
+
+- name: Assert on ams1_images
+  assert:
+    that:
+      - ams1_images is success
+
+# Region and name
+
+- name: region=par1 name=bionic
+  scaleway_image_facts:
+    region: fr-par-1
+    name: bionic
+  register: par1_name_images
+
+- name: Assert on par1_name_images
+  assert:
+    that:
+      - par1_name_images is success
+      - "'bionic' in '{{ item.name | lower }}'"
+  loop: "{{ par1_name_images.ansible_facts.scaleway_image_facts }}"
+
+- name: region=ams1 name=bionic
+  scaleway_image_facts:
+    region: nl-ams-1
+    name: bionic
+  register: ams1_name_images
+
+- name: Assert on ams1_name_images
+  assert:
+    that:
+      - ams1_name_images is success
+      - "'bionic' in '{{ item.name | lower }}'"
+  loop: "{{ ams1_name_images.ansible_facts.scaleway_image_facts }}"
+
+# Region, name, architecture
+
+- name: region=par1 name=bionic architecture=x86_64
+  scaleway_image_facts:
+    region: fr-par-1
+    architecture: x86_64
+    name: bionic
+  register: par1_name_arch_images
 
 - name: Ensure retrieval of images facts is success
   assert:
     that:
-      - images is success
+      - par1_name_arch_images is success
+      - "'bionic' in '{{ item.name | lower }}'"
+      - "'{{ item.arch }}' == 'x86_64'"
+  loop: "{{ par1_name_arch_images.ansible_facts.scaleway_image_facts }}"
+
+- name: region=ams1 name=bionic architecture=x86_64
+  scaleway_image_facts:
+    region: nl-ams-1
+    name: bionic
+    architecture: x86_64
+  register: ams1_name_arch_images
+
+- name: Ensure retrieval of images facts is success
+  assert:
+    that:
+      - ams1_name_arch_images is success
+      - "'bionic' in '{{ item.name | lower }}'"
+      - "'{{ item.arch }}' == 'x86_64'"
+  loop: "{{ ams1_name_arch_images.ansible_facts.scaleway_image_facts }}"
+
+# Region, name, architecture, most recent
+
+- name: Region=par1 architecture=x86_64 name=Bionic most_recent=yes
+  scaleway_image_facts:
+    region: fr-par-1
+    architecture: x86_64
+    name: bionic
+    most_recent: yes
+  register: par1_arch_name_most_recent_image
+
+- name: Ensure retrieval of images facts is success
+  assert:
+    that:
+      - par1_arch_name_most_recent_image is success
+      - bionic in par1_arch_name_most_recent_image.name
+      - par1_arch_name_most_recent_image.arch is x86_64
 
 - name: Get image informations from ams1 and register it in a variable
   scaleway_image_facts:
-    region: ams1
-  register: images_ams1
+    region: nl-ams-1
+    architecture: x86_64
+    name: bionic
+    most_recent: yes
 
-- name: Display images variable from ams1
-  debug:
-    var: images_ams1
+  register: ams1_arch_name_most_recent_image
 
 - name: Ensure retrieval of images facts is success
   assert:
     that:
-      - images_ams1 is success
+      - ams1_arch_name_most_recent_image is success
+      - ams1_arch_name_most_recent_image.arch is x86_64
+      - bionic in ams1_arch_name_most_recent_image.name
