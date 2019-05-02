@@ -48,16 +48,19 @@ options:
     - If C(specific_user), IIS will use the credentials provided in I(username) and I(password) to access the file system or network.
     type: str
     choices: [pass_through, specific_user]
+    version_added: '2.9'
   username:
     description:
     - Specifies the user name of an account that can access configuration files and content for this application.
     - Required when I(connect_as) is set to C(specific_user).
     type: str
+    version_added: '2.9'
   password:
     description:
     - The password associated with I(username).
     - Required when I(connect_as) is set to C(specific_user).
     type: str
+    version_added: '2.9'
 seealso:
 - module: win_iis_virtualdirectory
 - module: win_iis_webapppool

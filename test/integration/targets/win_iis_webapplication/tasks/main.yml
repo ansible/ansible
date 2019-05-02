@@ -23,7 +23,7 @@
   - name: take a copy of the original iis configuration
     win_copy:
       src: 'C:\Windows\System32\inetsrv\config\applicationHost.config'
-      dest: '{{ remote_tmpdir }}\applicationHost.config'
+      dest: '{{ remote_tmp_dir }}\applicationHost.config'
       remote_src: yes
 
   - name: set version of IIS for tests
@@ -39,7 +39,7 @@
   # Cleanup
   - name: restore iis configuration
     win_copy:
-      src: '{{ remote_tmpdir }}\applicationHost.config'
+      src: '{{ remote_tmp_dir }}\applicationHost.config'
       dest: 'C:\Windows\System32\inetsrv\config\applicationHost.config'
       remote_src: yes
   when: module_available.rc == 0
