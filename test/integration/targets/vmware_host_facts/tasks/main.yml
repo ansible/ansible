@@ -1,28 +1,34 @@
-- name: kill vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
-- name: start vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
-  register: vcsim_instance
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+    - name: get host facts through a vcenter
+      vmware_host_facts:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+      register: facts
+    - debug: var=facts
+    - name: verify some data,like ansible_processor
+      assert:
+        that:
+          - "'ansible_hostname' in facts['ansible_facts']"
+          - "'ansible_processor' in facts['ansible_facts']"
 
-- name: get host facts
-  vmware_host_facts:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-  register: facts
-
-- debug: var=facts
-
-- name: get host info
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_host_info' }}"
-  register: host_info_result
-
-- name: verify some data,like ansible_processor
-  assert:
-    that:
-      - facts['ansible_facts']['ansible_hostname'] in host_info_result['json']
-      - facts['ansible_facts']['ansible_processor'] == host_info_result['json'][facts['ansible_facts']['ansible_hostname']]['Processor type']
+    - name: get host facts through from a host
+      vmware_host_facts:
+        validate_certs: False
+        hostname: '{{ hostvars[esxi1].ansible_host }}'
+        username: '{{ hostvars[esxi1].ansible_user }}'
+        password: '{{ hostvars[esxi1].ansible_password }}'
+      register: facts
+    - debug: var=facts
+    - name: verify some data,like ansible_processor
+      assert:
+        that:
+          - "'ansible_hostname' in facts['ansible_facts']"
+          - "'ansible_processor' in facts['ansible_facts']"
