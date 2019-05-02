@@ -35,6 +35,7 @@ import urllib
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils._text import to_text
 
 URL_TOKEN = "{url}/realms/{realm}/protocol/openid-connect/token"
 URL_CLIENT = "{url}/admin/realms/{realm}/clients/{id}"
@@ -111,6 +112,25 @@ def camel(words):
     return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
 
 
+def remove_arguments_with_value_none(argument):
+    """
+    This function remove all NoneType elements from dict object.
+    This is useful when argument_spec include optional keys which dos not need to be
+    POST or PUT to Keycloak API.
+    :param argument: Dict from which to remove NoneType elements
+    :return: nothing
+    """
+    if type(argument) is dict:
+        for key in argument.keys():
+            if argument[key] is None:
+                del argument[key]
+            elif type(argument[key]) is list:
+                for element in argument[key]:
+                    remove_arguments_with_value_none(element)
+            elif type(argument[key]) is dict:
+                remove_arguments_with_value_none(argument[key])
+
+
 def isDictEquals(dict1, dict2, exclude=None):
     """
     This function compare if tthe first parameter structure, is included in the second.
@@ -175,8 +195,10 @@ def isDictEquals(dict1, dict2, exclude=None):
                     if not isDictEquals(dict1[key], dict2[key], exclude):
                         return False
             return True
-        else:
+        elif type(dict1) is bool and type(dict2) is bool:
             return dict1 == dict2
+        else:
+            return to_text(dict1, 'utf-8') == to_text(dict2, 'utf-8')
     except KeyError:
         return False
 
