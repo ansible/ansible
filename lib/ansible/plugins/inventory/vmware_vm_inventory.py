@@ -473,7 +473,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             'runtime.maxMemoryUsage',
             'customValue',
         ]
-        field_mgr = self.pyv.content.customFieldsManager.field
+        field_mgr = []
+        if self.pyv.content.customFieldsManager:
+            field_mgr = self.pyv.content.customFieldsManager.field
 
         for vm_prop in vm_properties:
             if vm_prop == 'customValue':

@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_vm_facts - fix the support with regular ESXi

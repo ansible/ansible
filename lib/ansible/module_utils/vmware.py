@@ -805,6 +805,9 @@ class PyVmomi(object):
         self.si = None
         self.current_vm_obj = None
         self.content = connect_to_api(self.module)
+        self.custom_field_mgr = []
+        if self.content.customFieldsManager:  # not an ESXi
+            self.custom_field_mgr = self.content.customFieldsManager.field
 
     def is_vcenter(self):
         """
