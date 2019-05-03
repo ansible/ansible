@@ -37,6 +37,7 @@ notes:
     - BFD global does not have a 'state' parameter. All of the BFD commands
       are unique and are defined if 'feature bfd' is enabled.
 options:
+  # Top-level commands
   echo_interface:
     description:
       - Loopback interface used for echo frames.
@@ -140,7 +141,7 @@ import re, yaml
 
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.network.nxos.nxos import load_config, run_commands, get_capabilities
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -162,6 +163,7 @@ echo_interface:
   default: ''
 
 echo_rx_interval:
+  _exclude: ['N5K', 'N6K']
   kind: int
   getval: bfd echo-rx-interval (\d+)$
   setval: bfd echo-rx-interval {0}

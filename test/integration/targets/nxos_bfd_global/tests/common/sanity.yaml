@@ -1,0 +1,131 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_bfd_global sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: set facts common
+  # nd_* vars are "non-default" values
+  set_fact:
+    echo: ''
+    nd_echo: loopback1
+    interval: [50, 50, 3]
+    nd_interval: [51, 52, 4]
+    slow: 2000
+    nd_slow: 2001
+  when: platform is not search('N3K')
+
+- name: set facts (exclude 5K/6K)
+  set_fact:
+    echo_rx: 50
+    nd_echo_rx: 51
+    ipv4_echo_rx: 50
+    ipv6_echo_rx: 50
+    nd_afi_echo_rx: 54
+    ipv4_interval: [50, 50, 3]
+    ipv6_interval: [50, 50, 3]
+    nd_afi_interval: [54, 56, 8]
+    ipv4_slow: 2000
+    ipv6_slow: 2000
+    nd_afi_slow: 2046
+  when: platform is not search('N5K|N6K')
+
+- name: set facts (exclude 5K/6K/7K)
+  set_fact:
+    startup: 5
+    nd_startup: 6
+  when: platform is not search('N5K|N6K|N7K')
+
+- name: set facts 3k defaults (resets some values above)
+  set_fact:
+    echo_rx: 250
+    interval: [250, 250, 3]
+    ipv4_echo_rx: 250
+    ipv6_echo_rx: 250
+    ipv4_interval: [250, 250, 3]
+    ipv6_interval: [250, 250, 3]
+    ipv4_slow: 2000
+    ipv6_slow: 2000
+  when: platform is search('N3K')
+
+- name: set facts fabricpath
+  set_fact:
+    fab_interval: [50, 50, 3]
+    nd_fab_interval: [57, 57, 7]
+    fab_slow_timer: 2000
+    nd_fab_slow_timer: 2007
+    fab_vlan: 1
+    nd_fab_vlan: 47
+  when: platform is not search('N3K|N9K')
+
+- name: Setup
+  nxos_feature: &setup_teardown
+    feature: bfd
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+
+- block:
+  - name: BFD non defaults
+    nxos_bfd_global: &bfd_non_def
+      echo_interface:        "{{ nd_echo }}"
+      echo_rx_interval:      "{{ nd_echo_rx | default(omit) }}"
+      interval:              "{{ nd_interval }}"
+      slow_timer:            "{{ nd_slow }}"
+      startup_timer:         "{{ nd_startup | default(omit) }}"
+      ipv4_echo_rx_interval: "{{ nd_afi_echo_rx | default(omit) }}"
+      ipv6_echo_rx_interval: "{{ nd_afi_echo_rx | default(omit) }}"
+      ipv4_interval:         "{{ nd_afi_interval | default(omit) }}"
+      ipv6_interval:         "{{ nd_afi_interval | default(omit) }}"
+      ipv4_slow_timer:       "{{ nd_afi_slow | default(omit) }}"
+      ipv6_slow_timer:       "{{ nd_afi_slow | default(omit) }}"
+      fabricpath_interval:   "{{ nd_fab_interval | default(omit) }}"
+      fabricpath_slow_timer: "{{ nd_fab_slow | default(omit) }}"
+      fabricpath_vlan:       "{{ nd_fab_vlan | default(omit) }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: bfd_non_def idempotence
+    nxos_bfd_global: *bfd_non_def
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: BFD defaults
+    nxos_bfd_global: &bfd_def
+      echo_interface:        "{{ echo }}"
+      echo_rx_interval:      "{{ echo_rx | default(omit) }}"
+      interval:              "{{ interval }}"
+      slow_timer:            "{{ slow }}"
+      startup_timer:         "{{ startup | default(omit) }}"
+      ipv4_echo_rx_interval: "{{ ipv4_echo_rx | default(omit) }}"
+      ipv6_echo_rx_interval: "{{ ipv6_echo_rx | default(omit) }}"
+      ipv4_interval:         "{{ ipv4_interval | default(omit) }}"
+      ipv6_interval:         "{{ ipv6_interval | default(omit) }}"
+      ipv4_slow_timer:       "{{ ipv4_slow | default(omit) }}"
+      ipv6_slow_timer:       "{{ ipv6_slow | default(omit) }}"
+      fabricpath_interval:   "{{ fab_interval | default(omit) }}"
+      fabricpath_slow_timer: "{{ fab_slow | default(omit) }}"
+      fabricpath_vlan:       "{{ fab_vlan | default(omit) }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: bfd_def idempotence
+    nxos_bfd_global: *bfd_def
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_bfd_global sanity test"

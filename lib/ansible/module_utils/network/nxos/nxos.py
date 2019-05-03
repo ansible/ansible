@@ -697,22 +697,24 @@ class NxosCmdRef:
         ref = self._ref = yaml.load(cmd_ref_str)
         # Create a list of supported commands based on ref keys
         ref['commands'] = [k for k in ref if not k.startswith('_')]
+        ref['commands'].sort()
         ref['_proposed'] = []
         self.feature_enable()
         self.get_platform_defaults()
 
 
     def feature_enable(self):
-        """Enable the feature if specified in ref. """
+        """Add 'feature <foo>' to _proposed if specified in ref. """
         ref = self._ref
         feature = ref['_template'].get('feature')
         if feature:
             show_cmd = "show run | incl 'feature {0}'".format(feature)
             output = self.execute_show_command(show_cmd, 'text')
             if not output or 'CLI command error' in output:
-                msg = "** 'feature {0}' is not enabled. Module will auto-enable ** ".format(feature)
+                msg = "** 'feature {0}' is not enabled. Module will auto-enable feature {0} ** ".format(feature)
                 self._module.warn(msg)
                 ref['_proposed'].append('feature {0}'.format(feature))
+                ref['_cli_is_feature_disabled'] = ref['_proposed']
 
 
     def get_platform_id(self):
@@ -728,7 +730,7 @@ class NxosCmdRef:
         plat = m.group(1)
 
         # Normalize
-        if re.match('C35', plat):
+        if re.search('C35', plat):
             plat = 'N35'
         if re.match('N77', plat):
             plat = 'N7K'
@@ -743,8 +745,13 @@ class NxosCmdRef:
         if not plat:
             return
 
-        # Update platform-specific settings for each item in ref
         ref = self._ref
+        # Remove excluded commands (no platform support for command)
+        for k in ref['commands']:
+            if plat in ref[k].get('_exclude', ''):
+                ref['commands'].remove(k)
+
+        # Update platform-specific settings for each item in ref
         plat_spec_cmds = [k for k in ref['commands'] if plat in ref[k]]
         for k in plat_spec_cmds:
             for plat_key in ref[k][plat]:
@@ -778,6 +785,8 @@ class NxosCmdRef:
         Store these states in each command's 'existing' key.
         """
         ref = self._ref
+        if ref.get('_cli_is_feature_disabled'):
+            return
         show_cmd = ref['_template']['get_command']
         output = self.execute_show_command(show_cmd, 'text') or []
         if not output:
