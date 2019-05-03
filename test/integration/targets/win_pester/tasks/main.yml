@@ -24,17 +24,16 @@
     name: PSModulePath
     scope: machine
     state: present
-    elements:
-    - '{{test_win_pester_path}}\Modules'
+    elements: '{{test_win_pester_path}}\Modules'
 
 - name: copy test files
   win_copy:
     src: files/
     dest: '{{test_win_pester_path}}\'
 
-- block:
-  - name: run Pester tests
-    include_tasks: test.yml
+- name: run Pester tests
+  block:
+    - include_tasks: test.yml
 
   always:
   - name: remove custom pester location on the PSModulePath
