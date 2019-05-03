@@ -129,6 +129,22 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get boot override information
+    redfish_facts:
+      category: Systems
+      command: GetBootOverride
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Get chassis inventory
+    redfish_facts:
+      category: Chassis
+      command: GetChassisInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in the Manager category
     redfish_facts:
       category: Manager
@@ -169,8 +185,8 @@ CATEGORY_COMMANDS_ALL = {
     "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
                 "GetMemoryInventory", "GetNicInventory",
                 "GetStorageControllerInventory", "GetDiskInventory",
-                "GetBiosAttributes", "GetBootOrder"],
-    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisThermals"],
+                "GetBiosAttributes", "GetBootOrder", "GetBootOverride"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals", "GetChassisInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
@@ -267,6 +283,8 @@ def main():
                     result["bios_attribute"] = rf_utils.get_multi_bios_attributes()
                 elif command == "GetBootOrder":
                     result["boot_order"] = rf_utils.get_multi_boot_order()
+                elif command == "GetBootOverride":
+                    result["boot_override"] = rf_utils.get_multi_boot_override()
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
@@ -281,6 +299,10 @@ def main():
                     result["psu"] = rf_utils.get_psu_inventory()
                 elif command == "GetChassisThermals":
                     result["thermals"] = rf_utils.get_chassis_thermals()
+                elif command == "GetChassisPower":
+                    result["chassis_power"] = rf_utils.get_chassis_power()
+                elif command == "GetChassisInventory":
+                    result["chassis"] = rf_utils.get_chassis_inventory()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource

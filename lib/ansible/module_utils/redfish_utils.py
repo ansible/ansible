@@ -786,6 +786,39 @@ class RedfishUtils(object):
     def get_multi_boot_order(self):
         return self.aggregate(self.get_boot_order)
 
+    def get_boot_override(self, systems_uri):
+        result = {}
+
+        properties = ["BootSourceOverrideEnabled", "BootSourceOverrideTarget",
+                      "BootSourceOverrideMode", "UefiTargetBootSourceOverride", "BootSourceOverrideTarget@Redfish.AllowableValues"]
+
+        response = self.get_request(self.root_uri + systems_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if 'Boot' not in data:
+            return {'ret': False, 'msg': "Key Boot not found"}
+
+        boot = data['Boot']
+
+        boot_overrides = {}
+        if "BootSourceOverrideEnabled" in boot:
+            if boot["BootSourceOverrideEnabled"] is not False:
+                for property in properties:
+                    if property in boot:
+                        if boot[property] is not None:
+                            boot_overrides[property] = boot[property]
+        else:
+            return {'ret': False, 'msg': "No boot override is enabled."}
+
+        result['entries'] = boot_overrides
+        return result
+
+    def get_multi_boot_override(self):
+        return self.aggregate(self.get_boot_override)
+
     def set_bios_default_settings(self):
         result = {}
         key = "Bios"
@@ -815,9 +848,13 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
 
-    def set_one_time_boot_device(self, bootdevice):
+    def set_one_time_boot_device(self, bootdevice, uefi_target, boot_next):
         result = {}
-        key = "Bios"
+        key = "Boot"
+
+        if not bootdevice:
+            return {'ret': False,
+                    'msg': "bootdevice option required for SetOneTimeBoot"}
 
         # Search for 'key' entry and extract URI from it
         response = self.get_request(self.root_uri + self.systems_uris[0])
@@ -829,23 +866,65 @@ class RedfishUtils(object):
         if key not in data:
             return {'ret': False, 'msg': "Key %s not found" % key}
 
-        bios_uri = data[key]["@odata.id"]
+        boot = data[key]
 
-        response = self.get_request(self.root_uri + bios_uri)
-        if response['ret'] is False:
-            return response
-        data = response['data']
+        annotation = 'BootSourceOverrideTarget@Redfish.AllowableValues'
+        if annotation in boot:
+            allowable_values = boot[annotation]
+            if isinstance(allowable_values, list) and bootdevice not in allowable_values:
+                return {'ret': False,
+                        'msg': "Boot device %s not in list of allowable values (%s)" %
+                               (bootdevice, allowable_values)}
 
-        boot_mode = data[u'Attributes']["BootMode"]
-        if boot_mode == "Uefi":
-            payload = {"Boot": {"BootSourceOverrideTarget": "UefiTarget", "UefiTargetBootSourceOverride": bootdevice}}
+        # read existing values
+        enabled = boot.get('BootSourceOverrideEnabled')
+        target = boot.get('BootSourceOverrideTarget')
+        cur_uefi_target = boot.get('UefiTargetBootSourceOverride')
+        cur_boot_next = boot.get('BootNext')
+
+        if bootdevice == 'UefiTarget':
+            if not uefi_target:
+                return {'ret': False,
+                        'msg': "uefi_target option required to SetOneTimeBoot for UefiTarget"}
+            if enabled == 'Once' and target == bootdevice and uefi_target == cur_uefi_target:
+                # If properties are already set, no changes needed
+                return {'ret': True, 'changed': False}
+            payload = {
+                'Boot': {
+                    'BootSourceOverrideEnabled': 'Once',
+                    'BootSourceOverrideTarget': bootdevice,
+                    'UefiTargetBootSourceOverride': uefi_target
+                }
+            }
+        elif bootdevice == 'UefiBootNext':
+            if not boot_next:
+                return {'ret': False,
+                        'msg': "boot_next option required to SetOneTimeBoot for UefiBootNext"}
+            if enabled == 'Once' and target == bootdevice and boot_next == cur_boot_next:
+                # If properties are already set, no changes needed
+                return {'ret': True, 'changed': False}
+            payload = {
+                'Boot': {
+                    'BootSourceOverrideEnabled': 'Once',
+                    'BootSourceOverrideTarget': bootdevice,
+                    'BootNext': boot_next
+                }
+            }
         else:
-            payload = {"Boot": {"BootSourceOverrideTarget": bootdevice}}
+            if enabled == 'Once' and target == bootdevice:
+                # If properties are already set, no changes needed
+                return {'ret': True, 'changed': False}
+            payload = {
+                'Boot': {
+                    'BootSourceOverrideEnabled': 'Once',
+                    'BootSourceOverrideTarget': bootdevice
+                }
+            }
 
         response = self.patch_request(self.root_uri + self.systems_uris[0], payload)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True}
 
     def set_bios_attributes(self, attr):
         result = {}
@@ -888,6 +967,30 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
 
+    def get_chassis_inventory(self):
+        result = {}
+        chassis_results = []
+
+        # Get these entries, but does not fail if not found
+        properties = ['ChassisType', 'PartNumber', 'AssetTag',
+                      'Manufacturer', 'IndicatorLED', 'SerialNumber', 'Model']
+
+        # Go through list
+        for chassis_uri in self.chassis_uri_list:
+            response = self.get_request(self.root_uri + chassis_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+            chassis_result = {}
+            for property in properties:
+                if property in data:
+                    chassis_result[property] = data[property]
+            chassis_results.append(chassis_result)
+
+        result["entries"] = chassis_results
+        return result
+
     def get_fan_inventory(self):
         result = {}
         fan_results = []
@@ -918,6 +1021,44 @@ class RedfishUtils(object):
                             fan[property] = device[property]
                     fan_results.append(fan)
         result["entries"] = fan_results
+        return result
+
+    def get_chassis_power(self):
+        result = {}
+        key = "Power"
+
+        # Get these entries, but does not fail if not found
+        properties = ['Name', 'PowerAllocatedWatts',
+                      'PowerAvailableWatts', 'PowerCapacityWatts',
+                      'PowerConsumedWatts', 'PowerMetrics',
+                      'PowerRequestedWatts', 'RelatedItem', 'Status']
+
+        chassis_power_results = []
+        # Go through list
+        for chassis_uri in self.chassis_uri_list:
+            chassis_power_result = {}
+            response = self.get_request(self.root_uri + chassis_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+            if key in data:
+                response = self.get_request(self.root_uri + chassis_uri +
+                                            "/" + key)
+                data = response['data']
+                if 'PowerControl' in data:
+                    if len(data['PowerControl']) > 0:
+                        data = data['PowerControl'][0]
+                        for property in properties:
+                            if property in data:
+                                chassis_power_result[property] = data[property]
+                else:
+                    return {'ret': False, 'msg': 'Key PowerControl not found.'}
+                chassis_power_results.append(chassis_power_result)
+            else:
+                return {'ret': False, 'msg': 'Key Power not found.'}
+
+        result['entries'] = chassis_power_results
         return result
 
     def get_chassis_thermals(self):
@@ -1132,7 +1273,7 @@ class RedfishUtils(object):
             ret = inventory.pop('ret') and ret
             if 'entries' in inventory:
                 entries.append(({'resource_uri': resource_uri},
-                               inventory['entries']))
+                                inventory['entries']))
         return dict(ret=ret, entries=entries)
 
     def get_psu_inventory(self):
