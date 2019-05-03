@@ -1889,8 +1889,7 @@ class ContainerManager(DockerBaseClass):
             if state == 'started' and not container.running:
                 container = self.container_start(container.Id)
             elif state == 'started' and self.parameters.restart:
-                self.container_stop(container.Id)
-                container = self.container_start(container.Id)
+                container = self.container_restart(container.Id)
             elif state == 'stopped' and container.running:
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
@@ -2150,6 +2149,19 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 self.fail("Error killing container %s: %s" % (container_id, exc))
         return response
+
+    def container_restart(self, container_id):
+        self.results['actions'].append(dict(restarted=container_id, timeout=self.parameters.stop_timeout))
+        self.results['changed'] = True
+        if not self.check_mode:
+            try:
+                if self.parameters.stop_timeout:
+                    response = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
+                else:
+                    response = self.client.restart(container_id)
+            except Exception as exc:
+                self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
+        return self._get_container(container_id)
 
     def container_stop(self, container_id):
         if self.parameters.force_kill:
