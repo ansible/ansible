@@ -89,7 +89,9 @@ class FakeAnsibleModule:
 
 
 def fake_connect_to_api(module):
-    pass
+    class MyContent():
+        customFieldsManager = None
+    return MyContent
 
 
 def test_pyvmomi_lib_exists(mocker, fake_ansible_module):
