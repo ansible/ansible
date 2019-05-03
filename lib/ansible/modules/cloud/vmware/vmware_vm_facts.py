@@ -18,9 +18,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_vm_facts
-short_description: Return basic facts pertaining to a vSphere virtual machine guest
+short_description: Return basic facts pertaining to a VMware machine guest
 description:
-- Return basic facts pertaining to a vSphere virtual machine guest.
+- Return basic facts pertaining to a vSphere or ESXi virtual machine guest.
 - Cluster name as fact is added in version 2.7.
 version_added: '2.0'
 author:
@@ -28,7 +28,7 @@ author:
 - Abhijeet Kasurde (@Akasurde)
 - Fedor Vompe (@sumkincpp)
 notes:
-- Tested on vSphere 5.5 and vSphere 6.5
+- Tested on ESXi 6.7, vSphere 5.5 and vSphere 6.5
 - From 2.8 and onwards, facts are returned as list of dict instead of dict.
 requirements:
 - python >= 2.6
@@ -150,7 +150,6 @@ from ansible.module_utils.vmware import PyVmomi, get_all_objs, vmware_argument_s
 class VmwareVmFacts(PyVmomi):
     def __init__(self, module):
         super(VmwareVmFacts, self).__init__(module)
-        self.custom_field_mgr = self.content.customFieldsManager.field
 
     def get_vm_attributes(self, vm):
         return dict((x.name, v.value) for x in self.custom_field_mgr
