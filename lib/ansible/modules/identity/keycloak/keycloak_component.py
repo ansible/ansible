@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from __builtin__ import True
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -23,7 +24,7 @@ options:
     realm:
         description:
             - The name of the realm in which is the component.
-        required: true
+        default: true
     id:
         description:
             - ID of the component when it have already been created and it is known.
@@ -653,7 +654,7 @@ def main():
     meta_args = dict(
         id=dict(type='str'),
         name=dict(type='str', required=True),
-        realm=dict(type='str', default='master'),
+        realm=dict(type='str', required=True),
         providerId=dict(
             choices=[
                 "ldap",
