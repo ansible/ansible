@@ -39,7 +39,7 @@ class TestMsTeamsModule(ModuleTestCase):
 
             self.assertTrue(fetch_url_mock.call_count, 1)
             assert fetch_url_mock.call_args[1]['url'] == 'https://outlook.office.com/my-webhook'
-            
+
             call_data = json.loads(fetch_url_mock.call_args[1]['data'])
             assert call_data['text'] == "Hello Teams!"
             assert call_data['title'] == "I am the subject"

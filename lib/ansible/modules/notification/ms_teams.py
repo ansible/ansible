@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ms_teams
-version_added: 1.0
+version_added: 2.9
 short_description: Send messages to a Microsoft Teams channel
 author: Christian Kaiser (@ckaiser79)
 description:
@@ -57,6 +57,14 @@ EXAMPLES = '''
     verbosity=1
 '''
 
+RETURN = '''
+meta:
+  description: The string message send or the payload in check_mode
+  returned: success
+  type: str
+  sample: "Message send."
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 import json
@@ -85,7 +93,7 @@ def post_to_msteams(module):
     else:
 
         headers = {'Content-Type': 'application/json'}
-        response, info = fetch_url(module=modulea,
+        response, info = fetch_url(module=module,
                                    url=module.params['webhook'],
                                    headers=headers,
                                    method='POST',
