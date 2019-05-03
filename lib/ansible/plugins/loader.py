@@ -325,15 +325,12 @@ class PluginLoader:
         package = splitname[0]
         resource = splitname[1]
 
-        append_plugin_type = self.class_name or self.subdir
+        append_plugin_type = self.subdir.replace('_plugins', '')
 
-        if append_plugin_type:
-            # only current non-class special case, module_utils don't use this loader method
-            if append_plugin_type == 'library':
-                append_plugin_type = 'modules'
-            elif append_plugin_type != 'module_utils':
-                append_plugin_type = get_plugin_class(append_plugin_type)
-            package += '.plugins.{0}'.format(append_plugin_type)
+        if append_plugin_type == 'library':
+            append_plugin_type = 'modules'
+
+        package += '.plugins.{0}'.format(append_plugin_type)
 
         if extension:
             resource += extension
