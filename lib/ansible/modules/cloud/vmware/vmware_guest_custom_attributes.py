@@ -139,7 +139,6 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 class VmAttributeManager(PyVmomi):
     def __init__(self, module):
         super(VmAttributeManager, self).__init__(module)
-        self.custom_field_mgr = self.content.customFieldsManager.field
 
     def set_custom_field(self, vm, user_fields):
         result_fields = dict()
