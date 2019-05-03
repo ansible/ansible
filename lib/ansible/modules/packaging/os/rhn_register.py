@@ -55,11 +55,12 @@ options:
             - Supply an profilename for use with registration.
         type: str
         version_added: "2.0"
-    sslcacert:
+    ca_cert:
         description:
             - Supply a custom ssl CA certificate file for use with registration.
         type: path
         version_added: "2.1"
+        aliases: [ sslcacert ]
     systemorgid:
         description:
             - Supply an organizational id for use with registration.
@@ -350,7 +351,7 @@ def main():
             server_url=dict(type='str'),
             activationkey=dict(type='str', no_log=True),
             profilename=dict(type='str'),
-            sslcacert=dict(type='path'),
+            ca_cert=dict(type='path', aliases=['sslcacert']),
             systemorgid=dict(type='str'),
             enable_eus=dict(type='bool', default=False),
             nopackages=dict(type='bool', default=False),
@@ -374,7 +375,7 @@ def main():
     state = module.params['state']
     activationkey = module.params['activationkey']
     profilename = module.params['profilename']
-    sslcacert = module.params['sslcacert']
+    sslcacert = module.params['ca_cert']
     systemorgid = module.params['systemorgid']
     channels = module.params['channels']
     enable_eus = module.params['enable_eus']

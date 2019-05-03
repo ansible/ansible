@@ -203,7 +203,7 @@ author:
 EXAMPLES = '''
     - name: Create a managed Azure Container Services (AKS) instance
       azure_rm_aks:
-        name: acctestaks1
+        name: myAKS
         location: eastus
         resource_group: myResourceGroup
         dns_prefix: akstest
@@ -222,7 +222,7 @@ EXAMPLES = '''
 
     - name: Remove a managed Azure Container Services (AKS) instance
       azure_rm_aks:
-        name: acctestaks3
+        name: myAKS
         resource_group: myResourceGroup
         state: absent
 '''
@@ -244,7 +244,7 @@ state:
            vnet_subnet_id: Null
         changed: false
         dns_prefix: aks9860bdcd89
-        id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/yuwzhoaks/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
+        id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
         kubernetes_version: 1.11.4
         linux_profile:
@@ -539,9 +539,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             if agentpoolcount > 1:
                 self.fail('You cannot specify more than one agent_pool_profiles currently')
 
+            available_versions = self.get_all_versions()
             if not response:
                 to_be_updated = True
-                available_versions = self.get_all_versions()
                 if self.kubernetes_version not in available_versions.keys():
                     self.fail("Unsupported kubernetes version. Expected one of {0} but got {1}".format(available_versions.keys(), self.kubernetes_version))
             else:

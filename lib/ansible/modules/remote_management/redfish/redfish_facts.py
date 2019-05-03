@@ -74,6 +74,14 @@ EXAMPLES = '''
   - debug:
       msg: "{{ redfish_facts.cpu.entries.0.Model }}"
 
+  - name: Get memory inventory
+    redfish_facts:
+      category: Systems
+      command: GetMemoryInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get fan inventory with a timeout of 20 seconds
     redfish_facts:
       category: Chassis
@@ -121,10 +129,34 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get boot override information
+    redfish_facts:
+      category: Systems
+      command: GetBootOverride
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Get chassis inventory
+    redfish_facts:
+      category: Chassis
+      command: GetChassisInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in the Manager category
     redfish_facts:
       category: Manager
       command: all
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Get firmware update capability information
+    redfish_facts:
+      category: Update
+      command: GetFirmwareUpdateCapabilities
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -150,12 +182,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["GetSystemInventory", "GetCpuInventory",
-                "GetNicInventory", "GetStorageControllerInventory",
-                "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
-    "Chassis": ["GetFanInventory", "GetPsuInventory"],
+    "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
+                "GetMemoryInventory", "GetNicInventory",
+                "GetStorageControllerInventory", "GetDiskInventory",
+                "GetBiosAttributes", "GetBootOrder", "GetBootOverride"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals", "GetChassisInventory"],
     "Accounts": ["ListUsers"],
-    "Update": ["GetFirmwareInventory"],
+    "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
 }
 
@@ -238,6 +271,8 @@ def main():
                     result["system"] = rf_utils.get_multi_system_inventory()
                 elif command == "GetCpuInventory":
                     result["cpu"] = rf_utils.get_multi_cpu_inventory()
+                elif command == "GetMemoryInventory":
+                    result["memory"] = rf_utils.get_multi_memory_inventory()
                 elif command == "GetNicInventory":
                     result["nic"] = rf_utils.get_multi_nic_inventory(category)
                 elif command == "GetStorageControllerInventory":
@@ -248,6 +283,8 @@ def main():
                     result["bios_attribute"] = rf_utils.get_multi_bios_attributes()
                 elif command == "GetBootOrder":
                     result["boot_order"] = rf_utils.get_multi_boot_order()
+                elif command == "GetBootOverride":
+                    result["boot_override"] = rf_utils.get_multi_boot_override()
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
@@ -260,6 +297,12 @@ def main():
                     result["fan"] = rf_utils.get_fan_inventory()
                 elif command == "GetPsuInventory":
                     result["psu"] = rf_utils.get_psu_inventory()
+                elif command == "GetChassisThermals":
+                    result["thermals"] = rf_utils.get_chassis_thermals()
+                elif command == "GetChassisPower":
+                    result["chassis_power"] = rf_utils.get_chassis_power()
+                elif command == "GetChassisInventory":
+                    result["chassis"] = rf_utils.get_chassis_inventory()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
@@ -280,6 +323,8 @@ def main():
             for command in command_list:
                 if command == "GetFirmwareInventory":
                     result["firmware"] = rf_utils.get_firmware_inventory()
+                elif command == "GetFirmwareUpdateCapabilities":
+                    result["firmware_update_capabilities"] = rf_utils.get_firmware_update_capabilities()
 
         elif category == "Manager":
             # execute only if we find a Manager service resource
@@ -289,7 +334,7 @@ def main():
 
             for command in command_list:
                 if command == "GetManagerNicInventory":
-                    result["manager_nics"] = rf_utils.get_multi_nic_inventory(resource_type=category)
+                    result["manager_nics"] = rf_utils.get_multi_nic_inventory(category)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 

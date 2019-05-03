@@ -93,12 +93,12 @@ items:
       description:
       - URL of the Target VPN gateway with which this VPN tunnel is associated.
       returned: success
-      type: str
+      type: dict
     router:
       description:
       - URL of router resource to be used for dynamic routing.
       returned: success
-      type: str
+      type: dict
     peerIp:
       description:
       - IP address of the peer VPN gateway. Only IPv4 is supported.

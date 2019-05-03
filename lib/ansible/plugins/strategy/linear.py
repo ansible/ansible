@@ -324,16 +324,12 @@ class StrategyModule(StrategyBase):
 
                 self.update_active_connections(results)
 
-                try:
-                    included_files = IncludedFile.process_include_results(
-                        host_results,
-                        iterator=iterator,
-                        loader=self._loader,
-                        variable_manager=self._variable_manager
-                    )
-                except AnsibleError as e:
-                    # this is a fatal error, so we abort here regardless of block state
-                    return self._tqm.RUN_ERROR
+                included_files = IncludedFile.process_include_results(
+                    host_results,
+                    iterator=iterator,
+                    loader=self._loader,
+                    variable_manager=self._variable_manager
+                )
 
                 include_failure = False
                 if len(included_files) > 0:
@@ -413,6 +409,9 @@ class StrategyModule(StrategyBase):
                     dont_fail_states = frozenset([iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS])
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
+                        # the state may actually be in a child state, use the get_active_state()
+                        # method in the iterator to figure out the true active state
+                        s = iterator.get_active_state(s)
                         if s.run_state not in dont_fail_states or \
                            s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
                             self._tqm._failed_hosts[host.name] = True

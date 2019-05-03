@@ -528,13 +528,13 @@ class XenServerVM(XenServerObject):
                 else:
                     self.module.fail_json(msg="VM deploy disks[0]: no default SR found! You must specify SR explicitly.")
 
-            # Support for Ansible check mode.
-            if self.module.check_mode:
-                return
-
             # VM name could be an empty string which is bad.
             if self.module.params['name'] is not None and not self.module.params['name']:
                 self.module.fail_json(msg="VM deploy: VM name must not be an empty string!")
+
+            # Support for Ansible check mode.
+            if self.module.check_mode:
+                return
 
             # Now we can instantiate VM. We use VM.clone for linked_clone and
             # VM.copy for non linked_clone.
@@ -1030,15 +1030,15 @@ class XenServerVM(XenServerObject):
         if not self.exists():
             self.module.fail_json(msg="Called destroy on non existing VM!")
 
-        if self.vm_params['power_state'].lower() != 'halted':
-            if self.module.params['force']:
-                self.set_power_state("poweredoff")
-            else:
-                self.module.fail_json(msg="VM destroy: VM has to be in powered off state to destroy but force was not specified!")
+        if self.vm_params['power_state'].lower() != 'halted' and not self.module.params['force']:
+            self.module.fail_json(msg="VM destroy: VM has to be in powered off state to destroy but force was not specified!")
 
         # Support for Ansible check mode.
         if self.module.check_mode:
             return
+
+        # Make sure that VM is poweredoff before we can destroy it.
+        self.set_power_state("poweredoff")
 
         try:
             # Destroy VM!
@@ -1149,13 +1149,13 @@ class XenServerVM(XenServerObject):
                     try:
                         num_cpu_cores_per_socket = int(num_cpu_cores_per_socket)
                     except ValueError as e:
-                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be an integer value.")
+                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be an integer value!")
 
                     if num_cpu_cores_per_socket < 1:
                         self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be greater than zero!")
 
                     if num_cpus and num_cpus % num_cpu_cores_per_socket != 0:
-                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be a multiple of hardware.num_cpu_cores_per_socket.")
+                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be a multiple of hardware.num_cpu_cores_per_socket!")
 
                     vm_platform = self.vm_params['platform']
                     vm_cores_per_socket = int(vm_platform.get('cores-per-socket', 1))
@@ -1174,7 +1174,7 @@ class XenServerVM(XenServerObject):
                     try:
                         memory_mb = int(memory_mb)
                     except ValueError as e:
-                        self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be an integer value.")
+                        self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be an integer value!")
 
                     if memory_mb < 1:
                         self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be greater than zero!")
@@ -1295,8 +1295,12 @@ class XenServerVM(XenServerObject):
                                 vm_disk_userdevice_highest = userdevice
                                 break
 
+                        # If no place was found.
                         if disk_userdevice is None:
-                            disk_userdevice = str(int(vm_disk_userdevice_highest) + 1)
+                            # Highest occupied place could be a CD-ROM device
+                            # so we have to include all devices regardless of
+                            # type when calculating out-of-bound position.
+                            disk_userdevice = str(int(self.vm_params['VBDs'][-1]['userdevice']) + 1)
                             self.module.fail_json(msg="VM check disks[%s]: new disk position %s is out of bounds!" % (position, disk_userdevice))
 
                         # For new disks we only track their position.
@@ -1558,7 +1562,7 @@ class XenServerVM(XenServerObject):
                         elif self.vm_params['customization_agent'] == "custom":
                             vm_xenstore_data = self.vm_params['xenstore_data']
 
-                            if network_type and network_type != vm_xenstore_data.get('vm-data/networks/%s/type' % vm_vif_params['device'], ""):
+                            if network_type and network_type != vm_xenstore_data.get('vm-data/networks/%s/type' % vm_vif_params['device'], "none"):
                                 network_changes.append('type')
                                 need_poweredoff = True
 
@@ -1577,7 +1581,7 @@ class XenServerVM(XenServerObject):
                                     network_changes.append('gateway')
                                     need_poweredoff = True
 
-                            if network_type6 and network_type6 != vm_xenstore_data.get('vm-data/networks/%s/type6' % vm_vif_params['device'], ""):
+                            if network_type6 and network_type6 != vm_xenstore_data.get('vm-data/networks/%s/type6' % vm_vif_params['device'], "none"):
                                 network_changes.append('type6')
                                 need_poweredoff = True
 
@@ -1615,6 +1619,9 @@ class XenServerVM(XenServerObject):
                                 if network_params.get(parameter):
                                     need_poweredoff = True
                                     break
+
+                        if not vif_devices_allowed:
+                            self.module.fail_json(msg="VM check networks[%s]: maximum number of network interfaces reached!" % position)
 
                         # We need to place a new network interface right above the
                         # highest placed existing interface to maintain relative
@@ -1721,19 +1728,19 @@ class XenServerVM(XenServerObject):
                     # We found int value in string, let's typecast it.
                     size = int(size)
 
-                if not size:
+                if not size or size < 0:
                     raise ValueError
 
             except (TypeError, ValueError, NameError):
                 # Common failure
-                self.module.fail_json(msg="%sfailed to parse disk size. Please review value provided using documentation." % msg_prefix)
+                self.module.fail_json(msg="%sfailed to parse disk size! Please review value provided using documentation." % msg_prefix)
 
             disk_units = dict(tb=4, gb=3, mb=2, kb=1, b=0)
 
             if unit in disk_units:
                 return int(size * (1024 ** disk_units[unit]))
             else:
-                self.module.fail_json(msg="%s'%s' is not a supported unit for disk size. Supported units are ['%s']." %
+                self.module.fail_json(msg="%s'%s' is not a supported unit for disk size! Supported units are ['%s']." %
                                       (msg_prefix, unit, "', '".join(sorted(disk_units.keys(), key=lambda key: disk_units[key]))))
         else:
             return None

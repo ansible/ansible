@@ -207,7 +207,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True,
     )
 
     host_capability_manager = CapabilityFactsManager(module)

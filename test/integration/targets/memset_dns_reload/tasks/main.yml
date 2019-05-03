@@ -1,7 +1,6 @@
 ---
 - name: request reload with invalid API key
-  local_action:
-    module: memset_dns_reload
+  memset_dns_reload:
     api_key: "wa9aerahhie0eekee9iaphoorovooyia"
   ignore_errors: true
   register: result
@@ -13,8 +12,7 @@
       - result is not successful
 
 - name: request reload and poll
-  local_action:
-    module: memset_dns_reload
+  memset_dns_reload:
     api_key: "{{ api_key }}"
     poll: true
   register: result

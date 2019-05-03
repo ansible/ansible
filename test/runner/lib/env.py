@@ -321,7 +321,8 @@ def get_merged_commit(args, commit):
         # This should only fail for pull requests where the commit does not exist.
         # Merge runs would fail much earlier when attempting to checkout the commit.
         raise ApplicationError('Commit %s was not found:\n\n%s\n\n'
-                               'The commit was likely removed by a force push between job creation and execution.\n'
+                               'GitHub may not have fully replicated the commit across their infrastructure.\n'
+                               'It is also possible the commit was removed by a force push between job creation and execution.\n'
                                'Find the latest run for the pull request and restart failed jobs as needed.'
                                % (commit, ex.stderr.strip()))
 

@@ -670,7 +670,27 @@ class ModuleManager(object):
             return self.remove_virtual_disk_from_device()
         return False
 
-    def get_virtual_disk_on_device(self):
+    def get_virtual_disks_on_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'items' in response:
+            return response
+
+    def virtual_disk_exists(self):
         """Checks if a virtual disk exists for a guest
 
         The virtual disk names can differ based on the device vCMP is installed on.
@@ -689,47 +709,32 @@ class ModuleManager(object):
         Returns:
             dict
         """
-
-        uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-        )
-        resp = self.client.api.get(uri)
-        try:
-            response = resp.json()
-        except ValueError as ex:
-            raise F5ModuleError(str(ex))
-
-        if 'code' in response and response['code'] == 400:
-            if 'message' in response:
-                raise F5ModuleError(response['message'])
-            else:
-                raise F5ModuleError(resp.content)
-
+        response = self.get_virtual_disks_on_device()
+        check = '{0}'.format(self.have.virtual_disk)
         for resource in response['items']:
-            check = '{0}'.format(self.have.virtual_disk)
             if resource['name'].startswith(check):
-                return resource
+                return True
             else:
                 return False
 
-    def virtual_disk_exists(self):
-        response = self.get_virtual_disk_on_device()
-        if response:
-            return True
-        return False
-
     def remove_virtual_disk_from_device(self):
-        response = self.get_virtual_disk_on_device()
-        uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/{2}".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-            response['name']
-        )
-        response = self.client.api.delete(uri)
-        if response.status == 200:
-            return True
-        raise F5ModuleError(response.content)
+        check = '{0}'.format(self.have.virtual_disk)
+        response = self.get_virtual_disks_on_device()
+        for resource in response['items']:
+            if resource['name'].startswith(check):
+                uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/{2}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    resource['name'].replace('/', '~')
+                )
+                response = self.client.api.delete(uri)
+
+                if response.status == 200:
+                    continue
+                else:
+                    raise F5ModuleError(response.content)
+
+        return True
 
     def is_configured(self):
         """Checks to see if guest is disabled

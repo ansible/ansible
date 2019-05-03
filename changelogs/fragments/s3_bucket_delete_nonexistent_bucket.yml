@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Handle error paginating object versions when bucket does not exist (https://github.com/ansible/ansible/issues/49393)

@@ -1,0 +1,30 @@
+- name: Create a destination file
+  tempfile:
+    state: file
+    suffix: temp
+  register: tempfile_dst
+
+- name: Get from bucket
+  aws_s3:
+    mode: get
+    bucket: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    object: test.txt
+    dest: '{{ tempfile_dst.path }}'
+    encrypt: false
+  register: get_task
+
+- name: Show get_task
+  debug:
+    var: get_task
+
+- name: get_task is success
+  assert:
+    that:
+      - get_task is success
+
+- name: get_task is changed
+  assert:
+    that:
+      - get_task is changed

@@ -15,7 +15,7 @@ Windows host must meet the following requirements:
 * Ansible's supported Windows versions generally match those under current
   and extended support from Microsoft. Supported desktop OSs include
   Windows 7, 8.1, and 10, and supported server OSs are Windows Server 2008,
-  2008 R2, 2012, 2012 R2, and 2016.
+  2008 R2, 2012, 2012 R2, 2016, and 2019.
 
 * Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be
   installed on the Windows host.
@@ -100,6 +100,8 @@ The following PowerShell command will install the hotfix:
 
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     powershell.exe -ExecutionPolicy ByPass -File $file -Verbose
+
+For more details, please refer to the `Hotfix document <https://support.microsoft.com/en-us/help/2842230/out-of-memory-error-on-a-computer-that-has-a-customized-maxmemorypersh>`_ from Microsoft.
 
 WinRM Setup
 ```````````
@@ -381,7 +383,7 @@ target Windows host:
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig
 
     # Test out HTTPS (will fail if the cert is not verifiable)
-    winrs -r:http://server:5985/wsman -u:Username -p:Password -ssl ipconfig
+    winrs -r:https://server:5986/wsman -u:Username -p:Password -ssl ipconfig
 
     # Test out HTTPS, ignoring certificate verification
     $username = "Username"

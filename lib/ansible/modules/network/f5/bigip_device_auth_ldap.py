@@ -87,26 +87,30 @@ options:
       - "yes"
       - "no"
       - start-tls
-  ssl_ca_cert:
+  ca_cert:
     description:
       - Specifies the name of an SSL certificate from a certificate authority (CA).
       - To remove this value, use the reserved value C(none).
     type: str
-  ssl_client_key:
+    aliases: [ ssl_ca_cert ]
+  client_key:
     description:
       - Specifies the name of an SSL client key.
       - To remove this value, use the reserved value C(none).
     type: str
-  ssl_client_cert:
+    aliases: [ ssl_client_key ]
+  client_cert:
     description:
       - Specifies the name of an SSL client certificate.
       - To remove this value, use the reserved value C(none).
     type: str
-  ssl_check_peer:
+    aliases: [ ssl_client_cert ]
+  validate_certs:
     description:
       - Specifies whether the system checks an SSL peer, as a result of which the
         system requires and verifies the server certificate.
     type: bool
+    aliases: [ ssl_check_peer ]
   login_ldap_attr:
     description:
       - Specifies the LDAP directory attribute containing the local user name that is
@@ -196,22 +200,22 @@ ssl:
   returned: changed
   type: str
   sample: start-tls
-ssl_ca_cert:
+ca_cert:
   description: The name of an SSL certificate from a certificate authority.
   returned: changed
   type: str
   sample: My-Trusted-CA-Bundle.crt
-ssl_client_key:
+client_key:
   description: The name of an SSL client key.
   returned: changed
   type: str
   sample: MyKey.key
-ssl_client_cert:
+client_cert:
   description: The name of an SSL client certificate.
   returned: changed
   type: str
   sample: MyCert.crt
-ssl_check_peer:
+validate_certs:
   description: Indicates if the system checks an SSL peer.
   returned: changed
   type: bool
@@ -257,10 +261,10 @@ class Parameters(AnsibleF5Parameters):
         'userTemplate': 'user_template',
         'fallback': 'fallback_to_local',
         'loginAttribute': 'login_ldap_attr',
-        'sslCheckPeer': 'ssl_check_peer',
-        'sslClientCert': 'ssl_client_cert',
-        'sslClientKey': 'ssl_client_key',
-        'sslCaCertFile': 'ssl_ca_cert',
+        'sslCheckPeer': 'validate_certs',
+        'sslClientCert': 'client_cert',
+        'sslClientKey': 'client_key',
+        'sslCaCertFile': 'ca_cert',
         'checkRolesGroup': 'check_member_attr',
         'searchBaseDn': 'remote_directory_tree',
     }
@@ -293,10 +297,10 @@ class Parameters(AnsibleF5Parameters):
         'scope',
         'servers',
         'ssl',
-        'ssl_ca_cert',
-        'ssl_check_peer',
-        'ssl_client_cert',
-        'ssl_client_key',
+        'ca_cert',
+        'validate_certs',
+        'client_cert',
+        'client_key',
         'user_template',
     ]
 
@@ -803,10 +807,10 @@ class ArgumentSpec(object):
             ssl=dict(
                 choices=['yes', 'no', 'start-tls']
             ),
-            ssl_ca_cert=dict(),
-            ssl_client_key=dict(),
-            ssl_client_cert=dict(),
-            ssl_check_peer=dict(type='bool'),
+            ca_cert=dict(aliases=['ssl_ca_cert']),
+            client_key=dict(aliases=['ssl_client_key']),
+            client_cert=dict(aliases=['ssl_client_cert']),
+            validate_certs=dict(type='bool', aliases=['ssl_check_peer']),
             login_ldap_attr=dict(),
             fallback_to_local=dict(type='bool'),
             update_password=dict(

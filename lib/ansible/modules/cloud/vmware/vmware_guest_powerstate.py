@@ -94,7 +94,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    folder: /"{{ datacenter_name }}"/vm/my_folder
+    folder: "/{{ datacenter_name }}/vm/my_folder"
     name: "{{ guest_name }}"
     state: powered-off
   delegate_to: localhost
@@ -105,7 +105,7 @@ EXAMPLES = r'''
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: /"{{ datacenter_name }}"/vm/my_folder
+    folder: "/{{ datacenter_name }}/vm/my_folder"
     name: "{{ guest_name }}"
     state: powered-off
     scheduled_at: "09/01/2018 10:18"

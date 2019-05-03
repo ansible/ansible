@@ -34,38 +34,39 @@ DOCUMENTATION = '''
             choices: docker_swarm
         docker_host:
             description:
-                - Socket of a Docker swarm manager node (tcp,unix).
+                - Socket of a Docker swarm manager node (C(tcp), C(unix)).
                 - "Use C(unix://var/run/docker.sock) to connect via local socket."
             type: str
             required: true
             aliases: [ docker_url ]
         verbose_output:
-            description: Toggle to (not) include all available nodes metadata (e.g. Platform, Architecture,OS,
-                         EngineVersion)
+            description: Toggle to (not) include all available nodes metadata (e.g. C(Platform), C(Architecture), C(OS),
+                         C(EngineVersion))
             type: bool
             default: yes
         tls:
             description: Connect using TLS without verifying the authenticity of the Docker host server.
             type: bool
             default: no
-        tls_verify:
+        validate_certs:
             description: Toggle if connecting using TLS with or without verifying the authenticity of the Docker
                          host server.
             type: bool
             default: no
-        key_path:
+            aliases: [ tls_verify ]
+        client_key:
             description: Path to the client's TLS key file.
             type: path
-            aliases: [ tls_client_key ]
-        cacert_path:
+            aliases: [ tls_client_key, key_path ]
+        ca_cert:
             description: Use a CA certificate when performing server verification by providing the path to a CA
                          certificate file.
             type: path
-            aliases: [ tls_ca_cert ]
-        cert_path:
+            aliases: [ tls_ca_cert, cacert_path ]
+        client_cert:
             description: Path to the client's TLS certificate file.
             type: path
-            aliases: [ tls_client_cert ]
+            aliases: [ tls_client_cert, cert_path ]
         tls_hostname:
             description: When verifying the authenticity of the Docker host server, provide the expected name of
                          the server.
@@ -88,10 +89,10 @@ DOCUMENTATION = '''
             default: 60
             aliases: [ time_out ]
         include_host_uri:
-            description: Toggle to return the additional attribute I(ansible_host_uri) which contains the URI of the
-                         swarm leader in format of M(tcp://172.16.0.1:2376). This value may be used without additional
+            description: Toggle to return the additional attribute C(ansible_host_uri) which contains the URI of the
+                         swarm leader in format of C(tcp://172.16.0.1:2376). This value may be used without additional
                          modification as value of option I(docker_host) in Docker Swarm modules when connecting via API.
-                         The port always defaults to M(2376).
+                         The port always defaults to C(2376).
             type: bool
             default: no
         include_host_uri_port:
@@ -116,10 +117,10 @@ tls: yes
 # Example using remote docker with verified TLS and client certificate verification
 plugin: docker_swarm
 docker_host: tcp://my-docker-host:2376
-tls_verify: yes
-cacert_path: /somewhere/ca.pem
-key_path: /somewhere/key.pem
-cert_path: /somewhere/cert.pem
+validate_certs: yes
+ca_cert: /somewhere/ca.pem
+client_key: /somewhere/key.pem
+client_cert: /somewhere/cert.pem
 
 # Example using constructed features to create groups and set ansible_host
 plugin: docker_swarm
@@ -164,10 +165,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         raw_params = dict(
             docker_host=self.get_option('docker_host'),
             tls=self.get_option('tls'),
-            tls_verify=self.get_option('tls_verify'),
-            key_path=self.get_option('key_path'),
-            cacert_path=self.get_option('cacert_path'),
-            cert_path=self.get_option('cert_path'),
+            tls_verify=self.get_option('validate_certs'),
+            key_path=self.get_option('client_key'),
+            cacert_path=self.get_option('ca_cert'),
+            cert_path=self.get_option('client_cert'),
             tls_hostname=self.get_option('tls_hostname'),
             api_version=self.get_option('api_version'),
             timeout=self.get_option('timeout'),
@@ -186,7 +187,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if self.get_option('include_host_uri'):
             if self.get_option('include_host_uri_port'):
                 host_uri_port = str(self.get_option('include_host_uri_port'))
-            elif self.get_option('tls') or self.get_option('tls_verify'):
+            elif self.get_option('tls') or self.get_option('validate_certs'):
                 host_uri_port = '2376'
             else:
                 host_uri_port = '2375'

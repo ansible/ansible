@@ -229,6 +229,7 @@ EXAMPLES = '''
 
 - name: "Delete group by its id"
   ec2_group:
+    region: eu-west-1
     group_id: sg-33b4ee5b
     state: absent
 '''
@@ -303,7 +304,7 @@ from ansible.module_utils.aws.iam import get_aws_account_id
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.network.common.utils import to_ipv6_network, to_subnet
+from ansible.module_utils.common.network import to_ipv6_subnet, to_subnet
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 
@@ -726,7 +727,7 @@ def validate_ip(module, cidr_ip):
         try:
             ip = to_subnet(split_addr[0], split_addr[1])
         except ValueError:
-            ip = to_ipv6_network(split_addr[0]) + "/" + split_addr[1]
+            ip = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
         if ip != cidr_ip:
             module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
                         "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))

@@ -59,6 +59,13 @@ options:
             - The passphrase for the private key.
         type: str
         version_added: "2.4"
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              public key back if you overwrote it with a different one by accident.
+        type: bool
+        default: no
+        version_added: "2.8"
 extends_documentation_fragment:
 - files
 seealso:
@@ -129,6 +136,11 @@ fingerprint:
       sha256: "41:ab:c7:cb:d5:5f:30:60:46:99:ac:d4:00:70:cf:a1:76:4f:24:5d:10:24:57:5d:51:6e:09:97:df:2f:de:c7"
       sha384: "85:39:50:4e:de:d9:19:33:40:70:ae:10:ab:59:24:19:51:c3:a2:e4:0b:1c:b1:6e:dd:b3:0c:d9:9e:6a:46:af:da:18:f8:ef:ae:2e:c0:9a:75:2c:9b:b3:0f:3a:5f:3d"
       sha512: "fd:ed:5e:39:48:5f:9f:fe:7f:25:06:3f:79:08:cd:ee:a5:e7:b3:3d:13:82:87:1f:84:e1:f5:c7:28:77:53:94:86:56:38:69:f0:d9:35:22:01:1e:a6:60:...:0f:9b"
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/publickey.pem.2019-03-09@11:22~
 '''
 
 import os
@@ -169,6 +181,9 @@ class PublicKey(crypto_utils.OpenSSLObject):
         self.privatekey = None
         self.fingerprint = {}
 
+        self.backup = module.params['backup']
+        self.backup_file = None
+
     def generate(self, module):
         """Generate the public key."""
 
@@ -197,6 +212,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
                     )
                     publickey_content = crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
 
+                if self.backup:
+                    self.backup_file = module.backup_local(self.path)
                 crypto_utils.write_file(module, publickey_content)
 
                 self.changed = True
@@ -235,7 +252,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
                     crypto.FILETYPE_ASN1,
                     crypto.load_publickey(crypto.FILETYPE_PEM, publickey_content)
                 )
-            except (crypto.Error, ValueError):
+            except Exception as dummy:
                 return False
 
             try:
@@ -253,6 +270,11 @@ class PublicKey(crypto_utils.OpenSSLObject):
 
         return _check_privatekey()
 
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        super(PublicKey, self).remove(module)
+
     def dump(self):
         """Serialize the object into a dictionary."""
 
@@ -263,6 +285,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
             'changed': self.changed,
             'fingerprint': self.fingerprint,
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -277,6 +301,7 @@ def main():
             privatekey_path=dict(type='path'),
             format=dict(type='str', default='PEM', choices=['OpenSSH', 'PEM']),
             privatekey_passphrase=dict(type='str', no_log=True),
+            backup=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
@@ -293,34 +318,28 @@ def main():
             msg="The directory '%s' does not exist or the file is not a directory" % base_dir
         )
 
-    public_key = PublicKey(module)
+    try:
+        public_key = PublicKey(module)
 
-    if public_key.state == 'present':
+        if public_key.state == 'present':
+            if module.check_mode:
+                result = public_key.dump()
+                result['changed'] = module.params['force'] or not public_key.check(module)
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = public_key.dump()
-            result['changed'] = module.params['force'] or not public_key.check(module)
-            module.exit_json(**result)
-
-        try:
             public_key.generate(module)
-        except PublicKeyError as exc:
-            module.fail_json(msg=to_native(exc))
-    else:
+        else:
+            if module.check_mode:
+                result = public_key.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = public_key.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        try:
             public_key.remove(module)
-        except PublicKeyError as exc:
-            module.fail_json(msg=to_native(exc))
 
-    result = public_key.dump()
-
-    module.exit_json(**result)
+        result = public_key.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':

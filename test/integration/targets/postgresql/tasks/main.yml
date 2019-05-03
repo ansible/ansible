@@ -794,6 +794,13 @@
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
 
+# Test ssl.
+# Restricted using Debian family because of there are errors on other distributions
+# that not related with PostgreSQL or psycopg2 SSL support.
+# The tests' key point is to be sure that ssl options work in general
+- include: ssl.yml
+  when: ansible_os_family == 'Debian' and postgres_version_resp.stdout is version('9.4', '>=')
+
 # Test postgresql_set
 - include: postgresql_set.yml
   when: postgres_version_resp.stdout is version('9.4', '>=')
@@ -833,8 +840,31 @@
 - include: postgresql_ext.yml
   when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
 
-# Test postgresql_schema module:
+# Test postgresql_slot module.
+# Physical replication slots are available from PostgreSQL 9.4
+- include: postgresql_slot.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Test postgresql_schema module
 - include: postgresql_schema.yml
+
+# Test postgresql_membership module
+- include: postgresql_membership.yml
+
+# Test postgresql_table module
+- include: postgresql_table.yml
+
+# Test postgresql_lang module.
+# To implement tests, it needs to install some additional packages
+# that may cause problems on different distributions,
+# so I restricted the tests using CentOS because the results
+# depend only on Postgres version
+# (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
+- include: postgresql_lang.yml
+  when: ansible_distribution == 'CentOS'
+
+# Test postgresql_owner module
+- include: postgresql_owner.yml
 
 # dump/restore tests per format
 # ============================================================
@@ -850,6 +880,10 @@
 # dump/restore tests per other logins
 # ============================================================
 - include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
+
+# postgres_pg_hba module checks
+# ============================================================
+- include: postgresql_pg_hba.yml
 
 #
 # Cleanup

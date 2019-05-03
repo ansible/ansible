@@ -26,7 +26,7 @@ from units.compat.mock import patch
 BASE_PARAMS = {'vdirect_ip': None, 'vdirect_user': None, 'vdirect_password': None,
                'vdirect_wait': None, 'vdirect_secondary_ip': None,
                'vdirect_https_port': None, 'vdirect_http_port': None,
-               'vdirect_timeout': None, 'vdirect_use_ssl': None, 'vdirect_validate_certs': None}
+               'vdirect_timeout': None, 'vdirect_use_ssl': None, 'validate_certs': None}
 
 RUNNABLE_PARAMS = {'runnable_type': 'ConfigurationTemplate', 'runnable_name': 'runnable',
                    'action_name': None, 'parameters': None}

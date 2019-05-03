@@ -29,7 +29,25 @@ options:
           the port number from the listen address is used.
       - If C(advertise_addr) is not specified, it will be automatically
           detected when possible.
+      - Only used when swarm is initialised or joined. Because of this it's not
+        considered for idempotency checking.
     type: str
+  default_addr_pool:
+    description:
+      - Default address pool in CIDR format.
+      - Only used when swarm is initialised. Because of this it's not considered
+        for idempotency checking.
+      - Requires API version >= 1.39.
+    type: list
+    version_added: "2.8"
+  subnet_size:
+    description:
+      - Default address pool subnet mask length.
+      - Only used when swarm is initialised. Because of this it's not considered
+        for idempotency checking.
+      - Requires API version >= 1.39.
+    type: int
+    version_added: "2.8"
   listen_addr:
     description:
       - Listen address used for inter-manager communication.
@@ -38,6 +56,8 @@ options:
           like C(eth0:4567).
       - If the port number is omitted, the default swarm listening port
           is used.
+      - Only used when swarm is initialised or joined. Because of this it's not
+        considered for idempotency checking.
     type: str
     default: 0.0.0.0:2377
   force:
@@ -151,6 +171,7 @@ options:
     description:
       - If set, generate a key and use it to lock data stored on the managers.
       - Docker default value is C(no).
+      - M(docker_swarm_info) can be used to retrieve the unlock key.
     type: bool
   rotate_worker_token:
     description: Rotate the worker join token.
@@ -230,6 +251,13 @@ swarm_facts:
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
+      UnlockKey:
+          description: The swarm unlock-key if I(autolock_managers) is C(true).
+          returned: on success if I(autolock_managers) is C(true)
+            and swarm is initialised, or if I(autolock_managers) has changed.
+          type: str
+          example: SWMKEY-1-xxx
+
 actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
@@ -249,6 +277,7 @@ except ImportError:
 from ansible.module_utils.docker.common import (
     DockerBaseClass,
     DifferenceTracker,
+    LooseVersion,
 )
 
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
@@ -283,6 +312,8 @@ class TaskParameters(DockerBaseClass):
         self.autolock_managers = None
         self.rotate_worker_token = None
         self.rotate_manager_token = None
+        self.default_addr_pool = None
+        self.subnet_size = None
 
     @staticmethod
     def from_ansible_params(client):
@@ -366,7 +397,8 @@ class TaskParameters(DockerBaseClass):
     def compare_to_active(self, other, client, differences):
         for k in self.__dict__:
             if k in ('advertise_addr', 'listen_addr', 'remote_addrs', 'join_token',
-                     'rotate_worker_token', 'rotate_manager_token', 'spec'):
+                     'rotate_worker_token', 'rotate_manager_token', 'spec',
+                     'default_addr_pool', 'subnet_size'):
                 continue
             if not client.option_minimal_versions[k]['supported']:
                 continue
@@ -401,6 +433,8 @@ class SwarmManager(DockerBaseClass):
         self.differences = DifferenceTracker()
         self.parameters = TaskParameters.from_ansible_params(client)
 
+        self.created = False
+
     def __call__(self):
         choice_map = {
             "present": self.init_swarm,
@@ -427,10 +461,28 @@ class SwarmManager(DockerBaseClass):
             data = self.client.inspect_swarm()
             json_str = json.dumps(data, ensure_ascii=False)
             self.swarm_info = json.loads(json_str)
+
             self.results['changed'] = False
             self.results['swarm_facts'] = self.swarm_info
+
+            unlock_key = self.get_unlock_key()
+            self.swarm_info.update(unlock_key)
         except APIError:
             return
+
+    def get_unlock_key(self):
+        default = {'UnlockKey': None}
+        if not self.has_swarm_lock_changed():
+            return default
+        try:
+            return self.client.get_unlock_key() or default
+        except APIError:
+            return default
+
+    def has_swarm_lock_changed(self):
+        return self.parameters.autolock_managers and (
+            self.created or self.differences.has_difference_for('autolock_managers')
+        )
 
     def init_swarm(self):
         if not self.force and self.client.check_if_swarm_manager():
@@ -438,21 +490,34 @@ class SwarmManager(DockerBaseClass):
             return
 
         if not self.check_mode:
+            init_arguments = {
+                'advertise_addr': self.parameters.advertise_addr,
+                'listen_addr': self.parameters.listen_addr,
+                'force_new_cluster': self.force,
+                'swarm_spec': self.parameters.spec,
+            }
+            if self.parameters.default_addr_pool is not None:
+                init_arguments['default_addr_pool'] = self.parameters.default_addr_pool
+            if self.parameters.subnet_size is not None:
+                init_arguments['subnet_size'] = self.parameters.subnet_size
             try:
-                self.client.init_swarm(
-                    advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
-                    force_new_cluster=self.force, swarm_spec=self.parameters.spec)
+                self.client.init_swarm(**init_arguments)
             except APIError as exc:
                 self.client.fail("Can not create a new Swarm Cluster: %s" % to_native(exc))
 
         if not self.client.check_if_swarm_manager():
             if not self.check_mode:
                 self.client.fail("Swarm not created or other error!")
+
+        self.created = True
         self.inspect_swarm()
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info.get('ID')))
         self.differences.add('state', parameter='present', active='absent')
         self.results['changed'] = True
-        self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info.get('JoinTokens')}
+        self.results['swarm_facts'] = {
+            'JoinTokens': self.swarm_info.get('JoinTokens'),
+            'UnlockKey': self.swarm_info.get('UnlockKey')
+        }
 
     def __update_swarm(self):
         try:
@@ -559,7 +624,9 @@ def main():
         autolock_managers=dict(type='bool'),
         node_id=dict(type='str'),
         rotate_worker_token=dict(type='bool', default=False),
-        rotate_manager_token=dict(type='bool', default=False)
+        rotate_manager_token=dict(type='bool', default=False),
+        default_addr_pool=dict(type='list', elements='str'),
+        subnet_size=dict(type='int'),
     )
 
     required_if = [
@@ -579,6 +646,8 @@ def main():
             detect_usage=_detect_remove_operation,
             usage_msg='remove swarm nodes'
         ),
+        default_addr_pool=dict(docker_py_version='4.0.0', docker_api_version='1.39'),
+        subnet_size=dict(docker_py_version='4.0.0', docker_api_version='1.39'),
     )
 
     client = AnsibleDockerSwarmClient(

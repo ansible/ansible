@@ -58,15 +58,15 @@ options:
       uid:
         description:
           - UID of the config file's owner.
-        type: int
+        type: str
       gid:
         description:
           - GID of the config file's group.
-        type: int
+        type: str
       mode:
         description:
-          - File access mode inside the container.
-        type: str
+          - File access mode inside the container. Must be an octal number (like C(0644) or C(0444)).
+        type: int
   constraints:
     description:
       - List of the service constraints.
@@ -611,18 +611,20 @@ options:
       uid:
         description:
           - UID of the secret file's owner.
-        type: int
+        type: str
       gid:
         description:
           - GID of the secret file's group.
-        type: int
+        type: str
       mode:
         description:
-          - File access mode inside the container.
+          - File access mode inside the container. Must be an octal number (like C(0644) or C(0444)).
         type: int
   state:
     description:
-      - Service state.
+      - I(absent) - A service matching the specified name will be removed and have its tasks stopped.
+      - I(present) - Asserts the existence of a service matching the name and provided configuration parameters.
+        Unspecified configuration parameters will be set to docker defaults.
     type: str
     required: yes
     default: present
@@ -1815,31 +1817,47 @@ class DockerService(DockerBaseClass):
         if self.configs is not None:
             configs = []
             for config_config in self.configs:
-                configs.append(
-                    types.ConfigReference(
-                        config_id=config_config['config_id'],
-                        config_name=config_config['config_name'],
-                        filename=config_config.get('filename'),
-                        uid=config_config.get('uid'),
-                        gid=config_config.get('gid'),
-                        mode=config_config.get('mode')
-                    )
-                )
+                config_args = {
+                    'config_id': config_config['config_id'],
+                    'config_name': config_config['config_name']
+                }
+                filename = config_config.get('filename')
+                if filename:
+                    config_args['filename'] = filename
+                uid = config_config.get('uid')
+                if uid:
+                    config_args['uid'] = uid
+                gid = config_config.get('gid')
+                if gid:
+                    config_args['gid'] = gid
+                mode = config_config.get('mode')
+                if mode:
+                    config_args['mode'] = mode
+
+                configs.append(types.ConfigReference(**config_args))
 
         secrets = None
         if self.secrets is not None:
             secrets = []
             for secret_config in self.secrets:
-                secrets.append(
-                    types.SecretReference(
-                        secret_id=secret_config['secret_id'],
-                        secret_name=secret_config['secret_name'],
-                        filename=secret_config.get('filename'),
-                        uid=secret_config.get('uid'),
-                        gid=secret_config.get('gid'),
-                        mode=secret_config.get('mode')
-                    )
-                )
+                secret_args = {
+                    'secret_id': secret_config['secret_id'],
+                    'secret_name': secret_config['secret_name']
+                }
+                filename = secret_config.get('filename')
+                if filename:
+                    secret_args['filename'] = filename
+                uid = secret_config.get('uid')
+                if uid:
+                    secret_args['uid'] = uid
+                gid = secret_config.get('gid')
+                if gid:
+                    secret_args['gid'] = gid
+                mode = secret_config.get('mode')
+                if mode:
+                    secret_args['mode'] = mode
+
+                secrets.append(types.SecretReference(**secret_args))
 
         dns_config_args = {}
         if self.dns is not None:
@@ -2232,8 +2250,8 @@ class DockerServiceManager(object):
                     'config_id': config_data['ConfigID'],
                     'config_name': config_data['ConfigName'],
                     'filename': config_data['File'].get('Name'),
-                    'uid': int(config_data['File'].get('UID')),
-                    'gid': int(config_data['File'].get('GID')),
+                    'uid': config_data['File'].get('UID'),
+                    'gid': config_data['File'].get('GID'),
                     'mode': config_data['File'].get('Mode')
                 })
 
@@ -2245,8 +2263,8 @@ class DockerServiceManager(object):
                     'secret_id': secret_data['SecretID'],
                     'secret_name': secret_data['SecretName'],
                     'filename': secret_data['File'].get('Name'),
-                    'uid': int(secret_data['File'].get('UID')),
-                    'gid': int(secret_data['File'].get('GID')),
+                    'uid': secret_data['File'].get('UID'),
+                    'gid': secret_data['File'].get('GID'),
                     'mode': secret_data['File'].get('Mode')
                 })
 
@@ -2488,16 +2506,16 @@ def main():
             config_id=dict(type='str', required=True),
             config_name=dict(type='str', required=True),
             filename=dict(type='str'),
-            uid=dict(type='int'),
-            gid=dict(type='int'),
+            uid=dict(type='str'),
+            gid=dict(type='str'),
             mode=dict(type='int'),
         )),
         secrets=dict(type='list', elements='dict', options=dict(
             secret_id=dict(type='str', required=True),
             secret_name=dict(type='str', required=True),
             filename=dict(type='str'),
-            uid=dict(type='int'),
-            gid=dict(type='int'),
+            uid=dict(type='str'),
+            gid=dict(type='str'),
             mode=dict(type='int'),
         )),
         networks=dict(type='list', elements='str'),

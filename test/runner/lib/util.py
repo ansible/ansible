@@ -38,7 +38,8 @@ except ImportError:
     # noinspection PyCompatibility
     from configparser import ConfigParser
 
-DOCKER_COMPLETION = {}
+DOCKER_COMPLETION = {}  # type: dict[str, dict[str, str]]
+REMOTE_COMPLETION = {}  # type: dict[str, dict[str, str]]
 PYTHON_PATHS = {}  # type: dict[str, str]
 
 try:
@@ -66,17 +67,33 @@ MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
 def get_docker_completion():
     """
-    :rtype: dict[str, str]
+    :rtype: dict[str, dict[str, str]]
     """
-    if not DOCKER_COMPLETION:
-        images = read_lines_without_comments('test/runner/completion/docker.txt', remove_blank_lines=True)
-
-        DOCKER_COMPLETION.update(dict(kvp for kvp in [parse_docker_completion(i) for i in images] if kvp))
-
-    return DOCKER_COMPLETION
+    return get_parameterized_completion(DOCKER_COMPLETION, 'docker')
 
 
-def parse_docker_completion(value):
+def get_remote_completion():
+    """
+    :rtype: dict[str, dict[str, str]]
+    """
+    return get_parameterized_completion(REMOTE_COMPLETION, 'remote')
+
+
+def get_parameterized_completion(cache, name):
+    """
+    :type cache: dict[str, dict[str, str]]
+    :type name: str
+    :rtype: dict[str, dict[str, str]]
+    """
+    if not cache:
+        images = read_lines_without_comments('test/runner/completion/%s.txt' % name, remove_blank_lines=True)
+
+        cache.update(dict(kvp for kvp in [parse_parameterized_completion(i) for i in images] if kvp))
+
+    return cache
+
+
+def parse_parameterized_completion(value):
     """
     :type value: str
     :rtype: tuple[str, dict[str, str]]
@@ -420,7 +437,10 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
         if communicate:
             encoding = 'utf-8'
-            data_bytes = data.encode(encoding, 'surrogateescape') if data else None
+            if data is None or isinstance(data, bytes):
+                data_bytes = data
+            else:
+                data_bytes = data.encode(encoding, 'surrogateescape')
             stdout_bytes, stderr_bytes = process.communicate(data_bytes)
             stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
             stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''

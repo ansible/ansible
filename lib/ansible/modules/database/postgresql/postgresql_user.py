@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -13,195 +13,197 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: postgresql_user
-short_description: Adds or removes a user (role) from a remote PostgreSQL server instance.
+short_description: Add or remove a user (role) from a PostgreSQL server instance
 description:
-   - Adds or removes a user (role) from a remote PostgreSQL server instance
-     ("cluster" in PostgreSQL terminology) and, optionally,
-     grants the user access to an existing database or tables.
-     A user is a role with login privilege (see U(https://www.postgresql.org/docs/11/role-attributes.html) for more information).
-   - The fundamental function of the module is to create, or delete, users from
-     a PostgreSQL instances. Privilege assignment, or removal, is an optional
-     step, which works on one database at a time. This allows for the module to
-     be called several times in the same module to modify the permissions on
-     different databases, or to grant permissions to already existing users.
-   - A user cannot be removed until all the privileges have been stripped from
-     the user. In such situation, if the module tries to remove the user it
-     will fail. To avoid this from happening the fail_on_user option signals
-     the module to try to remove the user, but if not possible keep going; the
-     module will report if changes happened and separately if the user was
-     removed or not.
-version_added: "0.6"
+- Adds or removes a user (role) from a PostgreSQL server instance
+  ("cluster" in PostgreSQL terminology) and, optionally,
+  grants the user access to an existing database or tables.
+  A user is a role with login privilege
+  (see U(https://www.postgresql.org/docs/11/role-attributes.html) for more information).
+- The fundamental function of the module is to create, or delete, users from
+  a PostgreSQL instances. Privilege assignment, or removal, is an optional
+  step, which works on one database at a time. This allows for the module to
+  be called several times in the same module to modify the permissions on
+  different databases, or to grant permissions to already existing users.
+- A user cannot be removed until all the privileges have been stripped from
+  the user. In such situation, if the module tries to remove the user it
+  will fail. To avoid this from happening the fail_on_user option signals
+  the module to try to remove the user, but if not possible keep going; the
+  module will report if changes happened and separately if the user was
+  removed or not.
+version_added: '0.6'
 options:
   name:
     description:
-      - Name of the user (role) to add or remove.
+    - Name of the user (role) to add or remove.
+    type: str
     required: true
+    aliases:
+    - user
   password:
     description:
-      - Set the user's password, before 1.4 this was required.
-      - Password can be passed unhashed or hashed (MD5-hashed).
-      - Unhashed password will automatically be hashed when saved into the
-        database if C(encrypted) parameter is set, otherwise it will be save in
-        plain text format.
-      - When passing a hashed password it must be generated with the format
-        C('str["md5"] + md5[ password + username ]'), resulting in a total of
-        35 characters. An easy way to do this is C(echo "md5$(echo -n
-        'verysecretpasswordJOE' | md5sum | awk '{print $1}')").
-      - Note that if the provided password string is already in MD5-hashed
-        format, then it is used as-is, regardless of C(encrypted) parameter.
+    - Set the user's password, before 1.4 this was required.
+    - Password can be passed unhashed or hashed (MD5-hashed).
+    - Unhashed password will automatically be hashed when saved into the
+      database if C(encrypted) parameter is set, otherwise it will be save in
+      plain text format.
+    - When passing a hashed password it must be generated with the format
+      C('str["md5"] + md5[ password + username ]'), resulting in a total of
+      35 characters. An easy way to do this is C(echo "md5$(echo -n
+      'verysecretpasswordJOE' | md5sum | awk '{print $1}')").
+    - Note that if the provided password string is already in MD5-hashed
+      format, then it is used as-is, regardless of C(encrypted) parameter.
+    type: str
   db:
     description:
-      - Name of database to connect to and where user's permissions will be granted.
+    - Name of database to connect to and where user's permissions will be granted.
+    type: str
+    aliases:
+    - login_db
   fail_on_user:
     description:
-      - If C(yes), fail when user (role) can't be removed. Otherwise just log and
-        continue.
+    - If C(yes), fail when user (role) can't be removed. Otherwise just log and continue.
     default: 'yes'
     type: bool
-  port:
-    description:
-      - Database port to connect to.
-    default: 5432
-  login_user:
-    description:
-      - User (role) used to authenticate with PostgreSQL.
-    default: postgres
-  login_password:
-    description:
-      - Password used to authenticate with PostgreSQL.
-  login_host:
-    description:
-      - Host running PostgreSQL.
-    default: localhost
-  login_unix_socket:
-    description:
-      - Path to a Unix domain socket for local connections.
+    aliases:
+    - fail_on_role
   priv:
     description:
-      - "Slash-separated PostgreSQL privileges string: C(priv1/priv2), where
-        privileges can be defined for database ( allowed options - 'CREATE',
-        'CONNECT', 'TEMPORARY', 'TEMP', 'ALL'. For example C(CONNECT) ) or
-        for table ( allowed options - 'SELECT', 'INSERT', 'UPDATE', 'DELETE',
-        'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL'. For example
-        C(table:SELECT) ). Mixed example of this string:
-        C(CONNECT/CREATE/table1:SELECT/table2:INSERT)."
+    - "Slash-separated PostgreSQL privileges string: C(priv1/priv2), where
+      privileges can be defined for database ( allowed options - 'CREATE',
+      'CONNECT', 'TEMPORARY', 'TEMP', 'ALL'. For example C(CONNECT) ) or
+      for table ( allowed options - 'SELECT', 'INSERT', 'UPDATE', 'DELETE',
+      'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL'. For example
+      C(table:SELECT) ). Mixed example of this string:
+      C(CONNECT/CREATE/table1:SELECT/table2:INSERT)."
+    type: str
   role_attr_flags:
     description:
-      - "PostgreSQL user attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER."
-      - Note that '[NO]CREATEUSER' is deprecated.
-    choices: ["[NO]SUPERUSER", "[NO]CREATEROLE", "[NO]CREATEDB", "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS"]
+    - "PostgreSQL user attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER."
+    - Note that '[NO]CREATEUSER' is deprecated.
+    - To create a simple role for using it like a group, use C(NOLOGIN) flag.
+    type: str
+    choices: [ '[NO]SUPERUSER', '[NO]CREATEROLE', '[NO]CREATEDB',
+               '[NO]INHERIT', '[NO]LOGIN', '[NO]REPLICATION', '[NO]BYPASSRLS' ]
   session_role:
-    version_added: "2.8"
-    description: |
-      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
-      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+    version_added: '2.8'
+    description:
+    - Switch to session_role after connecting.
+    - The specified session_role must be a role that the current login_user is a member of.
+    - Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+    type: str
   state:
     description:
-      - The user (role) state.
+    - The user (role) state.
+    type: str
     default: present
-    choices: ["present", "absent"]
+    choices: [ absent, present ]
   encrypted:
     description:
-      - Whether the password is stored hashed in the database. Passwords can be
-        passed already hashed or unhashed, and postgresql ensures the stored
-        password is hashed when C(encrypted) is set.
-      - "Note: Postgresql 10 and newer doesn't support unhashed passwords."
-      - Previous to Ansible 2.6, this was C(no) by default.
+    - Whether the password is stored hashed in the database.
+    - Passwords can be passed already hashed or unhashed, and postgresql
+      ensures the stored password is hashed when C(encrypted) is set.
+    - "Note: Postgresql 10 and newer doesn't support unhashed passwords."
+    - Previous to Ansible 2.6, this was C(no) by default.
     default: 'yes'
     type: bool
     version_added: '1.4'
   expires:
     description:
-      - The date at which the user's password is to expire.
-      - If set to C('infinity'), user's password never expire.
-      - Note that this value should be a valid SQL date and time type.
+    - The date at which the user's password is to expire.
+    - If set to C('infinity'), user's password never expire.
+    - Note that this value should be a valid SQL date and time type.
+    type: str
     version_added: '1.4'
   no_password_changes:
     description:
-      - If C(yes), don't inspect database for password changes. Effective when
-        C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
-        password changes as necessary.
+    - If C(yes), don't inspect database for password changes. Effective when
+      C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
+      password changes as necessary.
     default: 'no'
     type: bool
     version_added: '2.0'
-  ssl_mode:
-    description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection
-        will be negotiated with the server.
-      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-        more information on the modes.
-      - Default of C(prefer) matches libpq default.
-    default: prefer
-    choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
-    version_added: '2.3'
-  ssl_rootcert:
-    description:
-      - Specifies the name of a file containing SSL certificate authority (CA)
-        certificate(s). If the file exists, the server's certificate will be
-        verified to be signed by one of these authorities.
-    version_added: '2.3'
   conn_limit:
     description:
-      - Specifies the user (role) connection limit.
-    version_added: '2.4'
+    - Specifies the user (role) connection limit.
     type: int
+    version_added: '2.4'
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    type: str
+    default: prefer
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
+    version_added: '2.3'
+  ca_cert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    type: str
+    aliases: [ ssl_rootcert ]
+    version_added: '2.3'
 notes:
-   - The module creates a user (role) with login privilege by default.
-     Use NOLOGIN role_attr_flags to change this behaviour.
-   - The default authentication assumes that you are either logging in as or
-     sudo'ing to the postgres account on the host.
-   - This module uses psycopg2, a Python PostgreSQL database adapter. You must
-     ensure that psycopg2 is installed on the host before using this module. If
-     the remote host is the PostgreSQL server (which is the default case), then
-     PostgreSQL must also be installed on the remote host. For Ubuntu-based
-     systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-     on the remote host before using this module.
-   - If you specify PUBLIC as the user (role), then the privilege changes will apply
-     to all users (roles). You may not specify password or role_attr_flags when the
-     PUBLIC user is specified.
-   - The ssl_rootcert parameter requires at least Postgres version 8.4 and
-     I(psycopg2) version 2.4.3.
-requirements: [ psycopg2 ]
-author: "Ansible Core Team"
+- The module creates a user (role) with login privilege by default.
+  Use NOLOGIN role_attr_flags to change this behaviour.
+- The default authentication assumes that you are either logging in as or
+  sudo'ing to the postgres account on the host.
+- This module uses psycopg2, a Python PostgreSQL database adapter. You must
+  ensure that psycopg2 is installed on the host before using this module. If
+  the remote host is the PostgreSQL server (which is the default case), then
+  PostgreSQL must also be installed on the remote host. For Ubuntu-based
+  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
+  on the remote host before using this module.
+- If you specify PUBLIC as the user (role), then the privilege changes will apply to all users (roles).
+  You may not specify password or role_attr_flags when the PUBLIC user is specified.
+- The ca_cert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
+
+requirements:
+- psycopg2
+
+author:
+- Ansible Core Team
+extends_documentation_fragment: postgres
 '''
 
-EXAMPLES = '''
-# Connect to acme database, create django user, and grant access to database and products table
-- postgresql_user:
+EXAMPLES = r'''
+- name: Connect to acme database, create django user, and grant access to database and products table
+  postgresql_user:
     db: acme
     name: django
     password: ceec4eif7ya
     priv: "CONNECT/products:ALL"
     expires: "Jan 31 2020"
 
-# Connect to default database, create rails user, set its password (MD5-hashed), and grant privilege to create other
-# databases and demote rails from super user status if user exists
-- postgresql_user:
+# Connect to default database, create rails user, set its password (MD5-hashed),
+# and grant privilege to create other databases and demote rails from super user status if user exists
+- name: Create rails user, set MD5-hashed password, grant privs
+  postgresql_user:
     name: rails
     password: md59543f1d82624df2b31672ec0f7050460
     role_attr_flags: CREATEDB,NOSUPERUSER
 
-# Connect to acme database and remove test user privileges from there
-- postgresql_user:
+- name: Connect to acme database and remove test user privileges from there
+  postgresql_user:
     db: acme
     name: test
     priv: "ALL/products:ALL"
     state: absent
     fail_on_user: no
 
-# Connect to test database, remove test user from cluster
-- postgresql_user:
+- name: Connect to test database, remove test user from cluster
+  postgresql_user:
     db: test
     name: test
     priv: ALL
     state: absent
 
-# Connect to acme database and set user's password with no expire date
-- postgresql_user:
+- name: Connect to acme database and set user's password with no expire date
+  postgresql_user:
     db: acme
     name: django
     password: mysupersecretword
@@ -211,11 +213,20 @@ EXAMPLES = '''
 # Example privileges string format
 # INSERT,UPDATE/table:SELECT/anothertable:ALL
 
-# Connect to test database and remove an existing user's password
-- postgresql_user:
+- name: Connect to test database and remove an existing user's password
+  postgresql_user:
     db: test
     user: test
     password: ""
+'''
+
+RETURN = r'''
+queries:
+  description: List of executed queries.
+  returned: always
+  type: list
+  sample: ['CREATE USER "alice"', 'GRANT CONNECT ON DATABASE "acme" TO "alice"']
+  version_added: '2.8'
 '''
 
 import itertools
@@ -223,19 +234,17 @@ import re
 import traceback
 from hashlib import md5
 
-PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
-    import psycopg2.extras
+    from psycopg2.extras import DictCursor
 except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
-    postgresqldb_found = False
-else:
-    postgresqldb_found = True
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
 
@@ -252,6 +261,8 @@ VALID_PRIVS = dict(table=frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRU
 PRIV_TO_AUTHID_COLUMN = dict(SUPERUSER='rolsuper', CREATEROLE='rolcreaterole',
                              CREATEDB='rolcreatedb', INHERIT='rolinherit', LOGIN='rolcanlogin',
                              REPLICATION='rolreplication', BYPASSRLS='rolbypassrls')
+
+executed_queries = []
 
 
 class InvalidFlagsError(Exception):
@@ -291,6 +302,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
         query.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
     query.append(role_attr_flags)
     query = ' '.join(query)
+    executed_queries.append(query)
     cursor.execute(query, query_password_data)
     return True
 
@@ -335,7 +347,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
     if user == 'PUBLIC':
@@ -483,7 +495,9 @@ def user_delete(cursor, user):
     """Try to remove a user. Returns True if successful otherwise False"""
     cursor.execute("SAVEPOINT ansible_pgsql_user_delete")
     try:
-        cursor.execute("DROP USER %s" % pg_quote_identifier(user, 'role'))
+        query = "DROP USER %s" % pg_quote_identifier(user, 'role')
+        executed_queries.append(query)
+        cursor.execute(query)
     except Exception:
         cursor.execute("ROLLBACK TO SAVEPOINT ansible_pgsql_user_delete")
         cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
@@ -515,9 +529,9 @@ def get_table_privileges(cursor, user, table):
         schema, table = table.split('.', 1)
     else:
         schema = 'public'
-    query = '''SELECT privilege_type FROM information_schema.role_table_grants
-    WHERE grantee=%s AND table_name=%s AND table_schema=%s'''
-    cursor.execute(query, (user, table, schema))
+    query = ("SELECT privilege_type FROM information_schema.role_table_grants "
+             "WHERE grantee='%s' AND table_name='%s' AND table_schema='%s'" % (user, table, schema))
+    cursor.execute(query)
     return frozenset([x[0] for x in cursor.fetchall()])
 
 
@@ -526,6 +540,7 @@ def grant_table_privileges(cursor, user, table, privs):
     privs = ', '.join(privs)
     query = 'GRANT %s ON TABLE %s TO %s' % (
         privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role'))
+    executed_queries.append(query)
     cursor.execute(query)
 
 
@@ -534,6 +549,7 @@ def revoke_table_privileges(cursor, user, table, privs):
     privs = ', '.join(privs)
     query = 'REVOKE %s ON TABLE %s FROM %s' % (
         privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role'))
+    executed_queries.append(query)
     cursor.execute(query)
 
 
@@ -584,6 +600,8 @@ def grant_database_privileges(cursor, user, db, privs):
         query = 'GRANT %s ON DATABASE %s TO %s' % (
                 privs, pg_quote_identifier(db, 'database'),
                 pg_quote_identifier(user, 'role'))
+
+    executed_queries.append(query)
     cursor.execute(query)
 
 
@@ -597,6 +615,8 @@ def revoke_database_privileges(cursor, user, db, privs):
         query = 'REVOKE %s ON DATABASE %s FROM %s' % (
                 privs, pg_quote_identifier(db, 'database'),
                 pg_quote_identifier(user, 'role'))
+
+    executed_queries.append(query)
     cursor.execute(query)
 
 
@@ -745,24 +765,21 @@ def get_valid_flags_by_version(cursor):
 
 
 def main():
-    argument_spec = pgutils.postgres_common_argument_spec()
-    argument_spec.update(dict(
-        user=dict(required=True, aliases=['name']),
-        password=dict(default=None, no_log=True),
-        state=dict(default="present", choices=["absent", "present"]),
-        priv=dict(default=None),
-        db=dict(default=''),
-        fail_on_user=dict(type='bool', default='yes'),
-        role_attr_flags=dict(default=''),
+    argument_spec = postgres_common_argument_spec()
+    argument_spec.update(
+        user=dict(type='str', required=True, aliases=['name']),
+        password=dict(type='str', default=None, no_log=True),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        priv=dict(type='str', default=None),
+        db=dict(type='str', default='', aliases=['login_db']),
+        fail_on_user=dict(type='bool', default='yes', aliases=['fail_on_role']),
+        role_attr_flags=dict(type='str', default=''),
         encrypted=dict(type='bool', default='yes'),
         no_password_changes=dict(type='bool', default='no'),
-        expires=dict(default=None),
-        ssl_mode=dict(default='prefer', choices=[
-            'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(default=None),
+        expires=dict(type='str', default=None),
         conn_limit=dict(type='int', default=None),
-        session_role=dict(),
-    ))
+        session_role=dict(type='str'),
+    )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True
@@ -772,69 +789,23 @@ def main():
     password = module.params["password"]
     state = module.params["state"]
     fail_on_user = module.params["fail_on_user"]
-    db = module.params["db"]
-    session_role = module.params["session_role"]
-    if db == '' and module.params["priv"] is not None:
+    if module.params['db'] == '' and module.params["priv"] is not None:
         module.fail_json(msg="privileges require a database to be specified")
-    privs = parse_privs(module.params["priv"], db)
+    privs = parse_privs(module.params["priv"], module.params["db"])
     no_password_changes = module.params["no_password_changes"]
     if module.params["encrypted"]:
         encrypted = "ENCRYPTED"
     else:
         encrypted = "UNENCRYPTED"
     expires = module.params["expires"]
-    sslrootcert = module.params["ssl_rootcert"]
     conn_limit = module.params["conn_limit"]
+    role_attr_flags = module.params["role_attr_flags"]
 
-    if not postgresqldb_found:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
-
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(
-            msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+    db_connection = connect_to_db(module, warn_db_default=False)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     try:
-        db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(
-                msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
-
-    try:
-        role_attr_flags = parse_role_attrs(cursor, module.params["role_attr_flags"])
+        role_attr_flags = parse_role_attrs(cursor, role_attr_flags)
     except InvalidFlagsError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -876,7 +847,7 @@ def main():
                     module.fail_json(msg=to_native(e), exception=traceback.format_exc())
                 changed = changed or user_removed
                 if fail_on_user and not user_removed:
-                    msg = "unable to remove user"
+                    msg = "Unable to remove user"
                     module.fail_json(msg=msg)
                 kw['user_removed'] = user_removed
 
@@ -887,6 +858,7 @@ def main():
             db_connection.commit()
 
     kw['changed'] = changed
+    kw['queries'] = executed_queries
     module.exit_json(**kw)
 
 

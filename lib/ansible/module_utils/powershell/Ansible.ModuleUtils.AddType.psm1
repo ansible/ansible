@@ -33,6 +33,11 @@ Function Add-CSharpType {
     [Switch] Whether to include debug information in the compiled
     assembly. Cannot be used when AnsibleModule is set. This is a no-op
     when running on PSCore.
+
+    .PARAMETER CompileSymbols
+    [String[]] A list of symbols to be defined during compile time. These are
+    added to the existing symbols, 'CORECLR', 'WINDOWS', 'UNIX' that are set
+    conditionalls in this cmdlet.
     #>
     param(
         [Parameter(Mandatory=$true)][AllowEmptyCollection()][String[]]$References,
@@ -40,7 +45,8 @@ Function Add-CSharpType {
         [Switch]$PassThru,
         [Parameter(Mandatory=$true, ParameterSetName="Module")][Object]$AnsibleModule,
         [Parameter(ParameterSetName="Manual")][String]$TempPath = $env:TMP,
-        [Parameter(ParameterSetName="Manual")][Switch]$IncludeDebugInfo
+        [Parameter(ParameterSetName="Manual")][Switch]$IncludeDebugInfo,
+        [String[]]$CompileSymbols = @()
     )
     if ($null -eq $References -or $References.Length -eq 0) {
         return
@@ -49,7 +55,7 @@ Function Add-CSharpType {
     # define special symbols CORECLR, WINDOWS, UNIX if required
     # the Is* variables are defined on PSCore, if absent we assume an
     # older version of PowerShell under .NET Framework and Windows
-    $defined_symbols = [System.Collections.ArrayList]@()
+    $defined_symbols = [System.Collections.ArrayList]$CompileSymbols
     $is_coreclr = Get-Variable -Name IsCoreCLR -ErrorAction SilentlyContinue
     if ($null -ne $is_coreclr) {
         if ($is_coreclr.Value) {

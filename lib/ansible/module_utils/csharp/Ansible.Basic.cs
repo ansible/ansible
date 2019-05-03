@@ -315,7 +315,16 @@ namespace Ansible.Basic
             using (EventLog eventLog = new EventLog("Application"))
             {
                 eventLog.Source = logSource;
-                eventLog.WriteEntry(message, logEntryType, 0);
+                try
+                {
+                    eventLog.WriteEntry(message, logEntryType, 0);
+                }
+                catch (System.InvalidOperationException) { }  // Ignore permission errors on the Application event log
+                catch (System.Exception e)
+                {
+                    // Cannot call Warn as that calls LogEvent and we get stuck in a loop
+                    warnings.Add(String.Format("Unknown error when creating event log entry: {0}", e.Message));
+                }
             }
         }
 
@@ -325,7 +334,7 @@ namespace Ansible.Basic
             LogEvent(String.Format("[WARNING] {0}", message), EventLogEntryType.Warning);
         }
 
-        public static Dictionary<string, object> FromJson(string json) { return FromJson<Dictionary<string, object>>(json); }
+        public static object FromJson(string json) { return FromJson<object>(json); }
         public static T FromJson<T>(string json)
         {
 #if CORECLR
@@ -366,7 +375,7 @@ namespace Ansible.Basic
             if (args.Length > 0)
             {
                 string inputJson = File.ReadAllText(args[0]);
-                Dictionary<string, object> rawParams = FromJson(inputJson);
+                Dictionary<string, object> rawParams = FromJson<Dictionary<string, object>>(inputJson);
                 if (!rawParams.ContainsKey("ANSIBLE_MODULE_ARGS"))
                     throw new ArgumentException("Module was unable to get ANSIBLE_MODULE_ARGS value from the argument path json");
                 return (IDictionary)rawParams["ANSIBLE_MODULE_ARGS"];
@@ -1249,7 +1258,7 @@ namespace Ansible.Basic
                     return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
                 foreach (string omitMe in noLogStrings)
                     if (stringValue.Contains(omitMe))
-                        return (stringValue).Replace(omitMe, new String('*', omitMe.Length));
+                        return (stringValue).Replace(omitMe, "********");
                 value = stringValue;
             }
             return value;

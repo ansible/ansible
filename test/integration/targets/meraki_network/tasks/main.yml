@@ -56,7 +56,69 @@
       type: appliance
     delegate_to: localhost
     register: create_net_appliance_no_tz
-    
+
+  - name: Enable VLAN support on appliance network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: IntTestNetworkAppliance
+      enable_vlans: yes
+    delegate_to: localhost
+    register: enable_vlan
+
+  - debug:
+      msg: '{{ enable_vlan }}'
+
+  - assert:
+      that:
+        - enable_vlan.data.enabled == True
+
+  - name: Enable VLAN support on appliance network with idempotency
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: IntTestNetworkAppliance
+      enable_vlans: yes
+    delegate_to: localhost
+    register: enable_vlan_idempotent
+
+  - assert:
+      that:
+        - enable_vlan_idempotent is not changed
+  
+  - name: Disable VLAN support on appliance network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: IntTestNetworkAppliance
+      enable_vlans: no
+    delegate_to: localhost
+    register: disable_vlan
+
+  - debug:
+      msg: '{{ disable_vlan }}'
+
+  - assert:
+      that:
+        - disable_vlan.data.enabled == False
+
+  - name: Disable VLAN support on appliance network with idempotency
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: IntTestNetworkAppliance
+      enable_vlans: no
+    delegate_to: localhost
+    register: disable_vlan_idempotent
+
+  - assert:
+      that:
+        - disable_vlan_idempotent is not changed
+
   - name: Create network with type wireless
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -83,9 +145,11 @@
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
-      org_name: '{{test_org_name}}'
+      org_name: '{{ test_org_name }}'
       net_name: IntTestNetworkCombined
-      type: combined
+      type:
+        - appliance
+        - switch
       timezone: America/Chicago
       disable_my_meraki: yes
     delegate_to: localhost
@@ -124,7 +188,9 @@
       net_name: IntTestNetworkTags
       type: switch
       timezone: America/Chicago
-      tags: first_tag, second_tag
+      tags: 
+        - first_tag
+        - second_tag
     delegate_to: localhost
     register: create_net_tags
 
@@ -139,7 +205,10 @@
       net_name: IntTestNetworkTags
       type: switch
       timezone: America/Chicago
-      tags: first_tag, second_tag, third_tag
+      tags: 
+        - first_tag
+        - second_tag
+        - third_tag
     delegate_to: localhost
     register: create_net_modified
 
@@ -151,7 +220,10 @@
       net_name: IntTestNetworkTags
       type: switch
       timezone: America/Chicago
-      tags: first_tag, second_tag, third_tag
+      tags: 
+        - first_tag
+        - second_tag
+        - third_tag
     delegate_to: localhost
     register: create_net_modified_idempotent
 
@@ -206,7 +278,6 @@
       that:
         - 'net_query_one.data.name == "IntTestNetworkSwitch"'
         - 'query_config_template.data.name == "{{ test_template_name }}"'
-        
 
 #############################################################################
 # Tear down starts here

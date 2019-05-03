@@ -108,6 +108,14 @@ options:
         description:
             - Specify the key identity when signing a public key. The identifier that is logged by the server when the certificate is used for authentication.
         type: str
+    serial_number:
+        description:
+            - "Specify the certificate serial number.
+               The serial number is logged by the server when the certificate is used for authentication.
+               The certificate serial number may be used in a KeyRevocationList.
+               The serial number may be omitted for checks, but must be specified again for a new certificate.
+               Note: The default value set by ssh-keygen is 0."
+        type: int
 
 extends_documentation_fragment: files
 '''
@@ -216,6 +224,7 @@ class Certificate(object):
         self.public_key = module.params['public_key']
         self.path = module.params['path']
         self.identifier = module.params['identifier']
+        self.serial_number = module.params['serial_number']
         self.valid_from = module.params['valid_from']
         self.valid_to = module.params['valid_to']
         self.valid_at = module.params['valid_at']
@@ -289,6 +298,9 @@ class Certificate(object):
                 args.extend(['-I', self.identifier])
             else:
                 args.extend(['-I', ""])
+
+            if self.serial_number is not None:
+                args.extend(['-z', str(self.serial_number)])
 
             if self.principals:
                 args.extend(['-n', ','.join(self.principals)])
@@ -377,6 +389,7 @@ class Certificate(object):
             if principals == ["(none)"]:
                 principals = None
             cert_type = re.findall("( user | host )", proc[1])[0].strip()
+            serial_number = re.search(r"Serial: (\d+)", proc[1]).group(1)
             validity = re.findall("(from (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}) to (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}))", proc[1])
             if validity:
                 if validity[0][1]:
@@ -401,6 +414,11 @@ class Certificate(object):
         def _check_perms(module):
             file_args = module.load_file_common_arguments(module.params)
             return not module.set_fs_attributes_if_different(file_args, False)
+
+        def _check_serial_number():
+            if self.serial_number is None:
+                return True
+            return self.serial_number == int(serial_number)
 
         def _check_type():
             return self.type == cert_type
@@ -441,10 +459,10 @@ class Certificate(object):
 
             return False
 
-        if not perms_required:
-            return _check_type() and _check_principals() and _check_validity(module)
+        if perms_required and not _check_perms(module):
+            return False
 
-        return _check_perms(module) and _check_type() and _check_principals() and _check_validity(module)
+        return _check_type() and _check_principals() and _check_validity(module) and _check_serial_number()
 
     def dump(self):
 
@@ -456,9 +474,12 @@ class Certificate(object):
             for word in arr:
                 if word in keywords:
                     concated.append(string)
-                    string = ""
-                string += " " + word
+                    string = word
+                else:
+                    string += " " + word
             concated.append(string)
+            # drop the certificate path
+            concated.pop(0)
             return concated
 
         def format_cert_info():
@@ -512,6 +533,7 @@ def main():
             public_key=dict(type='path'),
             path=dict(type='path', required=True),
             identifier=dict(type='str'),
+            serial_number=dict(type='int'),
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),

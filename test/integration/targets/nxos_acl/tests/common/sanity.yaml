@@ -4,7 +4,7 @@
   when: ansible_connection == "local"
 
 - set_fact: time_range="ans-range"
-  when: not (platform is match("N5K")) and not (platform is match("N35"))
+  when: platform is not search('N35|N5K|N6K')
 
 - name: "Setup: Cleanup possibly existing acl."
   nxos_acl: &remove

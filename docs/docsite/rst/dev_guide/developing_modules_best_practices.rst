@@ -67,7 +67,7 @@ Python tips
 Importing and using shared code
 ===============================
 
-* Use shared code whenever possible - don't reinvent the wheel. Ansible offers the ``AnsibleModule`` common Python code, plus :ref:`utilities <appendix_module_utilities>` for many common use cases and patterns.
+* Use shared code whenever possible - don't reinvent the wheel. Ansible offers the ``AnsibleModule`` common Python code, plus :ref:`utilities <developing_module_utilities>` for many common use cases and patterns. You can also create documentation fragments for docs that apply to multiple modules.
 * Import ``ansible.module_utils`` code in the same place as you import other libraries.
 * Do NOT use wildcards (*) for importing other python modules; instead, list the function(s) you are importing (for example, ``from some.other_python_module.basic import otherFunction``).
 * Import custom packages in ``try``/``except``, capture any import errors, and handle them with ``fail_json()`` in ``main()``. For example:
@@ -152,7 +152,7 @@ Ansible conventions offer a predictable user interface across all modules, playb
 * Use consistent parameters (arguments) within your module(s).
 * Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your parameters so the user can choose which names to use in tasks and playbooks.
 * Return facts from ``*_facts`` modules in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
-* Implement ``check_mode`` in all ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``check_mode=True`` when instantiating ``AnsibleModule``.
+* Implement ``check_mode`` in all ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``supports_check_mode=True`` when instantiating ``AnsibleModule``.
 * Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use a module-specific environment variable like :code:`API_<MODULENAME>_USERNAME` to avoid conflict between modules.
 * Keep module options simple and focused - if you're loading a lot of choices/states on an existing option, consider adding a new, simple option instead.
 * Keep options small when possible. Passing a large data structure to an option might save us a few tasks, but it adds a complex requirement that we cannot easily validate before passing on to the module.

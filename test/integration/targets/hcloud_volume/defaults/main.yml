@@ -3,4 +3,4 @@
 ---
 hcloud_prefix: "tests"
 hcloud_volume_name: "{{hcloud_prefix}}-integ"
-hcloud_server_name: "{{hcloud_prefix}}-integ-server"
+hcloud_server_name: "{{hcloud_prefix}}-volume-server"

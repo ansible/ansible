@@ -2,7 +2,7 @@
      rpfx: "{{ resource_group | hash('md5') | truncate(8, True, '') }}"
 
  - name: Find available k8s version
-   azure_rm_aks_version:
+   azure_rm_aksversion_facts:
      location: eastus
    register: versions
 
@@ -100,7 +100,7 @@
        - not output.changed
 
  - name: Get available version
-   azure_rm_aks_version:
+   azure_rm_aksversion_facts:
       location: eastus
       version: "{{ versions.azure_aks_versions[0] }}"
    register: version1

@@ -18,8 +18,9 @@ author: "Brad Macpherson (@iiibrad)"
 options:
   filters:
     description:
-      - A set of filters to use. Each filter is a name:value pair. The value
-        may be a list or a single element.
+      - A dict of filters to apply. Each dict item consists of a filter key and filter
+        value.  See U(https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-addresses.html#options)
+        for possible filters. Filter names and values are case sensitive.
     required: false
     default: {}
 extends_documentation_fragment:
@@ -50,6 +51,24 @@ EXAMPLES = '''
          - i-123456789
          - i-987654321
   register: my_vms_eips
+
+# List all EIP addresses using the 'Name' tag as a filter.
+- ec2_eip_facts:
+    filters:
+      tag:Name: www.example.com
+  register: my_vms_eips
+
+# List all EIP addresses using the Allocation-id as a filter
+- ec2_eip_facts:
+    filters:
+      allocation-id: eipalloc-64de1b01
+  register: my_vms_eips
+
+# Set the variable eip_alloc to the value of the first allocation_id
+# and set the variable my_pub_ip to the value of the first public_ip
+- set_fact:
+    eip_alloc: my_vms_eips.addresses[0].allocation_id
+    my_pub_ip: my_vms_eips.addresses[0].public_ip
 
 '''
 
