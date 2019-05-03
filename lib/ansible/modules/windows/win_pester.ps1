@@ -73,28 +73,17 @@ If ($result.pester_version -ge "4.0.0") {
 }
 
 # Run Pester tests
-If (Test-Path -LiteralPath $path -PathType Leaf) {
-    if ($check_mode) {
+if ($check_mode) {
+    if (Test-Path -LiteralPath $path -PathType Leaf) {
         $result.output = "Run pester test in the file: $path"
-    } else {
-        try {
-            $result.output = Invoke-Pester $path @Parameters
-        } catch {
-            Fail-Json -obj $result -message $_.Exception
-        }
+    } elseif (Test-Path -LiteralPath $path -PathType Container) {
+        $result.output = "Run pester test(s) who are in the directory: $path"
     }
 } else {
-    # Run Pester tests against all the .ps1 file in the local folder
-    $files = Get-ChildItem -Path $path | Where-Object {$_.extension -eq ".ps1"}
-
-    if ($check_mode) {
-        $result.output = "Run pester test(s) who are in the folder: $path"
-    } else {
-        try {
-            $result.output = Invoke-Pester $files.FullName @Parameters
-        } catch {
-            Fail-Json -obj $result -message $_.Exception
-        }
+    try {
+        $result.output = Invoke-Pester $path @Parameters
+    } catch {
+        Fail-Json -obj $result -message $_.Exception
     }
 }
 

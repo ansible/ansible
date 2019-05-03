@@ -23,7 +23,7 @@ options:
   path:
     description:
       - Path to a pester test file or a folder where tests can be found.
-      - If the path is a folder, the module will consider all ps1 files as Pester tests.
+      - If the path is a folder, Pester will run every file matching '*.tests.ps1'.
     type: str
     required: true
   version:
