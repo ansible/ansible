@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2019, INSPQ <philippe.gauthier@inspq.qc.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from __builtin__ import True
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -15,16 +15,19 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: keycloak_component
-short_description: Configure a component in Keycloak
+
+short_description: Configure LDAP user storage component in Keycloak.
+
+version_added: "2.9"
+
 description:
     - This module creates, removes or update Keycloak component.
     - It can be use to create a LDAP and AD user federation to a realm in the Keycloak server
-version_added: "2.9"
 options:
     realm:
         description:
             - The name of the realm in which is the component.
-        default: true
+        required: true
     id:
         description:
             - ID of the component when it have already been created and it is known.
@@ -244,6 +247,7 @@ options:
         description:
             - List of sub components to create inside the component.
             - It can be use to configure group-ldap-mapper for a User Federation.
+        type: dict
         suboptions:
             org.keycloak.storage.ldap.mappers.LDAPStorageMapper:
                 description:
