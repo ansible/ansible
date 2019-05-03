@@ -37,11 +37,28 @@ options:
     description: The failover IP address.
     type: str
     required: yes
+  state:
+    description:
+      - Defines whether the IP will be routed or not.
+      - If set to C(routed), I(value) must be specified.
+    type: str
+    choices:
+      - routed
+      - unrouted
+    default: routed
   value:
     description:
       - The new value for the failover IP address.
-      - Not setting this will unroute the failover IP.
+      - Required when setting I(state) to C(routed).
     type: str
+  timeout:
+    description:
+      - Timeout to use when routing or unrouting the failover IP.
+      - Note that the API call returns when the failover IP has been
+        successfully routed to the new address, respectively successfully
+        unrouted.
+    type: int
+    default: 180
 '''
 
 EXAMPLES = r'''
@@ -51,6 +68,13 @@ EXAMPLES = r'''
     hetzner_pass: bar
     failover_ip: 1.2.3.4
     value: 5.6.7.8
+
+- name: Set value of failover IP 1.2.3.4 to unrouted
+  hetzner_failover_ip:
+    hetzner_user: foo
+    hetzner_pass: bar
+    failover_ip: 1.2.3.4
+    state: unrouted
 '''
 
 RETURN = r'''
@@ -58,6 +82,11 @@ value:
   description:
     - The value of the failover IP.
     - Will be C(none) if the IP is unrouted.
+  returned: success
+  type: str
+state:
+  description:
+    - Will be C(routed) or C(unrouted).
   returned: success
   type: str
 '''
@@ -105,14 +134,14 @@ def get_failover(module, ip):
     return result['failover']['active_server_ip']
 
 
-def set_failover(module, ip, value):
+def set_failover(module, ip, value, timeout=180):
     url = "{0}/failover/{1}".format(BASE_URL, ip)
     if value is None:
         result, error = fetch_url_json(
             module,
             url,
             method='DELETE',
-            timeout=3 * 60,  # 3 minutes timeout should be enough
+            timeout=timeout,
             accept_errors=['FAILOVER_ALREADY_ROUTED']
         )
     else:
@@ -124,7 +153,7 @@ def set_failover(module, ip, value):
             module,
             url,
             method='POST',
-            timeout=3 * 60,  # 3 minutes timeout should be enough
+            timeout=timeout,
             data=urlencode(data),
             headers=headers,
             accept_errors=['FAILOVER_ALREADY_ROUTED']
@@ -135,43 +164,55 @@ def set_failover(module, ip, value):
         return result['failover']['active_server_ip'], True
 
 
+def get_state(value):
+    return dict(
+        value=value,
+        state='routed' if value else 'unrouted'
+    )
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             hetzner_user=dict(type='str', required=True),
             hetzner_pass=dict(type='str', required=True, no_log=True),
             failover_ip=dict(type='str', required=True),
+            state=dict(type='str', default='routed', choices=['routed', 'unrouted']),
             value=dict(type='str'),
+            timeout=dict(type='int', default=180),
         ),
         supports_check_mode=True,
+        required_if=(
+            ('state', 'routed', ['value']),
+        ),
     )
-
-    before = dict()
-    after = dict()
-    changed = False
 
     failover_ip = module.params['failover_ip']
     value = get_failover(module, failover_ip)
-    before['value'] = value
+    changed = False
+    before = get_state(value)
 
-    if value != module.params['value']:
+    if module.params['state'] == 'routed':
+        new_value = module.params['value']
+    else:
+        new_value = None
+
+    if value != new_value:
         if module.check_mode:
-            value = module.params['value']
+            value = new_value
             changed = True
         else:
-            value, changed = set_failover(module, failover_ip, module.params['value'])
+            value, changed = set_failover(module, failover_ip, new_value, timeout=module.params['timeout'])
 
-    after['value'] = value
-    result = dict(
+    after = get_state(value)
+    module.exit_json(
         changed=changed,
-        value=value,
-    )
-    if module._diff:
-        result['diff'] = dict(
+        diff=dict(
             before=before,
             after=after,
-        )
-    module.exit_json(**result)
+        ),
+        **after
+    )
 
 
 if __name__ == '__main__':
