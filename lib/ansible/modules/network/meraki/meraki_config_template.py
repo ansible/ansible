@@ -156,7 +156,7 @@ def delete_template(meraki, org_id, name, data):
     path = meraki.construct_path('delete', org_id=org_id)
     path = path + '/' + template_id
     response = meraki.request(path, 'DELETE')
-    if meraki.status != 200:
+    if meraki.status != 204:
         meraki.fail_json(msg='Unable to remove configuration template')
     return response
 
@@ -283,7 +283,8 @@ def main():
                                                         org_id,
                                                         meraki.params['config_template'],
                                                         get_config_templates(meraki, org_id))
-                if meraki.status == 200:
+                if meraki.status == 204:
+                    meraki.result['data'] = {}
                     meraki.result['changed'] = True
             else:
                 meraki.fail_json(msg="No template named {0} found.".format(meraki.params['config_template']))

@@ -66,6 +66,16 @@
   - set_fact:
       net_id: '{{net_info.data.id}}'
 
+  - name: Bind a template to a network with check mode
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+      config_template: '{{test_template_name}}'
+    check_mode: yes
+    register: bind_check
+
   - name: Bind a template to a network
     meraki_config_template:
       auth_key: '{{auth_key}}'
@@ -79,18 +89,9 @@
       that:
         bind.changed == True
 
-  - name: Bind a template to a network with check mode
-    meraki_config_template:
-      auth_key: '{{auth_key}}'
-      state: present
-      org_name: '{{ test_org_name }}'
-      net_name: '{{ test_net_name }}'
-      config_template: '{{test_template_name}}'
-    register: bind_check
-
   - assert:
       that:
-        bind_check is not changed
+        bind_check is changed
 
   - name: Bind a template to a network when it's already bound
     meraki_config_template:
@@ -159,7 +160,21 @@
         - bind_id_idempotent.changed == False
         - bind_id_idempotent.data is defined
 
-  - name: Unbind a template to a network via id
+  - name: Unbind a template from a network via id with check mode
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      config_template: '{{test_template_name}}'
+    check_mode: yes
+    register: unbind_id_check
+
+  - assert:
+      that:
+        unbind_id_check is changed
+
+  - name: Unbind a template from a network via id
     meraki_config_template:
       auth_key: '{{auth_key}}'
       state: absent
@@ -172,18 +187,28 @@
       that:
         unbind_id.changed == True
 
-  - name: Unbind a template to a network via id with check mode
+  # This is disabled by default since they can't be created via API
+  - name: Delete sacrificial template with check mode
     meraki_config_template:
       auth_key: '{{auth_key}}'
       state: absent
       org_name: '{{test_org_name}}'
-      net_id: '{{net_id}}'
-      config_template: '{{test_template_name}}'
-    register: unbind_id_check
+      config_template: sacrificial_template
+    check_mode: yes
+    register: delete_template_check
 
-  - assert:
-      that:
-        unbind_id_check is not changed
+  # This is disabled by default since they can't be created via API
+  - name: Delete sacrificial template
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      config_template: sacrificial_template
+      output_level: debug
+    register: delete_template
+
+  - debug:
+      var: delete_template
 
   always:
   - name: Delete network
