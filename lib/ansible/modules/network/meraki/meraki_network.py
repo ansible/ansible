@@ -73,7 +73,7 @@ options:
             - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
             U[wired.meraki.com](wired.meraki.com)).
             - Mutually exclusive of C(enable_my_meraki).
-            - Will be deprecated in Ansible 2.12 in favor of C(enable_my_meraki).
+            - Will be deprecated in Ansible 2.13 in favor of C(enable_my_meraki).
         type: bool
         version_added: '2.7'
     enable_my_meraki:
@@ -297,7 +297,7 @@ def main():
             else:
                 payload['disableMyMerakiCom'] = True
         elif meraki.params['disable_my_meraki'] is not None:
-            self.module.deprecate("meraki_network will stop supporting disable_my_meraki in Ansible 2.12. Please update your playbook.")
+            meraki.module.deprecate("meraki_network will stop supporting disable_my_meraki in Ansible 2.13. Please update your playbook.", version=2.13)
             payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
         if meraki.params['enable_remote_status_page'] is not None:
             if meraki.params['enable_remote_status_page'] is True:
