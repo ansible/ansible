@@ -95,10 +95,14 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 
+# The API endpoint is fixed.
 BASE_URL = "https://robot-ws.your-server.de"
 
 
 def fetch_url_json(module, url, method='GET', timeout=10, data=None, headers=None, accept_errors=None):
+    '''
+    Make general request to Hetzner's JSON robot API.
+    '''
     module.params['url_username'] = module.params['hetzner_user']
     module.params['url_password'] = module.params['hetzner_pass']
     resp, info = fetch_url(module, url, method=method, timeout=timeout, data=data, headers=headers)
@@ -127,6 +131,13 @@ def fetch_url_json(module, url, method='GET', timeout=10, data=None, headers=Non
 
 
 def get_failover(module, ip):
+    '''
+    Get current routing target of failover IP.
+
+    The value ``None`` represents unrouted.
+
+    See https://robot.your-server.de/doc/webservice/en.html#get-failover-failover-ip
+    '''
     url = "{0}/failover/{1}".format(BASE_URL, ip)
     result, error = fetch_url_json(module, url)
     if 'failover' not in result:
@@ -135,6 +146,14 @@ def get_failover(module, ip):
 
 
 def set_failover(module, ip, value, timeout=180):
+    '''
+    Set current routing target of failover IP.
+
+    Return a pair ``(value, changed)``. The value ``None`` for ``value`` represents unrouted.
+
+    See https://robot.your-server.de/doc/webservice/en.html#post-failover-failover-ip
+    and https://robot.your-server.de/doc/webservice/en.html#delete-failover-failover-ip
+    '''
     url = "{0}/failover/{1}".format(BASE_URL, ip)
     if value is None:
         result, error = fetch_url_json(
@@ -165,6 +184,11 @@ def set_failover(module, ip, value, timeout=180):
 
 
 def get_state(value):
+    '''
+    Create result dictionary for failover IP's value.
+
+    The value ``None`` represents unrouted.
+    '''
     return dict(
         value=value,
         state='routed' if value else 'unrouted'
