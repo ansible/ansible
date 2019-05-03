@@ -357,11 +357,10 @@ class MerakiModule(object):
         self.response = info['msg']
         self.status = info['status']
         if self.status == 429:
-            if self.retry == 10:
-                self.fail_json(msg="Rate limiter retry count of 10 met, aborting.")
-            self.module.warn("Rate limiter triggered - retry count {0}".format(self.retry))
-            time.sleep(5)
             self.retry += 1
+            if self.retry == 11:
+                self.fail_json(msg="Rate limiter retry count of 10 met, aborting.")
+            time.sleep(self.retry * 3)
             return self.make_http_request(path, method, payload)
         return resp, info
 
@@ -386,6 +385,8 @@ class MerakiModule(object):
         """Custom written method to exit from module."""
         self.result['response'] = self.response
         self.result['status'] = self.status
+        if self.retry > 0:
+            self.module.warn("Rate limiter triggered - retry count {0}".format(self.retry))            
         # Return the gory details when we need it
         if self.params['output_level'] == 'debug':
             self.result['method'] = self.method
