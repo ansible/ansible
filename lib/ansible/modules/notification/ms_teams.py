@@ -123,7 +123,10 @@ def main():
     module = AnsibleModule(argument_spec=fields)
 
     changed, failed, meta = post_to_msteams(module)
-    module.exit_json(changed=changed, meta=meta, failed=failed)
+    if failed:
+        module.fail_json(msg=meta)
+    else:
+        module.exit_json(changed=changed, meta=meta)
 
 
 if __name__ == '__main__':
