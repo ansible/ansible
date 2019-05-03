@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - use docker API's ``restart`` instead of ``stop``/``start`` to restart a container."
