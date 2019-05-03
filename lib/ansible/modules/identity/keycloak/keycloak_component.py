@@ -3,6 +3,9 @@
 # Copyright: (c) 2019, INSPQ <philippe.gauthier@inspq.qc.ca>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -247,7 +250,7 @@ options:
                 type: list
                 suboptions:
                     name:
-                        descriptions:
+                        description:
                             - Name of the sub component
                         type: str
                     providerId:
@@ -412,11 +415,10 @@ options:
         default: present
         required: false
     force:
-        choices: [ "yes", "no" ]
-        default: "no"
         description:
-            - If yes, allows to remove component and recreate it.
-        required: false
+            - If true, allows to remove component and recreate it.
+        type: bool
+        default: false
 extends_documentation_fragment:
     - keycloak
 
