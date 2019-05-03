@@ -119,7 +119,7 @@
       that:
         - disable_vlan_idempotent is not changed
 
-  - name: Create network with type wireless
+  - name: Create network with type wireless and disable my.meraki.com
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
@@ -127,10 +127,11 @@
       net_name: IntTestNetworkWireless
       type: wireless
       timezone: America/Chicago
+      disable_my_meraki: yes
     delegate_to: localhost
     register: create_net_wireless
 
-  - name: Create network with type wireless and check for idempotency
+  - name: Create network with type wireless, disable my.meraki.com, and check for idempotency
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
@@ -138,6 +139,7 @@
       net_name: IntTestNetworkWireless
       type: wireless
       timezone: America/Chicago
+      disable_my_meraki: yes
     delegate_to: localhost
     register: create_net_wireless_idempotent
 
@@ -299,6 +301,7 @@
         - '"IntTestNetworkSwitch" in create_net_switch.data.name'
         - '"IntTestNetworkSwitchOrgID" in create_net_switch_org_id.data.name'
         - '"IntTestNetworkWireless" in create_net_wireless.data.name'
+        - create_net_wireless.data.disableMyMerakiCom == True
         - create_net_wireless_idempotent.changed == False
         - '"first_tag" in create_net_tag.data.tags'
         - '"second_tag" in create_net_tags.data.tags'

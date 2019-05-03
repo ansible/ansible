@@ -68,19 +68,27 @@ options:
         - Requires C(net_name) or C(net_id) to be specified.
         type: bool
         version_added: '2.9'
+    disable_my_meraki:
+        description: >
+            - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
+            U[wired.meraki.com](wired.meraki.com)).
+            - Mutually exclusive of C(enable_my_meraki).
+            - Will be deprecated in Ansible 2.12 in favor of C(enable_my_meraki).
+        type: bool
+        version_added: '2.7'
     enable_my_meraki:
         description: >
             - Enables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
             U[wired.meraki.com](wired.meraki.com)).
             - Ansible 2.7 had this parameter as C(disable_my_meraki).
         type: bool
-        version_added: '2.8'
+        version_added: '2.9'
     enable_remote_status_page:
         description:
             - Enables access to the device status page (U(http://device LAN IP)).
             - Can only be set if C(enable_my_meraki:) is set to C(yes).
         type: bool
-        version_added: '2.8'
+        version_added: '2.9'
 
 author:
     - Kevin Breit (@kbreit)
@@ -223,6 +231,7 @@ def main():
         net_name=dict(type='str', aliases=['name', 'network']),
         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
         enable_vlans=dict(type='bool'),
+        disable_my_meraki=dict(type='bool'),
         enable_my_meraki=dict(type='bool'),
         enable_remote_status_page=dict(type='bool'),
     )
@@ -233,6 +242,8 @@ def main():
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
+                           mutually_exclusive=[('disable_my_meraki', 'enable_my_meraki'),
+                                               ]
                            )
 
     meraki = MerakiModule(module, function='network')
@@ -285,6 +296,9 @@ def main():
                 payload['disableMyMerakiCom'] = False
             else:
                 payload['disableMyMerakiCom'] = True
+        elif meraki.params['disable_my_meraki'] is not None:
+            self.module.deprecate("meraki_network will stop supporting disable_my_meraki in Ansible 2.12. Please update your playbook.")
+            payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
         if meraki.params['enable_remote_status_page'] is not None:
             if meraki.params['enable_remote_status_page'] is True:
                 payload['disableRemoteStatusPage'] = False
