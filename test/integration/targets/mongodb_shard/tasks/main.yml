@@ -88,8 +88,9 @@
 
 - name: Assert that replset is a config server
   assert:
-    that: "'\"configsvr\" : true' in cfg_replset_output.stdout"
-    that: "'\"set\" : \"{{ configsrv_replicaset }}\"' in cfg_replset_output.stdout"
+    that:
+      - "'\"configsvr\" : true' in cfg_replset_output.stdout"
+      - "'\"set\" : \"{{ configsrv_replicaset }}\"' in cfg_replset_output.stdout"
 
 - name: Launch mongos
   command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath "{{ remote_tmp_dir }}/tests/mongos.log" --port 27017 --fork
@@ -278,9 +279,6 @@
     dest: /root/create_user_root_3.2.js
   when: mongodb_version in ["3.2", "4.0"]
 
-- pause:
-    seconds: 10
-
 - name: Create admin user on 3.2 and 4.0 config replset
   shell: mongo admin --port {{ item }} /root/create_user_root_3.2.js
   with_items:
@@ -387,9 +385,6 @@
       - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
       - "'\"draining\" : true' in mongo_output.stdout"
       - "'balancer' in mongo_output.stdout"
-
-- pause:
-    seconds: 10
 
 - name: Run remove command again to finalize shard removal
   mongodb_shard:
