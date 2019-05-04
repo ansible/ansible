@@ -4,5 +4,6 @@ junit-xml
 paramiko
 pyyaml
 pexpect # for _user test
+selectors2 # for ncclient
 ncclient # for Junos
 jxmlease # for Junos
