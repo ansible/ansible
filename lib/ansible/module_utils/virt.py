@@ -125,4 +125,3 @@ def get_facts(config, wanted):
         else:
             facts[key] = None
     return facts
-
