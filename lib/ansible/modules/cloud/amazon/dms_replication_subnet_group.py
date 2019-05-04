@@ -26,7 +26,7 @@ description:
     - creates or destroys a data migration services subnet group
 version_added: "2.9"
 options:
-    state: 
+    state:
       description:
         - State of the subnet group
       default: present
@@ -40,7 +40,10 @@ options:
         - The description for the subnet group.
     subnetids:
       description:
-        - A list containing the subnet ids for the replication subnet group    
+        - A list containing the subnet ids for the replication subnet group
+author:
+   - "Rui Moreira (@ruimoreira)"
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
@@ -68,7 +71,7 @@ def describe_subnet_group(connection, subnet_group):
     """checks if instance exists"""
     try:
         subnet_group_filter = dict(Name='replication-subnet-group-id',
-                               Values=[subnet_group])
+                                   Values=[subnet_group])
         return connection.describe_replication_subnet_groups(Filters=[subnet_group_filter])
     except botocore.exceptions.ClientError:
         return {'ReplicationSubnetGroups': []}
@@ -86,7 +89,8 @@ def replication_subnet_group_modify(connection, **modify_params):
 
 @AWSRetry.backoff(**backoff_params)
 def replication_subnet_group_delete(connection):
-    delete_parameters = dict(ReplicationSubnetGroupIdentifier=module.params.get('subnetgroupidentifier'))
+    delete_parameters = dict(ReplicationSubnetGroupIdentifier=\
+                                 module.params.get('subnetgroupidentifier'))
     return connection.delete_replication_subnet_group(**delete_parameters)
 
 
@@ -116,10 +120,10 @@ def create_module_params():
     :return: dict
     """
     instance_parameters = dict(
-        #ReplicationSubnetGroupIdentifier gets translated to lower case anyway by the API
-        ReplicationSubnetGroupIdentifier = module.params.get('subnetgroupidentifier').lower(),
-        ReplicationSubnetGroupDescription = module.params.get('subnetgroupdescription'),
-        SubnetIds = module.params.get('subnetids'),
+        # ReplicationSubnetGroupIdentifier gets translated to lower case anyway by the API
+        ReplicationSubnetGroupIdentifier=module.params.get('subnetgroupidentifier').lower(),
+        ReplicationSubnetGroupDescription=module.params.get('subnetgroupdescription'),
+        SubnetIds=module.params.get('subnetids'),
     )
 
     return instance_parameters
@@ -186,10 +190,10 @@ def delete_replication_subnet_group(connection):
 
 def main():
     argument_spec = dict(
-        state = dict(choices=['present', 'absent'], default='present'),
-        subnetgroupidentifier = dict(required=True),
-        subnetgroupdescription = dict(required=True),
-        subnetids = dict(type='list', required=True),
+        state=dict(choices=['present', 'absent'], default='present'),
+        subnetgroupidentifier=dict(required=True),
+        subnetgroupdescription=dict(required=True),
+        subnetids=dict(type='list', required=True),
     )
     global module
     module = AnsibleAWSModule(
@@ -207,17 +211,17 @@ def main():
         get_aws_connection_info(module, boto3=True)
     dmsclient = get_dms_client(aws_connect_params, aws_config_region, ec2_url)
     subnet_group = describe_subnet_group(dmsclient,
-                                  module.params.get('subnetgroupidentifier'))
+                                         module.params.get('subnetgroupidentifier'))
     if state == 'present':
         if replication_subnet_exists(subnet_group):
             if compare_params(subnet_group["ReplicationSubnetGroups"][0]):
-               changed=True
-               exit_message = modify_replication_subnet_group(dmsclient)
+                changed = True
+                exit_message = modify_replication_subnet_group(dmsclient)
             else:
                 exit_message = "No changes to Subnet group"
         else:
             exit_message = create_replication_subnet_group(dmsclient)
-            changed=True
+            changed = True
 
 
     elif state == 'absent':
