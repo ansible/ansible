@@ -279,6 +279,17 @@
     dest: /root/create_user_root_3.2.js
   when: mongodb_version in ["3.2", "4.0"]
 
+- name: Copy script to host
+  template:
+    src: files/bash/ensure_primary.sh.j2
+    dest: /root/ensure_primary.sh
+
+- name: Execute script for 3001
+  script: /root/ensure_primary.sh 3001 0
+# We do this here because sometimes 3004 instance seems to be demoted
+- name: Execute script for 3004
+  script: /root/ensure_primary.sh 3004 0
+
 - name: Create admin user on 3.2 and 4.0 config replset
   shell: mongo admin --port {{ item }} /root/create_user_root_3.2.js
   with_items:
@@ -315,16 +326,11 @@
 - name: Launch cfg server with auth
   command: mongod --configsvr --port 4000 --dbpath {{ remote_tmp_dir }}/config --logpath {{ remote_tmp_dir }}/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork --auth --keyFile {{ remote_tmp_dir }}/my.key
 
-- name: Copy script to host
-  template:
-    src: files/bash/ensure_primary.sh.j2
-    dest: /root/ensure_primary.sh
-
 - name: Execute script for 3001
-  script: /root/ensure_primary.sh 3001
+  script: /root/ensure_primary.sh 3001 1
 
 - name: Execute script for 3004
-  script: /root/ensure_primary.sh 3004
+  script: /root/ensure_primary.sh 3004 1
 
 - name: Ensure host reaches primary before proceeding 3001
   command: mongo admin --port 3001 -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} "{{ remote_tmp_dir }}/tests/is_primary.js"
