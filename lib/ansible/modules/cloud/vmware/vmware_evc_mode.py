@@ -127,7 +127,7 @@ def main():
         results['result'] = "EVC Mode for '%s' is already enabled." % (evc_mode)
     elif state == 'absent' and not current_evc_mode:
         results['changed'] = False
-        results['result'] = "EVC Mode for '%s' is already disabled." % (evc_mode)
+        results['result'] = "EVC Mode is already disabled."
     elif state == 'absent':
         try:
             if not module.check_mode:
