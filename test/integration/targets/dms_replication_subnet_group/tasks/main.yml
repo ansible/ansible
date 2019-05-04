@@ -1,0 +1,97 @@
+---
+
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+    resource_prefix: "test_dms_sg"
+    dms_sg_identifier: "{{ resource_prefix }}-dms"
+  no_log: no
+
+- block:
+    - name: create subnet group
+      dms_replication_subnet_group:
+        state: present
+        subnetgroupidentifier: "{{ dms_sg_identifier }}"
+        subnetgroupdescription: "Development Subnet Group"
+        subnetids: ['subnet-041d3373','subnet-59888e3c']
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result is not failed
+
+    - name: create subnet group no change
+      dms_replication_subnet_group:
+        state: present
+        subnetgroupidentifier: "{{ dms_sg_identifier }}"
+        subnetgroupdescription: "Development Subnet Group"
+        subnetids: ['subnet-041d3373','subnet-59888e3c']
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+          - result is not failed
+
+    - name: update subnet group
+      dms_replication_subnet_group:
+        state: present
+        subnetgroupidentifier: "{{ dms_sg_identifier }}"
+        subnetgroupdescription: "Development Subnet Group updated"
+        subnetids: ['subnet-041d3373','subnet-59888e3c']
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result is not failed
+
+    - name: update subnet group no change
+      dms_replication_subnet_group:
+        state: present
+        subnetgroupidentifier: "{{ dms_sg_identifier }}"
+        subnetgroupdescription: "Development Subnet Group updated"
+        subnetids: ['subnet-041d3373','subnet-59888e3c']
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+          - result is not failed
+
+  always:
+    - name: delete subnet group no change
+      dms_replication_subnet_group:
+        state: absent
+        subnetgroupidentifier: "{{ dms_sg_identifier }}"
+        subnetgroupdescription: "Development Subnet Group updated"
+        subnetids: ['subnet-041d3373','subnet-59888e3c']
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is changed
+          - result is not failed
+
+    - name: delete subnet group no change
+      dms_replication_subnet_group:
+        state: absent
+        subnetgroupidentifier: "{{ dms_sg_identifier }}"
+        subnetgroupdescription: "Development Subnet Group updated"
+        subnetids: ['subnet-041d3373','subnet-59888e3c']
+        <<: *aws_connection_info
+      register: result
+
+    - assert:
+        that:
+          - result is not changed
+          - result is not failed
