@@ -6,3 +6,4 @@ pyyaml
 pexpect # for _user test
 ncclient # for Junos
 jxmlease # for Junos
+selinux # for libselinux support in virtualenvs
