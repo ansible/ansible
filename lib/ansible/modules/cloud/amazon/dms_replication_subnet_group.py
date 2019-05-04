@@ -87,10 +87,11 @@ def replication_subnet_group_create(connection, **params):
 def replication_subnet_group_modify(connection, **modify_params):
     return connection.modify_replication_subnet_group(**modify_params)
 
+
 @AWSRetry.backoff(**backoff_params)
 def replication_subnet_group_delete(connection):
-    delete_parameters = dict(ReplicationSubnetGroupIdentifier=\
-                                 module.params.get('subnetgroupidentifier'))
+    subnetid = module.params.get('subnetgroupidentifier')
+    delete_parameters = dict(ReplicationSubnetGroupIdentifier=subnetid)
     return connection.delete_replication_subnet_group(**delete_parameters)
 
 
@@ -139,9 +140,11 @@ def compare_params(param_described):
     """
     modparams = create_module_params()
     changed = False
-    #need to sanitize values that get retured from the API
-    if 'VpcId' in param_described.keys(): param_described.pop('VpcId')
-    if 'SubnetGroupStatus' in param_described.keys(): param_described.pop('SubnetGroupStatus')
+    # need to sanitize values that get retured from the API
+    if 'VpcId' in param_described.keys():
+        param_described.pop('VpcId')
+    if 'SubnetGroupStatus' in param_described.keys():
+        param_described.pop('SubnetGroupStatus')
     for paramname in modparams.keys():
         if paramname in param_described.keys() and \
                 param_described.get(paramname) == modparams[paramname]:
@@ -222,8 +225,6 @@ def main():
         else:
             exit_message = create_replication_subnet_group(dmsclient)
             changed = True
-
-
     elif state == 'absent':
         if replication_subnet_exists(subnet_group):
             changed = True
