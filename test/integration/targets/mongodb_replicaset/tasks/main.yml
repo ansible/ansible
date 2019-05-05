@@ -120,12 +120,12 @@
   register: mongodb_replicaset_bad_pw
   ignore_errors: True
 
-- name: Assert replicaset name has not changed
+- name: Assert login failed
   assert:
     that:
       - "mongodb_replicaset_bad_pw.rc == 1"
       - "'Authentication failed' in mongodb_replicaset_bad_pw.module_stderr"
-    
+
   #############################################################
 
 - include_tasks: mongod_teardown.yml
