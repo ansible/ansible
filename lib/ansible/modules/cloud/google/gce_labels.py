@@ -300,6 +300,10 @@ def main():
             if k not in new_labels:
                 update_needed = True
                 new_labels[k] = v
+            elif k in new_labels:
+                if new_labels[k] != v:
+                    update_needed = True
+                    new_labels[k] = v
 
     changed = False
     json_output = {'state': module.params['state']}
