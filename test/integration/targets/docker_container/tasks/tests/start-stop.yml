@@ -224,9 +224,9 @@
     - recreate_2 is changed
     - recreate_3 is changed
     - recreate_4 is changed
-    - recreate_1.container.Id != recreate_2.container.Id
-    - recreate_2.container.Id == recreate_3.container.Id
-    - recreate_3.container.Id != recreate_4.container.Id
+    - recreate_1.ansible_facts.docker_container.Id != recreate_2.ansible_facts.docker_container.Id
+    - recreate_2.ansible_facts.docker_container.Id == recreate_3.ansible_facts.docker_container.Id
+    - recreate_3.ansible_facts.docker_container.Id != recreate_4.ansible_facts.docker_container.Id
 
 ####################################################################
 ## Restarting ######################################################
@@ -276,7 +276,7 @@
     that:
     - restart_1 is changed
     - restart_2 is changed
-    - restart_1.container.Id == restart_2.container.Id
+    - restart_1.ansible_facts.docker_container.Id == restart_2.ansible_facts.docker_container.Id
     - restart_3 is not changed
 
 ####################################################################
