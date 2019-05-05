@@ -88,7 +88,6 @@ options:
     description:
       - Use default virtual session timeout.
     type: bool
-  
 extends_documentation_fragment: checkpoint_objects
 """
 

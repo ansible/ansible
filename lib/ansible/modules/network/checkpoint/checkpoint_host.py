@@ -148,8 +148,6 @@ def main():
                 code, response = update_host(module, connection)
                 if code != 200:
                     module.fail_json(msg=response)
-                if module.params['auto_publish_session']:
-                    publish(connection)
 
                 result['changed'] = True
                 result['checkpoint_hosts'] = response
@@ -159,8 +157,6 @@ def main():
             code, response = create_host(module, connection)
             if code != 200:
                 module.fail_json(msg=response)
-            if module.params['auto_publish_session']:
-                publish(connection)
 
             result['changed'] = True
             result['checkpoint_hosts'] = response
@@ -170,8 +166,6 @@ def main():
             code, response = delete_host(module, connection)
             if code != 200:
                 module.fail_json(msg=response)
-            if module.params['auto_publish_session']:
-                publish(connection)
 
             result['changed'] = True
             result['checkpoint_hosts'] = response

@@ -207,8 +207,6 @@ def main():
                 code, response = update_access_rule(module, connection)
                 if code != 200:
                     module.fail_json(msg=response)
-                if module.params['auto_publish_session']:
-                    publish(connection)
 
                 result['changed'] = True
                 result['checkpoint_access_rules'] = response
@@ -218,8 +216,6 @@ def main():
             code, response = create_access_rule(module, connection)
             if code != 200:
                 module.fail_json(msg=response)
-            if module.params['auto_publish_session']:
-                publish(connection)
 
             result['changed'] = True
             result['checkpoint_access_rules'] = response
@@ -228,8 +224,6 @@ def main():
             code, response = delete_access_rule(module, connection)
             if code != 200:
                 module.fail_json(msg=response)
-            if module.params['auto_publish_session']:
-                publish(connection)
 
             result['changed'] = True
             result['checkpoint_access_rules'] = response
