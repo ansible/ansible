@@ -109,6 +109,7 @@ def claim_storage_volume(vplex, volume_name, vpd_id):
     response = vplex.https_post(urlsuffix=claim_uri, data=claiming_data)
     return response
 
+
 def unclaim_storage_volume(vplex, volume_name):
     unclaim_uri = '/vplex/storage-volume+unclaim'
     unclaiming_data = '{\"args\":\"-n ' + volume_name + ' -f\"}'
