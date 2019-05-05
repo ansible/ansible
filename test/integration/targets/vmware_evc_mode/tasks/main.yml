@@ -12,6 +12,7 @@
       validate_certs: no
       evc_mode: intel-broadwell
       state: present
+      check_mode: yes
 
   - name: Disable EVC mode on vCenter Cluster
     vmware_evc_mode:

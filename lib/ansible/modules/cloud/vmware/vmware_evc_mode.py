@@ -30,15 +30,19 @@ options:
     description:
     - The name of the cluster to enable or disable EVC mode on.
     required: True
+    type: str
   evc_mode:
     description:
-    - Required for C(state=present). The EVC mode to enable or disable on the cluster. (intel-broadwell, intel-nehalem, intel-merom, etc.).
+    - Required for C(state=present). 
+    - The EVC mode to enable or disable on the cluster. (intel-broadwell, intel-nehalem, intel-merom, etc.).
     required: True
+    type: str
   state:
     description:
     - Add or remove EVC mode.
     choices: [absent, present]
     default: present
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -81,7 +85,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import (connect_to_api, find_cluster_by_name, vmware_argument_spec,
+from ansible.module_utils.vmware import (PyVmomi, find_cluster_by_name, vmware_argument_spec,
                                          wait_for_task, TaskError)
 
 
@@ -107,8 +111,12 @@ def main():
 
     content = connect_to_api(module, False)
     results = dict(changed=False, result=dict())
-    cluster = find_cluster_by_name(content, cluster_name)
+    cluster_obj = find_cluster_by_name(content, cluster_name)
+    if not cluster_obj:
+      module.fail_json(msg="Unable to find the cluster %(cluster_name)s" % module.params)
     evcm = cluster.EvcManager()
+    if not evcm:
+      module.fail_json(msg="Unable to get EVC manager for cluster %(cluster_name)s" % module.params)
     evc_state = evcm.evcState
     current_evc_mode = evc_state.currentEVCModeKey
     supported_evc_modes = evc_state.supportedEVCMode
@@ -117,8 +125,8 @@ def main():
         try:
             if not module.check_mode:
                 evc_task = evcm.ConfigureEvcMode_Task(evc_mode)
-                wait_for_task(evc_task)
-            results['changed'] = True
+                changed, result = wait_for_task(evc_task)
+            results['changed'] = changed
             results['result'] = "EVC Mode for '%s' has been enabled." % (evc_mode)
         except TaskError as invalid_argument:
             module.fail_json(msg="Failed to update EVC mode: %s" % to_native(invalid_argument))
@@ -132,8 +140,8 @@ def main():
         try:
             if not module.check_mode:
                 evc_disable_task = evcm.DisableEvcMode_Task()
-                wait_for_task(evc_disable_task)
-            results['changed'] = True
+                changed, result = wait_for_task(evc_disable_task)
+            results['changed'] = changed
             results['result'] = "EVC Mode has been disabled."
         except TaskError as invalid_argument:
             module.fail_json(msg="Failed to disable EVC mode: %s" % to_native(invalid_argument))
