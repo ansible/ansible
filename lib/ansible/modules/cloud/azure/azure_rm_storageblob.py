@@ -260,7 +260,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
         # add file path validation
 
-        self.blob_client = self.get_blob_client(self.resource_group, self.storage_account_name, self.access_key, self.blob_type)
+        self.blob_client = self.get_blob_client(self.resource_group, self.storage_account_name, self.blob_type, self.access_key)
         self.container_obj = self.get_container()
 
         if self.blob is not None:
