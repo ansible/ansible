@@ -165,7 +165,7 @@ class VMwareEVC(PyVmomi):
         """
         changed, result = False, None
         try:
-            if not self.module.check_mode:
+            if not self.module.check_mode and self.current_evc_mode != self.evc_mode:
                 evc_task = self.evcm.ConfigureEvcMode_Task(self.evc_mode)
                 changed, result = wait_for_task(evc_task)
             if self.module.check_mode and self.current_evc_mode != self.evc_mode:
