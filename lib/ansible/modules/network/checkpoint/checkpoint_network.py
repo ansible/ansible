@@ -122,9 +122,7 @@ def main():
                            mutually_exclusive=[['name', 'uid']])
     api_call_object = "network"
 
-    unique_payload_for_get = {'name': module.params['name']} if module.params['name'] else {'uid': module.params['uid']}
-
-    api_call(module, api_call_object, user_parameters, unique_payload_for_get)
+    api_call(module, api_call_object, user_parameters)
 
 
 if __name__ == '__main__':

@@ -110,11 +110,9 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
                            mutually_exclusive=[['name', 'uid']])
-    api_call_object = "network"
+    api_call_object = "address_range"
 
-    unique_payload_for_get = {'name': module.params['name']} if module.params['name'] else {'uid': module.params['uid']}
-
-    api_call(module, api_call_object, user_parameters, unique_payload_for_get)
+    api_call(module, api_call_object, user_parameters)
 
 
 if __name__ == '__main__':

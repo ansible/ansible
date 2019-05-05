@@ -17,68 +17,57 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
+
 DOCUMENTATION = """
 ---
-module: checkpoint_group
-short_description: Manages group objects on Checkpoint over Web Services API
+module: checkpoint_install_policy
+short_description: Install policy on Checkpoint devices over Web Services API
 description:
-  - Manages group objects on Checkpoint devices including creating, updating, removing group objects.
+  - Install policy on Checkpoint devices.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
-  members:
+  uid:
     description:
-      - Collection of Network objects identified by the name or UID.
-    type: list
-extends_documentation_fragment: checkpoint_objects
+      - Session unique identifier. Specify it to publish a different session than the one you currently use.
+    type: str
 """
 
 EXAMPLES = """
-- name: Add group object
-  checkpoint_group:
-    name: "New Group 1"
-    state: present
-
-
-- name: Delete group object
-  checkpoint_group:
-    name: "New Group 1"
-    state: absent
+- name: publish
+  checkpoint_publish:
 """
 
 RETURN = """
-api_result:
-  description: The checkpoint object created or updated.
-  returned: always, except when deleting the object.
-  type: dict
+checkpoint_install_policy:
+  description: The checkpoint install policy output.
+  returned: always.
+  type: str
 """
 
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, api_call
+from ansible.module_utils.network.checkpoint.checkpoint import api_command
 
 
 def main():
     argument_spec = dict(
-        members=dict(type='list')
+        uid=dict(type='str')
     )
-    argument_spec.update(checkpoint_argument_spec)
+
     user_parameters = list(argument_spec.keys())
-    user_parameters.remove('auto_publish_session')
-    user_parameters.remove('state')
+    module = AnsibleModule(argument_spec=argument_spec)
+    command = "publish"
 
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
-                           mutually_exclusive=[['name', 'uid']])
-    api_call_object = "group"
-
-    api_call(module, api_call_object, user_parameters, unique_payload_for_get)
+    api_command(module, command, user_parameters)
 
 
 if __name__ == '__main__':

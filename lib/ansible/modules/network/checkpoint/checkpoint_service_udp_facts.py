@@ -26,59 +26,42 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_group
-short_description: Manages group objects on Checkpoint over Web Services API
+module: checkpoint_service_udp_facts
+short_description: Get service_udp objects facts on Checkpoint over Web Services API
 description:
-  - Manages group objects on Checkpoint devices including creating, updating, removing group objects.
+  - Get service_udp objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
-options:
-  members:
-    description:
-      - Collection of Network objects identified by the name or UID.
-    type: list
-extends_documentation_fragment: checkpoint_objects
+extends_documentation_fragment: checkpoint_facts
 """
 
 EXAMPLES = """
-- name: Add group object
-  checkpoint_group:
-    name: "New Group 1"
-    state: present
-
-
-- name: Delete group object
-  checkpoint_group:
-    name: "New Group 1"
-    state: absent
+- name: Get service_udp object facts
+  checkpoint_service_udp_facts:
+    name: "New_UDP_Service_1"
 """
 
 RETURN = """
 api_result:
-  description: The checkpoint object created or updated.
-  returned: always, except when deleting the object.
+  description: The checkpoint object facts.
+  returned: always.
   type: dict
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, api_call
+from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_facts, api_call_facts
 
 
 def main():
-    argument_spec = dict(
-        members=dict(type='list')
-    )
-    argument_spec.update(checkpoint_argument_spec)
+    argument_spec = dict()
+    argument_spec.update(checkpoint_argument_spec_for_facts)
     user_parameters = list(argument_spec.keys())
-    user_parameters.remove('auto_publish_session')
-    user_parameters.remove('state')
 
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
-                           mutually_exclusive=[['name', 'uid']])
-    api_call_object = "group"
+    module = AnsibleModule(argument_spec=argument_spec)
+    api_call_object = "service_udp"
 
-    api_call(module, api_call_object, user_parameters, unique_payload_for_get)
+    api_call_facts(module, api_call_object, user_parameters)
 
 
 if __name__ == '__main__':

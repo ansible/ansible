@@ -82,8 +82,8 @@ def discard(connection, uid=None):
 
 
 # get the object from checkpoint DB, if exist
-def get_api_call_object(connection, api_call_object, unique_payload_for_get):
-    code, response = connection.send_request('/web_api/show-' + api_call_object, unique_payload_for_get)
+def get_api_call_object(connection, api_call_object, payload):
+    code, response = connection.send_request('/web_api/show-' + api_call_object, payload)
 
     return code, response
 
@@ -151,7 +151,6 @@ def api_command(module, command, user_parameters):
 # handle api call facts
 def api_call_facts(module, api_call_object, user_parameters):
     payload = get_payload_from_user_parameters(module, user_parameters)
-    file_name_plural = "checkpoint_" + api_call_object.replace("_", "-") + "s"
 
     # if there is neither name nor uid, the API command will be in plural version (e.g. show-hosts instead of show-host)
     if payload.get("name") is None and payload.get("uid") is None:
@@ -159,15 +158,14 @@ def api_call_facts(module, api_call_object, user_parameters):
     connection = Connection(module._socket_path)
     code, response = get_api_call_object(connection, api_call_object, payload)
     if code == 200:
-        module.exit_json(ansible_facts={file_name_plural: response})
+        module.exit_json(ansible_facts={api_call_object: response})
     else:
         module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
 
 
 # handle api call
-def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
+def api_call(module, api_call_object, user_parameters):
     payload = get_payload_from_user_parameters(module, user_parameters)
-    file_name_plural = "checkpoint_" + api_call_object.replace("_", "-") + "s"
     connection = Connection(module._socket_path)
     code, response = equals(connection, api_call_object, payload)
     # if code is 400 (bad request) or 500 (internal error) - fail
@@ -186,7 +184,7 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
                     publish(connection)
 
                 result['changed'] = True
-                result[file_name_plural] = response
+                result[api_call_object] = response
             else:
                 # objects are equals and there is no need for set request
                 pass
@@ -199,7 +197,7 @@ def api_call(module, api_call_object, user_parameters, unique_payload_for_get):
                 publish(connection)
 
             result['changed'] = True
-            result[file_name_plural] = response
+            result[api_call_object] = response
     else:
         if code == 200:
             code, response = delete_api_call_object(connection, api_call_object, payload)
