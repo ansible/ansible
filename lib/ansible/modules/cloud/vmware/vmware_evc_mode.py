@@ -110,7 +110,7 @@ def main():
     evc_mode = module.params['evc_mode']
 
     content = connect_to_api(module, False)
-    results = dict(changed=False, result=dict())
+    results = dict(changed=False, evc_mode_msg=dict())
     cluster_obj = find_cluster_by_name(content, cluster_name)
     if not cluster_obj:
       module.fail_json(msg="Unable to find the cluster %(cluster_name)s" % module.params)
@@ -127,22 +127,22 @@ def main():
                 evc_task = evcm.ConfigureEvcMode_Task(evc_mode)
                 changed, result = wait_for_task(evc_task)
             results['changed'] = changed
-            results['result'] = "EVC Mode for '%s' has been enabled." % (evc_mode)
+            results['evc_mode_msg'] = "EVC Mode for '%s' has been enabled." % (evc_mode)
         except TaskError as invalid_argument:
             module.fail_json(msg="Failed to update EVC mode: %s" % to_native(invalid_argument))
     elif state == 'present' and current_evc_mode == evc_mode:
         results['changed'] = False
-        results['result'] = "EVC Mode for '%s' is already enabled." % (evc_mode)
+        results['evc_mode_msg'] = "EVC Mode for '%s' is already enabled." % (evc_mode)
     elif state == 'absent' and not current_evc_mode:
         results['changed'] = False
-        results['result'] = "EVC Mode is already disabled."
+        results['evc_mode_msg'] = "EVC Mode is already disabled."
     elif state == 'absent':
         try:
             if not module.check_mode:
                 evc_disable_task = evcm.DisableEvcMode_Task()
                 changed, result = wait_for_task(evc_disable_task)
             results['changed'] = changed
-            results['result'] = "EVC Mode has been disabled."
+            results['evc_mode_msg'] = "EVC Mode has been disabled."
         except TaskError as invalid_argument:
             module.fail_json(msg="Failed to disable EVC mode: %s" % to_native(invalid_argument))
 
