@@ -32,11 +32,18 @@ options:
   os:
     description:
       - The operating system.
-      - Required if the server does not yet exist and is not restoring from a snapshot.
+      - Required if the server does not yet exist, except restoring from a I(snapshot) or creating by an I(iso).
   snapshot:
     version_added: "2.8"
     description:
       - Name of snapshot to restore server from.
+      - Mutually exclusive with I(os) and I(iso).
+  iso:
+    version_added: "2.9"
+    description:
+      - Name of ISO to create server from.
+      - Mutually exclusive with I(os) and I(snapshot).
+    type: str
   firewall_group:
     description:
       - The firewall group to assign this server to.
@@ -385,6 +392,8 @@ class AnsibleVultrServer(Vultr):
     def get_os(self):
         if self.module.params.get('snapshot'):
             os_name = 'Snapshot'
+        elif self.module.params.get('iso'):
+            os_name = 'Custom'
         else:
             os_name = self.module.params.get('os')
 
@@ -401,6 +410,13 @@ class AnsibleVultrServer(Vultr):
             value=self.module.params.get('snapshot'),
             resource='snapshot',
             use_cache=True
+        )
+
+    def get_iso(self):
+        return self.query_resource_by_key(
+            key='filename',
+            value=self.module.params.get('iso'),
+            resource='iso',
         )
 
     def get_ssh_keys(self):
@@ -508,8 +524,8 @@ class AnsibleVultrServer(Vultr):
             'region',
         ]
 
-        snapshot_restore = self.module.params.get('snapshot') is not None
-        if snapshot_restore:
+        # OS requirement depends on snpashot and iso
+        if any([self.module.params.get('snapshot'), self.module.params.get('iso')]):
             required_params.remove('os')
 
         self.module.fail_on_missing_params(required_params=required_params)
@@ -522,6 +538,7 @@ class AnsibleVultrServer(Vultr):
                 'FIREWALLGROUPID': self.get_firewall_group().get('FIREWALLGROUPID'),
                 'OSID': self.get_os().get('OSID'),
                 'SNAPSHOTID': self.get_snapshot().get('SNAPSHOTID'),
+                'ISOID': self.get_iso().get('ISOID'),
                 'label': self.module.params.get('name'),
                 'hostname': self.module.params.get('hostname'),
                 'SSHKEYID': ','.join([ssh_key['SSHKEYID'] for ssh_key in self.get_ssh_keys()]),
@@ -540,7 +557,7 @@ class AnsibleVultrServer(Vultr):
                 data=data
             )
             server = self._wait_for_state(key='status', state='active')
-            server = self._wait_for_state(state='running', timeout=3600 if snapshot_restore else 60)
+            server = self._wait_for_state(state='running', timeout=3600 if self.module.params.get('snapshot') else 60)
         return server
 
     def _update_auto_backups_setting(self, server, start_server):
@@ -868,6 +885,7 @@ def main():
         hostname=dict(),
         os=dict(),
         snapshot=dict(),
+        iso=dict(type='str'),
         plan=dict(),
         force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
@@ -886,6 +904,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=(
+            ['snapshot', 'iso', 'os'],
+        ),
         supports_check_mode=True,
     )
 
