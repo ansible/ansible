@@ -494,21 +494,26 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     self.inventory.add_child(vm_guest_id, current_host)
 
                     # Based on folder of virtual machine
-                    folders = current_host.split('/')[1:]
-                    if folders[0] not in cacheable_results:
-                        parent_folder = ''
+                    folders = current_host.split('/')
+                    if folders[-2] not in cacheable_results:
+                        parent_folders = []
                         self.inventory.add_group(folders[0])
-                        while bool(folders):
-                            parent_folder = folders.pop(0)
+                        cacheable_results[folders[0]] = {'hosts': [], 'children': []}
+                        while len(folders) > 1:
+                            parent_folders.append(folders.pop(0))
+                            parent_folder_path = '/'.join(parent_folders)
+
                             if len(folders) > 1:
-                                self.inventory.add_group(folders[0])
-                                cacheable_results[parent_folder] = {'hosts': []}
-                                self.inventory.add_child(parent_folder, folders[0])
-                            elif len(folders) == 1:
-                                cacheable_results[parent_folder] = {'hosts': []}
-                                self.inventory.add_child(parent_folder, current_host)
+                                current_folder = folders[0]
+                                current_folder_path = parent_folder_path + '/' + current_folder
+                                if current_folder_path not in cacheable_results:
+                                    self.inventory.add_group(current_folder_path)
+                                    self.inventory.add_child(parent_folder_path, current_folder_path)
+                                    cacheable_results[parent_folder_path]['children'].append(current_folder_path)
+                                    cacheable_results[current_folder_path] = {'hosts': [], 'children': []}
                             else:
-                                pass
+                                cacheable_results[parent_folder_path]['hosts'].append(current_host)
+                                self.inventory.add_child(parent_folder_path, current_host)
 
         for host in hostvars:
             h = self.inventory.get_host(host)
