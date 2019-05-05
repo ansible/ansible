@@ -108,7 +108,7 @@ def syspatch_run(module):
 
     if module.check_mode:
         changed = change_pending
-    else:
+    elif change_pending:
         rc, out, err = module.run_command(cmd + run_flag)
 
         # Workaround syspatch ln bug:
@@ -117,6 +117,8 @@ def syspatch_run(module):
             module.fail_json(msg="Command %s failed rc=%d, out=%s, err=%s" % (cmd, rc, out, err))
         else:
             changed = True
+    else:
+        changed = False
 
     return dict(
         changed=changed
