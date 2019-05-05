@@ -2201,7 +2201,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     oom_killer: yes
     state: started
   register: oom_killer_1
-  ignore_errors: yes
 
 - name: oom_killer (idempotency)
   docker_container:
@@ -2211,7 +2210,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     oom_killer: yes
     state: started
   register: oom_killer_2
-  ignore_errors: yes
 
 - name: oom_killer (change)
   docker_container:
@@ -2222,7 +2220,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     state: started
     stop_timeout: 1
   register: oom_killer_3
-  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2235,12 +2232,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - oom_killer_1 is changed
     - oom_killer_2 is not changed
     - oom_killer_3 is changed
-  when: docker_py_version is version('2.0.0', '>=')
-- assert:
-    that:
-    - oom_killer_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_killer_1.msg"
-  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## oom_score_adj ###################################################
@@ -2254,7 +2245,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     oom_score_adj: 5
     state: started
   register: oom_score_adj_1
-  ignore_errors: yes
 
 - name: oom_score_adj (idempotency)
   docker_container:
@@ -2264,7 +2254,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     oom_score_adj: 5
     state: started
   register: oom_score_adj_2
-  ignore_errors: yes
 
 - name: oom_score_adj (change)
   docker_container:
@@ -2275,7 +2264,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     state: started
     stop_timeout: 1
   register: oom_score_adj_3
-  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2288,12 +2276,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - oom_score_adj_1 is changed
     - oom_score_adj_2 is not changed
     - oom_score_adj_3 is changed
-  when: docker_py_version is version('2.0.0', '>=')
-- assert:
-    that:
-    - oom_score_adj_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_score_adj_1.msg"
-  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## output_logs #####################################################
