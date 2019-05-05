@@ -64,6 +64,7 @@ options:
       - State of the access rule (present or absent). Defaults to present.
     type: str
     required: True
+    choices: ['present', 'absent']
   auto_publish_session:
     description:
       - Publish the current session if changes have been performed

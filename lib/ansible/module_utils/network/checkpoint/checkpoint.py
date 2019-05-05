@@ -47,7 +47,7 @@ checkpoint_argument_spec = dict(
     ignore_errors=dict(type='bool'),
     new_name=dict(type='str'),
     auto_publish_session=dict(type='bool'),
-    state=dict(type='str', required=True)
+    state=dict(type='str', required=True, choices=['present', 'absent'])
 )
 
 checkpoint_argument_spec_for_facts = dict(
