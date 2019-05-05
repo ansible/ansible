@@ -14,6 +14,10 @@
       state: present
       check_mode: yes
 
+  - name: Enable EVC mode on vCenter Cluster
+    vmware_evc_mode:
+      <<: *vmware_evc_data
+  
   - name: Disable EVC mode on vCenter Cluster
     vmware_evc_mode:
       <<: *vmware_evc_data
