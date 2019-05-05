@@ -486,7 +486,6 @@ options:
       - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are I(not) allowed. This
         is different from the C(docker) command line utility. Use the L(dig lookup,../lookup/dig.html)
         to resolve hostnames."
-      - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
       - A value of C(all) will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
