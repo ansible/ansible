@@ -102,26 +102,6 @@ import ssl
 import atexit
 from ansible.errors import AnsibleError, AnsibleParserError
 
-# Overwrite _ALWAYS_SAFE to only include letters and number
-# so that everything is correctly quoted
-try:
-    # python3
-    import urllib.parse
-    urllib.parse._ALWAYS_SAFE = frozenset(b'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                                 b'abcdefghijklmnopqrstuvwxyz'
-                                 b'0123456789')
-    urllib.parse._ALWAYS_SAFE_BYTES = bytes(urllib.parse._ALWAYS_SAFE)
-except ImportError:
-    # python2
-    import urllib
-    urllib.always_safe = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                          'abcdefghijklmnopqrstuvwxyz'
-                          '0123456789')
-    urllib._safe_map = {}
-    for i, c in zip(xrange(256), str(bytearray(xrange(256)))):
-        urllib._safe_map[c] = c if (i < 128 and c in urllib.always_safe) else '%{:02X}'.format(i)
-    urllib.parse = urllib # face pyton3 structure, so that python3 syntax can be used afterwards
-
 try:
     # requests is required for exception handling of the ConnectionError
     import requests
@@ -145,6 +125,26 @@ except ImportError:
 
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+
+# Overwrite _ALWAYS_SAFE to only include letters and number
+# so that everything is correctly quoted
+try:
+    # python3
+    import urllib.parse
+    urllib.parse._ALWAYS_SAFE = frozenset(b'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                                 b'abcdefghijklmnopqrstuvwxyz'
+                                 b'0123456789')
+    urllib.parse._ALWAYS_SAFE_BYTES = bytes(urllib.parse._ALWAYS_SAFE)
+except ImportError:
+    # python2
+    import urllib
+    urllib.always_safe = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                          'abcdefghijklmnopqrstuvwxyz'
+                          '0123456789')
+    urllib._safe_map = {}
+    for i, c in zip(xrange(256), str(bytearray(xrange(256)))):
+        urllib._safe_map[c] = c if (i < 128 and c in urllib.always_safe) else '%{:02X}'.format(i)
+    urllib.parse = urllib # fake pyton3 structure, so that python3 syntax can be used afterwards
 
 
 class BaseVMwareInventory:
