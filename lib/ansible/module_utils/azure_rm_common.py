@@ -537,25 +537,29 @@ class AzureRMModuleBase(object):
                 self.fail("Error {0} has a provisioning state of {1}. Expecting state to be {2}.".format(
                     azure_object.name, azure_object.provisioning_state, AZURE_SUCCESS_STATE))
 
-    def get_blob_client(self, resource_group_name, storage_account_name, storage_blob_type='block'):
+    def get_blob_client(self, resource_group_name, storage_account_name, provided_access_key=None, storage_blob_type='block'):
         keys = dict()
         try:
             # Get keys from the storage account
             self.log('Getting keys')
             account_keys = self.storage_client.storage_accounts.list_keys(resource_group_name, storage_account_name)
+            account_key = account_keys.keys[0].value
         except Exception as exc:
-            self.fail("Error getting keys for account {0} - {1}".format(storage_account_name, str(exc)))
+            if provided_access_key is not None:
+                account_key = provided_access_key
+            else:
+                self.fail("Error getting keys for account {0} - {1}".format(storage_account_name, str(exc)))
 
         try:
             self.log('Create blob service')
             if storage_blob_type == 'page':
                 return PageBlobService(endpoint_suffix=self._cloud_environment.suffixes.storage_endpoint,
                                        account_name=storage_account_name,
-                                       account_key=account_keys.keys[0].value)
+                                       account_key=account_key)
             elif storage_blob_type == 'block':
                 return BlockBlobService(endpoint_suffix=self._cloud_environment.suffixes.storage_endpoint,
                                         account_name=storage_account_name,
-                                        account_key=account_keys.keys[0].value)
+                                        account_key=account_key)
             else:
                 raise Exception("Invalid storage blob type defined.")
         except Exception as exc:

@@ -111,6 +111,11 @@ options:
         choices:
             - container
             - blob
+    access_key:
+        description:
+            - Use access key to authenticate your applications.
+            - Required when making requests to the storage account in other subscription
+        version_added: "2.9"
 
 extends_documentation_fragment:
     - azure
@@ -213,6 +218,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
             content_disposition=dict(type='str'),
             cache_control=dict(type='str'),
             content_md5=dict(type='str'),
+            access_key=dict(type='str')
         )
 
         mutually_exclusive = [('src', 'dest')]
@@ -232,6 +238,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         self.state = None
         self.tags = None
         self.public_access = None
+        self.access_key = None
         self.results = dict(
             changed=False,
             actions=[],
@@ -253,7 +260,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
         # add file path validation
 
-        self.blob_client = self.get_blob_client(self.resource_group, self.storage_account_name, self.blob_type)
+        self.blob_client = self.get_blob_client(self.resource_group, self.storage_account_name, self.access_key, self.blob_type)
         self.container_obj = self.get_container()
 
         if self.blob is not None:
