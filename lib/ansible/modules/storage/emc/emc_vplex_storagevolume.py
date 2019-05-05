@@ -22,8 +22,13 @@ author:
 options:
     ansible_module_logpath:
         description:
-            - Path of emc_vplex_storagevolume module log
+            - Path of emc_vplex_storagevolume module log directory
         required: true
+    state:
+        description:
+            - States of storage-volume on VPLEX
+        default: present
+        choices: [ absent, present ]
     vplex_ip_address:
         description:
             - IP Address of VPLEX management server to create storage-volume
@@ -57,6 +62,8 @@ options:
 EXAMPLES = r'''
 - name: Create storage-volume on VPLEX
   emc_vplex_storagevolume:
+    ansible_module_logpath: /var/log/emc_vplex_storagevolume
+    state: present
     vplex_ip_address: 10.10.10.2
     vplex_username: service
     vplex_password: password
@@ -102,10 +109,17 @@ def claim_storage_volume(vplex, volume_name, vpd_id):
     response = vplex.https_post(urlsuffix=claim_uri, data=claiming_data)
     return response
 
+def unclaim_storage_volume(vplex, volume_name):
+    unclaim_uri = '/vplex/storage-volume+unclaim'
+    unclaiming_data = '{\"args\":\"-n ' + volume_name + ' -f\"}'
+    response = vplex.https_post(urlsuffix=unclaim_uri, data=unclaiming_data)
+    return response
+
 
 def main():
     argument_spec = {
         "ansible_module_logpath": dict(type="str", required=True),
+        "state": dict(type='str', default='present', choices=['absent', 'present']),
         "vplex_ip_address": dict(type="str", required=True),
         "vplex_username": dict(type="str", required=True),
         "vplex_password": dict(type="str", required=True),
@@ -139,6 +153,7 @@ def main():
     volume_name = module.params["volume_name"]
     array_name = module.params['array_name']
     vpd_id = module.params["vpd_id"]
+    state = module.params["state"]
 
     vplex = VPLEX(
         ip_address=module.params["vplex_ip_address"],
@@ -148,7 +163,6 @@ def main():
     # --- if S/N differs from expected, exit the program
     if not vplex.confirm_vplex_serial_number(expect_serial_number=module.params["vplex_serialnum"]):
         module.fail_json(msg='Target system S/N and expected ones are different. Exit the module wihtout any operations.')
-    # --- if same as expected, proceed to play
 
     # Check LUN on backend storage-array are exposed to VPLEX or not
     logger.info('Getting exposed storage-volumes on VPLEX')
@@ -165,18 +179,32 @@ def main():
         except Exception:
             module.fail_json(msg='Failed to array re-discover')
 
-    # Check provided storage-volume name exists
-    if volume_name in storage_volumes:
-        module.fail_json(msg='Provided name of storage-volume have already configured on VPLEX. Please specifiy another name.')
-    else:
-        try:
-            claim_storage_volume(vplex=vplex, volume_name=volume_name, vpd_id=vpd_id)
-        except Exception:
-            module.fail_json(msg='Failed to claim storage-volumes. Retry playbook after checking backend volumes and masking on FC-Switches.')
+    if state == 'present':
+        # Check provided storage-volume name exists
+        if volume_name in storage_volumes:
+            module.fail_json(msg='Provided name of storage-volume have already configured on VPLEX. Please specifiy another name.')
         else:
-            logger.info('Successfully claim storage-volumes.')
-            get_storage_volume_info(vplex=vplex, name=volume_name, is_all=False)
-            module.exit_json(changed=True)
+            try:
+                claim_storage_volume(vplex=vplex, volume_name=volume_name, vpd_id=vpd_id)
+            except Exception:
+                module.fail_json(msg='Failed to claim storage-volumes. Retry playbook after checking backend volumes and masking on FC-Switches.')
+            else:
+                logger.info('Successfully claim storage-volume.')
+                get_storage_volume_info(vplex=vplex, name=volume_name, is_all=False)
+                module.exit_json(changed=True)
+
+    elif state == 'absent':
+        # Start to unclaim if state == absent provided
+        if volume_name not in storage_volumes:
+            module.fail_json(msg='Provided name of storage-volume does not exist on VPLEX.')
+        else:
+            try:
+                unclaim_storage_volume(vplex=vplex, volume_name=volume_name)
+            except Exception:
+                module.fail_json(msg='Failed to unclaim storage-volume. Retry playbook after reviewing VPLEX configurations.')
+            else:
+                logger.info('Successfully unclaim storage-volume.')
+                module.exit_json(changed=True)
 
 
 if __name__ == "__main__":
