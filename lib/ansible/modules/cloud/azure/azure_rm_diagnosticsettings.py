@@ -346,9 +346,10 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
                 if val.enabled is not None and val.enabled != results[results_name_dict.get(val.category)].enabled:
                     changed = True
                     results[results_name_dict.get(val.category)].enabled = val.enabled
-                if val.retention_policy is not None and val.retention_policy != results[results_name_dict.get(val.category)].retention_policy:
-                    changed = True
-                    results[results_name_dict.get(val.category)].retention_policy = val.retention_policy
+                if results[results_name_dict.get(val.category)].enabled:
+                    if val.retention_policy is not None and val.retention_policy != results[results_name_dict.get(val.category)].retention_policy:
+                        changed = True
+                        results[results_name_dict.get(val.category)].retention_policy = val.retention_policy
             else:
                 self.fail("Incrorrect metric or log category! Please check the exsitence of the category for this resource.")
         return changed, results

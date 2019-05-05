@@ -56,7 +56,6 @@
       retention_policy:
         enabled: yes
         days: 2
-  check_mode: yes
   register: output
 
 - name: Assert Create diagnostic settings for IP
@@ -71,11 +70,10 @@
     storage_account_id: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
-      enabled: false
+      enabled: yes
       retention_policy:
         enabled: yes
         days: 4
-  check_mode: yes
   register: output
 
 - name: Assert Update diagnostic settings for IP
@@ -90,11 +88,10 @@
     storage_account_id: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
-      enabled: false
+      enabled: yes
       retention_policy:
         enabled: yes
         days: 4
-  check_mode: yes
   register: output
 
 - name: Assert Update diagnostic settings for IP (idempotence)
