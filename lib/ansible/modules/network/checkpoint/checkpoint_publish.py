@@ -27,10 +27,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_install_policy
-short_description: Install policy on Checkpoint devices over Web Services API
+module: checkpoint_publish
+short_description: publish session on Checkpoint devices over Web Services API
 description:
-  - Install policy on Checkpoint devices.
+  - Publish session on Checkpoint devices.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -47,8 +47,8 @@ EXAMPLES = """
 """
 
 RETURN = """
-checkpoint_install_policy:
-  description: The checkpoint install policy output.
+checkpoint_publish:
+  description: The checkpoint publish output.
   returned: always.
   type: str
 """
