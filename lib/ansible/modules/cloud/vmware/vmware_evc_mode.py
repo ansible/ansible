@@ -133,15 +133,15 @@ class VMwareEVC(PyVmomi):
         try:
             self.datacenter = find_datacenter_by_name(self.content, self.datacenter_name)
             if self.datacenter is None:
-                self.module.fail_json(msg="Datacenter %s does not exist." % self.datacenter_name)
+                self.module.fail_json(msg="Datacenter '%s' does not exist." % self.datacenter_name)
             self.cluster = self.find_cluster_by_name(cluster_name=self.cluster_name)
 
             if self.cluster is None:
-                self.module.fail_json(msg="Cluster %s does not exist." % self.cluster_name)
+                self.module.fail_json(msg="Cluster '%s' does not exist." % self.cluster_name)
             self.evcm = self.cluster.EvcManager()
 
             if not self.evcm:
-                self.module.fail_json(msg="Unable to get EVC manager for cluster %s." % self.cluster_name)
+                self.module.fail_json(msg="Unable to get EVC manager for cluster '%s'." % self.cluster_name)
             self.evc_state = self.evcm.evcState
             self.current_evc_mode = self.evc_state.currentEVCModeKey
 
