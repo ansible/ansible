@@ -105,6 +105,27 @@
   assert:
     that: mongodb_replicaset.changed == False
 
+- name: Test with bad password
+  mongodb_replicaset:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: XXXXXXXXXXXXXXXX
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset1 }}"
+    members:
+     - "localhost:3001"
+     - "localhost:3002"
+     - "localhost:3003"
+  register: mongodb_replicaset_bad_pw
+  ignore_errors: True
+
+- name: Assert replicaset name has not changed
+  assert:
+    that:
+      - "mongodb_replicaset_bad_pw.rc == 1"
+      - "'Authentication failed' in mongodb_replicaset_bad_pw.module_stderr"
+    
   #############################################################
 
 - include_tasks: mongod_teardown.yml
@@ -423,3 +444,27 @@
       - "'localhost:3003' in mongo_output.stdout"
       - "'electionTimeoutMillis\" : 9000,' in mongo_output.stdout"
   when: mongodb_version.startswith('4') == True
+
+# Test with heartbeatTimeoutSecs
+- name: Run test with unknown host
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "idonotexist"
+    login_port: 3001
+    login_database: "admin"
+    protocol_version: 0
+    heartbeat_timeout_secs: 9
+    replica_set: "{{ mongodb_replicaset8 }}"
+    members:
+      - idonotexist:3001
+      - idonotexist:3002
+      - idonotexist:3003
+  ignore_errors: True
+  register: host_does_not_exist
+
+- name: Assert that "Name or service not known" is in error
+  assert:
+    that:
+      - "host_does_not_exist.rc == 1"
+      - "'Name or service not known' in host_does_not_exist.module_stderr"
