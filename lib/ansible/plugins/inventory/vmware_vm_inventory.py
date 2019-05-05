@@ -382,21 +382,31 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             self._cache[cache_key] = cacheable_results
 
     def _get_fullName(self, vm_obj_obj):
-        # This is based on the url schema VMware uses within the PowerCLI api
-        # but the PowerCLI url has collisions, as it uses slashes as folder name
-        # deliminator, but slashes can also occur within folder names themselves
-        # in the original these slashes are not escaped and the resulting path
-        # is inaccessible or even worse it overlays another path and the action
-        # could be performed on the vms within the wrong folder.
-        # To prevent this issue, every foldername within the folderpath gets
-        # urlencode before constructing
+        """
+          This is based on the url schema VMware uses within the PowerCLI api
+          but the PowerCLI url has collisions, as it uses slashes as folder name
+          deliminator, but slashes can also occur within folder names themselves
+          in the original these slashes are not escaped and the resulting path
+          is inaccessible or even worse it overlays another path and the action
+          could be performed on the vms within the wrong folder.
+          To prevent this issue, every foldername within the folderpath gets
+          urlencode before constructing
+          There is also an instanceUUID, but that is never shown to the user, so users
+          are not able to recognize the correct vm that way.
+          Not to be confuse with the uuid which is the UUID of the SMBios, it is not
+          guaranteed to be unique, as it does not necessarily change if a vm is imported
+          or copied.
+          VM names and folders are not restricted to specific characters either,
+          so foldernames need to be encoded first and transformed into a pseudo path.
+        """
         if(vm_obj_obj.parent):
             return self._get_fullName(vm_obj_obj.parent) + '/' + urllib.parse.quote_plus(vm_obj_obj.name, safe='')
         else:
             # For some reason the api returns 'Datencenter' (not Datacenter) as the
-            # root item, but VMware has also not included it within there path schema.
-            # Instead they have added the hostname and the port of the instance
-            # So why not mirror that?
+            # root item, but VMware has also not included it within there path schema,
+            # instead they have added the hostname and the port of the instance.
+            # So why not mirror that as well?
+            # That way we can differentiate vms between multiple isolated vmware instances.
             return 'vis:/' + self.pyv.hostname + '@' + str(self.pyv.port)
 
     def _populate_from_cache(self, source_data):
@@ -441,8 +451,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         for vm_obj in objects:
             for vm_obj_property in vm_obj.propSet:
-                # VMware does not provide a way to uniquely identify VM by its name
+                # VMware does not provide a way to uniquely identify a VM by its name
                 # i.e. there can be two virtual machines with same name
+                # The full name instead is unique and recognizable to users.
                 current_host = self._get_fullName(vm_obj.obj)
 
                 if current_host not in hostvars:
