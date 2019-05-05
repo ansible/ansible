@@ -165,3 +165,73 @@ def test_get_failover_fail(monkeypatch, ip, return_value, result):
 
     assert exc.value.fail_msg == result
     assert exc.value.fail_kwargs == dict()
+
+
+# ########################################################################################
+
+SET_FAILOVER_SUCCESS = [
+    (
+        '1.2.3.4',
+        '1.1.1.1',
+        (None, dict(
+            body=json.dumps(dict(
+                failover=dict(
+                    active_server_ip='1.1.1.2',
+                )
+            )).encode('utf-8'),
+        )),
+        ('1.1.1.2', True)
+    ),
+    (
+        '1.2.3.4',
+        '1.1.1.1',
+        (None, dict(
+            body=json.dumps(dict(
+                error=dict(
+                    code="FAILOVER_ALREADY_ROUTED",
+                    status=400,
+                    message="Failover already routed",
+                ),
+            )).encode('utf-8'),
+        )),
+        ('1.1.1.1', False)
+    ),
+]
+
+
+SET_FAILOVER_FAIL = [
+    (
+        '1.2.3.4',
+        '1.1.1.1',
+        (None, dict(
+            body=json.dumps(dict(
+                error=dict(
+                    code="foo",
+                    status=400,
+                    message="bar",
+                ),
+            )).encode('utf-8'),
+        )),
+        'Request failed: 400 foo (bar)'
+    ),
+]
+
+
+@pytest.mark.parametrize("ip, value, return_value, result", SET_FAILOVER_SUCCESS)
+def test_set_failover(monkeypatch, ip, value, return_value, result):
+    module = get_module_mock()
+    hetzner_failover_ip.fetch_url = MagicMock(return_value=return_value)
+
+    assert hetzner_failover_ip.set_failover(module, ip, value) == result
+
+
+@pytest.mark.parametrize("ip, value, return_value, result", SET_FAILOVER_FAIL)
+def test_set_failover_fail(monkeypatch, ip, value, return_value, result):
+    module = get_module_mock()
+    hetzner_failover_ip.fetch_url = MagicMock(return_value=return_value)
+
+    with pytest.raises(ModuleFailException) as exc:
+        hetzner_failover_ip.set_failover(module, ip, value)
+
+    assert exc.value.fail_msg == result
+    assert exc.value.fail_kwargs == dict()
