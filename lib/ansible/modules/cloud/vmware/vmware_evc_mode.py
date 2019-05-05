@@ -172,8 +172,7 @@ class VMwareEVC(PyVmomi):
                 changed, result = True, None
             if self.current_evc_mode == self.evc_mode:
                 self.module.exit_json(changed=changed, msg="EVC Mode is already set to '%(evc_mode)s' on '%(cluster_name)s'." % self.params)
-            else:
-                self.module.exit_json(changed=changed, msg="EVC Mode has been updated to '%(evc_mode)s' on '%(cluster_name)s'." % self.params)
+            self.module.exit_json(changed=changed, msg="EVC Mode has been updated to '%(evc_mode)s' on '%(cluster_name)s'." % self.params)
         except TaskError as invalid_argument:
             self.module.fail_json(msg="Failed to update EVC mode: %s" % to_native(invalid_argument))
 
