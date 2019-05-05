@@ -237,14 +237,9 @@ class HwcModule(AnsibleModule):
                     fallback=(env_fallback, ['ANSIBLE_HWC_PROJECT']),
                 ),
                 region=dict(
-                    required=True, type='str',
+                    type='str',
                     fallback=(env_fallback, ['ANSIBLE_HWC_REGION']),
                 ),
-                timeouts=dict(type='dict', options=dict(
-                    create=dict(default='10m', type='str'),
-                    update=dict(default='10m', type='str'),
-                    delete=dict(default='10m', type='str'),
-                ), default={}),
                 id=dict(type='str')
             )
         )
@@ -426,7 +421,7 @@ def get_region(module):
     if module.params['region']:
         return module.params['region']
 
-    return module.params['project_name'].split("_")[0]
+    return module.params['project'].split("_")[0]
 
 
 def is_empty_value(v):

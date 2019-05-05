@@ -34,6 +34,27 @@ options:
         type: str
         choices: ['present', 'absent']
         default: 'present'
+    timeouts:
+        description:
+            - The timeouts for each operations.
+        type: dict
+        version_added: '2.9'
+        suboptions:
+            create:
+                description:
+                    - The timeout for create operation.
+                type: str
+                default: '15m'
+            update:
+                description:
+                    - The timeout for update operation.
+                type: str
+                default: '15m'
+            delete:
+                description:
+                    - The timeout for delete operation.
+                type: str
+                default: '15m'
     name:
         description:
             - the name of vpc.
@@ -129,6 +150,11 @@ def main():
         argument_spec=dict(
             state=dict(
                 default='present', choices=['present', 'absent'], type='str'),
+            timeouts=dict(type='dict', options=dict(
+                create=dict(default='15m', type='str'),
+                update=dict(default='15m', type='str'),
+                delete=dict(default='15m', type='str'),
+            ), default=dict()),
             name=dict(required=True, type='str'),
             cidr=dict(required=True, type='str')
         ),
