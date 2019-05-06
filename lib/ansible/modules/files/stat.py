@@ -453,6 +453,7 @@ def main():
     checksum_algorithm = module.params.get('checksum_algorithm')
 
     #NOTE: undocumented option since 2.9 to be removed at a later date if possible (3.0+)
+    # no real reason for keeping other than fear we may break older content.
     get_md5 = module.params.get('get_md5')
 
     # main stat data
