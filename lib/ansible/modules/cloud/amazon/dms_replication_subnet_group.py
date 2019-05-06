@@ -40,7 +40,7 @@ options:
         - The description for the subnet group.
     subnetids:
       description:
-        - A list containing the subnet ids for the replication subnet group
+        - A list containing the subnet ids for the replication subnet group, needs to be at least 2 items in the list
 author:
    - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment: aws
@@ -51,7 +51,7 @@ EXAMPLES = '''
     state: present
     subnetgroupidentifier: "dev-sngroup"
     subnetgroupdescription: "Development Subnet Group asdasdas"
-    subnetids: ['subnet-041d3373','subnet-59888e3c']
+    subnetids: ['subnet-id1','subnet-id2']
 '''
 
 RETURN = ''' # '''
