@@ -70,7 +70,7 @@ options:
    datacenter:
      description:
      - Destination datacenter for the deploy operation
-     required: True
+     required: False
    tags:
      description:
      - Whether to show tags or not.
@@ -223,7 +223,7 @@ def main():
         uuid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
-        datacenter=dict(type='str', required=True),
+        datacenter=dict(type='str', required=False),
         tags=dict(type='bool', default=False),
         schema=dict(type='str', choices=['summary', 'vsphere'], default='summary'),
         properties=dict(type='list')
