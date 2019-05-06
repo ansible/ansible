@@ -760,7 +760,6 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     if not os.path.exists(b_src):
         raise AnsibleModuleError(results={'msg': 'src does not exist', 'dest': path, 'src': src})
 
-
     diff = initial_diff(path, 'hard', prev_state)
     changed = False
 
