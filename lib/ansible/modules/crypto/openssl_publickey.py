@@ -59,6 +59,11 @@ options:
             - The passphrase for the private key.
         type: str
         version_added: "2.4"
+    comment:
+        description:
+            - A comment to append to the public key
+        type: str
+        version_added: "2.8"
     backup:
         description:
             - Create a backup file including a timestamp so you can get the original
@@ -181,6 +186,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
         self.privatekey = None
         self.fingerprint = {}
 
+        self.pubkey_comment = module.params['comment']
+
         self.backup = module.params['backup']
         self.backup_file = None
 
@@ -214,6 +221,10 @@ class PublicKey(crypto_utils.OpenSSLObject):
 
                 if self.backup:
                     self.backup_file = module.backup_local(self.path)
+
+                if self.pubkey_comment is not None:
+                    publickey_content = publickey_content + (" " + self.pubkey_comment).encode('utf-8')
+
                 crypto_utils.write_file(module, publickey_content)
 
                 self.changed = True
@@ -288,6 +299,9 @@ class PublicKey(crypto_utils.OpenSSLObject):
         if self.backup_file:
             result['backup_file'] = self.backup_file
 
+        if self.pubkey_comment:
+            result['comment'] = self.pubkey_comment
+
         return result
 
 
@@ -302,6 +316,7 @@ def main():
             format=dict(type='str', default='PEM', choices=['OpenSSH', 'PEM']),
             privatekey_passphrase=dict(type='str', no_log=True),
             backup=dict(type='bool', default=False),
+            comment=dict(type='str', default=None),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
