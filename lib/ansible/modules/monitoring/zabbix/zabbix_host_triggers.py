@@ -75,20 +75,9 @@ author:
     - "Stéphane Travassac (@stravassac)"
 requirements:
     - "python >= 2.7"
-    - zabbix-api
+    - "zabbix-api"
+    - "zabbix-api >= 0.5.3"
 options:
-    server_url:
-        description:
-            - Url of Zabbix.
-        required: true
-    login_user:
-        description:
-            - Login of Zabbix.
-        required: true
-    login_password:
-        description:
-            - Password of Zabbix.
-        required: true
     host_identifier:
         description:
             - Identifier of Zabbix Host
@@ -106,9 +95,15 @@ options:
     trigger_severity:
         description:
             - Zabbix severity for search filter
-        default: 3
+        default: average
         required: false
-        type: int
+        choices:
+            - not_classified
+            - information
+            - warning
+            - average
+            - high
+            - disaster
     timeout:
         description:
             - timeout before fail
@@ -121,6 +116,8 @@ options:
         default: true
         required: true
         type: bool
+extends_documentation_fragment:
+    - zabbix
 '''
 
 EXAMPLES = '''
@@ -143,18 +140,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, no higher version so far),
-    # it does not support the 'hostinterface' api calls,
-    # so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
-
-    class ZabbixAPIExtends(ZabbixAPI):
-        hostinterface = None
-
-        def __init__(self, server, timeout, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, validate_certs=validate_certs)
-            self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
-
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
@@ -197,15 +182,21 @@ class Host(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(type='str', required=True),
+            server_url=dict(type='str', required=True, aliases=['url']),
             login_user=dict(type='str', required=True),
             login_password=dict(type='str', required=True, no_log=True),
+            http_login_user=dict(type='str', required=False, default=None),
+            http_login_password=dict(type='str', required=False, default=None, no_log=True),
             host_identifier=dict(type='str', default='hostname', required=False),
             host_id_type=dict(
                 default='hostname',
                 type='str',
                 choices=['hostname', 'visible_name', 'hostid']),
-            trigger_severity=dict(type='int', required=False, default=3),
+            trigger_severity=dict(
+                type='str',
+                required=False,
+                default='average',
+                choices=['not_classified', 'information', 'warning', 'average', 'high', 'disaster']),
             validate_certs=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', default=10),
 
@@ -216,20 +207,24 @@ def main():
     if not HAS_ZABBIX_API:
         module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
+    trigger_severity_map = {'not_classified': 0, 'information': 1, 'warning': 2, 'average': 3, 'high': 4, 'disaster': 5}
     server_url = module.params['server_url']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
+    http_login_user = module.params['http_login_user']
+    http_login_password = module.params['http_login_password']
     validate_certs = module.params['validate_certs']
     host_id = module.params['host_identifier']
     host_id_type = module.params['host_id_type']
-    trigger_severity = module.params['trigger_severity']
+    trigger_severity = trigger_severity_map[module.params['trigger_severity']]
     timeout = module.params['timeout']
 
     host_inventory = 'hostid'
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
