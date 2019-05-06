@@ -1,0 +1,13 @@
+---
+- debug: msg="START netconf_config iosxr/basic.yaml on connection={{ ansible_connection }}"
+
+- name: save config test
+  netconf_config:
+    backup: yes
+  register: result
+
+- assert:
+    that:
+      - "'backup_path' in result"
+
+- debug: msg="END netconf_config iosxr/basic.yaml on connection={{ ansible_connection }}"
