@@ -144,7 +144,7 @@ def parse_commands(module, warnings):
             )
         elif item['command'].startswith('conf'):
             warnings.append(
-                'commands run in config mode with aireos_command are not'
+                'commands run in config mode with aireos_command are not '
                 'idempotent.  Please use aireos_config instead'
             )
     return commands
