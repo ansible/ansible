@@ -28,15 +28,15 @@ options:
     certificate:
         description:
           - Certificate that should be used to create the key store.
-        required: false
+        required: true
     private_key:
         description:
           - Private key that should be used to create the key store.
-        required: false
+        required: true
     password:
         description:
           - Password that should be used to secure the key store.
-        required: false
+        required: true
     dest:
         description:
           - Absolute path where the jks should be generated.
