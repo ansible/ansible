@@ -1,1 +1,3 @@
 shippable/posix/group2
+needs/file/requirements.txt
+needs/file/test/runner/requirements/constraints.txt
