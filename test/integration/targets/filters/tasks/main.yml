@@ -173,6 +173,11 @@
         that:
           - '"{{ item.pass | password_hash(item.algo, item.salt) }}" == "{{ item.result }}"'
       loop: "{{ passwords }}"
+    - name: Passwords default to random salt
+      assert:
+        that:
+          - '"{{ item.pass | password_hash(item.algo) }}" != "{{ item.pass | password_hash(item.algo) }}"'
+      loop: "{{ passwords }}"
 
 - debug:
     var: "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit"
