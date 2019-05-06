@@ -306,6 +306,7 @@ options:
         description:
             - Accept terms for marketplace images that require it
             - Only Azure service admin/account admin users can purchase images from the marketplace
+            - C(plan) must be set when C(accept_terms) is true
         type: bool
         default: false
         version_added: "2.7"
