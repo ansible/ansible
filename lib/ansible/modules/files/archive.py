@@ -160,6 +160,7 @@ expanded_exclude_paths:
 '''
 
 import bz2
+import filecmp
 import glob
 import gzip
 import io
@@ -386,15 +387,28 @@ def main():
                                 for filename in filenames:
                                     fullpath = dirpath + filename
                                     arcname = match_root.sub('', fullpath)
-                                    try:
-                                        if format == 'zip':
-                                            arcfile.write(fullpath, arcname)
-                                        else:
-                                            arcfile.add(fullpath, arcname, recursive=False)
 
-                                        successes.append(fullpath)
-                                    except Exception as e:
-                                        errors.append('Adding %s: %s' % (path, to_native(e)))
+                                    # # filcmp returns True for a file that is empty
+                                    # fullpath_size = os.stat(fullpath).st_size
+                                    # dest_size = os.stat(dest).st_size
+
+                                    # if fullpath_size
+
+                                    # write_conditions = [
+                                    #     fullpath_size != dest_size,
+
+                                    # ]
+                                    # import q; q(fullpath, dest, filecmp.cmp(fullpath, dest))
+                                    if not filecmp.cmp(fullpath, dest):
+                                        try:
+                                            if format == 'zip':
+                                                arcfile.write(fullpath, arcname)
+                                            else:
+                                                arcfile.add(fullpath, arcname, recursive=False)
+
+                                            successes.append(fullpath)
+                                        except Exception as e:
+                                            errors.append('Adding %s: %s' % (path, to_native(e)))
                         else:
                             if format == 'zip':
                                 arcfile.write(path, match_root.sub('', path))
