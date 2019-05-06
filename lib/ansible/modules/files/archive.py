@@ -160,7 +160,6 @@ expanded_exclude_paths:
 '''
 
 import bz2
-import filecmp
 import glob
 import gzip
 import io
@@ -387,17 +386,15 @@ def main():
                                 for filename in filenames:
                                     fullpath = dirpath + filename
                                     arcname = match_root.sub('', fullpath)
+                                    try:
+                                        if format == 'zip':
+                                            arcfile.write(fullpath, arcname)
+                                        else:
+                                            arcfile.add(fullpath, arcname, recursive=False)
 
-                                    if not filecmp.cmp(fullpath, dest):
-                                        try:
-                                            if format == 'zip':
-                                                arcfile.write(fullpath, arcname)
-                                            else:
-                                                arcfile.add(fullpath, arcname, recursive=False)
-
-                                            successes.append(fullpath)
-                                        except Exception as e:
-                                            errors.append('Adding %s: %s' % (path, to_native(e)))
+                                        successes.append(fullpath)
+                                    except Exception as e:
+                                        errors.append('Adding %s: %s' % (path, to_native(e)))
                         else:
                             if format == 'zip':
                                 arcfile.write(path, match_root.sub('', path))
