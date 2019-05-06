@@ -1152,6 +1152,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
