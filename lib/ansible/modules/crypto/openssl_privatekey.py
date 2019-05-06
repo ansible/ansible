@@ -103,7 +103,9 @@ options:
         version_added: "2.4"
     cipher:
         description:
-            - The cipher to encrypt the private key. (cipher can be found by running `openssl list-cipher-algorithms`)
+            - The cipher to encrypt the private key. (Valid values can be found by
+              running `openssl list -cipher-algorithms` or `openssl list-cipher-algorithms`,
+              depending on your OpenSSL version.)
             - When using the C(cryptography) backend, use C(auto).
         type: str
         version_added: "2.4"
