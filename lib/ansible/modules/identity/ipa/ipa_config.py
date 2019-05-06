@@ -81,7 +81,6 @@ def get_config_dict(ipadefaultloginshell=None, ipadefaultemaildomain=None, ipado
     if ipadomainresolutionorder is not None:
         config['ipadomainresolutionorder'] = ipadomainresolutionorder
 
-
     return config
 
 
