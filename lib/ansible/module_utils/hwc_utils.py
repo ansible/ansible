@@ -310,13 +310,9 @@ class _DictComparison(object):
         elif isinstance(value1, dict) and isinstance(value2, dict):
             return self._compare_dicts(value1, value2)
 
-        try:
-            # Always use to_text values to avoid unicode issues.
-            # to_text may throw UnicodeErrors. These errors shouldn't crash
-            # Ansible and return False as default.
-            return to_text(value1) == to_text(value2)
-        except (UnicodeError, Exception):
-            return False
+        # Always use to_text values to avoid unicode issues.
+        return (to_text(value1, errors='surrogate_or_strict') == to_text(
+            value2, errors='surrogate_or_strict'))
 
 
 def wait_to_finish(target, pending, refresh, timeout, min_interval=1, delay=3):
@@ -367,6 +363,9 @@ def navigate_value(data, index, array_index=None):
 
     d = data
     for n in range(len(index)):
+        if d is None:
+            return None
+
         if not isinstance(d, dict):
             raise HwcModuleException(
                 "can't navigate value from a non-dict object")
@@ -383,6 +382,9 @@ def navigate_value(data, index, array_index=None):
         k = ".".join(index[: (n + 1)])
         if k not in array_index:
             continue
+
+        if d is None:
+            return None
 
         if not isinstance(d, list):
             raise HwcModuleException(
