@@ -124,6 +124,56 @@
       - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
       - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
 
+- name: Test password_hash filter
+  vars:
+    passwords:
+      - pass: 'hash'
+        algo: 'md5'
+        result: '$1$somesalt$O6svGriNmsz3R1fF/cFvh1'
+        salt: 'somesalt'
+      - pass: 'hash'
+        algo: 'sha1'
+        result: '$sha1$80$somesaltsomesalt$h7lwE0gVsklfEnUUth/XHjatn1DG'
+        salt: 'somesaltsomesalt'
+      - pass: 'hash'
+        algo: 'sha256'
+        result: '$5$somesaltsomesalt$htweuBbEINJNtSRltQ3nKa.yr/K64Nor4cqL526jaO1'
+        salt: 'somesaltsomesalt'
+      - pass: 'hash'
+        algo: 'sha512'
+        result: '$6$somesaltsomesalt$UXKSWGnhsHpsLOTx.Qe.Mi7qryzThIYDEaOYuD1izD7iPltWrZ2V57YxPNHACKVrvNH1hDmNBjQixoc6v2Bnv.'
+        salt: 'somesaltsomesalt'
+      - pass: 'hash'
+        algo: 'bcrypt'
+        result: '$2b$12$saltWith22Characters0u1uXyJT.dsFdme5PqlljM0R59E1XCwC2'
+        salt: 'saltWith22Characters00'
+      - pass: '*%!)0café'
+        algo: 'md5'
+        result: '$1$somesalt$H9oy8N8y2EQRPsOX2QAxq.'
+        salt: 'somesalt'
+      - pass: '*%!)0café'
+        result: '$sha1$80$somesaltsomesalt$D6BUIhnXSmk/OoWKOW9eI6UU.uFC'
+        algo: 'sha1'
+        salt: 'somesaltsomesalt'
+      - pass: '*%!)0café'
+        result: '$5$somesaltsomesalt$qt./ksLHkPeS6hbcL0apHqmZ237bu/9zgPHbE14b0Y8'
+        algo: 'sha256'
+        salt: 'somesaltsomesalt'
+      - pass: '*%!)0café'
+        result: '$6$somesaltsomesalt$A9Few/s0L/ZMntbQiAAHo.VN8bGjyFtgBHVURiPuyumhAldz0DpQu69KMR.5gJ4FAo.SLHLdfoffO.60w4yB61'
+        algo: 'sha512'
+        salt: 'somesaltsomesalt'
+      - pass: '*%!)0café'
+        result: '$2b$12$saltWith22Characters0udO85cENMyXfRbDHfY.b0bJEQrfUeMuO'
+        algo: 'bcrypt'
+        salt: 'saltWith22Characters00'
+  block:
+    - name: Test using static salt
+      assert:
+        that:
+          - '"{{ item.pass | password_hash(item.algo, item.salt) }}" == "{{ item.result }}"'
+      loop: "{{ passwords }}"
+
 - debug:
     var: "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit"
     verbosity: 1

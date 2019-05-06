@@ -4,6 +4,8 @@ set -eux
 
 source virtualenv.sh
 
+pip install bcrypt
+
 # Requirements have to be installed prior to running ansible-playbook
 # because plugins and requirements are loaded before the task runs
 
