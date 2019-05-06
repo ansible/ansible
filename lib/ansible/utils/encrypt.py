@@ -65,6 +65,7 @@ class BaseHash(object):
     algorithms = {
         'md5_crypt': algo(crypt_id='1', salt_size=8, implicit_rounds=None),
         'bcrypt': algo(crypt_id='2a', salt_size=22, implicit_rounds=None),
+        'sha1_crypt': algo(crypt_id='7', salt_size=16, implicit_rounds=80),
         'sha256_crypt': algo(crypt_id='5', salt_size=16, implicit_rounds=5000),
         'sha512_crypt': algo(crypt_id='6', salt_size=16, implicit_rounds=5000),
     }
