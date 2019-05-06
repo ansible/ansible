@@ -27,7 +27,7 @@ options:
     aliases: ["emaildomain"]
   ipadomainresolutionorder:
     description: colon-separated list of domains used for short name qualification
-    version_added: "2.9" 
+    version_added: "2.9"
 extends_documentation_fragment: ipa.documentation
 version_added: "2.7"
 '''
