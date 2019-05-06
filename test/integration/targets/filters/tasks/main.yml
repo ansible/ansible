@@ -146,6 +146,7 @@
       - pass: 'hash'
         algo: 'bcrypt'
         result: '$2b$12$saltWith22Characters0u1uXyJT.dsFdme5PqlljM0R59E1XCwC2'
+        result_alt: '$2a$12$saltWith22Characters0u1uXyJT.dsFdme5PqlljM0R59E1XCwC2'
         salt: 'saltWith22Characters00'
       - pass: '*%!)0café'
         algo: 'md5'
@@ -165,19 +166,21 @@
         salt: 'somesaltsomesalt'
       - pass: '*%!)0café'
         result: '$2b$12$saltWith22Characters0udO85cENMyXfRbDHfY.b0bJEQrfUeMuO'
+        result_alt: '$2a$12$saltWith22Characters0udO85cENMyXfRbDHfY.b0bJEQrfUeMuO'
         algo: 'bcrypt'
         salt: 'saltWith22Characters00'
   block:
     - name: Test using static salt
       assert:
         that:
-          - '"{{ item.pass | password_hash(item.algo, item.salt) }}" == "{{ item.result }}"'
+          - "{{ ( item.pass | password_hash(item.algo, item.salt) ) == item.result or ( item.pass | password_hash(item.algo, item.salt) ) == ( item.result_alt | default('') ) }}"
       loop: "{{ passwords }}"
     - name: Passwords default to random salt
       assert:
         that:
           - '"{{ item.pass | password_hash(item.algo) }}" != "{{ item.pass | password_hash(item.algo) }}"'
       loop: "{{ passwords }}"
+  tags: 'password_hash'
 
 - debug:
     var: "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit"
