@@ -20,9 +20,9 @@ module: include_role
 short_description: Load and execute a role
 description:
   - Dynamically loads and executes a specified role as a task.
-  - May be used only where Ansible tasks are allowed - inside C(pre_tasks:), C(tasks:), or C(post_tasks:) playbook objects, or as a task inside a role.
-  - Supports most keywords, including C(loop), C(with_items), and C(conditionals) (unlike M(import_role)).
-  - Does not support C(do_until) loops.
+  - May be used only where Ansible tasks are allowed - inside C(pre_tasks), C(tasks), or C(post_tasks) playbook objects, or as a task inside a role.
+  - Task-level keywords, L(loops,../user_guide/playbooks_loops.html), and L(conditionals,../user_guide/playbooks_conditionals.html) will be applied only to the C(include_role) statement itself. If you want the opposite behavior, use M(import_role) instead.
+  - The C(until) keyword, which retries a task until a condition is met, does not apply to C(include_role).
   - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
