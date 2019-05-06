@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
+
+
 
 DOCUMENTATION = '''
 ---
@@ -27,23 +29,28 @@ description:
 version_added: "2.9"
 options:
     state:
-      description:
-        - State of the subnet group
-      default: present
-      choices: ['present', 'absent']
+        description:
+            - State of the subnet group
+        default: present
+        choices: ['present', 'absent']
     subnetgroupidentifier:
-      description:
-        - The name for the replication subnet group. This value is stored as a lowercase string.
-          Must contain no more than 255 alphanumeric characters, periods, spaces, underscores, or hyphens. Must not be "default".
+        description:
+            - The name for the replication subnet group.
+              This value is stored as a lowercase string.
+              Must contain no more than 255 alphanumeric characters,
+              periods, spaces, underscores, or hyphens. Must not be "default".
     subnetgroupdescription:
-      description:
-        - The description for the subnet group.
+        description:
+            - The description for the subnet group.
     subnetids:
-      description:
-        - A list containing the subnet ids for the replication subnet group, needs to be at least 2 items in the list
+        description:
+            - A list containing the subnet ids for the replication subnet group,
+              needs to be at least 2 items in the list
 author:
-   - "Rui Moreira (@ruimoreira)"
-extends_documentation_fragment: aws
+    - "Rui Moreira (@ruimoreira)"
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
