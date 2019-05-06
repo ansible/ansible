@@ -28,7 +28,7 @@ options:
   ipadomainresolutionorder:
     description: colon-separated list of domains used for short name qualification
 extends_documentation_fragment: ipa.documentation
-version_added: "2.7"
+version_added: "2.9"
 '''
 
 EXAMPLES = '''
