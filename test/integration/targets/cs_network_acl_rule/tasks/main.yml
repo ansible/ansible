@@ -174,7 +174,9 @@
     traffic_type: egress
     action_policy: deny
     port: 81
-    cidr: 0.0.0.0/0
+    cidrs:
+    - 1.2.3.0/24
+    - 3.2.1.0/24
     zone: "{{ cs_common_zone_adv }}"
   register: acl_rule
   check_mode: true
@@ -189,6 +191,7 @@
     - acl_rule.end_port == 80
     - acl_rule.action_policy == "allow"
     - acl_rule.cidr == "0.0.0.0/0"
+    - acl_rule.cidrs == [ "0.0.0.0/0" ]
     - acl_rule.traffic_type == "ingress"
     - acl_rule.rule_position == 1
 
@@ -201,7 +204,9 @@
     action_policy: deny
     port: 81
     protocol: udp
-    cidr: 0.0.0.0/0
+    cidrs:
+    - 1.2.3.0/24
+    - 3.2.1.0/24
     zone: "{{ cs_common_zone_adv }}"
   register: acl_rule
 - name: verify test change network acl rule
@@ -214,7 +219,8 @@
     - acl_rule.start_port == 81
     - acl_rule.end_port == 81
     - acl_rule.action_policy == "deny"
-    - acl_rule.cidr == "0.0.0.0/0"
+    - acl_rule.cidr == "1.2.3.0/24,3.2.1.0/24"
+    - acl_rule.cidrs == [ "1.2.3.0/24", "3.2.1.0/24" ]
     - acl_rule.traffic_type == "egress"
     - acl_rule.protocol == "udp"
     - acl_rule.rule_position == 1
@@ -228,7 +234,9 @@
     action_policy: deny
     port: 81
     protocol: udp
-    cidr: 0.0.0.0/0
+    cidrs:
+    - 1.2.3.0/24
+    - 3.2.1.0/24
     zone: "{{ cs_common_zone_adv }}"
   register: acl_rule
 - name: verify test change network acl idempotence
@@ -241,7 +249,8 @@
     - acl_rule.start_port == 81
     - acl_rule.end_port == 81
     - acl_rule.action_policy == "deny"
-    - acl_rule.cidr == "0.0.0.0/0"
+    - acl_rule.cidr == "1.2.3.0/24,3.2.1.0/24"
+    - acl_rule.cidrs == [ "1.2.3.0/24", "3.2.1.0/24" ]
     - acl_rule.traffic_type == "egress"
     - acl_rule.protocol == "udp"
     - acl_rule.rule_position == 1
@@ -270,7 +279,7 @@
     - acl_rule.start_port == 81
     - acl_rule.end_port == 81
     - acl_rule.action_policy == "deny"
-    - acl_rule.cidr == "0.0.0.0/0"
+    - acl_rule.cidr == "1.2.3.0/24,3.2.1.0/24"
     - acl_rule.traffic_type == "egress"
     - acl_rule.protocol == "udp"
     - acl_rule.rule_position == 1
