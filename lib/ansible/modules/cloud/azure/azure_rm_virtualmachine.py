@@ -1282,7 +1282,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     # Before creating VM accept terms of plan if `accept_terms` is True
                     if self.accept_terms is True:
-                        if not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
+                        if not self.plan or not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
                             self.fail("parameter error: plan must be specified and include name, product, and publisher")
                         try:
                             plan_name = self.plan.get('name')
