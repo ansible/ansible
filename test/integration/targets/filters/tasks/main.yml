@@ -180,6 +180,18 @@
         that:
           - '"{{ item.pass | password_hash(item.algo) }}" != "{{ item.pass | password_hash(item.algo) }}"'
       loop: "{{ passwords }}"
+    - name: Register results of the password_hash filter
+      debug:
+        var: "{{ item.pass | password_hash('fake_algo') }}"
+      register: algo_error
+      ignore_errors: yes
+    - name: Error dialog shows for missing crypto algorithm
+      assert:
+        that:
+          - "'passlib does not support' in algo_error.msg"
+    - name: Rounds get set if defined in filter
+      debug:
+        msg: '{{ "supersecret" | password_hash("sha256_crypt", "somesalt", 8, 5000) }}'
   tags: 'password_hash'
 
 - debug:
