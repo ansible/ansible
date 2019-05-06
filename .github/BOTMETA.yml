@@ -1180,6 +1180,9 @@ files:
     maintainers: $team_networking
     labels: networking
   $plugins/httpapi/ftd.py: *ftd
+  $plugins/httpapi/vmware.py:
+    maintainers: $team_vmware_restapi
+    labels: vmware
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
@@ -1593,6 +1596,7 @@ macros:
   team_tower: ghjm matburt ryanpetrello rooftopcellist AlanCoding jladdjr kdelee chrismeyersfsu
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
   team_vmware: Akasurde warthog9 Tomorrow9 goneri pgbidkar
+  team_vmware_restapi: Akasurde goneri pgbidkar n3pjk
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
   team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
