@@ -255,7 +255,7 @@ class Cliconf(CliconfBase):
                 device_info['network_os_image'] = match.group(1)
         except AnsibleConnectionFailure:
             # This requires enable mode to run
-            pass
+            self._connection.queue_message('vvv', "Unable to gather network_os_image without enable mode")
 
         return device_info
 
