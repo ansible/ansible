@@ -1,0 +1,20 @@
+- hosts: testhost
+  gather_facts: no
+  vars:
+    foo: "{{ nested_undefined_variable }}"
+  tasks:
+    - name: Test lazy eval, evaluation of foo is not needed here
+      assert:
+        that:
+          - True or foo
+
+    - name: EXPECTED FAILURE Test lazy eval, this will fail on evaluation of foo
+      debug:
+      when:
+        - foo or True
+      register: fail_output
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - "\"'nested_undefined_variable' is undefined\" in fail_output.msg"
