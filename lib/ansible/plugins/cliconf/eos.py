@@ -247,10 +247,15 @@ class Cliconf(CliconfBase):
 
         device_info['network_os_hostname'] = data['hostname']
 
-        reply = self.get('bash timeout 5 cat /mnt/flash/boot-config')
-        match = re.search(r'SWI=(.+)$', reply, re.M)
-        if match:
-            device_info['network_os_image'] = match.group(1)
+        try:
+            reply = self.get('bash timeout 5 cat /mnt/flash/boot-config')
+
+            match = re.search(r'SWI=(.+)$', reply, re.M)
+            if match:
+                device_info['network_os_image'] = match.group(1)
+        except AnsibleConnectionFailure:
+            # This requires enable mode to run
+            self._connection.queue_message('vvv', "Unable to gather network_os_image without enable mode")
 
         return device_info
 
