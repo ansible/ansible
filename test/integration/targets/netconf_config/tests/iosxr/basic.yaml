@@ -11,4 +11,3 @@
       - "'backup_path' in result"
 
 - debug: msg="END netconf_config iosxr/basic.yaml on connection={{ ansible_connection }}"
-
