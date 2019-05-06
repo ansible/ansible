@@ -381,7 +381,7 @@ def main():
             if not module.check_mode:
                 conn.commit()
             result['changed'] = True
-        else:
+        elif config:
             if module.check_mode and not supports_commit:
                 module.warn("check mode not supported as Netconf server doesn't support candidate capability")
                 result['changed'] = True
