@@ -1,0 +1,2 @@
+bugfixes:
+- "mysql_user: fix regression introduced when fixing MariaDB/MySQL multiple versions handling"
