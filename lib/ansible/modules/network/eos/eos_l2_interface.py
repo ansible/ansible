@@ -215,7 +215,10 @@ def map_config_to_obj(module):
                    'output': 'text'}
         command_result = run_commands(module, command)
         if command_result[0] != "":
-            switchport_cfg = command_result[0].split(':')[1].strip()
+            try:
+                switchport_cfg = command_result[0].split(':')[1].strip()
+            except IndexError:
+                module.fail_json(msg="Failed to get switchport config, got: %s" % ''.join(command_result))
 
             if switchport_cfg == 'Enabled':
                 state = 'present'
