@@ -3,3 +3,4 @@ bugfixes:
 - Remove hardcoded ansible user for junos_user integration tests (https://github.com/ansible/ansible/pull/57650).
 - Fix junos integration zuul CI failures (https://github.com/ansible/ansible/pull/57309).
 - Fix in netconf plugin when data element is empty in xml response (https://github.com/ansible/ansible/pull/57981).
+- Fixes netconf_config single parameter bug (https://github.com/ansible/ansible/pull/56138).
