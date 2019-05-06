@@ -125,9 +125,7 @@ Function Get-ValidGeoIds($cultures) {
        try {
            $geo_id = [System.Globalization.RegionInfo]$culture.Name
            $geo_ids += $geo_id.GeoId
-       } catch {
-           Out-Null
-       }
+       } catch {}
    }
    $geo_ids
 }

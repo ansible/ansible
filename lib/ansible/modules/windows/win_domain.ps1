@@ -79,9 +79,7 @@ try {
     $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetForest($forest_context)
 } catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
     Add-Warning -obj $result -message "Error during forest query initialization: $($_.Exception.Message)"
-} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryOperationException] { i
-    Out-Null
-}
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryOperationException] { }
 
 if (-not $forest) {
     $result.changed = $true

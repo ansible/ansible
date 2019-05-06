@@ -265,7 +265,6 @@ if ($return_content -or $dest) {
                     $module.Result.json = ([Ansible.Basic.AnsibleModule]::FromJson($module.Result.content))
                 } catch [System.ArgumentException] {
                     # Simply continue, since 'text' might be anything
-                    Out-Null
                 }
             }
         }
