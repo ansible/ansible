@@ -1,0 +1,25 @@
+# Test code for the vmware evc mode module.
+# Copyright: (c) 2019, Michael Tipton <mike () ibeta.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+  - name: Enable EVC mode on vCenter Cluster
+    vmware_evc_mode: &vmware_evc_data
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      evc_mode: intel-broadwell
+      state: present
+      check_mode: yes
+
+  - name: Enable EVC mode on vCenter Cluster
+    vmware_evc_mode:
+      <<: *vmware_evc_data
+  
+  - name: Disable EVC mode on vCenter Cluster
+    vmware_evc_mode:
+      <<: *vmware_evc_data
+      state: absent
+      check_mode: yes
