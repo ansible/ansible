@@ -433,6 +433,7 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True),
             follow=dict(type='bool', default=False),
+            get_md5=dict(type='bool', default=False),
             get_checksum=dict(type='bool', default=True),
             get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
             get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
@@ -448,9 +449,11 @@ def main():
     follow = module.params.get('follow')
     get_mime = module.params.get('get_mime')
     get_attr = module.params.get('get_attributes')
-
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
+
+    #NOTE: undocumented option since 2.9 to be removed at a later date if possible (3.0+)
+    get_md5 = module.params.get('get_md5')
 
     # main stat data
     try:
@@ -491,6 +494,14 @@ def main():
 
     # checksums
     if output.get('isreg') and output.get('readable'):
+
+        #NOTE: see above about get_md5
+        if get_md5:
+            # Will fail on FIPS-140 compliant systems
+            try:
+                output['md5'] = module.md5(b_path)
+            except ValueError:
+                output['md5'] = None
 
         if get_checksum:
             output['checksum'] = module.digest_from_file(b_path, checksum_algorithm)
