@@ -1129,7 +1129,7 @@ def get_action_args_with_defaults(action, args, defaults, templar):
 
         # handle specific action defaults
         if action in module_defaults:
-            tmp_args.update(defaults[action].copy())
+            tmp_args.update(module_defaults[action].copy())
 
     # direct args override all
     tmp_args.update(args)
