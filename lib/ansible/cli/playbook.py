@@ -28,7 +28,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import add_dirs_to_loader
+from ansible.plugins.loader import add_all_plugin_dirs
 
 try:
     from __main__ import display
