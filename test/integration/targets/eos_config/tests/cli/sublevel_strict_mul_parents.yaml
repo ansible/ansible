@@ -53,12 +53,13 @@
   - name: Config sub level command with strict match (Idempotency)
     eos_config:
       lines:
-  #EOS does not change order of class action if reconfigured
-  #so we have to use old order for Idempotency
+        #EOS does not change order of class action if reconfigured
+        #so we have to use old order for Idempotency
         - set cos 1
         - set dscp 62
       parents: ['policy-map type qos p1', 'class c1']
       match: strict
+      diff_against: running
     register: result
     become: yes
 
