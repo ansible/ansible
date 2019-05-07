@@ -49,7 +49,7 @@
     hardware:
         num_cpus: 1
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ vm1 | dirname }}"
   register: vm_with_portgroup
   ignore_errors: no

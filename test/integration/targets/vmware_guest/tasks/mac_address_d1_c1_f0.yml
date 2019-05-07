@@ -24,7 +24,7 @@
           netmask: 255.255.255.0
           gateway: 192.168.10.254
           mac: aa:bb:cc:dd:aa:42
-    state: poweredoff
+    state: powered-off
     folder: vm
   register: clone_d1_c1_f0
 

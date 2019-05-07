@@ -22,7 +22,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: non_existent_network
   ignore_errors: yes
@@ -55,7 +55,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: no_netmask
   ignore_errors: yes
@@ -88,7 +88,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: no_ip
   ignore_errors: yes
@@ -121,7 +121,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: no_network_name
   ignore_errors: yes
@@ -154,7 +154,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: no_network
   ignore_errors: yes
@@ -188,7 +188,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: invalid_device_type
   ignore_errors: yes
@@ -223,7 +223,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: invalid_mac
   ignore_errors: yes
@@ -259,7 +259,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: invalid_network_type
   ignore_errors: yes
@@ -295,7 +295,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: invalid_dhcp_network_type
   ignore_errors: yes
@@ -326,7 +326,7 @@
     hardware:
         num_cpus: 3
         memory_mb: 512
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: no_network_type
   ignore_errors: yes

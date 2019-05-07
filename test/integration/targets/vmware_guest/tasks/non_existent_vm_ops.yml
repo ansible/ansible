@@ -11,7 +11,7 @@
     name: "non_existent_vm"
     datacenter: "{{ dc1 }}"
     folder: "{{ f0 }}"
-    state: poweredoff
+    state: powered-off
   register: non_existent_vm_ops
   ignore_errors: yes
 - debug: var=non_existent_vm_ops

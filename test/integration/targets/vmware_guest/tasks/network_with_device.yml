@@ -13,7 +13,7 @@
     password: "{{ vcenter_password }}"
     validate_certs: False
     datacenter: "{{ dc1 }}"
-    state: poweredon
+    state: powered-on
     folder: "{{ f0 }}"
     name: network_with_device
     disk:
@@ -41,7 +41,7 @@
     password: "{{ vcenter_password }}"
     validate_certs: False
     datacenter: "{{ dc1 }}"
-    state: poweredon
+    state: powered-on
     folder: "{{ f0 }}"
     name: network_with_device
     disk:

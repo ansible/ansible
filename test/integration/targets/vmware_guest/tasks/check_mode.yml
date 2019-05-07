@@ -14,12 +14,16 @@
   with_items:
     - absent
     - present
+    - powered-off
     - poweredoff
+    - powered-on
     - poweredon
-    - restarted
-    - suspended
-    - shutdownguest
+    - reboot-guest
     - rebootguest
+    - restarted
+    - shutdown-guest
+    - shutdownguest
+    - suspended
   register: check_mode_state
   check_mode: yes
 
@@ -43,7 +47,9 @@
     state: "{{ item }}"
   with_items:
     - present
+    - powered-off
     - poweredoff
+    - powered-on
     - poweredon
     - restarted
     - suspended

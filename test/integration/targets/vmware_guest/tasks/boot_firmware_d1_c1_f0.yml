@@ -19,7 +19,7 @@
         - size: 1gb
           type: thin
           autoselect_datastore: True
-    state: poweredoff
+    state: powered-off
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
   register: clone_d1_c1_f0
@@ -49,7 +49,7 @@
 #        - size: 1gb
 #          type: thin
 #          autoselect_datastore: True
-#    state: poweredoff
+#    state: powered-off
 #    folder: "{{ item|dirname }}"
 #  with_items: "{{ vmlist['json'] }}"
 #  register: clone_d1_c1_f0
@@ -78,7 +78,7 @@
         - size: 1gb
           type: thin
           autoselect_datastore: True
-    state: poweredoff
+    state: powered-off
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
   register: clone_d1_c1_f0
@@ -108,7 +108,7 @@
 #        - size: 1gb
 #          type: thin
 #          autoselect_datastore: True
-#    state: poweredoff
+#    state: powered-off
 #    folder: "{{ item|dirname }}"
 #  with_items: "{{ vmlist['json'] }}"
 #  register: clone_d1_c1_f0

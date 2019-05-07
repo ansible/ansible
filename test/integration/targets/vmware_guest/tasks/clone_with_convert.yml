@@ -11,7 +11,7 @@
     name: "{{ 'thin_' + item|basename }}"
     template: "{{ item|basename }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
-    state: poweredoff
+    state: powered-off
     folder: "{{ item|dirname }}"
     convert: thin
   with_items: "{{ vmlist['json'] }}"
@@ -33,7 +33,7 @@
     name: "{{ 'thick_' + item|basename }}"
     template: "{{ item|basename }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
-    state: poweredoff
+    state: powered-off
     folder: "{{ item|dirname }}"
     convert: thick
   with_items: "{{ vmlist['json'] }}"
@@ -55,7 +55,7 @@
     name: "{{ 'eagerzeroedthick_' + item|basename }}"
     template: "{{ item|basename }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
-    state: poweredoff
+    state: powered-off
     folder: "{{ item|dirname }}"
     convert: eagerzeroedthick
   with_items: "{{ vmlist['json'] }}"

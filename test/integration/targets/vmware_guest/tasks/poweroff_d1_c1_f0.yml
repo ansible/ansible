@@ -2,14 +2,14 @@
 # Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: set state to poweroff on all VMs
+- name: set state to powered-off on all VMs
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: "{{ item }}"
-    state: poweredoff
+    state: powered-off
   with_items: "{{ infra.vm_list }}"
   register: poweroff_d1_c1_f0
 

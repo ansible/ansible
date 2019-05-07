@@ -20,7 +20,7 @@
     folder: '{{ f0 }}'
     cluster: '{{ ccr1 }}'
     name: '{{ item }}' 
-    state: poweredon
+    state: powered-on
     guest_id: debian8_64Guest
     disk:
     - size_gb: 1

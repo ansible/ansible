@@ -19,7 +19,7 @@
           type: eagerzeroedthick
           autoselect_datastore: True
           disk_mode: 'invalid_disk_mode'
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: disk_mode_d1_c1_f0
   ignore_errors: True
@@ -48,7 +48,7 @@
           type: eagerzeroedthick
           autoselect_datastore: True
           disk_mode: 'independent_persistent'
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: disk_mode_d1_c1_f0_2
 
@@ -79,7 +79,7 @@
           type: eagerzeroedthick
           autoselect_datastore: True
           disk_mode: 'independent_persistent'
-      state: poweredoff
+      state: powered-off
       folder: "{{ f0 }}"
     register: disk_mode_d1_c1_f0_2
   - debug: var=disk_mode_d1_c1_f0_2

@@ -26,7 +26,7 @@
           wake_on_lan: True
           start_connected: True
           allow_guest_control: True
-    state: poweredoff
+    state: powered-off
     folder: F0
   register: clone_d1_c1_f0
 

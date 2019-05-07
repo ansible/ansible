@@ -21,7 +21,7 @@
         - size: 1gb
           type: thin
           autoselect_datastore: True
-    state: poweredoff
+    state: powered-off
     folder: F0
   register: disk_type_d1_c1_f0
 

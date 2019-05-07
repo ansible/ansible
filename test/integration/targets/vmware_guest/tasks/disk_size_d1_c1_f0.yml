@@ -18,7 +18,7 @@
         - size: 0gb
           type: eagerzeroedthick
           autoselect_datastore: True
-    state: poweredoff
+    state: powered-off
     folder: "{{ f0 }}"
   register: disk_size_d1_c1_f0
   ignore_errors: True
