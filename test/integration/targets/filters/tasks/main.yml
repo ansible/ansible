@@ -203,6 +203,7 @@
         that:
           - "'does not support' in algo_error.msg"
   tags: 'password_hash'
+  when: crypt_run|bool == true or crypt_run|bool == False and ansible_facts['os_family'] != 'Darwin'
 
 - debug:
     var: "'http://mary:MySecret@www.acme.com:9000/dir/index.html?query=term#fragment' | urlsplit"
