@@ -168,7 +168,7 @@ def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, 
         elif backend == 'cryptography':
             try:
                 result = load_pem_private_key(priv_key_detail,
-                                              passphrase,
+                                              None if passphrase is None else to_bytes(passphrase),
                                               cryptography_backend())
             except TypeError as dummy:
                 raise OpenSSLBadPassphraseError('Wrong or empty passphrase provided for private key')
