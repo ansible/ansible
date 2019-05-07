@@ -417,7 +417,7 @@ def get_timestamp_for_time(formatted_time, time_format):
         return struct_time
 
 
-def update_timestamp_for_file(path, mtime, atime, diff=None):
+def update_timestamp_for_file(path, mtime, atime, diff=None, check_mode=False):
     b_path = to_bytes(path, errors='surrogate_or_strict')
 
     try:
@@ -456,7 +456,9 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
 
             set_time = (atime, mtime)
 
-        os.utime(b_path, set_time)
+        # Update the file timestamps only when check_mode is False
+        if not check_mode:
+            os.utime(b_path, set_time)
 
         if diff is not None:
             if 'before' not in diff:
@@ -534,7 +536,7 @@ def execute_touch(path, follow, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     changed = False
-    result = {'dest': path}
+    result = {'dest': path, 'changed': changed}
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
@@ -566,6 +568,18 @@ def execute_touch(path, follow, timestamps):
 
         result['changed'] = changed
         result['diff'] = diff
+    else:
+        # check_mode is True, only if the file does not exist or when one or both access_time are modification_time
+        # parameters are not set to "preserve"
+        if prev_state == 'absent':
+            result['changed'] = True
+        elif module.params['access_time'] != 'preserve' or module.params['modification_time'] != 'preserve':
+            result['changed'] = True
+            diff = initial_diff(path, 'touch', prev_state)
+            file_args = module.load_file_common_arguments(module.params)
+            # Attach diff to result only when the file exists
+            if update_timestamp_for_file(file_args['path'], mtime, atime, diff, check_mode=True):
+                result['diff'] = diff
     return result
 
 
