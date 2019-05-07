@@ -74,6 +74,10 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+notes:
+- The ACI MultiSite PATCH API has a deficiency requiring some objects to be referenced by index.
+  This can cause silent corruption on concurrent access when changing/removing on object as
+  the wrong object may be referenced. This module is affected by this deficiency.
 seealso:
 - module: mso_schema_site_anp_epg
 - module: mso_schema_template_anp_epg_subnet
@@ -230,7 +234,7 @@ def main():
             mso.fail_json(msg="Subnet '{subnet}' not found".format(subnet=subnet))
         mso.exit_json()
 
-    subnets_path = '/sites/{0}/anps/{1}/epgs/{2}/subnets'.format(site_template, anp_idx, epg_idx)
+    subnets_path = '/sites/{0}/anps/{1}/epgs/{2}/subnets'.format(site_template, anp, epg)
     ops = []
 
     mso.previous = mso.existing
