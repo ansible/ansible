@@ -21,12 +21,15 @@
         - set dscp 62
       parents: ['policy-map type qos p1', 'class c1']
       match: strict
+      # session-config diffs does not produce a diff here for some reason.
+      # check against running-config instead.
+      diff_against: running
     register: result
     become: yes
 
   - assert:
       that:
-        #- "result.changed == true"
+        - "result.changed == true"
         - "'set cos 1' in result.updates"
         - "'set dscp 62' in result.updates"
 
@@ -37,12 +40,13 @@
         - set cos 1
       parents: ['policy-map type qos p1', 'class c1']
       match: strict
+      diff_against: running
     register: result
     become: yes
 
   - assert:
       that:
-        #- "result.changed == true"
+        - "result.changed == true"
         - "'set cos 1' in result.updates"
         - "'set dscp 62' in result.updates"
 
