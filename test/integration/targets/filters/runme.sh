@@ -20,4 +20,4 @@ source virtualenv-isolated.sh
 
 pip install jmespath netaddr bcrypt -r ../../../../requirements.txt
 
-ANSIBLE_ROLES_PATH=../ ansible-playbook filters.yml -e crypt_skip=True -t password_hash -i ../../inventory -e @../../integration_config.yml "$@"
+ANSIBLE_ROLES_PATH=../ ansible-playbook filters.yml -e crypt_run=False -t password_hash -i ../../inventory -e @../../integration_config.yml "$@"

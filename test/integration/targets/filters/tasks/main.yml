@@ -133,17 +133,31 @@
 
 - name: Test password_hash filter
   vars:
-    crypt_skip_all: '{{ True if ansible_system == "Darwin" else False }}'
+    crypt_run: True
+    no_crypt_passwords:
+      - pass: 'hash'
+        algo: 'sha1'
+        result: '$sha1$80$somesaltsomesalt$h7lwE0gVsklfEnUUth/XHjatn1DG'
+        salt: 'somesaltsomesalt'
+      - pass: 'hash'
+        algo: 'bcrypt'
+        result: '$2b$12$saltWith22Characters0u1uXyJT.dsFdme5PqlljM0R59E1XCwC2'
+        result_alt: '$2a$12$saltWith22Characters0u1uXyJT.dsFdme5PqlljM0R59E1XCwC2'
+        salt: 'saltWith22Characters00'
+      - pass: '*%!)0café'
+        result: '$sha1$80$somesaltsomesalt$D6BUIhnXSmk/OoWKOW9eI6UU.uFC'
+        algo: 'sha1'
+        salt: 'somesaltsomesalt'
+      - pass: '*%!)0café'
+        result: '$2b$12$saltWith22Characters0udO85cENMyXfRbDHfY.b0bJEQrfUeMuO'
+        result_alt: '$2a$12$saltWith22Characters0udO85cENMyXfRbDHfY.b0bJEQrfUeMuO'
+        algo: 'bcrypt'
+        salt: 'saltWith22Characters00'
     passwords:
       - pass: 'hash'
         algo: 'md5'
         result: '$1$somesalt$O6svGriNmsz3R1fF/cFvh1'
         salt: 'somesalt'
-      - pass: 'hash'
-        algo: 'sha1'
-        result: '$sha1$80$somesaltsomesalt$h7lwE0gVsklfEnUUth/XHjatn1DG'
-        salt: 'somesaltsomesalt'
-        crypt_skip: '{{ crypt_skip | default(False) }}'
       - pass: 'hash'
         algo: 'sha256'
         result: '$5$somesaltsomesalt$htweuBbEINJNtSRltQ3nKa.yr/K64Nor4cqL526jaO1'
@@ -152,21 +166,10 @@
         algo: 'sha512'
         result: '$6$somesaltsomesalt$UXKSWGnhsHpsLOTx.Qe.Mi7qryzThIYDEaOYuD1izD7iPltWrZ2V57YxPNHACKVrvNH1hDmNBjQixoc6v2Bnv.'
         salt: 'somesaltsomesalt'
-      - pass: 'hash'
-        algo: 'bcrypt'
-        result: '$2b$12$saltWith22Characters0u1uXyJT.dsFdme5PqlljM0R59E1XCwC2'
-        result_alt: '$2a$12$saltWith22Characters0u1uXyJT.dsFdme5PqlljM0R59E1XCwC2'
-        salt: 'saltWith22Characters00'
-        crypt_skip: '{{ crypt_skip | default(False) }}'
       - pass: '*%!)0café'
         algo: 'md5'
         result: '$1$somesalt$H9oy8N8y2EQRPsOX2QAxq.'
         salt: 'somesalt'
-      - pass: '*%!)0café'
-        result: '$sha1$80$somesaltsomesalt$D6BUIhnXSmk/OoWKOW9eI6UU.uFC'
-        algo: 'sha1'
-        salt: 'somesaltsomesalt'
-        crypt_skip: '{{ crypt_skip | default(False) }}'
       - pass: '*%!)0café'
         result: '$5$somesaltsomesalt$qt./ksLHkPeS6hbcL0apHqmZ237bu/9zgPHbE14b0Y8'
         algo: 'sha256'
@@ -175,25 +178,21 @@
         result: '$6$somesaltsomesalt$A9Few/s0L/ZMntbQiAAHo.VN8bGjyFtgBHVURiPuyumhAldz0DpQu69KMR.5gJ4FAo.SLHLdfoffO.60w4yB61'
         algo: 'sha512'
         salt: 'somesaltsomesalt'
-      - pass: '*%!)0café'
-        result: '$2b$12$saltWith22Characters0udO85cENMyXfRbDHfY.b0bJEQrfUeMuO'
-        result_alt: '$2a$12$saltWith22Characters0udO85cENMyXfRbDHfY.b0bJEQrfUeMuO'
-        algo: 'bcrypt'
-        salt: 'saltWith22Characters00'
-        crypt_skip: '{{ crypt_skip | default(False) }}'
   block:
     - name: Test using static salt
       assert:
         that:
           - "{{ ( item.pass | password_hash(item.algo, item.salt) ) == item.result or ( item.pass | password_hash(item.algo, item.salt) ) == ( item.result_alt | default('') ) }}"
-      loop: "{{ passwords }}"
-      when: not item.crypt_skip or not crypt_skip_all | default(False)
+      with_flattened:
+        - "{{ passwords }}"
+        - "{{ no_crypt_passwords if crypt_run|bool == true else omit }}"
     - name: Passwords default to random salt
       assert:
         that:
           - '"{{ item.pass | password_hash(item.algo) }}" != "{{ item.pass | password_hash(item.algo) }}"'
-      loop: "{{ passwords }}"
-      when: not item.crypt_skip or not crypt_skip_all | default(False)
+      with_flattened:
+        - "{{ passwords }}"
+        - "{{ no_crypt_passwords if crypt_run|bool == true else omit }}"
     - name: Register results of the algorithm error
       debug:
         var: "{{ item.pass | password_hash('fake_algo') }}"
