@@ -298,9 +298,9 @@ def main():
     unsupported = set(managers).difference(PKG_MANAGER_NAMES)
     if unsupported:
         if 'auto' in module.params['manager']:
-            msg='Could not auto detect a usable package manager, check warnings for details.'
+            msg = 'Could not auto detect a usable package manager, check warnings for details.'
         else:
-            msg='Unsupported package managers requested: %s' % (', '.join(unsupported))
+            msg = 'Unsupported package managers requested: %s' % (', '.join(unsupported))
         module.fail_json(msg=msg)
 
     found = 0
