@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - resolve unaligned apt error message (https://github.com/ansible/ansible/issues/35474)

@@ -1007,7 +1007,7 @@ def main():
             update_cache=dict(type='bool', aliases=['update-cache']),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
-            package=dict(type='list', aliases=['pkg', 'name']),
+            name=dict(type='list', aliases=['pkg', 'package']),
             deb=dict(type='path'),
             default_release=dict(type='str', aliases=['default-release']),
             install_recommends=dict(type='bool', aliases=['install-recommends']),
@@ -1021,8 +1021,8 @@ def main():
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
         ),
-        mutually_exclusive=[['deb', 'package', 'upgrade']],
-        required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
+        mutually_exclusive=[['deb', 'name', 'upgrade']],
+        required_one_of=[['autoremove', 'deb', 'name', 'update_cache', 'upgrade']],
         supports_check_mode=True,
     )
 
@@ -1106,7 +1106,7 @@ def main():
 
             # If there is nothing else to do exit. This will set state as
             #  changed based on if the cache was updated.
-            if not p['package'] and not p['upgrade'] and not p['deb']:
+            if not p['name'] and not p['upgrade'] and not p['deb']:
                 module.exit_json(
                     changed=updated_cache,
                     cache_updated=updated_cache,
@@ -1128,7 +1128,7 @@ def main():
                         allow_unauthenticated=allow_unauthenticated,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
-        unfiltered_packages = p['package'] or ()
+        unfiltered_packages = p['name'] or ()
         packages = [package.strip() for package in unfiltered_packages if package != '*']
         all_installed = '*' in unfiltered_packages
         latest = p['state'] == 'latest'
