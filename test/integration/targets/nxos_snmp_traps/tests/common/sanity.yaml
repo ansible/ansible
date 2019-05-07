@@ -5,14 +5,14 @@
 
 - name: Setup - Remove snmp_traps if configured
   nxos_snmp_traps: &remove
-    group: all 
+    group: all
     provider: "{{ connection }}"
     state: disabled
 
 - block:
-  - name: Configure one snmp trap group 
+  - name: Configure one snmp trap group
     nxos_snmp_traps: &config
-      group: bridge 
+      group: bridge
       provider: "{{ connection }}"
       state: enabled
     register: result
@@ -60,10 +60,9 @@
     - name: Idempotence Check
       nxos_snmp_traps: *config1
       register: result
-      when: imagetag is not search("I2|D1")
 
     - assert: *false
-      when: imagetag is not search("I2|D1")
+    when: imagetag is not search("I2|I7|D1")
 
   - name: Cleanup
     nxos_snmp_traps: *remove
