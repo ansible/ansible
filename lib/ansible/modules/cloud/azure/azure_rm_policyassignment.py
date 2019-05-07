@@ -53,6 +53,7 @@ options:
         description:
             - Required if a parameter is used in policy rule.
             - JSON formatted string or a path to a file or url with parameter definitions.
+            - See U(https://docs.microsoft.com/en-us/azure/templates/Microsoft.Authorization/2018-05-01/policyAssignments) for more details.
     description:
         description:
             - This message will be part of response in case of policy violation.

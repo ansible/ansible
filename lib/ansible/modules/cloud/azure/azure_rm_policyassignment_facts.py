@@ -25,7 +25,7 @@ options:
     name:
         description:
             - Name of the policy assignment
-            - This parameter is mutually exclusive with I(policy_assignment_id).
+            - This parameter is mutually exclusive with C(policy_assignment_id).
     scope:
         description:
             - The scope of the policy assignment.
@@ -36,7 +36,7 @@ options:
     policy_assignment_id:
         description:
             - The ID of the policy assignment to get.
-            - This parameter is mutually exclusive with I(name).
+            - This parameter is mutually exclusive with C(name).
     resource_group_name:
         description:
             - The name of the resource group containing the resource.
