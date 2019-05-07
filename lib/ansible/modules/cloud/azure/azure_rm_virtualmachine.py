@@ -151,6 +151,8 @@ options:
     managed_disk_type:
         description:
             - Managed OS disk type
+            - Create OS disk with managed disk if defined.
+            - If not defined, the OS disk will be created with virtual hard disk (VHD).
         choices:
             - Standard_LRS
             - StandardSSD_LRS
@@ -200,32 +202,51 @@ options:
                 version_added: "2.4"
             managed_disk_type:
                 description:
-                    - Managed data disk type
+                    - Managed data disk type.
+                    - Only used when OS disk created with managed disk.
+                    - Cannot be defined mutual with C(managed_disk_id).
+                    - If C(managed_disk_type) and C(managed_disk_id) undefined, the data disk will be created with a virtual hard disk(VHD).
                 choices:
                     - Standard_LRS
                     - StandardSSD_LRS
                     - UltraSSD_LRS
                     - Premium_LRS
                 version_added: "2.4"
+            managed_disk_id:
+                description:
+                    - Managed data disk id.
+                    - Only used when OS disk created with managed disk.
+                    - If C(managed_disk_type) and C(managed_disk_id) undefined, the data disk will be created with a virtual hard disk(VHD).
+                version_added: "2.9"
             storage_account_name:
                 description:
                     - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
                       a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when C(managed_disk_type) not defined.
+                    - Cannot be updated unless C(lun) updated.
                 version_added: "2.4"
             storage_container_name:
                 description:
                     - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
                       default container will created.
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when C(managed_disk_type) not defined.
+                    - Cannot be updated unless C(lun) updated.
                 default: vhds
                 version_added: "2.4"
             storage_blob_name:
                 description:
-                    - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
-                      the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
+                    - Name fo the storage blob used to hold the VM's OS disk image.
+                    - Must end with '.vhd'
+                    - Default to the VM name + '.vhd'.
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when C(managed_disk_type) not defined.
+                    - Cannot be updated unless C(lun) updated.
                 version_added: "2.4"
             caching:
                 description:
-                    - Type of data disk caching.
+                    - Specifies the caching requirements.
                 choices:
                     - empty
                     - Empty
@@ -234,17 +255,6 @@ options:
                     - read_write
                     - ReadWrite
                 version_added: "2.4"
-            create_option:
-                description:
-                    - Specifies how the virtual machine should be created.
-                    - C(attach) is used when using a specialized disk to create the virtual machine.
-                    - C(from_image) is used when using an image to create the virtual machine.
-                choices:
-                    - empty
-                    - attach
-                    - from_image
-                default: empty
-                version_added: "2.9"
     public_ip_allocation_method:
         description:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
@@ -767,6 +777,8 @@ azure_vm:
 import base64
 import random
 import re
+import copy
+import datetime
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -796,12 +808,18 @@ def extract_names_from_blob_uri(blob_uri, storage_suffix):
     return extracted_names
 
 
+def format_blob_uri(account, storage_suffix, blob, container='vhds'):
+    container = container or 'vhds'  # avoid None
+    return 'https://{0}.blob.{1}/{2}/{3}'.format(account, storage_suffix, container, blob)
+
+
 data_disk_spec = dict(
     lun=dict(type='int', required=True),
     disk_size_gb=dict(type='int', required=True),
     managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'UltraSSD_LRS', 'Premium_LRS']),
+    managed_disk_id=dict(type='str'),
     storage_account_name=dict(type='str'),
-    storage_container_name=dict(type='str', default='vhds'),
+    storage_container_name=dict(type='str'),
     storage_blob_name=dict(type='str'),
     caching=dict(type='str', choices=['empty', 'Empty', 'read_only', 'ReadOnly', 'read_write', 'ReadWrite']),
     create_option=dict(type='str', choices=['empty', 'attach', 'from_image'], default='empty')
@@ -899,6 +917,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.license_type = None
         self.vm_identity = None
         self.boot_diagnostics = None
+
+        self._default_storage_account = None
 
         self.results = dict(
             changed=False,
@@ -1044,14 +1064,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 requested_vhd_uri = '{0}{1}/{2}'.format(requested_storage_uri,
                                                         self.storage_container_name,
                                                         self.storage_blob_name)
-
             disable_ssh_password = not self.ssh_password_enabled
 
         try:
             self.log("Fetching virtual machine {0}".format(self.name))
-            vm = self.compute_client.virtual_machines.get(self.resource_group, self.name, expand='instanceview')
+            vm = self.get_vm()
             self.check_provisioning_state(vm, self.state)
             vm_dict = self.serialize_vm(vm)
+            if hasattr(vm.storage_profile.os_disk, 'vhd') or vm.storage_profile.os_disk.vhd:
+                os_vhd_dict = extract_names_from_blob_uri(vm.storage_profile.os_disk.vhd.uri, self._cloud_environment.suffixes.storage_endpoint)
+                self._default_storage_account = self.get_storage_account(os_vhd_dict['accountname'])
 
             if self.state == 'present':
                 differences = []
@@ -1182,6 +1204,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vm_dict['tags']['_own_sa_'] = own_sa
                         changed = True
 
+                is_os_disk_base = bool(vm_dict['properties']['storageProfile']['osDisk'].get('managedDisk'))
+                if self.data_disks:
+                    data_disk_updated, data_disks = self.compare_disks(self.data_disks, vm_dict['properties']['storageProfile'].get('dataDisks'), is_os_disk_base)
+                    if data_disk_updated:
+                        differences.append('Data disk')
+                        vm_dict['properties']['storageProfile']['dataDisks'] = data_disks
+                        changed = True
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -1237,19 +1267,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         self.log(self.serialize_obj(default_nic, 'NetworkInterface'), pretty_print=True)
                         network_interfaces = [default_nic.id]
 
-                    # os disk
-                    if not self.storage_account_name and not self.managed_disk_type:
-                        storage_account = self.create_default_storage_account()
-                        self.log("os disk storage account:")
-                        self.log(self.serialize_obj(storage_account, 'StorageAccount'), pretty_print=True)
-                        requested_storage_uri = 'https://{0}.blob.{1}/'.format(
-                            storage_account.name,
-                            self._cloud_environment.suffixes.storage_endpoint)
-                        requested_vhd_uri = '{0}{1}/{2}'.format(
-                            requested_storage_uri,
-                            self.storage_container_name,
-                            self.storage_blob_name)
-
                     if not self.short_hostname:
                         self.short_hostname = self.name
 
@@ -1257,6 +1274,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             for i, id in enumerate(network_interfaces)]
 
                     # os disk
+                    if not self.storage_account_name and not self.managed_disk_type:
+                        storage_account = self.default_storage_account
+                        self.log("storage account:")
+                        self.log(self.serialize_obj(storage_account, 'StorageAccount'), pretty_print=True)
+                        requested_vhd_uri = format_blob_uri(account=storage_account.name,
+                                                            storage_suffix=self._cloud_environment.suffixes.storage_endpoint,
+                                                            container=self.storage_container_name,
+                                                            blob=self.storage_blob_name)
+
                     if self.managed_disk_type:
                         vhd = None
                         managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=self.managed_disk_type)
@@ -1372,56 +1398,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     # data disk
                     if self.data_disks:
                         data_disks = []
-                        count = 0
+                        is_os_disk_base = bool(vm_resource.storage_profile.os_disk.managed_disk)
 
                         for data_disk in self.data_disks:
-                            if not data_disk.get('managed_disk_type'):
-                                if not data_disk.get('storage_blob_name'):
-                                    data_disk['storage_blob_name'] = self.name + '-data-' + str(count) + '.vhd'
-
-                                # construct vhd uri
-                                if data_disk.get('storage_account_name'):
-                                    data_disk_storage_account = self.get_storage_account(data_disk['storage_account_name'])
-                                elif not default_storage_account:
-                                    data_disk_storage_account = self.create_default_storage_account()
-                                    self.log("data disk storage account:")
-                                    self.log(self.serialize_obj(data_disk_storage_account, 'StorageAccount'), pretty_print=True)
-                                    default_storage_account = data_disk_storage_account  # store for use by future data disks if necessary
-                                else:
-                                    data_disk_storage_account = default_storage_account
-
-                                data_disk_requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(
-                                    data_disk_storage_account.name,
-                                    self._cloud_environment.suffixes.storage_endpoint,
-                                    data_disk.get('storage_container_name') or 'vhds',
-                                    data_disk['storage_blob_name']
-                                )
-
-                                data_disk_managed_disk = None
-                                disk_name = data_disk['storage_blob_name']
-                                data_disk_vhd = self.compute_models.VirtualHardDisk(uri=data_disk_requested_vhd_uri)
-                                count += 1
-                            else:
-                                data_disk_vhd = None
-                                data_disk_managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=data_disk['managed_disk_type'])
-                                disk_name = self.name + "-datadisk-" + str(count)
-                                count += 1
-
-                            # create_option
-                            data_disk_create_option = getattr(self.compute_models.DiskCreateOptionTypes, data_disk.get('create_option') or 'empty')
-                            # caching
-                            data_disk['caching'] = data_disk.get('caching', 'ReadOnly')
-                            data_disk['caching'] = _snake_to_camel(data_disk['caching'], capitalize_first=True)
-                            data_disks.append(self.compute_models.DataDisk(
-                                lun=data_disk['lun'],
-                                name=disk_name,
-                                vhd=data_disk_vhd,
-                                caching=data_disk['caching'],
-                                create_option=data_disk_create_option,
-                                disk_size_gb=data_disk['disk_size_gb'],
-                                managed_disk=data_disk_managed_disk,
-                            ))
-
+                            self.assert_disk_spec(data_disk, is_os_disk_base)
+                            data_disks.append(self.compute_models.DataDisk.from_dict(self.construct_disk_dict(data_disk, is_os_disk_base)))
                         vm_resource.storage_profile.data_disks = data_disks
 
                     # Before creating VM accept terms of plan if `accept_terms` is True
@@ -1563,24 +1544,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if vm_dict['properties']['storageProfile'].get('dataDisks'):
                         data_disks = []
 
+                        is_os_disk_base = bool(vm_dict['properties']['storageProfile']['osDisk'].get('managedDisk'))
                         for data_disk in vm_dict['properties']['storageProfile']['dataDisks']:
-                            if data_disk.get('managedDisk'):
-                                managed_disk_type = data_disk['managedDisk'].get('storageAccountType')
-                                data_disk_managed_disk = self.compute_models.ManagedDiskParameters(storage_account_type=managed_disk_type)
-                                data_disk_vhd = None
-                            else:
-                                data_disk_vhd = data_disk['vhd']['uri']
-                                data_disk_managed_disk = None
-
-                            data_disks.append(self.compute_models.DataDisk(
-                                lun=int(data_disk['lun']),
-                                name=data_disk.get('name'),
-                                vhd=data_disk_vhd,
-                                caching=data_disk.get('caching'),
-                                create_option=data_disk.get('createOption'),
-                                disk_size_gb=int(data_disk['diskSizeGB']),
-                                managed_disk=data_disk_managed_disk,
-                            ))
+                            data_disks.append(self.compute_models.DataDisk.from_dict(data_disk))
                         vm_resource.storage_profile.data_disks = data_disks
 
                     self.log("Update virtual machine with parameters:")
@@ -1987,7 +1953,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 return True
         return False
 
-    def create_default_storage_account(self, vm_dict=None):
+    @property
+    def default_storage_account(self):
         '''
         Create (once) a default storage account <vm name>XXXX, where XXXX is a random number.
         NOTE: If <vm name>XXXX exists, use it instead of failing.  Highly unlikely.
@@ -1999,6 +1966,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         :return: storage account object
         '''
+        if self._default_storage_account:
+            return self._default_storage_account
         account = None
         valid_name = False
         if self.tags is None:
@@ -2034,6 +2003,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         if account:
             self.log("Storage account {0} found.".format(storage_account_name))
             self.check_provisioning_state(account)
+            self._default_storage_account = account
             return account
         sku = self.storage_models.Sku(name=self.storage_models.SkuName.standard_lrs)
         sku.tier = self.storage_models.SkuTier.standard
@@ -2047,7 +2017,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Failed to create storage account: {0} - {1}".format(storage_account_name, str(exc)))
         self.tags['_own_sa_'] = storage_account_name
-        return self.get_storage_account(storage_account_name)
+        self._default_storage_account = self.get_storage_account(storage_account_name)
+        return self._default_storage_account
 
     def check_storage_account_name(self, name):
         self.log("Checking storage account name availability for {0}".format(name))
@@ -2197,6 +2168,103 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                   namespace='Microsoft.Network',
                                   types='networkInterfaces')
 
+    def compare_disks(self, updated, original, is_os_disk_base):
+        changed = False
+        result = []
+        original_dict = {}
+
+        for item in (original or []):
+            original_dict[item['lun']] = copy.copy(item)
+        for item in updated:
+            original_item = original_dict.get(item['lun'])
+            self.assert_disk_spec(item, is_os_disk_base)
+            if not original_item:
+                changed = True
+                result.append(self.construct_disk_dict(item, is_os_disk_base))
+            else:
+                if is_os_disk_base:
+                    if item.get('managed_disk_id') and item['managed_disk_id'] != original_item.get('managedDisk', {}).get('id'):
+                        changed = True
+                        original_item['managedDisk']['id'] = item['managed_disk_id']
+                    if item.get('managed_disk_type') and item['managed_disk_type'] != original_item.get('managedDisk', {}).get('storageAccountType'):
+                        changed = True
+                        original_item['managedDisk']['storageAccountType'] = item['managed_disk_type']
+                else:
+                    vhd = original_item.get('vhd', {}).get('uri')
+                    vhd_dict = extract_names_from_blob_uri(vhd, self._cloud_environment.suffixes.storage_endpoint)
+                    if item.get('storage_account_name') and item['storage_account_name'] != vhd_dict['accountname']:
+                        changed = True
+                        vhd_dict['accountname'] = item['storage_account_name']
+                    if item.get('storage_container_name') and item['storage_container_name'] != vhd_dict['containername']:
+                        changed = True
+                        vhd_dict['containername'] = item['storage_container_name']
+                    if item.get('storage_blob_name') and item['storage_blob_name'] != vhd_dict['blobname']:
+                        changed = True
+                        vhd_dict['blobname'] = item['storage_blob_name']
+                    original_item['vhd']['uri'] = format_blob_uri(account=vhd_dict['accountname'],
+                                                                  container=vhd_dict['containername'],
+                                                                  blob=vhd_dict['blobname'],
+                                                                  storage_suffix=self._cloud_environment.suffixes.storage_endpoint)
+                if item.get('disk_size_gb') and item['disk_size_gb'] != original_item['diskSizeGB']:
+                    changed = True
+                    original_item['diskSizeGB'] = item['disk_size_gb']
+                item['caching'] = _snake_to_camel(item['caching'], True) if item.get('caching') else None
+                if item.get('caching') and item['caching'] != original_item['caching']:
+                    changed = True
+                    original_item['caching'] = item['caching']
+                result.append(original_item)
+        return changed, result
+
+    def construct_disk_dict(self, disk, is_os_disk_base):
+        '''
+        Construct a dict of the data disk
+
+        :param: disk contains item align with data_disk_spec
+        :param: is_os_disk_base  whether the OS disk is managed disk base, the data disk MUST has the same base (blob or managed disk)
+        :return: dict with the same structure as DataDisk
+        '''
+        timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M')
+        result = {}
+        if disk.get('caching'):
+            result['caching'] = _snake_to_camel(disk['caching'], capitalize_first=True)
+        result['createOption'] = 'Empty'
+        result['lun'] = disk['lun']
+        if disk.get('disk_size_gb'):
+            result['diskSizeGB'] = disk['disk_size_gb']
+        result['name'] = self.name + '-datadisk-' + timestamp + '-' +str(disk['lun'])
+        # set the managed_disk or vhd
+        if is_os_disk_base:
+            if disk.get('managed_disk_id') and disk.get('disk_size_gb'):
+                self.module.warn("'disk_size_gb' is unused as 'managed_disk_id' is set to {0}".format(disk['managed_disk_id']))
+            if disk.get('managed_disk_type'):
+                result['managedDisk']['storageAccountType'] = disk['managed_disk_type']
+            if disk.get('managed_disk_id'):
+                result['managedDisk']['id'] = disk['managed_disk_id']
+        else:
+            disk['storage_blob_name'] = disk.get('storage_blob_name') or result['name']
+            if disk['storage_blob_name'].endswith('.vhd'):  # blob uri must be ended with .vhd
+                disk['storage_blob_name'] = disk['storage_blob_name'] + '.vhd'
+            result['name'] = disk['storage_blob_name']
+            result['vhd'] = {}
+            storage_account = None
+            if disk.get('storage_account_name'):
+                storage_account = self.get_storage_account(disk['storage_account_name'])
+            else:
+                storage_account = self.default_storage_account
+            result['vhd']['uri'] = format_blob_uri(account=storage_account.name,
+                                                   container=disk.get('storage_container_name'),
+                                                   blob=disk['storage_blob_name'],
+                                                   storage_suffix=self._cloud_environment.suffixes.storage_endpoint)
+        return result
+
+    def assert_disk_spec(self, data_disk, is_os_disk_base):
+        if is_os_disk_base:
+            if data_disk.get('storage_account_name') or data_disk.get('storage_container_name') or data_disk.get('storage_blob_name'):
+                self.fail("Addition of a blob based disk {0} to VM with managed disks is not supported."
+                          "'storage_account_name', 'storage_container_name' and 'storage_blob_name' is not allowed".format(str(data_disk)))
+        elif data_disk.get('managed_disk_id') or data_disk.get('managed_disk_type'):
+            self.fail("Addition of a managed disk {0} to a VM with blob based disk is not supported."
+                      "'managed_disk_id' and 'managed_disk_type' is not allowed".format(str(data_disk)))
 
 def main():
     AzureRMVirtualMachine()
