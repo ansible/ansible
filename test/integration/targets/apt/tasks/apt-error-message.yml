@@ -1,0 +1,14 @@
+- name: Update and upgrade using apt
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    name: "*"
+    upgrade: safe
+  become: True
+  failed_when: False
+  register: apt_result
+- name: Check that name and upgrade arguments produce a conflict error
+  assert:
+    that:
+      - >-
+        "parameters are mutually exclusive: deb|name|upgrade" in apt_result.msg

@@ -34,5 +34,7 @@
           name: "{{ repodir }}"
           state: absent
 
+  - include: 'apt-error-message.yml'
+
   when:
     - ansible_distribution in ('Ubuntu', 'Debian')
