@@ -128,6 +128,9 @@
   setup: filter=ansible_system
   tags: password_hash
 
+- name: Report ansible_system value
+  debug: var=ansible_system
+
 - name: Test password_hash filter
   vars:
     crypt_skip: '{{ True if ansible_system == "Darwin" else False }}'
@@ -179,6 +182,8 @@
         salt: 'saltWith22Characters00'
         crypt_skip: '{{ crypt_skip | default(False) }}'
   block:
+    - name: Debug crypt_skip var
+      debug: var=crypt_skip
     - name: Test using static salt
       assert:
         that:
