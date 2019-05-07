@@ -55,6 +55,19 @@ def fetch_url_json(module, url, method='GET', timeout=10, data=None, headers=Non
 # #####################################################################################
 # ## FAILOVER IP ######################################################################
 
+def get_failover_record(module, ip):
+    '''
+    Get information record of failover IP.
+
+    See https://robot.your-server.de/doc/webservice/en.html#get-failover-failover-ip
+    '''
+    url = "{0}/failover/{1}".format(BASE_URL, ip)
+    result, error = fetch_url_json(module, url)
+    if 'failover' not in result:
+        module.fail_json(msg='Cannot interpret result: {0}'.format(result))
+    return result['failover']
+
+
 def get_failover(module, ip):
     '''
     Get current routing target of failover IP.
@@ -63,11 +76,7 @@ def get_failover(module, ip):
 
     See https://robot.your-server.de/doc/webservice/en.html#get-failover-failover-ip
     '''
-    url = "{0}/failover/{1}".format(BASE_URL, ip)
-    result, error = fetch_url_json(module, url)
-    if 'failover' not in result:
-        module.fail_json(msg='Cannot interpret result: {0}'.format(result))
-    return result['failover']['active_server_ip']
+    return get_failover_record(module, ip)['active_server_ip']
 
 
 def set_failover(module, ip, value, timeout=180):
