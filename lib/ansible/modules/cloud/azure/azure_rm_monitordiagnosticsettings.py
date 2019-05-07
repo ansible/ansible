@@ -28,6 +28,7 @@ options:
         description:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
+            - The name and the resource_group can be provided as a dict to fill the I(resource_id)
     state:
         default: present
         description:
@@ -35,16 +36,15 @@ options:
         choices:
             - present
             - absent
-    storage_account_id:
+    storage_account:
         description:
-            - The resource ID of the storage account to which you would like to send Diagnostic Logs.
-    service_bus_rule_id:
+            - The resource name or ID of the storage account to which you would like to send Diagnostic Logs.
+            - The name, resource_group and subscription(optional) can be provided as a dict to fill the I(storage_account)
+    event_hub_authorization_rule:
         description:
-            - The service bus rule Id of the diagnostic setting.
-            - This is here to maintain backwards compatibility.
-    event_hub_authorization_rule_id:
-        description:
-            - The resource Id for the event hub authorization rule.
+            - The resource name or Id for the event hub authorization rule.
+            - "The key_name(optional), name(of event hub namespace), resource_group and subscription(optional)
+              can be provided as a dict to fill the I(event_hub_authorization_rule)"
     event_hub_name:
         description:
             - The name of the event hub.
@@ -105,9 +105,10 @@ options:
                             - The number of days for the retention in days.
                             - A value of 0 will retain the events indefinitely.
                         type: int
-    workspace_id:
+    workspace:
         description:
-            - The workspace ID (resource ID of a Log Analytics workspace) for a Log Analytics workspace to which you would like to send Diagnostic Logs.
+            - The resource name or ID for a Log Analytics workspace to which you would like to send Diagnostic Logs.
+            - The name, resource_group and subscription(optional) can be provided as a dict to fill the I(workspace)
 
 extends_documentation_fragment:
     - azure
@@ -122,7 +123,7 @@ EXAMPLES = '''
   azure_rm_monitordiagnosticsettings:
     name: myipdiagnostic
     resource_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
-    storage_account_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/
+    storage_account: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/
                          resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
     logs:
     - category: DDoSMitigationReports
@@ -203,14 +204,11 @@ class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
                 type='raw',
                 required=True
             ),
-            storage_account_id=dict(
-                type='str'
+            storage_account=dict(
+                type='raw'
             ),
-            service_bus_rule_id=dict(
-                type='str'
-            ),
-            event_hub_authorization_rule_id=dict(
-                type='str'
+            event_hub_authorization_rule=dict(
+                type='raw'
             ),
             event_hub_name=dict(
                 type='str'
@@ -225,8 +223,8 @@ class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
                 elements='dict',
                 options=logs_spec
             ),
-            workspace_id=dict(
-                type='str'
+            workspace=dict(
+                type='raw'
             )
         )
 
@@ -238,13 +236,12 @@ class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
         self.name = None
         self.state = None
         self.resource_id = None
-        self.storage_account_id = None
-        self.service_bus_rule_id = None
-        self.event_hub_authorization_rule_id = None
+        self.storage_account = None
+        self.event_hub_authorization_rule = None
         self.event_hub_name = None
         self.metrics = None
         self.logs = None
-        self.workspace_id = None
+        self.workspace = None
 
         super(AzureRMMonitorDiagnosticSettings, self).__init__(self.module_arg_spec,
                                                                supports_check_mode=True,
@@ -258,16 +255,13 @@ class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
         results = None
         changed = False
 
+        self.format_resource_id()
+        self.format_storage_account_id()
+        self.format_event_hub_authorization_rule_id()
+        self.format_workspace_id()
+
         results = self.get_diagnostic_settings()
 
-        resource_id = self.resource_id
-        if isinstance(self.resource_id, dict):
-            resource_id = format_resource_id(val=self.resource_id['name'],
-                                             subscription_id=self.resource_id.get('subscription_id') or self.subscription_id,
-                                             namespace=self.resource_id['namespace'],
-                                             types=self.resource_id['types'],
-                                             resource_group=self.resource_id.get('resource_group'))
-        self.resource_id = resource_id
         if self.state == 'present':
             def create_metric_or_log_instance(params, metric_or_log):
                 data = params.copy()
@@ -281,13 +275,12 @@ class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
                 data['time_grain'] = data.get('time_grain', None)
                 return metric_or_log(**data)
 
-            parameters = DiagnosticSettingsResource(storage_account_id=self.storage_account_id,
-                                                    service_bus_rule_id=self.service_bus_rule_id,
-                                                    event_hub_authorization_rule_id=self.event_hub_authorization_rule_id,
+            parameters = DiagnosticSettingsResource(storage_account_id=self.storage_account,
+                                                    event_hub_authorization_rule_id=self.event_hub_authorization_rule,
                                                     event_hub_name=self.event_hub_name,
                                                     metrics=[create_metric_or_log_instance(p, MetricSettings) for p in self.metrics or []],
                                                     logs=[create_metric_or_log_instance(p, LogSettings) for p in self.logs or []],
-                                                    workspace_id=self.workspace_id)
+                                                    workspace_id=self.workspace)
 
             if not results:
                 changed = True
@@ -312,10 +305,6 @@ class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
         if params.storage_account_id and results.storage_account_id != params.storage_account_id:
             changed = True
             results.storage_account_id = params.storage_account_id
-
-        if params.service_bus_rule_id and results.service_bus_rule_id != params.service_bus_rule_id:
-            changed = True
-            results.service_bus_rule_id = params.service_bus_rule_id
 
         if params.event_hub_authorization_rule_id and results.event_hub_authorization_rule_id != params.event_hub_authorization_rule_id:
             changed = True
@@ -378,6 +367,47 @@ class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
 
     def diagnostic_setting_to_dict(self, diagnostic_setting):
         return diagnostic_setting.as_dict()
+
+    def format_resource_id(self):
+        resource_id = self.resource_id
+        if isinstance(self.resource_id, dict):
+            resource_id = format_resource_id(val=self.resource_id['name'],
+                                             subscription_id=self.resource_id.get('subscription_id') or self.subscription_id,
+                                             namespace=self.resource_id['namespace'],
+                                             types=self.resource_id['types'],
+                                             resource_group=self.resource_id.get('resource_group'))
+        self.resource_id = resource_id
+
+    def format_storage_account_id(self):
+        storage_account = self.storage_account
+        if isinstance(self.storage_account, dict):
+            storage_account = format_resource_id(val=self.storage_account['name'],
+                                                 subscription_id=self.storage_account.get('subscription_id') or self.subscription_id,
+                                                 namespace="Microsoft.Storage",
+                                                 types="storageAccounts",
+                                                 resource_group=self.storage_account.get('resource_group'))
+        self.storage_account = storage_account
+
+    def format_workspace_id(self):
+        workspace = self.workspace
+        if isinstance(self.workspace, dict):
+            workspace = format_resource_id(val=self.workspace['name'],
+                                           subscription_id=self.workspace.get('subscription_id') or self.subscription_id,
+                                           namespace="Microsoft.OperationalInsights",
+                                           types="workspaces",
+                                           resource_group=self.workspace.get('resource_group'))
+        self.workspace = workspace
+
+    def format_event_hub_authorization_rule_id(self):
+        event_hub_authorization_rule = self.event_hub_authorization_rule
+        if isinstance(self.event_hub_authorization_rule, dict):
+            event_hub_authorization_rule = format_resource_id(val=self.event_hub_authorization_rule['name'],
+                                                              subscription_id=self.event_hub_authorization_rule.get('subscription_id') or self.subscription_id,
+                                                              namespace="Microsoft.EventHub",
+                                                              types="namespaces",
+                                                              resource_group=self.event_hub_authorization_rule.get('resource_group'))
+            event_hub_authorization_rule += "/authorizationrules/{0}".format(self.event_hub_authorization_rule.get('key_name') or "RootManageSharedAccessKey")
+        self.event_hub_authorization_rule = event_hub_authorization_rule
 
 
 def main():

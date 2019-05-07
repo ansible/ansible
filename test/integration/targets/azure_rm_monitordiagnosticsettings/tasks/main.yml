@@ -30,7 +30,7 @@
   azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
     resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
-    storage_account_id: '{{ storage.state["id"] }}'
+    storage_account: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
       enabled: yes
@@ -49,7 +49,7 @@
   azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
     resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
-    storage_account_id: '{{ storage.state["id"] }}'
+    storage_account: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
       enabled: yes
@@ -67,7 +67,7 @@
   azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
     resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
-    storage_account_id: '{{ storage.state["id"] }}'
+    storage_account: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
       enabled: yes
@@ -85,7 +85,7 @@
   azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
     resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
-    storage_account_id: '{{ storage.state["id"] }}'
+    storage_account: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
       enabled: yes
