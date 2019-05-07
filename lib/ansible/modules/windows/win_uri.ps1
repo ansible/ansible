@@ -37,6 +37,7 @@ $spec = @{
        validate_certs = @{ type = "bool"; default = $true }
        client_cert = @{ type = "path" }
        client_cert_password = @{ type = "str"; no_log = $true }
+       use_default_credentials = @{ type = "bool"; default = $false }
     }
     supports_check_mode = $true
 }
@@ -61,6 +62,7 @@ $timeout = $module.Params.timeout
 $validate_certs = $module.Params.validate_certs
 $client_cert = $module.Params.client_cert
 $client_cert_password = $module.Params.client_cert_password
+$use_default_credentials = $module.Params.use_default_credentials
 
 $JSON_CANDIDATES = @('text', 'json', 'javascript')
 
@@ -96,6 +98,9 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 $client = [System.Net.WebRequest]::Create($url)
 $client.Method = $method
 $client.Timeout = $timeout * 1000
+
+# Set UseDefaultCredentials to the param use_default_credentials
+$client.UseDefaultCredentials = $use_default_credentials
 
 # Disable redirection if requested
 switch($follow_redirects) {

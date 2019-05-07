@@ -148,6 +148,12 @@ options:
       secure web request.
     type: str
     version_added: '2.5'
+  use_default_credentials:
+    description:
+    - Set the the ability of UseDefaultCredentials.
+    type: bool
+    default: no
+    version_added: '2.9'
 seealso:
 - module: uri
 - module: win_get_url
