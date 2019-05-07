@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix vyos cli prompt inspection (https://github.com/ansible/ansible/pull/55589)
