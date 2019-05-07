@@ -306,6 +306,7 @@ options:
         description:
             - Accept terms for marketplace images that require it
             - Only Azure service admin/account admin users can purchase images from the marketplace
+            - C(plan) must be set when C(accept_terms) is true
         type: bool
         default: false
         version_added: "2.7"
@@ -1282,7 +1283,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     # Before creating VM accept terms of plan if `accept_terms` is True
                     if self.accept_terms is True:
-                        if not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
+                        if not self.plan or not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
                             self.fail("parameter error: plan must be specified and include name, product, and publisher")
                         try:
                             plan_name = self.plan.get('name')
