@@ -255,6 +255,12 @@ options:
                     - read_write
                     - ReadWrite
                 version_added: "2.4"
+            write_accelerator_enabled:
+                description:
+                    - Specifies whether writeAccelerator should be enabled or disabled on the disk.
+                    - This can only be enabled on Premium_LRS managed disks with no caching and M-Series VMs.
+                version_added: "2.9"
+                type: bool
     public_ip_allocation_method:
         description:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
@@ -822,7 +828,8 @@ data_disk_spec = dict(
     storage_container_name=dict(type='str'),
     storage_blob_name=dict(type='str'),
     caching=dict(type='str', choices=['empty', 'Empty', 'read_only', 'ReadOnly', 'read_write', 'ReadWrite']),
-    create_option=dict(type='str', choices=['empty', 'attach', 'from_image'], default='empty')
+    create_option=dict(type='str', choices=['empty', 'attach', 'from_image'], default='empty'),
+    write_accelerator_enabled=dict(type='bool')
 )
 
 
@@ -2189,7 +2196,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if item.get('managed_disk_type') and item['managed_disk_type'] != original_item.get('managedDisk', {}).get('storageAccountType'):
                         changed = True
                         original_item['managedDisk']['storageAccountType'] = item['managed_disk_type']
+                    if item.get('write_accelerator_enabled') is not None and item['write_accelerator_enabled'] != original_item.get('writeAcceleratorEnabled'):
+                        changed = True
+                        original_item['writeAcceleratorEnabled'] = item['write_accelerator_enabled']
                 else:
+                    if item.get('write_accelerator_enabled'):
+                        self.fail('Write Accelerator cannot be enabled on VMs with blob based disks.')
                     vhd = original_item.get('vhd', {}).get('uri')
                     vhd_dict = extract_names_from_blob_uri(vhd, self._cloud_environment.suffixes.storage_endpoint)
                     if item.get('storage_account_name') and item['storage_account_name'] != vhd_dict['accountname']:
@@ -2240,7 +2252,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 result['managedDisk']['storageAccountType'] = disk['managed_disk_type']
             if disk.get('managed_disk_id'):
                 result['managedDisk']['id'] = disk['managed_disk_id']
+            if disk.get('write_accelerator_enabled') is not None:
+                result['writeAcceleratorEnabled'] = disk['write_accelerator_enabled']
         else:
+            if disk.get('write_accelerator_enabled') is not None:
+                self.fail('Write Accelerator cannot be enabled on VMs with blob based disks.')
             disk['storage_blob_name'] = disk.get('storage_blob_name') or result['name']
             if disk['storage_blob_name'].endswith('.vhd'):  # blob uri must be ended with .vhd
                 disk['storage_blob_name'] = disk['storage_blob_name'] + '.vhd'
