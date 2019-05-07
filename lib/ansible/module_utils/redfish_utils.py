@@ -37,7 +37,7 @@ class RedfishUtils(object):
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
             data = json.loads(resp.read())
-            info = resp.info()
+            headers = {k.lower(): v for k, v in resp.info().items()}
         except HTTPError as e:
             msg = self._get_extended_message(e)
             return {'ret': False,
@@ -50,7 +50,7 @@ class RedfishUtils(object):
         except Exception as e:
             return {'ret': False,
                     'msg': "Failed GET request to '%s': '%s'" % (uri, to_text(e))}
-        return {'ret': True, 'data': data, 'info': info}
+        return {'ret': True, 'data': data, 'headers': headers}
 
     def post_request(self, uri, pyld):
         try:
@@ -79,8 +79,8 @@ class RedfishUtils(object):
         headers = PATCH_HEADERS
         r = self.get_request(uri)
         if r['ret']:
-            # Get etag from ETag header or @odata.etag property
-            etag = r['info'].get('ETag')
+            # Get etag from etag header or @odata.etag property
+            etag = r['headers'].get('etag')
             if not etag:
                 etag = r['data'].get('@odata.etag')
             if etag:
