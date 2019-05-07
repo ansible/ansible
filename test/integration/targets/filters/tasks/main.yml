@@ -194,11 +194,7 @@
     - name: Error dialog shows for missing crypto algorithm
       assert:
         that:
-          - "'passlib does not support' in algo_error.msg"
-      when: not crypt_skip | default(False)
-    - name: Rounds get set if defined in filter
-      debug:
-        msg: '{{ "supersecret" | password_hash("sha256_crypt", "somesalt", 8, 5000) }}'
+          - "'does not support' in algo_error.msg"
   tags: 'password_hash'
 
 - debug:
