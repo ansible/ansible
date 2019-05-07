@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_certificate - fix private key passphrase handling for ``cryptography`` backend."
