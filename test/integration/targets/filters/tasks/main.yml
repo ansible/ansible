@@ -186,7 +186,7 @@
           - '"{{ item.pass | password_hash(item.algo) }}" != "{{ item.pass | password_hash(item.algo) }}"'
       loop: "{{ passwords }}"
       when: not item.crypt_skip | default(False)
-    - name: Register results of the password_hash filter
+    - name: Register results of the algorithm error
       debug:
         var: "{{ item.pass | password_hash('fake_algo') }}"
       register: algo_error

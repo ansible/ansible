@@ -106,50 +106,17 @@ def test_password_hash_filter_passlib():
     if not encrypt.PASSLIB_AVAILABLE:
         pytest.skip("passlib not available")
 
-    with pytest.raises(AnsibleFilterError):
-        get_encrypted_password("123", "sha257", salt="12345678")
-
-    # Uses 5000 rounds by default for sha256 matching crypt behaviour
-    assert get_encrypted_password("123", "sha256", salt="12345678") == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
-    assert get_encrypted_password("123", "sha256", salt="12345678", rounds=5000) == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
-
     assert (get_encrypted_password("123", "sha256", salt="12345678", rounds=10000) ==
             "$5$rounds=10000$12345678$JBinliYMFEcBeAXKZnLjenhgEhTmJBvZn3aR8l70Oy/")
 
     assert (get_encrypted_password("123", "sha512", salt="12345678", rounds=6000) ==
             "$6$rounds=6000$12345678$l/fC67BdJwZrJ7qneKGP1b6PcatfBr0dI7W6JLBrsv8P1wnv/0pu4WJsWq5p6WiXgZ2gt9Aoir3MeORJxg4.Z/")
 
-    assert (get_encrypted_password("123", "sha512", salt="12345678", rounds=5000) ==
-            "$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.")
-
     assert get_encrypted_password("123", "crypt16", salt="12") == "12pELHK2ME3McUFlHxel6uMM"
 
     # Try algorithm that uses a raw salt
     assert get_encrypted_password("123", "pbkdf2_sha256")
 
-
-def test_do_encrypt_no_passlib():
-    with passlib_off():
-        assert not encrypt.PASSLIB_AVAILABLE
-        assert encrypt.do_encrypt("123", "md5_crypt", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
-
-        with pytest.raises(AnsibleError):
-            encrypt.do_encrypt("123", "crypt16", salt="12")
-
-
-def test_do_encrypt_passlib():
-    if not encrypt.PASSLIB_AVAILABLE:
-        pytest.skip("passlib not available")
-
-    with pytest.raises(AnsibleError):
-        encrypt.do_encrypt("123", "sha257_crypt", salt="12345678")
-
-    # Uses 5000 rounds by default for sha256 matching crypt behaviour.
-    assert encrypt.do_encrypt("123", "sha256_crypt", salt="12345678") == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
-
-    assert encrypt.do_encrypt("123", "md5_crypt", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
-
-    assert encrypt.do_encrypt("123", "crypt16", salt="12") == "12pELHK2ME3McUFlHxel6uMM"
 
 
 def test_random_salt():
@@ -158,3 +125,7 @@ def test_random_salt():
     assert len(res) == 8
     for res_char in res:
         assert res_char in expected_salt_candidate_chars
+
+
+def test_password_hash_filter_no_passlib():
+    with passlib_off():
