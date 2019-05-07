@@ -183,7 +183,7 @@ def set_failover(module, ip, value, timeout=180):
         return result['failover']['active_server_ip'], True
 
 
-def get_state(value):
+def get_failover_state(value):
     '''
     Create result dictionary for failover IP's value.
 
@@ -214,7 +214,7 @@ def main():
     failover_ip = module.params['failover_ip']
     value = get_failover(module, failover_ip)
     changed = False
-    before = get_state(value)
+    before = get_failover_state(value)
 
     if module.params['state'] == 'routed':
         new_value = module.params['value']
@@ -228,7 +228,7 @@ def main():
         else:
             value, changed = set_failover(module, failover_ip, new_value, timeout=module.params['timeout'])
 
-    after = get_state(value)
+    after = get_failover_state(value)
     module.exit_json(
         changed=changed,
         diff=dict(
