@@ -1,0 +1,199 @@
+---
+# Add new VHD
+- name: add generation {{ generation }} VM disk (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_add) }}"
+  register: add_vm_disk_check
+  check_mode: yes
+
+- name: get the result of add generation {{ generation }} VM disk (check mode)
+  win_command: |
+    powershell.exe "if (
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_add.disks.1.path }}'}) -and
+      (Get-VHD -Path '{{ test_hyperv_guest_disk_add.disks.1.path }}').Size -eq ('{{ test_hyperv_guest_disk_add.disks.1.size }}' /1))
+        { 'true' } else { 'false' }"
+  register: add_vm_disk_actual_check
+
+- name: assert add generation {{ generation }} VM disk (check mode)
+  assert:
+    that:
+      - add_vm_disk_check is changed
+      - add_vm_disk_actual_check.stdout == 'false\r\n'
+
+- name: add generation {{ generation }} VM disk
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_add) }}"
+  register: add_vm_disk
+
+- name: get the result of add generation {{ generation }} VM disk
+  win_command: |
+    powershell.exe "if (
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_add.disks.1.path }}'}) -and
+      (Get-VHD -Path '{{ test_hyperv_guest_disk_add.disks.1.path }}').Size -eq ('{{ test_hyperv_guest_disk_add.disks.1.size }}' /1))
+        { 'true' } else { 'false' }"
+  register: add_vm_disk_actual
+
+- name: assert add generation {{ generation }} VM disk
+  assert:
+    that:
+      - add_vm_disk is changed
+      - add_vm_disk_actual.stdout == 'true\r\n'
+
+- name: add generation {{ generation }} VM disk (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_add) }}"
+  register: add_vm_disk_again
+
+- name: assert add generation {{ generation }} VM disk (idempotent)
+  assert:
+    that:
+      - not add_vm_disk_again is changed
+
+# Expand newly added VHD from 5MB to 10MB
+- name: expand generation {{ generation }} VM disk (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_expand) }}"
+  register: expand_vm_disk_check
+  check_mode: yes
+
+- name: get the result of expand generation {{ generation }} VM disk (check mode)
+  win_command: |
+    powershell.exe "if (
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_expand.disks.1.path }}'}) -and
+      (Get-VHD -Path '{{ test_hyperv_guest_disk_expand.disks.1.path }}').Size -eq ('{{ test_hyperv_guest_disk_expand.disks.1.size }}' /1))
+        { 'true' } else { 'false' }"
+  register: expand_vm_disk_actual_check
+
+- name: assert expand generation {{ generation }} VM disk (check mode)
+  assert:
+    that:
+      - expand_vm_disk_check is changed
+      - expand_vm_disk_actual_check.stdout == 'false\r\n'
+
+- name: expand generation {{ generation }} VM disk
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_expand) }}"
+  register: expand_vm_disk
+
+- name: get the result of expand generation {{ generation }} VM disk
+  win_command: |
+    powershell.exe "if (
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_expand.disks.1.path }}'}) -and
+      (Get-VHD -Path '{{ test_hyperv_guest_disk_expand.disks.1.path }}').Size -eq ('{{ test_hyperv_guest_disk_expand.disks.1.size }}' /1))
+        { 'true' } else { 'false' }"
+  register: expand_vm_disk_actual
+
+- name: assert expand generation {{ generation }} VM disk
+  assert:
+    that:
+      - expand_vm_disk is changed
+      - expand_vm_disk_actual.stdout == 'true\r\n'
+
+- name: expand generation {{ generation }} VM disk (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_expand) }}"
+  register: expand_vm_disk_again
+
+- name: assert expand generation {{ generation }} VM disk (idempotent)
+  assert:
+    that:
+      - not expand_vm_disk_again is changed
+
+- name: Include first_boot_device_test when generation == 2
+  include_tasks: first_boot_device_test.yml
+  when: generation == 2
+
+# Remove added VHD without 'state: absent' so disk should still exist on disk
+- name: remove generation {{ generation }} VM disk without absent (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: remove_vm_disk_check
+  check_mode: yes
+
+- name: get the result of remove generation {{ generation }} VM disk without absent (check mode)
+  win_command: |
+    powershell.exe "if (
+      (-not (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_expand.disks.1.path }}'})) -and
+      (Test-Path -Path '{{ test_hyperv_guest_disk_expand.disks.1.path }}'))
+        { 'true' } else { 'false' }"
+  register: remove_vm_disk_actual_check
+
+- name: assert remove generation {{ generation }} VM disk without absent (check mode)
+  assert:
+    that:
+      - remove_vm_disk_check is changed
+      - remove_vm_disk_actual_check.stdout == 'false\r\n'
+
+- name: remove generation {{ generation }} VM disk without absent
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: remove_vm_disk
+
+- name: get the result of remove generation {{ generation }} VM disk without absent
+  win_command: |
+    powershell.exe "if (
+      (-not (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_expand.disks.1.path }}'})) -and
+      (Test-Path -Path '{{ test_hyperv_guest_disk_expand.disks.1.path }}'))
+        { 'true' } else { 'false' }"
+  register: remove_vm_disk_actual
+
+- name: assert remove generation {{ generation }} VM disk without absent
+  assert:
+    that:
+      - remove_vm_disk is changed
+      - remove_vm_disk_actual.stdout == 'true\r\n'
+
+- name: remove generation {{ generation }} VM disk without absent (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: remove_vm_disk_again
+
+- name: assert remove generation {{ generation }} VM disk without absent (idempotent)
+  assert:
+    that:
+      - not remove_vm_disk_again is changed
+
+# Remount the removed disk to the VM
+- name: remount generation {{ generation }} VM disk (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_expand) }}"
+  register: remount_vm_disk_check
+  check_mode: yes
+
+- name: get the result of remount generation {{ generation }} VM disk (check mode)
+  win_command: |
+    powershell.exe "if (
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_expand.disks.1.path }}'}))
+        { 'true' } else { 'false' }"
+  register: remount_vm_disk_actual_check
+
+- name: assert remount generation {{ generation }} VM disk (check mode)
+  assert:
+    that:
+      - remount_vm_disk_check is changed
+      - remount_vm_disk_actual_check.stdout == 'false\r\n'
+
+- name: remount generation {{ generation }} VM disk
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_expand) }}"
+  register: remount_vm_disk
+
+- name: get the result of remount generation {{ generation }} VM disk
+  win_command: |
+    powershell.exe "if (
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_expand.disks.1.path }}'}))
+        { 'true' } else { 'false' }"
+  register: remount_vm_disk_actual
+
+- name: assert remount generation {{ generation }} VM disk
+  assert:
+    that:
+      - remount_vm_disk is changed
+      - remount_vm_disk_actual.stdout == 'true\r\n'
+
+- name: remount generation {{ generation }} VM disk (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_expand) }}"
+  register: remount_vm_disk_again
+
+- name: assert remount generation {{ generation }} VM disk (idempotent)
+  assert:
+    that:
+      - not remount_vm_disk_again is changed
+
+# Remove added VHD again so VM is in default state (already tested not doing it again)
+- name: remove second hdd of generation {{ generation }} VM
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+
+- name: remove second hdd from disk
+  win_file:
+    path: "{{ test_hyperv_guest_disk_expand.disks.1.path }}"
+    state: absent

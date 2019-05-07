@@ -1,0 +1,24 @@
+---
+# Test if machine is in default state after running tests
+# Used to check if a operation leaves something behind
+- name: check if generation {{ generation }} VM is in default state
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').State -eq '{{ hyperv_state }}') -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').ProcessorCount -eq {{ test_hyperv_guest_vm.cpu }}) -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').MemoryStartup -eq '{{ test_hyperv_guest_vm.memory }}' /1) -and
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_vm.disks.0.path }}'}) -and
+      ((Get-VHD -Path '{{ test_hyperv_guest_vm.disks.0.path }}').Size -eq ('{{ test_hyperv_guest_vm.disks.0.size }}' /1)) -and
+      (Test-Path -Path '{{ test_hyperv_guest_vm.disks.0.path }}') -and
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_vm.network_adapters.0.name }}') -and
+      ((Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_vm.network_adapters.0.name }}').SwitchName -eq '{{ test_hyperv_guest_vm.network_adapters.0.switch_name }}') -and
+      (-not (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_disk_expand.disks.1.path }}'})) -and
+      (-not (Test-Path -Path '{{ test_hyperv_guest_disk_expand.disks.1.path }}')) -and
+      (-not (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_network_adapter_update.network_adapters.1.name }}')))
+        { 'true' } else { 'false' }"
+  register: no_side_effect
+
+- name: assert no side effects
+  assert:
+    that:
+      - no_side_effect.stdout == 'true\r\n'

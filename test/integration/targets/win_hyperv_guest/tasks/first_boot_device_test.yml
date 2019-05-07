@@ -1,0 +1,90 @@
+---
+# Set firstboot on first HDD
+- name: set first_boot_device (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_first_boot_device) }}"
+  register: set_first_boot_check
+  check_mode: yes
+
+- name: get the result of set first_boot_device (check mode)
+  win_command: |
+    powershell.exe "if (
+      (Get-VMFirmware -VMName '{{ test_hyperv_guest_vm.name }}').BootOrder[0].Device.Path -eq '{{ test_hyperv_guest_disk_first_boot_device.disks.0.path }}')
+        { 'true' } else { 'false' }"
+  register: set_first_boot_actual_check
+
+- name: assert set first_boot_device (check mode)
+  assert:
+    that:
+      - set_first_boot_check is changed
+      - set_first_boot_actual_check.stdout == 'false\r\n'
+
+- name: set first_boot_device
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_first_boot_device) }}"
+  register: set_first_boot
+
+- name: get the result of set first_boot_device
+  win_command: |
+    powershell.exe "if (
+      (Get-VMFirmware -VMName '{{ test_hyperv_guest_vm.name }}').BootOrder[0].Device.Path -eq '{{ test_hyperv_guest_disk_first_boot_device.disks.0.path }}')
+        { 'true' } else { 'false' }"
+  register: set_first_boot_actual
+
+- name: assert set first_boot_device
+  assert:
+    that:
+      - set_first_boot is changed
+      - set_first_boot_actual.stdout == 'true\r\n'
+
+- name: set first_boot_device (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_first_boot_device) }}"
+  register: set_first_boot_again
+
+- name: assert set first_boot_device (idempotent)
+  assert:
+    that:
+      - not set_first_boot_again is changed
+
+# Update firstboot to second HDD
+- name: set first_boot_device (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_first_boot_device_update) }}"
+  register: update_first_boot_device_check
+  check_mode: yes
+
+- name: get the result of set first_boot_device (check mode)
+  win_command: |
+    powershell.exe "if (
+      (Get-VMFirmware -VMName '{{ test_hyperv_guest_vm.name }}').BootOrder[0].Device.Path -eq '{{ test_hyperv_guest_disk_first_boot_device_update.disks.1.path }}')
+        { 'true' } else { 'false' }"
+  register: update_first_boot_device_actual_check
+
+- name: assert set first_boot_device (check mode)
+  assert:
+    that:
+      - update_first_boot_device_check is changed
+      - update_first_boot_device_actual_check.stdout == 'false\r\n'
+
+- name: set first_boot_device
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_first_boot_device_update) }}"
+  register: update_first_boot_device
+
+- name: get the result of set first_boot_device
+  win_command: |
+    powershell.exe "if (
+      (Get-VMFirmware -VMName '{{ test_hyperv_guest_vm.name }}').BootOrder[0].Device.Path -eq '{{ test_hyperv_guest_disk_first_boot_device_update.disks.1.path }}')
+        { 'true' } else { 'false' }"
+  register: update_first_boot_device_actual
+
+- name: assert set first_boot_device
+  assert:
+    that:
+      - update_first_boot_device is changed
+      - update_first_boot_device_actual.stdout == 'true\r\n'
+
+- name: set first_boot_device (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_first_boot_device_update) }}"
+  register: update_first_boot_device_again
+
+- name: assert set first_boot_device (idempotent)
+  assert:
+    that:
+      - not update_first_boot_device_again is changed

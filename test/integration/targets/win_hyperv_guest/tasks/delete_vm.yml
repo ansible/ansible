@@ -1,0 +1,47 @@
+---
+# Test deletion of VM
+- name: delete generation {{ generation }} VM (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_disk_expand) }}"
+  register: delete_vm_check
+  check_mode: yes
+
+- name: get the result of delete generation {{ generation }} VM (check mode)
+  win_command: |
+    powershell.exe "if (
+      (-not (Get-VM -Name '{{ test_hyperv_guest_vm.name }}')) -and
+      (-not (Test-Path -Path '{{ test_hyperv_guest_vm.disks.0.path }}')))
+        { 'true' } else { 'false' }"
+  register: delete_vm_actual_check
+
+- name: assert delete generation {{ generation }} VM (check mode)
+  assert:
+    that:
+      - delete_vm_check is changed
+      - delete_vm_actual_check.stdout == 'false\r\n'
+
+- name: delete generation {{ generation }} VM
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: delete_vm
+
+- name: get the result of delete generation {{ generation }} VM
+  win_command: |
+    powershell.exe "if (
+      (-not (Get-VM -Name '{{ test_hyperv_guest_vm.name }}')) -and
+      (-not (Test-Path -Path '{{ test_hyperv_guest_vm.disks.0.path }}')))
+        { 'true' } else { 'false' }"
+  register: delete_vm_actual
+
+- name: assert delete generation {{ generation }} VM
+  assert:
+      that:
+        - delete_vm is changed
+        - delete_vm_actual.stdout == 'true\r\n'
+
+- name: delete generation {{ generation }} VM (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: delete_vm_again
+
+- name: assert delete generation {{ generation }} VM (idempotent)
+  assert:
+    that:
+      - not delete_vm_again is changed

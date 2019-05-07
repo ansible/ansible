@@ -1,0 +1,94 @@
+---
+# Scale up memory and CPU
+- name: scale up generation {{ generation }} VM (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_vm_update) }}"
+  register: scale_up_vm_check
+  check_mode: yes
+
+- name: get the result of scale up generation {{ generation }} VM (check mode)
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').ProcessorCount -eq {{ test_hyperv_guest_vm_update.cpu }}) -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').MemoryStartup -eq '{{ test_hyperv_guest_vm_update.memory }}' /1))
+        { 'true' } else { 'false' }"
+  register: scale_up_vm_actual_check
+
+- name: assert scale up generation {{ generation }} VM (check mode)
+  assert:
+    that:
+      - scale_up_vm_check is changed
+      - scale_up_vm_actual_check.stdout == 'false\r\n'
+
+- name: scale up generation {{ generation }} VM
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_vm_update) }}"
+  register: scale_up_vm
+
+- name: get the result of scale up generation {{ generation }} VM
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').ProcessorCount -eq {{ test_hyperv_guest_vm_update.cpu }}) -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').MemoryStartup -eq '{{ test_hyperv_guest_vm_update.memory }}' /1))
+        { 'true' } else { 'false' }"
+  register: scale_up_vm_actual
+
+- name: assert scale up generation {{ generation }} VM
+  assert:
+    that:
+      - scale_up_vm is changed
+      - scale_up_vm_actual.stdout == 'true\r\n'
+
+- name: scale up generation {{ generation }} VM (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_vm_update) }}"
+  register: scale_up_vm_again
+
+- name: assert scale up generation {{ generation }} VM (idempotent)
+  assert:
+    that:
+    - not scale_up_vm_again is changed
+
+# Scale down memory and CPU
+- name: scale down generation {{ generation }} VM (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: scale_down_vm_check
+  check_mode: yes
+
+- name: get the result of scale down generation {{ generation }} VM (check mode)
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').ProcessorCount -eq {{ test_hyperv_guest_vm.cpu }}) -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').MemoryStartup -eq '{{ test_hyperv_guest_vm.memory }}' /1))
+        { 'true' } else { 'false' }"
+  register: scale_down_vm_actual_check
+
+- name: assert scale down generation {{ generation }} VM (check mode)
+  assert:
+    that:
+      - scale_down_vm_check is changed
+      - scale_down_vm_actual_check.stdout == 'false\r\n'
+
+- name: scale down generation {{ generation }} VM
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: scale_down_vm
+
+- name: get the result of scale down generation {{ generation }} VM
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').ProcessorCount -eq {{ test_hyperv_guest_vm.cpu }}) -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').MemoryStartup -eq '{{ test_hyperv_guest_vm.memory }}' /1))
+        { 'true' } else { 'false' }"
+  register: scale_down_vm_actual
+
+- name: assert scale down generation {{ generation }} VM
+  assert:
+    that:
+      - scale_down_vm is changed
+      - scale_down_vm_actual.stdout == 'true\r\n'
+
+- name: scale down generation {{ generation }} VM (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: scale_down_vm_again
+
+- name: assert scale down generation {{ generation }} VM (idempotent)
+  assert:
+    that:
+    - not scale_down_vm_again is changed

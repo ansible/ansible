@@ -1,0 +1,89 @@
+---
+test_hyperv_guest_path: '{{ win_output_dir }}\win_hyperv_guest'
+
+test_hyperv_guest_switch:
+  name: Ansible test
+
+test_hyperv_guest_parent_disk:
+  path: '{{ test_hyperv_guest_path }}\parent.vhdx'
+  size: 15MB
+
+test_hyperv_guest_vm:
+  name: Test machine
+  cpu: 1
+  memory: 512MB
+  disks:
+    - path: '{{ test_hyperv_guest_path }}\hdd.vhdx'
+      size: 5MB
+  network_adapters:
+    - name: Network Adapter
+      switch_name: "{{ test_hyperv_guest_switch.name }}"
+  generation: "{{ generation | default(omit) }}"  # Omit as default for removal without specifying generation
+  state: "{{ state | default('absent') }}"  # Absent as default for removal in task which has no support for vars like includes
+
+test_hyperv_guest_vm_update:
+  cpu: 2
+  memory: 1024MB
+
+# Empty network_adapters array so no adapters are removed
+test_hyperv_guest_disk_add:
+  disks:
+    - path: '{{ test_hyperv_guest_path }}\hdd.vhdx'
+      size: 5MB
+    - path: '{{ test_hyperv_guest_path }}\hdd1.vhdx'
+      size: 5MB
+  network_adapters: []
+
+test_hyperv_guest_disk_expand:
+  disks:
+    - path: '{{ test_hyperv_guest_path }}\hdd.vhdx'
+      size: 5MB
+    - path: '{{ test_hyperv_guest_path }}\hdd1.vhdx'
+      size: 10MB
+  network_adapters: []
+
+test_hyperv_guest_disk_first_boot_device:
+  disks:
+    - path: '{{ test_hyperv_guest_path }}\hdd.vhdx'
+      size: 5MB
+      first_boot_device: true
+    - path: '{{ test_hyperv_guest_path }}\hdd1.vhdx'
+      size: 10MB
+  network_adapters: []
+
+test_hyperv_guest_disk_first_boot_device_update:
+  disks:
+    - path: '{{ test_hyperv_guest_path }}\hdd.vhdx'
+      size: 5MB
+    - path: '{{ test_hyperv_guest_path }}\hdd1.vhdx'
+      size: 10MB
+      first_boot_device: true
+  network_adapters: []
+
+# Empty disk array so no disks are removed
+test_hyperv_guest_network_adapter_add:
+  disks: []
+  network_adapters:
+    - name: Network Adapter
+      switch_name: "{{ test_hyperv_guest_switch.name }}"
+    - name: Network Adapter 1
+
+test_hyperv_guest_network_adapter_update:
+  disks: []
+  network_adapters:
+    - name: Network Adapter
+      switch_name: "{{ test_hyperv_guest_switch.name }}"
+    - name: Network Adapter 1
+      switch_name: "{{ test_hyperv_guest_switch.name }}"
+
+test_hyperv_guest_vm_parent:
+  name: Test machine
+  disks:
+    - path: '{{ test_hyperv_guest_path }}\hdd.vhdx'
+      size: "{{ test_hyperv_guest_parent_disk.size }}"
+      parent_path: "{{ test_hyperv_guest_parent_disk.path }}"
+  network_adapters:
+    - name: Network Adapter
+      switch_name: "{{ test_hyperv_guest_switch.name }}"
+  generation: "{{ generation | default(omit) }}"  # Omit as default for removal without specifying generation
+  state: "{{ state | default('absent') }}"  # Absent as default for removal in task which has no support for vars like includes

@@ -1,0 +1,201 @@
+---
+# Cannot use win_feature to install IIS on Server 2008.
+# Run a brief check and skip hosts that don't support
+# that operation
+- name: Check if win_feature will work on test host
+  win_command: powershell.exe "Get-WindowsFeature"
+  register: module_available
+  failed_when: False
+
+# block: only run when win_feature is available
+- block:
+    - name: Ensure Hyper-V features are installed
+      win_feature:
+        name: "Hyper-V"
+        state: present
+        include_management_tools: true
+      register: feature_install
+
+    - name: Reboot after feature install
+      win_reboot:
+      when: feature_install.reboot_required
+
+  when: module_available.rc == 0
+
+# block: only run when feature install in successful
+- block:
+    - name: ensure testing dir is cleaned
+      win_file:
+        path: "{{ test_hyperv_guest_path }}"
+        state: "{{ item }}"
+      with_items:
+        - absent
+        - directory
+
+    - name: Create internal vSwitch for testing
+      win_command: |
+        powershell.exe "New-VMSwitch -Name '{{ test_hyperv_guest_switch.name }}' -SwitchType Internal"
+
+    - name: Create VHD for parent disk testing
+      win_command: |
+        powershell.exe "New-VHD -Path '{{ test_hyperv_guest_parent_disk.path }}' -SizeBytes {{ test_hyperv_guest_parent_disk.size }}"
+
+    # Tests
+    # generation and state are used in defaults/main.yml > test_hyperv_guest_vm
+    # Therefore they need to be defined for each include
+
+    # Generation 2
+    - name: Include assert failing checks
+      include_tasks: assert_failing_checks.yml
+
+    - name: Include create of generation 2 VM
+      include_tasks: create_vm.yml
+      vars:
+        generation: 2
+        state: present
+
+    - name: Include side effect check
+      include_tasks: side_effect_check.yml
+      vars:
+        generation: 2
+        hyperv_state: running
+
+    # No live updates due not bootable OS
+    - name: shutdown generation 2 machine
+      win_hyperv_guest: "{{ test_hyperv_guest_vm | combine({'state': 'stopped'}) }}"
+
+    - name: Include update of generation 2 VM
+      include_tasks: update_vm.yml
+      vars:
+        generation: 2
+        state: stopped
+
+    - name: Include side effect check
+      include_tasks: side_effect_check.yml
+      vars:
+        generation: 2
+        hyperv_state: "off"
+
+    - name: start generation 2 machine
+      win_hyperv_guest: "{{ test_hyperv_guest_vm | combine({'state': 'started'}) }}"
+
+    - name: Include disk test for generation 2 VM
+      include_tasks: disk_tests.yml
+      vars:
+        generation: 2
+        state: present
+
+    - name: Include side effect check
+      include_tasks: side_effect_check.yml
+      vars:
+        generation: 2
+        hyperv_state: running
+
+    - name: Include network_adapter tests for generation 2 VM
+      include_tasks: network_adapter_tests.yml
+      vars:
+        generation: 2
+        state: present
+
+    - name: Include side effect check
+      include_tasks: side_effect_check.yml
+      vars:
+        generation: 2
+        hyperv_state: running
+
+    - name: Include delete of generation 2 VM
+      include_tasks: delete_vm.yml
+      vars:
+        generation: 2
+        state: absent
+
+    - name: Include create of generation 2 VM with parent_disk
+      include_tasks: create_vm_parent_disk.yml
+      vars:
+        generation: 2
+        state: present
+
+    - name: Include delete of generation 2 VM with parent_disk
+      include_tasks: delete_vm.yml
+      vars:
+        generation: 2
+        state: absent
+
+    # Generation 1
+    - name: Include create of generation 1 VM
+      include_tasks: create_vm.yml
+      vars:
+        generation: 1
+        state: present
+
+    - name: Include side effect check
+      include_tasks: side_effect_check.yml
+      vars:
+        generation: 1
+        hyperv_state: running
+
+    # Stop generation 1 no live updates possible
+    - name: shutdown generation 1 machine
+      win_hyperv_guest: "{{ test_hyperv_guest_vm | combine({'state': 'stopped'}) }}"
+
+    - name: Include update of generation 1 VM
+      include_tasks: update_vm.yml
+      vars:
+        generation: 1
+        state: stopped
+
+    - name: Include side effect check
+      include_tasks: side_effect_check.yml
+      vars:
+        generation: 1
+        hyperv_state: "off"
+
+    - name: Include disk tests for generation 1 VM
+      include_tasks: disk_tests.yml
+      vars:
+        generation: 1
+        state: stopped  # No live disk updates for a generation 1 VM
+
+    - name: Include side effect check
+      include_tasks: side_effect_check.yml
+      vars:
+        generation: 1
+        hyperv_state: "off"
+
+    - name: Include network_adapter tests for generation 1 VM
+      include_tasks: network_adapter_tests.yml
+      vars:
+        generation: 1
+        state: stopped  # No live network adapter updates for a generation 1 VM
+
+    - name: Include side effect check
+      include_tasks: side_effect_check.yml
+      vars:
+        generation: 1
+        hyperv_state: "off"
+
+    - name: Include delete of generation 1 VM
+      include_tasks: delete_vm.yml
+      vars:
+        generation: 1
+        state: absent
+
+  always:
+    # Remove without disks because they might not be created due an error
+    - name: Ensure test VM is deleted without disks
+      win_hyperv_guest: "{{ test_hyperv_guest_vm | combine( {'disks': []} )}}"
+
+    # Separate removal of disks with idempotent file module
+    # They could still exists due an error
+    - name: Ensure disks of VM are removed and testing dir
+      win_file:
+        path: "{{ test_hyperv_guest_path }}"
+        state: absent
+
+    - name: Remove internal vSwitch for testing
+      win_command: |
+        powershell.exe "Remove-VMSwitch -Name '{{ test_hyperv_guest_switch.name }}' -Force"
+
+  when:
+    - module_available.rc == 0
+    - feature_install.success == true

@@ -1,0 +1,151 @@
+---
+- name: test secure_boot=true and generation=1
+  win_hyperv_guest:
+    name: Test machine
+    secure_boot: true
+    generation: 1
+  register: secure_boot_true_and_generation_1
+  ignore_errors: true
+
+- name: assert fail of test secure_boot=true and generation=1
+  assert:
+    that:
+      - secure_boot_true_and_generation_1.msg == 'Secure boot options are not valid for generation 1 machines'
+
+- name: test secure_boot=false and secure_boot_template is set
+  win_hyperv_guest:
+    name: Test machine
+    secure_boot: false
+    secure_boot_template: MicrosoftWindows
+  register: secure_boot_false_and_secure_boot_template
+  ignore_errors: true
+
+- name: assert fail of test secure_boot=false and secure_boot_template is set
+  assert:
+    that:
+      - secure_boot_false_and_secure_boot_template.msg == 'Secure_boot_template is not valid when secure_boot is false'
+
+- name: test duplicate disk paths are defined
+  win_hyperv_guest:
+    name: Test machine
+    disks:
+      - path: C:\Temp\hdd.vhdx
+        size: 15MB
+      - path: C:\Temp\hdd.vhdx
+        size: 15MB
+  register: duplicate_disk_paths
+  ignore_errors: true
+
+- name: assert fail of test duplicate disk paths are defined
+  assert:
+    that:
+      - duplicate_disk_paths.msg == 'There are duplicate disk paths defined'
+
+- name: test disk without size
+  win_hyperv_guest:
+    name: Test machine
+    disks:
+      - path: C:\Temp\hdd.vhdx
+  register: disk_without_size
+  ignore_errors: true
+
+- name: assert fail of test disk without size
+  assert:
+    that:
+      - disk_without_size.msg == 'No size is specified for C:\\Temp\\hdd.vhdx'
+
+- name: test path and parent_path different extensions
+  win_hyperv_guest:
+    name: Test machine
+    disks:
+      - path: C:\Temp\hdd.vhdx
+        size: 15MB
+        parent_path: C:\Temp\parent.vhd
+  register: disk_path_extension_different_from_parent_path
+  ignore_errors: true
+
+- name: assert fail of test path and parent_path different extensions
+  assert:
+    that:
+      - disk_path_extension_different_from_parent_path.msg == 'The path and parent_path have different extensions C:\\Temp\\hdd.vhdx and C:\\Temp\\parent.vhd'
+
+- name: test parent_path does not exist
+  win_hyperv_guest:
+    name: Test machine
+    disks:
+      - path: C:\Temp\hdd.vhdx
+        size: 15MB
+        parent_path: C:\Temp\not_parent.vhdx
+  register: parent_path_non_existing
+  ignore_errors: true
+
+- name: assert fail of test parent_path does not exist
+  assert:
+    that:
+      - parent_path_non_existing.msg == 'The parent disk does not exist C:\\Temp\\not_parent.vhdx'
+
+- name: test first_boot_device=true and generation=1
+  win_hyperv_guest:
+    name: Test machine
+    disks:
+      - path: C:\Temp\hdd.vhdx
+        size: 15MB
+        first_boot_device: true
+    generation: 1
+  register: fist_boot_true_and_generation_1
+  ignore_errors: true
+
+- name: assert fail of test first_boot_device=true and generation=1
+  assert:
+    that:
+      - fist_boot_true_and_generation_1.msg == 'The first_boot_device parameter is not supported for generation 1'
+
+- name: test first_boot_device=true defined multiple times
+  win_hyperv_guest:
+    name: Test machine
+    generation: 2
+    disks:
+      - path: C:\Temp\hdd.vhdx
+        size: 15MB
+        first_boot_device: true
+      - path: C:\Temp\hdd1.vhdx
+        size: 15MB
+        first_boot_device: true
+  register: multiple_first_boot_devices
+  ignore_errors: true
+
+- name: assert fail of test first_boot_device=true defined multiple times
+  assert:
+    that:
+      - multiple_first_boot_devices.msg == 'The first_boot_device parameter is set on multiple disks'
+
+- name: test duplicate network_adapter names
+  win_hyperv_guest:
+    name: Test machine
+    network_adapters:
+      - name: Network Adapter
+      - name: Network Adapter
+  register: duplicate_network_adapter_names
+  ignore_errors: true
+
+- name: assert fail of test duplicate network_adapter names
+  assert:
+    that:
+      - duplicate_network_adapter_names.msg == 'There are duplicate network adapter names defined'
+
+- name: test wait_for_ip timout
+  win_hyperv_guest:
+    name: Test machine
+    timeout: 10
+    wait_for_ip: true
+  register: wait_for_ip_timeout
+  ignore_errors: true
+
+- name: assert fail of test wait_for_ip_timeout
+  assert:
+    that:
+      - wait_for_ip_timeout.msg == 'Failed to get IPV4 for VM, timeout exceeded'
+
+# Remove with Powershell since module might fail since it is not tested in this phase yet
+- name: Remove VM waiting for IP
+  win_command: powershell.exe "Stop-VM -Name 'Test machine' -TurnOff; Remove-VM -Name 'Test machine' -Force"

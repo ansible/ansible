@@ -1,0 +1,55 @@
+---
+# Test creation of VM of parent disk
+- name: create generation {{ generation }} VM with parent_disk (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm_parent }}"
+  register: create_vm_parent_check
+  check_mode: yes
+
+- name: get the result of create generation {{ generation }} VM with parent_disk (check mode)
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm_parent.name }}').State -eq 'Running') -and
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm_parent.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_vm_parent.disks.0.path }}'}) -and
+      (Get-VHD -Path '{{ test_hyperv_guest_vm_parent.disks.0.path }}').Size -eq ('{{ test_hyperv_guest_vm_parent.disks.0.size }}' /1) -and
+      ((Get-VHD -Path '{{ test_hyperv_guest_vm_parent.disks.0.path }}').ParentPath -eq '{{ test_hyperv_guest_vm_parent.disks.0.parent_path }}') -and
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm_parent.name }}' -Name '{{ test_hyperv_guest_vm_parent.network_adapters.0.name }}') -and
+      ((Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_vm_parent.network_adapters.0.name }}').SwitchName -eq '{{ test_hyperv_guest_vm_parent.network_adapters.0.switch_name }}'))
+        { 'true' } else { 'false' }"
+  register: create_vm_parent_actual_check
+
+- name: assert create generation {{ generation }} VM with parent_disk (check mode)
+  assert:
+    that:
+      - create_vm_parent_check is changed
+      - create_vm_parent_actual_check.stdout == 'false\r\n'
+
+- name: create generation {{ generation }} VM with parent_disk
+  win_hyperv_guest: "{{ test_hyperv_guest_vm_parent }}"
+  register: create_vm_parent
+
+- name: get the result of create generation {{ generation }} VM with parent_disk
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm_parent.name }}').State -eq 'Running') -and
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm_parent.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_vm_parent.disks.0.path }}'}) -and
+      (Get-VHD -Path '{{ test_hyperv_guest_vm_parent.disks.0.path }}').Size -eq ('{{ test_hyperv_guest_vm_parent.disks.0.size }}' /1) -and
+      ((Get-VHD -Path '{{ test_hyperv_guest_vm_parent.disks.0.path }}').ParentPath -eq '{{ test_hyperv_guest_vm_parent.disks.0.parent_path }}') -and
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm_parent.name }}' -Name '{{ test_hyperv_guest_vm_parent.network_adapters.0.name }}') -and
+      ((Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_vm_parent.network_adapters.0.name }}').SwitchName -eq '{{ test_hyperv_guest_vm_parent.network_adapters.0.switch_name }}'))
+        { 'true' } else { 'false' }"
+  register: create_vm_parent_actual
+
+- name: assert create generation {{ generation }} VM with parent_disk
+  assert:
+    that:
+      - create_vm_parent is changed
+      - create_vm_parent_actual.stdout == 'true\r\n'
+
+- name: create generation {{ generation }} VM with parent_disk (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm_parent }}"
+  register: create_vm_parent_again
+
+- name: assert create generation {{ generation }} VM with parent_disk (idempotent)
+  assert:
+    that:
+    - not create_vm_parent_again is changed

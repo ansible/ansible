@@ -1,0 +1,135 @@
+---
+# Add new network adapters
+- name: add generation {{ generation }} VM network adapter (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_network_adapter_add) }}"
+  register: add_vm_network_adapter_check
+  check_mode: yes
+
+- name: get the result of add generation {{ generation }} VM network adapter (check mode)
+  win_command: |
+    powershell.exe "if(
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_network_adapter_add.network_adapters.1.name }}'))
+        { 'true' } else { 'false' }"
+  register: add_vm_network_adapter_actual_check
+
+- name: assert create generation {{ generation }} VM network adapter (check mode)
+  assert:
+    that:
+      - add_vm_network_adapter_check is changed
+      - add_vm_network_adapter_actual_check.stdout == 'false\r\n'
+
+- name: add generation {{ generation }} VM network adapter
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_network_adapter_add) }}"
+  register: add_vm_network_adapter
+
+- name: get the result of add generation {{ generation }} VM network adapter
+  win_command: |
+    powershell.exe "if(
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_network_adapter_add.network_adapters.1.name }}'))
+        { 'true' } else { 'false' }"
+  register: add_vm_network_adapter_actual
+
+- name: assert add generation {{ generation }} VM network adapter
+  assert:
+    that:
+      - add_vm_network_adapter is changed
+      - add_vm_network_adapter_actual.stdout == 'true\r\n'
+
+- name: add generation {{ generation }} VM network adapter (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_network_adapter_add) }}"
+  register: add_vm_network_adapter_again
+
+- name: assert add create generation {{ generation }} VM network adapter (idempotent)
+  assert:
+    that:
+      - not add_vm_network_adapter_again is changed
+
+# Connect new adapter to switch
+- name: update generation {{ generation }} VM network adapter (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_network_adapter_update) }}"
+  register: update_vm_network_adapter_check
+  check_mode: yes
+
+- name: get the result of update generation {{ generation }} VM network adapter (check mode)
+  win_command: |
+    powershell.exe "if (
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_network_adapter_update.network_adapters.1.name }}').SwitchName -eq '{{ test_hyperv_guest_network_adapter_update.network_adapters.1.switch_name }}')
+        { 'true' } else { 'false' }"
+  register: update_vm_network_adapter_actual_check
+
+- name: assert create generation {{ generation }} VM network adapter (check mode)
+  assert:
+    that:
+      - update_vm_network_adapter_check is changed
+      - update_vm_network_adapter_actual_check.stdout == 'false\r\n'
+
+- name: update generation {{ generation }} VM network adapter
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_network_adapter_update) }}"
+  register: update_vm_network_adapter
+
+- name: get the result of update generation {{ generation }} VM network adapter
+  win_command: |
+    powershell.exe "if (
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_network_adapter_update.network_adapters.1.name }}').SwitchName -eq '{{ test_hyperv_guest_network_adapter_update.network_adapters.1.switch_name }}')
+        { 'true' } else { 'false' }"
+  register: update_vm_network_adapter_actual
+
+- name: assert update generation {{ generation }} VM network adapter
+  assert:
+    that:
+      - update_vm_network_adapter is changed
+      - update_vm_network_adapter_actual.stdout == 'true\r\n'
+
+- name: update generation {{ generation }} VM network adapter (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm | combine(test_hyperv_guest_network_adapter_update) }}"
+  register: update_vm_network_adapter_again
+
+- name: assert update create generation {{ generation }} VM network adapter (idempotent)
+  assert:
+    that:
+      - not update_vm_network_adapter_again is changed
+
+# Remove network adapter
+- name: remove generation {{ generation }} VM network adapter (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: remove_vm_network_adapter_check
+  check_mode: yes
+
+- name: get the result of remove generation {{ generation }} VM network adapter (check mode)
+  win_command: |
+    powershell.exe "if (
+      -not (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_network_adapter_update.network_adapters.1.name }}'))
+        { 'true' } else { 'false' }"
+  register: remove_vm_network_adapter_actual_check
+
+- name: assert remove generation {{ generation }} VM network adapter (check mode)
+  assert:
+    that:
+      - remove_vm_network_adapter_check is changed
+      - remove_vm_network_adapter_actual_check.stdout == 'false\r\n'
+
+- name: remove generation {{ generation }} VM network adapter
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: remove_vm_network_adapter
+
+- name: get the result of remove generation {{ generation }} VM network adapter
+  win_command: |
+    powershell.exe "if (
+      -not (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_network_adapter_update.network_adapters.1.name }}'))
+        { 'true' } else { 'false' }"
+  register: remove_vm_network_adapter_actual
+
+- name: assert remove generation {{ generation }} VM network adapter
+  assert:
+    that:
+      - remove_vm_network_adapter is changed
+      - remove_vm_network_adapter_actual.stdout == 'true\r\n'
+
+- name: remove generation {{ generation }} VM network adapter (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: remove_vm_network_adapter_again
+
+- name: assert remove generation {{ generation }} VM network adapter (idempotent)
+  assert:
+    that:
+      - not remove_vm_network_adapter_again is changed

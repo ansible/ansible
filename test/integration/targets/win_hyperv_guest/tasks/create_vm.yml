@@ -1,0 +1,57 @@
+---
+# Test creation of VM
+- name: create generation {{ generation }} VM (check mode)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: create_vm_check
+  check_mode: yes
+
+- name: get the result of create generation {{ generation }} VM (check mode)
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').State -eq 'Running') -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').ProcessorCount -eq {{ test_hyperv_guest_vm.cpu }}) -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').MemoryStartup -eq '{{ test_hyperv_guest_vm.memory }}' /1) -and
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_vm.disks.0.path }}'}) -and
+      (Get-VHD -Path '{{ test_hyperv_guest_vm.disks.0.path }}').Size -eq ('{{ test_hyperv_guest_vm.disks.0.size }}' /1) -and
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_vm.network_adapters.0.name }}') -and
+      ((Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_vm.network_adapters.0.name }}').SwitchName -eq '{{ test_hyperv_guest_vm.network_adapters.0.switch_name }}'))
+        { 'true' } else { 'false' }"
+  register: create_vm_actual_check
+
+- name: assert create generation {{ generation }} VM (check mode)
+  assert:
+    that:
+      - create_vm_check is changed
+      - create_vm_actual_check.stdout == 'false\r\n'
+
+- name: create generation {{ generation }} VM
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: create_vm
+
+- name: get the result of create generation {{ generation }} VM
+  win_command: |
+    powershell.exe "if (
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').State -eq 'Running') -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').ProcessorCount -eq {{ test_hyperv_guest_vm.cpu }}) -and
+      ((Get-VM -Name '{{ test_hyperv_guest_vm.name }}').MemoryStartup -eq '{{ test_hyperv_guest_vm.memory }}' /1) -and
+      (Get-VMHardDiskDrive -VMName '{{ test_hyperv_guest_vm.name }}' | Where {$_.Path -eq '{{ test_hyperv_guest_vm.disks.0.path }}'}) -and
+      (Get-VHD -Path '{{ test_hyperv_guest_vm.disks.0.path }}').Size -eq ('{{ test_hyperv_guest_vm.disks.0.size }}' /1) -and
+      (Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_vm.network_adapters.0.name }}') -and
+      ((Get-VMNetworkAdapter -VMName '{{ test_hyperv_guest_vm.name }}' -Name '{{ test_hyperv_guest_vm.network_adapters.0.name }}').SwitchName -eq '{{ test_hyperv_guest_vm.network_adapters.0.switch_name }}'))
+        { 'true' } else { 'false' }"
+  register: create_vm_actual
+
+- name: assert create generation {{ generation }} VM
+  assert:
+    that:
+      - create_vm is changed
+      - create_vm_actual.stdout == 'true\r\n'
+
+- name: create generation {{ generation }} VM (idempotent)
+  win_hyperv_guest: "{{ test_hyperv_guest_vm }}"
+  register: create_vm_again
+
+- name: assert create generation {{ generation }} VM (idempotent)
+  assert:
+    that:
+    - not create_vm_again is changed
