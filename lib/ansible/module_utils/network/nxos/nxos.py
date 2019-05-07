@@ -707,8 +707,13 @@ class NxosCmdRef:
         self.feature_enable()
         self.get_platform_defaults()
 
+    def __getitem__(self, key=None):
+        if key is None:
+            return self._ref
+        return self._ref[key]
+
     def feature_enable(self):
-        """Add 'feature <foo>' to _proposed if specified in ref. """
+        """Add 'feature <foo>' to _proposed if ref includes a 'feature' key. """
         ref = self._ref
         feature = ref['_template'].get('feature')
         if feature:
@@ -719,6 +724,7 @@ class NxosCmdRef:
                 self._module.warn(msg)
                 ref['_proposed'].append('feature {0}'.format(feature))
                 ref['_cli_is_feature_disabled'] = ref['_proposed']
+
 
     def get_platform_id(self):
         """Query device for platform type"""
@@ -740,6 +746,7 @@ class NxosCmdRef:
 
         # TBD: Fretta check needs linecard productid
         return plat
+
 
     def get_platform_defaults(self):
         """Update ref with platform specific defaults"""
@@ -781,6 +788,7 @@ class NxosCmdRef:
                 raise
         return output
 
+
     def get_existing(self):
         """Update ref with existing command states from the device.
         Store these states in each command's 'existing' key.
@@ -796,36 +804,50 @@ class NxosCmdRef:
         # Walk each cmd in ref, use cmd pattern to discover existing cmds
         output = output.split('\n')
         for k in ref['commands']:
-            pattern = ref[k]['getval']
-            options = [re.search(pattern, line) for line in output]
-            match = [m.groups() for m in options if m]
-            if not match:
-                continue
-            if len(match) > 1:
-                # TBD: Add support for multiple instances
-                raise "get_existing: multiple match instances are not currently supported"
-
-            match = list(match[0])  # tuple to list
-            # Example match results for patterns that nvgen with the 'no' prefix:
-            # When pattern: '(no )*foo *(\S+)*$' And:
-            #  When output: 'no foo'  -> match: ['no ', None]
-            #  When output: 'foo 50'  -> match: [None, '50']
-            if None is match[0]:
-                match.pop(0)
-            elif 'no' in match[0]:
-                ref[k]['no_cmd'] = True
-                match.pop(0)
+            pattern = re.compile(ref[k]['getval'])   # CVH todo: move pattern matchers to another method###
+            match_lines = [re.search(pattern, line) for line in output]
+            if 'dict' == ref[k]['kind']:
+                match = [m for m in match_lines if m]
                 if not match:
                     continue
+                match = match[0]
+
+            else:
+                match = [m.groups() for m in match_lines if m]
+                if not match:
+                    continue
+                if len(match) > 1:
+                    # TBD: Add support for multiple instances
+                    raise "get_existing: multiple match instances are not currently supported"
+
+                match = list(match[0]) # tuple to list
+                # Example match results for patterns that nvgen with the 'no' prefix:
+                # When pattern: '(no )*foo *(\S+)*$' And:
+                #  When output: 'no foo'  -> match: ['no ', None]
+                #  When output: 'foo 50'  -> match: [None, '50']
+                if None is match[0]:    # CVH todo: is this needed for dict also? ############
+                    match.pop(0)
+                elif 'no' in match[0]:
+                    match.pop(0)
+                    if not match:
+                        continue
+
             kind = ref[k]['kind']
             if 'int' == kind:
                 ref[k]['existing'] = int(match[0])
             elif 'list' == kind:
                 ref[k]['existing'] = [str(i) for i in match]
+            elif 'dict' == kind:
+                # The getval pattern should contain regex named group keys that
+                # match up with the setval named placeholder keys; e.g.
+                #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
+                #   setval: my-cmd {foo} bar {baz}
+                ref[k]['existing'] = {k:str(match.group(k)) for k in pattern.groupindex.keys()}
             elif 'str' == kind:
                 ref[k]['existing'] = match[0]
             else:
                 raise "get_existing: unknown 'kind' value specified for key '{0}'".format(k)
+
 
     def get_playvals(self):
         """Update ref with values from the playbook.
@@ -836,11 +858,15 @@ class NxosCmdRef:
         for k in ref.keys():
             if k in module.params and module.params[k] is not None:
                 playval = module.params[k]
+                # Normalize each value
                 if 'int' == ref[k]['kind']:
                     playval = int(playval)
                 elif 'list' == ref[k]['kind']:
                     playval = [str(i) for i in playval]
+                elif 'dict' == ref[k]['kind']:
+                    playval = {k:str(v) for k,v in playval.iteritems()}
                 ref[k]['playval'] = playval
+
 
     def get_proposed(self):
         """Compare playbook values against existing states and create a list
@@ -867,6 +893,12 @@ class NxosCmdRef:
                 cmd = ref[k]['setval'].format(playval)
             elif 'list' == kind:
                 cmd = ref[k]['setval'].format(*(playval))
+            elif 'dict' == kind:
+                # The setval pattern should contain placeholder keys that
+                # match up with the getval regex named group keys; e.g.
+                #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
+                #   setval: my-cmd {foo} bar {baz}
+                cmd = ref[k]['setval'].format(**playval)
             elif 'str' == kind:
                 if playval:
                     cmd = ref[k]['setval'].format('', playval)

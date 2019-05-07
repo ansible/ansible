@@ -55,7 +55,7 @@ options:
       - BFD interval timer values.
         Valid values are a list of ints defining [interval, min_rx, multiplier]
     required: false
-    type: list
+    type: dict
   slow_timer:
     description:
       - BFD slow rate timer in milliseconds.
@@ -79,7 +79,7 @@ options:
       - BFD IPv4 interval timer values.
         Valid values are a list of ints defining [interval, min_rx, multiplier]
     required: false
-    type: list
+    type: list  ###### CVH todo: Update to dict; other lists too
   ipv4_slow_timer:
     description:
       - BFD IPv4 slow rate timer in milliseconds.
@@ -172,12 +172,17 @@ echo_rx_interval:
     default: 250
 
 interval:
-  kind: list
-  getval: bfd interval (\d+) min_rx (\d+) multiplier (\d+)
-  setval: bfd interval {0} min_rx {1} multiplier {2}
-  default: [50,50,3]
+  kind: dict
+  getval: bfd interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
+  setval: bfd interval {tx} min_rx {min_rx} multiplier {multiplier}
+  default:
+    tx: 50
+    min_rx: 50
+    multiplier: 3
   N3K:
-    default: [250,250,3]
+    tx: 250
+    min_rx: 250
+    multiplier: 3
 
 slow_timer:
   kind: int
@@ -271,7 +276,7 @@ def main():
     argument_spec = dict(
         echo_interface=dict(required=False, type='str'),
         echo_rx_interval=dict(required=False, type='int'),
-        interval=dict(required=False, type='list'),
+        interval=dict(required=False, type='dict'),
         slow_timer=dict(required=False, type='int'),
         startup_timer=dict(required=False, type='int'),
         ipv4_echo_rx_interval=dict(required=False, type='int'),
