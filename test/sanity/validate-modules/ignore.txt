@@ -354,6 +354,7 @@ lib/ansible/modules/files/lineinfile.py E323
 lib/ansible/modules/files/lineinfile.py E324
 lib/ansible/modules/files/lineinfile.py E326
 lib/ansible/modules/files/replace.py E323
+lib/ansible/modules/files/stat.py E322
 lib/ansible/modules/files/stat.py E336
 lib/ansible/modules/files/synchronize.py E322
 lib/ansible/modules/files/synchronize.py E323
