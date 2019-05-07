@@ -154,8 +154,8 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_device_info(self):
         device_info = {}
