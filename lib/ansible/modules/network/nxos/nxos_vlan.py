@@ -213,8 +213,7 @@ def map_obj_to_commands(updates, module):
         del w['state']
 
         obj_in_have = search_obj_in_list(vlan_id, have) or {}
-        if not re.match('N[567]', os_platform) or \
-          (not obj_in_have.get('mode') and mode == 'ce'):
+        if not re.match('N[567]', os_platform) or (not obj_in_have.get('mode') and mode == 'ce'):
             mode = w['mode'] = None
 
         if state == 'absent':
