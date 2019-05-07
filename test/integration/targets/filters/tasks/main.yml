@@ -133,7 +133,7 @@
 
 - name: Test password_hash filter
   vars:
-    crypt_skip: '{{ True if ansible_system == "Darwin" else False }}'
+    crypt_skip_all: '{{ True if ansible_system == "Darwin" else False }}'
     passwords:
       - pass: 'hash'
         algo: 'md5'
@@ -182,20 +182,18 @@
         salt: 'saltWith22Characters00'
         crypt_skip: '{{ crypt_skip | default(False) }}'
   block:
-    - name: Debug crypt_skip var
-      debug: var=crypt_skip
     - name: Test using static salt
       assert:
         that:
           - "{{ ( item.pass | password_hash(item.algo, item.salt) ) == item.result or ( item.pass | password_hash(item.algo, item.salt) ) == ( item.result_alt | default('') ) }}"
       loop: "{{ passwords }}"
-      when: not item.crypt_skip | default(False)
+      when: not item.crypt_skip or not crypt_skip_all | default(False)
     - name: Passwords default to random salt
       assert:
         that:
           - '"{{ item.pass | password_hash(item.algo) }}" != "{{ item.pass | password_hash(item.algo) }}"'
       loop: "{{ passwords }}"
-      when: not item.crypt_skip | default(False)
+      when: not item.crypt_skip or not crypt_skip_all | default(False)
     - name: Register results of the algorithm error
       debug:
         var: "{{ item.pass | password_hash('fake_algo') }}"
