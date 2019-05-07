@@ -695,13 +695,17 @@ class NxosCmdRef:
         """Initialize cmd_ref from yaml data."""
         self._module = module
         ref = self._ref = yaml.load(cmd_ref_str)
+        # Process module state key
+        if self._module.params.get('state') is None:
+            ref['_state'] = 'present'
+        else:
+            ref['_state'] = self._module.params.get('state')
         # Create a list of supported commands based on ref keys
         ref['commands'] = [k for k in ref if not k.startswith('_')]
         ref['commands'].sort()
         ref['_proposed'] = []
         self.feature_enable()
         self.get_platform_defaults()
-
 
     def feature_enable(self):
         """Add 'feature <foo>' to _proposed if specified in ref. """
@@ -715,7 +719,6 @@ class NxosCmdRef:
                 self._module.warn(msg)
                 ref['_proposed'].append('feature {0}'.format(feature))
                 ref['_cli_is_feature_disabled'] = ref['_proposed']
-
 
     def get_platform_id(self):
         """Query device for platform type"""
@@ -737,7 +740,6 @@ class NxosCmdRef:
 
         # TBD: Fretta check needs linecard productid
         return plat
-
 
     def get_platform_defaults(self):
         """Update ref with platform specific defaults"""
@@ -779,7 +781,6 @@ class NxosCmdRef:
                 raise
         return output
 
-
     def get_existing(self):
         """Update ref with existing command states from the device.
         Store these states in each command's 'existing' key.
@@ -796,14 +797,15 @@ class NxosCmdRef:
         output = output.split('\n')
         for k in ref['commands']:
             pattern = ref[k]['getval']
-            match = [m.groups() for m in (re.search(pattern, line) for line in output) if m]
+            options = [re.search(pattern, line) for line in output]
+            match = [m.groups() for m in options if m]
             if not match:
                 continue
             if len(match) > 1:
                 # TBD: Add support for multiple instances
                 raise "get_existing: multiple match instances are not currently supported"
 
-            match = list(match[0]) # tuple to list
+            match = list(match[0])  # tuple to list
             # Example match results for patterns that nvgen with the 'no' prefix:
             # When pattern: '(no )*foo *(\S+)*$' And:
             #  When output: 'no foo'  -> match: ['no ', None]
@@ -825,8 +827,6 @@ class NxosCmdRef:
             else:
                 raise "get_existing: unknown 'kind' value specified for key '{0}'".format(k)
 
-
-
     def get_playvals(self):
         """Update ref with values from the playbook.
         Store these values in each command's 'playval' key.
@@ -841,7 +841,6 @@ class NxosCmdRef:
                 elif 'list' == ref[k]['kind']:
                     playval = [str(i) for i in playval]
                 ref[k]['playval'] = playval
-
 
     def get_proposed(self):
         """Compare playbook values against existing states and create a list
@@ -858,7 +857,9 @@ class NxosCmdRef:
         for k in play_keys:
             playval = ref[k]['playval']
             existing = ref[k].get('existing', ref[k]['default'])
-            if playval == existing:
+            if playval == existing and ref['_state'] == 'present':
+                continue
+            if existing is None and ref['_state'] == 'absent':
                 continue
             cmd = None
             kind = ref[k]['kind']
@@ -874,6 +875,19 @@ class NxosCmdRef:
             else:
                 raise "get_proposed: unknown 'kind' value specified for key '{0}'".format(k)
             if cmd:
+                if 'absent' == ref['_state'] and not re.search(r'^no', cmd):
+                    cmd = 'no ' + cmd
+                # This command may require parent commands for proper context
+                # Global _template context is replaced by parameter context
+                parent_context = ref['_template'].get('context', [])
+                parent_context = ref[k].get('context', parent_context)
+                for context in parent_context:
+                    if isinstance(context, list):
+                        for ctx_cmd in context:
+                            proposed.append(ctx_cmd)
+                    elif isinstance(context, str):
+                        proposed.append(context)
+
                 proposed.append(cmd)
 
         return proposed
