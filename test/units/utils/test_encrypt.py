@@ -129,3 +129,6 @@ def test_random_salt():
 
 def test_password_hash_filter_no_passlib():
     with passlib_off():
+        if sys.platform.startswith('darwin'):
+            with pytest.raises(AnsibleError):
+                get_encrypted_password("123", "crypt16", salt="12")
