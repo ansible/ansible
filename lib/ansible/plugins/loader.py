@@ -18,7 +18,7 @@ from collections import defaultdict
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.plugin_docs import get_docstring
@@ -39,6 +39,19 @@ def add_dirs_to_loader(which_loader, paths):
     loader = getattr(sys.modules[__name__], '%s_loader' % which_loader)
     for path in paths:
         loader.add_directory(path, with_subdir=True)
+
+
+def add_all_plugin_dirs(path):
+    ''' add any existing plugin dirs in the path provided '''
+    b_path = to_bytes(path, errors='surrogate_or_strict')
+    if os.path.isdir(b_path):
+        for name, obj in get_all_plugin_loaders():
+            if obj.subdir:
+                plugin_path = os.path.join(b_path, to_bytes(obj.subdir))
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(to_text(plugin_path))
+    else:
+        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_native(path))
 
 
 class PluginLoader:
