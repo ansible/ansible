@@ -64,11 +64,35 @@ state:
     - Will be C(routed) or C(unrouted).
   returned: success
   type: str
+failover_ip:
+  description:
+    - The failover IP.
+  returned: success
+  type: str
+  sample: '1.2.3.4'
+failover_netmask:
+  description:
+    - The netmask for the failover IP.
+  returned: success
+  type: str
+  sample: '255.255.255.255'
+server_ip:
+  description:
+    - The main IP of the server this failover IP is associated to.
+    - This is I(not) the server the failover IP is routed to.
+  returned: success
+  type: str
+server_number:
+  description:
+    - The number of the server this failover IP is associated to.
+    - This is I(not) the server the failover IP is routed to.
+  returned: success
+  type: int
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.hetzner import (
-    get_failover,
+    get_failover_record,
     get_failover_state,
 )
 
@@ -83,8 +107,12 @@ def main():
         supports_check_mode=True,
     )
 
-    value = get_failover(module, module.params['failover_ip'])
-    result = get_failover_state(value)
+    failover = get_failover_record(module, module.params['failover_ip'])
+    result = get_failover_state(failover['active_server_ip'])
+    result['failover_ip'] = failover['ip']
+    result['failover_netmask'] = failover['netmask']
+    result['server_ip'] = failover['server_ip']
+    result['server_number'] = failover['server_number']
     result['changed'] = False
     module.exit_json(**result)
 
