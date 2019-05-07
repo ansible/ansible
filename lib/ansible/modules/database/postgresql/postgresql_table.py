@@ -93,6 +93,14 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
+  cascade:
+    description:
+    - Automatically drop objects that depend on the table (such as views)
+      U(https://www.postgresql.org/docs/current/sql-droptable.html).
+      Used with I(state=absent) only.
+    type: bool
+    default: no
+    version_added: '2.9'
 notes:
 - If you do not pass db parameter, tables will be created in the database
   named postgres.
@@ -174,6 +182,12 @@ EXAMPLES = r'''
   postgresql_table:
     name: foo
     state: absent
+
+- name: Drop table bar cascade
+  postgresql_table:
+    name: bar
+    state: absent
+    cascade: yes
 '''
 
 RETURN = r'''
@@ -402,8 +416,10 @@ class Table(object):
         self.executed_queries.append(query)
         return self.__exec_sql(query, ddl=True)
 
-    def drop(self):
+    def drop(self, cascade=False):
         query = "DROP TABLE %s" % pg_quote_identifier(self.name, 'table')
+        if cascade:
+            query += " CASCADE"
         self.executed_queries.append(query)
         return self.__exec_sql(query, ddl=True)
 
@@ -451,6 +467,7 @@ def main():
         columns=dict(type='list'),
         storage_params=dict(type='list'),
         session_role=dict(type='str'),
+        cascade=dict(type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -468,6 +485,10 @@ def main():
     storage_params = module.params["storage_params"]
     truncate = module.params["truncate"]
     columns = module.params["columns"]
+    cascade = module.params["cascade"]
+
+    if state == 'present' and cascade:
+        module.warn("cascade=true is ignored when state=present")
 
     # Check mutual exclusive parameters:
     if state == 'absent' and (truncate or newname or columns or tablespace or
@@ -522,7 +543,7 @@ def main():
         )
 
     if state == 'absent':
-        changed = table_obj.drop()
+        changed = table_obj.drop(cascade=cascade)
 
     elif truncate:
         changed = table_obj.truncate()
