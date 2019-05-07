@@ -82,6 +82,10 @@
       - facts['policydefinitions'][0]['policy_rule'] != None
       - facts['policydefinitions'][0]['mode'] != None
 
+- name: Store policy ID
+  set_fact:
+    policy_id="{{ facts['policydefinitions'][0]['id'] }}"
+
 - name: Update a policy definition (idempontent)
   azure_rm_policydefinition:
     name: "{{ policy_name }}"
@@ -141,7 +145,7 @@
     name: "{{ policy_set_name }}"
     policy_definitions: '[ 
                           { 
-                            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf" 
+                            "policyDefinitionId": "{{ policy_id }}"
                           } 
                         ]'
     metadata:
@@ -162,7 +166,7 @@
     name: "{{ policy_set_name }}"
     policy_definitions: '[ 
                           { 
-                            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf" 
+                            "policyDefinitionId": "{{ policy_id }}"
                           } 
                         ]'
     metadata:
@@ -204,7 +208,7 @@
     name: "{{ policy_set_name }}"
     policy_definitions: '[ 
                           { 
-                            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf" 
+                            "policyDefinitionId": "{{ policy_id }}"
                           } 
                         ]'
     metadata:
@@ -224,7 +228,7 @@
     name: "{{ policy_set_name }}"
     policy_definitions: '[ 
                           { 
-                            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/464dbb85-3d5f-4a1d-bb09-95a9b5dd19cf" 
+                            "policyDefinitionId": "{{ policy_id }}"
                           } 
                         ]'
     metadata:

@@ -33,6 +33,7 @@ options:
         description:
             - The type of policy set definition.
             - Possible values are NotSpecified, BuiltIn, and Custom.
+            - Currently, user through Ansible module can only create policy set definition with custom type.
         choices:
             - custom
     display_name:
@@ -45,6 +46,8 @@ options:
         description:
             - Required if a parameter is used in policy rule.
             - JSON formatted string or a path to a file or url with parameter definitions.
+            - The parameters element of policy set definition is compatible with the policy definition
+            - You can refer U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure) for more details.
     metadata:
         description:
             - The policy set definition metadata.
@@ -56,6 +59,7 @@ options:
             - Policy definitions in JSON format, or a path to a file containing policy rules.
             - The ID of the policy definition or policy set definition define the policy definition reference.
             - Required when creating the policy set definitions
+            - You can refer U(https://docs.microsoft.com/en-us/azure/templates/Microsoft.Authorization/2018-05-01/policySetDefinitions) for more details.
     state:
         description:
             - Assert the state of the policy definition. Use C(present) to create or update a database and C(absent) to delete it.
