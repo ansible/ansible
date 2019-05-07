@@ -22,8 +22,10 @@ author:
   - Felix Fontein (@felixfontein)
 description:
   - Manage Hetzner's failover IPs.
-  - See L(https://wiki.hetzner.de/index.php/Failover/en,Hetzner's documentation) for details
-    on failover IPs.
+seealso:
+  - name: Failover IP documentation
+    description: Hetzner's documentation on failover IPs.
+    link: https://wiki.hetzner.de/index.php/Failover/en
 options:
   hetzner_user:
     description: The username for the Robot webservice user.
