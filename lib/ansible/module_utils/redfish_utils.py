@@ -37,7 +37,7 @@ class RedfishUtils(object):
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
             data = json.loads(resp.read())
-            headers = {k.lower(): v for k, v in resp.info().items()}
+            headers = dict((k.lower(), v) for (k, v) in resp.info().items())
         except HTTPError as e:
             msg = self._get_extended_message(e)
             return {'ret': False,
