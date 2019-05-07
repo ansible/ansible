@@ -57,6 +57,7 @@ extends_documentation_fragment:
 
 requirements:
     - cryptography
+    - boto3
 
 notes:
     - As of Ansible 2.4, this module requires the python cryptography module rather than the
@@ -112,30 +113,19 @@ try:
 except ImportError:
     HAS_CRYPTOGRAPHY = False
 
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils._text import to_bytes
 
 
-def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        instance_id=dict(required=True),
-        key_file=dict(required=False, default=None, type='path'),
-        key_passphrase=dict(no_log=True, default=None, required=False),
-        key_data=dict(no_log=True, default=None, required=False),
-        wait=dict(type='bool', default=False, required=False),
-        wait_timeout=dict(default=120, required=False, type='int'),
-    )
-    )
-    module = AnsibleModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO:
-        module.fail_json(msg='Boto required for this module.')
-
-    if not HAS_CRYPTOGRAPHY:
-        module.fail_json(msg='cryptography package required for this module.')
-
+def get_win_password(connection, module):
     instance_id = module.params.get('instance_id')
     key_file = module.params.get('key_file')
     key_data = module.params.get('key_data')
@@ -146,22 +136,20 @@ def main():
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
-    ec2 = ec2_connect(module)
-
     if wait:
         start = datetime.datetime.now()
         end = start + datetime.timedelta(seconds=wait_timeout)
 
         while datetime.datetime.now() < end:
-            data = ec2.get_password_data(instance_id)
-            decoded = b64decode(data)
+            data = connection.get_password_data(InstanceId=instance_id)
+            decoded = b64decode(data['PasswordData'])
             if not decoded:
                 time.sleep(5)
             else:
                 break
     else:
-        data = ec2.get_password_data(instance_id)
-        decoded = b64decode(data)
+        data = connection.get_password_data(InstanceId=instance_id)
+        decoded = b64decode(data['PasswordData'])
 
     if wait and datetime.datetime.now() >= end:
         module.fail_json(msg="wait for password timeout after %d seconds" % wait_timeout)
@@ -195,6 +183,34 @@ def main():
             module.exit_json(win_password=decrypted, changed=True, elapsed=elapsed.seconds)
         else:
             module.exit_json(win_password=decrypted, changed=True)
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(
+        dict(
+            instance_id=dict(required=True),
+            key_file=dict(required=True, type='path'),
+            key_passphrase=dict(no_log=True, default=None, required=False),
+            wait=dict(type='bool', default=False, required=False),
+            wait_timeout=dict(default=120, required=False, type='int'),
+        )
+    )
+    module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module.')
+
+    if not HAS_CRYPTOGRAPHY:
+        module.fail_json(msg='cryptography package required for this module.')
+
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+
+    if region:
+        connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    else:
+        module.fail_json(msg="region must be specified")
+
+    get_win_password(connection, module)
 
 
 if __name__ == '__main__':
