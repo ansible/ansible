@@ -249,6 +249,14 @@
     cipher: auto
     select_crypto_backend: cryptography
 
+- name: Generate CSR with privatekey passphrase
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: hunter2
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: passphrase_1
+
 - name: Generate publickey - PEM format
   openssl_csr:
     path: '{{ output_dir }}/csr_pw1.csr'
