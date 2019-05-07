@@ -1,4 +1,3 @@
-
 # Copyright 2016-present MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +15,8 @@
 """An implementation of RFC4013 SASLprep.
 This code is mostly (apart from utils methods) a copy of
 https://github.com/mongodb/mongo-python-driver/blob/master/pymongo/saslprep.py
+
+Contributors: Andrey Tuzhilin <andrei.tuzhilin@gmail.com>
 """
 
 import sys
@@ -113,7 +114,6 @@ else:
         # RFC3454 section 2, step 3 and 4 - Prohibit and check bidi
         for char in data:
             if any(in_table(char) for in_table in prohibited):
-                raise ValueError(
-                    "SASLprep: failed prohibited character check")
+                raise ValueError("SASLprep: failed prohibited character check")
 
         return data
