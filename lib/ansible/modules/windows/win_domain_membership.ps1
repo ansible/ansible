@@ -26,6 +26,8 @@ Function Write-DebugLog {
     if($log_path) {
         Add-Content $log_path $msg
     }
+
+    $result.log += , $msg
 }
 
 Function Get-DomainMembershipMatch {
