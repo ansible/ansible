@@ -27,9 +27,9 @@
   register: storage
 
 - name: Create diagnostic settings for IP (check mode)
-  azure_rm_diagnosticsettings: 
+  azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
-    target: '{{ pipoutput.publicipaddresses[0].id }}'
+    resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
     storage_account_id: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
@@ -46,9 +46,9 @@
         - output.changed
 
 - name: Create diagnostic settings for IP
-  azure_rm_diagnosticsettings: 
+  azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
-    target: '{{ pipoutput.publicipaddresses[0].id }}'
+    resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
     storage_account_id: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
@@ -64,9 +64,9 @@
         - output.changed
 
 - name: Update diagnostic settings for IP
-  azure_rm_diagnosticsettings: 
+  azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
-    target: '{{ pipoutput.publicipaddresses[0].id }}'
+    resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
     storage_account_id: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
@@ -82,9 +82,9 @@
         - output.changed
 
 - name: Update diagnostic settings for IP (idempotence)
-  azure_rm_diagnosticsettings: 
+  azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
-    target: '{{ pipoutput.publicipaddresses[0].id }}'
+    resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
     storage_account_id: '{{ storage.state["id"] }}'
     logs:
     - category: DDoSProtectionNotifications
@@ -100,8 +100,8 @@
         - not output.changed
 
 - name: Gather facts for diagnostic settings
-  azure_rm_diagnosticsettings_facts: 
-    target: '{{ pipoutput.publicipaddresses[0].id }}'
+  azure_rm_monitordiagnosticsettings_facts: 
+    resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
     show_category: true
   register: output
 
@@ -117,9 +117,9 @@
         - output.diagnosticsettings[0]['metrics'] != None
 
 - name: Delete diagnostic settings for IP
-  azure_rm_diagnosticsettings: 
+  azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
-    target: '{{ pipoutput.publicipaddresses[0].id }}'
+    resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
     state: absent
   register: output
 
@@ -129,9 +129,9 @@
         - output.changed
 
 - name: Delete diagnostic settings for IP (idempotence)
-  azure_rm_diagnosticsettings: 
+  azure_rm_monitordiagnosticsettings: 
     name: '{{ diagnostic_name }}'
-    target: '{{ pipoutput.publicipaddresses[0].id }}'
+    resource_id: '{{ pipoutput.publicipaddresses[0].id }}'
     state: absent
   register: output
 

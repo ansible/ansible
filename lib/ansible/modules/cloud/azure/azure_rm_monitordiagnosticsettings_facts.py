@@ -14,16 +14,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_diagnosticsettings_facts
+module: azure_rm_monitordiagnosticsettings_facts
 version_added: "2.9"
-short_description: Get Azure diagnostic setting facts.
+short_description: Get information of Azure monitor diagnostic setting.
 description:
-    - Get facts of diagnostic setting.
+    - Get information of monitor diagnostic setting.
 options:
     name:
         description:
             - The name of the diagnostic setting.
-    target:
+    resource_id:
         description:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
@@ -43,13 +43,13 @@ author:
 
 EXAMPLES = '''
 - name: Get facts for a specific diagnostic setting
-  azure_rm_diagnosticsettings_facts:
+  azure_rm_monitordiagnosticsettings_facts:
     name: fanqiuipdiagnostic
-    target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
+    resource_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
     show_category: true
 - name: List facts for diagnostic setting of a specific resource
-  azure_rm_diagnosticsettings_facts:
-    target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
+  azure_rm_monitordiagnosticsettings_facts:
+    resource_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
     show_category: true
 '''
 
@@ -164,14 +164,14 @@ except ImportError:
     pass
 
 
-class AzureRMDiagnosticSettingsFacts(AzureRMModuleBase):
+class AzureRMMonitorDiagnosticSettingsFacts(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
             name=dict(
                 type='str'
             ),
-            target=dict(
+            resource_id=dict(
                 type='raw',
                 required=True
             ),
@@ -186,13 +186,13 @@ class AzureRMDiagnosticSettingsFacts(AzureRMModuleBase):
         )
 
         self.name = None
-        self.target = None
+        self.resource_id = None
         self.show_category = None
 
-        super(AzureRMDiagnosticSettingsFacts, self).__init__(self.module_arg_spec,
-                                                             supports_check_mode=True,
-                                                             supports_tags=False,
-                                                             facts_module=True)
+        super(AzureRMMonitorDiagnosticSettingsFacts, self).__init__(self.module_arg_spec,
+                                                                    supports_check_mode=True,
+                                                                    supports_tags=False,
+                                                                    facts_module=True)
 
     def exec_module(self, **kwargs):
 
@@ -200,6 +200,15 @@ class AzureRMDiagnosticSettingsFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         diagnosticsettings = []
+
+        resource_id = self.resource_id
+        if isinstance(self.resource_id, dict):
+            resource_id = format_resource_id(val=self.resource_id['name'],
+                                             subscription_id=self.resource_id.get('subscription_id') or self.subscription_id,
+                                             namespace=self.resource_id['namespace'],
+                                             types=self.resource_id['types'],
+                                             resource_group=self.resource_id.get('resource_group'))
+        self.resource_id = resource_id
 
         if self.name:
             diagnosticsettings = self.get_diagnostic_settings()
@@ -217,15 +226,15 @@ class AzureRMDiagnosticSettingsFacts(AzureRMModuleBase):
     def get_category_info(self):
         self.log('Getting diagnostic settings {0}'.format(self.name))
         try:
-            return self.monitor_client.diagnostic_settings_category.list(resource_uri=self.target)
+            return self.monitor_client.diagnostic_settings_category.list(resource_uri=self.resource_id)
         except ErrorResponseException as exc:
-            self.fail('Error listing diagnostic settings category {0} - {1}'.format(self.target, str(exc)))
+            self.fail('Error listing diagnostic settings category {0} - {1}'.format(self.resource_id, str(exc)))
             return None
 
     def get_diagnostic_settings(self):
         self.log('Getting diagnostic settings {0}'.format(self.name))
         try:
-            diagnostic_settings = self.monitor_client.diagnostic_settings.get(resource_uri=self.target, name=self.name)
+            diagnostic_settings = self.monitor_client.diagnostic_settings.get(resource_uri=self.resource_id, name=self.name)
             return [diagnostic_settings]
         except ErrorResponseException as exc:
             self.fail('Error getting diagnostic settings {0} - {1}'.format(self.name, str(exc)))
@@ -233,17 +242,17 @@ class AzureRMDiagnosticSettingsFacts(AzureRMModuleBase):
     def list_diagnostic_settings(self):
         self.log('Listing diagnostic settings {0}'.format(self.name))
         try:
-            diagnostic_settings = self.monitor_client.diagnostic_settings.list(resource_uri=self.target)
+            diagnostic_settings = self.monitor_client.diagnostic_settings.list(resource_uri=self.resource_id)
             return diagnostic_settings.value
         except ErrorResponseException as exc:
-            self.fail('Error listing diagnostic settings {0} - {1}'.format(self.target, str(exc)))
+            self.fail('Error listing diagnostic settings {0} - {1}'.format(self.resource_id, str(exc)))
 
     def diagnostic_setting_to_dict(self, diagnostic_setting):
         return diagnostic_setting.as_dict()
 
 
 def main():
-    AzureRMDiagnosticSettingsFacts()
+    AzureRMMonitorDiagnosticSettingsFacts()
 
 
 if __name__ == '__main__':

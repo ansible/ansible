@@ -15,16 +15,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_diagnosticsettings
+module: azure_rm_monitordiagnosticsettings
 version_added: "2.9"
-short_description: Manage Azure diagnostic setting.
+short_description: Manage Azure monitor diagnostic setting.
 description:
-    - Create, updata and delete an diagnostic setting.
+    - Create, updata and delete an Azure monitor diagnostic setting.
 options:
     name:
         description:
             - The name of the diagnostic setting.
-    target:
+    resource_id:
         description:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
@@ -119,9 +119,9 @@ author:
 
 EXAMPLES = '''
 - name: Create diagnostic settings for IP
-  azure_rm_diagnosticsettings:
+  azure_rm_monitordiagnosticsettings:
     name: myipdiagnostic
-    target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
+    resource_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
     storage_account_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/
                          resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
     logs:
@@ -139,9 +139,9 @@ EXAMPLES = '''
         days: 3
 
 - name: Delete diagnostic settings
-  azure_rm_diagnosticsettings:
+  azure_rm_monitordiagnosticsettings:
     name: myipdiagnostic
-    target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
+    resource_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/myip"
     state: absent
 '''
 
@@ -186,7 +186,7 @@ logs_spec = dict(
 )
 
 
-class AzureRMDiagnosticSettings(AzureRMModuleBase):
+class AzureRMMonitorDiagnosticSettings(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -199,7 +199,7 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
                 default='present',
                 choices=['present', 'absent']
             ),
-            target=dict(
+            resource_id=dict(
                 type='raw',
                 required=True
             ),
@@ -237,7 +237,7 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
 
         self.name = None
         self.state = None
-        self.target = None
+        self.resource_id = None
         self.storage_account_id = None
         self.service_bus_rule_id = None
         self.event_hub_authorization_rule_id = None
@@ -246,9 +246,9 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
         self.logs = None
         self.workspace_id = None
 
-        super(AzureRMDiagnosticSettings, self).__init__(self.module_arg_spec,
-                                                        supports_check_mode=True,
-                                                        supports_tags=False)
+        super(AzureRMMonitorDiagnosticSettings, self).__init__(self.module_arg_spec,
+                                                               supports_check_mode=True,
+                                                               supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -260,14 +260,14 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
 
         results = self.get_diagnostic_settings()
 
-        resource_id = self.target
-        if isinstance(self.target, dict):
-            resource_id = format_resource_id(val=self.target['name'],
-                                             subscription_id=self.target.get('subscription_id') or self.subscription_id,
-                                             namespace=self.target['namespace'],
-                                             types=self.target['types'],
-                                             resource_group=self.target.get('resource_group'))
-        self.target = resource_id
+        resource_id = self.resource_id
+        if isinstance(self.resource_id, dict):
+            resource_id = format_resource_id(val=self.resource_id['name'],
+                                             subscription_id=self.resource_id.get('subscription_id') or self.subscription_id,
+                                             namespace=self.resource_id['namespace'],
+                                             types=self.resource_id['types'],
+                                             resource_group=self.resource_id.get('resource_group'))
+        self.resource_id = resource_id
         if self.state == 'present':
             def create_metric_or_log_instance(params, metric_or_log):
                 data = params.copy()
@@ -357,7 +357,7 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
     def get_diagnostic_settings(self):
         self.log('Getting diagnostic settings {0}'.format(self.name))
         try:
-            return self.monitor_client.diagnostic_settings.get(resource_uri=self.target, name=self.name)
+            return self.monitor_client.diagnostic_settings.get(resource_uri=self.resource_id, name=self.name)
         except Exception as exc:
             self.log('Error getting diagnostic settings {0} - {1}'.format(self.name, str(exc)))
             return None
@@ -365,14 +365,14 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
     def create_or_update_diagnostic_settings(self, param):
         self.log('Creating or updating diagnostic settings {0}'.format(self.name))
         try:
-            return self.monitor_client.diagnostic_settings.create_or_update(resource_uri=self.target, parameters=param, name=self.name)
+            return self.monitor_client.diagnostic_settings.create_or_update(resource_uri=self.resource_id, parameters=param, name=self.name)
         except ErrorResponseException as exc:
             self.fail("Error creating diagnostic settings {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
 
     def delete_diagnostic_settings(self):
         self.log('Deleting diagnostic settings {0}'.format(self.name))
         try:
-            return self.monitor_client.diagnostic_settings.delete(resource_uri=self.target, name=self.name)
+            return self.monitor_client.diagnostic_settings.delete(resource_uri=self.resource_id, name=self.name)
         except ErrorResponseException as exc:
             self.fail("Error deleting diagnostic settings {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
 
@@ -381,7 +381,7 @@ class AzureRMDiagnosticSettings(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDiagnosticSettings()
+    AzureRMMonitorDiagnosticSettings()
 
 
 if __name__ == '__main__':
