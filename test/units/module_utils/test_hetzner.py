@@ -5,7 +5,7 @@ import json
 import pytest
 
 from mock import MagicMock
-from ansible.modules.net_tools import hetzner_failover_ip
+from ansible.module_utils import hetzner
 
 
 class ModuleFailException(Exception):
@@ -96,18 +96,18 @@ FETCH_URL_JSON_FAIL = [
 @pytest.mark.parametrize("return_value, accept_errors, result", FETCH_URL_JSON_SUCCESS)
 def test_fetch_url_json(monkeypatch, return_value, accept_errors, result):
     module = get_module_mock()
-    hetzner_failover_ip.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=return_value)
 
-    assert hetzner_failover_ip.fetch_url_json(module, 'https://foo/bar', accept_errors=accept_errors) == result
+    assert hetzner.fetch_url_json(module, 'https://foo/bar', accept_errors=accept_errors) == result
 
 
 @pytest.mark.parametrize("return_value, accept_errors, result", FETCH_URL_JSON_FAIL)
 def test_fetch_url_json_fail(monkeypatch, return_value, accept_errors, result):
     module = get_module_mock()
-    hetzner_failover_ip.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=return_value)
 
     with pytest.raises(ModuleFailException) as exc:
-        hetzner_failover_ip.fetch_url_json(module, 'https://foo/bar', accept_errors=accept_errors)
+        hetzner.fetch_url_json(module, 'https://foo/bar', accept_errors=accept_errors)
 
     assert exc.value.fail_msg == result
     assert exc.value.fail_kwargs == dict()
@@ -150,18 +150,18 @@ GET_FAILOVER_FAIL = [
 @pytest.mark.parametrize("ip, return_value, result", GET_FAILOVER_SUCCESS)
 def test_get_failover(monkeypatch, ip, return_value, result):
     module = get_module_mock()
-    hetzner_failover_ip.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=return_value)
 
-    assert hetzner_failover_ip.get_failover(module, ip) == result
+    assert hetzner.get_failover(module, ip) == result
 
 
 @pytest.mark.parametrize("ip, return_value, result", GET_FAILOVER_FAIL)
 def test_get_failover_fail(monkeypatch, ip, return_value, result):
     module = get_module_mock()
-    hetzner_failover_ip.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=return_value)
 
     with pytest.raises(ModuleFailException) as exc:
-        hetzner_failover_ip.get_failover(module, ip)
+        hetzner.get_failover(module, ip)
 
     assert exc.value.fail_msg == result
     assert exc.value.fail_kwargs == dict()
@@ -220,18 +220,18 @@ SET_FAILOVER_FAIL = [
 @pytest.mark.parametrize("ip, value, return_value, result", SET_FAILOVER_SUCCESS)
 def test_set_failover(monkeypatch, ip, value, return_value, result):
     module = get_module_mock()
-    hetzner_failover_ip.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=return_value)
 
-    assert hetzner_failover_ip.set_failover(module, ip, value) == result
+    assert hetzner.set_failover(module, ip, value) == result
 
 
 @pytest.mark.parametrize("ip, value, return_value, result", SET_FAILOVER_FAIL)
 def test_set_failover_fail(monkeypatch, ip, value, return_value, result):
     module = get_module_mock()
-    hetzner_failover_ip.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=return_value)
 
     with pytest.raises(ModuleFailException) as exc:
-        hetzner_failover_ip.set_failover(module, ip, value)
+        hetzner.set_failover(module, ip, value)
 
     assert exc.value.fail_msg == result
     assert exc.value.fail_kwargs == dict()
