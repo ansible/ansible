@@ -19,12 +19,15 @@
 from __future__ import absolute_import, division, print_function
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -38,6 +41,7 @@ DOCUMENTATION = '''
 module: fsm_maintenance
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version_added: "2.9"
 =======
 version_added: "2.8"
@@ -45,6 +49,9 @@ version_added: "2.8"
 =======
 version_added: "2.9"
 >>>>>>> Bug Fixes according to shippable... re-running
+=======
+version_added: "2.8"
+>>>>>>> Full FSM Commit
 author: Luke Weighall (@lweighall)
 short_description: Creates and Deletes maintenance calendar objects.
 description:
@@ -57,6 +64,7 @@ options:
     required: true
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -64,6 +72,9 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   username:
     description:
       - The username used to authenticate with the FortiManager.
@@ -71,6 +82,7 @@ options:
     required: false
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -78,12 +90,16 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   password:
     description:
       - The password associated with the username account.
     required: false
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -91,11 +107,15 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     choices: ["enable", "disable"]
@@ -105,12 +125,16 @@ options:
 =======
     choices: ["enable", "disable"]
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     choices: ["enable", "disable"]
@@ -120,6 +144,9 @@ options:
 =======
     choices: ["enable", "disable"]
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    options: ["enable, "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_file_path:
     description:
@@ -129,6 +156,7 @@ options:
     default: None
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -136,6 +164,9 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -153,6 +184,7 @@ options:
       - Defines which operation to use (add or delete).
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       - When deleting, the entire playbook and all parameters must match. It's not enough to use the name.
       - Recommend copy and paste task used to create org, and change mode to delete.
     required: false
@@ -160,10 +192,13 @@ options:
     choices: ["add", "delete"]
 
 =======
+=======
+>>>>>>> Full FSM Commit
     required: false
     default: "add"
     choices: ["add", "delete"]
     
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
 =======
       - When deleting, the entire playbook and all parameters must match. It's not enough to use the name.
@@ -173,6 +208,8 @@ options:
     choices: ["add", "delete"]
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
   name:
     description:
       - Friendly Name of Schedule Entry.
@@ -243,6 +280,7 @@ options:
       - When true then end_date is ignored.
     required: false
     default: False
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     type: bool
@@ -575,12 +613,22 @@ EXAMPLES = '''
     start_date: "2019-05-02"
     end_date_open: True
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    type: bool    
+'''
+
+
+EXAMPLES = '''
+  
+
+>>>>>>> Full FSM Commit
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   type: str
@@ -590,6 +638,9 @@ api_result:
 =======
   type: str
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+  type: string
+>>>>>>> Full FSM Commit
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -600,11 +651,15 @@ from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import pydevd
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+import pydevd
+>>>>>>> Full FSM Commit
 
 def main():
     argument_spec = dict(
@@ -673,6 +728,7 @@ def main():
     fsm = None
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
@@ -693,11 +749,20 @@ def main():
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+
+    #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
     # EXECUTE THE MODULE OPERATION
     if paramgram["mode"] == "add":
         paramgram["uri"] = FSMEndpoints.SET_MAINTENANCE
         try:
             if paramgram["input_xml_file"]:
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                 paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
@@ -713,6 +778,11 @@ def main():
             else:
                 paramgram["input_xml"] = fsm._xml.create_maint_payload()
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+                paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["input_xml_file"])
+            else:
+                paramgram["input_xml"] = fsm.create_maint_payload()
+>>>>>>> Full FSM Commit
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
             raise FSMBaseException(err)
@@ -722,6 +792,7 @@ def main():
             if paramgram["input_xml_file"]:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
             else:
                 paramgram["input_xml"] = fsm._xml.create_maint_payload()
@@ -735,10 +806,16 @@ def main():
             else:
                 paramgram["input_xml"] = fsm._xml.create_maint_payload()
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+                paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["input_xml_file"])
+            else:
+                paramgram["input_xml"] = fsm.create_maint_payload()
+>>>>>>> Full FSM Commit
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
             raise FSMBaseException(err)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     # EXIT USING GOVERN_RESPONSE()
@@ -752,10 +829,16 @@ def main():
     # EXIT USING GOVERN_RESPONSE()
     fsm.govern_response(module=module, results=results, changed=False, good_codes=[200, 204, ],
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+
+    # EXIT USING GOVERN_RESPONSE()
+    fsm.govern_response(module=module, results=results, changed=False, good_codes=[200,204,],
+>>>>>>> Full FSM Commit
                         ansible_facts=fsm.construct_ansible_facts(results["json_results"],
                                                                   module.params,
                                                                   paramgram))
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     return module.exit_json(msg=results)
@@ -765,6 +848,9 @@ def main():
 =======
     return module.exit_json(msg=results)
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    return module.exit_json(DEFAULT_EXIT_MSG)
+>>>>>>> Full FSM Commit
 
 
 if __name__ == "__main__":

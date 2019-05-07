@@ -29,6 +29,7 @@
 import socket
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import datetime
 import struct
 import ssl
@@ -64,6 +65,15 @@ class FSMMethods:
     A static list of methods.
     """
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+import ssl
+import struct
+
+import pydevd
+
+# BEGIN STATIC DATA / MESSAGES
+class FSMMethods:
+>>>>>>> Full FSM Commit
     GET = "get"
     SET = "set"
     EXEC = "exec"
@@ -81,6 +91,7 @@ BASE_HEADERS = {
     'Accept': 'application/json'
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 
@@ -121,10 +132,25 @@ class SyslogLevel:
     EMERG, ALERT, CRIT, ERR, \
     WARNING, NOTICE, INFO, DEBUG = range(8)
 >>>>>>> Bug Fixes according to shippable... re-running
+=======
+class SyslogFacility:
+  """Syslog facilities"""
+  KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
+  LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
+
+  LOCAL0, LOCAL1, LOCAL2, LOCAL3, \
+  LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
+
+class SyslogLevel:
+  """Syslog levels"""
+  EMERG, ALERT, CRIT, ERR, \
+  WARNING, NOTICE, INFO, DEBUG = range(8)
+>>>>>>> Full FSM Commit
 
 
 # FSM URL ENDPOINTS
 class FSMEndpoints:
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     """
@@ -137,6 +163,8 @@ class FSMEndpoints:
     UNIVERSAL REFERENCE TO ENDPOINTS. CHANGE HERE AND CHANGE FOR ALL MODULES.
     """
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
     GET_CMDB_SHORT = "/phoenix/rest/cmdbDeviceInfo/devices"
     GET_CMDB_IPRANGE = "/phoenix/rest/cmdbDeviceInfo/devices?includeIps="
     GET_CMDB_DETAILED_SINGLE = "/phoenix/rest/cmdbDeviceInfo/device?ip="
@@ -162,12 +190,15 @@ class FSMEndpoints:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
 =======
 
 >>>>>>> Bug Fixes according to shippable... re-running
+=======
+>>>>>>> Full FSM Commit
 # FSM RETURN CODES
 FSM_RC = {
     "fsm_return_codes": {
@@ -323,6 +354,7 @@ DEFAULT_RESULT_OBJ = (-100000, {"msg": "Nothing Happened. Check that handle_resp
 FAIL_SOCKET_MSG = {"msg": "Socket Path Empty! The persistent connection manager is messed up. "
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                           "Try again in a few moments."}
 DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response() that resulted in an exit. "
                            "This shouldn't happen. Please report to @ftntcorecse on Github."}
@@ -336,6 +368,12 @@ DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response()
                            "This shouldn't happen. Please report to @ftntcorecse on Github."}
 
 <<<<<<< HEAD
+=======
+                   "Try again in a few moments."}
+DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response() that resulted in an exit. "
+                           "This shouldn't happen. Please report to @ftntcorecse on Github."}
+
+>>>>>>> Full FSM Commit
 # DEFAULT REPORTS
 
 # ## ALL DEVICES EVENT TYPES AND COUNT LAST 12 HOURS
@@ -359,9 +397,12 @@ RPT_ALL_DEVICES_EVENT_TYPE_COUNTS = '<?xml version="1.0" encoding="UTF-8"?><Repo
                                     '</Report>' \
                                     '</Reports>'
 
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 
 # BEGIN ERROR EXCEPTIONS
 class FSMBaseException(Exception):
@@ -372,6 +413,7 @@ class FSMBaseException(Exception):
             msg = "An exception occurred within the fortisiem.py httpapi connection plugin."
         super(FSMBaseException, self).__init__(msg, *args)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -415,14 +457,19 @@ class FSMCommon(object):
     """
 <<<<<<< HEAD
 =======
+=======
+>>>>>>> Full FSM Commit
 # END ERROR CLASSES
 
 
 # BEGIN CLASSES
 class FSMCommon(object):
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 
     @staticmethod
     def split_comma_strings_into_lists(obj):
@@ -505,6 +552,7 @@ class FSMCommon(object):
     def local_syslog(module, msg):
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
         """
@@ -518,6 +566,8 @@ class FSMCommon(object):
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
         try:
             module.log(msg=msg)
         except BaseException:
@@ -525,6 +575,7 @@ class FSMCommon(object):
 
     @staticmethod
     def get_ip_list_from_range(start, end):
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -541,11 +592,14 @@ class FSMCommon(object):
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
         ipstruct = struct.Struct('>I')
         start, = ipstruct.unpack(socket.inet_aton(start))
         end, = ipstruct.unpack(socket.inet_aton(end))
         return [socket.inet_ntoa(ipstruct.pack(i)) for i in range(start, end + 1)]
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -1007,6 +1061,8 @@ class FSMCommon(object):
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 
 class SendSyslog(object):
     """
@@ -1016,6 +1072,7 @@ class SendSyslog(object):
     def __init__(self,
                  host="localhost",
                  port=514,
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                  facility=SyslogFacility.USER,
@@ -1045,12 +1102,21 @@ class SendSyslog(object):
 =======
         self.level = level
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+                 facility=SyslogFacility.DAEMON,
+                 protocol="",
+                 ssl_context=None,):
+        self.host = host
+        self.port = port
+        self.facility = facility
+>>>>>>> Full FSM Commit
         self.protocol = protocol
         self.ssl_context = ssl_context
         self.create_socket()
 
     def create_socket(self):
         """
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         Creates the socket for the SendSyslog class upon init().
@@ -1065,6 +1131,10 @@ class SendSyslog(object):
 
         :return: socket
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+
+        :return:
+>>>>>>> Full FSM Commit
         """
         if self.protocol == "udp":
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -1086,6 +1156,7 @@ class SendSyslog(object):
             except BaseException as err:
                 raise FSMBaseException(err)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     def send(self, header, message):
@@ -1121,15 +1192,35 @@ class SendSyslog(object):
 >>>>>>> Bug Fixes according to shippable... re-running
 
 <<<<<<< HEAD
+=======
+
+    def create_full_message(self, header, message, level):
+        """
+
+        :param header:
+        :param message:
+        :param level:
+        :return:
+        """
+        message = "<%d>%s" % (level + self.facility * 8, str(header + " host:" + socket.gethostname() + " | " + message))
+        return message
+
+    def send(self, header, message, level):
+        """
+
+>>>>>>> Full FSM Commit
         :param header:
         :param message:
         :param level:
         :return:
         """
         data = self.create_full_message(header, message, level)
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
         if self.protocol in ["udp", "udp-tls1.2"]:
             try:
                 self.socket.sendto(data, (self.host, self.port))
@@ -1153,12 +1244,15 @@ class SendSyslog(object):
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 # RECURSIVE FUNCTIONS START
 def prepare_dict(obj):
     """

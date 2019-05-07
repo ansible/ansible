@@ -19,12 +19,15 @@
 from __future__ import absolute_import, division, print_function
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -38,6 +41,7 @@ DOCUMENTATION = '''
 module: fsm_credentials
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version_added: "2.9"
 =======
 version_added: "2.8"
@@ -45,6 +49,9 @@ version_added: "2.8"
 =======
 version_added: "2.9"
 >>>>>>> Bug Fixes according to shippable... re-running
+=======
+version_added: "2.8"
+>>>>>>> Full FSM Commit
 author: Luke Weighall (@lweighall)
 short_description: Adds or Updates Credentials in FortiSIEM.
 description:
@@ -57,6 +64,7 @@ options:
     required: true
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -64,6 +72,9 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   username:
     description:
       - The username used to authenticate with the FortiManager.
@@ -71,6 +82,7 @@ options:
     required: false
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -78,12 +90,16 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   password:
     description:
       - The password associated with the username account.
     required: false
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -91,11 +107,15 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     choices: ["enable", "disable"]
@@ -105,6 +125,9 @@ options:
 =======
     choices: ["enable", "disable"]
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_screen:
     description:
@@ -113,6 +136,7 @@ options:
     default: "enable"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable", "disable"]
@@ -120,6 +144,9 @@ options:
 =======
     choices: ["enable", "disable"]
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_file_path:
     description:
@@ -129,6 +156,7 @@ options:
     default: None
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -136,12 +164,16 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 
@@ -172,10 +204,21 @@ options:
     choices: ["add", "update", "get"]
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+  mode:
+    description:
+      - Defines the HTTP method used in the playbook.
+    required: false
+    default: "add"
+    options: ["add", "update", "get"]
+    
+>>>>>>> Full FSM Commit
   input_xml_file:
     description:
       - If defined, all other options are ignored. The XML in the file path specified is strictly used.
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 
@@ -185,10 +228,14 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   access_protocol:
     description:
       - Defines the access protocol in use. Also plays a large role in included/excluded parameters.
     required: true
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     choices:
@@ -198,6 +245,9 @@ options:
 =======
     choices:
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    choices: 
+>>>>>>> Full FSM Commit
       - ftp
       - ftp_over_ssl
       - imap
@@ -226,6 +276,7 @@ options:
     required: false
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -233,6 +284,9 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   friendly_name:
     description:
       - Specifies the friendly name specified for the credential.
@@ -245,6 +299,7 @@ options:
     required: false
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -252,6 +307,9 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   pull_interval:
     description:
       - Specifies the pull interval for any monitors created as a result of this credential..
@@ -259,6 +317,7 @@ options:
     default: 5
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -266,6 +325,9 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   cred_username:
     description:
       - Specifies the username for the credential.
@@ -290,11 +352,15 @@ options:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+
+>>>>>>> Full FSM Commit
 EXAMPLES = '''
 - name: ADD AN SSH CREDENTIAL
   fsm_credentials:
@@ -309,6 +375,7 @@ EXAMPLES = '''
     mode: "add"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -316,6 +383,9 @@ EXAMPLES = '''
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
 - name: ADD AN SSH CREDENTIAL FOR ELEVATED DEVICE
   fsm_credentials:
     host: "10.0.0.15"
@@ -331,6 +401,7 @@ EXAMPLES = '''
     mode: "add"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     ip_range: "10.0.254.1-10.0.254.255"
 
 =======
@@ -340,6 +411,9 @@ EXAMPLES = '''
     ip_range: "10.0.254.1-10.0.254.255"
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
 - name: ADD AN VM_SDK CREDENTIAL
   fsm_credentials:
     host: "10.0.0.15"
@@ -352,6 +426,7 @@ EXAMPLES = '''
     friendly_name: "AnsibleTestVMSDKCred"
     mode: "add"
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -375,12 +450,15 @@ EXAMPLES = '''
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   type: str
@@ -390,6 +468,9 @@ api_result:
 =======
   type: str
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+  type: string
+>>>>>>> Full FSM Commit
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -400,11 +481,15 @@ from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import pydevd
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+import pydevd
+>>>>>>> Full FSM Commit
 
 def main():
     argument_spec = dict(
@@ -509,16 +594,20 @@ def main():
     fsm = None
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 =======
+=======
+>>>>>>> Full FSM Commit
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
 =======
     results = DEFAULT_EXIT_MSG
@@ -527,10 +616,13 @@ def main():
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 
     # EXECUTE THE MODULE OPERATION
     if paramgram["mode"] in ["add", "update"]:
         if paramgram["input_xml_file"]:
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
@@ -540,11 +632,15 @@ def main():
 =======
             paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+            paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["input_xml_file"])
+>>>>>>> Full FSM Commit
             try:
                 results = fsm.handle_simple_payload_request(paramgram["input_xml"])
             except BaseException as err:
                 raise FSMBaseException(err)
         else:
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             paramgram["input_xml"] = fsm._xml.create_credential_payload()
@@ -557,6 +653,10 @@ def main():
             paramgram["input_xml"] = fsm._xml.create_credential_payload()
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+            paramgram["input_xml"] = fsm.create_credential_payload()
+            #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
             try:
                 results = fsm.handle_simple_payload_request(paramgram["input_xml"])
             except BaseException as err:
@@ -566,11 +666,15 @@ def main():
             results = fsm.handle_simple_request()
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+            #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
         except BaseException as err:
             raise FSMBaseException(err)
 
@@ -582,6 +686,7 @@ def main():
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     return module.exit_json(msg=results)
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
@@ -589,6 +694,9 @@ def main():
 =======
     return module.exit_json(msg=results)
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    return module.exit_json(DEFAULT_EXIT_MSG)
+>>>>>>> Full FSM Commit
 
 
 if __name__ == "__main__":

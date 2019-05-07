@@ -19,12 +19,15 @@
 from __future__ import absolute_import, division, print_function
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -38,6 +41,7 @@ DOCUMENTATION = '''
 module: fsm_device_monitors
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version_added: "2.9"
 =======
 version_added: "2.8"
@@ -45,6 +49,9 @@ version_added: "2.8"
 =======
 version_added: "2.9"
 >>>>>>> Bug Fixes according to shippable... re-running
+=======
+version_added: "2.8"
+>>>>>>> Full FSM Commit
 author: Luke Weighall (@lweighall)
 short_description: Get a list of monitors for specified devices.
 description:
@@ -58,6 +65,7 @@ options:
     required: true
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -65,6 +73,9 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   username:
     description:
       - The username used to authenticate with the FortiManager.
@@ -72,6 +83,7 @@ options:
     required: false
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -79,12 +91,16 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   password:
     description:
       - The password associated with the username account.
     required: false
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -92,11 +108,15 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     choices: ["enable", "disable"]
@@ -106,12 +126,16 @@ options:
 =======
     choices: ["enable", "disable"]
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     choices: ["enable", "disable"]
@@ -121,6 +145,9 @@ options:
 =======
     choices: ["enable", "disable"]
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    options: ["enable, "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_file_path:
     description:
@@ -130,6 +157,7 @@ options:
     default: None
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -137,6 +165,9 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -145,6 +176,7 @@ options:
     default: None
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -152,12 +184,16 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   mode:
     description:
       - Handles how the query is formatted upon return.
       - When in update mode, update_xml_file is required.
     required: false
     default: "short_all"
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     choices: ["short_all", "ip_range", "detailed_single", "update"]
@@ -170,11 +206,16 @@ options:
     choices: ["short_all", "ip_range", "detailed_single", "update"]
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    options: ["short_all", "ip_range", "detailed_single", "update"]
+    
+>>>>>>> Full FSM Commit
   ip_range:
     description:
       - Specifies the IP Range of devices to search for and return.
       - Ignored unless "ip_range" is set for mode
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 
@@ -184,11 +225,15 @@ options:
 =======
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    
+>>>>>>> Full FSM Commit
   ip:
     description:
       - Specifies the single IP address of a device to get detailed information from.
       - Ignored unless "detailed_single" is set for mode
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 
@@ -248,6 +293,18 @@ EXAMPLES = '''
 
 EXAMPLES = '''
 <<<<<<< HEAD
+=======
+    
+  update_xml_file:
+    description:
+      - Specifies the XML file path that contains the pre-formatted XML to update the monitor with. 
+    required: false
+    
+'''
+
+
+EXAMPLES = '''
+>>>>>>> Full FSM Commit
 - name: GET SIMPLE DEVICE LIST FROM CMDB
       fsm_device_monitors:
         host: "10.0.0.15"
@@ -258,6 +315,7 @@ EXAMPLES = '''
         export_json_to_screen: "enable"
         export_json_to_file_path: "/root/monitors_out1.json"
         export_xml_to_file_path: "/root/monitors_out1.xml"
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
 =======
 - name: GET SIMPLE MONITOR LIST FROM CMDB
@@ -295,12 +353,15 @@ EXAMPLES = '''
     export_json_to_file_path: "/root/monitors_out3.json"
     export_xml_to_file_path: "/root/monitors_out3.xml"
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   type: str
@@ -310,6 +371,9 @@ api_result:
 =======
   type: str
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+  type: string
+>>>>>>> Full FSM Commit
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -322,11 +386,15 @@ import re
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import pydevd
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+import pydevd
+>>>>>>> Full FSM Commit
 
 def main():
     argument_spec = dict(
@@ -372,12 +440,17 @@ def main():
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     # TODO: BUILD IN UPDATE FEATURE
 
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    # TODO: BUILD IN UPDATE FEATURE
+
+>>>>>>> Full FSM Commit
     # DETERMINE THE MODE AND ADD THE CORRECT DATA TO THE PARAMGRAM
     if paramgram["mode"] in ["short_all", "ip_range", "detailed_single"]:
         paramgram["uri"] = FSMEndpoints.GET_MONITORED_DEVICES
@@ -393,16 +466,20 @@ def main():
     fsm = None
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 =======
+=======
+>>>>>>> Full FSM Commit
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
 =======
     results = DEFAULT_EXIT_MSG
@@ -411,6 +488,8 @@ def main():
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Full FSM Commit
 
     # RUN IF MODE = SHORT ALL
     if paramgram["mode"] == "short_all":
@@ -422,6 +501,7 @@ def main():
         try:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             results = fsm._tools.get_monitors_summary_for_short_all(results)
 =======
             results = fsm.get_monitors_summary_for_short_all(results)
@@ -429,6 +509,9 @@ def main():
 =======
             results = fsm._tools.get_monitors_summary_for_short_all(results)
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+            results = fsm.get_monitors_summary_for_short_all(results)
+>>>>>>> Full FSM Commit
         except BaseException as err:
             raise FSMBaseException(err)
 
@@ -450,6 +533,7 @@ def main():
             for ip in ipr_list:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 append = fsm._tools.get_monitors_info_for_specific_ip(results, str(ip))
 =======
                 append = fsm.get_monitors_info_for_specific_ip(results, str(ip))
@@ -457,6 +541,9 @@ def main():
 =======
                 append = fsm._tools.get_monitors_info_for_specific_ip(results, str(ip))
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+                append = fsm.get_monitors_info_for_specific_ip(results, str(ip))
+>>>>>>> Full FSM Commit
                 if len(append) > 0:
                     results_append_list.append(append)
             results["json_results"]["summary"] = results_append_list
@@ -469,16 +556,21 @@ def main():
     if paramgram["mode"] == "detailed_single":
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
 >>>>>>> Full FSM Commit
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
         try:
             results = fsm.handle_simple_request()
         except BaseException as err:
             raise FSMBaseException(err)
         results_append_list = []
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         append = fsm._tools.get_monitors_info_for_specific_ip(results, paramgram["ip"])
@@ -488,6 +580,9 @@ def main():
 =======
         append = fsm._tools.get_monitors_info_for_specific_ip(results, paramgram["ip"])
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+        append = fsm.get_monitors_info_for_specific_ip(results, paramgram["ip"])
+>>>>>>> Full FSM Commit
         if len(append) > 0:
             results_append_list.append(append)
         results["json_results"]["summary"] = results_append_list
@@ -495,6 +590,7 @@ def main():
         del results["json_results"]["monitoredDevices"]
         if isinstance(results["json_results"]["summary"], dict):
             # CONVERT SUMMARY DICT INTO XML
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             results["xml_results"] = fsm._tools.dict2xml(results["json_results"]["summary"])
@@ -530,6 +626,21 @@ def main():
 =======
             raise FSMBaseException(msg="Couldn't find or load update_xml_file path. Double check. Error: " + str(err))
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+            results["xml_results"] = fsm.dict2xml(results["json_results"]["summary"])
+        elif isinstance(results["json_results"]["summary"], list):
+            temp_xml_dict = {"results": results["xml_results"]}
+            results["xml_results"] = fsm.dict2xml(temp_xml_dict)
+
+    # RUN IF MODE = UPDATE
+    #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+    if paramgram["mode"] == "update":
+        try:
+            paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["update_xml_file"])
+            paramgram["input_xml"] = re.sub(r'\n', '', paramgram["input_xml"])
+        except BaseException as err:
+            raise FSMBaseException(msg="Couldn't find or load update_xml_file path. Double check.")
+>>>>>>> Full FSM Commit
         # REFRESH PARAMGRAM
         module.paramgram = paramgram
         try:
@@ -539,6 +650,7 @@ def main():
         # CONVERT SUMMARY DICT INTO XML
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         results["xml_results"] = fsm._tools.dict2xml(results["json_results"])
 =======
         results["xml_results"] = fsm.dict2xml(results["json_results"])
@@ -546,6 +658,9 @@ def main():
 =======
         results["xml_results"] = fsm._tools.dict2xml(results["json_results"])
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+        results["xml_results"] = fsm.dict2xml(results["json_results"])
+>>>>>>> Full FSM Commit
 
     # EXIT USING GOVERN_RESPONSE()
     fsm.govern_response(module=module, results=results, changed=False, good_codes=[200, 204],
@@ -556,6 +671,7 @@ def main():
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     return module.exit_json(msg=results)
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
@@ -563,6 +679,9 @@ def main():
 =======
     return module.exit_json(msg=results)
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+    return module.exit_json(DEFAULT_EXIT_MSG)
+>>>>>>> Full FSM Commit
 
 
 if __name__ == "__main__":
