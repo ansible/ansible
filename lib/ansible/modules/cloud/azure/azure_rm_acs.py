@@ -21,79 +21,33 @@ description:
     - Create, update and delete an Azure Container Service Instance.
 
 options:
-    ad_user:
+    resource_group:
         description:
-            - Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
-    adfs_authority_url:
-        description:
-            - Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
-    agent_pool_profiles:
-        description:
-            - The agent pool profile suboptions.
+            - Name of a resource group where the Container Services exists or will be created.
         required: true
-        suboptions:
-            name:
-                description:
-                  - Unique name of the agent pool profile in the context of the subscription and resource group.
-                required: true
-            count:
-                description:
-                    - Number of agents (VMs) to host docker containers. Allowed values must be in the range of 1 to 100 (inclusive).
-                required: true
-            dns_prefix:
-                description:
-                    - The DNS Prefix given to Agents in this Agent Pool.
-                required: true
-            vm_size:
-                description:
-                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
-                required: true
-    api_profile:
+    name:
         description:
-            - Selects an API profile to use when communicating with Azure services. Default value of `latest' is appropriate for public clouds.
-            - Future values will allow use with Azure Stack.
-    append_tags:
-        description:
-            - Use to control if tags field is canonical or just appends to existing tags.
-            - When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
-    auth_source:
-        description:
-            - Controls the source of the credentials to use for authentication.
-            - If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to `auto' if variable is not defined. `auto' will follow the default precedence of module parameters -> environment variables -> default profile in credential file `~/.azure/credentials'.
-            - When set to `cli', the credentials will be sources from the default Azure CLI profile. Can also be set via the `ANSIBLE_AZURE_AUTH_SOURCE' environment variable.
-            - When set to 'msi', the host machine must be an azure resource with an enabled MSI extension. `subscription_id' or the environment variable `AZURE_SUBSCRIPTION_ID' can be used to identify the subscription ID if the resource is granted access to more than one subscription, otherwise the first subscription is chosen.
-    cert_validation_mode:
-        description:
-            - Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but when an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable this behavior by passing `ignore'. 
-            - Can also be set via credential file profile or the `AZURE_CERT_VALIDATION' environment variable.
-    client_id:
-        description:
-            - Azure client ID. Use when authenticating with a Service Principal.
-    cloud_environment:
-        description:
-            - For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, `AzureChinaCloud', `AzureUSGovernment'), or a metadata discovery endpoint URL (required for Azure Stack).
-            - Can also be set via credential file profile or the `AZURE_CLOUD_ENVIRONMENT'environment variable.
-    diagnostics_profile:
-        description:
-            - Should VM Diagnostics be enabled for the Container Service VM's.
+            - Name of the Container Services instance.
         required: true
-        type: bool
-    linux_profile:
+    state:
         description:
-            - The linux profile suboptions.
-        required: true
-        suboptions:
-            admin_username:
-                description:
-                  - The Admin Username for the Cluster.
-                required: true
-            ssh_key:
-                description:
-                    - The Public SSH Key used to access the cluster.
-                required: true
+            - Assert the state of the ACS. Use C(present) to create or update an ACS and C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
+    orchestration_platform:
+        description:
+            - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
+            - If specifies the Container Orchestration Platform with Kubernetes, need specify the service_prin    cipal
+        choices:
+            - 'DCOS'
+            - 'Kubernetes'
+            - 'Swarm'
+        required: true
     master_profile:
         description:
             - Master profile suboptions.
@@ -116,32 +70,40 @@ options:
                 description:
                   - The DNS Prefix to use for the Container Service master nodes.
                 required: true
-    name:
+    linux_profile:
         description:
-            - Name of the Container Services instance.
+            - The linux profile suboptions.
         required: true
-    orchestration_platform:
+        suboptions:
+            admin_username:
+                description:
+                  - The Admin Username for the Cluster.
+                required: true
+            ssh_key:
+                description:
+                    - The Public SSH Key used to access the cluster.
+                required: true
+    agent_pool_profiles:
         description:
-            - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
-            - If specifies the Container Orchestration Platform with Kubernetes, need specify the service_principal
-        choices:
-            - 'DCOS'
-            - 'Kubernetes'
-            - 'Swarm'
+            - The agent pool profile suboptions.
         required: true
-    password:
-        description:
-            - Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
-    profile:
-        description:
-            - Security profile found in ~/.azure/credentials file.
-    resource_group:
-        description:
-            - Name of a resource group where the Container Services exists or will be created.
-        required: true
-    secret:
-        description:
-            - Azure client secret. Use when authenticating with a Service Principal.
+        suboptions:
+            name:
+                description:
+                  - Unique name of the agent pool profile in the context of the subscription and resource group.
+                required: true
+            count:
+                description:
+                    - Number of agents (VMs) to host docker containers. Allowed values must be in the range of 1 to 100 (inclusive).
+                required: true
+            dns_prefix:
+                description:
+                    - The DNS Prefix given to Agents in this Agent Pool.
+                required: true
+            vm_size:
+                description:
+                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                required: true
     service_principal:
         description:
             - The service principal suboptions.
@@ -152,20 +114,11 @@ options:
             client_secret:
                 description:
                     - The secret password associated with the service principal.
-    state:
+    diagnostics_profile:
         description:
-            - Assert the state of the ACS. Use C(present) to create or update an ACS and C(absent) to delete it.
-        default: present
-        choices:
-            - absent
-            - present
-    subscription_id:
-        description:
-            - Your Azure subscription Id.
-    tags:
-        description:
-            - Dictionary of string:string pairs to assign as metadata to the object.
-            - Metadata tags on the object will be updated with any provided
+            - Should VM Diagnostics be enabled for the Container Service VM's.
+        required: true
+        type: bool
 
 extends_documentation_fragment:
     - azure
