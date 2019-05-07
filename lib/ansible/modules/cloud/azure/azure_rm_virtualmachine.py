@@ -206,6 +206,7 @@ options:
 <<<<<<< b72834726012e5dd3bf9c7c8e2ba2cedbfa3d1c9
 =======
                     - This value cannot be larger than 1023 GB.
+                    - Size can be changed only when the virtual machine is deallocated.
                 required: true
 >>>>>>> add data disk support
                 version_added: "2.4"
@@ -860,7 +861,7 @@ def format_blob_uri(account, storage_suffix, blob, container='vhds'):
 
 data_disk_spec = dict(
     lun=dict(type='int', required=True),
-    disk_size_gb=dict(type='int', required=True),
+    disk_size_gb=dict(type='int'),
     managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'UltraSSD_LRS', 'Premium_LRS']),
     managed_disk_id=dict(type='str'),
     storage_account_name=dict(type='str'),
@@ -2328,6 +2329,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         elif data_disk.get('managed_disk_id') or data_disk.get('managed_disk_type'):
             self.fail("Addition of a managed disk {0} to a VM with blob based disk is not supported."
                       "'managed_disk_id' and 'managed_disk_type' is not allowed".format(str(data_disk)))
+            
 
 def main():
     AzureRMVirtualMachine()
