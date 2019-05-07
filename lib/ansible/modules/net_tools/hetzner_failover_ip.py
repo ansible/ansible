@@ -26,15 +26,9 @@ seealso:
   - name: Failover IP documentation
     description: Hetzner's documentation on failover IPs.
     link: https://wiki.hetzner.de/index.php/Failover/en
+extends_documentation_fragment:
+  - hetzner
 options:
-  hetzner_user:
-    description: The username for the Robot webservice user.
-    type: str
-    required: yes
-  hetzner_pass:
-    description: The password for the Robot webservice user.
-    type: str
-    required: yes
   failover_ip:
     description: The failover IP address.
     type: str
