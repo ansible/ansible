@@ -1,5 +1,6 @@
 ---
-- debug: msg="START cli/check_mode.yaml on connection={{ ansible_connection }}"
+- debug:
+    msg: "START cli/check_mode.yaml on connection={{ ansible_connection }}"
 
 - name: invalid configuration in check mode
   eos_config:

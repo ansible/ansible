@@ -440,6 +440,8 @@ def main():
             if module.params['diff_against'] == 'session':
                 if 'diff' in response:
                     result['diff'] = {'prepared': response['diff']}
+                elif 'session' not in response:
+                    warnings.append('Configuration not checked against session as session was not used')
                 else:
                     result['changed'] = False
 
