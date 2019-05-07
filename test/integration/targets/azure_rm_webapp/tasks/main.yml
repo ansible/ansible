@@ -367,7 +367,7 @@
     name: "{{ slot1_name }}"
     configuration_source: "{{ win_app_name }}13"
     app_settings:
-        testkey: testvalue
+        testkey: testvalue2
   register: output
 
 - name: Assert slot creation
