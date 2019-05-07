@@ -52,10 +52,13 @@ options:
         description:
             - The policy rule.
             - Policy rules in JSON format, or a path or url to a file containing JSON rules.
+            - Refer U(https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/2018-05-01/policydefinitions) for more details.
+            - This link U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure) can be helpful.
     parameters:
         description:
             - Required if a parameter is used in policy rule.
             - JSON formatted string or a path to a file or url with parameter definitions.
+            - Refer U(https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/2018-05-01/policydefinitions) for more details.
     metadata:
         description:
             - The policy definition metadata.

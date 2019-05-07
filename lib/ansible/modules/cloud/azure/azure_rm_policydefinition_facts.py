@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_policydefinition_facts
 version_added: "2.9"
-short_description: Gather Info of Policy Definition
+short_description: Gather Information of Policy Definition
 description:
     - Gather information of a specific policy definition or all policy definitions
 
@@ -28,11 +28,11 @@ options:
     management_group:
         description:
             - The ID of the management group.
-            - This parameter is mutually exclusive with 'built_in'.
+            - This parameter is mutually exclusive with C(built_in).
     built_in:
         description:
-            - To gather all built-in policy definitions when C(built_in) is set to True
-            - This parameter is mutually exclusive with 'management_group'.
+            - To gather all built-in policy definitions when I(built_in=true).
+            - This parameter is mutually exclusive with C(management_group).
         type: bool
 
 extends_documentation_fragment:
@@ -44,14 +44,14 @@ author:
 '''
 
 EXAMPLES = '''
-- name: List all policy definitions
+- name: List all policy definitions in subscription
   azure_rm_policydefinition_facts:
 
-- name: List all built-in policy definitions
+- name: List all built-in policy definitions in subscription
   azure_rm_policydefinition_facts:
     built_in: true
 
-- name: List all built-in policy definitions
+- name: List a built-in policy definition by name
   azure_rm_policydefinition_facts:
     name: testpolicydefinition
 '''
