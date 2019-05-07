@@ -469,6 +469,8 @@ def load_config(module, command_filter, commit=False, replace=False,
                     )
 
             response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
+
+            diff = response.get('show_commit_config_diff')
             if module._diff:
                 diff = response.get('diff')
         except ConnectionError as exc:

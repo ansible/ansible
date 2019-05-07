@@ -117,6 +117,7 @@ class Cliconf(CliconfBase):
             results.append(self.send_command(**line))
             requests.append(cmd)
 
+        resp['show_commit_config_diff'] = self.get('show commit changes diff')
         if commit:
             self.commit(comment=comment, label=label, replace=replace)
         else:
