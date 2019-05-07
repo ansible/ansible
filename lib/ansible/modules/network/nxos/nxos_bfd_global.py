@@ -53,7 +53,7 @@ options:
   interval:
     description:
       - BFD interval timer values.
-        Valid values are a list of ints defining [interval, min_rx, multiplier]
+        Value must be a dict defining values for keys: tx, min_rx, and multiplier.
     required: false
     type: dict
   slow_timer:
@@ -77,9 +77,9 @@ options:
   ipv4_interval:
     description:
       - BFD IPv4 interval timer values.
-        Valid values are a list of ints defining [interval, min_rx, multiplier]
+        Value must be a dict defining values for keys: tx, min_rx, and multiplier.
     required: false
-    type: list  ###### CVH todo: Update to dict; other lists too
+    type: dict
   ipv4_slow_timer:
     description:
       - BFD IPv4 slow rate timer in milliseconds.
@@ -93,9 +93,9 @@ options:
   ipv6_interval:
     description:
       - BFD IPv6 interval timer values.
-        Valid values are a list of ints defining [interval, min_rx, multiplier]
+        Value must be a dict defining values for keys: tx, min_rx, and multiplier.
     required: false
-    type: list
+    type: dict
   ipv6_slow_timer:
     description:
       - BFD IPv6 slow rate timer in milliseconds.
@@ -106,9 +106,9 @@ options:
   fabricpath_interval:
     description:
       - BFD fabricpath interval timer values.
-        Valid values are a list of ints defining [interval, min_rx, multiplier]
+        Value must be a dict defining values for keys: tx, min_rx, and multiplier.
     required: false
-    type: list
+    type: dict
   fabricpath_slow_timer:
     description:
       - BFD fabricpath slow rate timer in milliseconds.
@@ -124,8 +124,11 @@ options:
 EXAMPLES = '''
 - nxos_bfd_global:
     echo_interface: Ethernet1/2
-    echo_interval: [50, 50, 3]
-    state: present
+    echo_rx_interval: 50
+    interval:
+      tx: 50
+      min_rx: 50
+      multiplier: 4
 '''
 
 RETURN = '''
@@ -175,14 +178,15 @@ interval:
   kind: dict
   getval: bfd interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
   setval: bfd interval {tx} min_rx {min_rx} multiplier {multiplier}
-  default:
+  default: &def_interval
     tx: 50
     min_rx: 50
     multiplier: 3
   N3K:
-    tx: 250
-    min_rx: 250
-    multiplier: 3
+    default: &n3k_def_interval
+      tx: 250
+      min_rx: 250
+      multiplier: 3
 
 slow_timer:
   kind: int
@@ -209,12 +213,12 @@ ipv4_echo_rx_interval:
 
 ipv4_interval:
   _exclude: ['N5K', 'N6K']
-  kind: list
-  getval: bfd ipv4 interval (\d+) min_rx (\d+) multiplier (\d+)
-  setval: bfd ipv4 interval {0} min_rx {1} multiplier {2}
-  default: [50,50,3]
+  kind: dict
+  getval: bfd ipv4 interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
+  setval: bfd ipv4 interval {tx} min_rx {min_rx} multiplier {multiplier}
+  default: *def_interval
   N3K:
-    default: [250,250,3]
+    default: *n3k_def_interval
 
 ipv4_slow_timer:
   _exclude: ['N5K', 'N6K']
@@ -234,12 +238,12 @@ ipv6_echo_rx_interval:
 
 ipv6_interval:
   _exclude: ['N5K', 'N6K']
-  kind: list
-  getval: bfd ipv6 interval (\d+) min_rx (\d+) multiplier (\d+)
-  setval: bfd ipv6 interval {0} min_rx {1} multiplier {2}
-  default: [50,50,3]
+  kind: dict
+  getval: bfd ipv6 interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
+  setval: bfd ipv6 interval {tx} min_rx {min_rx} multiplier {multiplier}
+  default: *def_interval
   N3K:
-    default: [250,250,3]
+    default: *n3k_def_interval
 
 ipv6_slow_timer:
   _exclude: ['N5K', 'N6K']
@@ -251,10 +255,10 @@ ipv6_slow_timer:
 # Fabricpath Commands
 fabricpath_interval:
   _exclude: ['N3K', 'N9K']
-  kind: list
-  getval: bfd fabricpath interval (\d+) min_rx (\d+) multiplier (\d+)
-  setval: bfd fabricpath interval {0} min_rx {1} multiplier {2}
-  default: [50,50,3]
+  kind: dict
+  getval: bfd fabricpath interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
+  setval: bfd fabricpath interval {tx} min_rx {min_rx} multiplier {multiplier}
+  default: *def_interval
 
 fabricpath_slow_timer:
   _exclude: ['N3K', 'N9K']
@@ -280,12 +284,12 @@ def main():
         slow_timer=dict(required=False, type='int'),
         startup_timer=dict(required=False, type='int'),
         ipv4_echo_rx_interval=dict(required=False, type='int'),
-        ipv4_interval=dict(required=False, type='list'),
+        ipv4_interval=dict(required=False, type='dict'),
         ipv4_slow_timer=dict(required=False, type='int'),
         ipv6_echo_rx_interval=dict(required=False, type='int'),
-        ipv6_interval=dict(required=False, type='list'),
+        ipv6_interval=dict(required=False, type='dict'),
         ipv6_slow_timer=dict(required=False, type='int'),
-        fabricpath_interval=dict(required=False, type='list'),
+        fabricpath_interval=dict(required=False, type='dict'),
         fabricpath_slow_timer=dict(required=False, type='int'),
         fabricpath_vlan=dict(required=False, type='int'),
     )
