@@ -452,7 +452,7 @@ def main():
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
 
-    #NOTE: undocumented option since 2.9 to be removed at a later date if possible (3.0+)
+    # NOTE: undocumented option since 2.9 to be removed at a later date if possible (3.0+)
     # no real reason for keeping other than fear we may break older content.
     get_md5 = module.params.get('get_md5')
 
@@ -496,7 +496,7 @@ def main():
     # checksums
     if output.get('isreg') and output.get('readable'):
 
-        #NOTE: see above about get_md5
+        # NOTE: see above about get_md5
         if get_md5:
             # Will fail on FIPS-140 compliant systems
             try:
