@@ -995,7 +995,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         network_interfaces = []
         requested_storage_uri = None
         requested_vhd_uri = None
-        data_disk_requested_vhd_uri = None
         disable_ssh_password = None
         vm_dict = None
         image_reference = None
@@ -1076,7 +1075,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         try:
             self.log("Fetching virtual machine {0}".format(self.name))
-            vm = self.get_vm()
+            vm = self.get_vm(fail_on_exception=False)
             self.check_provisioning_state(vm, self.state)
             vm_dict = self.serialize_vm(vm)
             if hasattr(vm.storage_profile.os_disk, 'vhd') or vm.storage_profile.os_disk.vhd:
@@ -1214,7 +1213,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                 is_os_disk_base = bool(vm_dict['properties']['storageProfile']['osDisk'].get('managedDisk'))
                 if self.data_disks:
-                    data_disk_updated, data_disks = self.compare_disks(self.data_disks, vm_dict['properties']['storageProfile'].get('dataDisks'), is_os_disk_base)
+                    data_disk_updated, data_disks = self.compare_disks(self.data_disks,
+                                                                       vm_dict['properties']['storageProfile'].get('dataDisks'),
+                                                                       is_os_disk_base)
                     if data_disk_updated:
                         differences.append('Data disk')
                         vm_dict['properties']['storageProfile']['dataDisks'] = data_disks
@@ -1593,17 +1594,19 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         return self.results
 
-    def get_vm(self):
+    def get_vm(self, fail_on_exception=True):
         '''
         Get the VM with expanded instanceView
 
         :return: VirtualMachine object
         '''
         try:
-            vm = self.compute_client.virtual_machines.get(self.resource_group, self.name, expand='instanceview')
-            return vm
+            return self.compute_client.virtual_machines.get(self.resource_group, self.name, expand='instanceview')
         except Exception as exc:
-            self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
+            if fail_on_exception:
+                self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
+            else:
+                raise exc
 
     def serialize_vm(self, vm):
         '''
@@ -2244,7 +2247,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         result['lun'] = disk['lun']
         if disk.get('disk_size_gb'):
             result['diskSizeGB'] = disk['disk_size_gb']
-        result['name'] = self.name + '-datadisk-' + timestamp + '-' +str(disk['lun'])
+        result['name'] = self.name + '-datadisk-' + timestamp + '-' + str(disk['lun'])
         # set the managed_disk or vhd
         if is_os_disk_base:
             if disk.get('managed_disk_id') and disk.get('disk_size_gb'):
@@ -2282,7 +2285,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         elif data_disk.get('managed_disk_id') or data_disk.get('managed_disk_type'):
             self.fail("Addition of a managed disk {0} to a VM with blob based disk is not supported."
                       "'managed_disk_id' and 'managed_disk_type' is not allowed".format(str(data_disk)))
-            
+
 
 def main():
     AzureRMVirtualMachine()
