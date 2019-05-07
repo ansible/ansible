@@ -65,6 +65,10 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+notes:
+- The ACI MultiSite PATCH API has a deficiency requiring some objects to be referenced by index.
+  This can cause silent corruption on concurrent access when changing/removing on object as
+  the wrong object may be referenced. This module is affected by this deficiency.
 seealso:
 - module: mso_schema_site_vrf_region_cidr
 - module: mso_schema_template_vrf
@@ -221,6 +225,7 @@ def main():
     subnets = [s['ip'] for s in schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs'][cidr_idx]['subnets']]
     if subnet is not None and subnet in subnets:
         subnet_idx = subnets.index(subnet)
+        # FIXME: Changes based on index are DANGEROUS
         subnet_path = '/sites/{0}/vrfs/{1}/regions/{2}/cidrs/{3}/subnets/{4}'.format(site_template, vrf, region, cidr_idx, subnet_idx)
         mso.existing = schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs'][cidr_idx]['subnets'][subnet_idx]
 
