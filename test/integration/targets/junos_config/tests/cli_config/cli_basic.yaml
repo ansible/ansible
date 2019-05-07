@@ -4,12 +4,10 @@
 - name: setup
   cli_config: &rm1
     config: delete interfaces ge-0/0/1
-  become: yes
 
 - name: setup
   cli_config: &rm2
     config: delete interfaces ge-0/0/2
-  become: yes
 
 - name: configure device with config
   cli_config: &conf1
