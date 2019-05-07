@@ -17,7 +17,10 @@
 #
 
 from __future__ import absolute_import, division, print_function
+<<<<<<< HEAD
 
+=======
+>>>>>>> Full FSM Commit
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -29,7 +32,11 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_cmdb_devices
+<<<<<<< HEAD
 version_added: "2.9"
+=======
+version_added: "2.8"
+>>>>>>> Full FSM Commit
 author: Luke Weighall (@lweighall)
 short_description: Get a list of devices from the FortiSIEM CMDB
 description:
@@ -40,31 +47,51 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   password:
     description:
       - The password associated with the username account.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable, "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_file_path:
     description:
@@ -72,13 +99,18 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 
   mode:
     description:
@@ -87,20 +119,41 @@ options:
     default: "short_all"
     choices: ["short_all", "ip_range", "detailed_single"]
 
+=======
+    
+  mode:
+    description:
+      - Handles how the query is formatted. 
+    required: false
+    default: "short_all"
+    options: ["short_all", "ip_range", "detailed_single"]
+    
+>>>>>>> Full FSM Commit
   ip_range:
     description:
       - Specifies the IP Range of devices to search for and return.
       - Ignored unless "ip_range" is set for mode
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   ip:
     description:
       - Specifies the single IP address of a device to get detailed information from.
       - Ignored unless "detailed_single" is set for mode
     required: false
+<<<<<<< HEAD
 
 '''
 
+=======
+    
+'''
+
+
+>>>>>>> Full FSM Commit
 EXAMPLES = '''
 - name: GET SIMPLE DEVICE LIST FROM CMDB
   fsm_cmdb_devices:
@@ -127,7 +180,11 @@ EXAMPLES = '''
     ignore_ssl_errors: "enable"
     mode: "detailed_single"
     ip: "10.0.0.5"
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> Full FSM Commit
 
 '''
 
@@ -135,7 +192,11 @@ RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
+<<<<<<< HEAD
   type: str
+=======
+  type: string
+>>>>>>> Full FSM Commit
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -144,6 +205,10 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
+<<<<<<< HEAD
+=======
+import pydevd
+>>>>>>> Full FSM Commit
 
 def main():
     argument_spec = dict(
@@ -198,11 +263,18 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
+=======
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+>>>>>>> Full FSM Commit
     # EXECUTE THE MODULE OPERATION
     try:
         results = fsm.handle_simple_request()
@@ -214,7 +286,11 @@ def main():
                                                                   module.params,
                                                                   paramgram))
 
+<<<<<<< HEAD
     return module.exit_json(msg=results)
+=======
+    return module.exit_json(DEFAULT_EXIT_MSG)
+>>>>>>> Full FSM Commit
 
 
 if __name__ == "__main__":

@@ -17,7 +17,10 @@
 #
 
 from __future__ import absolute_import, division, print_function
+<<<<<<< HEAD
 
+=======
+>>>>>>> Full FSM Commit
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -29,7 +32,11 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_maintenance
+<<<<<<< HEAD
 version_added: "2.9"
+=======
+version_added: "2.8"
+>>>>>>> Full FSM Commit
 author: Luke Weighall (@lweighall)
 short_description: Creates and Deletes maintenance calendar objects.
 description:
@@ -40,31 +47,51 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   password:
     description:
       - The password associated with the username account.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable, "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_file_path:
     description:
@@ -72,7 +99,11 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -88,12 +119,19 @@ options:
   mode:
     description:
       - Defines which operation to use (add or delete).
+<<<<<<< HEAD
       - When deleting, the entire playbook and all parameters must match. It's not enough to use the name.
       - Recommend copy and paste task used to create org, and change mode to delete.
     required: false
     default: "add"
     choices: ["add", "delete"]
 
+=======
+    required: false
+    default: "add"
+    choices: ["add", "delete"]
+    
+>>>>>>> Full FSM Commit
   name:
     description:
       - Friendly Name of Schedule Entry.
@@ -164,6 +202,7 @@ options:
       - When true then end_date is ignored.
     required: false
     default: False
+<<<<<<< HEAD
     type: bool
 '''
 
@@ -324,13 +363,26 @@ EXAMPLES = '''
     time_zone: "-8"
     start_date: "2019-05-02"
     end_date_open: True
+=======
+    type: bool    
+'''
+
+
+EXAMPLES = '''
+  
+
+>>>>>>> Full FSM Commit
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
+<<<<<<< HEAD
   type: str
+=======
+  type: string
+>>>>>>> Full FSM Commit
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -339,6 +391,10 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
+<<<<<<< HEAD
+=======
+import pydevd
+>>>>>>> Full FSM Commit
 
 def main():
     argument_spec = dict(
@@ -405,20 +461,35 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 
+=======
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+
+    #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
     # EXECUTE THE MODULE OPERATION
     if paramgram["mode"] == "add":
         paramgram["uri"] = FSMEndpoints.SET_MAINTENANCE
         try:
             if paramgram["input_xml_file"]:
+<<<<<<< HEAD
                 paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
             else:
                 paramgram["input_xml"] = fsm._xml.create_maint_payload()
+=======
+                paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["input_xml_file"])
+            else:
+                paramgram["input_xml"] = fsm.create_maint_payload()
+>>>>>>> Full FSM Commit
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
             raise FSMBaseException(err)
@@ -426,20 +497,36 @@ def main():
         paramgram["uri"] = FSMEndpoints.DEL_MAINTENANCE
         try:
             if paramgram["input_xml_file"]:
+<<<<<<< HEAD
                 paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
             else:
                 paramgram["input_xml"] = fsm._xml.create_maint_payload()
+=======
+                paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["input_xml_file"])
+            else:
+                paramgram["input_xml"] = fsm.create_maint_payload()
+>>>>>>> Full FSM Commit
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
             raise FSMBaseException(err)
 
+<<<<<<< HEAD
     # EXIT USING GOVERN_RESPONSE()
     fsm.govern_response(module=module, results=results, changed=False, good_codes=[200, 204, ],
+=======
+
+    # EXIT USING GOVERN_RESPONSE()
+    fsm.govern_response(module=module, results=results, changed=False, good_codes=[200,204,],
+>>>>>>> Full FSM Commit
                         ansible_facts=fsm.construct_ansible_facts(results["json_results"],
                                                                   module.params,
                                                                   paramgram))
 
+<<<<<<< HEAD
     return module.exit_json(msg=results)
+=======
+    return module.exit_json(DEFAULT_EXIT_MSG)
+>>>>>>> Full FSM Commit
 
 
 if __name__ == "__main__":

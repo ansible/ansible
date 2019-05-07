@@ -17,7 +17,10 @@
 #
 
 from __future__ import absolute_import, division, print_function
+<<<<<<< HEAD
 
+=======
+>>>>>>> Full FSM Commit
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -29,7 +32,11 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_custom_query
+<<<<<<< HEAD
 version_added: "2.9"
+=======
+version_added: "2.8"
+>>>>>>> Full FSM Commit
 author: Luke Weighall (@lweighall)
 short_description: Get a list of devices from the FortiSIEM CMDB
 description:
@@ -40,31 +47,51 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   password:
     description:
       - The password associated with the username account.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable, "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_file_path:
     description:
@@ -72,13 +99,18 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 
   mode:
     description:
@@ -87,15 +119,30 @@ options:
     default: "get"
     choices: ["get", "set", "update", "delete", "add"]
 
+=======
+    
+  mode:
+    description:
+      - Handles how the query is formatted. 
+    required: false
+    default: "get"
+    options: ["get", "set", "update", "delete", "add"]
+    
+>>>>>>> Full FSM Commit
   uri:
     description:
       - Custom URI to query.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   payload_file:
     description:
       - Specifies the file path to a custom XML payload file.
     required: false
+<<<<<<< HEAD
 
 '''
 
@@ -111,13 +158,48 @@ EXAMPLES = '''
     export_json_to_file_path: "/root/custom_query1.json"
     export_xml_to_file_path: "/root/custom_query1.xml"
     uri: "/phoenix/rest/config/Domain"
+=======
+    
+'''
+
+
+EXAMPLES = '''
+- name: 
+  fsm_custom_query:
+    host: "10.0.0.15"
+    username: "super/api_user"
+    password: "Fortinet!1"
+    ignore_ssl_errors: "enable"
+
+- name: 
+  fsm_custom_query:
+    host: "10.0.0.15"
+    username: "super/api_user"
+    password: "Fortinet!1"
+    ignore_ssl_errors: "enable"
+
+
+- name: 
+  fsm_custom_query:
+    host: "10.0.0.15"
+    username: "super/api_user"
+    password: "Fortinet!1"
+    ignore_ssl_errors: "enable"
+
+  
+
+>>>>>>> Full FSM Commit
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
+<<<<<<< HEAD
   type: str
+=======
+  type: string
+>>>>>>> Full FSM Commit
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -125,6 +207,10 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
+<<<<<<< HEAD
+=======
+import pydevd
+>>>>>>> Full FSM Commit
 
 def main():
     argument_spec = dict(
@@ -166,6 +252,7 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
@@ -174,6 +261,15 @@ def main():
 
     if paramgram["payload_file"]:
         paramgram["input_xml"] = fsm.get_file_contents(paramgram["payload_file"])
+=======
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+
+    if paramgram["payload_file"]:
+        paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["payload_file"])
+>>>>>>> Full FSM Commit
         try:
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
@@ -190,7 +286,11 @@ def main():
                                                                   module.params,
                                                                   paramgram))
 
+<<<<<<< HEAD
     return module.exit_json(msg=results)
+=======
+    return module.exit_json(DEFAULT_EXIT_MSG)
+>>>>>>> Full FSM Commit
 
 
 if __name__ == "__main__":

@@ -17,7 +17,10 @@
 #
 
 from __future__ import absolute_import, division, print_function
+<<<<<<< HEAD
 
+=======
+>>>>>>> Full FSM Commit
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -29,7 +32,11 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_credentials
+<<<<<<< HEAD
 version_added: "2.9"
+=======
+version_added: "2.8"
+>>>>>>> Full FSM Commit
 author: Luke Weighall (@lweighall)
 short_description: Adds or Updates Credentials in FortiSIEM.
 description:
@@ -40,31 +47,51 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   password:
     description:
       - The password associated with the username account.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_file_path:
     description:
@@ -72,13 +99,18 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 
   mode:
     description:
@@ -88,16 +120,34 @@ options:
     default: "add"
     choices: ["add", "update", "get"]
 
+=======
+    
+  mode:
+    description:
+      - Defines the HTTP method used in the playbook.
+    required: false
+    default: "add"
+    options: ["add", "update", "get"]
+    
+>>>>>>> Full FSM Commit
   input_xml_file:
     description:
       - If defined, all other options are ignored. The XML in the file path specified is strictly used.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   access_protocol:
     description:
       - Defines the access protocol in use. Also plays a large role in included/excluded parameters.
     required: true
+<<<<<<< HEAD
     choices:
+=======
+    choices: 
+>>>>>>> Full FSM Commit
       - ftp
       - ftp_over_ssl
       - imap
@@ -124,7 +174,11 @@ options:
       - The Access_ID of the credential you want to map.
       - Only used when mode is "map"
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   friendly_name:
     description:
       - Specifies the friendly name specified for the credential.
@@ -135,13 +189,21 @@ options:
     description:
       - Specifies the description for the credential
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   pull_interval:
     description:
       - Specifies the pull interval for any monitors created as a result of this credential..
     required: false
     default: 5
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   cred_username:
     description:
       - Specifies the username for the credential.
@@ -164,6 +226,10 @@ options:
 
 '''
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> Full FSM Commit
 EXAMPLES = '''
 - name: ADD AN SSH CREDENTIAL
   fsm_credentials:
@@ -176,7 +242,11 @@ EXAMPLES = '''
     access_protocol: "ssh"
     friendly_name: "AnsibleTestSSHCred"
     mode: "add"
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
 - name: ADD AN SSH CREDENTIAL FOR ELEVATED DEVICE
   fsm_credentials:
     host: "10.0.0.15"
@@ -190,8 +260,12 @@ EXAMPLES = '''
     access_protocol: "ssh"
     friendly_name: "AnsibleTestCiscoCred"
     mode: "add"
+<<<<<<< HEAD
     ip_range: "10.0.254.1-10.0.254.255"
 
+=======
+    
+>>>>>>> Full FSM Commit
 - name: ADD AN VM_SDK CREDENTIAL
   fsm_credentials:
     host: "10.0.0.15"
@@ -204,6 +278,7 @@ EXAMPLES = '''
     friendly_name: "AnsibleTestVMSDKCred"
     mode: "add"
 
+<<<<<<< HEAD
 - name: MSP UPDATE AN SSH CREDENTIAL
   fsm_credentials:
     host: "{{ inventory_hostname }}"
@@ -218,13 +293,19 @@ EXAMPLES = '''
     friendly_name: "AnsibleTestSSHCred"
     ip_range: "10.7.220.100"
 
+=======
+>>>>>>> Full FSM Commit
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
+<<<<<<< HEAD
   type: str
+=======
+  type: string
+>>>>>>> Full FSM Commit
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -233,6 +314,10 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
+<<<<<<< HEAD
+=======
+import pydevd
+>>>>>>> Full FSM Commit
 
 def main():
     argument_spec = dict(
@@ -335,23 +420,39 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
+=======
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+>>>>>>> Full FSM Commit
 
     # EXECUTE THE MODULE OPERATION
     if paramgram["mode"] in ["add", "update"]:
         if paramgram["input_xml_file"]:
+<<<<<<< HEAD
             paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
+=======
+            paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["input_xml_file"])
+>>>>>>> Full FSM Commit
             try:
                 results = fsm.handle_simple_payload_request(paramgram["input_xml"])
             except BaseException as err:
                 raise FSMBaseException(err)
         else:
+<<<<<<< HEAD
             paramgram["input_xml"] = fsm._xml.create_credential_payload()
 
+=======
+            paramgram["input_xml"] = fsm.create_credential_payload()
+            #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
             try:
                 results = fsm.handle_simple_payload_request(paramgram["input_xml"])
             except BaseException as err:
@@ -359,6 +460,10 @@ def main():
     elif paramgram["mode"] == "get":
         try:
             results = fsm.handle_simple_request()
+<<<<<<< HEAD
+=======
+            #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
         except BaseException as err:
             raise FSMBaseException(err)
 
@@ -368,7 +473,11 @@ def main():
                                                                   module.params,
                                                                   paramgram))
 
+<<<<<<< HEAD
     return module.exit_json(msg=results)
+=======
+    return module.exit_json(DEFAULT_EXIT_MSG)
+>>>>>>> Full FSM Commit
 
 
 if __name__ == "__main__":

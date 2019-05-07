@@ -17,7 +17,10 @@
 #
 
 from __future__ import absolute_import, division, print_function
+<<<<<<< HEAD
 
+=======
+>>>>>>> Full FSM Commit
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -29,7 +32,11 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_discovery
+<<<<<<< HEAD
 version_added: "2.9"
+=======
+version_added: "2.8"
+>>>>>>> Full FSM Commit
 author: Luke Weighall (@lweighall)
 short_description: Submits and Queries for Discovery Tasks.
 description:
@@ -40,31 +47,51 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   password:
     description:
       - The password associated with the username account.
     required: false
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable", "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
+<<<<<<< HEAD
     choices: ["enable", "disable"]
+=======
+    options: ["enable, "disable"]
+>>>>>>> Full FSM Commit
 
   export_json_to_file_path:
     description:
@@ -72,7 +99,11 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -94,13 +125,19 @@ options:
     description:
       - Discovery type to use in FortiSIEM.
     required: true
+<<<<<<< HEAD
     choices: ["RangeScan", "SmartScan", "L2Scan", "status"]
 
+=======
+    options: ["RangeScan", "SmartScan", "L2Scan", "status"]
+    
+>>>>>>> Full FSM Commit
   root_ip:
     description:
       - Specifies the IP of a device to use as the "root" scanning device. Usually a router or switch.
       - Ignored unless "SmartScan" is set for mode
     required: false
+<<<<<<< HEAD
 
   include_range:
     description:
@@ -112,6 +149,19 @@ options:
       - Specifies the IP ranges to specify, in comma seperated format.
     required: false
 
+=======
+    
+  include_range:
+    description:
+      - Specifies the IP ranges to specify, in comma seperated format. 
+    required: false
+    
+  exclude_range:
+    description:
+      - Specifies the IP ranges to specify, in comma seperated format. 
+    required: false
+    
+>>>>>>> Full FSM Commit
   no_ping:
     description:
       - Tells FortiSIEM not to attempt to ping a device before attempting to discover it.
@@ -119,83 +169,131 @@ options:
     required: false
     default: false
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   only_ping:
     description:
       - Tells FortiSIEM to only discover devices with ICMP pings.
     required: false
     default: false
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   task_id:
     description:
       - Tells the module which task ID to query for when type = status.
     required: false
     type: int
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   delta:
     description:
       - Only discovers new devices.
     required: false
     default: false
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   vm_off:
     description:
       - Doesn't discover VMs.
     required: false
     default: false
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   vm_templates:
     description:
       - Discover VM templates.
     required: false
     default: false
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   discover_routes:
     description:
       - Discovers routes and follows those in smart scans.
     required: false
     default: true
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   winexe_based:
     description:
       - Discovers windows boxes with winExe.
     required: false
     default: false
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   unmanaged:
     description:
       - Sets newly discovered devices to unmanaged.
     required: false
     default: false
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   monitor_win_events:
     description:
       - Turns on or off Windows Event log mointor for newly discovered devices.
     required: false
     default: true
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   monitor_win_patches:
     description:
       - Turns on or off Windows Patching logging.
     required: false
     default: true
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   monitor_installed_sw:
     description:
       - Turns on or off Windows Installed Software monitoring.
     required: false
     default: true
     type: bool
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> Full FSM Commit
   name_resolution_dns_first:
     description:
       - Specifies to use DNS for name resolution first, and then SNMP/NETBIOS/SSH.
@@ -203,6 +301,7 @@ options:
     required: false
     default: true
     type: bool
+<<<<<<< HEAD
 
 '''
 
@@ -294,13 +393,50 @@ EXAMPLES = '''
     export_xml_to_file_path: "/root/xml_test_out.xml"
     type: "L2Scan"
     include_range: "10.0.0.1-10.0.0.254"
+=======
+    
+'''
+
+EXAMPLES = '''
+- name: GET SIMPLE DEVICE LIST FROM CMDB
+  fsm_discovery:
+    host: "10.0.0.15"
+    username: "super/api_user"
+    password: "Fortinet!1"
+    ignore_ssl_errors: "enable"
+    mode: "short_all"
+
+- name: GET SIMPLE DEVICE LIST FROM CMDB IP RANGE
+  fsm_discovery:
+    host: "10.0.0.15"
+    username: "super/api_user"
+    password: "Fortinet!1"
+    ignore_ssl_errors: "enable"
+    mode: "ip_range"
+    ip_range: "10.0.0.100-10.0.0.120"
+
+- name: GET DETAILED INFO ON ONE DEVICE
+  fsm_discovery:
+    host: "10.0.0.15"
+    username: "super/api_user"
+    password: "Fortinet!1"
+    ignore_ssl_errors: "enable"
+    mode: "detailed_single"
+    ip: "10.0.0.5"
+  
+
+>>>>>>> Full FSM Commit
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
+<<<<<<< HEAD
   type: str
+=======
+  type: string
+>>>>>>> Full FSM Commit
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -310,6 +446,10 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
+<<<<<<< HEAD
+=======
+import pydevd
+>>>>>>> Full FSM Commit
 
 def main():
     argument_spec = dict(
@@ -389,16 +529,28 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
+=======
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+>>>>>>> Full FSM Commit
 
     # EXECUTE THE MODULE OPERATION
     # SEND THE DISCOVERY XML PAYLOAD
     if paramgram["type"] != "status":
+<<<<<<< HEAD
         paramgram["input_xml"] = fsm._xml.create_discover_payload()
+=======
+        paramgram["input_xml"] = fsm.create_discover_payload()
+        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
         try:
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
@@ -430,6 +582,10 @@ def main():
 
             # PROCESS WAIT TO FINISH!
             if paramgram["wait_to_finish"]:
+<<<<<<< HEAD
+=======
+                #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+>>>>>>> Full FSM Commit
                 try:
                     task_status_result = results["json_results"]["fsm_response"].split(":")
 
@@ -444,18 +600,30 @@ def main():
                         try:
                             if results["json_results"]["taskResults"]:
                                 task_status_result = [str(paramgram["task_id"]), "Done"]
+<<<<<<< HEAD
                         except BaseException:
+=======
+                        except:
+>>>>>>> Full FSM Commit
                             try:
                                 task_status_result = results["json_results"]["fsm_response"].split(":")
                             except BaseException as err:
                                 raise FSMBaseException(err)
+<<<<<<< HEAD
                 except BaseException:
+=======
+                except BaseException as err:
+>>>>>>> Full FSM Commit
                     try:
                         if results["json_results"]["taskResults"]:
                             pass
                     except BaseException as err:
+<<<<<<< HEAD
                         raise FSMBaseException(msg="Something happened while looping "
                                                    "for the status. Error: " + str(err))
+=======
+                        raise FSMBaseException(msg="Something happened while looping for the status. Error: " + str(err))
+>>>>>>> Full FSM Commit
                     pass
 
     # EXIT USING GOVERN_RESPONSE()
@@ -464,7 +632,11 @@ def main():
                                                                   module.params,
                                                                   paramgram))
 
+<<<<<<< HEAD
     return module.exit_json(msg=results)
+=======
+    return module.exit_json(DEFAULT_EXIT_MSG)
+>>>>>>> Full FSM Commit
 
 
 if __name__ == "__main__":
