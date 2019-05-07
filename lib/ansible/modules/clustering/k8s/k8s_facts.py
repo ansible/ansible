@@ -97,7 +97,7 @@ EXAMPLES = '''
   k8s_facts:
     kind: Pod
     field_selectors:
-      - status.phase = running
+      - status.phase=Running
 '''
 
 RETURN = '''
