@@ -1,0 +1,2 @@
+minor_changes:
+- Add managed object identifier (moId) and vim reference (vimref) of virtual machine in guest facts (https://github.com/ansible/ansible/issues/53372).
