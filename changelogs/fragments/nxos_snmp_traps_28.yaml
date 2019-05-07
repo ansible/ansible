@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_snmp_traps fix group all for N35 platforms (https://github.com/ansible/ansible/pull/55995).
