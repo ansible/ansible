@@ -21,7 +21,7 @@ module: na_ontap_ipspace
 
 short_description: NetApp ONTAP Manage an ipspace
 
-version_added: '2.8'
+version_added: '2.9'
 
 author:
       - NTTE Storage Engineering (@vicmunoz) <cl.eng.sto@ntt.eu>
