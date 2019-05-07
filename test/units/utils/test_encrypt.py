@@ -118,7 +118,6 @@ def test_password_hash_filter_passlib():
     assert get_encrypted_password("123", "pbkdf2_sha256")
 
 
-
 def test_random_salt():
     res = encrypt.random_salt()
     expected_salt_candidate_chars = u'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./'
