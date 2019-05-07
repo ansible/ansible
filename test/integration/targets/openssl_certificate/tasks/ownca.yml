@@ -179,7 +179,7 @@
 
 - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (failed passphrase 2)
   openssl_certificate:
-    path: '{{ output_dir }}/ownca_cert_pw1.pem'
+    path: '{{ output_dir }}/ownca_cert_pw2.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'
     ownca_path: '{{ output_dir }}/ca_cert.pem'
     ownca_privatekey_path: '{{ output_dir }}/privatekeypw.pem'
