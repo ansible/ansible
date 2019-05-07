@@ -90,8 +90,9 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $inherit = Get-AnsibleParam -obj $params -name "inherit" -type "str"
 $propagation = Get-AnsibleParam -obj $params -name "propagation" -type "str" -default "None" -validateset "InheritOnly","None","NoPropagateInherit"
 
-# We mount the HKCR, HKU, and HKCC registry hives so PS can access them
-$path_qualifier = Split-Path -Path $path -Qualifier
+# We mount the HKCR, HKU, and HKCC registry hives so PS can access them.
+# Network paths have no qualifiers so we use -EA SilentlyContinue to ignore that
+$path_qualifier = Split-Path -Path $path -Qualifier -ErrorAction SilentlyContinue
 if ($path_qualifier -eq "HKCR:" -and (-not (Test-Path -LiteralPath HKCR:\))) {
     New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT > $null
 }
@@ -120,8 +121,10 @@ ElseIf ($null -eq $inherit) {
 }
 
 # Bug in Set-Acl, Get-Acl where -LiteralPath only works for the Registry provider if the location is in that root
-# qualifier.
-Push-Location -LiteralPath $path_qualifier
+# qualifier. We also don't have a qualifier for a network path so only change if not null
+if ($null -ne $path_qualifier) {
+    Push-Location -LiteralPath $path_qualifier
+}
 
 Try {
     SetPrivilegeTokens
@@ -218,7 +221,9 @@ Catch {
 }
 Finally {
     # Make sure we revert the location stack to the original path just for cleanups sake
-    Pop-Location
+    if ($null -ne $path_qualifier) {
+        Pop-Location
+    }
 }
 
 Exit-Json -obj $result

@@ -112,6 +112,25 @@ EXAMPLES = '''
     record: "puppet"
     type: "CNAME"
     state: absent
+
+- name: Add 1.1.168.192.in-addr.arpa. PTR for ansible.example.org
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    record: "1.1.168.192.in-addr.arpa."
+    type: "PTR"
+    value: "ansible.example.org."
+    state: present
+
+- name: Remove 1.1.168.192.in-addr.arpa. PTR
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    record: "1.1.168.192.in-addr.arpa."
+    type: "PTR"
+    state: absent
 '''
 
 RETURN = '''

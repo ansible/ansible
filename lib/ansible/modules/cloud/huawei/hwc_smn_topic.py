@@ -109,12 +109,11 @@ update_time:
 # Imports
 ###############################################################################
 
-from ansible.module_utils.hwc_utils import (HwcSession, HwcModule,
-                                            DictComparison, navigate_hash,
-                                            remove_nones_from_dict,
+from ansible.module_utils.hwc_utils import (Config, HwcModule, build_path,
+                                            HwcClientException, navigate_hash,
+                                            remove_nones_from_dict, get_region,
                                             remove_empty_from_dict,
                                             are_dicts_different)
-import json
 import re
 
 ###############################################################################
@@ -135,18 +134,19 @@ def main():
         supports_check_mode=True,
     )
 
-    session = HwcSession(module, "app")
+    config = Config(module, "smn")
 
     state = module.params['state']
 
     if not module.params.get("id"):
-        module.params['id'] = get_resource_id(session)
+        module.params['id'] = get_resource_id(config)
 
     fetch = None
-    link = self_link(session)
+    link = self_link(module)
     # the link will include Nones if required format parameters are missed
     if not re.search('/None/|/None$', link):
-        fetch = fetch_resource(session, link)
+        client = config.client(get_region(module), "smn", "project")
+        fetch = fetch_resource(module, client, link)
     changed = False
 
     if fetch:
@@ -155,20 +155,20 @@ def main():
             current_state = response_to_hash(module, fetch)
             if are_dicts_different(expect, current_state):
                 if not module.check_mode:
-                    fetch = update(session)
+                    fetch = update(config)
                     fetch = response_to_hash(module, fetch)
                 changed = True
             else:
                 fetch = current_state
         else:
             if not module.check_mode:
-                delete(session)
+                delete(config)
                 fetch = {}
             changed = True
     else:
         if state == 'present':
             if not module.check_mode:
-                fetch = create(session)
+                fetch = create(config)
                 fetch = response_to_hash(module, fetch)
             changed = True
         else:
@@ -179,96 +179,86 @@ def main():
     module.exit_json(**fetch)
 
 
-def create(session):
-    link = collection(session)
-    module = session.module
-    success_codes = [201, 202]
-    r = return_if_object(module,
-                         session.post(link, create_resource_opts(module)),
-                         success_codes)
+def create(config):
+    module = config.module
+    client = config.client(get_region(module), "smn", "project")
 
-    return get_resource(session, r)
-
-
-def update(session):
-    link = self_link(session)
-    success_codes = [201, 202]
-    module = session.module
-    r = return_if_object(module, session.put(link, update_resource_opts(module)), success_codes)
-
-    return get_resource(session, r)
-
-
-def delete(session):
-    link = self_link(session)
-    success_codes = [202, 204]
-    return_if_object(session.module, session.delete(link), success_codes, False)
-
-
-def link_wrapper(f):
-    def _wrapper(module, *args, **kwargs):
-        try:
-            return f(module, *args, **kwargs)
-        except KeyError as ex:
-            module.fail_json(
-                msg="Mapping keys(%s) are not found in generating link." % ex)
-
-    return _wrapper
-
-
-def return_if_object(module, response, success_codes, has_content=True):
-    code = response.status_code
-
-    # If not found, return nothing.
-    if code == 404:
-        return None
-
-    if not success_codes:
-        success_codes = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
-    # If no content, return nothing.
-    if code in success_codes and not has_content:
-        return None
-
-    result = None
+    link = "notifications/topics"
+    r = None
     try:
-        result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+        r = client.post(link, create_resource_opts(module))
+    except HwcClientException as ex:
+        msg = ("module(hwc_smn_topic): error creating "
+               "resource, error: %s" % str(ex))
+        module.fail_json(msg=msg)
 
-    if code not in success_codes:
-        msg = navigate_hash(result, ['message'])
-        if msg:
-            module.fail_json(msg=msg)
-        else:
-            module.fail_json(msg="operation failed, return code=%d" % code)
-
-    return result
+    return get_resource(config, r)
 
 
-def fetch_resource(session, link, success_codes=None):
-    if not success_codes:
-        success_codes = [200]
-    return return_if_object(session.module, session.get(link), success_codes)
+def update(config):
+    module = config.module
+    client = config.client(get_region(module), "smn", "project")
+
+    link = self_link(module)
+    try:
+        client.put(link, update_resource_opts(module))
+    except HwcClientException as ex:
+        msg = ("module(hwc_smn_topic): error updating "
+               "resource, error: %s" % str(ex))
+        module.fail_json(msg=msg)
+
+    return fetch_resource(module, client, link)
 
 
-def get_resource(session, result):
-    combined = session.module.params.copy()
-    combined['topic_urn'] = navigate_hash(result, ['topic_urn'])
-    url = 'notifications/topics/{topic_urn}'.format(**combined)
+def delete(config):
+    module = config.module
+    client = config.client(get_region(module), "smn", "project")
 
-    e = session.get_service_endpoint('compute')
-    url = e.replace("ecs", "smn") + url
-    return fetch_resource(session, url)
+    link = self_link(module)
+    try:
+        client.delete(link)
+    except HwcClientException as ex:
+        msg = ("module(hwc_smn_topic): error deleting "
+               "resource, error: %s" % str(ex))
+        module.fail_json(msg=msg)
 
 
-def get_resource_id(session):
-    module = session.module
-    link = list_link(session, {'limit': 10, 'offset': '{offset}'})
+def fetch_resource(module, client, link):
+    try:
+        return client.get(link)
+    except HwcClientException as ex:
+        msg = ("module(hwc_smn_topic): error fetching "
+               "resource, error: %s" % str(ex))
+        module.fail_json(msg=msg)
+
+
+def get_resource(config, result):
+    module = config.module
+    client = config.client(get_region(module), "smn", "project")
+
+    d = {'topic_urn': navigate_hash(result, ['topic_urn'])}
+    url = build_path(module, 'notifications/topics/{topic_urn}', d)
+
+    return fetch_resource(module, client, url)
+
+
+def get_resource_id(config):
+    module = config.module
+    client = config.client(get_region(module), "smn", "project")
+
+    link = "notifications/topics"
+    query_link = "?offset={offset}&limit=10"
+    link += query_link
+
     p = {'offset': 0}
     v = module.params.get('name')
     ids = set()
     while True:
-        r = fetch_resource(session, link.format(**p))
+        r = None
+        try:
+            r = client.get(link.format(**p))
+        except Exception:
+            pass
         if r is None:
             break
         r = r.get('topics', [])
@@ -285,42 +275,8 @@ def get_resource_id(session):
     return ids.pop() if ids else None
 
 
-@link_wrapper
-def list_link(session, extra_data=None):
-    url = "{endpoint}notifications/topics?limit={limit}&offset={offset}"
-
-    combined = session.module.params.copy()
-    if extra_data:
-        combined.update(extra_data)
-
-    e = session.get_service_endpoint('compute')
-    combined['endpoint'] = e.replace("ecs", "smn")
-
-    return url.format(**combined)
-
-
-@link_wrapper
-def self_link(session):
-    url = "{endpoint}notifications/topics/{id}"
-
-    combined = session.module.params.copy()
-
-    e = session.get_service_endpoint('compute')
-    combined['endpoint'] = e.replace("ecs", "smn")
-
-    return url.format(**combined)
-
-
-@link_wrapper
-def collection(session):
-    url = "{endpoint}notifications/topics"
-
-    combined = session.module.params.copy()
-
-    e = session.get_service_endpoint('compute')
-    combined['endpoint'] = e.replace("ecs", "smn")
-
-    return url.format(**combined)
+def self_link(module):
+    return build_path(module, "notifications/topics/{id}")
 
 
 def create_resource_opts(module):

@@ -107,6 +107,16 @@ EXAMPLES = '''
     object_name: mydatacenter
     quota_name: myquota
     role: QuotaConsumer
+
+- name: Assign QuotaConsumer role to group
+  ovirt_permissions:
+    state: present
+    group_name: group1
+    authz_name: example.com-authz
+    object_type: data_center
+    object_name: mydatacenter
+    quota_name: myquota
+    role: QuotaConsumer
 '''
 
 RETURN = '''

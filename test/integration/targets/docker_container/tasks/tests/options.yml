@@ -2438,7 +2438,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     oom_killer: yes
     state: started
   register: oom_killer_1
-  ignore_errors: yes
 
 - name: oom_killer (idempotency)
   docker_container:
@@ -2448,7 +2447,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     oom_killer: yes
     state: started
   register: oom_killer_2
-  ignore_errors: yes
 
 - name: oom_killer (change)
   docker_container:
@@ -2459,7 +2457,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     state: started
     force_kill: yes
   register: oom_killer_3
-  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2473,12 +2470,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - oom_killer_1 is changed
     - oom_killer_2 is not changed
     - oom_killer_3 is changed
-  when: docker_py_version is version('2.0.0', '>=')
-- assert:
-    that:
-    - oom_killer_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_killer_1.msg"
-  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## oom_score_adj ###################################################
@@ -2492,7 +2483,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     oom_score_adj: 5
     state: started
   register: oom_score_adj_1
-  ignore_errors: yes
 
 - name: oom_score_adj (idempotency)
   docker_container:
@@ -2502,7 +2492,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     oom_score_adj: 5
     state: started
   register: oom_score_adj_2
-  ignore_errors: yes
 
 - name: oom_score_adj (change)
   docker_container:
@@ -2513,7 +2502,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     state: started
     force_kill: yes
   register: oom_score_adj_3
-  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2527,12 +2515,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - oom_score_adj_1 is changed
     - oom_score_adj_2 is not changed
     - oom_score_adj_3 is changed
-  when: docker_py_version is version('2.0.0', '>=')
-- assert:
-    that:
-    - oom_score_adj_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_score_adj_1.msg"
-  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## output_logs #####################################################
@@ -2776,8 +2758,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 9001
-    - 9002
+    - '9001'
+    - '9002'
   register: published_ports_1
 
 - name: published_ports (idempotency)
@@ -2787,8 +2769,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 9002
-    - 9001
+    - '9002'
+    - '9001'
   register: published_ports_2
 
 - name: published_ports (less published_ports)
@@ -2798,7 +2780,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 9002
+    - '9002'
   register: published_ports_3
 
 - name: published_ports (more published_ports)
@@ -2808,8 +2790,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 9002
-    - 9003
+    - '9002'
+    - '9003'
     force_kill: yes
   register: published_ports_4
 
@@ -2877,109 +2859,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - read_only_1 is changed
     - read_only_2 is not changed
     - read_only_3 is changed
-
-####################################################################
-## recreate ########################################################
-####################################################################
-
-- name: recreate (created)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: present
-    force_kill: yes
-  register: recreate_1
-
-- name: recreate (created, recreate)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    recreate: yes
-    state: present
-    force_kill: yes
-  register: recreate_2
-
-- name: recreate (started)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    force_kill: yes
-  register: recreate_3
-
-- name: recreate (started, recreate)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    recreate: yes
-    state: started
-    force_kill: yes
-  register: recreate_4
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    force_kill: yes
-  diff: no
-
-- debug: var=recreate_1
-- debug: var=recreate_2
-- debug: var=recreate_3
-- debug: var=recreate_4
-
-- assert:
-    that:
-    - recreate_1 is changed
-    - recreate_2 is changed
-    - recreate_3 is changed
-    - recreate_4 is changed
-    - recreate_1.container.Id != recreate_2.container.Id
-    - recreate_2.container.Id == recreate_3.container.Id
-    - recreate_3.container.Id != recreate_4.container.Id
-
-####################################################################
-## restart #########################################################
-####################################################################
-
-- name: restart
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    force_kill: yes
-  register: restart_1
-
-- name: restart (restart)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    restart: yes
-    state: started
-    force_kill: yes
-  register: restart_2
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    force_kill: yes
-  diff: no
-
-- debug: var=restart_1
-- debug: var=restart_2
-
-- assert:
-    that:
-    - restart_1 is changed
-    - restart_2 is changed
-    - restart_1.container.Id == restart_2.container.Id
 
 ####################################################################
 ## restart_policy ##################################################

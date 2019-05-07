@@ -356,7 +356,9 @@ def check_args(module, warnings):
 
 
 def edit_config_or_macro(connection, commands):
-    if "macro name" in commands[0]:
+    # only catch the macro configuration command,
+    # not negated 'no' variation.
+    if commands[0].startswith("macro name"):
         connection.edit_macro(candidate=commands)
     else:
         connection.edit_config(candidate=commands)

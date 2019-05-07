@@ -76,7 +76,7 @@ def locked_config(module, target=None):
         unlock_configuration(module, target=target)
 
 
-def get_config(module, source, filter, lock=False):
+def get_config(module, source, filter=None, lock=False):
     conn = get_connection(module)
     try:
         locked = False

@@ -81,7 +81,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Thomas Stringer (@tstringer)"
+    - "Thomas Stringer (@trstringer)"
 '''
 
 EXAMPLES = '''
@@ -365,6 +365,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.name))
         else:
             function_app_settings.append(NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~2'))
+            function_app_settings.append(NameValuePair(name='WEBSITES_ENABLE_APP_SERVICE_STORAGE', value=False))
+            function_app_settings.append(NameValuePair(name='AzureWebJobsStorage', value=self.storage_connection_string))
 
         return function_app_settings
 

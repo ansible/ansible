@@ -110,12 +110,12 @@ RETURN = '''
 # Imports
 ###############################################################################
 
-from ansible.module_utils.hwc_utils import (HwcSession, HwcModule,
-                                            DictComparison, navigate_hash,
-                                            remove_nones_from_dict,
+from ansible.module_utils.hwc_utils import (Config, HwcModule, get_region,
+                                            HwcClientException, navigate_hash,
+                                            HwcClientException404,
+                                            remove_nones_from_dict, build_path,
                                             remove_empty_from_dict,
                                             are_dicts_different)
-import json
 import re
 import time
 
@@ -135,18 +135,19 @@ def main():
         ),
         supports_check_mode=True,
     )
-    session = HwcSession(module, 'network')
+    config = Config(module, 'vpc')
 
     state = module.params['state']
 
     if (not module.params.get("id")) and module.params.get("name"):
-        module.params['id'] = get_id_by_name(session)
+        module.params['id'] = get_id_by_name(config)
 
     fetch = None
-    link = self_link(session)
+    link = self_link(module)
     # the link will include Nones if required format parameters are missed
     if not re.search('/None/|/None$', link):
-        fetch = fetch_resource(session, link)
+        client = config.client(get_region(module), "vpc", "project")
+        fetch = fetch_resource(module, client, link)
         if fetch:
             fetch = fetch.get('vpc')
     changed = False
@@ -157,20 +158,20 @@ def main():
             current_state = response_to_hash(module, fetch)
             if are_dicts_different(expect, current_state):
                 if not module.check_mode:
-                    fetch = update(session, self_link(session), [200])
+                    fetch = update(config, self_link(module))
                     fetch = response_to_hash(module, fetch.get('vpc'))
                 changed = True
             else:
                 fetch = current_state
         else:
             if not module.check_mode:
-                delete(session, self_link(session))
+                delete(config, self_link(module))
                 fetch = {}
             changed = True
     else:
         if state == 'present':
             if not module.check_mode:
-                fetch = create(session, collection(session), [200])
+                fetch = create(config, "vpcs")
                 fetch = response_to_hash(module, fetch.get('vpc'))
             changed = True
         else:
@@ -181,72 +182,89 @@ def main():
     module.exit_json(**fetch)
 
 
-def create(session, link, success_codes=None):
-    if not success_codes:
-        success_codes = [201, 202]
-    module = session.module
-    r = return_if_object(module, session.post(link, resource_to_create(module)), success_codes)
+def create(config, link):
+    module = config.module
+    client = config.client(get_region(module), "vpc", "project")
 
-    wait_done = wait_for_operation(session, 'create', r)
+    r = None
+    try:
+        r = client.post(link, resource_to_create(module))
+    except HwcClientException as ex:
+        msg = ("module(hwc_network_vpc): error creating "
+               "resource, error: %s" % str(ex))
+        module.fail_json(msg=msg)
 
-    url = resource_get_url(session, wait_done)
-    return fetch_resource(session, url)
+    wait_done = wait_for_operation(config, 'create', r)
 
-
-def update(session, link, success_codes=None):
-    if not success_codes:
-        success_codes = [201, 202]
-    module = session.module
-    r = return_if_object(module, session.put(link, resource_to_update(module)), success_codes)
-
-    wait_done = wait_for_operation(session, 'update', r)
-
-    url = resource_get_url(session, wait_done)
-    return fetch_resource(session, url)
+    v = navigate_hash(wait_done, ['vpc', 'id'])
+    url = build_path(module, 'vpcs/{op_id}', {'op_id': v})
+    return fetch_resource(module, client, url)
 
 
-def delete(session, link, success_codes=None):
-    if not success_codes:
-        success_codes = [202, 204]
-    return_if_object(session.module, session.delete(link), success_codes, False)
+def update(config, link):
+    module = config.module
+    client = config.client(get_region(module), "vpc", "project")
 
-    wait_for_delete(session, link)
+    r = None
+    try:
+        r = client.put(link, resource_to_update(module))
+    except HwcClientException as ex:
+        msg = ("module(hwc_network_vpc): error updating "
+               "resource, error: %s" % str(ex))
+        module.fail_json(msg=msg)
 
+    wait_for_operation(config, 'update', r)
 
-def fetch_resource(session, link, success_codes=None):
-    if not success_codes:
-        success_codes = [200]
-    return return_if_object(session.module, session.get(link), success_codes)
-
-
-def link_wrapper(f):
-    def _wrapper(module, *args, **kwargs):
-        try:
-            return f(module, *args, **kwargs)
-        except KeyError as ex:
-            module.fail_json(
-                msg="Mapping keys(%s) are not found in generating link." % ex)
-
-    return _wrapper
+    return fetch_resource(module, client, link)
 
 
-def get_id_by_name(session):
-    module = session.module
+def delete(config, link):
+    module = config.module
+    client = config.client(get_region(module), "vpc", "project")
+
+    try:
+        client.delete(link)
+    except HwcClientException as ex:
+        msg = ("module(hwc_network_vpc): error deleting "
+               "resource, error: %s" % str(ex))
+        module.fail_json(msg=msg)
+
+    wait_for_delete(module, client, link)
+
+
+def fetch_resource(module, client, link):
+    try:
+        return client.get(link)
+    except HwcClientException as ex:
+        msg = ("module(hwc_network_vpc): error fetching "
+               "resource, error: %s" % str(ex))
+        module.fail_json(msg=msg)
+
+
+def get_id_by_name(config):
+    module = config.module
+    client = config.client(get_region(module), "vpc", "project")
     name = module.params.get("name")
-    link = list_link(session, {'limit': 10, 'marker': '{marker}'})
+    link = "vpcs"
+    query_link = "?marker={marker}&limit=10"
+    link += query_link
     not_format_keys = re.findall("={marker}", link)
     none_values = re.findall("=None", link)
 
     if not (not_format_keys or none_values):
-        r = fetch_resource(session, link)
+        r = None
+        try:
+            r = client.get(link)
+        except Exception:
+            pass
         if r is None:
-            return ""
+            return None
         r = r.get('vpcs', [])
         ids = [
             i.get('id') for i in r if i.get('name', '') == name
         ]
         if not ids:
-            return ""
+            return None
         elif len(ids) == 1:
             return ids[0]
         else:
@@ -258,7 +276,11 @@ def get_id_by_name(session):
         p = {'marker': ''}
         ids = set()
         while True:
-            r = fetch_resource(session, link.format(**p))
+            r = None
+            try:
+                r = client.get(link.format(**p))
+            except Exception:
+                pass
             if r is None:
                 break
             r = r.get('vpcs', [])
@@ -273,68 +295,11 @@ def get_id_by_name(session):
 
             p['marker'] = r[-1].get('id')
 
-        return ids.pop() if ids else ""
+        return ids.pop() if ids else None
 
 
-@link_wrapper
-def list_link(session, extra_data=None):
-    url = "{endpoint}vpcs?limit={limit}&marker={marker}"
-
-    combined = session.module.params.copy()
-    if extra_data:
-        combined.update(extra_data)
-
-    combined['endpoint'] = session.get_service_endpoint('vpc')
-
-    return url.format(**combined)
-
-
-@link_wrapper
-def self_link(session):
-    url = "{endpoint}vpcs/{id}"
-
-    combined = session.module.params.copy()
-    combined['endpoint'] = session.get_service_endpoint('vpc')
-
-    return url.format(**combined)
-
-
-@link_wrapper
-def collection(session):
-    url = "{endpoint}vpcs"
-
-    combined = session.module.params.copy()
-    combined['endpoint'] = session.get_service_endpoint('vpc')
-
-    return url.format(**combined)
-
-
-def return_if_object(module, response, success_codes, has_content=True):
-    code = response.status_code
-
-    # If not found, return nothing.
-    if code == 404:
-        return None
-
-    success_codes = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
-    # If no content, return nothing.
-    if code in success_codes and not has_content:
-        return None
-
-    result = None
-    try:
-        result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
-
-    if code not in success_codes:
-        msg = navigate_hash(result, ['message'])
-        if msg:
-            module.fail_json(msg=msg)
-        else:
-            module.fail_json(msg="operation failed, return code=%d" % code)
-
-    return result
+def self_link(module):
+    return build_path(module, "vpcs/{id}")
 
 
 def resource_to_create(module):
@@ -376,33 +341,11 @@ def response_to_hash(module, response):
     }
 
 
-@link_wrapper
-def resource_get_url(session, wait_done):
-    combined = session.module.params.copy()
-    combined['op_id'] = navigate_hash(wait_done, ['vpc', 'id'])
-    url = 'vpcs/{op_id}'.format(**combined)
-
-    endpoint = session.get_service_endpoint('vpc')
-    return endpoint + url
-
-
-@link_wrapper
-def async_op_url(session, extra_data=None):
-    url = "{endpoint}vpcs/{op_id}"
-
-    combined = session.module.params.copy()
-    if extra_data:
-        combined.update(extra_data)
-
-    combined['endpoint'] = session.get_service_endpoint('vpc')
-
-    return url.format(**combined)
-
-
-def wait_for_operation(session, op_type, op_result):
+def wait_for_operation(config, op_type, op_result):
+    module = config.module
     op_id = navigate_hash(op_result, ['vpc', 'id'])
-    url = async_op_url(session, {'op_id': op_id})
-    timeout = 60 * int(session.module.params['timeouts'][op_type].rstrip('m'))
+    url = build_path(module, "vpcs/{op_id}", {'op_id': op_id})
+    timeout = 60 * int(module.params['timeouts'][op_type].rstrip('m'))
     states = {
         'create': {
             'allowed': ['CREATING', 'DONW', 'OK'],
@@ -415,16 +358,17 @@ def wait_for_operation(session, op_type, op_result):
     }
 
     return wait_for_completion(url, timeout, states[op_type]['allowed'],
-                               states[op_type]['complete'], session)
+                               states[op_type]['complete'], config)
 
 
 def wait_for_completion(op_uri, timeout, allowed_states,
-                        complete_states, session):
-    module = session.module
+                        complete_states, config):
+    module = config.module
+    client = config.client(get_region(module), "vpc", "project")
     end = time.time() + timeout
     while time.time() <= end:
         try:
-            op_result = fetch_resource(session, op_uri)
+            op_result = fetch_resource(module, client, op_uri)
         except Exception:
             time.sleep(1.0)
             continue
@@ -448,20 +392,20 @@ def raise_if_errors(response, module):
         module.fail_json(msg=navigate_hash(response, []))
 
 
-def wait_for_delete(session, link):
+def wait_for_delete(module, client, link):
     end = time.time() + 60 * int(
-        session.module.params['timeouts']['delete'].rstrip('m'))
+        module.params['timeouts']['delete'].rstrip('m'))
     while time.time() <= end:
         try:
-            resp = session.get(link)
-            if resp.status_code == 404:
-                return
+            client.get(link)
+        except HwcClientException404:
+            return
         except Exception:
             pass
 
         time.sleep(1.0)
 
-    session.module.fail_json(msg="Timeout to wait for deletion to be complete.")
+    module.fail_json(msg="Timeout to wait for deletion to be complete.")
 
 
 class VpcRoutesArray(object):

@@ -48,6 +48,7 @@ from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
@@ -300,8 +301,10 @@ def combine(*terms, **kwargs):
     dicts = []
     for t in terms:
         if isinstance(t, MutableMapping):
+            recursive_check_defined(t)
             dicts.append(t)
         elif isinstance(t, list):
+            recursive_check_defined(t)
             dicts.append(combine(*t, **kwargs))
         else:
             raise AnsibleFilterError("|combine expects dictionaries, got " + repr(t))

@@ -9,7 +9,7 @@
 
 # Servers can only be destroyed 5 min after creation
 - name: wait for 5 min until VM is absent
-  local_action: wait_for
+  wait_for:
   when: result is changed
 
 - name: test gather vultr server facts - empty resources
@@ -17,7 +17,7 @@
 - name: verify test gather vultr server facts - empty resources
   assert:
     that:
-    - ansible_facts.vultr_server_facts | count == 0
+    - ansible_facts.vultr_server_facts | selectattr('name','equalto',vultr_server_name) | list | count == 0
 
 - name: setup firewall group
   vultr_firewall_group:
@@ -38,7 +38,7 @@
 - name: verify test gather vultr server facts in check mode
   assert:
     that:
-    - ansible_facts.vultr_server_facts|selectattr('name','equalto','{{ vultr_server_name }}') | list | count == 1
+    - ansible_facts.vultr_server_facts|selectattr('name','equalto',vultr_server_name) | list | count == 1
 
 - name: test gather vultr server facts
   vultr_server_facts:
@@ -46,7 +46,7 @@
 - name: verify test gather vultr server facts
   assert:
     that:
-    - ansible_facts.vultr_server_facts|selectattr('name','equalto','{{ vultr_server_name }}') | list | count == 1
+    - ansible_facts.vultr_server_facts|selectattr('name','equalto',vultr_server_name) | list | count == 1
 
 - name: Pause for 5 min before deleting the VM
   pause:
