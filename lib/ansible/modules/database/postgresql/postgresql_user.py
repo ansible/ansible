@@ -283,12 +283,11 @@ from ansible.module_utils.saslprep import saslprep
 
 try:
     # pbkdf2_hmac is missing on python 2.6, we can safely assume,
-    # that postresql 10 capable intance have at least python 2.7 installed
+    # that postresql 10 capable instance have at least python 2.7 installed
     from hashlib import pbkdf2_hmac
+    pbkdf2_found = True
 except ImportError:
     pbkdf2_found = False
-else:
-    pbkdf2_found = True
 
 
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
@@ -374,7 +373,7 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
                 pwchanging = True
         # SCRAM hashes are represented as a special object, containing hash data:
         # `SCRAM-SHA-256$<iteration count>:<salt>$<StoredKey>:<ServerKey>`
-        # for reference, see https://www.postgresql.org/docs/10/catalog-pg-authid.html
+        # for reference, see https://www.postgresql.org/docs/current/catalog-pg-authid.html
         elif current_role_attrs['rolpassword'] is not None \
                 and pbkdf2_found \
                 and re.match(SCRAM_SHA256_REGEX, current_role_attrs['rolpassword']):
