@@ -244,8 +244,7 @@ def main():
         filter_ref = mso.filter_ref(schema_id=filter_schema_id, template=filter_template, filter=filter_name)
         if filter_ref in filters:
             filter_idx = filters.index(filter_ref)
-            # FIXME: Changes based on index are DANGEROUS
-            filter_path = '/templates/{0}/contracts/{1}/{2}/{3}'.format(template, contract, filter_key, filter_idx)
+            filter_path = '/templates/{0}/contracts/{1}/{2}/{3}'.format(template, contract, filter_key, filter_name)
             mso.existing = schema_obj['templates'][template_idx]['contracts'][contract_idx][filter_key][filter_idx]
 
     if state == 'query':
