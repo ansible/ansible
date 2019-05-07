@@ -27,9 +27,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+psycopg2 = None  # This line needs for unit tests
 try:
     import psycopg2
-    from psycopg2.extras import DictCursor
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
@@ -75,6 +75,9 @@ def ensure_required_libs(module):
 
 
 def connect_to_db(module, autocommit=False, fail_on_conn=True, warn_db_default=True):
+    """
+    module arg must be an object of ansible.module_utils.basic.AnsibleModule class
+    """
 
     ensure_required_libs(module)
 
@@ -110,22 +113,24 @@ def connect_to_db(module, autocommit=False, fail_on_conn=True, warn_db_default=T
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
+    db_connection = None
     try:
         db_connection = psycopg2.connect(**kw)
         if autocommit:
-            if psycopg2.__version__ >= '2.4.2':
+            if LooseVersion(psycopg2.__version__) >= LooseVersion('2.4.2'):
                 db_connection.set_session(autocommit=True)
             else:
                 db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
         # Switch role, if specified:
-        cursor = db_connection.cursor(cursor_factory=DictCursor)
         if module.params.get('session_role'):
+            cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
             try:
                 cursor.execute('SET ROLE %s' % module.params['session_role'])
             except Exception as e:
                 module.fail_json(msg="Could not switch role: %s" % to_native(e))
-        cursor.close()
+            finally:
+                cursor.close()
 
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
