@@ -241,7 +241,7 @@ class PlayContext(Base):
             # may happen when users put an IP entry into their inventory, or if
             # they rely on DNS for a non-inventory hostname
             for address_var in ('ansible_%s_host' % delegated_transport,) + C.MAGIC_VARIABLE_MAPPING.get('remote_addr'):
-                if address_var in delegated_vars:
+                if address_var in delegated_vars and delegated_vars.get(address_var) is not None:
                     break
             else:
                 display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
