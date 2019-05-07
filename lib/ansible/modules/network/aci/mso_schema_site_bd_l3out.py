@@ -52,6 +52,10 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+notes:
+- The ACI MultiSite PATCH API has a deficiency requiring some objects to be referenced by index.
+  This can cause silent corruption on concurrent access when changing/removing on object as
+  the wrong object may be referenced. This module is affected by this deficiency.
 seealso:
 - module: mso_schema_site_bd
 - module: mso_schema_template_bd
@@ -181,6 +185,7 @@ def main():
     l3outs = schema_obj['sites'][site_idx]['bds'][bd_idx]['l3Outs']
     if l3out is not None and l3out in l3outs:
         l3out_idx = l3outs.index(l3out)
+        # FIXME: Changes based on index are DANGEROUS
         l3out_path = '/sites/{0}/bds/{1}/l3Outs/{2}'.format(site_template, bd, l3out_idx)
         mso.existing = schema_obj['sites'][site_idx]['bds'][bd_idx]['l3Outs'][l3out_idx]
 
