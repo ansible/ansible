@@ -691,3 +691,39 @@
     that:
       - result.rowcount == 1
   when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Drop table CASCADE:
+- name: postgresql_table - drop table cascade
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test5
+    state: absent
+    cascade: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.queries == ['DROP TABLE "test5" CASCADE']
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Check that the table doesn't exist after the previous step, rowcount must be - 0
+- name: postgresql_table - check that table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test5'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.1', '>=')
