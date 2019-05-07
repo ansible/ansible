@@ -197,6 +197,8 @@ options:
     description:
       - create, terminate, start, stop or restart instances.
         The state 'restarted' was added in 2.2
+      - when 'absent': instance_ids is required
+      - when 'running','stopped','restarted': instance_ids or instance_tags is required
     required: false
     default: 'present'
     choices: ['present', 'absent', 'running', 'restarted', 'stopped']
