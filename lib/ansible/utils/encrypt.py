@@ -107,7 +107,7 @@ class CryptHash(BaseHash):
             saltstring = "$%s$%s" % (self.algo_data.crypt_id, salt)
         else:
             saltstring = "$%s$rounds=%d$%s" % (self.algo_data.crypt_id, rounds, salt)
-        result = crypt.crypt(to_bytes(secret), saltstring)
+        result = crypt.crypt(secret, saltstring)
 
         # crypt.crypt returns None if it cannot parse saltstring
         # None as result would be interpreted by the some modules (user module)
