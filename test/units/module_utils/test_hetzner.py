@@ -1,6 +1,7 @@
 # Copyright: (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+import copy
 import json
 import pytest
 
@@ -122,10 +123,17 @@ GET_FAILOVER_SUCCESS = [
             body=json.dumps(dict(
                 failover=dict(
                     active_server_ip='1.1.1.1',
+                    ip='1.2.3.4',
+                    netmask='255.255.255.255',
                 )
             )).encode('utf-8'),
         )),
-        '1.1.1.1'
+        '1.1.1.1',
+        dict(
+            active_server_ip='1.1.1.1',
+            ip='1.2.3.4',
+            netmask='255.255.255.255',
+        )
     ),
 ]
 
@@ -147,10 +155,30 @@ GET_FAILOVER_FAIL = [
 ]
 
 
-@pytest.mark.parametrize("ip, return_value, result", GET_FAILOVER_SUCCESS)
-def test_get_failover(monkeypatch, ip, return_value, result):
+@pytest.mark.parametrize("ip, return_value, result, record", GET_FAILOVER_SUCCESS)
+def test_get_failover_record(monkeypatch, ip, return_value, result, record):
     module = get_module_mock()
-    hetzner.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=copy.deepcopy(return_value))
+
+    assert hetzner.get_failover_record(module, ip) == record
+
+
+@pytest.mark.parametrize("ip, return_value, result", GET_FAILOVER_FAIL)
+def test_get_failover_record_fail(monkeypatch, ip, return_value, result):
+    module = get_module_mock()
+    hetzner.fetch_url = MagicMock(return_value=copy.deepcopy(return_value))
+
+    with pytest.raises(ModuleFailException) as exc:
+        hetzner.get_failover_record(module, ip)
+
+    assert exc.value.fail_msg == result
+    assert exc.value.fail_kwargs == dict()
+
+
+@pytest.mark.parametrize("ip, return_value, result, record", GET_FAILOVER_SUCCESS)
+def test_get_failover(monkeypatch, ip, return_value, result, record):
+    module = get_module_mock()
+    hetzner.fetch_url = MagicMock(return_value=copy.deepcopy(return_value))
 
     assert hetzner.get_failover(module, ip) == result
 
@@ -158,7 +186,7 @@ def test_get_failover(monkeypatch, ip, return_value, result):
 @pytest.mark.parametrize("ip, return_value, result", GET_FAILOVER_FAIL)
 def test_get_failover_fail(monkeypatch, ip, return_value, result):
     module = get_module_mock()
-    hetzner.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=copy.deepcopy(return_value))
 
     with pytest.raises(ModuleFailException) as exc:
         hetzner.get_failover(module, ip)
@@ -220,7 +248,7 @@ SET_FAILOVER_FAIL = [
 @pytest.mark.parametrize("ip, value, return_value, result", SET_FAILOVER_SUCCESS)
 def test_set_failover(monkeypatch, ip, value, return_value, result):
     module = get_module_mock()
-    hetzner.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=copy.deepcopy(return_value))
 
     assert hetzner.set_failover(module, ip, value) == result
 
@@ -228,7 +256,7 @@ def test_set_failover(monkeypatch, ip, value, return_value, result):
 @pytest.mark.parametrize("ip, value, return_value, result", SET_FAILOVER_FAIL)
 def test_set_failover_fail(monkeypatch, ip, value, return_value, result):
     module = get_module_mock()
-    hetzner.fetch_url = MagicMock(return_value=return_value)
+    hetzner.fetch_url = MagicMock(return_value=copy.deepcopy(return_value))
 
     with pytest.raises(ModuleFailException) as exc:
         hetzner.set_failover(module, ip, value)
