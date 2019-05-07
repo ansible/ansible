@@ -1,0 +1,17 @@
+- name: Install R
+  apt:
+    name: r-base
+    state: present
+  when: ansible_facts.pkg_mgr == 'apt'
+
+- block:
+    - name: Install epel-release
+      yum:
+        name: epel-release
+        state: present
+
+    - name: Install R
+      yum:
+        name: R
+        state: present
+  when: ansible_facts.pkg_mgr == 'yum'

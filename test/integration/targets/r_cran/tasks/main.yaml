@@ -1,0 +1,45 @@
+- name: Install 1 package
+  r_cran:
+    name: 'gapminder'
+    state: 'present'
+  register: install_1
+
+- name: Install 1 package again
+  r_cran:
+    name: 'gapminder'
+    state: 'present'
+  register: install_1_again
+
+- name: List installed packages
+  cmd: "Rscript -e 'row.names(list.packages())'"
+  register: r_list_packages
+
+- name: Check that package was installed
+  assert:
+    that:
+      - install_1_list is changed
+      - install_1_list_again is not changed
+      - "'gapminder' in r_list_packages.stdout"
+
+- name: Remove 1 package
+  r_cran:
+    name: 'gapminder'
+    state: 'absent'
+  register: remove_1
+
+- name: Remove 1 package again
+  r_cran:
+    name: 'gapminder'
+    state: 'absent'
+  register: remove_1_again
+
+- name: List installed packages
+  cmd: "Rscript -e 'row.names(list.packages())'"
+  register: r_list_packages
+
+- name: Check that package was removed
+  assert:
+    that:
+      - remove_1 is changed
+      - remove_1_again is not changed
+      - "'gapminder' not in r_list_packages.stdout"
