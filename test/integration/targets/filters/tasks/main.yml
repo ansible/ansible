@@ -124,6 +124,10 @@
       - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
       - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
 
+- name: Get ansible_system fact
+  setup: filter=ansible_system
+  tags: password_hash
+
 - name: Test password_hash filter
   vars:
     crypt_skip: '{{ True if ansible_system == "Darwin" else False }}'
