@@ -172,7 +172,8 @@
 - name: Create list of users
   junos_user:
     aggregate:
-      - name: ansible
+      # NOTE(pabelanger): We noop our ansible-test user, as not to lose SSH access
+      - name: "{{ ansible_user|default('ansible') }}"
       - {name: test_user1, full_name: test_user2, role: operator}
       - {name: test_user2, full_name: test_user2, role: read-only}
     provider: "{{ netconf }}"
@@ -181,7 +182,8 @@
 - name: Purge users except the users in aggregate
   junos_user:
     aggregate:
-      - name: ansible
+      # NOTE(pabelanger): We noop our ansible-test user, as not to lose SSH access
+      - name: "{{ ansible_user|default('ansible') }}"
     purge: True
     provider: "{{ netconf }}"
   register: result

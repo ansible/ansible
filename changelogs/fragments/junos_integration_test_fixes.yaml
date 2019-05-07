@@ -1,0 +1,5 @@
+bugfixes:
+- netconf - Make netconf_get python3 compatible (https://github.com/ansible/ansible/pull/57639).
+- Remove hardcoded ansible user for junos_user integration tests (https://github.com/ansible/ansible/pull/57650).
+- Fix junos integration zuul CI failures (https://github.com/ansible/ansible/pull/57309).
+- Fix in netconf plugin when data element is empty in xml response (https://github.com/ansible/ansible/pull/57981).
