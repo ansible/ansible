@@ -36,6 +36,14 @@
         - '"Failed to connect to" in invalid_domain.msg'
         - '"http" in http.url'
 
+  - name: Test play without auth_key
+    meraki_network:
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      type: appliance
+    delegate_to: localhost
+
   - name: Create test network
     meraki_network:
       auth_key: '{{auth_key}}'
