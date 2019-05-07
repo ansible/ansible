@@ -184,15 +184,15 @@
         that:
           - "{{ ( item.pass | password_hash(item.algo, item.salt) ) == item.result or ( item.pass | password_hash(item.algo, item.salt) ) == ( item.result_alt | default('') ) }}"
       with_flattened:
-        - "{{ passwords }}"
-        - "{{ no_crypt_passwords if crypt_run|bool == true else omit }}"
+        - - "{{ passwords }}"
+          - "{{ no_crypt_passwords if crypt_run|bool == true else [] }}"
     - name: Passwords default to random salt
       assert:
         that:
           - '"{{ item.pass | password_hash(item.algo) }}" != "{{ item.pass | password_hash(item.algo) }}"'
       with_flattened:
-        - "{{ passwords }}"
-        - "{{ no_crypt_passwords if crypt_run|bool == true else omit }}"
+        - - "{{ passwords }}"
+          - "{{ no_crypt_passwords if crypt_run|bool == true else [] }}"
     - name: Register results of the algorithm error
       debug:
         var: "{{ item.pass | password_hash('fake_algo') }}"
