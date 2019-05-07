@@ -45,7 +45,7 @@ options:
   password:
     description:
     - Set the user's password, before 1.4 this was required.
-    - Password can be passed unhashed or hashed (MD5-hashed or SCRAM-SHA256-hashed).
+    - Password can be passed unhashed or hashed (MD5-hashed).
     - Unhashed password will automatically be hashed when saved into the
       database if C(encrypted) parameter is set, otherwise it will be save in
       plain text format.
@@ -55,8 +55,6 @@ options:
       'verysecretpasswordJOE' | md5sum | awk '{print $1}')").
     - Note that if the provided password string is already in MD5-hashed
       format, then it is used as-is, regardless of C(encrypted) parameter.
-    - When passing a SCRAM-hashed password it must be in internal PostgreSQL format,
-      see https://www.postgresql.org/docs/10/catalog-pg-authid.html for reference.
     type: str
   db:
     description:
@@ -196,12 +194,15 @@ EXAMPLES = r'''
     password: md59543f1d82624df2b31672ec0f7050460
     role_attr_flags: CREATEDB,NOSUPERUSER
 
-# Create user with password if it does not exist or update its password
+# Create user with cleartext password if it does not exist or update its password
+# password will be encrypted with SCRAM algorithm (available from PostgreSQL 10)
 - name: Create appclient user with SCRAM-hashed password
   postgresql_user:
     name: appclient
-    password: "SCRAM-SHA-256$4096:RmnRFDvK0XWNYCTInV61ww==$WPAaJG/7Kn1BImfxsOYfeZsZ3u4YRgRbnepAYg18LvU=:L0AnLYOUvfUWdho5OlHn/v67EfcpOcjAvjuBNT0TPrU="
+    password: "secret123"
     no_password_changes: no
+  environment:
+    PGOPTIONS: "-c password_encryption=scram-sha-256"
 
 # Remove test user privileges from acme
 - name: Connect to acme database and remove test user privileges from there
