@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# NOTE: Testing sysctl inside an unprivileged container means that we cannot
+# apply sysctl, or it will always fail, because of that in most cases (except
+# those when it should fail) we have to use `reload=no`.
+
 - set_fact:
     output_dir_test: "{{ output_dir }}/test_sysctl"
 
@@ -115,6 +119,22 @@
     that:
       - sysctl_test2_change_test is not changed
 
+- name: Try sysctl with an invalid value
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: foo
+  register: sysctl_test3
+  ignore_errors: yes
+
+- debug:
+    var: sysctl_test3
+    verbosity: 1
+
+- name: validate results for test 3
+  assert:
+    that:
+      - sysctl_test3 is failed
+
 ##
 ## sysctl - sysctl_set
 ##
@@ -171,3 +191,20 @@
     that:
       - sysctl_no_value is failed
       - "sysctl_no_value.msg == 'value cannot be None'"
+
+- name: Try sysctl with an invalid value
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: foo
+    sysctl_set: yes
+  register: sysctl_test4
+  ignore_errors: yes
+
+- debug:
+    var: sysctl_test4
+    verbosity: 1
+
+- name: validate results for test 4
+  assert:
+    that:
+      - sysctl_test4 is failed
