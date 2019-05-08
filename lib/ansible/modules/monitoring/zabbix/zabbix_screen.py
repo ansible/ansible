@@ -351,6 +351,7 @@ def main():
         screen_name = zabbix_screen['screen_name']
         screen_id = screen.get_screen_id(screen_name)
         state = "absent" if "state" in zabbix_screen and zabbix_screen['state'] == "absent" else "present"
+        sort = bool(zabbix_screen.get("sort", False))
 
         if state == "absent":
             if screen_id:
