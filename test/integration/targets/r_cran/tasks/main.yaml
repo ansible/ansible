@@ -1,11 +1,11 @@
 - name: Install 1 package
-  r_cran:
+  r_pkg_cran:
     name: 'gapminder'
     state: 'present'
   register: install_1
 
 - name: Install 1 package again
-  r_cran:
+  r_pkg_cran:
     name: 'gapminder'
     state: 'present'
   register: install_1_again
@@ -22,13 +22,13 @@
       - "'gapminder' in r_list_packages.stdout"
 
 - name: Remove 1 package
-  r_cran:
+  r_pkg_cran:
     name: 'gapminder'
     state: 'absent'
   register: remove_1
 
 - name: Remove 1 package again
-  r_cran:
+  r_pkg_cran:
     name: 'gapminder'
     state: 'absent'
   register: remove_1_again

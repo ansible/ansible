@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: r_cran
+module: r_pkg_cran
 
 short_description: Install R packages from CRAN
 
@@ -35,15 +35,24 @@ author:
 
 EXAMPLES = '''
 # Install a single package
-  - r_cran:e
-      name: ['gapminder']
+  - r_pkg_cran:
+      name: 'gapminder'
+      state: 'present'
+
+# Install a multiple packages
+  - r_pkg_cran:
+      name: ['gapminder', 'AmesHousing']
       state: 'present'
 
 # Remove a single package
-  - r_cran:
-      name: ['gapminder']
+  - r_pkg_cran:
+      name: 'gapminder'
       state: 'absent'
 
+# Remove multiple packages
+  - r_pkg_cran:
+      name: ['gapminder', 'AmesHousing']
+      state: 'absent'
 '''
 
 RETURN = '''
