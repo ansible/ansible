@@ -885,11 +885,10 @@ class NxosCmdRef:
             existing = ref[k].get('existing', ref[k]['default'])
             if playval == existing and ref['_state'] == 'present':
                 continue
-            if isinstance(ref[k]['default'], dict):
-                # Dictionary of default keys needs special handling to check
-                # all keys for None
-                if not all(ref[k]['default'].values()):
-                    existing = None
+            if isinstance(existing, dict) and not all(existing.values()):
+                # All existing sub_key values are None so it's safe to set
+                # existing to None.
+                existing = None
             if existing is None and ref['_state'] == 'absent':
                 continue
             cmd = None
