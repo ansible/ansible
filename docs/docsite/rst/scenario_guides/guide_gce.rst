@@ -29,7 +29,7 @@ used, but you may experience issues trying to use them together.
 
 While the community GCP modules are not going away, Google is investing effort
 into the new "gcp_*" modules. Google is committed to ensuring the Ansible
-community has a great experience with GCP and therefore recommends adopting 
+community has a great experience with GCP and therefore recommends adopting
 these new modules if possible.
 
 
@@ -42,7 +42,7 @@ The Google Cloud Platform (GCP) modules require both the ``requests`` and the
 
     $ pip install requests google-auth
 
-Alternatively for RHEL / CentOS, the ``python-requests`` package is also 
+Alternatively for RHEL / CentOS, the ``python-requests`` package is also
 available to satisfy ``requests`` libraries.
 
 .. code-block:: bash
@@ -234,10 +234,10 @@ rest.
         register: instance
 
        - name: Wait for SSH to come up
-         wait_for: host={{ instance.address }} port=22 delay=10 timeout=60
+         wait_for: host={{ address.address }} port=22 delay=10 timeout=60
 
        - name: Add host to groupname
-         add_host: hostname={{ instance.address }} groupname=new_instances
+         add_host: hostname={{ address.address }} groupname=new_instances
 
 
    - name: Manage new instances
@@ -268,7 +268,7 @@ module (and more!). Below is a mapping of ``gce`` fields over to
 ``gcp_compute_instance`` fields.
 
 ============================  ==========================================  ======================
- gce.py                        gcp_compute_instance.py                     Notes 
+ gce.py                        gcp_compute_instance.py                     Notes
 ============================  ==========================================  ======================
  state                        state/status                                State on gce has multiple values: "present", "absent", "stopped", "started", "terminated". State on gcp_compute_instance is used to describe if the instance exists (present) or does not (absent). Status is used to describe if the instance is "started", "stopped" or "terminated".
  image                        disks[].initialize_params.source_image      You'll need to create a single disk using the disks[] parameter and set it to be the boot disk (disks[].boot = true)
