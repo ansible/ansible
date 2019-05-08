@@ -302,3 +302,30 @@
     that:
       - 'var_host_info[0] == ansible_host'
       - 'var_host_info[1] == ansible_user'
+
+# Jsonnet lookups
+- name: Test that we have a proper jinja search path in Jsonnet lookup
+  set_fact:
+    hello_from_jsonnet: "{{ lookup('jsonnet', 'hello.jsonnet') }}"
+
+- debug:
+    var: 'hello_from_jsonnet'
+
+- assert:
+    that:
+      - "hello_from_jsonnet.msg == 'Hello Jsonnet!'"
+
+- name: Test that Jsonnet callback to Jinja works
+  vars:
+    external_vars:
+      evar: '42'
+    another_var: 'foo'
+  block:
+    - set_fact:
+        jsonnet_ext: "{{ lookup('jsonnet', 'ext.jsonnet', ext_vars=external_vars) }}"
+
+    - assert:
+        that:
+          - "jsonnet_ext.two == '2'"
+          - "jsonnet_ext.evar == external_vars.evar"
+          - "jsonnet_ext.bare == another_var"
