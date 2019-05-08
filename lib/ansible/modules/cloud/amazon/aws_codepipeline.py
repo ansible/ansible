@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: aws_codepipeline
-short_description: Create or delete AWS CodePipeline
+short_description: Create or delete AWS CodePipelines
 notes:
     - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/codepipeline.html)
 description:

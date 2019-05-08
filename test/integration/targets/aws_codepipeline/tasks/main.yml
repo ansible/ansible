@@ -18,7 +18,7 @@
 
     - name: create IAM role needed for CodePipeline
       iam_role:
-        name: "{{ resource_prefix }}-codepipeline-service-role"
+        name: "ansible-test-sts-{{ resource_prefix }}-codepipeline-service-role"
         description: Role with permissions for CodePipeline actions.
         assume_role_policy_document: "{{ lookup('file', 'codepipeline_iam_trust_policy.json') }}"
         state: present
