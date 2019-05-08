@@ -123,9 +123,8 @@ class Cli:
 
     @property
     def supports_sessions(self):
-        if self._session_support:
-            return self._session_support
-        self._session_support = self._get_connection().supports_sessions
+        if self._session_support is None:
+            self._session_support = self._get_connection().supports_sessions()
         return self._session_support
 
     def _get_connection(self):
@@ -237,10 +236,9 @@ class LocalEapi:
 
     @property
     def supports_sessions(self):
-        if self._session_support:
-            return self._session_support
-        response = self.send_request(['show configuration sessions'])
-        self._session_support = 'error' not in response
+        if self._session_support is None:
+            response = self.send_request(['show configuration sessions'])
+            self._session_support = 'error' not in response
         return self._session_support
 
     def _request_builder(self, commands, output, reqid=None):
@@ -437,9 +435,8 @@ class HttpApi:
 
     @property
     def supports_sessions(self):
-        if self._session_support:
-            return self._session_support
-        self._session_support = self._connection.supports_sessions
+        if self._session_support is None:
+            self._session_support = self._connection.supports_sessions()
         return self._session_support
 
     def run_commands(self, commands, check_rc=True):
