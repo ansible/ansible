@@ -693,7 +693,12 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
-  $module_utils/hwc_utils.py: *huawei
+  $module_utils/hwc_utils.py: &huawei_hwc
+    <<: *huawei
+    support: community
+    labels:
+      - networking
+      - huawei
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -1424,7 +1429,7 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
-  test/units/module_utils/hwc: *huawei
+  test/units/module_utils/hwc: *huawei_hwc
   test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
