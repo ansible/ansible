@@ -160,7 +160,6 @@ def ensure(module, client):
                     for key in diff:
                         data[key] = module_hostgroup.get(key)
                     client.hostgroup_mod(name=name, item=data)
-
     else:
         if ipa_hostgroup:
             changed = True
@@ -189,7 +188,7 @@ def ensure(module, client):
             changed = client.add_if_missing(name, ipa_hostgroup.get('member_hostgroup', []),
                                             [item.lower() for item in hostgroup],
                                             client.hostgroup_add_hostgroup) or changed
-    if state == 'remove_members':
+    elif state == 'remove_members':
         if host is not None:
             changed = client.remove_if_present(name, ipa_hostgroup.get('member_host', []),
                                                [item.lower() for item in host],
