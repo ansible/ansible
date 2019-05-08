@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_policydefinition
 version_added: "2.9"
-short_description: Manage Policy Definition.
+short_description: Manage Azure Policy Definition.
 description:
-    - Create, update and delete instance of policy definition.
+    - Create, update and delete instance of Azure policy definition.
 
 options:
     name:
