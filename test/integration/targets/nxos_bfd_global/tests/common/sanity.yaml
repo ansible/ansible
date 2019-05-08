@@ -6,7 +6,7 @@
 - name: set facts common
   # nd_* vars are "non-default" values
   set_fact:
-    echo: ''
+    echo: absent
     nd_echo: loopback1
     interval: &def_interval
       tx: 50

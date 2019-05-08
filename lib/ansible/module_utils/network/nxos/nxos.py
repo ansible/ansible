@@ -733,9 +733,11 @@ class NxosCmdRef:
         plat = None
 
         # Supported Platform IDs (N35 N3K N5K N6K N7K N9K)
+        if not os_platform:
+            return None
         m = re.match('([CN][35679][K57])-', os_platform)
         if not m:
-            return
+            return None
         plat = m.group(1)
 
         # Normalize
@@ -919,10 +921,11 @@ class NxosCmdRef:
                 #   setval: my-cmd {foo} bar {baz}
                 cmd = ref[k]['setval'].format(**playval)
             elif 'str' == kind:
-                if playval:
-                    cmd = ref[k]['setval'].format('', playval)
-                elif existing:
-                    cmd = ref[k]['setval'].format('no ', existing)
+                if 'absent' in playval:
+                    if existing:
+                        cmd = 'no ' + ref[k]['setval'].format(existing)
+                else:
+                    cmd = ref[k]['setval'].format(playval)
             else:
                 raise "get_proposed: unknown 'kind' value specified for key '{0}'".format(k)
             if cmd:

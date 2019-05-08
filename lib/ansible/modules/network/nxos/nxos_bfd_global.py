@@ -41,7 +41,7 @@ options:
   echo_interface:
     description:
       - Loopback interface used for echo frames.
-        Valid values are loopback interface name or an empty string ''.
+        Valid values are loopback interface name or 'absent'.
       - Not supported on N5K/N6K
     required: false
     type: str
@@ -162,8 +162,8 @@ _template: # _template holds common settings for all commands
 echo_interface:
   kind: str
   getval: (no )*bfd echo-interface *(\S+)*$
-  setval: '{0}bfd echo-interface {1}'
-  default: ''
+  setval: 'bfd echo-interface {0}'
+  default: ~
 
 echo_rx_interval:
   _exclude: ['N5K', 'N6K']
