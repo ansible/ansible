@@ -176,6 +176,25 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: selfsigned_certificate_ecc
 
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR (privatekey passphrase)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pass.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: hunter2
+    subject:
+      commonName: www.example.com
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (privatekey passphrase)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_pass.pem'
+    csr_path: '{{ output_dir }}/csr_pass.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: hunter2
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_certificate_passphrase
+
 - name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (failed passphrase 1)
   openssl_certificate:
     path: '{{ output_dir }}/cert_pw1.pem'
