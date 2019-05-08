@@ -42,7 +42,7 @@ options:
     orchestration_platform:
         description:
             - Specifies the Container I(orchestration_platform) to use. Currently can be either C(DCOS), C(Kubernetes) or C(Swarm).
-            - I(service_principal) must be defined if set to C(Kubernetes).
+            - The I(service_principal) must be defined if set to C(Kubernetes).
         choices:
             - 'DCOS'
             - 'Kubernetes'
@@ -72,7 +72,7 @@ options:
                 required: true
     linux_profile:
         description:
-            - The Linux profile suboptions. 
+            - The Linux profile suboptions.
         required: true
         suboptions:
             admin_username:
