@@ -27,11 +27,12 @@ version_added: "2.9"
 short_description: Use FTP protocol to transfer file on HUAWEI CloudEngine devices.
 description:
     - Use FTP protocol to transfer file on HUAWEI CloudEngine devices.
-author: (@weixiaoxu0512)
+author: weixiaoxu0512(@weixiaoxu0512)
 options:
     ftp_port:
         description:
             - Specifies the port for ftp connection, default 21.
+        default: 21
     ftp_server:
         description:
             - Specifies the ftp server ip address.
@@ -76,20 +77,25 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-  {
-    "changed": true,
-    "local_file": {
-        "date": "Nov 07 16:57:47 2018",
-        "name": "/usr/xuyuandong/1.txt",
-        "size": "10,153,720 (Byte)"
-    },
-    "mode": "get",
-    "remote_file": {
-        "date": "Apr 21  2015",
-        "name": "/mpu/profile_666_04211257.dat",
-        "size": "10,153,720 (Byte)"
-    }
-  }
+changed:
+  returned: always
+  type: bool
+  sample: true
+local_file:
+  date: local file create time
+  name: local file name
+  size: local file size
+  returned: always
+  type: dict
+mode:
+  description: put or get
+  type: str
+remote_file:
+  date: remote file create time
+  name: remote file name
+  size: remote file size
+  returned: always
+  type: dict
 '''
 
 
