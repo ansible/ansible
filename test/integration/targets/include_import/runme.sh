@@ -10,6 +10,10 @@ function gen_task_files() {
     done
 }
 
+## Adhoc
+
+ansible -m include_role -a name=role1 localhost
+
 ## Import (static)
 
 # Playbook
