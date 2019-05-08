@@ -28,7 +28,7 @@ options:
         description:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
-            - It can be a dict contains C(name), C(resource_group) and optional C(subscription).
+            - It can also be a dict contains C(name), C(namespace), C(types), C(resource_group) and optional C(subscription_id).
     state:
         default: present
         description:
@@ -39,11 +39,11 @@ options:
     storage_account:
         description:
             - The resource name or ID of the storage account to which you would like to send Diagnostic Logs.
-            - It can be a dict contains C(name), C(resource_group) and optional C(subscription).
+            - It can also be a dict contains C(name), C(resource_group) and optional C(subscription_id).
     event_hub_authorization_rule:
         description:
             - The resource name or Id for the event hub authorization rule.
-            - It can be a dict contains C(name), C(resource_group), optional C(key_name) and optional C(subscription).
+            - It can also be a dict contains C(name), C(resource_group), optional C(key_name) and optional C(subscription_id).
             - The C(name) means the name of the event hub namespace.
     event_hub_name:
         description:
@@ -108,7 +108,7 @@ options:
     workspace:
         description:
             - The resource name or ID for a Log Analytics workspace to which you would like to send Diagnostic Logs.
-            - It can be a dict contains C(name), C(resource_group) and optional C(subscription).
+            - It can also be a dict contains C(name), C(resource_group) and optional C(subscription_id).
 
 extends_documentation_fragment:
     - azure

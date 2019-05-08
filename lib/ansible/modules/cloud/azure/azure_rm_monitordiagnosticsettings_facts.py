@@ -18,7 +18,7 @@ module: azure_rm_monitordiagnosticsettings_facts
 version_added: "2.9"
 short_description: Get information of Azure monitor diagnostic setting.
 description:
-    - Get information of monitor diagnostic setting.
+    - Get information of Azure monitor diagnostic setting.
 options:
     name:
         description:
@@ -27,6 +27,7 @@ options:
         description:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
+            - It can also be a dict contains C(name), C(namespace), C(types), C(resource_group) and optional C(subscription_id).
     show_category:
         description:
             - List the diagnostic settings category when I(show_category) is set to true
