@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_interface Fix admin_state check for n6k (https://github.com/ansible/ansible/pull/55673).
