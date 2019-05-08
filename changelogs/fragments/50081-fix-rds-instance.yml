@@ -1,0 +1,2 @@
+bugfixes:
+  - rds_instance - Fixed EnablePerformanceInsights setting (https://github.com/ansible/ansible/issues/50081)
