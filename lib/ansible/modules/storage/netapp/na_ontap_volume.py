@@ -78,7 +78,9 @@ options:
   type:
     description:
     - The volume type, either read-write (RW) or data-protection (DP).
-
+    choices: ['rw', 'dp']
+    default: rw
+    
   policy:
     description:
     - Name of the export policy.
