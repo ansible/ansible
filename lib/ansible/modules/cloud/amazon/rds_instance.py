@@ -224,10 +224,8 @@ options:
     license_model:
         description:
           - The license model for the DB instance.
-        choices:
-          - license-included
-          - bring-your-own-license
-          - general-public-license
+          - Several options are license-included, bring-your-own-license, and general-public-license.
+          - This option can also be omitted to default to an accepted value.
         type: str
     master_user_password:
         description:
@@ -1090,7 +1088,7 @@ def main():
         force_failover=dict(type='bool'),
         iops=dict(type='int'),
         kms_key_id=dict(),
-        license_model=dict(choices=['license-included', 'bring-your-own-license', 'general-public-license']),
+        license_model=dict(),
         master_user_password=dict(aliases=['password'], no_log=True),
         master_username=dict(aliases=['username']),
         monitoring_interval=dict(type='int'),
