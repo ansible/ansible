@@ -22,12 +22,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: ce_bfd_view
+module: ce_ftp
 version_added: "2.9"
 short_description: Use FTP protocol to transfer file on HUAWEI CloudEngine devices.
 description:
     - Use FTP protocol to transfer file on HUAWEI CloudEngine devices.
-author: (@CloudEngine-Ansible)
+author: (@weixiaoxu0512)
 options:
     ftp_port:
         description:
@@ -71,11 +71,12 @@ EXAMPLES = '''
         ftp_user: huawei
         ftp_password: huaweiDC
         remote_file: /mpu/profile_666_04211257.dat
-        local_file: /usr/xuyuandong/1.txt 
+        local_file: /usr/xuyuandong/1.txt
         mode: get
 '''
 
 RETURN = '''
+  {
     "changed": true,
     "local_file": {
         "date": "Nov 07 16:57:47 2018",
@@ -88,6 +89,7 @@ RETURN = '''
         "name": "/mpu/profile_666_04211257.dat",
         "size": "10,153,720 (Byte)"
     }
+  }
 '''
 
 
@@ -95,7 +97,6 @@ import sys
 import os
 import re
 import time
-import StringIO
 from ftplib import FTP
 from functools import partial
 from ansible.module_utils.basic import AnsibleModule
@@ -109,12 +110,12 @@ else:
     from StringIO import StringIO
 
 
-def progress(total,current):
+def progress(total, current):
     """
     report file transfer progress
     """
 
-    bar_length=20
+    bar_length = 20
     if current >= total:
         percent = 100
         flag = bar_length * '#'
@@ -122,14 +123,14 @@ def progress(total,current):
         percent = current * 100.0 / total
         flag = (int(percent) * bar_length / 100) * '#' + (int(100 - percent) * bar_length / 100) * ' '
     f = open(os.ctermid(), 'w')
-    f.write("\rFile transfer progress: [%s] %d%%\r"%(flag, percent))
+    f.write("\rFile transfer progress: [%s] %d%%\r" % (flag, percent))
     f.flush()
     f.close()
 
 
 def get_file_info(ftp, filename):
     """
-    get file information from ftp server 
+    get file information from ftp server
     """
 
     fps = filename.split('/')
@@ -140,7 +141,7 @@ def get_file_info(ftp, filename):
     output = StringIO()
     try:
         ftp.dir(filename, output.write)
-    except:
+    except Exception:
         return {}
     res = output.getvalue()
     sear = re.compile(r'\S{10}\s+\S+\s+\S+\s+\S+\s+(?P<size>\d+)\s+(?P<date>\S+\s+\S+\s+\S+)\s+(?P<name>\S+)')
@@ -159,11 +160,11 @@ def size_format(size):
     format the size to string
     """
 
-    svaule = ' '*3 + str(size)
+    svaule = ' ' * 3 + str(size)
     y = len(svaule)
     values = []
     for i in range(y, 0, -3):
-        values = [svaule[i:i+3]] + values
+        values = [svaule[i:i + 3]] + values
     return ','.join(values).strip().strip(',') + ' (Byte)'
 
 
@@ -226,6 +227,7 @@ def ftplib_transfer(kwargs):
             size = remote_info['size']
             c_size = [0]
             # callback, to write file data
+
             def save(obj):
                 c_size[0] += len(obj)
                 progress(size, c_size[0])
@@ -236,6 +238,7 @@ def ftplib_transfer(kwargs):
             size = os.stat(local_file).st_size
             send_size = [0]
             # callback, to report file transfer progress
+
             def report_progress(obj):
                 send_size[0] += len(obj)
                 progress(size, send_size[0])
@@ -268,7 +271,7 @@ def check_parames(module):
     kwargs['port'] = module.params['ftp_port']
     kwargs['mode'] = module.params['mode']
     kwargs['timeout'] = module.params['timeout'] or 60
-    kwargs['local_file']  = module.params['local_file']
+    kwargs['local_file'] = module.params['local_file']
     kwargs['remote_file'] = module.params['remote_file']
     if kwargs['server'] is None:
         module.fail_json(msg='Error: ftp server is not specified.')
