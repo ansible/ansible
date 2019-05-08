@@ -1465,11 +1465,11 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except NoSSLError as e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
-            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e))
+            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e), url=to_native(url), status=None)
         else:
-            module.fail_json(msg='%s' % to_native(e))
+            module.fail_json(msg='%s' % to_native(e), url=to_native(url), status=None)
     except (ConnectionError, ValueError) as e:
-        module.fail_json(msg=to_native(e))
+        module.fail_json(msg=to_native(e), url=to_native(url), status=None)
     except urllib_error.HTTPError as e:
         try:
             body = e.read()
