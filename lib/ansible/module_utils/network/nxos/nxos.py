@@ -688,6 +688,7 @@ def to_command(module, commands):
         output=dict(default=default_output),
         prompt=dict(type='list'),
         answer=dict(type='list'),
+        newline=dict(type='bool', default=True),
         sendonly=dict(type='bool', default=False),
         check_all=dict(type='bool', default=False),
     ), module)
