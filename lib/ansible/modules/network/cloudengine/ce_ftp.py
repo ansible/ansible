@@ -78,24 +78,33 @@ EXAMPLES = '''
 
 RETURN = '''
 changed:
-  returned: always
-  type: bool
-  sample: true
+    description: if the file is transfer successully and file is changed
+    returned: always
+    type: bool
+    sample: true
 local_file:
-  date: local file create time
-  name: local file name
-  size: local file size
-  returned: always
-  type: dict
+    description: information about local file
+    returned: always
+    type: dict
+    sample: {
+        "date": "Nov 07 16:57:47 2018",
+        "name": "/usr/xuyuandong/1.txt",
+        "size": "10,153,720 (Byte)"
+    }
 mode:
-  description: put or get
-  type: str
+    description: put or get file
+    returned: always
+    type: dict
+    sample: get
 remote_file:
-  date: remote file create time
-  name: remote file name
-  size: remote file size
-  returned: always
-  type: dict
+    description: information about remote file
+    returned: always
+    type: dict
+    sample: {
+        "date": "Apr 21  2015",
+        "name": "/mpu/profile_666_04211257.dat",
+        "size": "10,153,720 (Byte)"
+    }
 '''
 
 
