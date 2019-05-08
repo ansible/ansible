@@ -1407,7 +1407,8 @@ class CloudFrontValidationManager(object):
             return None
         try:
             comment = "access-identity-by-ansible-%s-%s" % (origin.get('domain_name'), self.__default_datetime_string)
-            cfoai_config = dict(CloudFrontOriginAccessIdentityConfig=dict(CallerReference=self.__default_datetime_string,
+            caller_reference = "%s-%s" % (origin.get('domain_name'), self.__default_datetime_string)
+            cfoai_config = dict(CloudFrontOriginAccessIdentityConfig=dict(CallerReference=caller_reference,
                                                                           Comment=comment))
             oai = client.create_cloud_front_origin_access_identity(**cfoai_config)['CloudFrontOriginAccessIdentity']['Id']
         except Exception as e:
