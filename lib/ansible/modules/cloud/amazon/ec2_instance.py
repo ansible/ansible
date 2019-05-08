@@ -818,6 +818,11 @@ def manage_tags(match, new_tags, purge_tags, ec2):
 
 def build_volume_spec(params):
     volumes = params.get('volumes') or []
+    for volume in volumes:
+        if 'ebs' in volume:
+            for int_value in ['volume_size', 'iops']:
+                if int_value in volume['ebs']:
+                    volume['ebs'][int_value] = int(volume['ebs'][int_value])
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
 
 
