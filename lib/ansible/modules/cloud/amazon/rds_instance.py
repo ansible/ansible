@@ -842,6 +842,9 @@ def get_options_with_changing_values(client, module, parameters):
     apply_immediately = parameters.pop('ApplyImmediately', None)
     cloudwatch_logs_enabled = module.params['enable_cloudwatch_logs_exports']
 
+    # Iops can't be updated
+    parameters.pop('Iops', None)
+
     if port:
         parameters['DBPortNumber'] = port
     if not force_update_password:
@@ -892,7 +895,8 @@ def get_current_attributes_with_inconsistent_keys(instance):
     options['DBParameterGroupName'] = [parameter_group['DBParameterGroupName'] for parameter_group in instance['DBParameterGroups']]
     options['AllowMajorVersionUpgrade'] = None
     options['EnableIAMDatabaseAuthentication'] = instance['IAMDatabaseAuthenticationEnabled']
-    options['EnablePerformanceInsights'] = instance['PerformanceInsightsEnabled']
+    # PerformanceInsightsEnabled is not returned on older RDS instances it seems
+    options['EnablePerformanceInsights'] = instance.get('PerformanceInsightsEnabled', False)
     options['MasterUserPassword'] = None
     options['NewDBInstanceIdentifier'] = instance['DBInstanceIdentifier']
 
