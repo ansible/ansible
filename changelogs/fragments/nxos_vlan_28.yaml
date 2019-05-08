@@ -1,0 +1,3 @@
+bugfixes:
+- nxos_vlan vlan names containing regex ctl chars should be escaped (https://github.com/ansible/ansible/pull/55463).
+- nxos_vlan mode idempotence bug (https://github.com/ansible/ansible/pull/55144).
