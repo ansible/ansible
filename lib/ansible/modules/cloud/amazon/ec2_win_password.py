@@ -184,12 +184,14 @@ def get_win_password(connection, module):
         else:
             module.exit_json(win_password=decrypted, changed=True)
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             instance_id=dict(required=True),
-            key_file=dict(required=True, type='path'),
+            key_file=dict(required=False, type='path'),
+            key_data=dict(required=False, default=None),
             key_passphrase=dict(no_log=True, default=None, required=False),
             wait=dict(type='bool', default=False, required=False),
             wait_timeout=dict(default=120, required=False, type='int'),
