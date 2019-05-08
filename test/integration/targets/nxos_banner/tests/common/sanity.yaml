@@ -1,0 +1,86 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_banner sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: banner_exec_image_ok
+  # N5K/N6K/N9K-F support banner exec but have image defects
+  when: platform is search("N7K|N3K-F")
+
+- set_fact: banner_motd_image_ok
+  # multiline banner issues
+  when: imagetag is not search("I7") and ansible_connection != "httpapi"
+
+
+# banner exec tests
+- block:
+  - debug: msg="START nxos_banner exec tests"
+  - name: setup exec
+    nxos_banner: &remove_exec
+      banner: exec
+      state: absent
+
+  - name: Set exec
+    nxos_banner: &exec
+      banner: exec
+      text: |
+        this is my exec banner
+        that has a multiline
+        string
+      state: present
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'banner exec @\nthis is my exec banner\nthat has a multiline\nstring\n@' in result.commands"
+
+  - name: Set exec again (idempotent)
+    nxos_banner: *exec
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands | length == 0"
+
+  - name: teardown exec
+    nxos_banner: *remove_exec
+
+  when: banner_exec_image_ok is defined
+
+# banner motd tests
+- block:
+  - name: setup motd
+    nxos_banner: &remove_motd
+      banner: motd
+      state: absent
+
+  - name: Set motd
+    nxos_banner: &motd
+      banner: motd
+      text: |
+        Junk motd banner
+        over multiple lines
+      state: present
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'banner motd @\nJunk motd banner\nover multiple lines\n@' in result.commands"
+
+  - name: Set motd again (idempotent)
+    nxos_banner: *motd
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: teardown motd
+    nxos_banner: *remove_motd
+
+  when: banner_motd_image_ok is defined
+
+- debug: msg="END connection={{ ansible_connection }} nxos_banner sanity test"
