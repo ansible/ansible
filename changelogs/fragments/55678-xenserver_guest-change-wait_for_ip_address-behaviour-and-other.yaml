@@ -1,0 +1,6 @@
+minor_changes:
+  - xenserver_guest - wait_for_ip_address is now ignored when state=absent (https://github.com/ansible/ansible/issues/55348).
+
+bugfixes:
+  - xenserver_guest - proper error message is shown when maximum number of network interfaces is reached and multiple network interfaces are added at once.
+  - xenserver_guest - fixed an issue where VM whould be powered off even though check mode is used if reconfiguration requires VM to be powered off.

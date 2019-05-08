@@ -169,7 +169,7 @@ options:
     type: list
   wait_for_ip_address:
     description:
-    - Wait until XenServer detects an IP address for the VM.
+    - Wait until XenServer detects an IP address for the VM. If C(state) is set to C(absent), this parameter is ignored.
     - This requires XenServer Tools to be preinstalled on the VM to work properly.
     type: bool
     default: no
@@ -597,15 +597,15 @@ class XenServerVM(XenServerObject):
 
         vm_power_state_save = self.vm_params['power_state'].lower()
 
-        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted':
-            if self.module.params['force']:
-                self.set_power_state("shutdownguest")
-            else:
-                self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
+        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted' and not self.module.params['force']:
+            self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
 
         # Support for Ansible check mode.
         if self.module.check_mode:
             return config_changes
+
+        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted' and self.module.params['force']:
+            self.set_power_state("shutdownguest")
 
         try:
             for change in config_changes:
@@ -1632,6 +1632,7 @@ class XenServerVM(XenServerObject):
                         if vif_device not in vif_devices_allowed:
                             self.module.fail_json(msg="VM check networks[%s]: new network interface position %s is out of bounds!" % (position, vif_device))
 
+                        vif_devices_allowed.remove(vif_device)
                         vif_device_highest = vif_device
 
                         # For new VIFs we only track their position.
@@ -1911,7 +1912,7 @@ def main():
         vm.deploy()
         result['changed'] = True
 
-    if module.params['wait_for_ip_address']:
+    if module.params['wait_for_ip_address'] and module.params['state'] != "absent":
         vm.wait_for_ip_address()
 
     result['instance'] = vm.gather_facts()
