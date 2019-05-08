@@ -1,0 +1,2411 @@
+{
+    "openconfig-interfaces:interfaces": {
+        "interface": [
+            {
+                "config": {
+                    "description": "Stack Port 1:1",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:1",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:1",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:1",
+                    "enabled": true,
+                    "ifindex": 1001,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:1",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "UP",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:10",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:10",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:10",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:10",
+                    "enabled": true,
+                    "ifindex": 1010,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:10",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:11",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:11",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:11",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:11",
+                    "enabled": true,
+                    "ifindex": 1011,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:11",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:12",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:12",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:12",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:12",
+                    "enabled": true,
+                    "ifindex": 1012,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:12",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:13",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:13",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:13",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:13",
+                    "enabled": true,
+                    "ifindex": 1013,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:13",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:14",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:14",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:14",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:14",
+                    "enabled": true,
+                    "ifindex": 1014,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:14",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:15",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:15",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:15",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:15",
+                    "enabled": true,
+                    "ifindex": 1015,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:15",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:16",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:16",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:16",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:16",
+                    "enabled": true,
+                    "ifindex": 1016,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:16",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:17",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:17",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:17",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:17",
+                    "enabled": true,
+                    "ifindex": 1017,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:17",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:18",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:18",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:18",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:18",
+                    "enabled": true,
+                    "ifindex": 1018,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:18",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:19",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:19",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:19",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:19",
+                    "enabled": true,
+                    "ifindex": 1019,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:19",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:2",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:2",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:2",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:2",
+                    "enabled": true,
+                    "ifindex": 1002,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:2",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:20",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:20",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:20",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:20",
+                    "enabled": true,
+                    "ifindex": 1020,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:20",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:21",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:21",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:21",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:21",
+                    "enabled": true,
+                    "ifindex": 1021,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:21",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:22",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:22",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:22",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:22",
+                    "enabled": true,
+                    "ifindex": 1022,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:22",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:23",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:23",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:23",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:23",
+                    "enabled": true,
+                    "ifindex": 1023,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:23",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:24",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:24",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:24",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:24",
+                    "enabled": true,
+                    "ifindex": 1024,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:24",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:25",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:25",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:25",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:25",
+                    "enabled": true,
+                    "ifindex": 1025,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:25",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:26",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:26",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:26",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:26",
+                    "enabled": true,
+                    "ifindex": 1026,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:26",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:27",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:27",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:27",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:27",
+                    "enabled": true,
+                    "ifindex": 1027,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:27",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:28",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:28",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:28",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:28",
+                    "enabled": true,
+                    "ifindex": 1028,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:28",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:29",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:29",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:29",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:29",
+                    "enabled": true,
+                    "ifindex": 1029,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:29",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:3",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:3",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:3",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:3",
+                    "enabled": true,
+                    "ifindex": 1003,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:3",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:30",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:30",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:30",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:30",
+                    "enabled": true,
+                    "ifindex": 1030,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:30",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:31",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:31",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:31",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:31",
+                    "enabled": true,
+                    "ifindex": 1031,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:31",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "NOT_PRESENT",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:32",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:32",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:32",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:32",
+                    "enabled": true,
+                    "ifindex": 1032,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:32",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "NOT_PRESENT",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:33",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:33",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:33",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:33",
+                    "enabled": true,
+                    "ifindex": 1033,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:33",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "NOT_PRESENT",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:34",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:34",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:34",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:34",
+                    "enabled": true,
+                    "ifindex": 1034,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:34",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "NOT_PRESENT",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:4",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:4",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:4",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:4",
+                    "enabled": true,
+                    "ifindex": 1004,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:4",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:5",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:5",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:5",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:5",
+                    "enabled": true,
+                    "ifindex": 1005,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:5",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "UP",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:6",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:6",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:6",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:6",
+                    "enabled": true,
+                    "ifindex": 1006,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:6",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:7",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:7",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:7",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:7",
+                    "enabled": true,
+                    "ifindex": 1007,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:7",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:8",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:8",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:8",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:8",
+                    "enabled": true,
+                    "ifindex": 1008,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:8",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 1:9",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "1:9",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "1:9",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 1:9",
+                    "enabled": true,
+                    "ifindex": 1009,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "1:9",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:1",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:1",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:1",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:1",
+                    "enabled": true,
+                    "ifindex": 2001,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:1",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "UP",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:10",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:10",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:10",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:10",
+                    "enabled": true,
+                    "ifindex": 2010,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:10",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:11",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:11",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:11",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:11",
+                    "enabled": true,
+                    "ifindex": 2011,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:11",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:12",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:12",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:12",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:12",
+                    "enabled": true,
+                    "ifindex": 2012,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:12",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:13",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:13",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:13",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:13",
+                    "enabled": true,
+                    "ifindex": 2013,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:13",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:14",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:14",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:14",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:14",
+                    "enabled": true,
+                    "ifindex": 2014,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:14",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:15",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:15",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:15",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:15",
+                    "enabled": true,
+                    "ifindex": 2015,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:15",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:16",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:16",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:16",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:16",
+                    "enabled": true,
+                    "ifindex": 2016,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:16",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:17",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:17",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:17",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:17",
+                    "enabled": true,
+                    "ifindex": 2017,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:17",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:18",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:18",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:18",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:18",
+                    "enabled": true,
+                    "ifindex": 2018,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:18",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:19",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:19",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:19",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:19",
+                    "enabled": true,
+                    "ifindex": 2019,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:19",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:2",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:2",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:2",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:2",
+                    "enabled": true,
+                    "ifindex": 2002,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:2",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:20",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:20",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:20",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:20",
+                    "enabled": true,
+                    "ifindex": 2020,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:20",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:21",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:21",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:21",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:21",
+                    "enabled": true,
+                    "ifindex": 2021,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:21",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:22",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:22",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:22",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:22",
+                    "enabled": true,
+                    "ifindex": 2022,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:22",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:23",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:23",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:23",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:23",
+                    "enabled": true,
+                    "ifindex": 2023,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:23",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:24",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:24",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:24",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:24",
+                    "enabled": true,
+                    "ifindex": 2024,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:24",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:25",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:25",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:25",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:25",
+                    "enabled": true,
+                    "ifindex": 2025,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:25",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:26",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:26",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:26",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:26",
+                    "enabled": true,
+                    "ifindex": 2026,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:26",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:27",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:27",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:27",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:27",
+                    "enabled": true,
+                    "ifindex": 2027,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:27",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:28",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:28",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:28",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:28",
+                    "enabled": true,
+                    "ifindex": 2028,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:28",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:29",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:29",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:29",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:29",
+                    "enabled": true,
+                    "ifindex": 2029,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:29",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:3",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:3",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:3",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:3",
+                    "enabled": true,
+                    "ifindex": 2003,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:3",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:30",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:30",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:30",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:30",
+                    "enabled": true,
+                    "ifindex": 2030,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:30",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:31",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:31",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:31",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:31",
+                    "enabled": true,
+                    "ifindex": 2031,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:31",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "NOT_PRESENT",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:32",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:32",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:32",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:32",
+                    "enabled": true,
+                    "ifindex": 2032,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:32",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "NOT_PRESENT",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:33",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:33",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:33",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:33",
+                    "enabled": true,
+                    "ifindex": 2033,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:33",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "NOT_PRESENT",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:34",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:34",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:34",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:34",
+                    "enabled": true,
+                    "ifindex": 2034,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:34",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "NOT_PRESENT",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:4",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:4",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:4",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:4",
+                    "enabled": true,
+                    "ifindex": 2004,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:4",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:5",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:5",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:5",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:5",
+                    "enabled": true,
+                    "ifindex": 2005,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:5",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "UP",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:6",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:6",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:6",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:6",
+                    "enabled": true,
+                    "ifindex": 2006,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:6",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:7",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:7",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:7",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:7",
+                    "enabled": true,
+                    "ifindex": 2007,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:7",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:8",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:8",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:8",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:8",
+                    "enabled": true,
+                    "ifindex": 2008,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:8",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "Stack Port 2:9",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "2:9",
+                    "type": "ethernetCsmacd"
+                },
+                "hold-time": {
+                    "config": {},
+                    "state": {}
+                },
+                "name": "2:9",
+                "openconfig-if-ethernet:ethernet": {
+                    "config": {},
+                    "openconfig-if-poe:poe": {},
+                    "openconfig-vlan:switched-vlan": {},
+                    "state": {}
+                },
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "Stack Port 2:9",
+                    "enabled": true,
+                    "ifindex": 2009,
+                    "last-change": 0,
+                    "mtu": 1500,
+                    "name": "2:9",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "02:04:96:9A:4F:4F",
+                    "oper-status": "DOWN",
+                    "type": "ethernetCsmacd"
+                },
+                "subinterfaces": {}
+            },
+            {
+                "config": {
+                    "description": "",
+                    "enabled": true,
+                    "mtu": 1500,
+                    "name": "Default",
+                    "type": "ift:l2vlan"
+                },
+                "name": "Default",
+                "state": {
+                    "admin-status": "UP",
+                    "counters": {},
+                    "description": "",
+                    "enabled": true,
+                    "ifindex": 1000004,
+                    "last-change": 15400,
+                    "mtu": 1500,
+                    "name": "Default",
+                    "openconfig-platform-transceiver:physical-channel": [],
+                    "openconfig-platform:hardware-port": "",
+                    "oper-status": "UP",
+                    "type": "ift:l2vlan"
+                },
+                "subinterfaces": {}
+            }
+        ]
+    }
+}
