@@ -548,11 +548,7 @@ class HttpApi:
             if response[0] == '{':
                 out[index] = json.loads(response)
 
-        if return_timestamps:
-            # workaround until timestamps are implemented
-            return out, list()
-        else:
-            return out
+        return out
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
