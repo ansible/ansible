@@ -33,25 +33,22 @@ options:
             - For example, use /subscriptions/{subscription-id}/ for a subscription,
             - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name} for a resource group,
             - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource
-    policy_assignment_id:
-        description:
-            - The ID of the policy assignment to get.
-            - This parameter is mutually exclusive with C(name).
+            - /providers/Microsoft.Management/managementGroups/{managementGroup} for a management group
     resource_group_name:
         description:
             - The name of the resource group containing the resource.
-            - This parameter is required when I(resource_name) provided.
+            - This parameter is required when C(resource_name) provided.
     resource_provider_namespace:
         description:
             - The namespace of the resource provider.
-            - This parameter is required when I(resource_name) provided.
+            - This parameter is required when C(resource_name) provided.
     parent_resource_path:
         description:
             - The parent resource path. Use empty string if there is none.
     resource_type:
         description:
             - The resource type name.
-            - This parameter is required when I(resource_name) provided.
+            - This parameter is required when C(resource_name) provided.
     resource_name:
         description:
             - The name of the resource.
@@ -69,7 +66,7 @@ author:
 '''
 
 EXAMPLES = '''
-- name: list policy assignment
+- name: list policy assignment in a subscription
   azure_rm_policyassignment_facts:
 
 - name: list policy assignment by resource group
@@ -80,10 +77,6 @@ EXAMPLES = '''
   azure_rm_policyassignment_facts:
     name: SecurityCenterBuiltIn
     scope: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-
-- name: list policy assignment by id
-  azure_rm_policyassignment_facts:
-    policy_assignment_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn"
 '''
 
 RETURN = '''
@@ -184,9 +177,6 @@ class AzureRMPolicyAssignmentFacts(AzureRMModuleBase):
             scope=dict(
                 type='str'
             ),
-            policy_assignment_id=dict(
-                type='str'
-            ),
             resource_group_name=dict(
                 type='str'
             ),
@@ -209,15 +199,12 @@ class AzureRMPolicyAssignmentFacts(AzureRMModuleBase):
 
         self.name = None
         self.scope = None
-        self.policy_assignment_id = None
         self.resource_group_name = None
         self.resource_provider_namespace = None
         self.parent_resource_path = None
         self.resource_type = None
         self.resource_name = None
         self.filter = None
-
-        mutually_exclusive = [('name', 'policy_assignment_id')]
 
         self.results = dict(
             changed=False,
@@ -226,8 +213,7 @@ class AzureRMPolicyAssignmentFacts(AzureRMModuleBase):
 
         super(AzureRMPolicyAssignmentFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                            facts_module=True,
-                                                           supports_tags=False,
-                                                           mutually_exclusive=mutually_exclusive)
+                                                           supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -237,9 +223,7 @@ class AzureRMPolicyAssignmentFacts(AzureRMModuleBase):
 
         results = None
 
-        if self.policy_assignment_id:
-            results = self.get_policy_assignment_by_id()
-        elif self.name:
+        if self.name:
             results = self.get_policy_assignment_by_name()
         elif self.resource_group_name and self.resource_name:
             results = self.list_policy_assignments_by_resource()
@@ -257,16 +241,6 @@ class AzureRMPolicyAssignmentFacts(AzureRMModuleBase):
             self.log("Getting the resource policy assignment by name")
             result = self.rm_policy_client.policy_assignments.get(scope=self.scope,
                                                                   policy_assignment_name=self.name)
-            result = [result]
-        except self.rm_policy_models.ErrorResponseException as exc:
-            self.fail("Error getting the info for resource policy assignment {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
-        return result
-
-    def get_policy_assignment_by_id(self):
-        result = None
-        try:
-            self.log("Getting the resource policy assignment by name")
-            result = self.rm_policy_client.policy_assignments.get_by_id(policy_assignment_id=self.policy_assignment_id)
             result = [result]
         except self.rm_policy_models.ErrorResponseException as exc:
             self.fail("Error getting the info for resource policy assignment {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))

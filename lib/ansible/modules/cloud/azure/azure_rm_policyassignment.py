@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_policyassignment
 version_added: "2.9"
-short_description: Manage Policy Assignment instance.
+short_description: Manage Azure policy assignment instance.
 description:
-    - Create, update and delete instance of policy assignment.
+    - Create, update and delete instance of Azure policy assignment.
 
 options:
     name:
@@ -31,6 +31,7 @@ options:
             - For example, use /subscriptions/{subscription-id}/ for subscription,
             - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for resource group,
             - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name} for resource.
+            - /providers/Microsoft.Management/managementGroups/{managementGroup} for a management group
     state:
         description:
             - Assert the state of the policy assignment.
@@ -39,9 +40,11 @@ options:
         choices:
             - absent
             - present
-    policy_definition_id:
+    policy_definition:
         description:
-            - The ID of the policy definition or policy set definition being assigned.
+            - The ID or name of the policy definition or policy set definition being assigned.
+            - It can also be a dict contains C(name), C(types) and optional C(subscription_id).
+            - The types of the I(policy_definition) could be policyDefinitions or policySetDefinitions.
     display_name:
         description:
             - The display name of the policy assignment.
@@ -84,8 +87,8 @@ EXAMPLES = '''
 - name: Create a policy assignment
   azure_rm_policyassignment:
     scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    policy_definition_id:
-        "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    policy_definition:
+        "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/policyDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 - name: Delete a policy assignment
   azure_rm_policyassignment:
@@ -108,7 +111,7 @@ import os
 import codecs
 import base64
 import uuid
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 from ansible.module_utils._text import to_native
 
 try:
@@ -134,8 +137,8 @@ class AzureRMPolicyAssignment(AzureRMModuleBase):
             display_name=dict(
                 type='str'
             ),
-            policy_definition_id=dict(
-                type='str'
+            policy_definition=dict(
+                type='raw'
             ),
             not_scopes=dict(
                 type='list'
@@ -166,7 +169,7 @@ class AzureRMPolicyAssignment(AzureRMModuleBase):
         self.name = None
         self.scope = None
         self.display_name = None
-        self.policy_definition_id = None
+        self.policy_definition = None
         self.not_scopes = None
         self.parameters = None
         self.description = None
@@ -194,6 +197,15 @@ class AzureRMPolicyAssignment(AzureRMModuleBase):
         response = None
         results = None
 
+        policy_definition = self.policy_definition
+        if isinstance(self.policy_definition, dict):
+            policy_definition = format_resource_id(val=self.policy_definition['name'],
+                                                   subscription_id=self.policy_definition.get('subscription_id') or self.subscription_id,
+                                                   namespace="Microsoft.Authorization",
+                                                   types=self.policy_definition['types'],
+                                                   resource_group=None)
+        self.policy_definition = policy_definition
+
         self.parameters = self.load_file_string_or_url(self.parameters) if self.parameters else None
         if self.sku == 'a0':
             self.sku = self.rm_policy_models.PolicySku(name="A0", tier="Free")
@@ -212,7 +224,7 @@ class AzureRMPolicyAssignment(AzureRMModuleBase):
                 changed = True
 
                 policy_assignment_instance = self.rm_policy_models.PolicyAssignment(display_name=self.display_name,
-                                                                                    policy_definition_id=self.policy_definition_id,
+                                                                                    policy_definition_id=self.policy_definition,
                                                                                     scope=self.scope,
                                                                                     not_scopes=self.not_scopes,
                                                                                     parameters=self.parameters,

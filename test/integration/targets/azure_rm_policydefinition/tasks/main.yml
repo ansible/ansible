@@ -139,7 +139,7 @@
 - name: Create policy assignment
   azure_rm_policyassignment:
     name: {{ policy_assignment_name }}
-    policy_definition_id: {{ output.id }}
+    policy_definition: {{ output.id }}
     display_name: testassignment
     sku: a0
     metadata:
