@@ -502,8 +502,7 @@ class NetAppOntapVolume(object):
                 else:
                     return_value['qos_policy_group'] = None
                 if volume_qos_attributes.get_child_by_name('adaptive-policy-group-name'):
-                    vol_qos_adaptive = volume_qos_attributes['adaptive-policy-group-name']
-                    return_value['qos_adaptive_policy_group'] = vol_qos_adaptive
+                    return_value['qos_adaptive_policy_group'] = volume_qos_attributes['adaptive-policy-group-name']
                 else:
                     return_value['qos_adaptive_policy_group'] = None
             else:
