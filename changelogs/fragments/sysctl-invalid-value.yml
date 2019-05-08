@@ -1,0 +1,2 @@
+bugfixes:
+  - "sysctl: the module now also checks the output of STDERR to report if values are correctly set (https://github.com/ansible/ansible/pull/55695)"
