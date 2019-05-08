@@ -46,8 +46,20 @@ options:
     kind:
       description:
         - Type of credential being added.  The ssh choice refers to a Tower Machine credential.
-      required: True
+      required: False
       choices: ["ssh", "vault", "net", "scm", "aws", "vmware", "satellite6", "cloudforms", "gce", "azure_rm", "openstack", "rhv", "insights", "tower"]
+    credential_type:
+      description:
+        - Name of credential type.
+      required: False
+      version_added: "2.7"
+    inputs:
+      description:
+        - >-
+          Enter inputs using either JSON or YAML syntax. Refer to the Ansible
+          Tower documentation for example syntax.
+      required: False
+      version_added: "2.7"
     host:
       description:
         - Host for this credential.
@@ -148,6 +160,15 @@ EXAMPLES = '''
     tower_host: https://localhost
   run_once: true
   delegate_to: localhost
+
+- name: Add Credential with Custom Credential Type
+  tower_credential:
+    name: Workshop Credential
+    credential_type: MyCloudCredential
+    organization: Default
+    tower_username: admin
+    tower_password: ansible
+    tower_host: https://localhost
 '''
 
 import os
@@ -182,7 +203,7 @@ KIND_CHOICES = {
 }
 
 
-def credential_type_for_v1_kind(params, module):
+def credential_type_for_kind(params):
     credential_type_res = tower_cli.get_resource('credential_type')
     kind = params.pop('kind')
     arguments = {'managed_by_tower': True}
@@ -207,8 +228,9 @@ def main():
         name=dict(required=True),
         user=dict(),
         team=dict(),
-        kind=dict(required=True,
-                  choices=KIND_CHOICES.keys()),
+        kind=dict(choices=KIND_CHOICES.keys()),
+        credential_type=dict(),
+        inputs=dict(type='dict'),
         host=dict(),
         username=dict(),
         password=dict(no_log=True),
@@ -260,10 +282,21 @@ def main():
                 # /api/v1/ backwards compat
                 # older versions of tower-cli don't *have* a credential_type
                 # resource
-                params['kind'] = module.params['kind']
+                params['kind'] = module.params.get('kind')
             else:
-                credential_type = credential_type_for_v1_kind(module.params, module)
-                params['credential_type'] = credential_type['id']
+                if module.params.get('credential_type'):
+                    credential_type_res = tower_cli.get_resource('credential_type')
+                    credential_type = credential_type_res.get(name=module.params['credential_type'])
+                    params['credential_type'] = credential_type['id']
+
+                    if module.params.get('inputs'):
+                        params['inputs'] = module.params.get('inputs')
+
+                elif module.params.get('kind'):
+                    credential_type = credential_type_for_kind(module.params)
+                    params['credential_type'] = credential_type['id']
+                else:
+                    module.fail_json(msg='must either specify credential_type or kind', changed=False)
 
             if module.params.get('description'):
                 params['description'] = module.params.get('description')

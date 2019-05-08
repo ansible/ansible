@@ -12,6 +12,29 @@
     that:
       - "result is changed"
 
+- name: Create credential from custom credential type
+  tower_credential:
+    name: test-custom-cred
+    organization: Default
+    credential_type: test-credential-type
+    state: present
+    inputs: '{"username": "my-username", "password": "my-password"}'
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Remove credential
+  tower_credential:
+    name: test-custom-cred
+    organization: Default
+    credential_type: test-credential-type
+    state: absent
+
+- assert:
+    that:
+      - "result is changed"
+
 - name: Remove a Tower credential type
   tower_credential_type:
     name: test-credential-type
