@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_policydefinition_facts
 version_added: "2.9"
-short_description: Gather Information of Policy Definition
+short_description: Gather Information of Azure Policy Definition
 description:
-    - Gather information of a specific policy definition or all policy definitions
+    - Gather information of a specific Azure policy definition or all Azure policy definitions
 
 options:
     name:
@@ -224,7 +224,7 @@ class AzureRMPolicyDefinitionFacts(AzureRMModuleBase):
                 result = self.rm_policy_client.policy_definitions.get(policy_definition_name=self.name)
             result = [result]
         except CloudError as exc:
-            self.fail("Error getting the info for resource policy definition {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
+            self.fail("Error getting the information for resource policy definition {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
         return result
 
     def list_policy_definition(self):
@@ -238,7 +238,7 @@ class AzureRMPolicyDefinitionFacts(AzureRMModuleBase):
             else:
                 result = self.rm_policy_client.policy_definitions.list()
         except CloudError as exc:
-            self.fail("Error getting the info for resource policy definition {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
+            self.fail("Error getting the information for resource policy definition {0} - {1}".format(self.name, str(exc.inner_exception) or str(exc)))
         return result
 
     def policydefinition_to_dict(self, policy_definition):
