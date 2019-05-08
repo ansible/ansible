@@ -136,7 +136,6 @@ options:
     - ' - C(num_cpus) (integer): Number of CPUs.'
     - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. Value should be multiple of C(num_cpus).'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
-    - ' - C(memory_reservation) (integer): Amount of memory in MB to set resource limits for memory. version_added: 2.5'
     - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for the virtual machine
           will always be equal to the virtual machine's memory size. version_added: 2.5"
     - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines.
@@ -144,7 +143,7 @@ options:
     - ' - C(mem_limit) (integer): The memory utilization of a virtual machine will not exceed this limit. Unit is MB.
           version_added: 2.5'
     - ' - C(mem_reservation) (integer): The amount of memory resource that is guaranteed available to the virtual
-          machine. Unit is MB. version_added: 2.5'
+          machine. Unit is MB. C(memory_reservation) is alias to this. version_added: 2.5'
     - ' - C(cpu_limit) (integer): The CPU utilization of a virtual machine will not exceed this limit. Unit is MHz.
           version_added: 2.5'
     - ' - C(cpu_reservation) (integer): The amount of CPU resource that is guaranteed available to the virtual machine.
@@ -415,7 +414,6 @@ EXAMPLES = r'''
       num_cpus: 6
       num_cpu_cores_per_socket: 3
       scsi: paravirtual
-      memory_reservation: 512
       memory_reservation_lock: True
       mem_limit: 8096
       mem_reservation: 4096
@@ -900,12 +898,12 @@ class PyVmomiHelper(PyVmomi):
                 if vm_obj is None or memory_allocation.limit != vm_obj.config.memoryAllocation.limit:
                     rai_change_detected = True
 
-            if 'mem_reservation' in self.params['hardware']:
-                mem_reservation = None
+            if 'mem_reservation' in self.params['hardware'] or 'memory_reservation' in self.params['hardware']:
+                mem_reservation = self.params['hardware'].get('mem_reservation') or self.params['hardware'].get('memory_reservation') or None
                 try:
-                    mem_reservation = int(self.params['hardware'].get('mem_reservation'))
+                    mem_reservation = int(mem_reservation)
                 except ValueError:
-                    self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
+                    self.module.fail_json(msg="hardware.mem_reservation or hardware.memory_reservation should be an integer value.")
 
                 memory_allocation.reservation = mem_reservation
                 if vm_obj is None or \
@@ -1017,20 +1015,6 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="Configure hotremove cpu operation is not supported when VM is power on")
                 self.configspec.cpuHotRemoveEnabled = bool(self.params['hardware']['hotremove_cpu'])
                 if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
-                    self.change_detected = True
-
-            if 'memory_reservation' in self.params['hardware']:
-                memory_reservation_mb = 0
-                try:
-                    memory_reservation_mb = int(self.params['hardware']['memory_reservation'])
-                except ValueError as e:
-                    self.module.fail_json(msg="Failed to set memory_reservation value."
-                                              "Valid value for memory_reservation value in MB (integer): %s" % e)
-
-                mem_alloc = vim.ResourceAllocationInfo()
-                mem_alloc.reservation = memory_reservation_mb
-                self.configspec.memoryAllocation = mem_alloc
-                if vm_obj is None or self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
                     self.change_detected = True
 
             if 'memory_reservation_lock' in self.params['hardware']:
