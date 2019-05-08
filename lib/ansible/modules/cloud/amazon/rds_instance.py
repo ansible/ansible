@@ -212,7 +212,7 @@ options:
         type: bool
     iops:
         description:
-          - The Provisioned IOPS (I/O operations per second) value. Is only set when when using I(storage_type) is set to io1.
+          - The Provisioned IOPS (I/O operations per second) value. Is only set when using I(storage_type) is set to io1.
         type: int
     kms_key_id:
         description:
