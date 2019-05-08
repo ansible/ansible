@@ -1423,7 +1423,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     cookies = cookiejar.LWPCookieJar()
 
     r = None
-    info = dict(url=url)
+    info = dict(url=url, status=None)
     try:
         r = open_url(url, data=data, headers=headers, method=method,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
@@ -1465,11 +1465,11 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except NoSSLError as e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
-            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e), url=to_native(url), status=None)
+            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e), **info)
         else:
-            module.fail_json(msg='%s' % to_native(e), url=to_native(url), status=None)
+            module.fail_json(msg='%s' % to_native(e), **info)
     except (ConnectionError, ValueError) as e:
-        module.fail_json(msg=to_native(e), url=to_native(url), status=None)
+        module.fail_json(msg=to_native(e), **info)
     except urllib_error.HTTPError as e:
         try:
             body = e.read()
