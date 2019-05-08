@@ -212,14 +212,14 @@ def ftplib_transfer(kwargs):
             ls = local_info.get('size') or -1
             if mode == 'get' and ls == rs:
                 return {'changed': False,
-                        'msg': 'local file {!r} is existed.'.format(local_file),
+                        'msg': 'local file {0!r} is existed.'.format(local_file),
                         'remote_file': remote_info,
                         'local_file': local_info}
             elif mode == 'put' and ls == rs:
                 remote_info['size'] = size_format(remote_info['size'])
                 local_info['size'] = size_format(local_info['size'])
                 return {'changed': False,
-                        'msg': 'remote file {!r} is existed.'.format(remote_file),
+                        'msg': 'remote file {0!r} is existed.'.format(remote_file),
                         'remote_file': remote_info,
                         'local_file': local_info}
         if mode == 'get':
