@@ -922,11 +922,6 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         else:
             cadata = cadata or None
 
-        if self.ca_path:
-            kwargs.update(
-                cafile=self.ca_path,
-                cadata=None
-            )
         if HAS_SSLCONTEXT:
             context = create_default_context(cafile=cafile)
         elif HAS_URLLIB3_PYOPENSSLCONTEXT:
