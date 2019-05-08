@@ -405,7 +405,7 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
             if HAS_SSLCONTEXT:
                 self.context = self._context
             elif HAS_URLLIB3_PYOPENSSLCONTEXT:
-                self.context = PyOpenSSLContext(PROTOCOL)
+                self.context = self._context = PyOpenSSLContext(PROTOCOL)
             if self.context and self.cert_file:
                 self.context.load_cert_chain(self.cert_file, self.key_file)
 
