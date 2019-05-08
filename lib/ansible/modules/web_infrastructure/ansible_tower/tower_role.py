@@ -33,7 +33,8 @@ options:
       description:
         - The role type to grant/revoke.
       required: True
-      choices: ["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor", "project_admin", "inventory_admin", "credential_admin", "workflow_admin", "notification_admin", "job_template_admin"]
+      choices: ["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor", "project_admin", "inventory_admin", "credential_admin",
+                "workflow_admin", "notification_admin", "job_template_admin"]
     target_team:
       description:
         - Team that the role acts on.
@@ -114,7 +115,7 @@ def main():
         user=dict(),
         team=dict(),
         role=dict(choices=["admin", "read", "member", "execute", "adhoc", "update", "use", "auditor", "project_admin", "inventory_admin", "credential_admin",
-            "workflow_admin", "notification_admin", "job_template_admin"]),
+                           "workflow_admin", "notification_admin", "job_template_admin"]),
         target_team=dict(),
         inventory=dict(),
         job_template=dict(),
