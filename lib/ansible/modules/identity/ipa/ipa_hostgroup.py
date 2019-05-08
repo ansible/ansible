@@ -30,21 +30,25 @@ options:
     - Description
   host:
     description:
-    - List of hosts that belong to the host-group.
+    - If the state is set to 'present', any provided hosts will be added to the group.
     - If an empty list is passed all hosts will be removed from the group.
     - If option is omitted hosts will not be checked or changed.
-    - If option is passed all assigned hosts that are not passed will be unassigned from the group.
+    - Any assigned hostgroups which are not passed will be unassigned from the group.
+    - If the state is set to 'add_members', any provided hosts not currently in the group will be added.
+    - If the state is set to 'remove_members', any provided hosts currently in the group will be removed.
   hostgroup:
     description:
-    - List of host-groups than belong to that host-group.
+    - If the state is set to 'present', any provided host-groups will be added to the group.
     - If an empty list is passed all host-groups will be removed from the group.
     - If option is omitted host-groups will not be checked or changed.
-    - If option is passed all assigned hostgroups that are not passed will be unassigned from the group.
+    - Any assigned hostgroups which are not passed will be unassigned from the group.
+    - If the state is set to 'add_members', any provided host-groups not currently in the group will be added.
+    - If the state is set to 'remove_members', any provided host-groups currently in the group will be removed.
   state:
     description:
     - State to ensure.
     default: "present"
-    choices: ["present", "absent", "enabled", "disabled"]
+    choices: ["present", "absent", "add_members", "remove_members", "enabled", "disabled"]
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
@@ -142,7 +146,7 @@ def ensure(module, client):
     module_hostgroup = get_hostgroup_dict(description=module.params['description'])
 
     changed = False
-    if state == 'present':
+    if state in ['present', 'add_members', 'remove_members']:
         if not ipa_hostgroup:
             changed = True
             if not module.check_mode:
@@ -157,21 +161,44 @@ def ensure(module, client):
                         data[key] = module_hostgroup.get(key)
                     client.hostgroup_mod(name=name, item=data)
 
+    else:
+        if ipa_hostgroup:
+            changed = True
+            if not module.check_mode:
+                client.hostgroup_del(name=name)
+
+    if state == 'present':
         if host is not None:
-            changed = client.modify_if_diff(name, ipa_hostgroup.get('member_host', []), [item.lower() for item in host],
-                                            client.hostgroup_add_host, client.hostgroup_remove_host) or changed
+            changed = client.modify_if_diff(name, ipa_hostgroup.get('member_host', []),
+                                            [item.lower() for item in host],
+                                            client.hostgroup_add_host,
+                                            client.hostgroup_remove_host) or changed
 
         if hostgroup is not None:
             changed = client.modify_if_diff(name, ipa_hostgroup.get('member_hostgroup', []),
                                             [item.lower() for item in hostgroup],
                                             client.hostgroup_add_hostgroup,
                                             client.hostgroup_remove_hostgroup) or changed
+    elif state == 'add_members':
+        if host is not None:
+            changed = client.add_if_missing(name, ipa_hostgroup.get('member_host', []),
+                                            [item.lower() for item in host],
+                                            client.hostgroup_add_host) or changed
 
-    else:
-        if ipa_hostgroup:
-            changed = True
-            if not module.check_mode:
-                client.hostgroup_del(name=name)
+        if hostgroup is not None:
+            changed = client.add_if_missing(name, ipa_hostgroup.get('member_hostgroup', []),
+                                            [item.lower() for item in hostgroup],
+                                            client.hostgroup_add_hostgroup) or changed
+    if state == 'remove_members':
+        if host is not None:
+            changed = client.remove_if_present(name, ipa_hostgroup.get('member_host', []),
+                                               [item.lower() for item in host],
+                                               client.hostgroup_remove_host) or changed
+
+        if hostgroup is not None:
+            changed = client.remove_if_present(name, ipa_hostgroup.get('member_hostgroup', []),
+                                               [item.lower() for item in hostgroup],
+                                               client.hostgroup_remove_hostgroup) or changed
 
     return changed, client.hostgroup_find(name=name)
 
@@ -182,7 +209,16 @@ def main():
                          description=dict(type='str'),
                          host=dict(type='list'),
                          hostgroup=dict(type='list'),
-                         state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']))
+                         state=dict(type='str', default='present',
+                                    choices=[
+                                        'present',
+                                        'absent',
+                                        'add_members',
+                                        'remove_members',
+                                        'enabled',
+                                        'disabled'
+                                    ]
+                         ))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
