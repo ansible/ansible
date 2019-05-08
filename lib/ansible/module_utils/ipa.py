@@ -191,6 +191,32 @@ class IPAClient(object):
                 result.append(key)
         return result
 
+    def add_if_missing(self, name, ipa_list, module_list, add_method, item=None):
+        changed = False
+        diff = list(set(module_list) - set(ipa_list))
+        if len(diff) > 0:
+            changed = True
+            if not self.module.check_mode:
+                if item:
+                    add_method(name=name, item={item: diff})
+                else:
+                    add_method(name=name, item=diff)
+
+        return changed
+
+    def remove_if_present(self, name, ipa_list, module_list, remove_method, item=None):
+        changed = False
+        common = list(set(ipa_list).intersection(set(module_list)))
+        if len(common) > 0:
+            changed = True
+            if not self.module.check_mode:
+                if item:
+                    remove_method(name=name, item={item: common})
+                else:
+                    remove_method(name=name, item=common)
+
+        return changed
+
     def modify_if_diff(self, name, ipa_list, module_list, add_method, remove_method, item=None):
         changed = False
         diff = list(set(ipa_list) - set(module_list))
