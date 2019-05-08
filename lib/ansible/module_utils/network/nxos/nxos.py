@@ -789,6 +789,45 @@ class NxosCmdRef:
         return output
 
 
+    def pattern_match_existing(self, output, k):
+        """Pattern matching helper for `get_existing`.
+        `k` is the command name string. Use the pattern from cmd_ref to
+        find a matching string in the output.
+        Return regex match object or None.
+        """
+        ref = self._ref
+        pattern = re.compile(ref[k]['getval'])
+        match_lines = [re.search(pattern, line) for line in output]
+        if 'dict' == ref[k]['kind']:
+            match = [m for m in match_lines if m]
+            if not match:
+                return None
+            match = match[0]
+
+        else:
+            match = [m.groups() for m in match_lines if m]
+            if not match:
+                return None
+            if len(match) > 1:
+                # TBD: Add support for multiple instances
+                raise "get_existing: multiple match instances are not currently supported"
+            match = list(match[0]) # tuple to list
+
+            # Handle config strings that nvgen with the 'no' prefix.
+            # Example match behavior:
+            # When pattern is: '(no )*foo *(\S+)*$' AND
+            #  When output is: 'no foo'  -> match: ['no ', None]
+            #  When output is: 'foo 50'  -> match: [None, '50']
+            if None is match[0]:
+                match.pop(0)
+            elif 'no' in match[0]:
+                match.pop(0)
+                if not match:
+                    return None
+
+        return match
+
+
     def get_existing(self):
         """Update ref with existing command states from the device.
         Store these states in each command's 'existing' key.
@@ -804,34 +843,9 @@ class NxosCmdRef:
         # Walk each cmd in ref, use cmd pattern to discover existing cmds
         output = output.split('\n')
         for k in ref['commands']:
-            pattern = re.compile(ref[k]['getval'])   # CVH todo: move pattern matchers to another method###
-            match_lines = [re.search(pattern, line) for line in output]
-            if 'dict' == ref[k]['kind']:
-                match = [m for m in match_lines if m]
-                if not match:
-                    continue
-                match = match[0]
-
-            else:
-                match = [m.groups() for m in match_lines if m]
-                if not match:
-                    continue
-                if len(match) > 1:
-                    # TBD: Add support for multiple instances
-                    raise "get_existing: multiple match instances are not currently supported"
-
-                match = list(match[0]) # tuple to list
-                # Example match results for patterns that nvgen with the 'no' prefix:
-                # When pattern: '(no )*foo *(\S+)*$' And:
-                #  When output: 'no foo'  -> match: ['no ', None]
-                #  When output: 'foo 50'  -> match: [None, '50']
-                if None is match[0]:    # CVH todo: is this needed for dict also? ############
-                    match.pop(0)
-                elif 'no' in match[0]:
-                    match.pop(0)
-                    if not match:
-                        continue
-
+            match = self.pattern_match_existing(output, k)
+            if not match:
+                continue
             kind = ref[k]['kind']
             if 'int' == kind:
                 ref[k]['existing'] = int(match[0])
@@ -842,6 +856,7 @@ class NxosCmdRef:
                 # match up with the setval named placeholder keys; e.g.
                 #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
                 #   setval: my-cmd {foo} bar {baz}
+                pattern = re.compile(ref[k]['getval'])
                 ref[k]['existing'] = {k:str(match.group(k)) for k in pattern.groupindex.keys()}
             elif 'str' == kind:
                 ref[k]['existing'] = match[0]
