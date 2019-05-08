@@ -18,7 +18,7 @@
 
     - name: create IAM role needed for CodeBuild
       iam_role:
-        name: "{{ resource_prefix }}-codebuild-service-role"
+        name: "ansible-test-sts-{{ resource_prefix }}-codebuild-service-role"
         description: Role with permissions for CodeBuild actions.
         assume_role_policy_document: "{{ lookup('file', 'codebuild_iam_trust_policy.json') }}"
         state: present
