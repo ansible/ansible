@@ -34,7 +34,6 @@ import json
 import re
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.basic import get_timestamp
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.connection import ConnectionError
@@ -199,7 +198,6 @@ class Cliconf(CliconfBase):
             raise ValueError("'commands' value is required")
 
         responses = list()
-        timestamps = list()
         for cmd in to_list(commands):
             if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
@@ -209,7 +207,6 @@ class Cliconf(CliconfBase):
                 cmd['command'] = self._get_command_with_output(cmd['command'], output)
 
             try:
-                timestamp = get_timestamp()
                 out = self.send_command(**cmd)
             except AnsibleConnectionFailure as e:
                 if check_rc is True:
@@ -228,8 +225,7 @@ class Cliconf(CliconfBase):
                     pass
 
                 responses.append(out)
-                timestamps.append(timestamp)
-        return responses, timestamps
+        return responses
 
     def get_device_operations(self):
         return {
