@@ -1,0 +1,16 @@
+{"changed": false, "module_stderr": "Traceback (most recent call last):
+  File \"/home/ben/.ansible/tmp/ansible-tmp-1557238262.929231-46974637799698/AnsiballZ_ec2_group.py\", line 125, in <module>
+    _ansiballz_main()
+  File \"/home/ben/.ansible/tmp/ansible-tmp-1557238262.929231-46974637799698/AnsiballZ_ec2_group.py\", line 117, in _ansiballz_main
+    invoke_module(zipped_mod, temp_path, ANSIBALLZ_PARAMS)
+  File \"/home/ben/.ansible/tmp/ansible-tmp-1557238262.929231-46974637799698/AnsiballZ_ec2_group.py\", line 51, in invoke_module
+    spec.loader.exec_module(module)
+  File \"<frozen importlib._bootstrap_external>\", line 678, in exec_module
+  File \"<frozen importlib._bootstrap>\", line 219, in _call_with_frames_removed
+  File \"/tmp/ansible_ec2_group_payload_ops859se/__main__.py\", line 1192, in <module>
+  File \"/tmp/ansible_ec2_group_payload_ops859se/__main__.py\", line 1184, in main
+  File \"/tmp/ansible_ec2_group_payload_ops859se/__main__.py\", line 958, in get_diff_final_resource
+  File \"/tmp/ansible_ec2_group_payload_ops859se/__main__.py\", line 941, in get_final_rules
+RuntimeError: dictionary changed size during iteration
+", "module_stdout": "", "msg": "MODULE FAILURE
+See stdout/stderr for the exact error", "rc": 1}

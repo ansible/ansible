@@ -1470,6 +1470,26 @@
            - 'result.changed'
            - 'not result.group_id'
 
+    - name: test self-referential rule in diff mode
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: rule referencing self
+        rules:
+          - proto: all
+            group_name: '{{ec2_group_name}}'
+        rules_egress:
+          - proto: -1
+            from_port: 0
+            to_port: 0
+            cidr_ip: '0.0.0.0/0'
+      diff: true
+      register: result
+
+    - name: assert self referential rule didn't fail
+      assert:
+        that:
+          - 'result.diff'
+
   always:
     # ============================================================
     - name: tidy up security group
