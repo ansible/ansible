@@ -1686,7 +1686,11 @@ def main():
         for match in existing_matches:
             warn_if_public_ip_assignment_changed(match)
             warn_if_cpu_options_changed(match)
-            changed |= manage_tags(match, (module.params.get('tags') or {}), module.params.get('purge_tags', False), ec2)
+            tags = module.params.get('tags') or {}
+            name = module.params.get('name')
+            if name:
+                tags['Name'] = name
+            changed |= manage_tags(match, tags, module.params.get('purge_tags', False), ec2)
 
     if state in ('present', 'running', 'started'):
         ensure_present(existing_matches=existing_matches, changed=changed, ec2=ec2, state=state)
