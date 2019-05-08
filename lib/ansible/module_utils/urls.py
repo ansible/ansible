@@ -747,7 +747,7 @@ def build_ssl_validation_error(hostname, port, paths, exc=None):
                    ' python >= 2.7.9 on your managed machine')
         msg.append(' (the python executable used (%s) is version: %s)' %
                    (sys.executable, ''.join(sys.version.splitlines())))
-        if not HAS_URLLIB3_PYOPENSSLCONTEXT or not HAS_URLLIB3_SSL_WRAP_SOCKET:
+        if not HAS_URLLIB3_PYOPENSSLCONTEXT and not HAS_URLLIB3_SSL_WRAP_SOCKET:
             msg.append('or you can install the `urllib3`, `pyOpenSSL`,'
                        ' `ndg-httpsclient`, and `pyasn1` python modules')
 
