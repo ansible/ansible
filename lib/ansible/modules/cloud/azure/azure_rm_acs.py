@@ -68,7 +68,7 @@ options:
                 version_added: 2.5
             dns_prefix:
                 description:
-                    - The DNS prefix to use for the Container Service master nodes.
+                    - The DNS Prefix to use for the Container Service master nodes.
                 required: true
     linux_profile:
         description:
