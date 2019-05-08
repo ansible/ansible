@@ -940,7 +940,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         context = None
         try:
             context = self._make_context(tmp_ca_cert_path, cadata)
-        except Exception:
+        except NotImplementedError:
             # We'll make do with no context below
             pass
 
@@ -1234,7 +1234,7 @@ class Request:
             tmp_ca_path, cadata, paths_checked = ssl_handler.get_ca_certs()
             try:
                 context = ssl_handler._make_context(tmp_ca_path, cadata)
-            except Exception:
+            except NotImplementedError:
                 pass
 
         # pre-2.6 versions of python cannot use the custom https
