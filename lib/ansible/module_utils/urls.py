@@ -916,17 +916,25 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return True
 
     def _make_context(self, cafile, cadata):
+        cafile = self.ca_path or cafile
+        if self.ca_path:
+            cadata = None
+        else:
+            cadata = cadata or None
+
+        if self.ca_path:
+            kwargs.update(
+                cafile=self.ca_path,
+                cadata=None
+            )
         if HAS_SSLCONTEXT:
-            kwargs = {}
-            if self.ca_path:
-                kwargs['cafile'] = self.ca_path
-            context = create_default_context(**kwargs)
+            context = create_default_context(cafile=cafile)
         elif HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = PyOpenSSLContext(PROTOCOL)
         else:
             raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
 
-        if not self.ca_path:
+        if cafile or cadata:
             context.load_verify_locations(cafile=cafile, cadata=cadata)
         return context
 
