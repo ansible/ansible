@@ -89,6 +89,7 @@ state:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.hetzner import (
+    HETZNER_DEFAULT_ARGUMENT_SPEC,
     get_failover,
     set_failover,
     get_failover_state,
@@ -96,15 +97,15 @@ from ansible.module_utils.hetzner import (
 
 
 def main():
+    argument_spec = dict(
+        failover_ip=dict(type='str', required=True),
+        state=dict(type='str', default='routed', choices=['routed', 'unrouted']),
+        value=dict(type='str'),
+        timeout=dict(type='int', default=180),
+    )
+    argument_spec.update(HETZNER_DEFAULT_ARGUMENT_SPEC)
     module = AnsibleModule(
-        argument_spec=dict(
-            hetzner_user=dict(type='str', required=True),
-            hetzner_password=dict(type='str', required=True, no_log=True),
-            failover_ip=dict(type='str', required=True),
-            state=dict(type='str', default='routed', choices=['routed', 'unrouted']),
-            value=dict(type='str'),
-            timeout=dict(type='int', default=180),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=(
             ('state', 'routed', ['value']),

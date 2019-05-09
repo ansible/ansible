@@ -17,6 +17,11 @@ __metaclass__ = type
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 
+HETZNER_DEFAULT_ARGUMENT_SPEC = dict(
+    hetzner_user=dict(type='str', required=True),
+    hetzner_password=dict(type='str', required=True, no_log=True),
+)
+
 # The API endpoint is fixed.
 BASE_URL = "https://robot-ws.your-server.de"
 
