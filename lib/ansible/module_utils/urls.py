@@ -1423,7 +1423,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     cookies = cookiejar.LWPCookieJar()
 
     r = None
-    info = dict(url=url, status=None)
+    info = dict(url=url, status=-1)
     try:
         r = open_url(url, data=data, headers=headers, method=method,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
