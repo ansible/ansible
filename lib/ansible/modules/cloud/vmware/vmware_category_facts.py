@@ -32,7 +32,6 @@ requirements:
 - python >= 2.6
 - PyVmomi
 - vSphere Automation SDK
-- vCloud Suite SDK
 extends_documentation_fragment: vmware_rest_client.documentation
 '''
 
