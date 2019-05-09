@@ -38,6 +38,18 @@
     that:
     - "result.changed == true"
 
+- name: test assemble with a an invalid path
+  assemble:
+    src: "{{ output_dir }}/src/invalid"
+    dest: "{{output_dir}}/assembled_invalid"
+  register: result
+  ignore_errors: yes
+
+- name: assert that there was a failure with an invalid path
+  assert:
+    that:
+    - "result is failed"
+
 - name: test assemble with all fragments
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
   register: result
@@ -99,3 +111,54 @@
     that:
     - "result.state == 'file'"
     - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
+
+- name: test assemble with a list of fragments
+  assemble:
+    src:
+    - "{{ output_dir }}/src/fragment5"
+    - "{{ output_dir }}/src/fragment2"
+    - "{{ output_dir }}/src/ßΩ.txt"
+    - "{{ output_dir }}/src/fragment1"
+    - "{{ output_dir }}/src/fragment4"
+    dest: "{{output_dir}}/assembled6"
+  register: result
+
+- name: assert the fragments were assembled
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.changed == True"
+    - "result.checksum == '406283589a089a13dddec052e1aa5b6bcaef2a03'"
+
+- name: test assemble with a list of fragments and a directory
+  assemble:
+    src:
+    - "{{ output_dir }}/src/fragment5"
+    - "{{ output_dir }}/src"
+    - "{{ output_dir }}/src/fragment1"
+    dest: "{{output_dir}}/assembled7"
+  register: result
+
+- name: assert the fragments were assembled
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.changed == True"
+    - "result.checksum == '381eeb1ae8b2faf3997ec5e0f627d538d3ba76fc'"
+
+- name: test assemble with a list of fragments and a directory with remote_src=False
+  assemble:
+    src:
+    - "{{ output_dir }}/src/fragment5"
+    - "{{ output_dir }}/src"
+    - "{{ output_dir }}/src/fragment1"
+    dest: "{{output_dir}}/assembled8"
+    remote_src: no
+  register: result
+
+- name: assert the fragments were assembled
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.changed == True"
+    - "result.checksum == '381eeb1ae8b2faf3997ec5e0f627d538d3ba76fc'"

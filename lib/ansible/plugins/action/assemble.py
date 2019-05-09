@@ -37,7 +37,23 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, decrypt=True):
+    def _return_fragments(self, src_paths):
+        ''' return file fragments '''
+
+        for p in src_paths:
+            try:
+                p = self._find_needle('files', p)
+            except AnsibleError as e:
+                raise AnsibleActionFail(to_native(e))
+            if not os.path.exists(p):
+                raise AnsibleActionFail(u"Source (%s) does not exist" % p)
+            if os.path.isdir(p):
+                for f in sorted(os.listdir(p)):
+                    yield {'dirname': p, 'basename': to_text(f, errors='surrogate_or_strict')}
+            else:
+                yield {'dirname': os.path.dirname(p), 'basename': os.path.basename(p)}
+
+    def _assemble_from_fragments(self, src_paths, delimiter=None, compiled_regexp=None, ignore_hidden=False, decrypt=True):
         ''' assemble a file from a directory of fragments '''
 
         tmpfd, temp_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
@@ -45,10 +61,10 @@ class ActionModule(ActionBase):
         delimit_me = False
         add_newline = False
 
-        for f in (to_text(p, errors='surrogate_or_strict') for p in sorted(os.listdir(src_path))):
-            if compiled_regexp and not compiled_regexp.search(f):
+        for f in self._return_fragments(src_paths):
+            if compiled_regexp and not compiled_regexp.search(f['basename']):
                 continue
-            fragment = u"%s/%s" % (src_path, f)
+            fragment = u"%s/%s" % (f['dirname'], f['basename'])
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
 
@@ -99,6 +115,9 @@ class ActionModule(ActionBase):
         ignore_hidden = self._task.args.get('ignore_hidden', False)
         decrypt = self._task.args.get('decrypt', True)
 
+        if not isinstance(src, list):
+            src = [src]
+
         try:
             if src is None or dest is None:
                 raise AnsibleActionFail("src and dest are required")
@@ -106,14 +125,6 @@ class ActionModule(ActionBase):
             if boolean(remote_src, strict=False):
                 result.update(self._execute_module(module_name='assemble', task_vars=task_vars))
                 raise _AnsibleActionDone()
-            else:
-                try:
-                    src = self._find_needle('files', src)
-                except AnsibleError as e:
-                    raise AnsibleActionFail(to_native(e))
-
-            if not os.path.isdir(src):
-                raise AnsibleActionFail(u"Source (%s) is not a directory" % src)
 
             _re = None
             if regexp is not None:

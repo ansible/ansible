@@ -24,7 +24,8 @@ description:
   from multiple sources. C(assemble) will take a directory of files that can be
   local or have already been transferred to the system, and concatenate them
   together to produce a destination file.
-- Files are assembled in string sorting order.
+- If src is a directory then files are assembled in string sorting order.  If src is a
+  list files will be assembled in the order of the list.
 - Puppet calls this idea I(fragments).
 - This module is also supported for Windows targets.
 notes:
@@ -33,8 +34,8 @@ version_added: '0.5'
 options:
   src:
     description:
-    - An already existing directory full of source files.
-    type: path
+    - A list of existing files or directories full of source files
+    type: list
     required: true
   dest:
     description:
@@ -97,6 +98,14 @@ EXAMPLES = r'''
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
+- name: Assemble from fragments from a list or files
+  assemble:
+    src:
+    - /etc/someapp/fragment_5
+    - /etc/someapp/fragment_1
+    - /etc/someapp/fragment_3
+    dest: /etc/someapp/someapp.conf
+
 - name: Inserted provided delimiter in between each fragment
   assemble:
     src: /etc/someapp/fragments
@@ -120,17 +129,29 @@ from ansible.module_utils.six import b, indexbytes
 from ansible.module_utils._text import to_native
 
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
+def return_fragments(module, src_paths):
+    ''' return file fragments '''
+    for p in src_paths:
+        if not os.path.exists(p):
+            module.fail_json(msg="Source (%s) does not exist" % p)
+        if os.path.isdir(p):
+            for f in sorted(os.listdir(p)):
+                yield {'dirname': p, 'basename': f}
+        else:
+            yield {'dirname': os.path.dirname(p), 'basename': os.path.basename(p)}
+
+
+def assemble_from_fragments(module, src_paths, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp(dir=tmpdir)
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
 
-    for f in sorted(os.listdir(src_path)):
-        if compiled_regexp and not compiled_regexp.search(f):
+    for f in return_fragments(module, src_paths):
+        if compiled_regexp and not compiled_regexp.search(f['basename']):
             continue
-        fragment = os.path.join(src_path, f)
+        fragment = os.path.join(f['dirname'], f['basename'])
         if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
         with open(fragment, 'rb') as fragment_fh:
@@ -182,7 +203,7 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
-            src=dict(type='path', required=True),
+            src=dict(type='list', elements='path', required=True),
             delimiter=dict(type='str'),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
@@ -207,11 +228,6 @@ def main():
     validate = module.params.get('validate', None)
 
     result = dict(src=src, dest=dest)
-    if not os.path.exists(src):
-        module.fail_json(msg="Source (%s) does not exist" % src)
-
-    if not os.path.isdir(src):
-        module.fail_json(msg="Source (%s) is not a directory" % src)
 
     if regexp is not None:
         try:
@@ -222,7 +238,7 @@ def main():
     if validate and "%s" not in validate:
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
+    path = assemble_from_fragments(module, src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
     path_hash = module.sha1(path)
     result['checksum'] = path_hash
 
