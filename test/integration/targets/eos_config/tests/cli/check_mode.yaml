@@ -1,5 +1,6 @@
 ---
-- debug: msg="START cli/check_mode.yaml on connection={{ ansible_connection }}"
+- debug:
+    msg: "START cli/check_mode.yaml on connection={{ ansible_connection }}"
 
 - name: invalid configuration in check mode
   eos_config:
@@ -39,11 +40,28 @@
    that:
      - "config.session not in result.stdout[0].sessions"
 
+- name: configuration in check mode + no config session
+  eos_config:
+     lines:
+         - ip address 119.31.1.1 255.255.255.254
+     parents: interface Loopback911
+  become: yes
+  check_mode: 1
+  vars:
+    ansible_eos_use_sessions: 0
+  register: result
+  ignore_errors: yes
+
+- assert:
+   that:
+   - "result.failed == true"
+
 - name: invalid configuration in check mode + no config session
   eos_config:
      lines:
          - ip address 119.31.1.1 255.255.255.256
      parents: interface Loopback911
+     diff_against: running
   become: yes
   check_mode: 1
   vars:
@@ -60,6 +78,7 @@
      lines:
          - ip address 119.31.1.1 255.255.255.255
      parents: interface Loopback911
+     diff_against: running
   become: yes
   check_mode: yes
   register: result
