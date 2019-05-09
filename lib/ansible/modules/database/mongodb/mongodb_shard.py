@@ -287,13 +287,15 @@ def main():
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
         try:
-            client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
+            client['admin'].command('listDatabases', 1.0) # if this throws an error we need to authenticate
         except OperationFailure as excep:
-            if excep.code != MONGO_ERRCODE_UNAUTHORIZED:
+            if excep.code == MONGO_ERRCODE_UNAUTHORIZED: 
+                if login_user is not None and login_password is not None: 
+                    client.admin.authenticate(login_user, login_password, source=login_database)
+                else: 
+                    raise excep
+            else: 
                 raise excep
-            if login_user is None or login_password is None:
-                raise excep
-            client.admin.authenticate(login_user, login_password, source=login_database)
 
     except Exception as e:
         module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
