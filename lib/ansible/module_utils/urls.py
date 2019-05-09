@@ -1233,7 +1233,7 @@ class Request:
                                                    client_key=client_key,
                                                    unix_socket=unix_socket))
 
-        if ssl_handler and HAS_SSLCONTEXT:
+        if ssl_handler and HAS_SSLCONTEXT and validate_certs:
             tmp_ca_path, cadata, paths_checked = ssl_handler.get_ca_certs()
             try:
                 context = ssl_handler._make_context(tmp_ca_path, cadata)
