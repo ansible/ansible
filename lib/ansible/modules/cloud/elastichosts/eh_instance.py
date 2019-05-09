@@ -37,6 +37,12 @@ options:
         description:
             - Name of the instance to be created.
             - Required if I(state=present).
+    ssh_key:
+        description:
+            - The public SSH key to be added to C(authorized_keys) on the created instance.
+            - If not supplied, the keys from ElasticHosts ControlPanel will be used.
+            - If supplied, the C(ssh_key) will be used instead of the keys defined in ControlPanel.
+        default: None
     state:
         description:
             - Specify whether instance should be in.
@@ -45,6 +51,13 @@ options:
         choices:
             - present
             - absent
+        default: present
+    type:
+        description:
+            - Specify the type of the instance to create.
+        choices:
+            - container
+            - vm
         default: present
     uuid:
         description:
@@ -68,8 +81,8 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details.
 # See the module notes for details.
 
-# Create an instance
-- name: Create an instance
+# Create a container instance
+- name: Create a container instance
   eh_instance:
     name: somename
     state: present
@@ -186,7 +199,9 @@ def main():
             force=dict(type='bool', default=False),
             name=dict(type='str'),
             password=dict(type='str', no_log=True, default=os.environ.get('EHPASS')),
+            ssh_key=dict(required=False, type='str', default=None),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
+            type=dict(required=False, choices=['container', 'vm'], default='container'),
             username=dict(type='str', default=os.environ.get('EHUSER'), no_log=True),
             uuid=dict(type='str'),
             zone=dict(type='str', default='lon-b'),
@@ -222,7 +237,8 @@ def main():
     if state == 'present':
         # Create instance
         instance.update(
-            name=module.params['name']
+            name=module.params['name'],
+            type=module.params['type']
         )
         if module.check_mode:
             result.update(
