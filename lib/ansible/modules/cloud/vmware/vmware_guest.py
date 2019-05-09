@@ -165,7 +165,7 @@ options:
     - "  virtual machine with RHEL7 64 bit, will be 'rhel7_64Guest'"
     - "  virtual machine with CensOS 64 bit, will be 'centos64Guest'"
     - "  virtual machine with Ubuntu 64 bit, will be 'ubuntu64Guest'"
-    - This field is required when creating a virtual machine.
+    - This field is required when creating a virtual machine, not required when creating from the template.
     - >
          Valid values are referenced here:
          U(http://pubs.vmware.com/vsphere-6-5/topic/com.vmware.wssdk.apiref.doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
@@ -866,7 +866,7 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_guestid(self, vm_obj, vm_creation=False):
         # guest_id is not required when using templates
-        if self.params['template'] and not self.params['guest_id']:
+        if self.params['template']:
             return
 
         # guest_id is only mandatory on VM creation
