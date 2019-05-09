@@ -963,19 +963,9 @@ def maybe_add_ssl_handler(url, validate_certs):
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
-        # do the cert validation
-        netloc = parsed.netloc
-        if '@' in netloc:
-            netloc = netloc.split('@', 1)[1]
-        if ':' in netloc:
-            hostname, port = netloc.split(':', 1)
-            port = int(port)
-        else:
-            hostname = netloc
-            port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(parsed.hostname, parsed.port or 443)
 
 
 def rfc2822_date_string(timetuple, zone='-0000'):
