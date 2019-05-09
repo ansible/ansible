@@ -180,6 +180,7 @@ options:
             - Describes list of data disks.
             - Use M(azure_rm_mangeddisk) to manage the specific disk.
             - This list cannot be changed after creation currently, use M(azure_rm_manageddisk) to manage the data disk.
+            - Use M(azure_rm_manageddisk) to manage the specific disk.
         version_added: "2.4"
         suboptions:
             lun:
@@ -194,16 +195,11 @@ options:
                     - This value cannot be larger than C(1023) GB.
                     - Size can be changed only when the virtual machine is deallocated.
                     - Not sure when I(managed_disk_id) defined.
-                    - This value cannot be larger than 1023 GB.
-                    - Size can be changed only when the virtual machine is deallocated.
-                required: true
                 version_added: "2.4"
             managed_disk_type:
                 description:
                     - Managed data disk type.
                     - Only used when OS disk created with managed disk.
-                    - Cannot be defined mutual with C(managed_disk_id).
-                    - If C(managed_disk_type) and C(managed_disk_id) undefined, the data disk will be created with a virtual hard disk(VHD).
                 choices:
                     - Standard_LRS
                     - StandardSSD_LRS
@@ -214,7 +210,6 @@ options:
                 description:
                     - Managed data disk id.
                     - Only used when OS disk created with managed disk.
-                    - If C(managed_disk_type) and C(managed_disk_id) undefined, the data disk will be created with a virtual hard disk(VHD).
                 version_added: "2.9"
             storage_account_name:
                 description:
