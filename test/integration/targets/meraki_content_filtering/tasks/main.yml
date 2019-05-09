@@ -50,7 +50,7 @@
   - assert:
       that:
         - single_allowed_check.data.allowedUrlPatterns | length == 1
-        - single_allowed_check is not changed
+        - single_allowed_check is changed
 
   - name: Set single allowed URL pattern
     meraki_content_filtering:
