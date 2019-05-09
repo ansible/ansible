@@ -83,7 +83,7 @@
 
   - assert:
       that:
-        - create_vlan_check is not changed
+        - create_vlan_check is changed
 
   - name: Create VLAN
     meraki_vlan:
@@ -170,7 +170,7 @@
 
   - assert:
       that:
-        - update_vlan_check is not changed
+        - update_vlan_check is changed
 
   - name: Update VLAN
     meraki_vlan:
@@ -444,7 +444,7 @@
 
   - assert:
       that:
-        delete_vlan_check is not changed
+        delete_vlan_check is changed
 
   - name: Delete VLAN
     meraki_vlan:
