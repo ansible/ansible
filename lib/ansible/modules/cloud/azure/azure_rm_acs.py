@@ -16,9 +16,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_acs
 version_added: "2.4"
-short_description: Manage an Azure Container Service Instance (ACS).
+short_description: Manage an Azure Container Service(ACS) instance.
 description:
-    - Create, update and delete an Azure Container Service instance.
+    - Create, update and delete an Azure Container Service(ACS) instance.
 
 options:
     resource_group:
@@ -27,7 +27,7 @@ options:
         required: true
     name:
         description:
-            - Name of the Azure Container Services instance (ACS).
+            - Name of the Azure Container Services(ACS) instance.
         required: true
     state:
         description:
