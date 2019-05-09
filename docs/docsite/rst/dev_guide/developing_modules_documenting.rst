@@ -23,8 +23,8 @@ Every Ansible module written in Python must begin with seven standard sections i
 
 .. _shebang:
 
-Python shebang
-==============
+Python shebang & UTF-8 coding
+===============================
 
 Every Ansible module must begin with ``#!/usr/bin/python`` - this "shebang" allows ``ansible_python_interpreter`` to work.
 This is immediately followed by ``# -*- coding: utf-8 -*-`` to clarify that the file is UTF-8 encoded.
@@ -328,7 +328,7 @@ If your module returns facts that are often needed, an example of how to use the
 RETURN block
 ============
 
-After the shebang, the coding, the copyright line, the license, the ``ANSIBLE_METADATA`` section, ``DOCUMENTATION`` and ``EXAMPLES`` blocks comes the ``RETURN`` block. This section documents the information the module returns for use by other modules.
+After the shebang, the UTF-8 coding, the copyright line, the license, the ``ANSIBLE_METADATA`` section, ``DOCUMENTATION`` and ``EXAMPLES`` blocks comes the ``RETURN`` block. This section documents the information the module returns for use by other modules.
 
 If your module doesn't return anything (apart from the standard returns), this section of your module should read: ``RETURN = r''' # '''``
 Otherwise, for each value returned, provide the following fields. All fields are required unless specified otherwise.
@@ -405,4 +405,3 @@ After the shebang, the UTF-8 coding, the copyright line, the license, and the se
    from module_utils.basic import AnsibleModule
 
 The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
-
