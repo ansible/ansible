@@ -114,7 +114,7 @@ options:
     shared_access_key:
         description:
             - Use shared access key to authenticate your applications.
-            - Required when making requests to the storage account in other subscription
+            - Required when making requests to the storage account in other subscription.
         version_added: "2.9"
 
 extends_documentation_fragment:
@@ -223,6 +223,8 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
         mutually_exclusive = [('src', 'dest')]
 
+        required_one_of = [('resource_group', 'shared_access_key')]
+
         self.blob_client = None
         self.blob_details = None
         self.storage_account_name = None
@@ -249,7 +251,8 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         super(AzureRMStorageBlob, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                  supports_check_mode=True,
                                                  mutually_exclusive=mutually_exclusive,
-                                                 supports_tags=True)
+                                                 supports_tags=True,
+                                                 required_one_of=required_one_of)
 
     def exec_module(self, **kwargs):
 
