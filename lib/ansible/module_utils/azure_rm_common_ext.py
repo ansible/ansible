@@ -101,6 +101,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         modifiers = {}
         result = {}
         self.create_compare_modifiers(self.module.argument_spec, '', modifiers)
+        self.results['modifiers'] = modifiers
         return self.default_compare(modifiers, new_params, old_params, '', self.results)
 
     def create_compare_modifiers(self, arg_spec, path, result):
