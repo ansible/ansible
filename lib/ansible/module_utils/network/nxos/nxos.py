@@ -733,7 +733,7 @@ class NxosCmdRef:
         # TBD: add this method logic to get_capabilities() after those methods
         #      are made consistent across transports
         platform_info = self.execute_show_command('show inventory', 'json')
-        if not platform_info:
+        if not platform_info or not isinstance(platform_info, dict):
             return None
         inventory_table = platform_info['TABLE_inv']['ROW_inv']
         for info in inventory_table:
@@ -770,6 +770,7 @@ class NxosCmdRef:
             return
 
         ref = self._ref
+        ref['_platform_shortname'] = plat
         # Remove excluded commands (no platform support for command)
         for k in ref['commands']:
             if plat in ref[k].get('_exclude', ''):
