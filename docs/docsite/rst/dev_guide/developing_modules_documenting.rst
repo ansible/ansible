@@ -178,14 +178,14 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
     * Declarative operation (not CRUD), to focus on the final state, for example `online:`, rather than `is_online:`.
     * The name of the option should be consistent with the rest of the module, as well as other modules in the same category.
-    * In doubt, look for other modules to find option names that are used for the same purpose, we like to offer consistency to our users.
+    * When in doubt, look for other modules to find option names that are used for the same purpose, we like to offer consistency to our users.
 
   :description:
 
     * Detailed explanation of what this option does. It should be written in full sentences.
-    * The first entry is a description of the option itself, subsequent entries detail its use, possible value format or dependencies.
-    * Should not list the possible values (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious).
-    * If an option is only sometimes required, this needs to be reflected in the documentation, e.g. "Required when I(state=present)."
+    * The first entry is a description of the option itself; subsequent entries detail its use, dependencies, or format of possible values.
+    * Should not list the possible values (that's what ``choices:`` is for, though it should explain what the values do if they aren't obvious).
+    * If an option is only sometimes required, describe the conditions. For example, "Required when I(state=present)."
     * Mutually exclusive options must be documented as the final sentence on each of the options.
 
   :required:
@@ -284,7 +284,7 @@ Documentation fragments
 If you're writing multiple related modules, they may share common documentation, such as authentication details, file mode settings, ``notes:`` or ``seealso:`` entries. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a doc_fragment plugin and use it in each module's documentation. In Ansible, shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation.
 
 .. _note:
-  * in Ansible 2.8 the Ansible directories for doc fragments changed, see documentation of previous versions to find the old locations.
+  * Prior to Ansible 2.8, documentation fragments were kept in ``lib/ansible/utils/module_docs_fragments``.
 
 .. versionadded:: 2.8
 
