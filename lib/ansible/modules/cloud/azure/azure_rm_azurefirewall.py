@@ -46,10 +46,9 @@ options:
       action:
         description:
           - The action type of a rule collection
-        suboptions:
-          type:
-            description:
-              - The type of action.
+        choices:
+          - allow
+          - deny
       rules:
         description:
           - Collection of rules used by a application rule collection.
@@ -93,10 +92,9 @@ options:
       action:
         description:
           - The action type of a NAT rule collection
-        suboptions:
-          type:
-            description:
-              - The type of action.
+        choices:
+          - snat
+          - dnat
       rules:
         description:
           - Collection of rules used by a NAT rule collection.
@@ -148,10 +146,9 @@ options:
       action:
         description:
           - The action type of a rule collection
-        suboptions:
-          type:
-            description:
-              - The type of action.
+        choices:
+          - allow
+          - deny
       rules:
         description:
           - Collection of rules used by a network rule collection.
@@ -228,7 +225,7 @@ EXAMPLES = '''
     application_rule_collections:
       - priority: '110'
         action:
-          type: Deny
+          type: deny
         rules:
           - name: rule1
             description: Deny inbound rule
@@ -244,7 +241,7 @@ EXAMPLES = '''
     nat_rule_collections:
       - priority: '112'
         action:
-          type: Dnat
+          type: dnat
         rules:
           - name: DNAT-HTTPS-traffic
             description: D-NAT all outbound web traffic for inspection
@@ -262,7 +259,7 @@ EXAMPLES = '''
     network_rule_collections:
       - priority: '112'
         action:
-          type: Deny
+          type: deny
         rules:
           - name: L4-traffic
             description: Block traffic based on source IPs and ports
@@ -354,15 +351,11 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='number'
                     ),
                     action=dict(
-                        type='dict',
-                        options=dict(
-                            type=dict(
-                                type='str',
-                                choices=['allow',
-                                         'deny'],
-                                comparison='insensitive'
-                            )
-                        )
+                        type='str',
+                        choices=['allow',
+                                 'deny'],
+                        comparison='insensitive',
+                        disposition='action/type'
                     ),
                     rules=dict(
                         type='list',
@@ -410,15 +403,11 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='number'
                     ),
                     action=dict(
-                        type='dict',
-                        options=dict(
-                            type=dict(
-                                type='str',
-                                choices=['snat',
-                                         'dnat'],
-                                comparison='insensitive'
-                            )
-                        )
+                        type='str',
+                        choices=['snat',
+                                 'dnat'],
+                        comparison='insensitive',
+                        disposition='action/type'
                     ),
                     rules=dict(
                         type='list',
@@ -462,15 +451,11 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='number'
                     ),
                     action=dict(
-                        type='dict',
-                        options=dict(
-                            type=dict(
-                                type='str',
-                                choices=['allow',
-                                         'deny']
-                            ),
-                            comparison='insensitive'
-                        )
+                        type='str',
+                        choices=['allow',
+                                 'deny'],
+                        comparison='insensitive',
+                        disposition='action/type'
                     ),
                     rules=dict(
                         type='list',
