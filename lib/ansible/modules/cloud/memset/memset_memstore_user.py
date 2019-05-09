@@ -1,4 +1,4 @@
-#!/usr/bin/python
+v#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2018, Simon Weald <ansible@simonweald.com>
@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: memset_memstore_user
 author: "Simon Weald (@glitchcrab)"
-version_added: "2.8"
+version_added: "2.9"
 short_description: Manage Memstore users.
 notes:
   - Create/delete and manage the status of Memstore users.
