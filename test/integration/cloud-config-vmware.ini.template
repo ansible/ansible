@@ -1,7 +1,7 @@
 [DEFAULT]
-vmware_user: @VMWARE_USER
-vmware_password: @VMWARE_PASSWORD
-vmware_host: @VMWARE_HOST
-vmware_https_port: @VMWARE_HTTPS_PORT
+vcenter_username: @VMWARE_USER
+vcenter_password: @VMWARE_PASSWORD
+vcenter_hostname: @VMWARE_HOST
+vcenter_port: @VMWARE_HTTPS_PORT
 vmware_ssh_port: @VMWARE_SSH_PORT
 vmware_validate_certs: @VMWARE_VALIDATE_CERTS
