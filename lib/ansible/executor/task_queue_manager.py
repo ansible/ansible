@@ -24,7 +24,7 @@ import tempfile
 import time
 
 from ansible import constants as C
-from ansible import context
+from ansible.context import CLIARGS as cli
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
@@ -79,8 +79,6 @@ class TaskQueueManager:
         self._run_tree = run_tree
         self._forks = forks or 5
 
-        cli = context['CLIARGS']
-
         self._list_mode = any([cli.get(x, False) for x in ('listtags', 'listhosts', 'listtasks')])
 
         if self._list_mode:
@@ -104,8 +102,8 @@ class TaskQueueManager:
         self._start_at_done = False
 
         # make sure any module paths (if specified) are added to the module_loader
-        if context.CLIARGS.get('module_path', False):
-            for path in context.CLIARGS['module_path']:
+        if cli.get('module_path', False):
+            for path in cli['module_path']:
                 if path:
                     module_loader.add_directory(path)
 
@@ -274,7 +272,7 @@ class TaskQueueManager:
         # during initialization, the PlayContext will clear the start_at_task
         # field to signal that a matching task was found, so check that here
         # and remember it so we don't try to skip tasks on future plays
-        if context.CLIARGS.get('start_at_task') is not None and play_context.start_at_task is None:
+        if cli.get('start_at_task') is not None and play_context.start_at_task is None:
             self._start_at_done = True
 
         # and run the play using the strategy and cleanup on way out
