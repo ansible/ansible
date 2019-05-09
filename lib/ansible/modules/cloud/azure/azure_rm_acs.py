@@ -23,7 +23,7 @@ description:
 options:
     resource_group:
         description:
-            - Name of a resource group where the Azure Container Services Instance (ACS) exists or will be created.
+            - Name of a resource group where the Container Services exists or will be created.
         required: true
     name:
         description:
