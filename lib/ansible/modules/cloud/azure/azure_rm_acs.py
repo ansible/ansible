@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_acs
 version_added: "2.4"
-short_description: Manage an Azure Container Service(ACS) instance.
+short_description: Manage an Azure Container Service(ACS) instance
 description:
     - Create, update and delete an Azure Container Service(ACS) instance.
 
@@ -229,7 +229,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 state:
-    description: Current state of the azure container service
+    description: Current state of the Azure Container Service(ACS).
     returned: always
     type: dict
 '''
