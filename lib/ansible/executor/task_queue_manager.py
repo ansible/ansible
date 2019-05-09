@@ -79,10 +79,14 @@ class TaskQueueManager:
         self._run_tree = run_tree
         self._forks = forks or 5
 
+        cli = context['CLIARGS']
+
+        self._list_mode = any([cli.get(x, False) for x in ('listtags', 'listhosts', 'listtasks')])
+
         if self._list_mode:
-            if any([self._options.listtags, self._options.listtasks]) and all([self._options.tags == ['all'], not self._options.skip_tags]):
+            if any([cli.get(x, False) for x in ('listtags', 'listtasks')]) and all([cli.get('tags', False) == ['all'], not cli.get('skip_tags', False)]):
                 # when not passing tag options, show all possible tagged/untagged tasks
-                self._options.tags = ['untagged', 'tagged', 'never']
+                cli['tags'] = ['untagged', 'tagged', 'never']
             # callbacks
             self._stdout_callback = callback_loader.get(C.LIST_CALLBACK)
             self._run_additional_callbacks = False
