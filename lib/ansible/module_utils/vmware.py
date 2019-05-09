@@ -490,7 +490,7 @@ def vmware_argument_spec():
     )
 
 
-def connect_to_api(module, disconnect_atexit=True):
+def connect_to_api(module, disconnect_atexit=True, return_si=False):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
@@ -555,6 +555,8 @@ def connect_to_api(module, disconnect_atexit=True):
     # Also removal significantly speeds up the return of the module
     if disconnect_atexit:
         atexit.register(connect.Disconnect, service_instance)
+    if return_si:
+        return service_instance, service_instance.RetrieveContent()
     return service_instance.RetrieveContent()
 
 
@@ -804,9 +806,8 @@ class PyVmomi(object):
 
         self.module = module
         self.params = module.params
-        self.si = None
         self.current_vm_obj = None
-        self.content = connect_to_api(self.module)
+        self.si, self.content = connect_to_api(self.module, return_si=True)
         self.custom_field_mgr = []
         if self.content.customFieldsManager:  # not an ESXi
             self.custom_field_mgr = self.content.customFieldsManager.field
