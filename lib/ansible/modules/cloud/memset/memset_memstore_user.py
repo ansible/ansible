@@ -1,4 +1,4 @@
-v#!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2018, Simon Weald <ansible@simonweald.com>
@@ -264,11 +264,19 @@ def create_or_delete_user(args=None):
             break
 
     if args['state'] == 'present':
-        if user and args['update_password']:
-            retvals = update_password(args=args)
+        if currentuser:
+            # user exists.
+            if args['update_password']:
+                # update password.
+                retvals = update_password(args=args)
+            else:
+                # nothing to do.
+                return(retvals)
         else:
+            # user needs to be created.
             retvals = create_user(args=args, user=currentuser)
     if args['state'] == 'absent':
+        # remove user
         retvals = delete_user(args=args, user=currentuser)
 
     return(retvals)
