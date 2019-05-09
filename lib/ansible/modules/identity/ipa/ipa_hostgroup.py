@@ -204,21 +204,23 @@ def ensure(module, client):
 
 def main():
     argument_spec = ipa_argument_spec()
-    argument_spec.update(cn=dict(type='str', required=True, aliases=['name']),
-                         description=dict(type='str'),
-                         host=dict(type='list'),
-                         hostgroup=dict(type='list'),
-                         state=dict(type='str', default='present',
-                                    choices=[
-                                        'present',
-                                        'absent',
-                                        'add_members',
-                                        'remove_members',
-                                        'enabled',
-                                        'disabled'
-                                    ]
-                                   )
-                         )
+    argument_spec.update(
+        cn=dict(type='str', required=True, aliases=['name']),
+        description=dict(type='str'),
+        host=dict(type='list'),
+        hostgroup=dict(type='list'),
+        state=dict(
+            type='str', default='present',
+            choices=[
+                'present',
+                'absent',
+                'add_members',
+                'remove_members',
+                'enabled',
+                'disabled'
+            ]
+        )
+    )
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
