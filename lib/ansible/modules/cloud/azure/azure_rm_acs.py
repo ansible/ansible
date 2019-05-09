@@ -18,7 +18,7 @@ module: azure_rm_acs
 version_added: "2.4"
 short_description: Manage an Azure Container Service Instance (ACS).
 description:
-    - Create, update and delete an Azure Container Service Instance (ACS).
+    - Create, update and delete an Azure Container Service Instance.
 
 options:
     resource_group:
@@ -41,7 +41,7 @@ options:
             - Valid azure location. Defaults to location of the resource group.
     orchestration_platform:
         description:
-            - Specifies the Container I(orchestration_platform) to use. Currently can be either C(DCOS), C(Kubernetes) or C(Swarm).
+            - Specifies the Container Orchestration Platform to use. Currently can be either C(DCOS), C(Kubernetes) or C(Swarm).
             - The I(service_principal) must be defined if set to C(Kubernetes).
         choices:
             - 'DCOS'
