@@ -16,9 +16,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_aks
 version_added: "2.6"
-short_description: Manage a managed Azure Container Service (AKS) Instance.
+short_description: Manage a managed Azure Container Service (AKS) instance
 description:
-    - Create, update and delete a managed Azure Container Service (AKS) Instance.
+    - Create, update and delete a managed Azure Container Service (AKS) instance.
 
 options:
     resource_group:
@@ -47,15 +47,15 @@ options:
             - Version of Kubernetes specified when creating the managed cluster.
     linux_profile:
         description:
-            - The linux profile suboptions.
+            - The Linux profile suboptions.
         suboptions:
             admin_username:
                 description:
-                  - The Admin Username for the Cluster.
+                    - The Admin Username for the Cluster.
                 required: true
             ssh_key:
                 description:
-                    - The Public SSH Key used to access the cluster.
+                    - The Public SSH Key used to access the Cluster.
                 required: true
     agent_pool_profiles:
         description:
@@ -63,16 +63,16 @@ options:
         suboptions:
             name:
                 description:
-                  - Unique name of the agent pool profile in the context of the subscription and resource group.
+                    - Unique name of the agent pool profile in the context of the subscription and resource group.
                 required: true
             count:
                 description:
                     - Number of agents (VMs) to host docker containers.
-                    - Allowed values must be in the range of 1 to 100 (inclusive).
+                    - Allowed values must be in the range of C(1) to C(100) (inclusive).
                 required: true
             vm_size:
                 description:
-                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                    - The VM Size of each of the Agent Pool VM's (e.g. C(Standard_F1) / C(Standard_D2v2)).
                 required: true
             os_disk_size_gb:
                 description:
@@ -95,7 +95,7 @@ options:
             - Existing non-RBAC enabled AKS clusters cannot currently be updated for RBAC use.
         type: bool
         default: no
-        version_added: 2.8
+        version_added: "2.8"
     network_profile:
         description:
             - Profile of network configuration.
@@ -114,7 +114,7 @@ options:
                 description: Network policy used for building Kubernetes network.
             pod_cidr:
                 description:
-                    - A CIDR notation IP range from which to assign pod IPs when kubenet is used.
+                    - A CIDR notation IP range from which to assign pod IPs when C(kubenet) is used.
                     - It should be a large address space that isn't in use elsewhere in your network environment.
                     - This address range must be large enough to accommodate the number of nodes that you expect to scale up to.
             service_cidr:
@@ -130,7 +130,7 @@ options:
                 description:
                     - A CIDR notation IP range assigned to the Docker bridge network.
                     - It must not overlap with any Subnet IP ranges or the Kubernetes service address range.
-        version_added: 2.8
+        version_added: "2.8"
     aad_profile:
         description:
             - Profile of Azure Active Directory configuration.
@@ -188,7 +188,7 @@ options:
                     subnet_resource_id:
                         description:
                             - Subnet associdated to the cluster.
-        version_added: 2.8
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -228,7 +228,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 state:
-    description: Current state of the Azure Container Service (AKS)
+    description: Current state of the Azure Container Service (AKS).
     returned: always
     type: dict
     example:
