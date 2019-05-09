@@ -1,0 +1,2 @@
+minor_changes:
+- Added documentation about the folder parameter with examples in vmware_deploy_ovf (https://github.com/ansible/ansible/issues/51825).
