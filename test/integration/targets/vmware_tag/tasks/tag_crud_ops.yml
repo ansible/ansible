@@ -1,12 +1,12 @@
 # Test code for the vmware_tag CRUD Operations.
 # Copyright: (c) 2019, Pavan Bidkar <pbidkar@vmware.com>
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - when: vcsim is not defined
   block:
-
-    # Testcase Create Category
-    - name: Create Category
+    - &cat_create
+      name: Create Category
       vmware_category:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -23,11 +23,20 @@
         that:
           - category_create.changed
 
+    - <<: *cat_create
+      name: Create category again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not category_create.changed
+
     - name: Set Cat_ID Paramter. Required for Tag creation
       set_fact: Cat_ID={{ category_create['category_results']['category_id'] }}
 
     # Testcase Create Tag
-    - name: Create a tag
+    - &tag_create
+      name: Create a tag
       vmware_tag:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -44,8 +53,17 @@
         that:
           - tag_creation.changed
 
+    - <<: *tag_create
+      name: Create a tag again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not tag_creation.changed
+
     # Testcase Update Tag Description (reconfig)
-    - name: Update Tag Description
+    - &tag_update
+      name: Update Tag Description
       vmware_tag:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -61,8 +79,17 @@
         that:
           - update_tag_desc.changed
 
+    - <<: *tag_update
+      name: Update tag description again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not update_tag_desc.changed
+
     # Testcase Delete the Tag
-    - name: Delete Tag
+    - &tag_delete
+      name: Delete Tag
       vmware_tag:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -76,3 +103,10 @@
       assert:
         that:
           - delete_tag.changed
+    - <<: *tag_delete
+      name: Delete tag again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not delete_tag.changed
