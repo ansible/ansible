@@ -320,7 +320,7 @@ if($gather_subset.Contains('platform')) {
         ansible_architecture = $win32_os.OSArchitecture
         ansible_domain = $ip_props.DomainName
         ansible_fqdn = ($ip_props.Hostname + "." + $ip_props.DomainName)
-        ansible_hostname = $env:COMPUTERNAME
+        ansible_hostname = [System.Net.Dns]::GetHostName()
         ansible_kernel = $osversion.Version.ToString()
         ansible_nodename = ($ip_props.HostName + "." + $ip_props.DomainName)
         ansible_machine_id = Get-MachineSid
