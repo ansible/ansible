@@ -359,7 +359,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                             type=dict(
                                 type='str',
                                 choices=['allow',
-                                         'deny']
+                                         'deny'],
+                                comparison='insensitive'
                             )
                         )
                     ),
@@ -380,7 +381,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 options=dict(
                                     type=dict(
                                         type='str',
-                                        disposition='protocolType'
+                                        disposition='protocolType',
+                                        comparison='insensitive'
                                     ),
                                     port=dict(
                                         type='str'
@@ -413,7 +415,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                             type=dict(
                                 type='str',
                                 choices=['snat',
-                                         'dnat']
+                                         'dnat'],
+                                comparison='insensitive'
                             )
                         )
                     ),
@@ -465,7 +468,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 type='str',
                                 choices=['allow',
                                          'deny']
-                            )
+                            ),
+                            comparison='insensitive'
                         )
                     ),
                     rules=dict(
@@ -589,7 +593,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             response = old_response
 
         if response:
-           self.results["id"] = response["id"]
+            self.results["id"] = response["id"]
 
         return self.results
 

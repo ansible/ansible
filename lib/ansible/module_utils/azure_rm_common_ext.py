@@ -172,10 +172,15 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         else:
             updatable = modifiers.get(path, {}).get('updatable', True)
             comparison = modifiers.get(path, {}).get('comparison', 'default')
-            if path == '/location' or path.endswith('locationName'):
+            if comparison == 'default' and (path == '/location' or path.endswith('locationName')):
+                comparison = 'location'
+            if comparison == 'location':
                 new = new.replace(' ', '').lower()
                 old = old.replace(' ', '').lower()
-            elif path.endswith('adminPassword') or path.endswith('administratorLoginPassword') or path.endswith('createMode'):
+            elif comparison == 'insensitive':
+                new = new.lower()
+                old = old.lower()
+            elif comparison == 'ignore':
                 return True
             if str(new) == str(old):
                 result['compare'] = result.get('compare', '') + "(" + str(new) + ":" + str(old) + ")"
