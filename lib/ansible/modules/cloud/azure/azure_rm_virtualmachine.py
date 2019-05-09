@@ -186,8 +186,12 @@ options:
             - List of data disks.
 =======
             - Describes list of data disks.
+<<<<<<< bd263c3210517078dff604e40d664614400dcb28
             - This list cannot be changed after creation currently, use M(azure_rm_manageddisk) to manage the data disk.
 >>>>>>> add data disk support
+=======
+            - Use M(azure_rm_manageddisk) to manage the specific disk.
+>>>>>>> add documentation
         version_added: "2.4"
         suboptions:
             lun:
@@ -203,12 +207,18 @@ options:
             disk_size_gb:
                 description:
                     - The initial disk size in GB for blank data disks.
+<<<<<<< bd263c3210517078dff604e40d664614400dcb28
 <<<<<<< b72834726012e5dd3bf9c7c8e2ba2cedbfa3d1c9
 =======
                     - This value cannot be larger than 1023 GB.
                     - Size can be changed only when the virtual machine is deallocated.
                 required: true
 >>>>>>> add data disk support
+=======
+                    - This value cannot be larger than C(1023) GB.
+                    - Size can be changed only when the virtual machine is deallocated.
+                    - Not used when I(managed_disk_id) defined.
+>>>>>>> add documentation
                 version_added: "2.4"
             managed_disk_type:
                 description:
@@ -216,9 +226,12 @@ options:
 <<<<<<< 78f2bc62ecbf94709af04a6ffc272b5c802bb23b
 =======
                     - Only used when OS disk created with managed disk.
+<<<<<<< bd263c3210517078dff604e40d664614400dcb28
                     - Cannot be defined mutual with C(managed_disk_id).
                     - If C(managed_disk_type) and C(managed_disk_id) undefined, the data disk will be created with a virtual hard disk(VHD).
 >>>>>>> support datadisk updated
+=======
+>>>>>>> add documentation
                 choices:
                     - Standard_LRS
                     - StandardSSD_LRS
@@ -229,10 +242,10 @@ options:
                 description:
                     - Managed data disk id.
                     - Only used when OS disk created with managed disk.
-                    - If C(managed_disk_type) and C(managed_disk_id) undefined, the data disk will be created with a virtual hard disk(VHD).
                 version_added: "2.9"
             storage_account_name:
                 description:
+<<<<<<< bd263c3210517078dff604e40d664614400dcb28
 <<<<<<< 78f2bc62ecbf94709af04a6ffc272b5c802bb23b
                     - Name of an existing storage account that supports creation of VHD blobs.
                     - If not specified for a new data disk, a new storage account named <vm name>01 will be created using storage type C(Standard_LRS).
@@ -244,18 +257,27 @@ options:
 =======
                     - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
                       a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+=======
+                    - Name of an existing storage account that supports creation of VHD blobs.
+                    - If not specified for a new VM, a new storage account started with I(name) will be created using storage type 'Standard_LRS'.
+>>>>>>> add documentation
                     - Only used when OS disk created with virtual hard disk (VHD).
-                    - Used when C(managed_disk_type) not defined.
-                    - Cannot be updated unless C(lun) updated.
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
                 version_added: "2.4"
             storage_container_name:
                 description:
-                    - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
-                      default container will created.
+                    - Name of the container to use within the storage account to store VHD blobs.
+                    - If no name is specified a default container named 'vhds' will created.
                     - Only used when OS disk created with virtual hard disk (VHD).
+<<<<<<< bd263c3210517078dff604e40d664614400dcb28
                     - Used when C(managed_disk_type) not defined.
                     - Cannot be updated unless C(lun) updated.
 >>>>>>> support datadisk updated
+=======
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
+>>>>>>> add documentation
                 default: vhds
                 version_added: "2.4"
             storage_blob_name:
@@ -267,11 +289,16 @@ options:
 =======
                     - Name fo the storage blob used to hold the VM's OS disk image.
                     - Must end with '.vhd'
-                    - Default to the VM name + '.vhd'.
+                    - Default to the I(name) + timestamp + I(lun) + '.vhd'.
                     - Only used when OS disk created with virtual hard disk (VHD).
+<<<<<<< bd263c3210517078dff604e40d664614400dcb28
                     - Used when C(managed_disk_type) not defined.
                     - Cannot be updated unless C(lun) updated.
 >>>>>>> support datadisk updated
+=======
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
+>>>>>>> add documentation
                 version_added: "2.4"
             caching:
                 description:
@@ -513,12 +540,20 @@ EXAMPLES = '''
       sku: Stable
       version: latest
     data_disks:
+<<<<<<< bd263c3210517078dff604e40d664614400dcb28
       - lun: 0
         disk_size_gb: 64
         managed_disk_type: Standard_LRS
       - lun: 1
         disk_size_gb: 128
         managed_disk_type: Premium_LRS
+=======
+        - lun: 0
+          managed_disk_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk"
+        - lun: 1
+          managed_disk_type: Premium_LRS
+          disk_size_gb: 64
+>>>>>>> add documentation
 
 - name: Create a VM with OS and multiple data storage accounts
   azure_rm_virtualmachine:
@@ -541,6 +576,7 @@ EXAMPLES = '''
       sku: Stable
       version: latest
     data_disks:
+<<<<<<< bd263c3210517078dff604e40d664614400dcb28
       - lun: 0
         disk_size_gb: 64
         storage_container_name: datadisk1
@@ -549,6 +585,14 @@ EXAMPLES = '''
         disk_size_gb: 128
         storage_container_name: datadisk2
         storage_blob_name: datadisk2.vhd
+=======
+    - lun: 0
+      disk_size_gb: 64
+      storage_container_name: datadisk1
+      storage_blob_name: datadisk1.vhd
+    - lun: 1
+      disk_size_gb: 128
+>>>>>>> add documentation
 
 - name: Create a VM with a custom image
   azure_rm_virtualmachine:
