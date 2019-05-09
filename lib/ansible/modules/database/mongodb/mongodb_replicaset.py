@@ -381,9 +381,9 @@ def main():
         if excep.code == MONGO_ERRCODE_UNAUTHORIZED: 
             if login_user is not None and login_password is not None: 
                 client.admin.authenticate(login_user, login_password, source=login_database)
-            else: 
+            else:
                 raise excep
-        else: 
+        else:
             raise excep
 
     if len(replica_set) == 0:
