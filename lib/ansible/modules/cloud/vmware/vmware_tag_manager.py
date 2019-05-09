@@ -138,7 +138,6 @@ from ansible.module_utils.vmware_rest_client import VmwareRestClient
 from ansible.module_utils.vmware import (PyVmomi, find_dvs_by_name, find_dvspg_by_name)
 try:
     from com.vmware.vapi.std_client import DynamicID
-    from com.vmware.cis.tagging_client import Tag, TagAssociation, Category
 except ImportError:
     pass
 
@@ -186,9 +185,9 @@ class VmwareTagManager(VmwareRestClient):
 
         self.dynamic_managed_object = DynamicID(type=self.object_type, id=self.managed_object._moId)
 
-        self.tag_service = Tag(self.connect)
-        self.category_service = Category(self.connect)
-        self.tag_association_svc = TagAssociation(self.connect)
+        self.tag_service = self.api_client.tagging.Tag
+        self.category_service = self.api_client.tagging.Category
+        self.tag_association_svc = self.api_client.tagging.TagAssociation
 
         self.tag_names = self.params.get('tag_names')
 
