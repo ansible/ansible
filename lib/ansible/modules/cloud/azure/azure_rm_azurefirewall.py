@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino), Jurijs Fadejevs (@xxgithubid)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -355,7 +355,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         choices=['allow',
                                  'deny'],
                         comparison='insensitive',
-                        disposition='action/type'
+                        disposition='action/type',
+                        pattern='camelize'
                     ),
                     rules=dict(
                         type='list',
@@ -407,7 +408,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         choices=['snat',
                                  'dnat'],
                         comparison='insensitive',
-                        disposition='action/type'
+                        disposition='action/type',
+                        pattern='camelize'
                     ),
                     rules=dict(
                         type='list',
@@ -455,7 +457,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         choices=['allow',
                                  'deny'],
                         comparison='insensitive',
-                        disposition='action/type'
+                        disposition='action/type',
+                        pattern='camelize'
                     ),
                     rules=dict(
                         type='list',

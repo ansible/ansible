@@ -5,6 +5,7 @@
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 import re
+from ansible.module_utils.common.dict_transformations import _camel_to_snake, _snake_to_camel
 
 
 class AzureRMModuleBaseExt(AzureRMModuleBase):
@@ -22,8 +23,11 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
             # check if pattern needs to be used
             pattern = spec[name].get('pattern', None)
             if pattern:
-                param = self.normalize_resource_id(param, pattern)
-                body[name] = param
+                if pattern == 'camelize':
+                    param = _snake_to_camel(param, True)
+                else:
+                    param = self.normalize_resource_id(param, pattern)
+                    body[name] = param
             disposition = spec[name].get('disposition', '*')
             if level == 0 and not disposition.startswith('/'):
                 continue
