@@ -98,6 +98,20 @@ def wait_for_vm_ip(content, vm, timeout=300):
     return facts
 
 
+def wait_for_poweroff(vm, timeout=300):
+    result = dict()
+    interval = 15
+    while timeout > 0:
+        if vm.runtime.powerState.lower() == 'poweredoff':
+            break
+        time.sleep(interval)
+        timeout -= interval
+    else:
+        result['failed'] = True
+        result['msg'] = 'Timeout while waiting for VM power off.'
+    return result
+
+
 def find_obj(content, vimtype, name, first=True, folder=None):
     container = content.viewManager.CreateContainerView(folder or content.rootFolder, recursive=True, type=vimtype)
     # Get all objects matching type (and name if given)
@@ -569,60 +583,6 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     return obj
 
 
-def run_command_in_guest(content, vm, username, password, program_path, program_args, program_cwd, program_env):
-
-    result = {'failed': False}
-
-    tools_status = vm.guest.toolsStatus
-    if (tools_status == 'toolsNotInstalled' or
-            tools_status == 'toolsNotRunning'):
-        result['failed'] = True
-        result['msg'] = "VMwareTools is not installed or is not running in the guest"
-        return result
-
-    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
-    creds = vim.vm.guest.NamePasswordAuthentication(
-        username=username, password=password
-    )
-
-    try:
-        # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/ProcessManager.rst
-        pm = content.guestOperationsManager.processManager
-        # https://www.vmware.com/support/developer/converter-sdk/conv51_apireference/vim.vm.guest.ProcessManager.ProgramSpec.html
-        ps = vim.vm.guest.ProcessManager.ProgramSpec(
-            # programPath=program,
-            # arguments=args
-            programPath=program_path,
-            arguments=program_args,
-            workingDirectory=program_cwd,
-        )
-
-        res = pm.StartProgramInGuest(vm, creds, ps)
-        result['pid'] = res
-        pdata = pm.ListProcessesInGuest(vm, creds, [res])
-
-        # wait for pid to finish
-        while not pdata[0].endTime:
-            time.sleep(1)
-            pdata = pm.ListProcessesInGuest(vm, creds, [res])
-
-        result['owner'] = pdata[0].owner
-        result['startTime'] = pdata[0].startTime.isoformat()
-        result['endTime'] = pdata[0].endTime.isoformat()
-        result['exitCode'] = pdata[0].exitCode
-        if result['exitCode'] != 0:
-            result['failed'] = True
-            result['msg'] = "program exited non-zero"
-        else:
-            result['msg'] = "program completed successfully"
-
-    except Exception as e:
-        result['msg'] = str(e)
-        result['failed'] = True
-
-    return result
-
-
 def serialize_spec(clonespec):
     """Serialize a clonespec or a relocation spec"""
     data = {}
@@ -772,20 +732,6 @@ def set_vm_power_state(content, vm, state, force, timeout=0):
     # need to get new metadata if changed
     result['instance'] = gather_vm_facts(content, vm)
 
-    return result
-
-
-def wait_for_poweroff(vm, timeout=300):
-    result = dict()
-    interval = 15
-    while timeout > 0:
-        if vm.runtime.powerState.lower() == 'poweredoff':
-            break
-        time.sleep(interval)
-        timeout -= interval
-    else:
-        result['failed'] = True
-        result['msg'] = 'Timeout while waiting for VM power off.'
     return result
 
 
