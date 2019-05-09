@@ -109,9 +109,12 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
             o = arg_spec[k]
             updatable = o.get('updatable', True)
             comparison = o.get('comparison', 'default')
+            disposition = o.get('disposition', '*')
+            if disposition == '/':
+                disposition = '/*'
             p = (path +
                  ('/' if len(path) > 0 else '') +
-                 o.get('disposition', '*').replace('*', k) +
+                 disposition.replace('*', k) +
                  ('/*' if o['type'] == 'list' else ''))
             if comparison != 'default' or not updatable:
                 result[p] = {'updatable': updatable, 'comparison': comparison}
