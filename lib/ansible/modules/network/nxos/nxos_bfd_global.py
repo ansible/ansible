@@ -41,7 +41,7 @@ options:
   echo_interface:
     description:
       - Loopback interface used for echo frames.
-        Valid values are loopback interface name or 'absent'.
+        Valid values are loopback interface name or 'deleted'.
       - Not supported on N5K/N6K
     required: false
     type: str

@@ -933,7 +933,7 @@ class NxosCmdRef:
                 #   setval: my-cmd {foo} bar {baz}
                 cmd = ref[k]['setval'].format(**playval)
             elif 'str' == kind:
-                if 'absent' in playval:
+                if 'deleted' in playval:
                     if existing:
                         cmd = 'no ' + ref[k]['setval'].format(existing)
                 else:
