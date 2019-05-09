@@ -145,7 +145,7 @@ options:
                 description:
                     - The AAD tenant ID to use for authentication.
                     - If not specified, will use the tenant of the deployment subscription.
-        version_added: 2.8
+        version_added: "2.8"
     addon:
         description:
             - Profile of managed cluster add-on.
