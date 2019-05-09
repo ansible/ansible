@@ -46,7 +46,7 @@
     application_rule_collections:
       - priority: '110'
         action:
-          type: Deny
+          type: deny
         rules:
           - name: rule1
             description: Deny inbound rule
@@ -54,7 +54,7 @@
               - 216.58.216.164
               - 10.0.0.0/25
             protocols:
-              - protocol_type: Https
+              - type: https
                 port: '443'
             target_fqdns:
               - www.test.com
@@ -62,7 +62,7 @@
     nat_rule_collections:
       - priority: '112'
         action:
-          type: Dnat
+          type: dnat
         rules:
           - name: DNAT-HTTPS-traffic
             description: D-NAT all outbound web traffic for inspection
@@ -73,19 +73,19 @@
             destination_ports:
               - '443'
             protocols:
-              - TCP
+              - tcp
             translated_address: 1.2.3.5
             translated_port: '8443'
         name: natrulecoll
     network_rule_collections:
       - priority: '112'
         action:
-          type: Deny
+          type: deny
         rules:
           - name: L4-traffic
             description: Block traffic based on source IPs and ports
             protocols:
-              - TCP
+              - tcp
             source_addresses:
               - 192.168.1.1-192.168.1.12
               - 10.1.4.12-10.1.4.255
@@ -118,7 +118,7 @@
     application_rule_collections:
       - priority: '110'
         action:
-          type: Deny
+          type: deny
         rules:
           - name: rule1
             description: Deny inbound rule
@@ -126,7 +126,7 @@
               - 216.58.216.164
               - 10.0.0.0/25
             protocols:
-              - protocol_type: Https
+              - type: https
                 port: '443'
             target_fqdns:
               - www.test.com
@@ -134,7 +134,7 @@
     nat_rule_collections:
       - priority: '112'
         action:
-          type: Dnat
+          type: dnat
         rules:
           - name: DNAT-HTTPS-traffic
             description: D-NAT all outbound web traffic for inspection
@@ -145,19 +145,19 @@
             destination_ports:
               - '443'
             protocols:
-              - TCP
+              - tcp
             translated_address: 1.2.3.5
             translated_port: '8443'
         name: natrulecoll
     network_rule_collections:
       - priority: '112'
         action:
-          type: Deny
+          type: deny
         rules:
           - name: L4-traffic
             description: Block traffic based on source IPs and ports
             protocols:
-              - TCP
+              - tcp
             source_addresses:
               - 192.168.1.1-192.168.1.12
               - 10.1.4.12-10.1.4.255
@@ -190,7 +190,7 @@
     application_rule_collections:
       - priority: '110'
         action:
-          type: Deny
+          type: deny
         rules:
           - name: rule1
             description: Deny inbound rule
@@ -198,7 +198,7 @@
               - 216.58.216.165
               - 10.0.0.0/25
             protocols:
-              - protocol_type: Https
+              - type: https
                 port: '443'
             target_fqdns:
               - www.test.com
@@ -206,7 +206,7 @@
     nat_rule_collections:
       - priority: '112'
         action:
-          type: Dnat
+          type: dnat
         rules:
           - name: DNAT-HTTPS-traffic
             description: D-NAT all outbound web traffic for inspection
@@ -217,19 +217,19 @@
             destination_ports:
               - '443'
             protocols:
-              - TCP
+              - tcp
             translated_address: 1.2.3.6
             translated_port: '8443'
         name: natrulecoll
     network_rule_collections:
       - priority: '112'
         action:
-          type: Deny
+          type: deny
         rules:
           - name: L4-traffic
             description: Block traffic based on source IPs and ports
             protocols:
-              - TCP
+              - tcp
             source_addresses:
               - 192.168.1.1-192.168.1.12
               - 10.1.4.12-10.1.4.255

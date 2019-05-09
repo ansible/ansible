@@ -236,7 +236,7 @@ EXAMPLES = '''
               - 216.58.216.164
               - 10.0.0.0/24
             protocols:
-              - protocolType: Https
+              - type: https
                 port: '443'
             target_fqdns:
               - www.test.com
@@ -255,7 +255,7 @@ EXAMPLES = '''
             destination_ports:
               - '443'
             protocols:
-              - TCP
+              - tcp
             translated_address: 1.2.3.5
             translated_port: '8443'
         name: natrulecoll
@@ -267,7 +267,7 @@ EXAMPLES = '''
           - name: L4-traffic
             description: Block traffic based on source IPs and ports
             protocols:
-              - TCP
+              - tcp
             source_addresses:
               - 192.168.1.1-192.168.1.12
               - 10.1.4.12-10.1.4.255
@@ -358,8 +358,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         options=dict(
                             type=dict(
                                 type='str',
-                                choices=['Allow',
-                                         'Deny']
+                                choices=['allow',
+                                         'deny']
                             )
                         )
                     ),
@@ -376,7 +376,16 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 type='list'
                             ),
                             protocols=dict(
-                                type='list'
+                                type='list',
+                                options=dict(
+                                    type=dict(
+                                        type='str',
+                                        disposition='protocolType'
+                                    ),
+                                    port=dict(
+                                        type='str'
+                                    )
+                                )
                             ),
                             target_fqdns=dict(
                                 type='list'
@@ -403,8 +412,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         options=dict(
                             type=dict(
                                 type='str',
-                                choices=['Snat',
-                                         'Dnat']
+                                choices=['snat',
+                                         'dnat']
                             )
                         )
                     ),
@@ -454,8 +463,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         options=dict(
                             type=dict(
                                 type='str',
-                                choices=['Allow',
-                                         'Deny']
+                                choices=['allow',
+                                         'deny']
                             )
                         )
                     ),
@@ -494,7 +503,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     subnet=dict(
                         type='raw',
                         disposition='subnet/id',
-                        pattern=('//subscriptions/{{ subscription_id }}/resourceGroups'
+                        pattern=('/subscriptions/{{ subscription_id }}/resourceGroups'
                                  '/{{ resource_group }}/providers/Microsoft.Network'
                                  '/virtualNetworks/{{ virtual_network_name }}/subnets'
                                  '/{{ name }}')
@@ -502,7 +511,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     public_ip_address=dict(
                         type='raw',
                         disposition='public_ip_address/id',
-                        pattern=('//subscriptions/{{ subscription_id }}/resourceGroups'
+                        pattern=('/subscriptions/{{ subscription_id }}/resourceGroups'
                                  '/{{ resource_group }}/providers/Microsoft.Network'
                                  '/publicIPAddresses/{{ name }}')
                     ),
