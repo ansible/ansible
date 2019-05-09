@@ -726,33 +726,46 @@ class NxosCmdRef:
                 ref['_cli_is_feature_disabled'] = ref['_proposed']
 
 
-    def get_platform_id(self):
-        """Query device for platform type"""
-        info = get_capabilities(self._module).get('device_info')
-        os_platform = info.get('network_os_platform')
-        plat = None
-
-        # Supported Platform IDs (N35 N3K N5K N6K N7K N9K)
-        if not os_platform:
+    def get_platform_shortname(self):
+        """Query device for platform type, normalize to a shortname/nickname.
+        Returns platform shortname (e.g. 'N3K-3058P' returns 'N3K') or None.
+        """
+        # TBD: add this method logic to get_capabilities() after those methods
+        #      are made consistent across transports
+        platform_info = self.execute_show_command('show inventory', 'json')
+        if not platform_info:
             return None
-        m = re.match('([CN][35679][K57])-', os_platform)
+        inventory_table = platform_info['TABLE_inv']['ROW_inv']
+        for info in inventory_table:
+            if 'Chassis' in info['name']:
+                network_os_platform = info['productid']
+                break
+        else:
+            return None
+
+        # Supported Platforms: N3K,N5K,N6K,N7K,N9K,N3K-F,N9K-F
+        m = re.match('(?P<short>N[35679][K57])-(?P<N35>C35)*', network_os_platform)
         if not m:
             return None
-        plat = m.group(1)
+        shortname = m.group('short')
 
         # Normalize
-        if re.search('C35', plat):
-            plat = 'N35'
-        if re.match('N77', plat):
-            plat = 'N7K'
-
-        # TBD: Fretta check needs linecard productid
-        return plat
+        if m.groupdict().get('N35'):
+            shortname = 'N35'
+        elif re.match('N77', shortname):
+            shortname = 'N7K'
+        elif re.match(r'N3K|N9K', shortname):
+            for info in inventory_table:
+                if '-R' in info['productid']:
+                    # Fretta Platform
+                    shortname += '-F'
+                    break
+        return shortname
 
 
     def get_platform_defaults(self):
         """Update ref with platform specific defaults"""
-        plat = self.get_platform_id()
+        plat = self.get_platform_shortname()
         if not plat:
             return
 
@@ -858,8 +871,7 @@ class NxosCmdRef:
                 # match up with the setval named placeholder keys; e.g.
                 #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
                 #   setval: my-cmd {foo} bar {baz}
-                pattern = re.compile(ref[k]['getval'])
-                ref[k]['existing'] = {k:str(match.group(k)) for k in pattern.groupindex.keys()}
+                ref[k]['existing'] = {k:str(match.group(k)) for k in match.groupdict().keys()}
             elif 'str' == kind:
                 ref[k]['existing'] = match[0]
             else:

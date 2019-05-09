@@ -228,7 +228,7 @@ ipv4_slow_timer:
   default: 2000
 
 ipv6_echo_rx_interval:
-  _exclude: ['N5K', 'N6K']
+  _exclude: ['N35', 'N5K', 'N6K']
   kind: int
   getval: bfd ipv6 echo-rx-interval (\d+)$
   setval: bfd ipv6 echo-rx-interval {0}
@@ -237,7 +237,7 @@ ipv6_echo_rx_interval:
     default: 250
 
 ipv6_interval:
-  _exclude: ['N5K', 'N6K']
+  _exclude: ['N35', 'N5K', 'N6K']
   kind: dict
   getval: bfd ipv6 interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
   setval: bfd ipv6 interval {tx} min_rx {min_rx} multiplier {multiplier}
@@ -246,7 +246,7 @@ ipv6_interval:
     default: *n3k_def_interval
 
 ipv6_slow_timer:
-  _exclude: ['N5K', 'N6K']
+  _exclude: ['N35', 'N5K', 'N6K']
   kind: int
   getval: bfd ipv6 slow-timer (\d+)$
   setval: bfd ipv6 slow-timer {0}
@@ -254,21 +254,21 @@ ipv6_slow_timer:
 
 # Fabricpath Commands
 fabricpath_interval:
-  _exclude: ['N3K', 'N9K']
+  _exclude: ['N35', 'N3K', 'N9K']
   kind: dict
   getval: bfd fabricpath interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
   setval: bfd fabricpath interval {tx} min_rx {min_rx} multiplier {multiplier}
   default: *def_interval
 
 fabricpath_slow_timer:
-  _exclude: ['N3K', 'N9K']
+  _exclude: ['N35', 'N3K', 'N9K']
   kind: int
   getval: bfd fabricpath slow-timer (\d+)$
   setval: bfd fabricpath slow-timer {0}
   default: 2000
 
 fabricpath_vlan:
-  _exclude: ['N3K', 'N9K']
+  _exclude: ['N35', 'N3K', 'N9K']
   kind: int
   getval: bfd fabricpath vlan (\d+)$
   setval: bfd fabricpath vlan {0}

@@ -18,37 +18,42 @@
       multiplier: 4
     slow: 2000
     nd_slow: 2001
-  when: platform is not search('N3K')
 
 - name: set facts (exclude 5K/6K)
   set_fact:
     echo_rx: 50
     nd_echo_rx: 51
     ipv4_echo_rx: 50
-    ipv6_echo_rx: 50
-    nd_afi_echo_rx: 54
+    nd_ipv4_echo_rx: 54
     ipv4_interval: *def_interval
-    ipv6_interval: *def_interval
-    nd_afi_interval:
+    nd_ipv4_interval: &nd_afi_interval
       tx: 54
       min_rx: 56
       multiplier: 8
     ipv4_slow: 2000
-    ipv6_slow: 2000
-    nd_afi_slow: 2046
+    nd_ipv4_slow: 2044
   when: platform is not search('N5K|N6K')
+
+- name: set facts (exclude 35/5K/6K)
+  set_fact:
+    ipv6_echo_rx: 50
+    nd_ipv6_echo_rx: 56
+    ipv6_interval: *def_interval
+    nd_ipv6_interval: *nd_afi_interval
+    ipv6_slow: 2000
+    nd_ipv6_slow: 2046
+  when: platform is not search('N35|N5K|N6K')
 
 - name: set facts (exclude 5K/6K/7K)
   set_fact:
     startup: 5
     nd_startup: 6
-  when: platform is not search('N5K|N6K|N7K')
+  when: platform is not search('N35|N5K|N6K|N7K')
 
 - name: set facts 3k defaults (resets some values above)
   set_fact:
     echo_rx: 250
     interval: &n3k_def_interval
-    interval:
       tx: 250
       min_rx: 250
       multiplier: 3
@@ -71,7 +76,7 @@
     nd_fab_slow_timer: 2007
     fab_vlan: 1
     nd_fab_vlan: 47
-  when: platform is not search('N3K|N9K')
+  when: platform is not search('N35|N3K|N9K')
 
 - name: Setup
   nxos_feature: &setup_teardown
@@ -88,12 +93,12 @@
       interval:              "{{ nd_interval }}"
       slow_timer:            "{{ nd_slow }}"
       startup_timer:         "{{ nd_startup | default(omit) }}"
-      ipv4_echo_rx_interval: "{{ nd_afi_echo_rx | default(omit) }}"
-      ipv6_echo_rx_interval: "{{ nd_afi_echo_rx | default(omit) }}"
-      ipv4_interval:         "{{ nd_afi_interval | default(omit) }}"
-      ipv6_interval:         "{{ nd_afi_interval | default(omit) }}"
-      ipv4_slow_timer:       "{{ nd_afi_slow | default(omit) }}"
-      ipv6_slow_timer:       "{{ nd_afi_slow | default(omit) }}"
+      ipv4_echo_rx_interval: "{{ nd_ipv4_echo_rx | default(omit) }}"
+      ipv6_echo_rx_interval: "{{ nd_ipv6_echo_rx | default(omit) }}"
+      ipv4_interval:         "{{ nd_ipv4_interval | default(omit) }}"
+      ipv6_interval:         "{{ nd_ipv6_interval | default(omit) }}"
+      ipv4_slow_timer:       "{{ nd_ipv4_slow | default(omit) }}"
+      ipv6_slow_timer:       "{{ nd_ipv6_slow | default(omit) }}"
       fabricpath_interval:   "{{ nd_fab_interval | default(omit) }}"
       fabricpath_slow_timer: "{{ nd_fab_slow | default(omit) }}"
       fabricpath_vlan:       "{{ nd_fab_vlan | default(omit) }}"
