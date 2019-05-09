@@ -114,7 +114,7 @@ EXAMPLES = '''
     name: my_first_group
     path: my_first_group
     state: present
-    parent_path: "super_parent/parent"
+    parent: "super_parent/parent"
 '''
 
 RETURN = '''
