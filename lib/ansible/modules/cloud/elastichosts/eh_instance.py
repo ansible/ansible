@@ -274,12 +274,8 @@ def main():
         if instance['status'] == 'active':
             # Active
             if module.params['force']:
-                if instance['persistent'] == 'false':
-                    client.stop_instance(uuid, graceful=True)
-                else:
-                    # Persistent, graceful shutdown
-                    if not client.stop_instance(uuid, graceful=True):
-                        module.fail_json(msg=('Could not shutdown instance'))
+                if not client.stop_instance(uuid, graceful=True):
+                    module.fail_json(msg=('Could not shutdown instance'))
             else:
                 module.fail_json(msg=(
                     'Instance is active, cannot delete. '
