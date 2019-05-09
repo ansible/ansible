@@ -41,26 +41,6 @@ options:
         description:
             - The region to which the project belongs.
         type: str
-        required: true
-    timeouts:
-        description:
-            - The timeouts for create/update/delete operation.
-        type: dict
-        suboptions:
-            create:
-                description:
-                    - The timeouts for create operation.
-                type: str
-                default: '10m'
-            update:
-                description:
-                    - The timeouts for update operation.
-                type: str
-                default: '10m'
-            delete:
-                description:
-                    - The timeouts for delete operation.
-                type: str
     id:
         description:
             - The id of resource to be managed.
