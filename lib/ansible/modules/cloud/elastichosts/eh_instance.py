@@ -240,6 +240,10 @@ def main():
             name=module.params['name'],
             type=module.params['type']
         )
+        if module.params['ssh_key'] is not None:
+            instance.update(
+                ssh_key=module.params['ssh_key']
+        )
         if module.check_mode:
             result.update(
                 changed=True,
