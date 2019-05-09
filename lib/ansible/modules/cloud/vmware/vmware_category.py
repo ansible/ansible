@@ -32,7 +32,6 @@ requirements:
 - python >= 2.6
 - PyVmomi
 - vSphere Automation SDK
-- vCloud Suite SDK
 options:
     category_name:
       description:
