@@ -99,10 +99,10 @@ Ansible metadata fields
    The default value is a single element list ["preview"]. The following strings are valid
    statuses and have the following meanings:
 
-   :stableinterface: The module's parameters are stable. Every effort will be made not to remove parameters or change
+   :stableinterface: The module's options (the parameters or arguments it accepts) are stable. Every effort will be made not to remove options or change
       their meaning. **Not** a rating of the module's code quality.
    :preview: The module is in tech preview. It may be
-      unstable, the parameters may change, or it may require libraries or
+      unstable, the options may change, or it may require libraries or
       web services that are themselves subject to incompatible changes.
    :deprecated: The module is deprecated and will be removed in a future release.
    :removed: The module is not present in the release. A stub is
@@ -116,7 +116,7 @@ DOCUMENTATION block
 
 After the shebang, the UTF-8 coding, the copyright line, the license, and the ``ANSIBLE_METADATA`` section comes the ``DOCUMENTATION`` block. Ansible's online module documentation is generated from the ``DOCUMENTATION`` blocks in each module's source code. The ``DOCUMENTATION`` block must be valid YAML. You may find it easier to start writing your ``DOCUMENTATION`` string in an :ref:`editor with YAML syntax highlighting <other_tools_and_programs>` before you include it in your Python file. You can start by copying our `example documentation string <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_ into your module file and modifying it. If you run into syntax issues in your YAML, you can validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
 
-Module documentation should briefly and accurately define what each module and parameter does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts.
+Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts.
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
     * Verify that arguments in doc and module spec dict are identical.
     * For password / secret arguments no_log=True should be set.
@@ -170,45 +170,45 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
 :options:
 
-  * Options are usually called `parameters` and sometimes arguments. We will be using `parameters` for the remainder of the documentation.
-  * If the module has no parameters (for example, it's a ``_facts`` module), all you need is one line: ``options: {}``.
-  * If your module has parameters (in other words, accepts arguments), each parameter should be documented thoroughly. For each module parameter, include:
+  * Options are often called `parameters` or `arguments`. Because the documentation field is called `options`, we will use that term.
+  * If the module has no options (for example, it's a ``_facts`` module), all you need is one line: ``options: {}``.
+  * If your module has options (in other words, accepts arguments), each option should be documented thoroughly. For each module option, include:
 
-  :parameter-name:
+  :option-name:
 
     * Declarative operation (not CRUD), to focus on the final state, for example `online:`, rather than `is_online:`.
-    * The name of the parameter should be consistent with the rest of the module, as well as other modules in the same category.
-    * In doubt, look for other modules to find parameter names that are used for the same purpose, we like to offer consistency to our users.
+    * The name of the option should be consistent with the rest of the module, as well as other modules in the same category.
+    * In doubt, look for other modules to find option names that are used for the same purpose, we like to offer consistency to our users.
 
   :description:
 
-    * Detailed explanation of what this parameter does. It should be written in full sentences.
-    * The first entry is a description of the parameter itself, subsequent entries detail its use, possible value format or dependencies.
+    * Detailed explanation of what this option does. It should be written in full sentences.
+    * The first entry is a description of the option itself, subsequent entries detail its use, possible value format or dependencies.
     * Should not list the possible values (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious).
-    * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when I(state=present)."
-    * Mutually exclusive parameters must be documented as the final sentence on each of the parameters.
+    * If an option is only sometimes required, this needs to be reflected in the documentation, e.g. "Required when I(state=present)."
+    * Mutually exclusive options must be documented as the final sentence on each of the options.
 
   :required:
 
     * Only needed if ``true``.
-    * If missing, we assume the parameter is not required.
+    * If missing, we assume the option is not required.
 
   :default:
 
     * If ``required`` is false/missing, ``default`` may be specified (assumed 'null' if missing).
     * Ensure that the default value in the docs matches the default value in the code.
     * The default field must not be listed as part of the description, unless it requires additional information or conditions.
-    * If the parameter is a boolean value, you can use any of the boolean values recognized by Ansible:
-      (such as true/false or yes/no).  Choose the one that reads better in the context of the parameter.
+    * If the option is a boolean value, you can use any of the boolean values recognized by Ansible:
+      (such as true/false or yes/no).  Choose the one that reads better in the context of the option.
 
   :choices:
 
-    * List of parameter values.
+    * List of option values.
     * Should be absent if empty.
 
   :type:
 
-    * Specifies the data type that parameter accepts, must match the ``argspec``.
+    * Specifies the data type that option accepts, must match the ``argspec``.
     * If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
 
   :aliases:
@@ -217,12 +217,12 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
   :version_added:
 
-    * Only needed if this parameter was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
+    * Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     * This is a string, and not a float, i.e. ``version_added: '2.3'``.
 
   :suboptions:
 
-    * If this parameter takes a dict, you can define its structure here.
+    * If this option takes a dict, you can define its structure here.
     * See :ref:`azure_rm_securitygroup_module`, :ref:`os_ironic_node_module` for examples.
 
 :requirements:
@@ -269,8 +269,8 @@ You can link from your module documentation to other module docs, other resource
 
 * ``L()`` for Links with a heading. For example: ``See L(IOS Platform Options guide,../network/user_guide/platform_ios.html).``
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/tower) for an overview.``
-* ``I()`` for parameter names. For example: ``Required if I(state=present).``
-* ``C()`` for files and parameter values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``
+* ``I()`` for option names. For example: ``Required if I(state=present).``
+* ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``
 * ``M()`` for module names. For example: ``See also M(win_copy) or M(win_template).``
 
 .. note::
@@ -319,7 +319,7 @@ Per playbook best practices, each example should include a ``name:`` line::
 
 The ``name:`` line should be capitalized and not include a trailing dot.
 
-If your examples use boolean parameters, use yes/no values. Since the documentation generates boolean values as yes/no, having the examples use these values as well makes the module documentation more consistent.
+If your examples use boolean options, use yes/no values. Since the documentation generates boolean values as yes/no, having the examples use these values as well makes the module documentation more consistent.
 
 If your module returns facts that are often needed, an example of how to use them can be helpful.
 
