@@ -119,9 +119,9 @@ def openstack_cloud_from_module(module, min_version='0.12.0'):
         module.fail_json(msg='openstacksdk is required for this module')
 
     if min_version:
-        min_version = max(StrictVersion('0.10.0'), StrictVersion(min_version))
+        min_version = max(StrictVersion('0.12.0'), StrictVersion(min_version))
     else:
-        min_version = StrictVersion('0.10.0')
+        min_version = StrictVersion('0.12.0')
 
     if StrictVersion(sdk_version.__version__) < min_version:
         module.fail_json(
