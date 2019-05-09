@@ -43,7 +43,7 @@ DOCUMENTATION = """
         - name: VAULT_SECRET_ID
     role:
       description: Role name for vault Kubernetes auth.
-      version_added: "2.8"
+      version_added: "2.9"
       env:
         - name: VAULT_ROLE
     auth_method:
