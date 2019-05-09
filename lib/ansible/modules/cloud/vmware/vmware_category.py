@@ -119,7 +119,7 @@ category_results:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
-    from com.vmware.cis.tagging_client import Category, CategoryModel
+    from com.vmware.cis.tagging_client import CategoryModel
 except ImportError:
     pass
 
@@ -127,7 +127,7 @@ except ImportError:
 class VmwareCategory(VmwareRestClient):
     def __init__(self, module):
         super(VmwareCategory, self).__init__(module)
-        self.category_service = Category(self.connect)
+        self.category_service = self.api_client.tagging.Category
         self.global_categories = dict()
         self.category_name = self.params.get('category_name')
         self.get_all_categories()

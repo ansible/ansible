@@ -218,17 +218,16 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
     from com.vmware.vapi.std_client import DynamicID
-    from com.vmware.cis.tagging_client import Tag, TagAssociation
-    HAS_VCLOUD = True
+    HAS_VSPHERE = True
 except ImportError:
-    HAS_VCLOUD = False
+    HAS_VSPHERE = False
 
 
 class VmwareTag(VmwareRestClient):
     def __init__(self, module):
         super(VmwareTag, self).__init__(module)
-        self.tag_service = Tag(self.connect)
-        self.tag_association_svc = TagAssociation(self.connect)
+        self.tag_service = self.api_client.tagging.Tag
+        self.tag_association_svc = self.api_client.tagging.TagAssociation
 
 
 def main():
@@ -268,7 +267,7 @@ def main():
             else:
                 instance = pyv.to_json(vm, module.params['properties'])
             if module.params.get('tags'):
-                if not HAS_VCLOUD:
+                if not HAS_VSPHERE:
                     module.fail_json(msg="Unable to find 'vCloud Suite SDK' Python library which is required."
                                          " Please refer this URL for installation steps"
                                          " - https://code.vmware.com/web/sdk/60/vcloudsuite-python")
