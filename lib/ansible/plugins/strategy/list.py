@@ -12,6 +12,7 @@ DOCUMENTATION = '''
     author: Ansible Core Team
 '''
 
+from ansible import context
 from ansible.executor.task_result import TaskResult
 from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
 
@@ -46,9 +47,9 @@ class StrategyModule(LinearStrategyModule):
         results.extend(super(StrategyModule, self)._process_pending_results(iterator, one_pass, max_passes))
 
         # give callback 'list optoins info'
-        opts = {'tasks': getattr(self._tqm._options, 'listtasks', False),
-                'tags': getattr(self._tqm._options, 'listtags', False),
-                'hosts': getattr(self._tqm._options, 'listhosts', False)}
+        opts = {'tasks': context.CLIARGS.get('listtasks', False),
+                'tags': context.CLIARGS.get('listtags', False),
+                'hosts': context.CLIARGS.get('listhosts', False)}
         self._tqm.send_callback('list_options', opts)
 
         return results
