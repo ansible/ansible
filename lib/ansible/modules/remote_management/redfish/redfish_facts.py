@@ -91,6 +91,36 @@ EXAMPLES = '''
       password: "{{ password }}"
       timeout: 20
 
+  - name: Get Virtual Media information
+    redfish_facts:
+      category: Manager
+      command: GetVirtualMedia
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts.virtual_media.entries | to_nice_json }}"
+
+  - name: Get Volume Inventory
+    redfish_facts:
+      category: Systems
+      command: GetVolumeInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts.volume.entries | to_nice_json }}"
+
+  - name: Get Session information
+    redfish_facts:
+      category: Sessions
+      command: GetSessions
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts.session.entries | to_nice_json }}"
+
   - name: Get default inventory information
     redfish_facts:
       baseuri: "{{ baseuri }}"
@@ -184,12 +214,13 @@ from ansible.module_utils.redfish_utils import RedfishUtils
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
                 "GetMemoryInventory", "GetNicInventory",
-                "GetStorageControllerInventory", "GetDiskInventory",
+                "GetStorageControllerInventory", "GetDiskInventory", "GetVolumeInventory",
                 "GetBiosAttributes", "GetBootOrder", "GetBootOverride"],
     "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals", "GetChassisInventory"],
     "Accounts": ["ListUsers"],
+    "Sessions": ["GetSessions"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
-    "Manager": ["GetManagerNicInventory", "GetLogs"],
+    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -197,6 +228,7 @@ CATEGORY_COMMANDS_DEFAULT = {
     "Chassis": "GetFanInventory",
     "Accounts": "ListUsers",
     "Update": "GetFirmwareInventory",
+    "Sessions": "GetSessions",
     "Manager": "GetManagerNicInventory"
 }
 
@@ -279,6 +311,8 @@ def main():
                     result["storage_controller"] = rf_utils.get_multi_storage_controller_inventory()
                 elif command == "GetDiskInventory":
                     result["disk"] = rf_utils.get_multi_disk_inventory()
+                elif command == "GetVolumeInventory":
+                    result["volume"] = rf_utils.get_multi_volume_inventory()
                 elif command == "GetBiosAttributes":
                     result["bios_attribute"] = rf_utils.get_multi_bios_attributes()
                 elif command == "GetBootOrder":
@@ -326,6 +360,16 @@ def main():
                 elif command == "GetFirmwareUpdateCapabilities":
                     result["firmware_update_capabilities"] = rf_utils.get_firmware_update_capabilities()
 
+        elif category == "Sessions":
+            # excute only if we find SessionService resources
+            resource = rf_utils._find_sessionservice_resource(rf_uri)
+            if resource['ret'] is False:
+                module.fail_json(msg=resource['msg'])
+
+            for command in command_list:
+                if command == "GetSessions":
+                    result["session"] = rf_utils.get_sessions()
+
         elif category == "Manager":
             # execute only if we find a Manager service resource
             resource = rf_utils._find_managers_resource(rf_uri)
@@ -335,6 +379,8 @@ def main():
             for command in command_list:
                 if command == "GetManagerNicInventory":
                     result["manager_nics"] = rf_utils.get_multi_nic_inventory(category)
+                elif command == "GetVirtualMedia":
+                    result["virtual_media"] = rf_utils.get_multi_virtualmedia()
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 

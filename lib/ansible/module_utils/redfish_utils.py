@@ -161,6 +161,25 @@ class RedfishUtils(object):
             self.accounts_uri = accounts
         return {'ret': True}
 
+    def _find_sessionservice_resource(self, uri):
+        response = self.get_request(self.root_uri + uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'SessionService' not in data:
+            return {'ret': False, 'msg': "SessionService resource not found"}
+        else:
+            session_service = data["SessionService"]["@odata.id"]
+            response = self.get_request(self.root_uri + session_service)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+            sessions = data['Sessions']['@odata.id']
+            if sessions[-1:] == '/':
+                sessions = sessions[:-1]
+            self.sessions_uri = sessions
+        return {'ret': True}
+
     def _find_systems_resource(self, uri):
         response = self.get_request(self.root_uri + uri)
         if response['ret'] is False:
@@ -460,6 +479,89 @@ class RedfishUtils(object):
     def get_multi_disk_inventory(self):
         return self.aggregate(self.get_disk_inventory)
 
+    def get_volume_inventory(self, systems_uri):
+        result = {'entries': []}
+        controller_list = []
+        volume_list = []
+        volume_results = []
+        # Get these entries, but does not fail if not found
+        properties = ['Id', 'Name', 'RAIDType', 'VolumeType', 'BlockSizeBytes',
+                      'Capacity', 'CapacityBytes', 'CapacitySources',
+                      'Encrypted', 'EncryptionTypes', 'Identifiers',
+                      'Operations', 'OptimumIOSizeBytes', 'AccessCapabilities',
+                      'AllocatedPools', 'Status']
+
+        # Find Storage service
+        response = self.get_request(self.root_uri + systems_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+
+        if 'SimpleStorage' not in data and 'Storage' not in data:
+            return {'ret': False, 'msg': "SimpleStorage and Storage resource \
+                     not found"}
+
+        if 'Storage' in data:
+            # Get a list of all storage controllers and build respective URIs
+            storage_uri = data[u'Storage'][u'@odata.id']
+            response = self.get_request(self.root_uri + storage_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+
+            if data.get('Members'):
+                for controller in data[u'Members']:
+                    controller_list.append(controller[u'@odata.id'])
+                for c in controller_list:
+                    uri = self.root_uri + c
+                    response = self.get_request(uri)
+                    if response['ret'] is False:
+                        return response
+                    data = response['data']
+
+                    if 'Volumes' in data:
+                        # Get a list of all volumes and build respective URIs
+                        volumes_uri = data[u'Volumes'][u'@odata.id']
+                        response = self.get_request(self.root_uri + volumes_uri)
+                        data = response['data']
+
+                        if data.get('Members'):
+                            for volume in data[u'Members']:
+                                volume_list.append(volume[u'@odata.id'])
+                            for v in volume_list:
+                                uri = self.root_uri + v
+                                response = self.get_request(uri)
+                                if response['ret'] is False:
+                                    return response
+                                data = response['data']
+
+                                volume_result = {}
+                                for property in properties:
+                                    if property in data:
+                                        if data[property] is not None:
+                                            volume_result[property] = data[property]
+
+                                # Get related Drives Id
+                                drive_id_list = []
+                                if 'Links' in data:
+                                    if 'Drives' in data[u'Links']:
+                                        for link in data[u'Links'][u'Drives']:
+                                            drive_id_link = link[u'@odata.id']
+                                            drive_id = drive_id_link.split("/")[-1]
+                                            drive_id_list.append({'Id': drive_id})
+                                        volume_result['Linked_drives'] = drive_id_list
+
+                                volume_results.append(volume_result)
+                result["entries"].append(volume_results)
+        else:
+            return {'ret': False, 'msg': "Storage resource not found"}
+
+        return result
+
+    def get_multi_volume_inventory(self):
+        return self.aggregate(self.get_volume_inventory)
+
     def restart_manager_gracefully(self):
         result = {}
         key = "Actions"
@@ -629,6 +731,39 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True}
+
+    def get_sessions(self):
+        result = {}
+        # listing all users has always been slower than other operations, why?
+        session_list = []
+        sessions_results = []
+        # Get these entries, but does not fail if not found
+        properties = ['Description', 'Id', 'Name', 'UserName']
+
+        response = self.get_request(self.root_uri + self.sessions_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        for sessions in data[u'Members']:
+            session_list.append(sessions[u'@odata.id'])   # session_list[] are URIs
+
+        # for each session, get details
+        for uri in session_list:
+            session = {}
+            response = self.get_request(self.root_uri + uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+
+            for property in properties:
+                if property in data:
+                    session[property] = data[property]
+
+            sessions_results.append(session)
+        result["entries"] = sessions_results
+        return result
 
     def get_firmware_update_capabilities(self):
         result = {}
@@ -1274,6 +1409,69 @@ class RedfishUtils(object):
             if 'entries' in inventory:
                 entries.append(({'resource_uri': resource_uri},
                                 inventory['entries']))
+        return dict(ret=ret, entries=entries)
+
+    def get_virtualmedia(self, resource_uri):
+        result = {}
+        virtualmedia_list = []
+        virtualmedia_results = []
+        key = "VirtualMedia"
+        # Get these entries, but does not fail if not found
+        properties = ['Description', 'ConnectedVia', 'Id', 'MediaTypes',
+                      'Image', 'ImageName', 'Name', 'WriteProtected',
+                      'TransferMethod', 'TransferProtocolType']
+
+        response = self.get_request(self.root_uri + resource_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        virtualmedia_uri = data[key]["@odata.id"]
+
+        # Get a list of all virtual media and build respective URIs
+        response = self.get_request(self.root_uri + virtualmedia_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        for virtualmedia in data[u'Members']:
+            virtualmedia_list.append(virtualmedia[u'@odata.id'])
+
+        for n in virtualmedia_list:
+            virtualmedia = {}
+            uri = self.root_uri + n
+            response = self.get_request(uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+
+            for property in properties:
+                if property in data:
+                    virtualmedia[property] = data[property]
+
+            virtualmedia_results.append(virtualmedia)
+        result["entries"] = virtualmedia_results
+        return result
+
+    def get_multi_virtualmedia(self):
+        ret = True
+        entries = []
+
+        # Because _find_managers_resource() only find last Manager uri in self.manager_uri, not one list. This should be 1 issue.
+        # I have to put manager_uri into list to reduce future changes when the issue is fixed.
+        resource_uris = [self.manager_uri]
+
+        for resource_uri in resource_uris:
+            virtualmedia = self.get_virtualmedia(resource_uri)
+            ret = virtualmedia.pop('ret') and ret
+            if 'entries' in virtualmedia:
+                entries.append(({'resource_uri': resource_uri},
+                               virtualmedia['entries']))
         return dict(ret=ret, entries=entries)
 
     def get_psu_inventory(self):
