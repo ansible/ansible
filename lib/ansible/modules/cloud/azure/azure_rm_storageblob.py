@@ -81,7 +81,7 @@ options:
     resource_group:
         description:
             - Name of the resource group to use.
-        required: true
+            - If C(resource_group) is not provided, the field C(shared_access_key) must be provided.
         aliases:
             - resource_group_name
     src:
@@ -208,7 +208,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
             container=dict(required=True, type='str', aliases=['container_name']),
             dest=dict(type='path', aliases=['destination']),
             force=dict(type='bool', default=False),
-            resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
+            resource_group=dict(type='str', aliases=['resource_group_name']),
             src=dict(type='str', aliases=['source']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             public_access=dict(type='str', choices=['container', 'blob']),
