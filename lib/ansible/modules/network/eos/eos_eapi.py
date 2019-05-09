@@ -299,7 +299,7 @@ def map_config_to_obj(module):
         'local_http': out[0]['localHttpServer']['configured'],
         'local_http_port': out[0]['localHttpServer']['port'],
         'socket': out[0]['unixSocketServer']['configured'],
-        'vrf': out[0]['vrf'],
+        'vrf': out[0]['vrf'] or "default",
         'state': parse_state(out)
     }
 
