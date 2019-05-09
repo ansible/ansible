@@ -367,7 +367,7 @@
     name: "{{ slot1_name }}"
     configuration_source: "{{ win_app_name }}13"
     app_settings:
-        testkey: testvalue
+        testkey: testvalueslot
   register: output
 
 - name: Assert slot creation
@@ -381,7 +381,7 @@
     webapp_name: "{{ win_app_name }}13"
     name: "{{ slot1_name }}"
     app_settings:
-        testkey: testvalue
+        testkey: testvalueslot
   register: output
 
 - name: Assert idempotence
