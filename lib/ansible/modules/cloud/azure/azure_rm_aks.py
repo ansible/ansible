@@ -114,7 +114,7 @@ options:
                 description: Network policy used for building Kubernetes network.
             pod_cidr:
                 description:
-                    - A CIDR notation IP range from which to assign pod IPs when C(kubenet) is used.
+                    - A CIDR notation IP range from which to assign pod IPs when I(network_plugin=kubenet) is used.
                     - It should be a large address space that isn't in use elsewhere in your network environment.
                     - This address range must be large enough to accommodate the number of nodes that you expect to scale up to.
             service_cidr:
