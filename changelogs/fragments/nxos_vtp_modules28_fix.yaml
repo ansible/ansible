@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_vtp_* modules fix n6k issues (https://github.com/ansible/ansible/pull/55737).
