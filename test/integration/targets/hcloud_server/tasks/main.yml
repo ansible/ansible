@@ -307,7 +307,7 @@
       - ci@ansible.hetzner.cloud
     labels:
       key: value
-      mylabel: 123
+      mylabel: "123"
     state: started
   register: main_server
 - name: verify create server with labels
@@ -315,7 +315,7 @@
     that:
       - main_server is changed
       - main_server.hcloud_server.labels.key == "value"
-      - main_server.hcloud_server.labels.mylabel == 123
+      - main_server.hcloud_server.labels.mylabel == "123"
 
 - name: test update server with labels
   hcloud_server:
@@ -326,7 +326,7 @@
       - ci@ansible.hetzner.cloud
     labels:
       key: other
-      mylabel: 123
+      mylabel: "123"
     state: started
   register: main_server
 - name: verify update server with labels
@@ -334,7 +334,7 @@
     that:
       - main_server is changed
       - main_server.hcloud_server.labels.key == "other"
-      - main_server.hcloud_server.labels.mylabel == 123
+      - main_server.hcloud_server.labels.mylabel == "123"
 
 
 - name: test update server with labels in other order
@@ -345,7 +345,7 @@
     ssh_keys:
       - ci@ansible.hetzner.cloud
     labels:
-      mylabel: 123
+      mylabel: "123"
       key: other
     state: started
   register: main_server
