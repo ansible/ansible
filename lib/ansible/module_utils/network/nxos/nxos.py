@@ -31,6 +31,7 @@
 import collections
 import json
 import re
+import sys
 import yaml
 
 from ansible.module_utils._text import to_text
@@ -41,6 +42,9 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.urls import fetch_url
+
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
 
 _DEVICE_CONNECTION = None
 
@@ -694,8 +698,12 @@ class NxosCmdRef:
     def __init__(self, module, cmd_ref_str):
         """Initialize cmd_ref from yaml data."""
         self._module = module
-        ref = self._ref = yaml.load(cmd_ref_str)
-        #TBD py3# ref = self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
+        if PY2:
+            self._ref = yaml.load(cmd_ref_str)
+        else:
+            self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
+        ref = self._ref
+
         # Process module state key
         if self._module.params.get('state') is None:
             ref['_state'] = 'present'
