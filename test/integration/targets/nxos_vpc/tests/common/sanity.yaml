@@ -4,6 +4,17 @@
   when: ansible_connection == "local"
 
 - block:
+  - set_fact: delay_restore_orphan_port=25
+  - set_fact: def_delay_restore_orphan_port=default
+  when: platform is not search("N35|N5K|N6K")
+
+- block:
+  - name: disable vpc for initial vpc config cleanup
+    nxos_feature:
+      feature: vpc
+      provider: "{{ connection }}"
+      state: disabled
+
   - name: enable feature vpc
     nxos_feature:
       feature: vpc
@@ -46,6 +57,8 @@
       system_priority: 2000
       peer_gw: True
       delay_restore: 5
+      delay_restore_interface_vlan: 15
+      delay_restore_orphan_port: "{{ delay_restore_orphan_port|default(omit) }}"
     register: result
 
   - assert: *true
@@ -57,74 +70,58 @@
   - assert: *false
 
   - block:
-    - name: Configure auto1
-      nxos_vpc: &auto_false
+    # This block is only useful on platforms that nvgen 'no auto-recovery'.
+    # Note: auto_recovery is mutually_exclusive with auto_recovery_reload_delay.
+    - set_fact: def_auto_recovery=False
+    - set_fact: def_auto_recovery=True
+      when: platform is search("N7K")
+
+    - name: auto-recovery from default to non-default
+      nxos_vpc: &auto_recovery_1
         provider: "{{ connection }}"
-        state: present
         domain: 100
-        auto_recovery: False
+        auto_recovery: "{{ not def_auto_recovery }}"
       register: result
 
     - assert: *true
 
-    - name: "Conf Idempotence"
-      nxos_vpc: *auto_false
+    - name: "Conf Idempotence auto-recovery def-to-non-def"
+      nxos_vpc: *auto_recovery_1
       register: result
 
     - assert: *false
 
-    - name: Configure auto2
-      nxos_vpc: &auto_true
+    - name: auto-recovery from non-default to default
+      nxos_vpc: &auto_recovery_2
         provider: "{{ connection }}"
-        state: present
         domain: 100
-        auto_recovery: True
+        auto_recovery: "{{ def_auto_recovery }}"
       register: result
 
     - assert: *true
 
-    - name: "Conf Idempotence"
-      nxos_vpc: *auto_true
+    - name: "Conf Idempotence auto-recovery non-def-to-def"
+      nxos_vpc: *auto_recovery_2
       register: result
 
     - assert: *false
 
-    when: (platform is search("N7K|N9K-F"))
+    when: platform is search("N35|N7K|N3K-F|N9K-F")
 
-  - block:
-    - name: Configure auto1
-      nxos_vpc: &auto_true1
-        provider: "{{ connection }}"
-        state: present
-        domain: 100
-        auto_recovery: True
-      register: result
+  - name: Configure auto-recovery reload-delay
+    nxos_vpc: &auto_reload
+      provider: "{{ connection }}"
+      domain: 100
+      auto_recovery_reload_delay: 242
+    register: result
 
-    - assert: *true
+  - assert: *true
 
-    - name: "Conf Idempotence"
-      nxos_vpc: *auto_true1
-      register: result
+  - name: "Conf Idempotence auto-recovery reload-delay"
+    nxos_vpc: *auto_reload
+    register: result
 
-    - assert: *false
-
-    - name: Configure auto2
-      nxos_vpc: &auto_false1
-        provider: "{{ connection }}"
-        state: present
-        domain: 100
-        auto_recovery: False
-      register: result
-
-    - assert: *true
-
-    - name: "Conf Idempotence"
-      nxos_vpc: *auto_false1
-      register: result
-
-    - assert: *false
-
-    when: not (platform is search("N7K|N9K-F"))
+  - assert: *false
 
   - name: Configure vpc2
     nxos_vpc: &conf_vpc2
@@ -135,6 +132,8 @@
       system_priority: default
       peer_gw: True
       delay_restore: default
+      delay_restore_interface_vlan: default
+      delay_restore_orphan_port: "{{ def_delay_restore_orphan_port|default(omit) }}"
     register: result
 
   - assert: *true
