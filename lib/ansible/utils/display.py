@@ -62,10 +62,8 @@ logger = None
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-        mypid = str(os.getpid())
-        user = getpass.getuser()
-        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        logging.basicConfig(filename=path, level=logging.INFO, format='%(asctime)s p=%(user)s u=%(process)d | %(message)s')
+        logger = logging.LoggerAdapter(logging.getLogger(__name__), {'user': getpass.getuser()})
         for handler in logging.root.handlers:
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
@@ -161,19 +159,25 @@ class Display(with_metaclass(Singleton, object)):
                     raise
 
         if logger and not screen_only:
-            msg2 = nocolor.lstrip(u'\n')
+            # We first convert to a byte string so that we get rid of
+            # color and characters that are invalid in the user's locale
+            msg2 = to_bytes(nocolor.lstrip(u'\n'))
 
-            msg2 = to_bytes(msg2)
             if sys.version_info >= (3,):
                 # Convert back to text string on python3
-                # We first convert to a byte string so that we get rid of
-                # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
+            # set logger level based on color (bad match, but otherwise we need to start passing severity around)
             if color == C.COLOR_ERROR:
-                logger.error(msg2)
+                lvl = logging.ERROR
+            elif color == C.COLOR_WARN:
+                lvl = logging.WARNING
+            elif color == C.COLOR_DEBUG:
+                lvl = logging.DEBUG
             else:
-                logger.info(msg2)
+                lvl = logging.INFO
+
+            logger.log(lvl, msg2)
 
     def v(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=0)
