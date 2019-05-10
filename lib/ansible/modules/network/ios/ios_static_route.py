@@ -149,6 +149,7 @@ def map_obj_to_commands(want, have):
         del w['state']
         # Try to match an existing config with the desired config
         for h in have:
+            # To delete admin_distance param from have if not it want before comparing both fields
             if not w.get('admin_distance') and h.get('admin_distance'):
                 del h['admin_distance']
             diff = list(set(w.items()) ^ set(h.items()))
