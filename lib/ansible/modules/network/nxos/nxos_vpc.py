@@ -66,14 +66,39 @@ options:
     description:
       - Enables/Disables peer gateway
     type: bool
+  # TBD: no support for peer_gw_exclude_gw
+  # peer_gw_exclude_gw:
+  #   description:
+  #     - Range of VLANs to be excluded from peer-gateway
+  #   type: str
   auto_recovery:
     description:
-      - Enables/Disables auto recovery
+      - Enables/Disables auto recovery on platforms that support disable
+      - timers are not modifiable with this attribute
+      - mutually exclusive with auto_recovery_reload_delay
     type: bool
+  auto_recovery_reload_delay:
+    description:
+      - Manages auto-recovery reload-delay timer in seconds
+      - mutually exclusive with auto_recovery
+    type: str
+    version_added: "2.9"
   delay_restore:
     description:
       - manages delay restore command and config value in seconds
     type: str
+  delay_restore_interface_vlan:
+    description:
+      - manages delay restore interface-vlan command and config value in seconds
+      - not supported on all platforms
+    type: str
+    version_added: "2.9"
+  delay_restore_orphan_port:
+    description:
+      - manages delay restore orphan-port command and config value in seconds
+      - not supported on all platforms
+    type: str
+    version_added: "2.9"
   state:
     description:
       - Manages desired state of the resource
@@ -135,15 +160,21 @@ CONFIG_ARGS = {
     'role_priority': 'role priority {role_priority}',
     'system_priority': 'system-priority {system_priority}',
     'delay_restore': 'delay restore {delay_restore}',
+    'delay_restore_interface_vlan': 'delay restore interface-vlan {delay_restore_interface_vlan}',
+    'delay_restore_orphan_port': 'delay restore orphan-port {delay_restore_orphan_port}',
     'peer_gw': '{peer_gw} peer-gateway',
     'auto_recovery': '{auto_recovery} auto-recovery',
+    'auto_recovery_reload_delay': 'auto-recovery reload-delay {auto_recovery_reload_delay}',
 }
 
 PARAM_TO_DEFAULT_KEYMAP = {
     'delay_restore': '60',
+    'delay_restore_interface_vlan': '10',
+    'delay_restore_orphan_port': '0',
     'role_priority': '32667',
     'system_priority': '32667',
     'peer_gw': False,
+    'auto_recovery_reload_delay': 240,
 }
 
 
@@ -201,7 +232,7 @@ def get_vpc(module):
 
     vpc = {}
     if domain != 'not configured':
-        run = get_config(module, flags=['vpc'])
+        run = get_config(module, flags=['vpc all'])
         if run:
             vpc['domain'] = domain
             for key in PARAM_TO_DEFAULT_KEYMAP.keys():
@@ -215,15 +246,21 @@ def get_vpc(module):
                 if 'system-priority' in each:
                     line = each.split()
                     vpc['system_priority'] = line[-1]
-                if 'delay restore' in each:
+                if re.search(r'delay restore \d+', each):
                     line = each.split()
                     vpc['delay_restore'] = line[-1]
-                if 'no auto-recovery' in each:
-                    vpc['auto_recovery'] = False
-                elif 'auto-recovery' in each:
-                    vpc['auto_recovery'] = True
+                if 'delay restore interface-vlan' in each:
+                    line = each.split()
+                    vpc['delay_restore_interface_vlan'] = line[-1]
+                if 'delay restore orphan-port' in each:
+                    line = each.split()
+                    vpc['delay_restore_orphan_port'] = line[-1]
+                if 'auto-recovery' in each:
+                    vpc['auto_recovery'] = False if 'no ' in each else True
+                    line = each.split()
+                    vpc['auto_recovery_reload_delay'] = line[-1]
                 if 'peer-gateway' in each:
-                    vpc['peer_gw'] = True
+                    vpc['peer_gw'] = False if 'no ' in each else True
                 if 'peer-keepalive destination' in each:
                     line = each.split()
                     vpc['pkl_dest'] = line[2]
@@ -235,7 +272,6 @@ def get_vpc(module):
                     else:
                         if 'vrf' in each:
                             vpc['pkl_vrf'] = line[4]
-
     return vpc
 
 
@@ -288,13 +324,18 @@ def main():
         pkl_vrf=dict(required=False),
         peer_gw=dict(required=False, type='bool'),
         auto_recovery=dict(required=False, type='bool'),
+        auto_recovery_reload_delay=dict(required=False, type='str'),
         delay_restore=dict(required=False, type='str'),
+        delay_restore_interface_vlan=dict(required=False, type='str'),
+        delay_restore_orphan_port=dict(required=False, type='str'),
         state=dict(choices=['absent', 'present'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
+    mutually_exclusive = [('auto_recovery', 'auto_recovery_reload_delay')]
     module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
     warnings = list()
@@ -309,14 +350,21 @@ def main():
     pkl_vrf = module.params['pkl_vrf']
     peer_gw = module.params['peer_gw']
     auto_recovery = module.params['auto_recovery']
+    auto_recovery_reload_delay = module.params['auto_recovery_reload_delay']
     delay_restore = module.params['delay_restore']
+    delay_restore_interface_vlan = module.params['delay_restore_interface_vlan']
+    delay_restore_orphan_port = module.params['delay_restore_orphan_port']
     state = module.params['state']
 
     args = dict(domain=domain, role_priority=role_priority,
                 system_priority=system_priority, pkl_src=pkl_src,
                 pkl_dest=pkl_dest, pkl_vrf=pkl_vrf, peer_gw=peer_gw,
                 auto_recovery=auto_recovery,
-                delay_restore=delay_restore)
+                auto_recovery_reload_delay=auto_recovery_reload_delay,
+                delay_restore=delay_restore,
+                delay_restore_interface_vlan=delay_restore_interface_vlan,
+                delay_restore_orphan_port=delay_restore_orphan_port,
+                )
 
     if not pkl_dest:
         if pkl_src:
