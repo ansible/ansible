@@ -686,13 +686,20 @@ class NxosCmdRef:
       # Common getter syntax for BFD commands
       get_command: show run bfd all | incl '^(no )*bfd'
 
-    echo_rx_interval:
-      kind: int
-      getval: bfd echo-rx-interval {?P<echo_rx_interval>}$
-      setval: bfd echo-rx-interval {echo_rx_interval}
-      default: 50
+    interval:
+      kind: dict
+      getval: bfd interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
+      setval: bfd interval {tx} min_rx {min_rx} multiplier {multiplier}
+      default:
+        tx: 50
+        min_rx: 50
+        multiplier: 3
       N3K:
-        default: 250
+        # Platform overrides
+        default:
+          tx: 250
+          min_rx: 250
+          multiplier: 3
     """
 
     def __init__(self, module, cmd_ref_str):
@@ -709,6 +716,7 @@ class NxosCmdRef:
             ref['_state'] = 'present'
         else:
             ref['_state'] = self._module.params.get('state')
+
         # Create a list of supported commands based on ref keys
         ref['commands'] = [k for k in ref if not k.startswith('_')]
         ref['commands'].sort()
