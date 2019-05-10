@@ -684,8 +684,8 @@ class NxosCmdRef:
 
     echo_rx_interval:
       kind: int
-      getval: bfd echo-rx-interval (\d+)$
-      setval: bfd echo-rx-interval {0}
+      getval: bfd echo-rx-interval {?P<echo_rx_interval>}$
+      setval: bfd echo-rx-interval {echo_rx_interval}
       default: 50
       N3K:
         default: 250
@@ -695,6 +695,7 @@ class NxosCmdRef:
         """Initialize cmd_ref from yaml data."""
         self._module = module
         ref = self._ref = yaml.load(cmd_ref_str)
+        #TBD py3# ref = self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
         # Process module state key
         if self._module.params.get('state') is None:
             ref['_state'] = 'present'
@@ -706,6 +707,7 @@ class NxosCmdRef:
         ref['_proposed'] = []
         self.feature_enable()
         self.get_platform_defaults()
+        self.normalize_defaults()
 
     def __getitem__(self, key=None):
         if key is None:
@@ -781,6 +783,20 @@ class NxosCmdRef:
         for k in plat_spec_cmds:
             for plat_key in ref[k][plat]:
                 ref[k][plat_key] = ref[k][plat][plat_key]
+
+    def normalize_defaults(self):
+        """Update ref defaults with normalized data"""
+        ref = self._ref
+        for k in ref['commands']:
+            if ref[k]['default']:
+                kind = ref[k]['kind']
+                if 'int' == kind:
+                    ref[k]['default'] = int(ref[k]['default'])
+                elif 'list' == kind:
+                    ref[k]['default'] = [str(i) for i in ref[k]['default']]
+                elif 'dict' == kind:
+                    ref[k]['default'] = {k:str(v) for k,v in ref[k]['default'].items()}
+
 
     def execute_show_command(self, command, format):
         """Generic show command helper.
@@ -894,7 +910,7 @@ class NxosCmdRef:
                 elif 'list' == ref[k]['kind']:
                     playval = [str(i) for i in playval]
                 elif 'dict' == ref[k]['kind']:
-                    playval = {k:str(v) for k,v in playval.iteritems()}
+                    playval = {k:str(v) for k,v in playval.items()}
                 ref[k]['playval'] = playval
 
 
@@ -915,9 +931,7 @@ class NxosCmdRef:
             existing = ref[k].get('existing', ref[k]['default'])
             if playval == existing and ref['_state'] == 'present':
                 continue
-            if isinstance(existing, dict) and not all(existing.values()):
-                # All existing sub_key values are None so it's safe to set
-                # existing to None.
+            if isinstance(existing, dict) and all(x==None for x in existing.values()):
                 existing = None
             if existing is None and ref['_state'] == 'absent':
                 continue
