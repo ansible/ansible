@@ -91,6 +91,8 @@ EXAMPLES = '''
       username: admin
       password: passme
       project_name: admin
+      os_user_domain_name: Default
+      os_project_domain_name: Default
     name: cirros
     container_format: bare
     disk_format: qcow2
