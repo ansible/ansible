@@ -1521,3 +1521,12 @@ releases:
     - ps-basic-json.yaml
     - v2.8.0rc2_summary.yaml
     release_date: '2019-05-01'
+  2.8.0rc3:
+    codename: How Many More Times
+    fragments:
+    - 51825-vmware_deploy_ovf-add_folder_doc.yml
+    - 56145-ios-net_get-net_put-update.yaml
+    - networkos_config_src_option_fix.yaml
+    - v2.8.0rc3_summary.yaml
+    - vmware_check_ssl_cert.yaml
+    release_date: '2019-05-10'

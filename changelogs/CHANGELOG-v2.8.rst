@@ -5,6 +5,28 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.0rc3
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2019-05-10
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Added documentation about the folder parameter with examples in vmware_deploy_ovf (https://github.com/ansible/ansible/issues/51825).
+
+Bugfixes
+--------
+
+- Fix invalid src option return response for network config modules (https://github.com/ansible/ansible/pull/56076)
+- Fix net_get and net_put task run failure - https://github.com/ansible/ansible/pull/56145
+- vmware - The VMware modules now enable the SSL certificate check unless ``validate_certs`` is ``false``.
+
 v2.8.0rc2
 =========
 
