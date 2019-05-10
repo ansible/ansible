@@ -17,18 +17,18 @@
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     ebs_optimized: true
     instance_type: t3.nano
+    wait: false
     <<: *aws_connection_info
   register: ebs_opt_in_vpc
 
-- name: Get ec2 instance facts
+- name: Get ec2 instance info
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-optimized-instance-in-vpc"
-      "instance-state-name": "running"
     <<: *aws_connection_info
-  register: ebs_opt_instance_fact
+  register: ebs_opt_instance_info
 
 - name: Assert instance is ebs_optimized
   assert:
     that:
-      - "{{ ebs_opt_instance_fact.instances.0.ebs_optimized }}"
+      - "{{ ebs_opt_instance_info.instances.0.ebs_optimized }}"

@@ -15,10 +15,7 @@
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
-        volumes:
-        - device_name: /dev/sda1
-          ebs:
-            delete_on_termination: true
+        wait: false
         <<: *aws_connection_info
       register: basic_instance
 
@@ -29,10 +26,6 @@
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
         vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
-        volumes:
-        - device_name: /dev/sda1
-          ebs:
-            delete_on_termination: true
         <<: *aws_connection_info
       check_mode: yes
 
@@ -40,7 +33,6 @@
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
-          "instance-state-name": "running"
         <<: *aws_connection_info
       register: presented_instance_fact
 
@@ -48,7 +40,6 @@
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison-checkmode"
-          "instance-state-name": "running"
         <<: *aws_connection_info
       register: checkmode_instance_fact
 
@@ -78,12 +69,16 @@
         that:
           - '"{{ confirm_checkmode_stopinstance_fact.instances[0].state.name }}" != "stopped"'
 
-    - name: Stop instance in normaly.
+    - name: Stop instance.
       ec2_instance:
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: stopped
         vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
         <<: *aws_connection_info
+      register: instance_stop
+      until: not instance_stop.failed
+      retries: 10
+
       
     - name: fact stopped ec2 instance
       ec2_instance_info:
@@ -95,7 +90,7 @@
     - name: Verify that it was stopped.
       assert:
         that:
-          - '"{{ confirm_stopinstance_fact.instances[0].state.name }}" == "stopped"'
+          - '"{{ confirm_stopinstance_fact.instances[0].state.name }}" in ["stopped", "stopping"]'
 
     - name: Running instance in check mode.
       ec2_instance:
@@ -117,7 +112,7 @@
         that:
           - '"{{ confirm_checkmode_runninginstance_fact.instances[0].state.name }}" != "running"'
 
-    - name: Running instance in normaly.
+    - name: Running instance.
       ec2_instance:
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: running
@@ -156,7 +151,7 @@
         that:
           - '"{{ confirm_checkmode_terminatedinstance_fact.instances[0].state.name }}" != "terminated"'
 
-    - name: Terminate instance in check mode.
+    - name: Terminate instance.
       ec2_instance:
         name: "{{ resource_prefix }}-checkmode-comparison"
         state: absent

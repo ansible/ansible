@@ -16,6 +16,10 @@ aws_access_key: @ACCESS_KEY
 aws_secret_key: @SECRET_KEY
 security_token: @SECURITY_TOKEN
 aws_region: @REGION
+# aws_cleanup controls whether the environment is cleaned up after tests have completed
+# This only applies to tests that have a cleanup stage
+# Defaults to true when using this template
+# aws_cleanup: true
 # aliases for backwards compatibility with older integration test playbooks
 ec2_access_key: {{ aws_access_key }}
 ec2_secret_key: {{ aws_secret_key }}

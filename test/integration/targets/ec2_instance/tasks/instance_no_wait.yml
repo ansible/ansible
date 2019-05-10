@@ -43,7 +43,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-no-wait"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: real_instance_fact
   until: real_instance_fact.instances | length > 0
@@ -53,7 +52,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-no-wait-checkmode"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: checkmode_instance_fact
 
