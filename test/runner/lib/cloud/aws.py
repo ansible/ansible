@@ -99,6 +99,9 @@ class AwsCloudEnvironment(CloudEnvironment):
 
         ansible_vars.update(dict(parser.items('default')))
 
+        if 'aws_cleanup' not in ansible_vars:
+            ansible_vars['aws_cleanup'] = not self.managed
+
         env_vars = {'ANSIBLE_DEBUG_BOTOCORE_LOGS': 'True'}
 
         return CloudEnvironmentConfig(

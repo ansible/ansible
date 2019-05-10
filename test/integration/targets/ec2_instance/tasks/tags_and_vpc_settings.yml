@@ -22,10 +22,7 @@
       source_dest_check: false
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     instance_type: t2.micro
-    volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
+    wait: false
     <<: *aws_connection_info
   register: in_test_vpc
 
@@ -45,10 +42,6 @@
       source_dest_check: false
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     instance_type: t2.micro
-    volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
     <<: *aws_connection_info
   check_mode: yes
 
@@ -82,7 +75,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-basic-vpc-create"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: presented_instance_fact
 
@@ -90,7 +82,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-basic-vpc-create-checkmode"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: checkmode_instance_fact
 
@@ -135,10 +126,12 @@
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     instance_type: t2.micro
     <<: *aws_connection_info
+
 - ec2_instance_info:
     instance_ids: "{{ add_another_tag.instance_ids }}"
     <<: *aws_connection_info
   register: check_tags
+
 - name: "Remaking the same instance resulted in no changes"
   assert:
     that:
@@ -149,6 +142,7 @@
     filters:
       tag:TestId: "{{ resource_prefix }}"
     state: absent
+    wait: false
     <<: *aws_connection_info
   register: result
 - assert:
@@ -156,8 +150,9 @@
 
 - name: Terminate instance
   ec2_instance:
-    instance_ids: "{{ in_test_vpc.instance_ids }}"
+    instance_ids: "{{ add_another_tag.instance_ids }}"
     state: absent
+    wait: false
     <<: *aws_connection_info
   register: result
 - assert:
@@ -166,11 +161,11 @@
 - name: check that subnet-default public IP rule was followed
   assert:
     that:
-      - in_test_vpc.instances[0].public_dns_name == ""
-      - in_test_vpc.instances[0].private_ip_address.startswith("10.22.33")
-      - in_test_vpc.instances[0].subnet_id == testing_subnet_b.subnet.id
+      - check_tags.instances[0].public_dns_name == ""
+      - check_tags.instances[0].private_ip_address.startswith("10.22.33")
+      - check_tags.instances[0].subnet_id == testing_subnet_b.subnet.id
 - name: check that tags were applied
   assert:
     that:
-      - in_test_vpc.instances[0].tags.Name.startswith(resource_prefix)
-      - in_test_vpc.instances[0].state.name == 'running'
+      - check_tags.instances[0].tags.Name.startswith(resource_prefix)
+      - "'{{ check_tags.instances[0].state.name }}' in  ['pending', 'running']"

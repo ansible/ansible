@@ -10,7 +10,7 @@
 - block:
     - name: Create IAM role for test
       iam_role:
-        name: "{{ resource_prefix }}-test-policy"
+        name: "ansible-test-sts-{{ resource_prefix }}-test-policy"
         assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
         state: present
         create_instance_profile: yes
@@ -21,7 +21,7 @@
 
     - name: Create second IAM role for test
       iam_role:
-        name: "{{ resource_prefix }}-test-policy-2"
+        name: "ansible-test-sts-{{ resource_prefix }}-test-policy-2"
         assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
         state: present
         create_instance_profile: yes
@@ -36,11 +36,7 @@
         image_id: "{{ ec2_ami_image[aws_region] }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
-        instance_role: "{{ resource_prefix }}-test-policy"
-        volumes:
-        - device_name: /dev/sda1
-          ebs:
-            delete_on_termination: true
+        instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy"
         <<: *aws_connection_info
       register: instance_with_role
 
@@ -54,11 +50,7 @@
         image_id: "{{ ec2_ami_image[aws_region] }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
-        instance_role: "{{ resource_prefix }}-test-policy"
-        volumes:
-        - device_name: /dev/sda1
-          ebs:
-            delete_on_termination: true
+        instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy"
         <<: *aws_connection_info
       check_mode: yes
 
@@ -66,7 +58,6 @@
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-instance-role"
-          "instance-state-name": "running"
         <<: *aws_connection_info
       register: presented_instance_fact
 
@@ -74,7 +65,6 @@
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-instance-role-checkmode"
-          "instance-state-name": "running"
         <<: *aws_connection_info
       register: checkmode_instance_fact
 
@@ -90,9 +80,11 @@
         image_id: "{{ ec2_ami_image[aws_region] }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
-        instance_role: "{{ resource_prefix }}-test-policy-2"
+        instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy-2"
         <<: *aws_connection_info
       register: instance_with_updated_role
+      until: instance_with_updated_role is not failed
+      retries: 10
 
     - assert:
         that:
@@ -120,8 +112,8 @@
         - AmazonEC2ContainerServiceRole
         <<: *aws_connection_info
       loop:
-        - "{{ resource_prefix }}-test-policy"
-        - "{{ resource_prefix }}-test-policy-2"
+        - "ansible-test-sts-{{ resource_prefix }}-test-policy"
+        - "ansible-test-sts-{{ resource_prefix }}-test-policy-2"
       register: removed
       until: removed is not failed
       ignore_errors: yes
