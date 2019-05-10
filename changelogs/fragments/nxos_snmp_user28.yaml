@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_snmp_user fix platform fixes for get_snmp_user (https://github.com/ansible/ansible/pull/55832).
