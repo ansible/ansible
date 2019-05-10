@@ -132,7 +132,6 @@ class InventoryCLI(CLI):
                 raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
 
             myvars = self._get_host_variables(host=hosts[0])
-            self._remove_internal(myvars)
 
             # FIXME: should we template first?
             results = self.dump(myvars)
@@ -224,7 +223,7 @@ class InventoryCLI(CLI):
         if group.priority != 1:
             res['ansible_group_priority'] = group.priority
 
-        return res
+        return self._remove_internal(res)
 
     def _get_host_variables(self, host):
 
@@ -238,7 +237,7 @@ class InventoryCLI(CLI):
         else:
             hostvars = self.vm.get_vars(host=host, include_hostvars=False)
 
-        return hostvars
+        return self._remove_internal(hostvars)
 
     def _get_group(self, gname):
         group = self.inventory.groups.get(gname)
@@ -261,7 +260,6 @@ class InventoryCLI(CLI):
     @staticmethod
     def _show_vars(dump, depth):
         result = []
-        InventoryCLI._remove_internal(dump)
         if context.CLIARGS['show_vars']:
             for (name, val) in sorted(dump.items()):
                 result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
@@ -329,7 +327,6 @@ class InventoryCLI(CLI):
         for host in hosts:
             hvars = self._get_host_variables(host)
             if hvars:
-                self._remove_internal(hvars)
                 results['_meta']['hostvars'][host.name] = hvars
 
         return results
@@ -358,7 +355,6 @@ class InventoryCLI(CLI):
                     if h.name not in seen:  # avoid defining host vars more than once
                         seen.append(h.name)
                         myvars = self._get_host_variables(host=h)
-                        self._remove_internal(myvars)
                     results[group.name]['hosts'][h.name] = myvars
 
             if context.CLIARGS['export']:
@@ -393,7 +389,6 @@ class InventoryCLI(CLI):
                     if host.name not in seen:
                         seen.add(host.name)
                         host_vars = self._get_host_variables(host=host)
-                        self._remove_internal(host_vars)
                     else:
                         host_vars = {}
                     try:
