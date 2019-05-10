@@ -96,48 +96,50 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
-- name: List all networks associated to the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: query
-    org_name: YourOrg
-  delegate_to: localhost
-- name: Query network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: query
-    org_name: YourOrg
-    net_name: MyNet
-  delegate_to: localhost
-- name: Create network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: present
-    org_name: YourOrg
-    net_name: MyNet
-    type: switch
-    timezone: America/Chicago
-    tags: production, chicago
-  delegate_to: localhost
-- name: Create combined network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: present
-    org_name: YourOrg
-    net_name: MyNet
-    type:
-      - switch
-      - appliance
-    timezone: America/Chicago
-    tags: production, chicago
-- name: Enable VLANs on a network
-  meraki_network:
-    auth_key: abc12345
-    state: query
-    org_name: YourOrg
-    net_name: MyNet
-    enable_vlans: yes
-  delegate_to: localhost
+- delegate_to: localhost
+  block:
+    - name: List all networks associated to the YourOrg organization
+      meraki_network:
+        auth_key: abc12345
+        state: query
+        org_name: YourOrg
+      delegate_to: localhost
+    - name: Query network named MyNet in the YourOrg organization
+      meraki_network:
+        auth_key: abc12345
+        state: query
+        org_name: YourOrg
+        net_name: MyNet
+      delegate_to: localhost
+    - name: Create network named MyNet in the YourOrg organization
+      meraki_network:
+        auth_key: abc12345
+        state: present
+        org_name: YourOrg
+        net_name: MyNet
+        type: switch
+        timezone: America/Chicago
+        tags: production, chicago
+      delegate_to: localhost
+    - name: Create combined network named MyNet in the YourOrg organization
+      meraki_network:
+        auth_key: abc12345
+        state: present
+        org_name: YourOrg
+        net_name: MyNet
+        type:
+          - switch
+          - appliance
+        timezone: America/Chicago
+        tags: production, chicago
+    - name: Enable VLANs on a network
+      meraki_network:
+        auth_key: abc12345
+        state: query
+        org_name: YourOrg
+        net_name: MyNet
+        enable_vlans: yes
+      delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -297,7 +299,7 @@ def main():
             else:
                 payload['disableMyMerakiCom'] = True
         elif meraki.params['disable_my_meraki'] is not None:
-            meraki.module.deprecate("meraki_network will stop supporting disable_my_meraki in Ansible 2.13. Please update your playbook.", version=2.13)
+            meraki.module.deprecate("Please update your playbook to use enable_my_meraki.", version=2.13)
             payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
         if meraki.params['enable_remote_status_page'] is not None:
             if meraki.params['enable_remote_status_page'] is True:
