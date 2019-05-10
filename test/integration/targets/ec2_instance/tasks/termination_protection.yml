@@ -16,10 +16,7 @@
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     termination_protection: true
     instance_type: t2.micro
-    volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
+    state: running
     <<: *aws_connection_info
   register: in_test_vpc
 
@@ -33,10 +30,6 @@
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     termination_protection: true
     instance_type: t2.micro
-    volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
     <<: *aws_connection_info
   check_mode: yes
 
@@ -44,7 +37,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-protected-instance-in-vpc"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: presented_instance_fact
 
@@ -52,7 +44,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-protected-instance-in-vpc-checkmode"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: checkmode_instance_fact
 
@@ -60,6 +51,7 @@
   assert:
     that:
       - "{{ presented_instance_fact.instances | length }} > 0"
+      - "'{{ presented_instance_fact.instances.0.state.name }}' in ['running', 'pending']"
       - "{{ checkmode_instance_fact.instances | length }} == 0"
 
 - name: Try to terminate the instance
@@ -95,6 +87,7 @@
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     instance_type: t2.micro
     state: absent
+    wait: false
     <<: *aws_connection_info
   register: terminate_results
 - assert:

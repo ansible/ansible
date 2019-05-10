@@ -12,9 +12,6 @@
     image_id: "{{ ec2_ami_image[aws_region] }}"
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
     - device_name: /dev/sdb
       ebs:
         volume_size: 20
@@ -23,15 +20,24 @@
     tags:
       TestId: "{{ resource_prefix }}"
     instance_type: t2.micro
+    wait: false
     <<: *aws_connection_info
   register: in_test_vpc
+
+- name: Gather instance facts
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
+    <<: *aws_connection_info
+  register: in_test_vpc_instance
+
 - assert:
     that:
     - in_test_vpc is not failed
     - in_test_vpc is changed
-    - in_test_vpc.instances[0].block_device_mappings[0]
-    - in_test_vpc.instances[0].block_device_mappings[1]
-    - in_test_vpc.instances[0].block_device_mappings[1].device_name == '/dev/sdb'
+    - in_test_vpc_instance.instances[0].block_device_mappings[0]
+    - in_test_vpc_instance.instances[0].block_device_mappings[1]
+    - in_test_vpc_instance.instances[0].block_device_mappings[1].device_name == '/dev/sdb'
 
 - name: New instance with an extra block device(check mode)
   ec2_instance:
@@ -39,9 +45,6 @@
     image_id: "{{ ec2_ami_image[aws_region] }}"
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
     - device_name: /dev/sdb
       ebs:
         volume_size: 20
@@ -57,7 +60,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: presented_instance_fact
 
@@ -65,7 +67,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-vols-checkmode"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: checkmode_instance_fact
 

@@ -44,18 +44,22 @@
     availability_zone: '{{ aws_region }}b'
     tags:
       TestId: "{{ resource_prefix }}"
-    volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
     instance_type: t2.micro
+    wait: false
     <<: *aws_connection_info
   register: in_test_vpc
 
+- name: "Gather {{ resource_prefix }}-test-eni-vpc facts"
+  ec2_instance_facts:
+    filters:
+      "tag:Name": '{{ resource_prefix }}-test-eni-vpc'
+    <<: *aws_connection_info
+  register: in_test_vpc_instance
+
 - assert:
     that:
-      - 'in_test_vpc.instances[0].key_name == "{{ resource_prefix }}_test_key"'
-      - '(in_test_vpc.instances[0].network_interfaces | length) == 1'
+      - 'in_test_vpc_instance.instances.0.key_name == "{{ resource_prefix }}_test_key"'
+      - '(in_test_vpc_instance.instances.0.network_interfaces | length) == 1'
 
 - name: Add a second interface
   ec2_instance:
@@ -68,7 +72,12 @@
     tags:
       TestId: "{{ resource_prefix }}"
     instance_type: t2.micro
+    wait: false
     <<: *aws_connection_info
+  register: add_interface
+  until: add_interface is not failed
+  ignore_errors: yes
+  retries: 10
 
 - name: Make instance in the testing subnet created in the test VPC(check mode)
   ec2_instance:
@@ -81,10 +90,6 @@
     availability_zone: '{{ aws_region }}b'
     tags:
       TestId: "{{ resource_prefix }}"
-    volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
     instance_type: t2.micro
     <<: *aws_connection_info
   check_mode: yes
@@ -93,7 +98,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-eni-vpc"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: presented_instance_fact
 
@@ -101,7 +105,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-eni-vpc-checkmode"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: checkmode_instance_fact
 
@@ -116,6 +119,7 @@
     filters:
       tag:TestId: "{{ resource_prefix }}"
     state: absent
+    wait: false
     <<: *aws_connection_info
   register: result
 - assert:
@@ -125,6 +129,7 @@
   ec2_instance:
     instance_ids: "{{ in_test_vpc.instance_ids }}"
     state: absent
+    wait: false
     <<: *aws_connection_info
   register: result
 - assert:
@@ -134,12 +139,3 @@
     name: "{{ resource_prefix }}_test_key"
     state: absent
     <<: *aws_connection_info
-
-- ec2_eni:
-    eni_id: "{{ item }}"
-    state: absent
-    <<: *aws_connection_info
-  with_items:
-    - "{{ eni_a.interface.id }}"
-    - "{{ eni_b.interface.id }}"
-    - "{{ eni_c.interface.id }}"

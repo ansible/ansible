@@ -15,16 +15,16 @@
               region: "{{ aws_region }}"
           no_log: True
 
-        - name: Include vars file in roles/ec2_instance/defaults/main.yml
+        - name: Include vars file in {{ playbook_dir }}../defaults/main.yml
           include_vars:
-            file: 'roles/ec2_instance/defaults/main.yml'
+            file: '{{ playbook_dir }}/../defaults/main.yml'
 
-        - name: create c4.large with cpu options (fails gracefully)
+        - name: create t3.nano with cpu options (fails gracefully)
           ec2_instance:
             state: present
             name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
             image_id: "{{ ec2_ami_image[aws_region] }}"
-            instance_type: c4.large
+            instance_type: t3.nano
             cpu_options:
                 core_count: 1
                 threads_per_core: 1
