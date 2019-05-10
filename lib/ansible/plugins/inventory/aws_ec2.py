@@ -134,7 +134,7 @@ keyed_groups:
     prefix: aws_region
 # Set individual variables with compose
 compose:
-  # Use the private IP address to connect to the host and add additionnal variables as hostvars
+  # Use the private IP address to connect to the host and add additional variables as hostvars
   # (note: this does not modify inventory_hostname, which is set via I(hostnames))
   ansible_host: private_ip_address
   public_ip_address: public_ip_address
