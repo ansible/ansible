@@ -63,7 +63,7 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
         logging.basicConfig(filename=path, level=logging.INFO, format='%(asctime)s p=%(user)s u=%(process)d | %(message)s')
-        logger = logging.LoggerAdapter(logging.getLogger(__name__), {'user': getpass.getuser()})
+        logger = logging.LoggerAdapter(logging.getLogger('ansible'), {'user': getpass.getuser()})
         for handler in logging.root.handlers:
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
