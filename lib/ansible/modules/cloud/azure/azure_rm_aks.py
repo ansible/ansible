@@ -51,11 +51,11 @@ options:
         suboptions:
             admin_username:
                 description:
-                    - The Admin Username for the Cluster.
+                    - The Admin Username for the cluster.
                 required: true
             ssh_key:
                 description:
-                    - The Public SSH Key used to access the Cluster.
+                    - The Public SSH Key used to access the cluster.
                 required: true
     agent_pool_profiles:
         description:
