@@ -299,6 +299,7 @@ def main():
                 meraki.result['diff']['before'] = diff[0]
                 meraki.result['diff']['after'] = diff[1]
                 meraki.result['data'] = payload
+                meraki.result['changed'] = True
                 meraki.exit_json(**meraki.result)
             payload['allowLanAccess'] = meraki.params['allow_lan_access']
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
