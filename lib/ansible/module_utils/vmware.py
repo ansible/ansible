@@ -1276,11 +1276,14 @@ class PyVmomi(object):
         if not changed:
             self.module.fail_json(msg="No valid disk vmdk image found for path %s" % vmdk_path)
 
-        target_folder_path = datastore_name_sq + " " + vmdk_folder + '/'
+        target_folder_paths = [
+            datastore_name_sq + " " + vmdk_folder + '/',
+            datastore_name_sq + " " + vmdk_folder,
+        ]
 
         for file_result in search_res.info.result:
             for f in getattr(file_result, 'file'):
-                if f.path == vmdk_filename and file_result.folderPath == target_folder_path:
+                if f.path == vmdk_filename and file_result.folderPath in target_folder_paths:
                     return f
 
         self.module.fail_json(msg="No vmdk file found for path specified [%s]" % vmdk_path)
