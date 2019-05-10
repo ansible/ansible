@@ -58,7 +58,7 @@ class FilterBlackList(logging.Filter):
 
 
 logger = None
-# TODO: make this a logging callback instead
+# TODO: make this a callback event instead
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
@@ -68,6 +68,17 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
+
+# map color to log levels
+color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
+                      C.COLOR_WARN: logging.WARNING,
+                      C.COLOR_OK: logging.INFO,
+                      C.COLOR_SKIP: logging.WARNING,
+                      C.COLOR_UNREACHABLE: logging.ERROR,
+                      C.COLOR_DEBUG: logging.DEBUG,
+                      C.COLOR_CHANGED: logging.INFO,
+                      C.COLOR_DEPRECATE: logging.WARNING,
+                      C.COLOR_VERBOSE: logging.INFO}
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
@@ -167,16 +178,15 @@ class Display(with_metaclass(Singleton, object)):
                 # Convert back to text string on python3
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
-            # set logger level based on color (bad match, but otherwise we need to start passing severity around)
-            if color == C.COLOR_ERROR:
-                lvl = logging.ERROR
-            elif color == C.COLOR_WARN:
-                lvl = logging.WARNING
-            elif color == C.COLOR_DEBUG:
-                lvl = logging.DEBUG
-            else:
-                lvl = logging.INFO
-
+            lvl = logging.INFO
+            if color:
+                # set logger level based on color (not great)
+                try:
+                    lvl = color_to_log_level[color]
+                except KeyError:
+                    # this should not happen, but JIC
+                    pass
+            # actually log
             logger.log(lvl, msg2)
 
     def v(self, msg, host=None):
