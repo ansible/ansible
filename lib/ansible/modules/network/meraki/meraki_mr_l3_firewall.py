@@ -132,10 +132,12 @@ RETURN = r'''
 
 '''
 
+import copy
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -154,6 +156,19 @@ def assemble_payload(meraki):
         rules.append(proposed_rule)
     payload = {'rules': rules}
     return payload
+
+def diff_list(before, after):
+    '''This is an awful function which allows me to use the
+       recursive_diff() method within Ansible. A proper
+       method to diff is required or the desire for an
+       improvement is in issue #56249. This is disgusting.
+       Do not judge me.
+    '''
+    # TODO: Append default rules to after so it's accurate
+    before_dict = {'before': before}
+    after_dict = {'after': after}
+    diff = recursive_diff(before_dict, after_dict)
+    return diff[0]['before'], diff[1]['after']
 
 
 def get_rules(meraki, net_id, number):
@@ -279,10 +294,18 @@ def main():
                     payload[len(payload) - 2]['policy'] = 'deny'
                 elif meraki.params['allow_lan_access'] is True:
                     payload[len(payload) - 2]['policy'] = 'allow'
+                meraki.result['diff'] = dict()
+                diff = diff_list(rules, payload)
+                meraki.result['diff']['before'] = diff[0]
+                meraki.result['diff']['after'] = diff[1]
                 meraki.result['data'] = payload
                 meraki.exit_json(**meraki.result)
             payload['allowLanAccess'] = meraki.params['allow_lan_access']
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
+            meraki.result['diff'] = dict()
+            diff = diff_list(rules, response)
+            meraki.result['diff']['before'] = diff[0]
+            meraki.result['diff']['after'] = diff[1]
             if meraki.status == 200:
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
