@@ -1,0 +1,2 @@
+bugfixes:
+- "os_server now attaches security groups while creating instance"
