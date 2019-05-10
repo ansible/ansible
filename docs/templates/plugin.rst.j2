@@ -119,7 +119,7 @@ Parameters
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     <div style="font-size: small">
-                        <span style="color: purple">@{ value.type | documented_type }@</span>
+                        <span style="color: purple">@{ value.type | default('string') | documented_type }@</span>
                         {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
                     </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
