@@ -42,6 +42,7 @@ options:
         required: true
         description:
             - The name of the user to manage.
+        aliases: [ name ]
     memstore:
         required: true
         description:
