@@ -61,7 +61,6 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
-    default: 1
   tag:
     description:
       - Set tag of the static route.
