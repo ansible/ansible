@@ -61,7 +61,6 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
-    default: 1
   tag:
     description:
       - Set tag of the static route.
@@ -149,6 +148,9 @@ def map_obj_to_commands(want, have):
         del w['state']
         # Try to match an existing config with the desired config
         for h in have:
+            # To delete admin_distance param from have if not it want before comparing both fields
+            if not w.get('admin_distance') and h.get('admin_distance'):
+                del h['admin_distance']
             diff = list(set(w.items()) ^ set(h.items()))
             if not diff:
                 break
@@ -259,7 +261,7 @@ def main():
         vrf=dict(type='str'),
         interface=dict(type='str'),
         name=dict(type='str', aliases=['description']),
-        admin_distance=dict(type='str', default='1'),
+        admin_distance=dict(type='str'),
         track=dict(type='str'),
         tag=dict(tag='str'),
         state=dict(default='present', choices=['present', 'absent'])
