@@ -40,6 +40,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.parsing.convert_bool import boolean
 
 # Backwards compatibility for 3rd party modules
 from ansible.module_utils.common.network import (
@@ -418,6 +419,9 @@ def load_provider(spec, args):
                 provider[key] = value['default']
             else:
                 provider[key] = None
+    if 'authorize' in provider:
+        # Coerce authorize to provider if a string has somehow snuck in.
+        provider['authorize'] = boolean(provider['authorize'])
     args['provider'] = provider
     return provider
 
