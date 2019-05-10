@@ -92,18 +92,19 @@ server_number:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.hetzner import (
+    HETZNER_DEFAULT_ARGUMENT_SPEC,
     get_failover_record,
     get_failover_state,
 )
 
 
 def main():
+    argument_spec = dict(
+        failover_ip=dict(type='str', required=True),
+    )
+    argument_spec.update(HETZNER_DEFAULT_ARGUMENT_SPEC)
     module = AnsibleModule(
-        argument_spec=dict(
-            hetzner_user=dict(type='str', required=True),
-            hetzner_pass=dict(type='str', required=True, no_log=True),
-            failover_ip=dict(type='str', required=True),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
