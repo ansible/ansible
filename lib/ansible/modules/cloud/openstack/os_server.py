@@ -413,10 +413,10 @@ from ansible.module_utils.openstack import (
     openstack_full_argument_spec, openstack_module_kwargs)
 
 
-def _exit_hostvars(module, cloud, server, changed=True):
+def _exit_hostvars(module, cloud, server, diff, changed=True):
     hostvars = cloud.get_openstack_vars(server)
     module.exit_json(
-        changed=changed, server=server, id=server.id, openstack=hostvars)
+        changed=changed, diff=diff, server=server, id=server.id, openstack=hostvars)
 
 
 def _parse_nics(nics):
@@ -481,7 +481,7 @@ def _delete_server(module, cloud):
             delete_ips=module.params['delete_fip'])
     except Exception as e:
         module.fail_json(msg='Error in deleting vm: %s' % e.message)
-    module.exit_json(changed=True, result='deleted')
+    return True
 
 
 def _create_server(module, cloud):
@@ -516,7 +516,6 @@ def _create_server(module, cloud):
         flavor=flavor_dict['id'],
         nics=nics,
         meta=module.params['meta'],
-        security_groups=module.params['security_groups'],
         userdata=module.params['userdata'],
         config_drive=module.params['config_drive'],
     )
@@ -534,11 +533,12 @@ def _create_server(module, cloud):
         boot_from_volume=module.params['boot_from_volume'],
         terminate_volume=module.params['terminate_volume'],
         reuse_ips=module.params['reuse_ips'],
+        security_groups=module.params['security_groups'],
         wait=module.params['wait'], timeout=module.params['timeout'],
         **bootkwargs
     )
 
-    _exit_hostvars(module, cloud, server)
+    return server
 
 
 def _update_server(module, cloud, server):
@@ -556,6 +556,12 @@ def _update_server(module, cloud, server):
     if update_meta:
         cloud.set_server_metadata(server, update_meta)
         changed = True
+
+    # these functions perform update checks themselves
+    (changed, server) = _update_security_groups(module, cloud, server)
+    (changed, server) = _update_ips(module, cloud, server)
+
+    if changed:
         # Refresh server vars
         server = cloud.get_server(module.params['name'])
 
@@ -570,7 +576,7 @@ def _detach_ip_list(cloud, server, extra_ips):
             server_id=server.id, floating_ip_id=ip_id)
 
 
-def _check_ips(module, cloud, server):
+def _update_ips(module, cloud, server):
     changed = False
 
     auto_ip = module.params['auto_ip']
@@ -625,10 +631,11 @@ def _check_ips(module, cloud, server):
                 timeout=module.params['timeout'],
             )
             changed = True
+
     return (changed, server)
 
 
-def _check_security_groups(module, cloud, server):
+def _update_security_groups(module, cloud, server):
     changed = False
 
     # server security groups were added to shade in 1.19. Until then this
@@ -638,40 +645,55 @@ def _check_security_groups(module, cloud, server):
             hasattr(cloud, 'remove_server_security_groups')):
         return changed, server
 
-    module_security_groups = set(module.params['security_groups'])
-    server_security_groups = set(sg['name'] for sg in server.security_groups)
+    module_sgs = module.params['security_groups']
+    server_sgs = [sg['name'] for sg in server.security_groups]
 
-    add_sgs = module_security_groups - server_security_groups
-    remove_sgs = server_security_groups - module_security_groups
+    add_sgs = [sg for sg in module_sgs if sg not in server_sgs]
+    remove_sgs = [sg for sg in server_sgs if sg not in module_sgs]
 
     if add_sgs:
-        cloud.add_server_security_groups(server, list(add_sgs))
+        cloud.add_server_security_groups(server, add_sgs)
         changed = True
 
     if remove_sgs:
-        cloud.remove_server_security_groups(server, list(remove_sgs))
+        cloud.remove_server_security_groups(server, remove_sgs)
         changed = True
 
     return (changed, server)
 
 
-def _get_server_state(module, cloud):
-    state = module.params['state']
+def _present_server(module, cloud):
+    changed = False
+    diff = {'before': '', 'after': ''}
     server = cloud.get_server(module.params['name'])
-    if server and state == 'present':
-        if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
-            module.fail_json(
-                msg='The instance is available but not Active state: %s' % server.status)
-        (ip_changed, server) = _check_ips(module, cloud, server)
-        (sg_changed, server) = _check_security_groups(module, cloud, server)
-        (server_changed, server) = _update_server(module, cloud, server)
-        _exit_hostvars(module, cloud, server,
-                       ip_changed or sg_changed or server_changed)
-    if server and state == 'absent':
-        return True
-    if state == 'absent':
-        module.exit_json(changed=False, result='not present')
-    return True
+
+    if not server:
+        server = _create_server(module, cloud)
+        diff['after'] = server
+        _exit_hostvars(module, cloud, server, diff, True)
+
+    if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
+        module.fail_json(
+            msg='The instance is available but not Active state: %s' % server.status)
+
+    if server:
+        diff['before'] = server
+        (changed, server) = _update_server(module, cloud, server)
+        diff['after'] = server
+        _exit_hostvars(module, cloud, server, diff, changed)
+
+
+def _absent_server(module, cloud):
+    changed = False
+    diff = {'before': '', 'after': ''}
+    server = cloud.get_server(module.params['name'])
+
+    if server:
+        diff['before'] = server
+        changed = _delete_server(module, cloud)
+        module.exit_json(changed=changed, result='deleted', diff=diff)
+
+    module.exit_json(changed=changed, diff=diff, result='not present')
 
 
 def main():
@@ -736,13 +758,12 @@ def main():
             )
 
     sdk, cloud = openstack_cloud_from_module(module)
+
     try:
         if state == 'present':
-            _get_server_state(module, cloud)
-            _create_server(module, cloud)
-        elif state == 'absent':
-            _get_server_state(module, cloud)
-            _delete_server(module, cloud)
+            _present_server(module, cloud)
+        if state == 'absent':
+            _absent_server(module, cloud)
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
