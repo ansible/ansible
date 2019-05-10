@@ -69,6 +69,7 @@ options:
                 description:
                     - Number of agents (VMs) to host docker containers.
                     - Allowed values must be in the range of C(1) to C(100) (inclusive).
+                default: 1
                 required: true
             vm_size:
                 description:
@@ -107,29 +108,37 @@ options:
                     - With C(kubenet), nodes get an IP address from the Azure virtual network subnet.
                     - AKS features such as Virtual Nodes or network policies aren't supported with C(kubenet).
                     - C(azure) enables Azure Container Networking Interface(CNI), every pod gets an IP address from the subnet and can be accessed directly.
+                default: kubenet
                 choices:
                     - azure
                     - kubenet
             network_policy:
                 description: Network policy used for building Kubernetes network.
+                choices:
+                    - azure
+                    - calico
             pod_cidr:
                 description:
                     - A CIDR notation IP range from which to assign pod IPs when I(network_plugin=kubenet) is used.
                     - It should be a large address space that isn't in use elsewhere in your network environment.
                     - This address range must be large enough to accommodate the number of nodes that you expect to scale up to.
+                default: "10.244.0.0/16"
             service_cidr:
                 description:
                     - A CIDR notation IP range from which to assign service cluster IPs.
                     - It must not overlap with any Subnet IP ranges.
                     - It should be the *.10 address of your service IP address range.
+                default: "10.0.0.0/16"
             dns_service_ip:
                 description:
                     - An IP address assigned to the Kubernetes DNS service.
                     - It must be within the Kubernetes service address range specified in serviceCidr.
+                default: "10.0.0.10"
             docker_bridge_cidr:
                 description:
                     - A CIDR notation IP range assigned to the Docker bridge network.
                     - It must not overlap with any Subnet IP ranges or the Kubernetes service address range.
+                default: "172.17.0.1/16"
         version_added: "2.8"
     aad_profile:
         description:
