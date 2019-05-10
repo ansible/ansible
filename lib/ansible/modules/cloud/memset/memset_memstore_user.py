@@ -161,7 +161,8 @@ def create_user(args=None, user=None):
             retvals['changed'] = True
             retvals['memset_api'] = response.json()
     else:
-        # User exists, update it. The only change possible is to enable/disable the user.
+        # User exists, update it. The only user attribute we can change is to
+        # enable or disable.
         if user['enabled'] != args['enabled']:
             if args['check_mode']:
                 retvals['changed'] = True
@@ -183,6 +184,15 @@ def create_user(args=None, user=None):
                 retvals['changed'] = True
                 payload['enabled'] = args['enabled']
                 retvals['memset_api'] = payload
+
+        # if update_password is true then we always run a password change which
+        # will always return true (provided it is successful). Memstore's API does
+        # not expose whether the password was changed or not.
+        if args['update_password']:
+            pwd_retvals = update_password(args=args)
+            retvals['password'] = pwd_retvals['password']
+            if pwd_retvals['changed']:
+                retvals['changed'] = True
 
     return(retvals)
 
@@ -221,7 +231,7 @@ def update_password(args=None):
     if args['check_mode']:
         # Updating a password will always return changed as the API does not
         # know if the password is actually being changed.
-        retvals['msg'] = 'Check mode not suppported when update_password is True.'
+        retvals['password'] = 'Check mode not suppported when update_password is True.'
     else:
         payload['name'], payload['username'], payload['password'] = args['memstore'], \
             args['username'], args['password']
@@ -230,10 +240,10 @@ def update_password(args=None):
         retvals['failed'], msg, response = memset_api_call(args['api_key'], api_method, payload)
 
         if retvals['failed']:
-            retvals['msg'] = msg
+            retvals['password'] = msg
         else:
             retvals['changed'] = True
-            retvals['memset_api'] = payload
+            retvals['password'] = 'Password updated.'
 
     return(retvals)
 
@@ -265,17 +275,9 @@ def create_or_delete_user(args=None):
             break
 
     if args['state'] == 'present':
-        if currentuser:
-            # user exists.
-            if args['update_password']:
-                # update password.
-                retvals = update_password(args=args)
-            else:
-                # nothing to do.
-                return(retvals)
-        else:
-            # user needs to be created.
-            retvals = create_user(args=args, user=currentuser)
+        # the user may already exist, however we may also want to update
+        # their attributes.
+        retvals = create_user(args=args, user=currentuser)
     if args['state'] == 'absent':
         # remove user
         retvals = delete_user(args=args, user=currentuser)
