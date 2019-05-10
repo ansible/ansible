@@ -14,10 +14,7 @@
       TestId: "{{ resource_prefix }}"
     security_groups: "{{ sg.group_id }}"
     instance_type: t2.micro
-    volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
+    wait: false
     <<: *aws_connection_info
   register: in_default_vpc
 
@@ -29,10 +26,6 @@
       TestId: "{{ resource_prefix }}"
     security_groups: "{{ sg.group_id }}"
     instance_type: t2.micro
-    volumes:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
     <<: *aws_connection_info
   check_mode: yes
 
@@ -40,7 +33,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-default-vpc"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: presented_instance_fact
 
@@ -48,7 +40,6 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-default-vpc-checkmode"
-      "instance-state-name": "running"
     <<: *aws_connection_info
   register: checkmode_instance_fact
 
