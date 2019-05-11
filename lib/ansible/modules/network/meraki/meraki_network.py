@@ -103,14 +103,12 @@ EXAMPLES = r'''
         auth_key: abc12345
         state: query
         org_name: YourOrg
-      delegate_to: localhost
     - name: Query network named MyNet in the YourOrg organization
       meraki_network:
         auth_key: abc12345
         state: query
         org_name: YourOrg
         net_name: MyNet
-      delegate_to: localhost
     - name: Create network named MyNet in the YourOrg organization
       meraki_network:
         auth_key: abc12345
@@ -120,7 +118,6 @@ EXAMPLES = r'''
         type: switch
         timezone: America/Chicago
         tags: production, chicago
-      delegate_to: localhost
     - name: Create combined network named MyNet in the YourOrg organization
       meraki_network:
         auth_key: abc12345
@@ -139,7 +136,6 @@ EXAMPLES = r'''
         org_name: YourOrg
         net_name: MyNet
         enable_vlans: yes
-      delegate_to: localhost
 '''
 
 RETURN = r'''
