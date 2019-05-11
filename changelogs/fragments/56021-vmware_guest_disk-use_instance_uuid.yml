@@ -1,0 +1,2 @@
+minor_changes:
+- vmware_guest_disk module supports use_instance_uuid parameter since Ansible 2.8 (https://github.com/ansible/ansible/issues/56021).
