@@ -196,5 +196,5 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                     return False
                 else:
                     # XXX change new value to old
-                    self.module.warn("property '" + path + "' cannot be updated (" + str(old) + "->" + str(new) + ")")
+                    self.module.warn("property '" + path + "' cannot be updated (" + str(old) + "->" + str(new) + ", " + comparison + ")")
                     return True
