@@ -50,6 +50,21 @@ options:
       default: no
       type: bool
       version_added: 2.8
+    folder:
+      description:
+        - Specify a folder location of VMs to gather facts from.
+        - 'Examples:'
+        - '   folder: /ha-datacenter/vm'
+        - '   folder: ha-datacenter/vm'
+        - '   folder: /datacenter1/vm'
+        - '   folder: datacenter1/vm'
+        - '   folder: /datacenter1/vm/folder1'
+        - '   folder: datacenter1/vm/folder1'
+        - '   folder: /folder1/datacenter1/vm'
+        - '   folder: folder1/datacenter1/vm'
+        - '   folder: /folder1/datacenter1/vm/folder2'
+      type: str
+      version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -161,7 +176,14 @@ class VmwareVmFacts(PyVmomi):
         """
         Get all virtual machines and related configurations information
         """
-        virtual_machines = get_all_objs(self.content, [vim.VirtualMachine])
+        folder = self.params.get('folder')
+        folder_obj = None
+        if folder:
+            folder_obj = self.content.searchIndex.FindByInventoryPath(folder)
+            if not folder_obj:
+                self.module.fail_json(msg="Failed to find folder specified by %(folder)s" % self.params)
+
+        virtual_machines = get_all_objs(self.content, [vim.VirtualMachine], folder=folder_obj)
         _virtual_machines = []
 
         for vm in virtual_machines:
@@ -234,6 +256,7 @@ def main():
     argument_spec.update(
         vm_type=dict(type='str', choices=['vm', 'all', 'template'], default='all'),
         show_attribute=dict(type='bool', default='no'),
+        folder=dict(type='str'),
     )
 
     module = AnsibleModule(
