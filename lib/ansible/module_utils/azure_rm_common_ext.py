@@ -180,20 +180,17 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         else:
             updatable = modifiers.get(path, {}).get('updatable', True)
             comparison = modifiers.get(path, {}).get('comparison', 'default')
-            if comparison == 'default' and (path == '/location' or path.endswith('locationName')):
-                comparison = 'location'
-            if comparison == 'location':
-                new = new.replace(' ', '').lower()
-                old = old.replace(' ', '').lower()
-            elif comparison == 'insensitive':
-                new = new.lower() if new is not None else None
-                old = old.lower() if old is not None else None
-            elif comparison == 'ignore':
+            if comparison == 'ignore':
                 return True
-            if str(new) == str(old):
-                result['compare'] = result.get('compare', '') + "(" + str(new) + ":" + str(old) + ")"
-                return True
-            else:
+            elif comparison == 'default' or comparison == 'sensitive':
+                if isinstance(old, str) and isinstance(new, str):
+                    new = new.lower()
+                    old = old.lower()
+            elif comparison == 'location':
+                if isinstance(old, str) and isinstance(new, str):
+                    new = str(new).replace(' ', '').lower()
+                    old = str(old).replace(' ', '').lower()
+            if str(new) != str(old):
                 result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
                 if updatable:
                     return False

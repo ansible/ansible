@@ -341,7 +341,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/'
+                disposition='/',
+                comparison='location'
             ),
             application_rule_collections=dict(
                 type='list',
@@ -354,7 +355,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='str',
                         choices=['allow',
                                  'deny'],
-                        comparison='insensitive',
                         disposition='action/type',
                         pattern='camelize'
                     ),
@@ -375,8 +375,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 options=dict(
                                     type=dict(
                                         type='str',
-                                        disposition='protocol_type',
-                                        comparison='insensitive'
+                                        disposition='protocol_type'
                                     ),
                                     port=dict(
                                         type='str'
@@ -407,7 +406,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='str',
                         choices=['snat',
                                  'dnat'],
-                        comparison='insensitive',
                         disposition='action/type',
                         pattern='camelize'
                     ),
@@ -456,7 +454,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='str',
                         choices=['allow',
                                  'deny'],
-                        comparison='insensitive',
                         disposition='action/type',
                         pattern='camelize'
                     ),
