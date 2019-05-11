@@ -882,10 +882,10 @@ class PyVmomi(object):
         """
         vm_obj = None
         user_desired_path = None
-
-        if self.params['uuid'] and not self.params['use_instance_uuid']:
+        use_instance_uuid = self.params.get('use_instance_uuid') or False
+        if self.params['uuid'] and not use_instance_uuid:
             vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
-        elif self.params['uuid'] and self.params['use_instance_uuid']:
+        elif self.params['uuid'] and use_instance_uuid:
             vm_obj = find_vm_by_id(self.content,
                                    vm_id=self.params['uuid'],
                                    vm_id_type="instance_uuid")

@@ -60,6 +60,12 @@ options:
      description:
      - The datacenter name to which virtual machine belongs to.
      required: True
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    disk:
      description:
      - A list of disks to add.
@@ -630,6 +636,7 @@ def main():
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
         disk=dict(type='list', default=[]),
+        use_instance_uuid=dict(type='bool', default=False),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=[['name', 'uuid']])
