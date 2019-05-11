@@ -41,7 +41,7 @@ EXAMPLES = r'''
 - name: Get value of failover IP 1.2.3.4
   hetzner_failover_ip_info:
     hetzner_user: foo
-    hetzner_pass: bar
+    hetzner_password: bar
     failover_ip: 1.2.3.4
     value: 5.6.7.8
   register: result
