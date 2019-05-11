@@ -43,7 +43,7 @@ simple_config_file:
     query:
       logged_in_users: /VirtualBox/GuestInfo/OS/LoggedInUsersList
     compose:
-      ansible_connection: ('indows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
+      ansible_connection: ('windows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
 '''
 
 import os
