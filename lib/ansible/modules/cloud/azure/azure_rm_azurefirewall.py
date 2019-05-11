@@ -375,7 +375,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 options=dict(
                                     type=dict(
                                         type='str',
-                                        disposition='protocolType',
+                                        disposition='protocol_type',
                                         comparison='insensitive'
                                     ),
                                     port=dict(
