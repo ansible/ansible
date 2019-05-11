@@ -26,6 +26,8 @@ seealso:
   - name: Failover IP documentation
     description: Hetzner's documentation on failover IPs.
     link: https://wiki.hetzner.de/index.php/Failover/en
+  - module: hetzner_failover_ip_info
+    description: Retrieve information on failover IPs.
 extends_documentation_fragment:
   - hetzner
 options:
