@@ -19,7 +19,7 @@ DOCUMENTATION = r'''
 module: vmware_folder_info
 short_description: Provides information about folders in a datacenter
 description:
-- The module can be used to gather a hierarchical view of the folders that exist in a datacenter
+- The module can be used to gather a hierarchical view of the folders that exist within a datacenter
 version_added: 2.9
 author:
 - David Hewitt (@davidmhewitt)
