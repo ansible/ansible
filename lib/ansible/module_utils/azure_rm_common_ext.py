@@ -186,8 +186,8 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                 new = new.replace(' ', '').lower()
                 old = old.replace(' ', '').lower()
             elif comparison == 'insensitive':
-                new = new.lower()
-                old = old.lower()
+                new = new.lower() if new is not None else None
+                old = old.lower() if old is not None else None
             elif comparison == 'ignore':
                 return True
             if str(new) == str(old):
