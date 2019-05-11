@@ -170,6 +170,9 @@
         name: azureFirewallIpConfiguration
   register: output
 
+- debug:
+    var: output
+
 - name: Assert that output has not changed
   assert:
     that:

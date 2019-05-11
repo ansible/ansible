@@ -174,7 +174,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                 new = sorted(new)
                 old = sorted(old)
             for i in range(len(new)):
-                if not self.default_compare(modifiers, new[i], old[i], path, result):
+                if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
                     return False
             return True
         else:
