@@ -112,7 +112,7 @@ api_result:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, api_call
+from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_objects, api_call
 
 
 def main():
@@ -129,16 +129,13 @@ def main():
         sync_connections_on_cluster=dict(type='bool'),
         use_default_session_timeout=dict(type='bool')
     )
-    argument_spec.update(checkpoint_argument_spec)
-    user_parameters = list(argument_spec.keys())
-    user_parameters.remove('auto_publish_session')
-    user_parameters.remove('state')
+    argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
                            mutually_exclusive=[['name', 'uid']])
-    api_call_object = "service_tcp"
+    api_call_object = "service-tcp"
 
-    api_call(module, api_call_object, user_parameters)
+    api_call(module, api_call_object)
 
 
 if __name__ == '__main__':

@@ -78,6 +78,7 @@ options:
     description:
       - The UID of the revision of the policy to install.
     type: str
+extends_documentation_fragment: checkpoint_commands
 """
 
 EXAMPLES = """
@@ -96,7 +97,7 @@ checkpoint_install_policy:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.checkpoint.checkpoint import api_command
+from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec_for_commands, api_command
 
 
 def main():
@@ -109,14 +110,16 @@ def main():
         threat_prevention=dict(type='bool'),
         install_on_all_cluster_members_or_fail=dict(type='bool'),
         prepare_only=dict(type='bool'),
-        revision=dict(type='str')
+        revision=dict(type='str'),
+        wait_for_task=dict(type='bool', default=True)
     )
+    argument_spec.update(checkpoint_argument_spec_for_commands)
 
-    user_parameters = list(argument_spec.keys())
     module = AnsibleModule(argument_spec=argument_spec)
+
     command = "install-policy"
 
-    api_command(module, command, user_parameters)
+    api_command(module, command)
 
 
 if __name__ == '__main__':

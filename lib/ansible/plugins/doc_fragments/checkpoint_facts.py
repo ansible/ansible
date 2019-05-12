@@ -39,4 +39,8 @@ options:
     description:
       - Indicates whether to calculate and show "groups" field for every object in reply.
     type: bool
+  version:
+    description:
+      - Version of checkpoint. If not given one, the latest version taken.
+    type: str
 '''

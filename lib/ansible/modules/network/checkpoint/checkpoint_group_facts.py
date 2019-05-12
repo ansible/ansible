@@ -70,12 +70,13 @@ def main():
         dereference_group_members=dict(type='bool')
     )
     argument_spec.update(checkpoint_argument_spec_for_facts)
-    user_parameters = list(argument_spec.keys())
 
     module = AnsibleModule(argument_spec=argument_spec)
-    api_call_object = "group"
 
-    api_call_facts(module, api_call_object, user_parameters)
+    api_call_object = "group"
+    api_call_object_plural_version = "groups"
+
+    api_call_facts(module, api_call_object, api_call_object_plural_version)
 
 
 if __name__ == '__main__':

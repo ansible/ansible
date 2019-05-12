@@ -56,12 +56,13 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 def main():
     argument_spec = dict()
     argument_spec.update(checkpoint_argument_spec_for_facts)
-    user_parameters = list(argument_spec.keys())
 
     module = AnsibleModule(argument_spec=argument_spec)
-    api_call_object = "network"
 
-    api_call_facts(module, api_call_object, user_parameters)
+    api_call_object = "network"
+    api_call_object_plural_version = "networks"
+
+    api_call_facts(module, api_call_object, api_call_object_plural_version)
 
 
 if __name__ == '__main__':

@@ -70,4 +70,13 @@ options:
       - Publish the current session if changes have been performed
         after task completes.
     type: bool
+  wait_for_task:
+    description:
+      - Wait for the task to end. Such as publish task.
+    type: bool
+    default: true
+  version:
+    description:
+      - Version of checkpoint. If not given one, the latest version taken.
+    type: str
 '''
