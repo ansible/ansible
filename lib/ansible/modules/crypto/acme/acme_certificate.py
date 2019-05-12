@@ -693,19 +693,23 @@ class ACMEClient(object):
                     chain.append(''.join(current))
                 current = []
 
-        # Process link-up headers if there was no chain in reply
-        if not chain:
-            def f(link, relation):
-                if relation == 'up':
+        alternates = []
+
+        def f(link, relation):
+            if relation == 'up':
+                # Process link-up headers if there was no chain in reply
+                if not chain:
                     chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
                     if chain_info['status'] in [200, 201]:
                         chain.append(self._der_to_pem(chain_result))
+            elif relation == 'alternate':
+                alternates.append(link)
 
-            process_links(info, f)
+        process_links(info, f)
 
         if cert is None or current:
             raise ModuleFailException("Failed to parse certificate chain download from {0}: {1} (headers: {2})".format(url, content, info))
-        return {'cert': cert, 'chain': chain}
+        return {'cert': cert, 'chain': chain, 'alternates': alternates}
 
     def _new_cert_v1(self):
         '''
@@ -878,11 +882,23 @@ class ACMEClient(object):
             if auth['status'] != 'valid':
                 self._fail_challenge(identifier_type, identifier, auth, 'Authorization for {0} returned status ' + str(auth['status']))
 
+        alternate_chains = []
         if self.version == 1:
             cert = self._new_cert_v1()
         else:
             cert_uri = self._finalize_cert()
             cert = self._download_cert(cert_uri)
+            for alternate in cert['alternates']:
+                try:
+                    alt_cert = self._download_cert(alternate)
+                except ModuleFailException as e:
+                    self.module.warn('Error while downloading alternative certificate {0}: {1}'.format(alternate, e))
+                    continue
+                alt_chain = alt_cert.get('chain', [])
+                if alt_chain:
+                    alternate_chains.append(alt_chain)
+                else:
+                    self.module.warn('Alternative certificate {0} chain is empty'.format(alternate))
 
         if cert['cert'] is not None:
             pem_cert = cert['cert']
