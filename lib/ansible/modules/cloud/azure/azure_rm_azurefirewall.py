@@ -343,7 +343,8 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 disposition='/properties/applicationRuleCollections',
                 options=dict(
                     priority=dict(
-                        type='number'
+                        type='number',
+                        disposition='properties/*'
                     ),
                     action=dict(
                         type='str',
