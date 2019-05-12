@@ -37,6 +37,7 @@ class RedfishUtils(object):
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
             data = json.loads(resp.read())
+            headers = dict((k.lower(), v) for (k, v) in resp.info().items())
         except HTTPError as e:
             msg = self._get_extended_message(e)
             return {'ret': False,
@@ -49,7 +50,7 @@ class RedfishUtils(object):
         except Exception as e:
             return {'ret': False,
                     'msg': "Failed GET request to '%s': '%s'" % (uri, to_text(e))}
-        return {'ret': True, 'data': data}
+        return {'ret': True, 'data': data, 'headers': headers}
 
     def post_request(self, uri, pyld):
         try:
@@ -75,9 +76,20 @@ class RedfishUtils(object):
         return {'ret': True, 'resp': resp}
 
     def patch_request(self, uri, pyld):
+        headers = PATCH_HEADERS
+        r = self.get_request(uri)
+        if r['ret']:
+            # Get etag from etag header or @odata.etag property
+            etag = r['headers'].get('etag')
+            if not etag:
+                etag = r['data'].get('@odata.etag')
+            if etag:
+                # Make copy of headers and add If-Match header
+                headers = dict(headers)
+                headers['If-Match'] = etag
         try:
             resp = open_url(uri, data=json.dumps(pyld),
-                            headers=PATCH_HEADERS, method="PATCH",
+                            headers=headers, method="PATCH",
                             url_username=self.creds['user'],
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,

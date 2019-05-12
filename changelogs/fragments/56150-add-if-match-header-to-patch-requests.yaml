@@ -1,0 +1,3 @@
+---
+bugfixes:
+- redfish_command - add If-Match etag header to Redfish PATCH requests (https://github.com/ansible/ansible/issues/56050)
