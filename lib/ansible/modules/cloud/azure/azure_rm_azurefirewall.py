@@ -403,13 +403,14 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     ),
                     action=dict(
                         type='str',
+                        disposition='properties/action/type',
                         choices=['snat',
                                  'dnat'],
-                        disposition='properties/action/type',
                         pattern='camelize'
                     ),
                     rules=dict(
                         type='list',
+                        disposition='properties/*',
                         options=dict(
                             name=dict(
                                 type='str'
