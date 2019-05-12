@@ -635,7 +635,10 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
 
         if response:
             self.results["id"] = response["id"]
-            self.results["xxx"] = response
+            while response['properties']['provisioningState'] == 'Updating':
+              time.sleep(30)
+              response = self.get_resource()
+
 
         return self.results
 
