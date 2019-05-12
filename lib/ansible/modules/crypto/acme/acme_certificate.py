@@ -392,11 +392,20 @@ import os
 import re
 import textwrap
 import time
+import urllib
 from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
+from ansible.module_utils.six.moves.urllib.parse import unquote
+
+
+def process_links(info, callback):
+    if 'link' in info:
+        link = info['link']
+        for url, relation in re.findall(r'<([^>]+)>;rel="(\w+)"', link):
+            callback(unquote(url), relation)
 
 
 def get_cert_days(module, cert_file):
@@ -685,14 +694,14 @@ class ACMEClient(object):
                 current = []
 
         # Process link-up headers if there was no chain in reply
-        if not chain and 'link' in info:
-            link = info['link']
-            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
-            if parsed_link and parsed_link.group(2) == "up":
-                chain_link = parsed_link.group(1)
-                chain_result, chain_info = self.account.get_request(chain_link, parse_json_result=False)
-                if chain_info['status'] in [200, 201]:
-                    chain.append(self._der_to_pem(chain_result))
+        if not chain:
+            def f(link, relation):
+                if relation == 'up':
+                    chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
+                    if chain_info['status'] in [200, 201]:
+                        chain.append(self._der_to_pem(chain_result))
+
+            process_links(info, f)
 
         if cert is None or current:
             raise ModuleFailException("Failed to parse certificate chain download from {0}: {1} (headers: {2})".format(url, content, info))
@@ -712,14 +721,15 @@ class ACMEClient(object):
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
 
         chain = []
-        if 'link' in info:
-            link = info['link']
-            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
-            if parsed_link and parsed_link.group(2) == "up":
-                chain_link = parsed_link.group(1)
-                chain_result, chain_info = self.account.get_request(chain_link, parse_json_result=False)
+
+        def f(link, relation):
+            if relation == 'up':
+                chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
                 if chain_info['status'] in [200, 201]:
-                    chain = [self._der_to_pem(chain_result)]
+                    chain.clear()
+                    chain.append(self._der_to_pem(chain_result))
+
+        process_links(info, f)
 
         if info['status'] not in [200, 201]:
             raise ModuleFailException("Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
