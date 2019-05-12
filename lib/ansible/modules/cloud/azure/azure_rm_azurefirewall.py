@@ -695,6 +695,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                               self.status_code,
                                               600,
                                               30)
+            response = json.loads(response.text)
             found = True
             self.log("Response : {0}".format(response))
             # self.log("AzureFirewall instance : {0} found".format(response.name))
