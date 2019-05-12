@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# 2019 Rhys Campbell <rhys.james.campbell@googlemail.com>
+# 2019 Rhys Campbell (@rhysmeister) <rhys.james.campbell@googlemail.com>
 # https://github.com/rhysmeister
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -15,7 +15,7 @@ ANSIBLE_METADATA =\
 DOCUMENTATION = '''
 ---
 module: cassandra_backup
-author: "Rhys Campbell"
+author: Rhys Campbell (@rhysmeister)
 version_added: 2.9
 short_description: Enables or disables incremental backup.
 requirements: [ nodetool ]
