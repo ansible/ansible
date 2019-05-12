@@ -53,20 +53,15 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         :param resource_id: It could be a resource name, resource id or dict containing parts from the pattern.
         :param pattern: pattern of resource is, just like in Azure Swagger
         '''
+        value_dict = {}
         if isinstance(value, string_types):
-            pattern_parts = pattern.split('/')
-            for i in range(len(pattern_parts)):
-                x = re.sub('[{} ]+', '', pattern_parts[i], 2)
-                if len(x) < len(pattern_parts[i]):
-                    pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
             value_parts = value.split('/')
             if len(value_parts) == 1:
-                value_dict = {}
                 value_dict['name'] = value
             else:
+                pattern_parts = pattern.split('/')
                 if len(value_parts) != len(pattern_parts):
                     return None
-                value_dict = {}
                 for i in range(len(value_parts)):
                     if pattern_parts[i].startswith('{'):
                         value_dict[pattern_parts[i][1:-1]] = value_parts[i]
@@ -76,19 +71,16 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
             value_dict = value
         else:
             return None
-
         if not value_dict.get('subscription_id'):
             value_dict['subscription_id'] = self.subscription_id
         if not value_dict.get('resource_group'):
             value_dict['resource_group'] = self.resource_group
 
-        # for i in range(len(pattern_parts)):
-        #     if pattern_parts[i].startswith('{'):
-        #         value = value_dict.get(pattern_parts[i][1:-1], None)
-        #         if not value:
-        #             return None
-        #         pattern_parts[i] = value
-        # return "/".join(pattern_parts)
+        # check if any extra values passed
+        for k in value_dict:
+            if not ('{' + k + '}') in pattern:
+                return None 
+        # format url
         return pattern.format(**value_dict)
 
     def idempotency_check(self, old_params, new_params):
