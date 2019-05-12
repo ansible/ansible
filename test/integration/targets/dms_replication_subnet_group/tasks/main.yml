@@ -42,6 +42,7 @@
         subnetgroupidentifier: "dev-sngroup"
         subnetgroupdescription: "Development Subnet Group asdasdas"
         subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
+        register: result
 
     - assert:
         that:
