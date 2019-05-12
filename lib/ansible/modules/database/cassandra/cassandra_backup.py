@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 
 
 ANSIBLE_METADATA =\
-            {"metadata_version": "1.1",
-             "status": ['preview'],
-             "supported_by": "community"}
+  {"metadata_version": "1.1",
+   "status": ['preview'],
+   "supported_by": "community"}
 
 DOCUMENTATION = '''
 ---
@@ -96,7 +96,7 @@ class NodeToolCmd(object):
         self.nodetool_path = module.params['nodetool_path']
         self.debug = module.params['debug']
         if self.host is None:
-                self.host = socket.getfqdn()
+            self.host = socket.getfqdn()
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
@@ -106,7 +106,7 @@ class NodeToolCmd(object):
                 not self.nodetool_path.endswith('/'):
             self.nodetool_path += '/'
         else:
-                self.nodetool_path = ""
+            self.nodetool_path = ""
         cmd = "{0}nodetool --host {1} --port {2}".format(self.nodetool_path,
                                                          self.host,
                                                          self.port)
