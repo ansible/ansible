@@ -203,7 +203,7 @@ def api_call(module, api_call_object):
     payload_for_equals = {'type': api_call_object, 'params': payload}
     equals_code, equals_response = send_request(connection, version, 'equals', payload_for_equals)
     # if code is 400 (bad request) or 500 (internal error) - fail
-    if equals_code== 400 or equals_code == 500:
+    if equals_code == 400 or equals_code == 500:
         module.fail_json(msg=equals_response)
     result = {'changed': False}
 
