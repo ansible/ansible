@@ -79,7 +79,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         # check if any extra values passed
         for k in value_dict:
             if not ('{' + k + '}') in pattern:
-                return None 
+                return None
         # format url
         return pattern.format(**value_dict)
 
