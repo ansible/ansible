@@ -1,5 +1,4 @@
-# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
-#                    Chris Houseknecht, <house@redhat.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -54,13 +53,12 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         :param resource_id: It could be a resource name, resource id or dict containing parts from the pattern.
         :param pattern: pattern of resource is, just like in Azure Swagger
         '''
-        pattern_parts = pattern.split('/')
-        for i in range(len(pattern_parts)):
-            x = re.sub('[{} ]+', '', pattern_parts[i], 2)
-            if len(x) < len(pattern_parts[i]):
-                pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
-
         if isinstance(value, string_types):
+            pattern_parts = pattern.split('/')
+            for i in range(len(pattern_parts)):
+                x = re.sub('[{} ]+', '', pattern_parts[i], 2)
+                if len(x) < len(pattern_parts[i]):
+                    pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
             value_parts = value.split('/')
             if len(value_parts) == 1:
                 value_dict = {}
@@ -84,14 +82,14 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         if not value_dict.get('resource_group'):
             value_dict['resource_group'] = self.resource_group
 
-        for i in range(len(pattern_parts)):
-            if pattern_parts[i].startswith('{'):
-                value = value_dict.get(pattern_parts[i][1:-1], None)
-                if not value:
-                    return None
-                pattern_parts[i] = value
-
-        return "/".join(pattern_parts)
+        # for i in range(len(pattern_parts)):
+        #     if pattern_parts[i].startswith('{'):
+        #         value = value_dict.get(pattern_parts[i][1:-1], None)
+        #         if not value:
+        #             return None
+        #         pattern_parts[i] = value
+        # return "/".join(pattern_parts)
+        return pattern.format(**value_dict)
 
     def idempotency_check(self, old_params, new_params):
         '''

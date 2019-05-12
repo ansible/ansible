@@ -507,17 +507,17 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     subnet=dict(
                         type='raw',
                         disposition='properties/subnet/id',
-                        pattern=('/subscriptions/{{ subscription_id }}/resourceGroups'
-                                 '/{{ resource_group }}/providers/Microsoft.Network'
-                                 '/virtualNetworks/{{ virtual_network_name }}/subnets'
-                                 '/{{ name }}')
+                        pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                 '/{resource_group}/providers/Microsoft.Network'
+                                 '/virtualNetworks/{virtual_network_name}/subnets'
+                                 '/{name}')
                     ),
                     public_ip_address=dict(
                         type='raw',
                         disposition='properties/publicIPAddress/id',
-                        pattern=('/subscriptions/{{ subscription_id }}/resourceGroups'
-                                 '/{{ resource_group }}/providers/Microsoft.Network'
-                                 '/publicIPAddresses/{{ name }}')
+                        pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                 '/{resource_group}/providers/Microsoft.Network'
+                                 '/publicIPAddresses/{name}')
                     ),
                     name=dict(
                         type='str'
