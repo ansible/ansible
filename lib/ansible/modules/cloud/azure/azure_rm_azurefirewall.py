@@ -635,7 +635,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
 
         if response:
             self.results["id"] = response["id"]
-            self.results["provisioning_state"] = response["provisioningState"]
+            self.results["xxx"] = response
 
         return self.results
 
