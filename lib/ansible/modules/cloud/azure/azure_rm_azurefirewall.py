@@ -398,7 +398,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 disposition='/properties/natRuleCollections',
                 options=dict(
                     priority=dict(
-                        type='number'
+                        type='number',
                         disposition='properties/*'
                     ),
                     action=dict(
