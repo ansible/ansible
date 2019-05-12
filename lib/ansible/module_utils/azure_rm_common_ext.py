@@ -6,6 +6,7 @@
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 import re
 from ansible.module_utils.common.dict_transformations import _camel_to_snake, _snake_to_camel
+from six import string_types
 
 
 class AzureRMModuleBaseExt(AzureRMModuleBase):
@@ -59,7 +60,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
             if len(x) < len(pattern_parts[i]):
                 pattern_parts[i] = '{' + re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower() + '}'
 
-        if isinstance(value, str):
+        if isinstance(value, string_types):
             value_parts = value.split('/')
             if len(value_parts) == 1:
                 value_dict = {}
@@ -183,15 +184,17 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
             if comparison == 'ignore':
                 return True
             elif comparison == 'default' or comparison == 'sensitive':
-                if isinstance(old, str) and isinstance(new, str):
+                comparison = "moo"
+                if isinstance(old, string_types) and isinstance(new, string_types):
+                    comparison = "kfi"
                     new = new.lower()
                     old = old.lower()
             elif comparison == 'location':
-                if isinstance(old, str) and isinstance(new, str):
-                    new = str(new).replace(' ', '').lower()
-                    old = str(old).replace(' ', '').lower()
+                if isinstance(old, string_types) and isinstance(new, string_types):
+                    new = new.replace(' ', '').lower()
+                    old = old.replace(' ', '').lower()
             if str(new) != str(old):
-                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
+                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old) + ' - ' + str(comparison)
                 if updatable:
                     return False
                 else:
