@@ -135,6 +135,8 @@ keyed_groups:
 # Set individual variables with compose
 compose:
   # Use the private IP address to connect to the host and add additional variables as hostvars
+  # EC2 attribute private_ip_address will be mapped to hostvars ansible_host and internal_ip_adddress
+  # EC2 attribute public_ip_address will be mapped to hostvars public_ip_address
   # (note: this does not modify inventory_hostname, which is set via I(hostnames))
   ansible_host: private_ip_address
   public_ip_address: public_ip_address
