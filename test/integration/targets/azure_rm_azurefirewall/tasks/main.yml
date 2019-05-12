@@ -101,6 +101,9 @@
         name: azureFirewallIpConfiguration
   register: output
 
+- debug:
+    var: output
+
 - name: Assert that output has changed
   assert:
     that:
