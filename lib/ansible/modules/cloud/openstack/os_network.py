@@ -76,6 +76,13 @@ options:
            not utilised.
      type: bool
      version_added: "2.8"
+   mtu:
+     description:
+       -  The maximum transmission unit (MTU) value to address fragmentation.
+          Network will use OpenStack defaults if this option is
+          not provided.
+     type: int
+     version_added: "2.9"
 requirements:
      - "openstacksdk"
 '''
@@ -164,7 +171,8 @@ def main():
         provider_segmentation_id=dict(required=False, type='int'),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None),
-        port_security_enabled=dict(type='bool')
+        port_security_enabled=dict(type='bool'),
+        mtu=dict(required=False, type='int')
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -180,6 +188,7 @@ def main():
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
     port_security_enabled = module.params.get('port_security_enabled')
+    mtu = module.params.get('mtu')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -207,11 +216,13 @@ def main():
                 if project_id is not None:
                     net = cloud.create_network(name, shared, admin_state_up,
                                                external, provider, project_id,
-                                               port_security_enabled=port_security_enabled)
+                                               port_security_enabled=port_security_enabled,
+                                               mtu_size=mtu)
                 else:
                     net = cloud.create_network(name, shared, admin_state_up,
                                                external, provider,
-                                               port_security_enabled=port_security_enabled)
+                                               port_security_enabled=port_security_enabled,
+                                               mtu_size=mtu)
                 changed = True
             else:
                 changed = False
