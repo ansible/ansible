@@ -306,15 +306,9 @@ import time
 import json
 import re
 from ansible.module_utils.azure_rm_common_ext import AzureRMModuleBaseExt
+from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 from copy import deepcopy
-try:
-    from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network import NetworkManagementClient
-    from msrestazure.azure_operation import AzureOperationPoller
-    from msrest.polling import LROPoller
-except ImportError:
-    # This is handled in azure_rm_common
-    pass
+from msrestazure.azure_exceptions import CloudError
 
 
 class Actions:
@@ -346,7 +340,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             ),
             application_rule_collections=dict(
                 type='list',
-                disposition='/',
+                disposition='/properties/applicationRuleCollections',
                 options=dict(
                     priority=dict(
                         type='number'
@@ -355,11 +349,12 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                         type='str',
                         choices=['allow',
                                  'deny'],
-                        disposition='action/type',
+                        disposition='properties/action/type',
                         pattern='camelize'
                     ),
                     rules=dict(
                         type='list',
+                        disposition='properties/*',
                         options=dict(
                             name=dict(
                                 type='str'
@@ -368,14 +363,15 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 type='str'
                             ),
                             source_addresses=dict(
-                                type='list'
+                                type='list',
+                                disposition='sourceAddresses'
                             ),
                             protocols=dict(
                                 type='list',
                                 options=dict(
                                     type=dict(
                                         type='str',
-                                        disposition='protocol_type'
+                                        disposition='protocolType'
                                     ),
                                     port=dict(
                                         type='str'
@@ -383,10 +379,12 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 )
                             ),
                             target_fqdns=dict(
-                                type='list'
+                                type='list',
+                                disposition='targetFqdns'
                             ),
                             fqdn_tags=dict(
-                                type='list'
+                                type='list',
+                                disposition='fqdnTags'
                             )
                         )
                     ),
@@ -397,16 +395,17 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             ),
             nat_rule_collections=dict(
                 type='list',
-                disposition='/',
+                disposition='/properties/natRuleCollections',
                 options=dict(
                     priority=dict(
                         type='number'
+                        disposition='properties/*'
                     ),
                     action=dict(
                         type='str',
                         choices=['snat',
                                  'dnat'],
-                        disposition='action/type',
+                        disposition='properties/action/type',
                         pattern='camelize'
                     ),
                     rules=dict(
@@ -419,22 +418,27 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 type='str'
                             ),
                             source_addresses=dict(
-                                type='list'
+                                type='list',
+                                disposition='sourceAddresses'
                             ),
                             destination_addresses=dict(
-                                type='list'
+                                type='list',
+                                disposition='destinationAddresses'
                             ),
                             destination_ports=dict(
-                                type='list'
+                                type='list',
+                                disposition='destinationPorts'
                             ),
                             protocols=dict(
                                 type='list'
                             ),
                             translated_address=dict(
-                                type='str'
+                                type='str',
+                                disposition='translatedAddress'
                             ),
                             translated_port=dict(
-                                type='str'
+                                type='str',
+                                disposition='translatedPort'
                             )
                         )
                     ),
@@ -445,20 +449,22 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             ),
             network_rule_collections=dict(
                 type='list',
-                disposition='/',
+                disposition='/properties/networkRuleCollections',
                 options=dict(
                     priority=dict(
-                        type='number'
+                        type='number',
+                        disposition='properties/*'
                     ),
                     action=dict(
                         type='str',
                         choices=['allow',
                                  'deny'],
-                        disposition='action/type',
+                        disposition='properties/action/type',
                         pattern='camelize'
                     ),
                     rules=dict(
                         type='list',
+                        disposition='properties/*',
                         options=dict(
                             name=dict(
                                 type='str'
@@ -470,13 +476,16 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                                 type='list'
                             ),
                             source_addresses=dict(
-                                type='list'
+                                type='list',
+                                disposition='sourceAddresses'
                             ),
                             destination_addresses=dict(
-                                type='list'
+                                type='list',
+                                disposition='destinationAddresses'
                             ),
                             destination_ports=dict(
-                                type='list'
+                                type='list',
+                                disposition='destinationPorts'
                             )
                         )
                     ),
@@ -487,11 +496,11 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             ),
             ip_configurations=dict(
                 type='list',
-                disposition='/',
+                disposition='/properties/ipConfigurations',
                 options=dict(
                     subnet=dict(
                         type='raw',
-                        disposition='subnet/id',
+                        disposition='properties/subnet/id',
                         pattern=('/subscriptions/{{ subscription_id }}/resourceGroups'
                                  '/{{ resource_group }}/providers/Microsoft.Network'
                                  '/virtualNetworks/{{ virtual_network_name }}/subnets'
@@ -499,7 +508,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     ),
                     public_ip_address=dict(
                         type='raw',
-                        disposition='public_ip_address/id',
+                        disposition='properties/publicIPAddress/id',
                         pattern=('/subscriptions/{{ subscription_id }}/resourceGroups'
                                  '/{{ resource_group }}/providers/Microsoft.Network'
                                  '/publicIPAddresses/{{ name }}')
@@ -523,7 +532,15 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
         self.results = dict(changed=False)
         self.mgmt_client = None
         self.state = None
+        self.url = None
+        self.status_code = [200, 201, 202]
         self.to_do = Actions.NoAction
+
+        self.body = {}
+        self.query_parameters = {}
+        self.query_parameters['api-version'] = '2018-11-01'
+        self.header_parameters = {}
+        self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         super(AzureRMAzureFirewalls, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                     supports_check_mode=True,
@@ -541,7 +558,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
         old_response = None
         response = None
 
-        self.mgmt_client = self.get_mgmt_svc_client(NetworkManagementClient,
+        self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
@@ -549,12 +566,30 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
         if 'location' not in self.body:
             self.body['location'] = resource_group.location
 
+        self.url = ('/subscriptions' +
+                    '/{{ subscription_id }}' +
+                    '/resourceGroups' +
+                    '/{{ resource_group }}' +
+                    '/providers' +
+                    '/Microsoft.Network' +
+                    '/azureFirewalls' +
+                    '/{{ azure_firewall_name }}')
+        self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
+        self.url = self.url.replace('{{ resource_group }}', self.resource_group)
+        self.url = self.url.replace('{{ azure_firewall_name }}', self.name)
+
         old_response = self.get_resource()
 
         if not old_response:
-            if self.state == 'present':
+            self.log("AzureFirewall instance doesn't exist")
+
+            if self.state == 'absent':
+                self.log("Old instance didn't exist")
+            else:
                 self.to_do = Actions.Create
         else:
+            self.log('AzureFirewall instance already exists')
+
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             else:
@@ -565,16 +600,34 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
-            self.results['changed'] = True
+            self.log('Need to Create / Update the AzureFirewall instance')
+
             if self.check_mode:
+                self.results['changed'] = True
                 return self.results
+
             response = self.create_update_resource()
-        elif self.to_do == Actions.Delete:
+
+            # if not old_response:
             self.results['changed'] = True
+            # else:
+            #     self.results['changed'] = old_response.__ne__(response)
+            self.log('Creation / Update done')
+        elif self.to_do == Actions.Delete:
+            self.log('AzureFirewall instance deleted')
+            self.results['changed'] = True
+
             if self.check_mode:
                 return self.results
+
             self.delete_resource()
+
+            # make sure instance is actually deleted, for some Azure resources, instance is hanging around
+            # for some time after deletion -- this should be really fixed in Azure
+            while self.get_resource():
+                time.sleep(20)
         else:
+            self.log('AzureFirewall instance unchanged')
             self.results['changed'] = False
             response = old_response
 
@@ -584,22 +637,40 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
         return self.results
 
     def create_update_resource(self):
+        # self.log('Creating / Updating the AzureFirewall instance {0}'.format(self.))
+
         try:
-            response = self.mgmt_client.azure_firewalls.create_or_update(resource_group_name=self.resource_group,
-                                                                         azure_firewall_name=self.name,
-                                                                         parameters=self.body)
-            if isinstance(response, AzureOperationPoller) or isinstance(response, LROPoller):
-                response = self.get_poller_result(response)
+            response = self.mgmt_client.query(self.url,
+                                              'PUT',
+                                              self.query_parameters,
+                                              self.header_parameters,
+                                              self.body,
+                                              self.status_code,
+                                              600,
+                                              30)
         except CloudError as exc:
             self.log('Error attempting to create the AzureFirewall instance.')
             self.fail('Error creating the AzureFirewall instance: {0}'.format(str(exc)))
-        return response.as_dict()
+
+        try:
+            response = json.loads(response.text)
+        except Exception:
+            response = {'text': response.text}
+            pass
+
+        return response
 
     def delete_resource(self):
         # self.log('Deleting the AzureFirewall instance {0}'.format(self.))
         try:
-            response = self.mgmt_client.azure_firewalls.delete(resource_group_name=self.resource_group,
-                                                               azure_firewall_name=self.name)
+            response = self.mgmt_client.query(self.url,
+                                              'DELETE',
+                                              self.query_parameters,
+                                              self.header_parameters,
+                                              None,
+                                              self.status_code,
+                                              600,
+                                              30)
         except CloudError as e:
             self.log('Error attempting to delete the AzureFirewall instance.')
             self.fail('Error deleting the AzureFirewall instance: {0}'.format(str(e)))
@@ -610,11 +681,23 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
         # self.log('Checking if the AzureFirewall instance {0} is present'.format(self.))
         found = False
         try:
-            response = self.mgmt_client.azure_firewalls.get(resource_group_name=self.resource_group,
-                                                            azure_firewall_name=self.name)
+            response = self.mgmt_client.query(self.url,
+                                              'GET',
+                                              self.query_parameters,
+                                              self.header_parameters,
+                                              None,
+                                              self.status_code,
+                                              600,
+                                              30)
+            found = True
+            self.log("Response : {0}".format(response))
+            # self.log("AzureFirewall instance : {0} found".format(response.name))
         except CloudError as e:
-            return False
-        return response.as_dict()
+            self.log('Did not find the AzureFirewall instance.')
+        if found is True:
+            return response
+
+        return False
 
 
 def main():
