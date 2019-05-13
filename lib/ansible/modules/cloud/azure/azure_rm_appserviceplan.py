@@ -41,7 +41,6 @@ options:
             - The pricing tiers, e.g., C(F1), C(D1), C(B1), C(B2), C(B3), C(S1), C(P1), C(P1V2) etc.
             - Please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/plans/) for more detail.
             - For linux app service plan, please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/) for more detail.
-            - Sku needs to be configured at creation time.
     is_linux:
         description:
             - Describe whether to host webapp on Linux worker.
