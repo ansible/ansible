@@ -174,9 +174,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
             if comparison == 'ignore':
                 return True
             elif comparison == 'default' or comparison == 'sensitive':
-                comparison = "moo"
                 if isinstance(old, string_types) and isinstance(new, string_types):
-                    comparison = "kfi"
                     new = new.lower()
                     old = old.lower()
             elif comparison == 'location':
@@ -188,7 +186,6 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                 if updatable:
                     return False
                 else:
-                    # XXX change new value to old
                     self.module.warn("property '" + path + "' cannot be updated (" + str(old) + "->" + str(new) + ")")
                     return True
             else:

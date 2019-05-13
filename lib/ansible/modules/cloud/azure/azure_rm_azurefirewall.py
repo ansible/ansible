@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Zim Kalinowski, (@zikalino), Jurijs Fadejevs (@xxgithubid)
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino), Jurijs Fadejevs
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_azurefirewall
 version_added: '2.9'
-short_description: Manage Azure AzureFirewall instance.
+short_description: Manage Azure Firewall instance.
 description:
-  - 'Create, update and delete instance of Azure AzureFirewall.'
+  - 'Create, update and delete instance of Azure Firewall.'
 options:
   resource_group:
     description:
@@ -29,9 +29,6 @@ options:
     description:
       - The name of the Azure Firewall.
     required: true
-  id:
-    description:
-      - Resource ID.
   location:
     description:
       - Resource location.
@@ -188,10 +185,15 @@ options:
     suboptions:
       subnet:
         description:
-          - Resource ID.
+          - Existing subnet.
+          - It can be a string containing subnet resource id.
+          - It can be a dictionary containing C(name), C(virtual_network_name) and optionally C(resource_group) .
       public_ip_address:
         description:
-          - Resource ID.
+          - Existing public IP address
+          - It can be a string containing resource id.
+          - It can be a string containing a name in current resource group.
+          - It can be a dictionary containing C(name) and optionally C(resource_group).
       name:
         description:
           - >-
@@ -212,6 +214,7 @@ extends_documentation_fragment:
   - azure_tags
 author:
   - Zim Kalinowski (@zikalino)
+  - Jurijs Fadejevs
 
 '''
 
@@ -573,16 +576,13 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
             self.body['location'] = resource_group.location
 
         self.url = ('/subscriptions' +
-                    '/{{ subscription_id }}' +
+                    '/' + self.subscription_id +
                     '/resourceGroups' +
-                    '/{{ resource_group }}' +
+                    '/' + self.resource_group +
                     '/providers' +
                     '/Microsoft.Network' +
                     '/azureFirewalls' +
-                    '/{{ azure_firewall_name }}')
-        self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
-        self.url = self.url.replace('{{ resource_group }}', self.resource_group)
-        self.url = self.url.replace('{{ azure_firewall_name }}', self.name)
+                    '/' + self.azure_firewall_name)
 
         old_response = self.get_resource()
 
