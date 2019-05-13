@@ -89,7 +89,8 @@ def is_checkpoint_param(parameter):
     return True
 
 
-def get_payload_from_user_parameters(module):
+# build the payload from the parameters which has value (not None), and they are parameter of checkpoint API as well
+def get_payload_from_parameters(module):
     payload = {}
     for parameter in module.params:
         if module.params[parameter] and is_checkpoint_param(parameter):
@@ -152,7 +153,7 @@ def handle_publish(module, connection, version):
 
 # handle a command
 def api_command(module, command):
-    payload = get_payload_from_user_parameters(module)
+    payload = get_payload_from_parameters(module)
     connection = Connection(module._socket_path)
     # if user insert a specific version, we add it to the url
     version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
@@ -177,7 +178,7 @@ def api_command(module, command):
 
 # handle api call facts
 def api_call_facts(module, api_call_object, api_call_object_plural_version):
-    payload = get_payload_from_user_parameters(module)
+    payload = get_payload_from_parameters(module)
     connection = Connection(module._socket_path)
     # if user insert a specific version, we add it to the url
     version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
@@ -195,7 +196,7 @@ def api_call_facts(module, api_call_object, api_call_object_plural_version):
 
 # handle api call
 def api_call(module, api_call_object):
-    payload = get_payload_from_user_parameters(module)
+    payload = get_payload_from_parameters(module)
     connection = Connection(module._socket_path)
     # if user insert a specific version, we add it to the url
     version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
