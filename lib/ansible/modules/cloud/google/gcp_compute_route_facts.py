@@ -91,7 +91,7 @@ items:
       description:
       - The network that this route applies to.
       returned: success
-      type: str
+      type: dict
     priority:
       description:
       - The priority of this route. Priority is used to break ties in cases where
@@ -122,7 +122,7 @@ items:
         instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
         .'
       returned: success
-      type: str
+      type: dict
     nextHopIp:
       description:
       - Network IP address of an instance that should handle matching packets.
@@ -132,7 +132,7 @@ items:
       description:
       - URL to a VpnTunnel that should handle matching packets.
       returned: success
-      type: str
+      type: dict
     nextHopNetwork:
       description:
       - URL to a Network that should handle matching packets.

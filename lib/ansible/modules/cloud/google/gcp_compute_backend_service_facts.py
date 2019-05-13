@@ -107,13 +107,21 @@ items:
           type: str
         group:
           description:
-          - This instance group defines the list of instances that serve traffic.
-            Member virtual machine instances from each instance group must live in
-            the same zone as the instance group itself.
-          - No two backends in a backend service are allowed to use same Instance
-            Group resource.
+          - The fully-qualified URL of an Instance Group or Network Endpoint Group
+            resource. In case of instance group this defines the list of instances
+            that serve traffic. Member virtual machine instances from each instance
+            group must live in the same zone as the instance group itself. No two
+            backends in a backend service are allowed to use same Instance Group resource.
+          - For Network Endpoint Groups this defines list of endpoints. All endpoints
+            of Network Endpoint Group must be hosted on instances located in the same
+            zone as the Network Endpoint Group.
+          - Backend service can not contain mix of Instance Group and Network Endpoint
+            Group backends.
+          - Note that you must specify an Instance Group or Network Endpoint Group
+            resource using the fully-qualified URL, rather than a partial URL.
           - When the BackendService has load balancing scheme INTERNAL, the instance
-            group must be in a zone within the same region as the BackendService.
+            group must be within the same region as the BackendService. Network Endpoint
+            Groups are not supported for INTERNAL load balancing scheme.
           returned: success
           type: str
         maxConnections:
@@ -206,9 +214,20 @@ items:
               - "'&' and '=' will be percent encoded and not treated as delimiters."
               returned: success
               type: list
+        signedUrlCacheMaxAgeSec:
+          description:
+          - Maximum number of seconds the response to a signed URL request will be
+            considered fresh, defaults to 1hr (3600s). After this time period, the
+            response will be revalidated before being served.
+          - 'When serving responses to signed URL requests, Cloud CDN will internally
+            behave as though all responses from this backend had a "Cache-Control:
+            public, max-age=[TTL]" header, regardless of any existing Cache-Control
+            header. The actual headers served in responses will not be altered.'
+          returned: success
+          type: int
     connectionDraining:
       description:
-      - Settings for connection draining.
+      - Settings for connection draining .
       returned: success
       type: complex
       contains:
@@ -221,6 +240,12 @@ items:
     creationTimestamp:
       description:
       - Creation timestamp in RFC3339 text format.
+      returned: success
+      type: str
+    fingerprint:
+      description:
+      - Fingerprint of this resource. A hash of the contents stored in this object.
+        This field is used in optimistic locking.
       returned: success
       type: str
     description:
@@ -261,24 +286,24 @@ items:
           type: bool
         oauth2ClientId:
           description:
-          - OAuth2 Client ID for IAP.
+          - OAuth2 Client ID for IAP .
           returned: success
           type: str
         oauth2ClientSecret:
           description:
-          - OAuth2 Client Secret for IAP.
+          - OAuth2 Client Secret for IAP .
           returned: success
           type: str
         oauth2ClientSecretSha256:
           description:
-          - OAuth2 Client Secret SHA-256 for IAP.
+          - OAuth2 Client Secret SHA-256 for IAP .
           returned: success
           type: str
     loadBalancingScheme:
       description:
       - Indicates whether the backend service will be used with internal or external
         load balancing. A backend service created for one type of load balancing cannot
-        be used with the other.
+        be used with the other. One of `INTERNAL` or `EXTERNAL`. Defaults to `EXTERNAL`.
       returned: success
       type: str
     name:
@@ -306,10 +331,9 @@ items:
         default is TCP.
       returned: success
       type: str
-    region:
+    securityPolicy:
       description:
-      - The region where the regional backend service resides.
-      - This field is not applicable to global backend services.
+      - The security policy associated with this backend service.
       returned: success
       type: str
     sessionAffinity:

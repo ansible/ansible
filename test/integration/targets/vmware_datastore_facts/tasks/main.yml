@@ -3,77 +3,77 @@
 # Copyright (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?ds=2&datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of Clusters from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
-  register: clusters
-
-- set_fact:
-    cl1: "{{ clusters['json'][0] }}"
-
-- name: get a list of Datacenters from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DC
-  register: datacenters
-
-- set_fact:
-    dc1: "{{ datacenters['json'][0] }}"
-
-- name: get a list of Datastores from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=D
-  register: datastores
-
-- set_fact:
-    ds1: "{{ datastores['json'][0] }}"
-
 # Testcase 0001: Get a full list of datastores in a datacenter
+# - name: get list of facts about datastores
+#   vmware_datastore_facts:
+#     validate_certs: False
+#     hostname: "{{ vcenter_hostname }}"
+#     username: "{{ vcenter_username }}"
+#     password: "{{ vcenter_password }}"
+#     datacenter: "{{ dc1 }}"
+#   register: datastore_facts_0001
+
+# - assert:
+#     that:
+#       - "datastore_facts_0001.datastores|length == 0"
+
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+
+- when: vcsim is not defined
+  block:
+    - name: get list of facts about datastores from the ESXi
+      vmware_datastore_facts:
+        validate_certs: False
+        hostname: '{{ hostvars[item].ansible_host }}'
+        username: '{{ hostvars[item].ansible_user }}'
+        password: '{{ hostvars[item].ansible_password }}'
+      register: facts_from_esxi
+      with_items: "{{ groups['esxi-lab'] }}"
+    - assert:
+        that:
+          - "facts_from_esxi.results[0].datastores|length == 2"
+
 - name: get list of facts about datastores
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
-  register: datastore_facts_0001
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    gather_nfs_mount_info: true
+  register: facts_from_vcenter_with_dc_filter
 
-- debug:
-    msg: "{{ datastore_facts_0001 }}"
+# Depends-On: https://github.com/ansible/ansible/pull/54879
+- when: vcsim is not defined
+  block:
+    - name: get list of facts about datastores
+      vmware_datastore_facts:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        gather_nfs_mount_info: true
+      register: facts_from_vcenter_with_no_filter
 
-- assert:
-    that:
-      - "datastore_facts_0001['datastores'][0]['capacity'] is defined"
-      - "datastore_facts_0001['datastores'][1]['capacity'] is defined"
+    - assert:
+        that:
+          - "facts_from_vcenter_with_dc_filter.datastores|length == 2"
+          - "facts_from_vcenter_with_no_filter.datastores|length == 2"
+          - "facts_from_vcenter_with_no_filter.datastores[0]['capacity'] is defined"
 
 # Testcase 0002: Get a full list of datastores in a cluster
 - name: get list of facts about datastores - no dc
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    cluster: "{{ cl1 | basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster: "{{ ccr1 }}"
   register: datastore_facts_0002
 
 - debug:
@@ -82,17 +82,16 @@
 - assert:
     that:
       - "datastore_facts_0002['datastores'][0]['capacity'] is defined"
-      - "datastore_facts_0002['datastores'][1]['capacity'] is defined"
 
 # Testcase 0003: Find a specific datastore
 - name: get list of facts about one datastore
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
-    name: "{{ ds1 | basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ ds1 }}"
   register: datastore_facts_0003
 
 - debug:
@@ -100,16 +99,16 @@
 
 - assert:
     that:
-      - "datastore_facts_0003['datastores'][0]['name'] == ds1 | basename"
+      - "datastore_facts_0003['datastores'][0]['name'] == ds1"
       - "datastore_facts_0003['datastores'][0]['capacity'] is defined"
 
 - name: get list of extended facts about one datastore
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
     name: "{{ ds1 | basename }}"
     gather_nfs_mount_info: True
     gather_vmfs_mount_info: True
@@ -120,16 +119,16 @@
 
 - assert:
     that:
-      - "datastore_facts_0004['datastores'][0]['name'] == ds1 | basename"
+      - "datastore_facts_0004['datastores'][0]['name'] == ds1"
       - "datastore_facts_0004['datastores'][0]['capacity'] is defined"
 
 - name: get list of facts about one datastore in check mode
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
     name: "{{ ds1 | basename }}"
   register: datastore_facts_0005
 
@@ -138,5 +137,5 @@
 
 - assert:
     that:
-      - "datastore_facts_0005['datastores'][0]['name'] == ds1 | basename"
+      - "datastore_facts_0005['datastores'][0]['name'] == ds1"
       - "datastore_facts_0005['datastores'][0]['capacity'] is defined"

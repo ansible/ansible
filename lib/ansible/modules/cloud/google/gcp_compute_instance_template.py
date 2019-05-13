@@ -201,10 +201,10 @@ options:
             - Note that for InstanceTemplate, specify the disk name, not the URL for
               the disk.
             - 'This field represents a link to a Disk resource in GCP. It can be specified
-              in two ways. First, you can place in the name of the resource here as
-              a string Alternatively, you can add `register: name-of-resource` to
-              a gcp_compute_disk task and then set this source field to "{{ name-of-resource
-              }}"'
+              in two ways. First, you can place a dictionary with key ''name'' and
+              value of your resource''s name Alternatively, you can add `register:
+              name-of-resource` to a gcp_compute_disk task and then set this source
+              field to "{{ name-of-resource }}"'
             required: false
           type:
             description:
@@ -273,10 +273,10 @@ options:
                   IP address pool. If you specify a static external IP address, it
                   must live in the same region as the zone of the instance.
                 - 'This field represents a link to a Address resource in GCP. It can
-                  be specified in two ways. First, you can place in the address of
-                  the resource here as a string Alternatively, you can add `register:
-                  name-of-resource` to a gcp_compute_address task and then set this
-                  nat_ip field to "{{ name-of-resource }}"'
+                  be specified in two ways. First, you can place a dictionary with
+                  key ''address'' and value of your resource''s address Alternatively,
+                  you can add `register: name-of-resource` to a gcp_compute_address
+                  task and then set this nat_ip field to "{{ name-of-resource }}"'
                 required: false
               type:
                 description:
@@ -312,10 +312,10 @@ options:
               network global/networks/default is used; if the network is not specified
               but the subnetwork is specified, the network is inferred.
             - 'This field represents a link to a Network resource in GCP. It can be
-              specified in two ways. First, you can place in the selfLink of the resource
-              here as a string Alternatively, you can add `register: name-of-resource`
-              to a gcp_compute_network task and then set this network field to "{{
-              name-of-resource }}"'
+              specified in two ways. First, you can place a dictionary with key ''selfLink''
+              and value of your resource''s selfLink Alternatively, you can add `register:
+              name-of-resource` to a gcp_compute_network task and then set this network
+              field to "{{ name-of-resource }}"'
             required: false
           network_ip:
             description:
@@ -330,10 +330,10 @@ options:
               If the network is in auto subnet mode, providing the subnetwork is optional.
               If the network is in custom subnet mode, then this field should be specified.
             - 'This field represents a link to a Subnetwork resource in GCP. It can
-              be specified in two ways. First, you can place in the selfLink of the
-              resource here as a string Alternatively, you can add `register: name-of-resource`
-              to a gcp_compute_subnetwork task and then set this subnetwork field
-              to "{{ name-of-resource }}"'
+              be specified in two ways. First, you can place a dictionary with key
+              ''selfLink'' and value of your resource''s selfLink Alternatively, you
+              can add `register: name-of-resource` to a gcp_compute_subnetwork task
+              and then set this subnetwork field to "{{ name-of-resource }}"'
             required: false
       scheduling:
         description:
@@ -626,7 +626,7 @@ properties:
           - Note that for InstanceTemplate, specify the disk name, not the URL for
             the disk.
           returned: success
-          type: str
+          type: dict
         type:
           description:
           - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
@@ -699,7 +699,7 @@ properties:
                 IP address pool. If you specify a static external IP address, it must
                 live in the same region as the zone of the instance.
               returned: success
-              type: str
+              type: dict
             type:
               description:
               - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
@@ -741,7 +741,7 @@ properties:
             global/networks/default is used; if the network is not specified but the
             subnetwork is specified, the network is inferred.
           returned: success
-          type: str
+          type: dict
         networkIP:
           description:
           - An IPv4 internal network address to assign to the instance for this network
@@ -756,7 +756,7 @@ properties:
             If the network is in auto subnet mode, providing the subnetwork is optional.
             If the network is in custom subnet mode, then this field should be specified.
           returned: success
-          type: str
+          type: dict
     scheduling:
       description:
       - Sets the scheduling options for this instance.
@@ -877,7 +877,7 @@ def main():
                             ),
                             interface=dict(type='str', choices=['SCSI', 'NVME']),
                             mode=dict(type='str', choices=['READ_WRITE', 'READ_ONLY']),
-                            source=dict(),
+                            source=dict(type='dict'),
                             type=dict(type='str', choices=['SCRATCH', 'PERSISTENT']),
                         ),
                     ),
@@ -893,15 +893,17 @@ def main():
                                 type='list',
                                 elements='dict',
                                 options=dict(
-                                    name=dict(required=True, type='str'), nat_ip=dict(), type=dict(required=True, type='str', choices=['ONE_TO_ONE_NAT'])
+                                    name=dict(required=True, type='str'),
+                                    nat_ip=dict(type='dict'),
+                                    type=dict(required=True, type='str', choices=['ONE_TO_ONE_NAT']),
                                 ),
                             ),
                             alias_ip_ranges=dict(
                                 type='list', elements='dict', options=dict(ip_cidr_range=dict(type='str'), subnetwork_range_name=dict(type='str'))
                             ),
-                            network=dict(),
+                            network=dict(type='dict'),
                             network_ip=dict(type='str'),
-                            subnetwork=dict(),
+                            subnetwork=dict(type='dict'),
                         ),
                     ),
                     scheduling=dict(
@@ -951,7 +953,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="InstanceTemplate cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

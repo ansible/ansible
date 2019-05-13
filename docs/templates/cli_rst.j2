@@ -38,7 +38,7 @@ Common Options
 ==============
 
 
-{% for option in options|sort(attribute='options') %}
+{% for option in options|sort(attribute='options') if option.options %}
 
 .. option:: {% for switch in option['options'] %}{{switch}}{% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 

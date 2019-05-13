@@ -140,12 +140,12 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             httphealthcheck_name=dict(),
-            httphealthcheck_port=dict(default=80),
+            httphealthcheck_port=dict(default=80, type='int'),
             httphealthcheck_path=dict(default='/'),
-            httphealthcheck_interval=dict(default=5),
-            httphealthcheck_timeout=dict(default=5),
-            httphealthcheck_unhealthy_count=dict(default=2),
-            httphealthcheck_healthy_count=dict(default=2),
+            httphealthcheck_interval=dict(default=5, type='int'),
+            httphealthcheck_timeout=dict(default=5, type='int'),
+            httphealthcheck_unhealthy_count=dict(default=2, type='int'),
+            httphealthcheck_healthy_count=dict(default=2, type='int'),
             httphealthcheck_host=dict(),
             name=dict(),
             protocol=dict(default='tcp'),

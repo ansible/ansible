@@ -201,14 +201,8 @@ import re
 import sys
 import inspect
 
-try:
-    # python2
-    import ConfigParser as cp
-except ImportError:
-    # python3
-    import configparser as cp
-
 from os.path import expanduser
+from ansible.module_utils.six.moves import configparser as cp
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 HAS_AZURE = True

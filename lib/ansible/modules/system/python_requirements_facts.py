@@ -26,7 +26,7 @@ options:
       partial version like I(requests>2) are all valid specifications.
 author:
 - Will Thames (@willthames)
-- Ryan Scott Brown (@ryan_sb)
+- Ryan Scott Brown (@ryansb)
 '''
 
 EXAMPLES = '''

@@ -28,6 +28,7 @@ import sys
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.six import iteritems
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -408,18 +409,12 @@ class PlayContext(Base):
         conn_type = None
         if self._attributes['connection'] == 'smart':
             conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self.password:
-                # due to a current bug in sshpass on OSX, which can trigger
-                # a kernel panic even for non-privileged users, we revert to
-                # paramiko on that OS when a SSH password is specified
+            # see if SSH can support ControlPersist if not use paramiko
+            if not check_for_controlpersist(self.ssh_executable) and paramiko is not None:
                 conn_type = "paramiko"
-            else:
-                # see if SSH can support ControlPersist if not use paramiko
-                if not check_for_controlpersist(self.ssh_executable):
-                    conn_type = "paramiko"
 
         # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        elif self._attributes['connection'] == 'persistent':
+        elif self._attributes['connection'] == 'persistent' and paramiko is not None:
             conn_type = 'paramiko'
 
         if conn_type:

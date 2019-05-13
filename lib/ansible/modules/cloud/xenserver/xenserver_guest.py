@@ -169,7 +169,7 @@ options:
     type: list
   wait_for_ip_address:
     description:
-    - Wait until XenServer detects an IP address for the VM.
+    - Wait until XenServer detects an IP address for the VM. If C(state) is set to C(absent), this parameter is ignored.
     - This requires XenServer Tools to be preinstalled on the VM to work properly.
     type: bool
     default: no
@@ -528,13 +528,13 @@ class XenServerVM(XenServerObject):
                 else:
                     self.module.fail_json(msg="VM deploy disks[0]: no default SR found! You must specify SR explicitly.")
 
-            # Support for Ansible check mode.
-            if self.module.check_mode:
-                return
-
             # VM name could be an empty string which is bad.
             if self.module.params['name'] is not None and not self.module.params['name']:
                 self.module.fail_json(msg="VM deploy: VM name must not be an empty string!")
+
+            # Support for Ansible check mode.
+            if self.module.check_mode:
+                return
 
             # Now we can instantiate VM. We use VM.clone for linked_clone and
             # VM.copy for non linked_clone.
@@ -597,15 +597,15 @@ class XenServerVM(XenServerObject):
 
         vm_power_state_save = self.vm_params['power_state'].lower()
 
-        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted':
-            if self.module.params['force']:
-                self.set_power_state("shutdownguest")
-            else:
-                self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
+        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted' and not self.module.params['force']:
+            self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
 
         # Support for Ansible check mode.
         if self.module.check_mode:
             return config_changes
+
+        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted' and self.module.params['force']:
+            self.set_power_state("shutdownguest")
 
         try:
             for change in config_changes:
@@ -1030,15 +1030,15 @@ class XenServerVM(XenServerObject):
         if not self.exists():
             self.module.fail_json(msg="Called destroy on non existing VM!")
 
-        if self.vm_params['power_state'].lower() != 'halted':
-            if self.module.params['force']:
-                self.set_power_state("poweredoff")
-            else:
-                self.module.fail_json(msg="VM destroy: VM has to be in powered off state to destroy but force was not specified!")
+        if self.vm_params['power_state'].lower() != 'halted' and not self.module.params['force']:
+            self.module.fail_json(msg="VM destroy: VM has to be in powered off state to destroy but force was not specified!")
 
         # Support for Ansible check mode.
         if self.module.check_mode:
             return
+
+        # Make sure that VM is poweredoff before we can destroy it.
+        self.set_power_state("poweredoff")
 
         try:
             # Destroy VM!
@@ -1295,8 +1295,12 @@ class XenServerVM(XenServerObject):
                                 vm_disk_userdevice_highest = userdevice
                                 break
 
+                        # If no place was found.
                         if disk_userdevice is None:
-                            disk_userdevice = str(int(vm_disk_userdevice_highest) + 1)
+                            # Highest occupied place could be a CD-ROM device
+                            # so we have to include all devices regardless of
+                            # type when calculating out-of-bound position.
+                            disk_userdevice = str(int(self.vm_params['VBDs'][-1]['userdevice']) + 1)
                             self.module.fail_json(msg="VM check disks[%s]: new disk position %s is out of bounds!" % (position, disk_userdevice))
 
                         # For new disks we only track their position.
@@ -1558,7 +1562,7 @@ class XenServerVM(XenServerObject):
                         elif self.vm_params['customization_agent'] == "custom":
                             vm_xenstore_data = self.vm_params['xenstore_data']
 
-                            if network_type and network_type != vm_xenstore_data.get('vm-data/networks/%s/type' % vm_vif_params['device'], ""):
+                            if network_type and network_type != vm_xenstore_data.get('vm-data/networks/%s/type' % vm_vif_params['device'], "none"):
                                 network_changes.append('type')
                                 need_poweredoff = True
 
@@ -1577,7 +1581,7 @@ class XenServerVM(XenServerObject):
                                     network_changes.append('gateway')
                                     need_poweredoff = True
 
-                            if network_type6 and network_type6 != vm_xenstore_data.get('vm-data/networks/%s/type6' % vm_vif_params['device'], ""):
+                            if network_type6 and network_type6 != vm_xenstore_data.get('vm-data/networks/%s/type6' % vm_vif_params['device'], "none"):
                                 network_changes.append('type6')
                                 need_poweredoff = True
 
@@ -1616,6 +1620,9 @@ class XenServerVM(XenServerObject):
                                     need_poweredoff = True
                                     break
 
+                        if not vif_devices_allowed:
+                            self.module.fail_json(msg="VM check networks[%s]: maximum number of network interfaces reached!" % position)
+
                         # We need to place a new network interface right above the
                         # highest placed existing interface to maintain relative
                         # positions pairable with network interface specifications
@@ -1625,6 +1632,7 @@ class XenServerVM(XenServerObject):
                         if vif_device not in vif_devices_allowed:
                             self.module.fail_json(msg="VM check networks[%s]: new network interface position %s is out of bounds!" % (position, vif_device))
 
+                        vif_devices_allowed.remove(vif_device)
                         vif_device_highest = vif_device
 
                         # For new VIFs we only track their position.
@@ -1721,7 +1729,7 @@ class XenServerVM(XenServerObject):
                     # We found int value in string, let's typecast it.
                     size = int(size)
 
-                if not size:
+                if not size or size < 0:
                     raise ValueError
 
             except (TypeError, ValueError, NameError):
@@ -1904,7 +1912,7 @@ def main():
         vm.deploy()
         result['changed'] = True
 
-    if module.params['wait_for_ip_address']:
+    if module.params['wait_for_ip_address'] and module.params['state'] != "absent":
         vm.wait_for_ip_address()
 
     result['instance'] = vm.gather_facts()

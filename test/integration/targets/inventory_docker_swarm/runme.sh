@@ -14,7 +14,7 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 echo "Setup"
-ansible-playbook playbooks/swarm_setup.yml
+ANSIBLE_ROLES_PATH=.. ansible-playbook  playbooks/swarm_setup.yml
 
 echo "Test docker_swarm inventory 1"
 ansible-playbook -i inventory_1.docker_swarm.yml playbooks/test_inventory_1.yml

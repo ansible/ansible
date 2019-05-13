@@ -37,7 +37,7 @@ description:
   - For Windows targets, use the M(win_ping) module instead.
   - For targets running Python, use the M(ping) module instead.
 author:
-  - Nilashish Chakraborty (@nilashishc)
+  - Nilashish Chakraborty (@NilashishC)
 version_added: '2.8'
 options:
   dest:

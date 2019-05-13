@@ -299,7 +299,7 @@ class TaskExecutor:
             loop_pause = templar.template(self._task.loop_control.pause)
             extended = templar.template(self._task.loop_control.extended)
 
-            # This may be 'None',so it is tempalted below after we ensure a value and an item is assigned
+            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
             label = self._task.loop_control.label
 
         # ensure we always have a label
@@ -559,18 +559,18 @@ class TaskExecutor:
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
         if self._task.action in ('include', 'include_tasks'):
-            include_variables = self._task.args.copy()
-            include_file = include_variables.pop('_raw_params', None)
+            include_args = self._task.args.copy()
+            include_file = include_args.pop('_raw_params', None)
             if not include_file:
                 return dict(failed=True, msg="No include file was specified to the include")
 
             include_file = templar.template(include_file)
-            return dict(include=include_file, include_variables=include_variables)
+            return dict(include=include_file, include_args=include_args)
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
-            include_variables = self._task.args.copy()
-            return dict(include_variables=include_variables)
+            include_args = self._task.args.copy()
+            return dict(include_args=include_args)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)
@@ -692,9 +692,10 @@ class TaskExecutor:
                     vars_copy.update(result['ansible_facts'])
                 else:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
-                    vars_copy.update(namespace_facts(result['ansible_facts']))
+                    af = wrap_var(result['ansible_facts'])
+                    vars_copy.update(namespace_facts(af))
                     if C.INJECT_FACTS_AS_VARS:
-                        vars_copy.update(clean_facts(result['ansible_facts']))
+                        vars_copy.update(clean_facts(af))
 
             # set the failed property if it was missing.
             if 'failed' not in result:
@@ -754,9 +755,10 @@ class TaskExecutor:
                 variables.update(result['ansible_facts'])
             else:
                 # TODO: cleaning of facts should eventually become part of taskresults instead of vars
-                variables.update(namespace_facts(result['ansible_facts']))
+                af = wrap_var(result['ansible_facts'])
+                variables.update(namespace_facts(af))
                 if C.INJECT_FACTS_AS_VARS:
-                    variables.update(clean_facts(result['ansible_facts']))
+                    variables.update(clean_facts(af))
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification

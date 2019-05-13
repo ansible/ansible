@@ -27,7 +27,7 @@ AZURE_COMMON_ARGS = dict(
         choices=['auto', 'cli', 'env', 'credential_file', 'msi']
     ),
     profile=dict(type='str'),
-    subscription_id=dict(type='str', no_log=True),
+    subscription_id=dict(type='str'),
     client_id=dict(type='str', no_log=True),
     secret=dict(type='str', no_log=True),
     tenant=dict(type='str', no_log=True),
@@ -67,7 +67,7 @@ AZURE_API_PROFILES = {
         'NetworkManagementClient': '2018-08-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
-        'WebsiteManagementClient': '2016-08-01',
+        'WebSiteManagementClient': '2018-02-01',
         'PostgreSQLManagementClient': '2017-12-01',
         'MySQLManagementClient': '2017-12-01',
         'MariaDBManagementClient': '2019-03-01'
@@ -235,7 +235,7 @@ AZURE_PKG_VERSIONS = {
     },
     'WebSiteManagementClient': {
         'package_name': 'web',
-        'expected_version': '0.32.0'
+        'expected_version': '0.41.0'
     },
     'TrafficManagerManagementClient': {
         'package_name': 'trafficmanager',
@@ -870,7 +870,7 @@ class AzureRMModuleBase(object):
         if not self._web_client:
             self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient,
                                                         base_url=self._cloud_environment.endpoints.resource_manager,
-                                                        api_version='2016-08-01')
+                                                        api_version='2018-02-01')
         return self._web_client
 
     @property
@@ -1149,8 +1149,9 @@ class AzureRMAuth(object):
 
         return None
 
-    def _get_msi_credentials(self, subscription_id_param=None):
-        credentials = MSIAuthentication()
+    def _get_msi_credentials(self, subscription_id_param=None, **kwargs):
+        client_id = kwargs.get('client_id', None)
+        credentials = MSIAuthentication(client_id=client_id)
         subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
             try:
@@ -1206,7 +1207,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'msi':
             self.log('Retrieving credenitals from MSI')
-            return self._get_msi_credentials(arg_credentials['subscription_id'])
+            return self._get_msi_credentials(arg_credentials['subscription_id'], client_id=params.get('client_id', None))
 
         if auth_source == 'cli':
             if not HAS_AZURE_CLI_CORE:
@@ -1226,7 +1227,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'credential_file':
             self.log("Retrieving credentials from credential file")
-            profile = params.get('profile', 'default')
+            profile = params.get('profile') or 'default'
             default_credentials = self._get_profile(profile)
             return default_credentials
 

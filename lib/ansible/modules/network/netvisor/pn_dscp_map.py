@@ -92,12 +92,13 @@ def check_cli(module, cli):
     """
     name = module.params['pn_name']
 
-    cli += ' dscp-map-show name %s format name no-show-headers' % name
+    cli += ' dscp-map-show format name no-show-headers'
     out = run_commands(module, cli)[1]
 
-    out = out.split()
+    if out:
+        out = out.split()
 
-    return True if name in out[-1] else False
+    return True if name in out else False
 
 
 def main():

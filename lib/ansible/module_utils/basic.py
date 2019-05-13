@@ -27,8 +27,6 @@ FILE_ATTRIBUTES = {
     'Z': 'compresseddirty',
 }
 
-PASS_BOOLS = ('no_log', 'debug', 'diff')
-
 # Ansible modules can be written in any language.
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
@@ -157,6 +155,7 @@ from ansible.module_utils.common.parameters import (
     list_deprecations,
     list_no_log_values,
     PASS_VARS,
+    PASS_BOOLS,
 )
 
 from ansible.module_utils.six import (
@@ -711,8 +710,10 @@ class AnsibleModule(object):
         if self._tmpdir is None:
             basedir = None
 
-            basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
-            if not os.path.exists(basedir):
+            if self._remote_tmp is not None:
+                basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
+
+            if basedir is not None and not os.path.exists(basedir):
                 try:
                     os.makedirs(basedir, mode=0o700)
                 except (OSError, IOError) as e:
@@ -1441,20 +1442,27 @@ class AnsibleModule(object):
         if legal_inputs is None:
             legal_inputs = self._legal_inputs
 
-        for (k, v) in list(param.items()):
+        for k in list(param.keys()):
 
             if check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
-            elif k.startswith('_ansible_'):
-                # handle setting internal properties from internal ansible vars
-                key = k.replace('_ansible_', '')
-                if key in PASS_BOOLS:
-                    setattr(self, PASS_VARS[key], self.boolean(v))
-                else:
-                    setattr(self, PASS_VARS[key], v)
 
-                # clean up internal params:
-                del self.params[k]
+        for k in PASS_VARS:
+            # handle setting internal properties from internal ansible vars
+            param_key = '_ansible_%s' % k
+            if param_key in param:
+                if k in PASS_BOOLS:
+                    setattr(self, PASS_VARS[k][0], self.boolean(param[param_key]))
+                else:
+                    setattr(self, PASS_VARS[k][0], param[param_key])
+
+                # clean up internal top level params:
+                if param_key in self.params:
+                    del self.params[param_key]
+            else:
+                # use defaults if not already set
+                if not hasattr(self, PASS_VARS[k][0]):
+                    setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
         if unsupported_parameters:
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
@@ -2666,7 +2674,3 @@ class AnsibleModule(object):
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
-
-
-def get_timestamp():
-    return datetime.datetime.now().replace(microsecond=0).isoformat()

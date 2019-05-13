@@ -1,2 +1,0 @@
-minor_changes:
-  - Changed output of tags dictionary in results to standard Ansible format

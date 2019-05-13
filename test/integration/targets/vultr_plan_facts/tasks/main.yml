@@ -8,7 +8,7 @@
 - name: verify test gather vultr plan facts in check mode
   assert:
     that:
-    - ansible_facts.vultr_plan_facts|selectattr('name','equalto','16384 MB RAM,110 GB SSD,20.00 TB BW') | list | count == 1
+    - ansible_facts.vultr_plan_facts|selectattr('name','equalto','16384 MB RAM,2x110 GB SSD,20.00 TB BW') | list | count == 1
 
 - name: test gather vultr plan fact
   vultr_plan_facts:
@@ -16,4 +16,4 @@
 - name: verify test gather vultr plan facts
   assert:
     that:
-    - ansible_facts.vultr_plan_facts|selectattr('name','equalto','16384 MB RAM,110 GB SSD,20.00 TB BW') | list | count == 1
+    - ansible_facts.vultr_plan_facts|selectattr('name','equalto','16384 MB RAM,2x110 GB SSD,20.00 TB BW') | list | count == 1

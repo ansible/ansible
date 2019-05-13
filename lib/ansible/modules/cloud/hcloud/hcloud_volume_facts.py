@@ -25,7 +25,7 @@ description:
     - Gather facts about your Hetzner Cloud volumes.
 
 author:
-    - Lukas Kaemmerling (@lkaemmerling)
+    - Lukas Kaemmerling (@LKaemmerling)
 
 options:
     id:
@@ -134,7 +134,7 @@ class AnsibleHcloudVolumeFacts(Hcloud):
                     self.module.params.get("name")
                 )]
             elif self.module.params.get("label_selector") is not None:
-                self.hcloud_volume_facts = self.client.servers.get_all(
+                self.hcloud_volume_facts = self.client.volumes.get_all(
                     label_selector=self.module.params.get("label_selector"))
             else:
                 self.hcloud_volume_facts = self.client.volumes.get_all()

@@ -336,6 +336,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 MINIMAL_PYOPENSSL_VERSION = '0.15'
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.3'
@@ -368,7 +369,6 @@ try:
     import cryptography.hazmat.backends
     import cryptography.hazmat.primitives.serialization
     import cryptography.hazmat.primitives.hashes
-    import ipaddress
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
@@ -554,6 +554,16 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             raise CertificateSigningRequestError(exc)
 
+    def _normalize_san(self, san):
+        # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+        # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
+        if san.startswith('IP Address:'):
+            san = 'IP:' + san[len('IP Address:'):]
+        if san.startswith('IP:'):
+            ip = compat_ipaddress.ip_address(san[3:])
+            san = 'IP:{0}'.format(ip.compressed)
+        return san
+
     def _check_csr(self):
         def _check_subject(csr):
             subject = [(OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])), to_bytes(sub[1])) for sub in self.subject]
@@ -565,12 +575,11 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
 
         def _check_subjectAltName(extensions):
             altnames_ext = next((ext for ext in extensions if ext.get_short_name() == b'subjectAltName'), '')
-            altnames = [altname.strip() for altname in str(altnames_ext).split(',') if altname.strip()]
-            # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
-            # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
-            altnames = [name if not name.startswith('IP Address:') else "IP:" + name.split(':', 1)[1] for name in altnames]
+            altnames = [self._normalize_san(altname.strip()) for altname in
+                        to_text(altnames_ext, errors='surrogate_or_strict').split(',') if altname.strip()]
             if self.subjectAltName:
-                if set(altnames) != set(self.subjectAltName) or altnames_ext.get_critical() != self.subjectAltName_critical:
+                if (set(altnames) != set([self._normalize_san(to_text(name)) for name in self.subjectAltName]) or
+                        altnames_ext.get_critical() != self.subjectAltName_critical):
                     return False
             else:
                 if altnames:
@@ -632,7 +641,7 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
                 return False
 
         try:
-            csr = crypto_utils.load_certificate_request(self.path)
+            csr = crypto_utils.load_certificate_request(self.path, backend='pyopenssl')
         except Exception as dummy:
             return False
 
@@ -649,7 +658,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         csr = cryptography.x509.CertificateSigningRequestBuilder()
         try:
             csr = csr.subject_name(cryptography.x509.Name([
-                cryptography.x509.NameAttribute(crypto_utils.cryptography_get_name_oid(entry[0]), to_text(entry[1])) for entry in self.subject
+                cryptography.x509.NameAttribute(crypto_utils.cryptography_name_to_oid(entry[0]), to_text(entry[1])) for entry in self.subject
             ]))
         except ValueError as e:
             raise CertificateSigningRequestError(e)
@@ -664,7 +673,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             csr = csr.add_extension(cryptography.x509.KeyUsage(**params), critical=self.keyUsage_critical)
 
         if self.extendedKeyUsage:
-            usages = [crypto_utils.cryptography_get_ext_keyusage(usage) for usage in self.extendedKeyUsage]
+            usages = [crypto_utils.cryptography_name_to_oid(usage) for usage in self.extendedKeyUsage]
             csr = csr.add_extension(cryptography.x509.ExtendedKeyUsage(usages), critical=self.extendedKeyUsage_critical)
 
         if self.basicConstraints:
@@ -713,7 +722,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
     def _check_csr(self):
         def _check_subject(csr):
-            subject = [(crypto_utils.cryptography_get_name_oid(entry[0]), entry[1]) for entry in self.subject]
+            subject = [(crypto_utils.cryptography_name_to_oid(entry[0]), entry[1]) for entry in self.subject]
             current_subject = [(sub.oid, sub.value) for sub in csr.subject]
             return set(subject) == set(current_subject)
 
@@ -751,7 +760,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         def _check_extenededKeyUsage(extensions):
             current_usages_ext = _find_extension(extensions, cryptography.x509.ExtendedKeyUsage)
             current_usages = [str(usage) for usage in current_usages_ext.value] if current_usages_ext else []
-            usages = [str(crypto_utils.cryptography_get_ext_keyusage(usage)) for usage in self.extendedKeyUsage] if self.extendedKeyUsage else []
+            usages = [str(crypto_utils.cryptography_name_to_oid(usage)) for usage in self.extendedKeyUsage] if self.extendedKeyUsage else []
             if set(current_usages) != set(usages):
                 return False
             if usages:
@@ -761,8 +770,8 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
         def _check_basicConstraints(extensions):
             bc_ext = _find_extension(extensions, cryptography.x509.BasicConstraints)
-            current_ca = bc_ext.ca if bc_ext else False
-            current_path_length = bc_ext.path_length if bc_ext else None
+            current_ca = bc_ext.value.ca if bc_ext else False
+            current_path_length = bc_ext.value.path_length if bc_ext else None
             ca, path_length = crypto_utils.cryptography_get_basic_constraints(self.basicConstraints)
             # Check CA flag
             if ca != current_ca:
@@ -819,8 +828,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             return key_a == key_b
 
         try:
-            with open(self.path, 'rb') as f:
-                csr = cryptography.x509.load_pem_x509_csr(f.read(), self.cryptography_backend)
+            csr = crypto_utils.load_certificate_request(self.path, backend='cryptography')
         except Exception as dummy:
             return False
 
@@ -881,8 +889,8 @@ def main():
 
         # Success?
         if backend == 'auto':
-            module.fail_json(msg=('Can detect none of the Python libraries '
-                                  'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
+            module.fail_json(msg=("Can't detect any of the required Python libraries "
+                                  "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
                                       MINIMAL_PYOPENSSL_VERSION))
     try:

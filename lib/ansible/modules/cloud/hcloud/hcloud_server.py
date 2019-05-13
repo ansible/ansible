@@ -26,7 +26,7 @@ description:
     - Create, update and manage cloud servers on the Hetzner Cloud.
 
 author:
-    - Lukas Kaemmerling (@lkaemmerling)
+    - Lukas Kaemmerling (@LKaemmerling)
 
 options:
     id:
@@ -46,7 +46,9 @@ options:
         type: str
     ssh_keys:
         description:
-            - List of SSH Keys Names
+            - List of SSH key names
+            - The key names correspond to the SSH keys configured for your
+              Hetzner Cloud account access.
         type: list
     volumes:
         description:
@@ -97,7 +99,7 @@ options:
         description:
             - State of the server.
         default: present
-        choices: [ absent, present, restarted, started, stopped ]
+        choices: [ absent, present, restarted, started, stopped, rebuild ]
         type: str
 extends_documentation_fragment: hcloud
 """
@@ -117,7 +119,7 @@ EXAMPLES = """
     image: ubuntu-18.04
     location: fsn1
     ssh_keys:
-      - my-ssh-key
+      - me@myorganisation
     state: present
 
 - name: Resize an existing server
@@ -146,6 +148,12 @@ EXAMPLES = """
   hcloud_server:
     name: my-server
     state: restarted
+
+- name: Ensure the server is rebuild
+  hcloud_server:
+    name: my-server
+    image: ubuntu-18.04
+    state: rebuild
 """
 
 RETURN = """
@@ -295,7 +303,7 @@ class AnsibleHcloudServer(Hcloud):
             timeout = 100
             if self.module.params.get("upgrade_disk"):
                 timeout = (
-                    500
+                    1000
                 )  # When we upgrade the disk too the resize progress takes some more time.
             if not self.module.check_mode:
                 self.hcloud_server.change_type(
@@ -320,6 +328,16 @@ class AnsibleHcloudServer(Hcloud):
             if not self.module.check_mode:
                 self.client.servers.power_off(self.hcloud_server).wait_until_finished()
             self._mark_as_changed()
+        self._get_server()
+
+    def rebuild_server(self):
+        self.module.fail_on_missing_params(
+            required_params=["image"]
+        )
+        if not self.module.check_mode:
+            self.client.servers.rebuild(self.hcloud_server, self.client.images.get_by_name(self.module.params.get("image"))).wait_until_finished()
+        self._mark_as_changed()
+
         self._get_server()
 
     def present_server(self):
@@ -355,7 +373,7 @@ class AnsibleHcloudServer(Hcloud):
                 upgrade_disk={"type": "bool", "default": False},
                 force_upgrade={"type": "bool", "default": False},
                 state={
-                    "choices": ["absent", "present", "restarted", "started", "stopped"],
+                    "choices": ["absent", "present", "restarted", "started", "stopped", "rebuild"],
                     "default": "present",
                 },
                 **Hcloud.base_module_arguments()
@@ -385,6 +403,9 @@ def main():
         hcloud.present_server()
         hcloud.stop_server()
         hcloud.start_server()
+    elif state == "rebuild":
+        hcloud.present_server()
+        hcloud.rebuild_server()
 
     module.exit_json(**hcloud.get_result())
 

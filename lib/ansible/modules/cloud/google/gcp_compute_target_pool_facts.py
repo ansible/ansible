@@ -84,7 +84,7 @@ items:
         primary pool in the "force" mode, where traffic will be spread to the healthy
         instances with the best effort, or to all instances when no instance is healthy.
       returned: success
-      type: str
+      type: dict
     creationTimestamp:
       description:
       - Creation timestamp in RFC3339 text format.
@@ -117,7 +117,7 @@ items:
         checks pass. If not specified it means all member instances will be considered
         healthy at all times.
       returned: success
-      type: str
+      type: dict
     id:
       description:
       - The unique identifier for the resource.

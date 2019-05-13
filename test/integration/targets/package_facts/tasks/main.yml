@@ -19,11 +19,11 @@
 - name: Prep package_fact tests - Debian Family
   block:
     - name: install python apt bindings - python2
-      package: name="python-apt" state=installed
+      package: name="python-apt" state=present
       when: ansible_python.version.major|int == 2
 
     - name: install python apt bindings - python3
-      package: name="python3-apt" state=installed
+      package: name="python3-apt" state=present
       when: ansible_python.version.major|int == 3
 
     - name: Gather package facts
@@ -49,11 +49,11 @@
 - name: Run package_fact tests - SUSE/OpenSUSE Family
   block:
     - name: install python rpm bindings - python2
-      package: name="rpm-python" state=installed
+      package: name="rpm-python" state=present
       when: ansible_python.version.major|int == 2
 
     - name: install python rpm bindings - python3
-      package: name="python3-rpm" state=installed
+      package: name="python3-rpm" state=present
       when: ansible_python.version.major|int == 3
 
     - name: Gather package facts

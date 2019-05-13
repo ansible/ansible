@@ -39,8 +39,9 @@ import uuid
 from time import time
 
 from jinja2 import Environment
-from six import integer_types, PY3
-from six.moves import configparser
+
+from ansible.module_utils.six import integer_types, PY3
+from ansible.module_utils.six.moves import configparser
 
 try:
     import argparse

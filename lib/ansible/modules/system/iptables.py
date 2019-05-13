@@ -399,6 +399,7 @@ EXAMPLES = r'''
     protocol: tcp
     destination_port: 8080
     jump: ACCEPT
+    action: insert
     rule_num: 5
 
 - name: Set the policy for the INPUT chain to DROP

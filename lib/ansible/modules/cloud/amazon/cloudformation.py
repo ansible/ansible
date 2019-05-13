@@ -33,6 +33,14 @@ options:
       - If a stacks fails to form, rollback will remove the stack
     type: bool
     default: 'no'
+  on_create_failure:
+    description:
+      - Action to take upon failure of stack creation. Incompatible with the disable_rollback option.
+    choices:
+      - DO_NOTHING
+      - ROLLBACK
+      - DELETE
+    version_added: "2.8"
   create_timeout:
     description:
       - The amount of time (in minutes) that can pass before the stack status becomes CREATE_FAILED
@@ -259,6 +267,17 @@ EXAMPLES = '''
     template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
     create_timeout: 5
 
+# Configure rollback behaviour on the unsuccessful creation of a stack allowing
+# CloudFormation to clean up, or do nothing in the event of an unsuccessful
+# deployment
+# In this case, if on_create_failure is set to "DELETE", it will clean up the stack if
+# it fails to create
+- name: create stack which will delete on creation failure
+  cloudformation:
+    stack_name: my_stack
+    state: present
+    template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
+    on_create_failure: DELETE
 '''
 
 RETURN = '''
@@ -354,9 +373,17 @@ def create_stack(module, stack_params, cfn, events_limit):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         module.fail_json(msg="Either 'template', 'template_body' or 'template_url' is required when the stack does not exist.")
 
-    # 'DisableRollback', 'TimeoutInMinutes' and 'EnableTerminationProtection'
-    # only apply on creation, not update.
-    stack_params['DisableRollback'] = module.params['disable_rollback']
+    # 'DisableRollback', 'TimeoutInMinutes', 'EnableTerminationProtection' and
+    # 'OnFailure' only apply on creation, not update.
+    #
+    # 'OnFailure' and 'DisableRollback' are incompatible with each other, so
+    # throw error if both are defined
+    if module.params.get('on_create_failure') is None:
+        stack_params['DisableRollback'] = module.params['disable_rollback']
+    else:
+        if module.params['disable_rollback']:
+            module.fail_json(msg="You can specify either 'on_create_failure' or 'disable_rollback', but not both.")
+        stack_params['OnFailure'] = module.params['on_create_failure']
     if module.params.get('create_timeout') is not None:
         stack_params['TimeoutInMinutes'] = module.params['create_timeout']
     if module.params.get('termination_protection') is not None:
@@ -366,8 +393,9 @@ def create_stack(module, stack_params, cfn, events_limit):
             module.fail_json(msg="termination_protection parameter requires botocore >= 1.7.18")
 
     try:
-        cfn.create_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', events_limit, stack_params.get('ClientRequestToken', None))
+        response = cfn.create_stack(**stack_params)
+        # Use stack ID to follow stack state in case of on_create_failure = DELETE
+        result = stack_operation(cfn, response['StackId'], 'CREATE', events_limit, stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg="Failed to create stack {0}: {1}.".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
@@ -509,7 +537,10 @@ def stack_operation(cfn, stack_name, operation, events_limit, op_token=None):
         elif stack['StackStatus'].endswith('ROLLBACK_COMPLETE') and operation != 'CREATE_CHANGESET':
             ret.update({'changed': True, 'failed': True, 'output': 'Problem with %s. Rollback complete' % operation})
             return ret
-        # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
+        elif stack['StackStatus'] == 'DELETE_COMPLETE' and operation == 'CREATE':
+            ret.update({'changed': True, 'failed': True, 'output': 'Stack create failed. Delete complete.'})
+            return ret
+        # note the ordering of ROLLBACK_COMPLETE, DELETE_COMPLETE, and COMPLETE, because otherwise COMPLETE will match all cases.
         elif stack['StackStatus'].endswith('_COMPLETE'):
             ret.update({'changed': True, 'output': 'Stack %s complete' % operation})
             return ret
@@ -599,6 +630,7 @@ def main():
         notification_arns=dict(default=None, required=False),
         stack_policy=dict(default=None, required=False),
         disable_rollback=dict(default=False, type='bool'),
+        on_create_failure=dict(default=None, required=False, choices=['DO_NOTHING', 'ROLLBACK', 'DELETE']),
         create_timeout=dict(default=None, type='int'),
         template_url=dict(default=None, required=False),
         template_body=dict(default=None, require=False),
@@ -738,23 +770,24 @@ def main():
         # format the stack output
 
         stack = get_stack_facts(cfn, stack_params['StackName'])
-        if result.get('stack_outputs') is None:
-            # always define stack_outputs, but it may be empty
-            result['stack_outputs'] = {}
-        for output in stack.get('Outputs', []):
-            result['stack_outputs'][output['OutputKey']] = output['OutputValue']
-        stack_resources = []
-        reslist = cfn.list_stack_resources(StackName=stack_params['StackName'])
-        for res in reslist.get('StackResourceSummaries', []):
-            stack_resources.append({
-                "logical_resource_id": res['LogicalResourceId'],
-                "physical_resource_id": res.get('PhysicalResourceId', ''),
-                "resource_type": res['ResourceType'],
-                "last_updated_time": res['LastUpdatedTimestamp'],
-                "status": res['ResourceStatus'],
-                "status_reason": res.get('ResourceStatusReason')  # can be blank, apparently
-            })
-        result['stack_resources'] = stack_resources
+        if stack is not None:
+            if result.get('stack_outputs') is None:
+                # always define stack_outputs, but it may be empty
+                result['stack_outputs'] = {}
+            for output in stack.get('Outputs', []):
+                result['stack_outputs'][output['OutputKey']] = output['OutputValue']
+            stack_resources = []
+            reslist = cfn.list_stack_resources(StackName=stack_params['StackName'])
+            for res in reslist.get('StackResourceSummaries', []):
+                stack_resources.append({
+                    "logical_resource_id": res['LogicalResourceId'],
+                    "physical_resource_id": res.get('PhysicalResourceId', ''),
+                    "resource_type": res['ResourceType'],
+                    "last_updated_time": res['LastUpdatedTimestamp'],
+                    "status": res['ResourceStatus'],
+                    "status_reason": res.get('ResourceStatusReason')  # can be blank, apparently
+                })
+            result['stack_resources'] = stack_resources
 
     elif state == 'absent':
         # absent state is different because of the way delete_stack works.

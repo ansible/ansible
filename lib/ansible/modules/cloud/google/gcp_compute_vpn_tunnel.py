@@ -63,18 +63,19 @@ options:
     description:
     - URL of the Target VPN gateway with which this VPN tunnel is associated.
     - 'This field represents a link to a TargetVpnGateway resource in GCP. It can
-      be specified in two ways. First, you can place in the selfLink of the resource
-      here as a string Alternatively, you can add `register: name-of-resource` to
-      a gcp_compute_target_vpn_gateway task and then set this target_vpn_gateway field
-      to "{{ name-of-resource }}"'
+      be specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_target_vpn_gateway task and then set this
+      target_vpn_gateway field to "{{ name-of-resource }}"'
     required: true
   router:
     description:
     - URL of router resource to be used for dynamic routing.
     - 'This field represents a link to a Router resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_router
-      task and then set this router field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_router task and then set this router field to "{{ name-of-resource
+      }}"'
     required: false
   peer_ip:
     description:
@@ -193,12 +194,12 @@ targetVpnGateway:
   description:
   - URL of the Target VPN gateway with which this VPN tunnel is associated.
   returned: success
-  type: str
+  type: dict
 router:
   description:
   - URL of router resource to be used for dynamic routing.
   returned: success
-  type: str
+  type: dict
 peerIp:
   description:
   - IP address of the peer VPN gateway. Only IPv4 is supported.
@@ -265,8 +266,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            target_vpn_gateway=dict(required=True),
-            router=dict(),
+            target_vpn_gateway=dict(required=True, type='dict'),
+            router=dict(type='dict'),
             peer_ip=dict(required=True, type='str'),
             shared_secret=dict(required=True, type='str'),
             ike_version=dict(default=2, type='int'),
@@ -313,7 +314,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="VpnTunnel cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

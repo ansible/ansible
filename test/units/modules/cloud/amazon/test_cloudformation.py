@@ -44,6 +44,23 @@ bad_json_tpl = """{
   }
 }"""
 
+failing_yaml_tpl = """
+---
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  ECRRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryPolicyText:
+        Version: 3000-10-17 # <--- invalid version
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ecr:*'
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+"""
+
 default_events_limit = 10
 
 
@@ -132,3 +149,79 @@ def test_missing_template_body():
     assert exc_info.match('FAIL')
     assert not m.exit_args
     assert "Either 'template', 'template_body' or 'template_url' is required when the stack does not exist." == m.exit_kwargs['msg']
+
+
+def test_disable_rollback_and_on_failure_defined():
+    m = FakeModule(
+        on_create_failure='DELETE',
+        disable_rollback=True,
+    )
+    with pytest.raises(Exception, message='Expected module to fail with both on_create_failure and disable_rollback defined') as exc_info:
+        cfn_module.create_stack(
+            module=m,
+            stack_params={'TemplateBody': ''},
+            cfn=None,
+            events_limit=default_events_limit
+        )
+    assert exc_info.match('FAIL')
+    assert not m.exit_args
+    assert "You can specify either 'on_create_failure' or 'disable_rollback', but not both." == m.exit_kwargs['msg']
+
+
+def test_on_create_failure_delete(maybe_sleep, placeboify):
+    m = FakeModule(
+        on_create_failure='DELETE',
+        disable_rollback=False,
+    )
+    connection = placeboify.client('cloudformation')
+    params = {
+        'StackName': 'ansible-test-on-create-failure-delete',
+        'TemplateBody': failing_yaml_tpl
+    }
+    result = cfn_module.create_stack(m, params, connection, default_events_limit)
+    assert result['changed']
+    assert result['failed']
+    assert len(result['events']) > 1
+    # require that the final recorded stack state was DELETE_COMPLETE
+    # events are retrieved newest-first, so 0 is the latest
+    assert 'DELETE_COMPLETE' in result['events'][0]
+
+
+def test_on_create_failure_rollback(maybe_sleep, placeboify):
+    m = FakeModule(
+        on_create_failure='ROLLBACK',
+        disable_rollback=False,
+    )
+    connection = placeboify.client('cloudformation')
+    params = {
+        'StackName': 'ansible-test-on-create-failure-rollback',
+        'TemplateBody': failing_yaml_tpl
+    }
+    result = cfn_module.create_stack(m, params, connection, default_events_limit)
+    assert result['changed']
+    assert result['failed']
+    assert len(result['events']) > 1
+    # require that the final recorded stack state was ROLLBACK_COMPLETE
+    # events are retrieved newest-first, so 0 is the latest
+    assert 'ROLLBACK_COMPLETE' in result['events'][0]
+    connection.delete_stack(StackName=params['StackName'])
+
+
+def test_on_create_failure_do_nothing(maybe_sleep, placeboify):
+    m = FakeModule(
+        on_create_failure='DO_NOTHING',
+        disable_rollback=False,
+    )
+    connection = placeboify.client('cloudformation')
+    params = {
+        'StackName': 'ansible-test-on-create-failure-do-nothing',
+        'TemplateBody': failing_yaml_tpl
+    }
+    result = cfn_module.create_stack(m, params, connection, default_events_limit)
+    assert result['changed']
+    assert result['failed']
+    assert len(result['events']) > 1
+    # require that the final recorded stack state was CREATE_FAILED
+    # events are retrieved newest-first, so 0 is the latest
+    assert 'CREATE_FAILED' in result['events'][0]
+    connection.delete_stack(StackName=params['StackName'])

@@ -59,7 +59,7 @@ azure_availabilityset:
     type: list
     example: [{
         "location": "eastus2",
-        "name": "myavailabilityset",
+        "name": "myAvailabilitySet",
         "properties": {
             "platformFaultDomainCount": 3,
             "platformUpdateDomainCount": 2,

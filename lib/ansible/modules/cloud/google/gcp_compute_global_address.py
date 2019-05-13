@@ -56,7 +56,6 @@ options:
   description:
     description:
     - An optional description of this resource.
-    - Provide this property when you create the resource.
     required: false
   name:
     description:
@@ -69,8 +68,8 @@ options:
     required: true
   ip_version:
     description:
-    - The IP Version that will be used by this address. Valid options are IPV4 or
-      IPV6. The default value is IPV4.
+    - The IP Version that will be used by this address. Valid options are `IPV4` or
+      `IPV6`. The default value is `IPV4`.
     required: false
     choices:
     - IPV4
@@ -116,7 +115,6 @@ creationTimestamp:
 description:
   description:
   - An optional description of this resource.
-  - Provide this property when you create the resource.
   returned: success
   type: str
 id:
@@ -136,8 +134,8 @@ name:
   type: str
 ipVersion:
   description:
-  - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
-    The default value is IPV4.
+  - The IP Version that will be used by this address. Valid options are `IPV4` or
+    `IPV6`. The default value is `IPV4`.
   returned: success
   type: str
 region:
@@ -219,7 +217,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="GlobalAddress cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

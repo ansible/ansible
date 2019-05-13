@@ -82,9 +82,10 @@ options:
       will automatically connect the Interconnect to the network & region within which
       the Cloud Router is configured.
     - 'This field represents a link to a Router resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_router
-      task and then set this router field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_router task and then set this router field to "{{ name-of-resource
+      }}"'
     required: true
   name:
     description:
@@ -214,7 +215,7 @@ router:
     automatically connect the Interconnect to the network & region within which the
     Cloud Router is configured.
   returned: success
-  type: str
+  type: dict
 creationTimestamp:
   description:
   - Creation timestamp in RFC3339 text format.
@@ -282,7 +283,7 @@ def main():
             description=dict(type='str'),
             edge_availability_domain=dict(type='str'),
             type=dict(type='str', choices=['DEDICATED', 'PARTNER', 'PARTNER_PROVIDER']),
-            router=dict(required=True),
+            router=dict(required=True, type='dict'),
             name=dict(required=True, type='str'),
             candidate_subnets=dict(type='list', elements='str'),
             vlan_tag8021q=dict(type='int'),
@@ -327,7 +328,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="InterconnectAttachment cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

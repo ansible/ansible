@@ -29,7 +29,7 @@ used, but you may experience issues trying to use them together.
 
 While the community GCP modules are not going away, Google is investing effort
 into the new "gcp_*" modules. Google is committed to ensuring the Ansible
-community has a great experience with GCP and therefore recommends adopting 
+community has a great experience with GCP and therefore recommends adopting
 these new modules if possible.
 
 
@@ -42,7 +42,7 @@ The Google Cloud Platform (GCP) modules require both the ``requests`` and the
 
     $ pip install requests google-auth
 
-Alternatively for RHEL / CentOS, the ``python-requests`` package is also 
+Alternatively for RHEL / CentOS, the ``python-requests`` package is also
 available to satisfy ``requests`` libraries.
 
 .. code-block:: bash
@@ -81,14 +81,13 @@ For the GCE modules you can specify the credentials as arguments:
 * ``project``: id of the project
 * ``scopes``: The specific scopes that you want the actions to use.
 
-For example, to create a new IP address using the `gcp_compute_address` module,
+For example, to create a new IP address using the ``gcp_compute_address`` module,
 you can use the following configuration:
 
 .. code-block:: yaml
 
    - name: Create IP address
      hosts: localhost
-     connection: local
      gather_facts: no
 
      vars:
@@ -169,11 +168,10 @@ rest.
    - name: Create an instance
      hosts: localhost
      gather_facts: no
-     connection: local
      vars:
-         project: my-project
-         auth_kind: serviceaccount
-         service_account_file: /home/my_account.json
+         gcp_project: my-project
+         gcp_cred_kind: serviceaccount
+         gcp_cred_file: /home/my_account.json
          zone: "us-central1-a"
          region: "us-central1"
 
@@ -236,10 +234,10 @@ rest.
         register: instance
 
        - name: Wait for SSH to come up
-         wait_for: host={{ instance.address }} port=22 delay=10 timeout=60
+         wait_for: host={{ address.address }} port=22 delay=10 timeout=60
 
        - name: Add host to groupname
-         add_host: hostname={{ instance.address }} groupname=new_instances
+         add_host: hostname={{ address.address }} groupname=new_instances
 
 
    - name: Manage new instances
@@ -254,3 +252,60 @@ Note that use of the "add_host" module above creates a temporary, in-memory grou
 in the 'new_instances' group, if so desired.  Any sort of arbitrary configuration is possible at this point.
 
 For more information about Google Cloud, please visit the `Google Cloud website <https://cloud.google.com>`_.
+
+Migration Guides
+----------------
+
+gce.py -> gcp_compute_instance.py
+`````````````````````````````````
+As of Ansible 2.8, we're encouraging everyone to move from the ``gce`` module to the
+``gcp_compute_instance`` module. The ``gcp_compute_instance`` module has better
+support for all of GCP's features, fewer dependencies, more flexibility, and
+better supports GCP's authentication systems.
+
+The ``gcp_compute_instance`` module supports all of the features of the ``gce``
+module (and more!). Below is a mapping of ``gce`` fields over to
+``gcp_compute_instance`` fields.
+
+============================  ==========================================  ======================
+ gce.py                        gcp_compute_instance.py                     Notes
+============================  ==========================================  ======================
+ state                        state/status                                State on gce has multiple values: "present", "absent", "stopped", "started", "terminated". State on gcp_compute_instance is used to describe if the instance exists (present) or does not (absent). Status is used to describe if the instance is "started", "stopped" or "terminated".
+ image                        disks[].initialize_params.source_image      You'll need to create a single disk using the disks[] parameter and set it to be the boot disk (disks[].boot = true)
+ image_family                 disks[].initialize_params.source_image      See above.
+ external_projects            disks[].initialize_params.source_image      The name of the source_image will include the name of the project.
+ instance_names               Use a loop or multiple tasks.               Using loops is a more Ansible-centric way of creating multiple instances and gives you the most flexibility.
+ service_account_email        service_accounts[].email                    This is the service_account email address that you want the instance to be associated with. It is not the service_account email address that is used for the credentials necessary to create the instance.
+ service_account_permissions  service_accounts[].scopes                   These are the permissions you want to grant to the instance.
+ pem_file                     Not supported.                              We recommend using JSON service account credentials instead of PEM files.
+ credentials_file             service_account_file
+ project_id                   project
+ name                         name                                        This field does not accept an array of names. Use a loop to create multiple instances.
+ num_instances                Use a loop                                  For maximum flexibility, we're encouraging users to use Ansible features to create multiple instances, rather than letting the module do it for you.
+ network                      network_interfaces[].network
+ subnetwork                   network_interfaces[].subnetwork
+ persistent_boot_disk         disks[].type = 'PERSISTENT'
+ disks                        disks[]
+ ip_forward                   can_ip_forward
+ external_ip                  network_interfaces[].access_configs.nat_ip  This field takes multiple types of values. You can create an IP address with ``gcp_compute_address`` and place the name/output of the address here. You can also place the string value of the IP address's GCP name or the actual IP address.
+ disks_auto_delete            disks[].auto_delete
+ preemptible                  scheduling.preemptible
+ disk_size                    disks[].initialize_params.disk_size_gb
+============================  ==========================================  ======================
+
+An example playbook is below:
+
+.. code:: yaml
+
+  gcp_compute_instance:
+      name: "{{ item }}"
+      machine_type: n1-standard-1
+      ... # any other settings
+      zone: us-central1-a
+      project: "my-project"
+      auth_kind: "service_account_file"
+      service_account_file: "~/my_account.json"
+      state: present
+  with_items:
+    - instance-1
+    - instance-2

@@ -85,9 +85,10 @@ options:
     description:
     - Identifies the managed zone addressed by this request.
     - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_dns_managed_zone
-      task and then set this managed_zone field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_dns_managed_zone task and then set this managed_zone field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -144,7 +145,7 @@ managed_zone:
   description:
   - Identifies the managed zone addressed by this request.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -172,7 +173,7 @@ def main():
             type=dict(required=True, type='str', choices=['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NAPTR', 'NS', 'PTR', 'SOA', 'SPF', 'SRV', 'TLSA', 'TXT']),
             ttl=dict(type='int'),
             target=dict(type='list', elements='str'),
-            managed_zone=dict(required=True),
+            managed_zone=dict(required=True, type='dict'),
         )
     )
 

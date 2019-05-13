@@ -47,11 +47,11 @@ Function Get-DomainMembershipMatch {
     }
     catch [System.Security.Authentication.AuthenticationException] {
         Write-DebugLog "Failed to get computer domain.  Attempting a different method."
-        Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement            
         $user_principal = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
         If ($user_principal.ContextType -eq "Machine") {
             $current_dns_domain = (Get-CimInstance -ClassName Win32_ComputerSystem -Property Domain).Domain
-
+            
             $domain_match = $current_dns_domain -eq $dns_domain_name
 
             Write-DebugLog ("current domain {0} matches {1}: {2}" -f $current_dns_domain, $dns_domain_name, $domain_match)
@@ -102,8 +102,7 @@ Function Join-Domain {
         [string] $new_hostname,
         [string] $domain_admin_user,
         [string] $domain_admin_password,
-        [string] $domain_ou_path,
-        [bool]   $allow_existing_computer_account
+        [string] $domain_ou_path
     )
 
     Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
@@ -119,24 +118,17 @@ Function Join-Domain {
     Write-DebugLog "adding hostname set arg to Add-Computer args"
     If($new_hostname) {
         $add_args["NewName"] = $new_hostname
-        $hostname_in_domain = Get-ADObject -LDAPFilter "(&(CN=$new_hostname)(ObjectClass=Computer))"
-    } else {
-        $hostname_in_domain = Get-ADObject -LDAPFilter "(&(CN=$env:COMPUTERNAME)(ObjectClass=Computer))"
     }
+
 
     if($domain_ou_path){
         Write-DebugLog "adding OU destination arg to Add-Computer args"
         $add_args["OUPath"] = $domain_ou_path
     }
-
     $argstr = $add_args | Out-String
     Write-DebugLog "calling Add-Computer with args: $argstr"
     try {
-        if($null -eq $hostname_in_domain -or ($null -ne $hostname_in_domain -and $allow_existing_computer_account)) {
-            $add_result = Add-Computer @add_args
-        } else {
-            Fail-Json -obj $result -message "failed to join domain: hostname already exists in AD and allow_existing_computer_account=no"
-        }
+        $add_result = Add-Computer @add_args
     } catch {
         Fail-Json -obj $result -message "failed to join domain: $($_.Exception.Message)"
     }
@@ -162,7 +154,7 @@ Function Set-Workgroup {
 
     if ($swg_result.ReturnValue -ne 0) {
         Fail-Json -obj $result -message "failed to set workgroup through WMI, return value: $($swg_result.ReturnValue)"
-
+    
     return $swg_result}
 }
 
@@ -206,7 +198,6 @@ $workgroup_name = Get-AnsibleParam $params "workgroup_name"
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
-$allow_existing_computer_account = Get-AnsibleParam $params "allow_existing_computer_account" -type "bool" -default $false
 
 $log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
@@ -248,7 +239,6 @@ Try {
                         dns_domain_name = $dns_domain_name
                         domain_admin_user = $domain_admin_user
                         domain_admin_password = $domain_admin_password
-                        allow_existing_computer_account = $allow_existing_computer_account
                     }
 
                     Write-DebugLog "not a domain member, joining..."
@@ -257,7 +247,7 @@ Try {
                         Write-DebugLog "adding hostname change to domain-join args"
                         $join_args.new_hostname = $hostname
                     }
-                    If($domain_ou_path -ne $null){ # If OU Path is not empty
+                    If($null -ne $domain_ou_path){ # If OU Path is not empty
                         Write-DebugLog "adding domain_ou_path to domain-join args"
                         $join_args.domain_ou_path = $domain_ou_path
                     }

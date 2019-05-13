@@ -190,8 +190,8 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.keyvault import KeyVaultManagementClient
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -325,7 +325,8 @@ class AzureRMVaults(AzureRMModuleBase):
         response = None
 
         self.mgmt_client = self.get_mgmt_svc_client(KeyVaultManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
+                                                    base_url=self._cloud_environment.endpoints.resource_manager,
+                                                    api_version="2018-02-14")
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -448,7 +449,7 @@ class AzureRMVaults(AzureRMModuleBase):
             response = self.mgmt_client.vaults.create_or_update(resource_group_name=self.resource_group,
                                                                 vault_name=self.vault_name,
                                                                 parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

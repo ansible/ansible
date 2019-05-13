@@ -77,9 +77,6 @@
         locations:
           - eastus
           - westus
-    tags:
-       testing: testing
-       delete: on-fini
 
 - name: Should be idempotent
   azure_rm_subnet:
@@ -92,9 +89,6 @@
         locations:
           - eastus
           - westus
-    tags:
-       testing: testing
-       delete: on-fini
   register: output
 
 - assert:
@@ -116,9 +110,6 @@
     security_group:
       name: secgroupfoo
       resource_group: "{{ resource_group_secondary }}"
-    tags:
-       testing: testing
-       delete: on-fini
   register: output
 
 - assert:
@@ -133,16 +124,13 @@
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
     security_group: "{{ nsg.state.id }}"
-    tags:
-       testing: testing
-       delete: on-fini
   register: output
 
 - assert:
     that: not output.changed
 
 - name: Get subnet facts
-  azure_rm_subnet_info:
+  azure_rm_subnet_facts:
     name: foobar
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"

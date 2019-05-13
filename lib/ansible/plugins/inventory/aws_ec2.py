@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: aws_ec2
     plugin_type: inventory
-    short_description: ec2 inventory source
+    short_description: EC2 inventory source
     requirements:
         - boto3
         - botocore
@@ -17,13 +17,13 @@ DOCUMENTATION = '''
         - aws_credentials
     description:
         - Get inventory hosts from Amazon Web Services EC2.
-        - Uses a YAML configuration file that ends with aws_ec2.(yml|yaml).
+        - Uses a YAML configuration file that ends with C(aws_ec2.(yml|yaml)).
     notes:
         - If no credentials are provided and the control node has an associated IAM instance profile then the
           role will be used for authentication.
     options:
         plugin:
-            description: token that ensures this is a source file for the 'aws_ec2' plugin.
+            description: Token that ensures this is a source file for the plugin.
             required: True
             choices: ['aws_ec2']
         regions:
@@ -75,7 +75,6 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-
 # Minimal example using environment vars or instance role credentials
 # Fetch all hosts in us-east-1, the hostname is the public DNS if it exists, otherwise the private IP address
 plugin: aws_ec2
@@ -85,23 +84,24 @@ regions:
 # Example using filters, ignoring permission errors, and specifying the hostname precedence
 plugin: aws_ec2
 boto_profile: aws_profile
-regions: # populate inventory with instances in these regions
+# Populate inventory with instances in these regions
+regions:
   - us-east-1
   - us-east-2
 filters:
-  # all instances with their `Environment` tag set to `dev`
+  # All instances with their `Environment` tag set to `dev`
   tag:Environment: dev
-  # all dev and QA hosts
+  # All dev and QA hosts
   tag:Environment:
     - dev
     - qa
   instance.group-id: sg-xxxxxxxx
-# ignores 403 errors rather than failing
+# Ignores 403 errors rather than failing
 strict_permissions: False
-# note: I(hostnames) sets the inventory_hostname. To modify ansible_host without modifying
+# Note: I(hostnames) sets the inventory_hostname. To modify ansible_host without modifying
 # inventory_hostname use compose (see example below).
 hostnames:
-  - tag:Name=Tag1,Name=Tag2  # return specific hosts only
+  - tag:Name=Tag1,Name=Tag2  # Return specific hosts only
   - tag:CustomDNSName
   - dns-name
   - private-ip-address
@@ -114,30 +114,31 @@ regions:
 # keyed_groups may be used to create custom groups
 strict: False
 keyed_groups:
-  # add e.g. x86_64 hosts to an arch_x86_64 group
+  # Add e.g. x86_64 hosts to an arch_x86_64 group
   - prefix: arch
     key: 'architecture'
-  # add hosts to tag_Name_Value groups for each Name/Value tag pair
+  # Add hosts to tag_Name_Value groups for each Name/Value tag pair
   - prefix: tag
     key: tags
-  # add hosts to e.g. instance_type_z3_tiny
+  # Add hosts to e.g. instance_type_z3_tiny
   - prefix: instance_type
     key: instance_type
-  # create security_groups_sg_abcd1234 group for each SG
+  # Create security_groups_sg_abcd1234 group for each SG
   - key: 'security_groups|json_query("[].group_id")'
     prefix: 'security_groups'
-  # create a group for each value of the Application tag
+  # Create a group for each value of the Application tag
   - key: tags.Application
     separator: ''
-  # create a group per region e.g. aws_region_us_east_2
+  # Create a group per region e.g. aws_region_us_east_2
   - key: placement.region
     prefix: aws_region
-# set individual variables with compose
+# Set individual variables with compose
 compose:
-  # use the private IP address to connect to the host
+  # Use the private IP address to connect to the host
   # (note: this does not modify inventory_hostname, which is set via I(hostnames))
   ansible_host: private_ip_address
 '''
+
 import re
 
 from ansible.errors import AnsibleError

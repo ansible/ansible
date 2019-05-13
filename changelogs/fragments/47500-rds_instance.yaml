@@ -1,3 +1,0 @@
----
-bugfixes:
-- rds_instance - Cluster_id which is an alias of db_cluster_identifier is a mandatory check target.

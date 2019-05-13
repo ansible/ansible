@@ -29,10 +29,15 @@
 
 try:
     import psycopg2
-    import psycopg2.extras
+    from psycopg2.extras import DictCursor
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
+
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
+from distutils.version import LooseVersion
 
 
 class LibraryError(Exception):
@@ -55,7 +60,89 @@ def postgres_common_argument_spec():
         login_password=dict(default='', no_log=True),
         login_host=dict(default=''),
         login_unix_socket=dict(default=''),
-        port=dict(type='int', default=5432),
-        ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        port=dict(type='int', default=5432, aliases=['login_port']),
+        ssl_mode=dict(default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ca_cert=dict(aliases=['ssl_rootcert']),
     )
+
+
+def ensure_required_libs(module):
+    if not HAS_PSYCOPG2:
+        module.fail_json(msg=missing_required_lib('psycopg2'))
+
+    if module.params.get('ca_cert') and LooseVersion(psycopg2.__version__) < LooseVersion('2.4.3'):
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to use the ca_cert parameter')
+
+
+def connect_to_db(module, autocommit=False, fail_on_conn=True, warn_db_default=True):
+
+    ensure_required_libs(module)
+
+    # To use defaults values, keyword arguments must be absent, so
+    # check which values are empty and don't include in the **kw
+    # dictionary
+    params_map = {
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "ssl_mode": "sslmode",
+        "ca_cert": "sslrootcert"
+    }
+
+    # Might be different in the modules:
+    if module.params.get('db'):
+        params_map['db'] = 'database'
+    elif module.params.get('database'):
+        params_map['database'] = 'database'
+    elif module.params.get('login_db'):
+        params_map['login_db'] = 'database'
+    else:
+        if warn_db_default:
+            module.warn('Database name has not been passed, '
+                        'used default database to connect to.')
+
+    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
+              if k in params_map and v != '' and v is not None)
+
+    # If a login_unix_socket is specified, incorporate it here.
+    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
+    if is_localhost and module.params["login_unix_socket"] != "":
+        kw["host"] = module.params["login_unix_socket"]
+
+    try:
+        db_connection = psycopg2.connect(**kw)
+        if autocommit:
+            if psycopg2.__version__ >= '2.4.2':
+                db_connection.set_session(autocommit=True)
+            else:
+                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+        # Switch role, if specified:
+        cursor = db_connection.cursor(cursor_factory=DictCursor)
+        if module.params.get('session_role'):
+            try:
+                cursor.execute('SET ROLE %s' % module.params['session_role'])
+            except Exception as e:
+                module.fail_json(msg="Could not switch role: %s" % to_native(e))
+        cursor.close()
+
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least '
+                                 'version 8.4 to support sslrootcert')
+
+        if fail_on_conn:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        else:
+            module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+            db_connection = None
+
+    except Exception as e:
+        if fail_on_conn:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        else:
+            module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+            db_connection = None
+
+    return db_connection

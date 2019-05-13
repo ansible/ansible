@@ -61,9 +61,10 @@ options:
         description:
         - The name of the bucket.
         - 'This field represents a link to a Bucket resource in GCP. It can be specified
-          in two ways. First, you can place in the name of the resource here as a
-          string Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
-          task and then set this bucket field to "{{ name-of-resource }}"'
+          in two ways. First, you can place a dictionary with key ''name'' and value
+          of your resource''s name Alternatively, you can add `register: name-of-resource`
+          to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
+          }}"'
         required: true
       entity:
         description:
@@ -140,9 +141,10 @@ options:
         description:
         - The name of the bucket.
         - 'This field represents a link to a Bucket resource in GCP. It can be specified
-          in two ways. First, you can place in the name of the resource here as a
-          string Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
-          task and then set this bucket field to "{{ name-of-resource }}"'
+          in two ways. First, you can place a dictionary with key ''name'' and value
+          of your resource''s name Alternatively, you can add `register: name-of-resource`
+          to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
+          }}"'
         required: true
       entity:
         description:
@@ -359,7 +361,7 @@ acl:
       description:
       - The name of the bucket.
       returned: success
-      type: str
+      type: dict
     domain:
       description:
       - The domain associated with the entity.
@@ -453,7 +455,7 @@ defaultObjectAcl:
       description:
       - The name of the bucket.
       returned: success
-      type: str
+      type: dict
     domain:
       description:
       - The domain associated with the entity.
@@ -740,7 +742,7 @@ def main():
                 type='list',
                 elements='dict',
                 options=dict(
-                    bucket=dict(required=True),
+                    bucket=dict(required=True, type='dict'),
                     entity=dict(required=True, type='str'),
                     entity_id=dict(type='str'),
                     project_team=dict(
@@ -763,7 +765,7 @@ def main():
                 type='list',
                 elements='dict',
                 options=dict(
-                    bucket=dict(required=True),
+                    bucket=dict(required=True, type='dict'),
                     entity=dict(required=True, type='str'),
                     object=dict(type='str'),
                     role=dict(required=True, type='str', choices=['OWNER', 'READER']),

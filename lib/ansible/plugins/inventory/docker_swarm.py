@@ -34,14 +34,14 @@ DOCUMENTATION = '''
             choices: docker_swarm
         docker_host:
             description:
-                - Socket of a Docker swarm manager node (tcp,unix).
+                - Socket of a Docker swarm manager node (C(tcp), C(unix)).
                 - "Use C(unix://var/run/docker.sock) to connect via local socket."
             type: str
             required: true
             aliases: [ docker_url ]
         verbose_output:
-            description: Toggle to (not) include all available nodes metadata (e.g. Platform, Architecture,OS,
-                         EngineVersion)
+            description: Toggle to (not) include all available nodes metadata (e.g. C(Platform), C(Architecture), C(OS),
+                         C(EngineVersion))
             type: bool
             default: yes
         tls:
@@ -89,10 +89,10 @@ DOCUMENTATION = '''
             default: 60
             aliases: [ time_out ]
         include_host_uri:
-            description: Toggle to return the additional attribute I(ansible_host_uri) which contains the URI of the
-                         swarm leader in format of M(tcp://172.16.0.1:2376). This value may be used without additional
+            description: Toggle to return the additional attribute C(ansible_host_uri) which contains the URI of the
+                         swarm leader in format of C(tcp://172.16.0.1:2376). This value may be used without additional
                          modification as value of option I(docker_host) in Docker Swarm modules when connecting via API.
-                         The port always defaults to M(2376).
+                         The port always defaults to C(2376).
             type: bool
             default: no
         include_host_uri_port:

@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - ``init`` and ``shm_size`` are now checked for idempotency."

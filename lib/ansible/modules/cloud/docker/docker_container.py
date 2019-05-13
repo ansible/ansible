@@ -486,7 +486,6 @@ options:
       - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are I(not) allowed. This
         is different from the C(docker) command line utility. Use the L(dig lookup,../lookup/dig.html)
         to resolve hostnames."
-      - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
       - A value of C(all) will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
@@ -1586,7 +1585,14 @@ class TaskParameters(DockerBaseClass):
         if self.log_options is not None:
             options['Config'] = dict()
             for k, v in self.log_options.items():
-                options['Config'][k] = str(v)
+                if not isinstance(v, string_types):
+                    self.client.module.warn(
+                        "Non-string value found for log_options option '%s'. The value is automatically converted to '%s'. "
+                        "If this is not correct, or you want to avoid such warnings, please quote the value." % (k, str(v))
+                    )
+                v = str(v)
+                self.log_options[k] = v
+                options['Config'][k] = v
 
         try:
             return LogConfig(**options)
@@ -1622,8 +1628,8 @@ class TaskParameters(DockerBaseClass):
         if self.env:
             for name, value in self.env.items():
                 if not isinstance(value, string_types):
-                    self.fail("Non-string value found for env option. "
-                              "Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s" % (name, ))
+                    self.fail("Non-string value found for env option. Ambiguous env options must be "
+                              "wrapped in quotes to avoid them being interpreted. Key: %s" % (name, ))
                 final_env[name] = str(value)
         return final_env
 
@@ -2344,8 +2350,8 @@ class ContainerManager(DockerBaseClass):
                 container = self.container_start(container.Id)
             elif state == 'started' and self.parameters.restart:
                 self.diff_tracker.add('running', parameter=True, active=was_running)
-                self.container_stop(container.Id)
-                container = self.container_start(container.Id)
+                self.diff_tracker.add('restarted', parameter=True, active=False)
+                container = self.container_restart(container.Id)
             elif state == 'stopped' and container.running:
                 self.diff_tracker.add('running', parameter=False, active=was_running)
                 self.container_stop(container.Id)
@@ -2627,6 +2633,19 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error killing container %s: %s" % (container_id, exc))
         return response
 
+    def container_restart(self, container_id):
+        self.results['actions'].append(dict(restarted=container_id, timeout=self.parameters.stop_timeout))
+        self.results['changed'] = True
+        if not self.check_mode:
+            try:
+                if self.parameters.stop_timeout:
+                    response = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
+                else:
+                    response = self.client.restart(container_id)
+            except Exception as exc:
+                self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
+        return self._get_container(container_id)
+
     def container_stop(self, container_id):
         if self.parameters.force_kill:
             self.container_kill(container_id)
@@ -2761,8 +2780,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 key_main = comp_aliases.get(key)
                 if key_main is None:
                     if key_main in all_options:
-                        self.fail(("The module option '%s' cannot be specified in the comparisons dict," +
-                                   " since it does not correspond to container's state!") % key)
+                        self.fail("The module option '%s' cannot be specified in the comparisons dict, "
+                                  "since it does not correspond to container's state!" % key)
                     self.fail("Unknown module option '%s' in comparisons dict!" % key)
                 if key_main in comp_aliases_used:
                     self.fail("Both '%s' and '%s' (aliases of %s) are specified in comparisons dict!" % (key, comp_aliases_used[key_main], key_main))
@@ -2824,8 +2843,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             dns_opts=dict(docker_api_version='1.21', docker_py_version='1.10.0'),
             ipc_mode=dict(docker_api_version='1.25'),
             mac_address=dict(docker_api_version='1.25'),
-            oom_killer=dict(docker_py_version='2.0.0'),
-            oom_score_adj=dict(docker_api_version='1.22', docker_py_version='2.0.0'),
+            oom_score_adj=dict(docker_api_version='1.22'),
             shm_size=dict(docker_api_version='1.22'),
             stop_signal=dict(docker_api_version='1.21'),
             tmpfs=dict(docker_api_version='1.22'),

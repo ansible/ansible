@@ -2,6 +2,14 @@
 # Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+
+
 - include: poweroff_d1_c1_f0.yml
 - include: poweroff_d1_c1_f1.yml
 - include: check_mode.yml
@@ -15,6 +23,14 @@
 - include: create_nw_d1_c1_f0.yml
 - include: delete_vm.yml
 - include: non_existent_vm_ops.yml
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+
 - include: network_negative_test.yml
 # VCSIM does not return list of portgroups for dvswitch so commenting following TC
 #- include: network_with_portgroup.yml
@@ -28,3 +44,4 @@
 - include: linked_clone_d1_c1_f0.yml
 - include: boot_firmware_d1_c1_f0.yml
 - include: clone_with_convert.yml
+- include: clone_customize_guest_test.yml

@@ -176,7 +176,7 @@ class NsoConfig(object):
         return self._changes, self._diffs
 
     def _data_write(self, values):
-        th = self._client.new_trans(mode='read_write')
+        th = self._client.get_trans(mode='read_write')
 
         for value in values:
             if value.state == State.SET:

@@ -308,9 +308,14 @@ class NetAppOntapSVM(object):
             self.module.fail_json(msg='Error provisioning SVM %s: %s'
                                       % (self.parameters['name'], to_native(e)),
                                   exception=traceback.format_exc())
-        # add allowed-protocols after creation, since vserver-create doesn't allow this attribute during creation
-        if self.parameters.get('allowed_protocols'):
-            self.modify_vserver({'allowed_protocols': self.parameters['allowed_protocols']})
+        # add allowed-protocols, aggr-list after creation,
+        # since vserver-create doesn't allow these attributes during creation
+        options = dict()
+        for key in ('allowed_protocols', 'aggr_list'):
+            if self.parameters.get(key):
+                options[key] = self.parameters[key]
+        if options:
+            self.modify_vserver(options)
 
     def delete_vserver(self):
         vserver_delete = netapp_utils.zapi.NaElement.create_node_with_children(

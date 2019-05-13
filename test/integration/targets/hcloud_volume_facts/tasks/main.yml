@@ -7,13 +7,6 @@
     state: absent
   register: result
 
-- name: test gather hcloud volume facts - empty resources
-  hcloud_volume_facts:
-- name: verify test gather hcloud volume facts - empty resources
-  assert:
-    that:
-      - ansible_facts.hcloud_volume_facts | count == 0
-
 - name: setup volume
   hcloud_volume:
     name: "{{hcloud_volume_name}}"

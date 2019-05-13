@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_instance - make Name tag idempotent (https://github.com/ansible/ansible/pull/55224)

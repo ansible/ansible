@@ -86,7 +86,8 @@ def get_connection(module):
         return _CONNECTION
     _CONNECTION = Connection(module._socket_path)
 
-    context = module.params['context']
+    # Not all modules include the 'context' key.
+    context = module.params.get('context')
 
     if context:
         if context == 'system':
@@ -130,7 +131,8 @@ def run_commands(module, commands, check_rc=True):
 def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
-    passwords = module.params['passwords']
+    # Not all modules include the 'passwords' key.
+    passwords = module.params.get('passwords', False)
     if passwords:
         cmd = 'more system:running-config'
     else:

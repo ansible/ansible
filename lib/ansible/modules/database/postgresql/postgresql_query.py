@@ -21,7 +21,7 @@ short_description: Run PostgreSQL queries
 description:
 - Runs arbitraty PostgreSQL queries.
 - Can run queries from SQL script files.
-version_added: "2.8"
+version_added: '2.8'
 options:
   query:
     description:
@@ -54,46 +54,8 @@ options:
     description:
     - Name of database to connect to and run queries against.
     type: str
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    type: str
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s).
-    - If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    aliases: [ ssl_rootcert ]
+    aliases:
+    - login_db
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -110,6 +72,7 @@ author:
 - Felix Archambault (@archf)
 - Andrew Klychkov (@Andersson007)
 - Will Rouesnel (@wrouesnel)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -173,42 +136,21 @@ rowcount:
     sample: 5
 '''
 
-import os
-
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2 import ProgrammingError as Psycopg2ProgrammingError
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # it is needed for checking 'no result to fetch' in main(),
+    # psycopg2 availability will be checked by connect_to_db() into
+    # ansible.module_utils.postgres
+    pass
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
 
-
-def connect_to_db(module, kw, autocommit=False):
-    try:
-        db_connection = psycopg2.connect(**kw)
-        if autocommit:
-            if psycopg2.__version__ >= '2.4.2':
-                db_connection.set_session(autocommit=True)
-            else:
-                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least '
-                                 'version 8.4 to support sslrootcert')
-
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-
-    return db_connection
 
 # ===========================================
 # Module execution.
@@ -219,9 +161,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         query=dict(type='str'),
-        db=dict(type='str'),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
+        db=dict(type='str', aliases=['login_db']),
         positional_args=dict(type='list'),
         named_args=dict(type='dict'),
         session_role=dict(type='str'),
@@ -234,14 +174,9 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
     query = module.params["query"]
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
-    sslrootcert = module.params["ca_cert"]
-    session_role = module.params["session_role"]
     path_to_script = module.params["path_to_script"]
 
     if positional_args and named_args:
@@ -256,44 +191,13 @@ def main():
         except Exception as e:
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != '' and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 '
-                             'in order to user the ca_cert parameter')
-
-    db_connection = connect_to_db(module, kw)
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
+    db_connection = connect_to_db(module, autocommit=False)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Prepare args:
-    if module.params["positional_args"]:
+    if module.params.get("positional_args"):
         arguments = module.params["positional_args"]
-    elif module.params["named_args"]:
+    elif module.params.get("named_args"):
         arguments = module.params["named_args"]
     else:
         arguments = None
@@ -314,7 +218,7 @@ def main():
 
     try:
         query_result = [dict(row) for row in cursor.fetchall()]
-    except psycopg2.ProgrammingError as e:
+    except Psycopg2ProgrammingError as e:
         if to_native(e) == 'no results to fetch':
             query_result = {}
 

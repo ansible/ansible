@@ -9,7 +9,6 @@ __metaclass__ = type
 
 import getpass
 import os
-import os.path
 import re
 import subprocess
 import sys
@@ -18,8 +17,8 @@ from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli.arguments import optparse_helpers as opt_help
-from ansible.errors import AnsibleOptionsError, AnsibleError
+from ansible.cli.arguments import option_helpers as opt_help
+from ansible.errors import AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
@@ -31,14 +30,18 @@ from ansible.vars.manager import VariableManager
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs
 
+try:
+    import argcomplete
+    HAS_ARGCOMPLETE = True
+except ImportError:
+    HAS_ARGCOMPLETE = False
+
 
 display = Display()
 
 
 class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
-
-    VALID_ACTIONS = frozenset()
 
     _ITALIC = re.compile(r"I\(([^)]+)\)")
     _BOLD = re.compile(r"B\(([^)]+)\)")
@@ -58,39 +61,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         Base init method for all command line programs
         """
 
+        if not args:
+            raise ValueError('A non-empty list for args is required')
+
         self.args = args
         self.parser = None
-        self.action = None
         self.callback = callback
-
-    def set_action(self):
-        """
-        Get the action the user wants to execute from the sys argv list.
-        """
-        for i in range(0, len(self.args)):
-            arg = self.args[i]
-            if arg in self.VALID_ACTIONS:
-                self.action = arg
-                del self.args[i]
-                break
-
-        if not self.action:
-            # if we're asked for help or version, we don't need an action.
-            # have to use a special purpose Option Parser to figure that out as
-            # the standard OptionParser throws an error for unknown options and
-            # without knowing action, we only know of a subset of the options
-            # that could be legal for this command
-            tmp_parser = opt_help.InvalidOptsParser(self.parser)
-            tmp_options, tmp_args = tmp_parser.parse_args(self.args)
-            if not(hasattr(tmp_options, 'help') and tmp_options.help) or (hasattr(tmp_options, 'version') and tmp_options.version):
-                raise AnsibleOptionsError("Missing required action")
-
-    def execute(self):
-        """
-        Actually runs a child defined method using the execute_<action> pattern
-        """
-        fn = getattr(self, "execute_%s" % self.action)
-        fn()
 
     @abstractmethod
     def run(self):
@@ -101,7 +77,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         """
         self.parse()
 
-        display.vv(to_text(self.parser.get_version()))
+        display.vv(to_text(opt_help.version(self.parser.prog)))
 
         if C.CONFIG_FILE:
             display.v(u"Using %s as config file" % to_text(C.CONFIG_FILE))
@@ -278,17 +254,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         return (sshpass, becomepass)
 
-    def validate_conflicts(self, op, vault_opts=False, runas_opts=False, fork_opts=False, vault_rekey_opts=False):
+    def validate_conflicts(self, op, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
-
-        if vault_opts:
-            # Check for vault related conflicts
-            if op.ask_vault_pass and op.vault_password_files:
-                self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
-
-        if vault_rekey_opts:
-            if op.new_vault_id and op.new_vault_password_file:
-                self.parser.error("--new-vault-password-file and --new-vault-id are mutually exclusive")
 
         if fork_opts:
             if op.forks < 1:
@@ -308,13 +275,13 @@ class CLI(with_metaclass(ABCMeta, object)):
 
             def init_parser(self):
                 super(MyCLI, self).init_parser(usage="My Ansible CLI", inventory_opts=True)
-                ansible.arguments.optparse_helpers.add_runas_options(self.parser)
+                ansible.arguments.option_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
-        self.parser = opt_help.create_base_parser(usage=usage, desc=desc, epilog=epilog)
+        self.parser = opt_help.create_base_parser(os.path.basename(self.args[0]), usage=usage, desc=desc, epilog=epilog, )
 
     @abstractmethod
-    def post_process_args(self, options, args):
+    def post_process_args(self, options):
         """Process the command line args
 
         Subclasses need to implement this method.  This method validates and transforms the command
@@ -323,13 +290,13 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         An implementation will look something like this::
 
-            def post_process_args(self, options, args):
-                options, args = super(MyCLI, self).post_process_args(options, args)
+            def post_process_args(self, options):
+                options = super(MyCLI, self).post_process_args(options)
                 if options.addition and options.subtraction:
                     raise AnsibleOptionsError('Only one of --addition and --subtraction can be specified')
                 if isinstance(options.listofhosts, string_types):
                     options.listofhosts = string_types.split(',')
-                return options, args
+                return options
         """
 
         # process tags
@@ -365,7 +332,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             else:
                 options.inventory = C.DEFAULT_HOST_LIST
 
-        return options, args
+        return options
 
     def parse(self):
         """Parse the command line args
@@ -378,9 +345,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         are called from this function before and after parsing the arguments.
         """
         self.init_parser()
-        options, args = self.parser.parse_args(self.args[1:])
-        options, args = self.post_process_args(options, args)
-        options.args = args
+
+        if HAS_ARGCOMPLETE:
+            argcomplete.autocomplete(self.parser)
+
+        options = self.parser.parse_args(self.args[1:])
+        options = self.post_process_args(options)
         context._init_global_context(options)
 
     @staticmethod

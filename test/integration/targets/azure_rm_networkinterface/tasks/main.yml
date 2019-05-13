@@ -351,7 +351,7 @@
       - output.id != ''
 
 - name: Get Application security group
-  azure_rm_applicationsecuritygroup_info:
+  azure_rm_applicationsecuritygroup_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ applicationsecuritygroup_name1 }}"
   register: facts

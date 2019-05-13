@@ -260,9 +260,9 @@ class RegistrationBase(object):
             cfg.read([tmpfile])
 
             if enabled:
-                cfg.set('main', 'enabled', 1)
+                cfg.set('main', 'enabled', '1')
             else:
-                cfg.set('main', 'enabled', 0)
+                cfg.set('main', 'enabled', '0')
 
             fd = open(tmpfile, 'w+')
             cfg.write(fd)

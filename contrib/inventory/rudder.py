@@ -53,9 +53,9 @@ import sys
 import os
 import re
 import argparse
-import six
 import httplib2 as http
 from time import time
+from ansible.module_utils import six
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 

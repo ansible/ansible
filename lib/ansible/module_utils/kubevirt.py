@@ -10,37 +10,18 @@ from distutils.version import Version
 from ansible.module_utils.k8s.common import list_dict_str
 from ansible.module_utils.k8s.raw import KubernetesRawModule
 
-try:
-    from openshift import watch
-    from openshift.helper.exceptions import KubernetesException
-except ImportError:
-    # Handled in k8s common:
-    pass
-
 import re
 
 MAX_SUPPORTED_API_VERSION = 'v1alpha3'
 API_GROUP = 'kubevirt.io'
 
 
-VM_COMMON_ARG_SPEC = {
-    'name': {'required': True},
-    'namespace': {'required': True},
-    'state': {
-        'default': 'present',
-        'choices': ['present', 'absent'],
-    },
-    'force': {
-        'type': 'bool',
-        'default': False,
-    },
+# Put all args that (can) modify 'spec:' here:
+VM_SPEC_DEF_ARG_SPEC = {
     'resource_definition': {
         'type': 'dict',
         'aliases': ['definition', 'inline']
     },
-    'merge_type': {'type': 'list', 'choices': ['json', 'merge', 'strategic-merge']},
-    'wait': {'type': 'bool', 'default': True},
-    'wait_timeout': {'type': 'int', 'default': 120},
     'memory': {'type': 'str'},
     'memory_limit': {'type': 'str'},
     'cpu_cores': {'type': 'int'},
@@ -59,6 +40,23 @@ VM_COMMON_ARG_SPEC = {
     'cpu_shares': {'type': 'int'},
     'cpu_features': {'type': 'list'},
 }
+# And other common args go here:
+VM_COMMON_ARG_SPEC = {
+    'name': {'required': True},
+    'namespace': {'required': True},
+    'state': {
+        'default': 'present',
+        'choices': ['present', 'absent'],
+    },
+    'force': {
+        'type': 'bool',
+        'default': False,
+    },
+    'merge_type': {'type': 'list', 'choices': ['json', 'merge', 'strategic-merge']},
+    'wait': {'type': 'bool', 'default': True},
+    'wait_timeout': {'type': 'int', 'default': 120},
+}
+VM_COMMON_ARG_SPEC.update(VM_SPEC_DEF_ARG_SPEC)
 
 
 def virtdict():
@@ -143,18 +141,6 @@ class KubeVirtRawModule(KubernetesRawModule):
                 yield (k, x[k])
             else:
                 yield (k, y[k])
-
-    def _create_stream(self, resource, namespace, wait_timeout):
-        """ Create a stream of events for the object """
-        w = None
-        stream = None
-        try:
-            w = watch.Watch()
-            w._api_client = self.client.client
-            stream = w.stream(resource.get, serialize=False, namespace=namespace, timeout_seconds=wait_timeout)
-        except KubernetesException as exc:
-            self.fail_json(msg='Failed to initialize watch: {0}'.format(exc.message))
-        return w, stream
 
     def get_resource(self, resource):
         try:
@@ -342,7 +328,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             template_spec['domain']['cpu']['model'] = cpu_model
 
         if labels:
-            template['metadata']['labels'] = labels
+            template['metadata']['labels'] = dict(self.merge_dicts(labels, template['metadata']['labels']))
 
         if machine_type:
             template_spec['domain']['machine']['type'] = machine_type

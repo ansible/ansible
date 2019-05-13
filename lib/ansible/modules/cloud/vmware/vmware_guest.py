@@ -136,7 +136,6 @@ options:
     - ' - C(num_cpus) (integer): Number of CPUs.'
     - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. Value should be multiple of C(num_cpus).'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
-    - ' - C(memory_reservation) (integer): Amount of memory in MB to set resource limits for memory. version_added: 2.5'
     - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for the virtual machine
           will always be equal to the virtual machine's memory size. version_added: 2.5"
     - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines.
@@ -144,7 +143,7 @@ options:
     - ' - C(mem_limit) (integer): The memory utilization of a virtual machine will not exceed this limit. Unit is MB.
           version_added: 2.5'
     - ' - C(mem_reservation) (integer): The amount of memory resource that is guaranteed available to the virtual
-          machine. Unit is MB. version_added: 2.5'
+          machine. Unit is MB. C(memory_reservation) is alias to this. version_added: 2.5'
     - ' - C(cpu_limit) (integer): The CPU utilization of a virtual machine will not exceed this limit. Unit is MHz.
           version_added: 2.5'
     - ' - C(cpu_reservation) (integer): The amount of CPU resource that is guaranteed available to the virtual machine.
@@ -166,7 +165,7 @@ options:
     - "  virtual machine with RHEL7 64 bit, will be 'rhel7_64Guest'"
     - "  virtual machine with CensOS 64 bit, will be 'centos64Guest'"
     - "  virtual machine with Ubuntu 64 bit, will be 'ubuntu64Guest'"
-    - This field is required when creating a virtual machine.
+    - This field is required when creating a virtual machine, not required when creating from the template.
     - >
          Valid values are referenced here:
          U(http://pubs.vmware.com/vsphere-6-5/topic/com.vmware.wssdk.apiref.doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
@@ -415,7 +414,6 @@ EXAMPLES = r'''
       num_cpus: 6
       num_cpu_cores_per_socket: 3
       scsi: paravirtual
-      memory_reservation: 512
       memory_reservation_lock: True
       mem_limit: 8096
       mem_reservation: 4096
@@ -844,6 +842,7 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
         self.device_helper = PyVmomiDeviceHelper(self.module)
         self.configspec = None
+        self.relospec = None
         self.change_detected = False  # a change was detected and needs to be applied through reconfiguration
         self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.customspec = None
@@ -867,7 +866,7 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_guestid(self, vm_obj, vm_creation=False):
         # guest_id is not required when using templates
-        if self.params['template'] and not self.params['guest_id']:
+        if self.params['template']:
             return
 
         # guest_id is only mandatory on VM creation
@@ -900,12 +899,12 @@ class PyVmomiHelper(PyVmomi):
                 if vm_obj is None or memory_allocation.limit != vm_obj.config.memoryAllocation.limit:
                     rai_change_detected = True
 
-            if 'mem_reservation' in self.params['hardware']:
-                mem_reservation = None
+            if 'mem_reservation' in self.params['hardware'] or 'memory_reservation' in self.params['hardware']:
+                mem_reservation = self.params['hardware'].get('mem_reservation') or self.params['hardware'].get('memory_reservation') or None
                 try:
-                    mem_reservation = int(self.params['hardware'].get('mem_reservation'))
+                    mem_reservation = int(mem_reservation)
                 except ValueError:
-                    self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
+                    self.module.fail_json(msg="hardware.mem_reservation or hardware.memory_reservation should be an integer value.")
 
                 memory_allocation.reservation = mem_reservation
                 if vm_obj is None or \
@@ -1017,20 +1016,6 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="Configure hotremove cpu operation is not supported when VM is power on")
                 self.configspec.cpuHotRemoveEnabled = bool(self.params['hardware']['hotremove_cpu'])
                 if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
-                    self.change_detected = True
-
-            if 'memory_reservation' in self.params['hardware']:
-                memory_reservation_mb = 0
-                try:
-                    memory_reservation_mb = int(self.params['hardware']['memory_reservation'])
-                except ValueError as e:
-                    self.module.fail_json(msg="Failed to set memory_reservation value."
-                                              "Valid value for memory_reservation value in MB (integer): %s" % e)
-
-                mem_alloc = vim.ResourceAllocationInfo()
-                mem_alloc.reservation = memory_reservation_mb
-                self.configspec.memoryAllocation = mem_alloc
-                if vm_obj is None or self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
                     self.change_detected = True
 
             if 'memory_reservation_lock' in self.params['hardware']:
@@ -1397,6 +1382,7 @@ class PyVmomiHelper(PyVmomi):
                 nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
                 nic.device.backing.opaqueNetworkId = network_id
                 nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
+                nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -1413,7 +1399,13 @@ class PyVmomiHelper(PyVmomi):
                     nic_change_detected = True
 
             if nic_change_detected:
-                self.configspec.deviceChange.append(nic)
+                # Change to fix the issue found while configuring opaque network
+                # VMs cloned from a template with opaque network will get disconnected
+                # Replacing deprecated config parameter with relocation Spec
+                if isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
+                    self.relospec.deviceChange.append(nic)
+                else:
+                    self.configspec.deviceChange.append(nic)
                 self.change_detected = True
 
     def configure_vapp_properties(self, vm_obj):
@@ -2143,6 +2135,9 @@ class PyVmomiHelper(PyVmomi):
 
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
+        # create the relocation spec
+        self.relospec = vim.vm.RelocateSpec()
+        self.relospec.deviceChange = []
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
@@ -2167,13 +2162,10 @@ class PyVmomiHelper(PyVmomi):
         clone_method = None
         try:
             if self.params['template']:
-                # create the relocation spec
-                relospec = vim.vm.RelocateSpec()
-
                 # Only select specific host when ESXi hostname is provided
                 if self.params['esxi_hostname']:
-                    relospec.host = self.select_host()
-                relospec.datastore = datastore
+                    self.relospec.host = self.select_host()
+                self.relospec.datastore = datastore
 
                 # Convert disk present in template if is set
                 if self.params['convert']:
@@ -2189,22 +2181,22 @@ class PyVmomiHelper(PyVmomi):
                                 disk_locator.diskBackingInfo.diskMode = "persistent"
                             disk_locator.diskId = device.key
                             disk_locator.datastore = datastore
-                            relospec.disk.append(disk_locator)
+                            self.relospec.disk.append(disk_locator)
 
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
-                relospec.pool = resource_pool
+                self.relospec.pool = resource_pool
 
                 linked_clone = self.params.get('linked_clone')
                 snapshot_src = self.params.get('snapshot_src', None)
                 if linked_clone:
                     if snapshot_src is not None:
-                        relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+                        self.relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
                     else:
                         self.module.fail_json(msg="Parameter 'linked_src' and 'snapshot_src' are"
                                                   " required together for linked clone operation.")
 
-                clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
+                clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=self.relospec)
                 if self.customspec:
                     clonespec.customization = self.customspec
 
@@ -2314,7 +2306,9 @@ class PyVmomiHelper(PyVmomi):
     def reconfigure_vm(self):
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
-
+        # create the relocation spec
+        self.relospec = vim.vm.RelocateSpec()
+        self.relospec.deviceChange = []
         self.configure_guestid(vm_obj=self.current_vm_obj)
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
         self.configure_hardware_params(vm_obj=self.current_vm_obj)
@@ -2329,12 +2323,11 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.annotation = str(self.params['annotation'])
             self.change_detected = True
 
-        relospec = vim.vm.RelocateSpec()
         if self.params['resource_pool']:
-            relospec.pool = self.get_resource_pool()
+            self.relospec.pool = self.get_resource_pool()
 
-            if relospec.pool != self.current_vm_obj.resourcePool:
-                task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
+            if self.relospec.pool != self.current_vm_obj.resourcePool:
+                task = self.current_vm_obj.RelocateVM_Task(spec=self.relospec)
                 self.wait_for_task(task)
                 if task.info.state == 'error':
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'relocate'}

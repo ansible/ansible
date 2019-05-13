@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - fix idempotency of ``log_options`` when non-string values are used. Also warn user that this is the case."

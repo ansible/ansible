@@ -98,7 +98,7 @@ EXAMPLES = r'''
     ValueName: TestValue
     ValueData: TestData
     PsDscRunAsCredential_username: '{{ansible_user}}'
-    PsDscRunAsCredentual_password: '{{ansible_password}}'
+    PsDscRunAsCredential_password: '{{ansible_password}}'
   no_log: true
 
 - name: Create file with multiple attributes

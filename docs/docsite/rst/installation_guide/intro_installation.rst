@@ -31,10 +31,10 @@ Major bugs will still have maintenance releases when needed, though these are in
 
 If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using the OS package manager.
 
-For other installation options, we recommend installing via "pip", which is the Python package manager, though other options are also available.
+For other installation options, we recommend installing via ``pip``, which is the Python package manager.
 
 If you wish to track the development release to use and test the latest features, we will share
-information about running from source.  It's not necessary to install the program to run from source.
+information about running from source. It's not necessary to install the program to run from source.
 
 .. _control_node_requirements:
 
@@ -150,7 +150,7 @@ To configure the PPA on your machine and install ansible run these commands:
     $ sudo apt-add-repository --yes --update ppa:ansible/ansible
     $ sudo apt install ansible
 
-.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions.
+.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (i.e. 18.04, 18.10, etc.) have a ``-u`` or ``--update`` flag, so adjust your script accordingly.
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
 
@@ -230,9 +230,9 @@ Older versions of FreeBSD worked with something like this (substitute for your c
 Latest Releases on macOS
 ++++++++++++++++++++++++++
 
-The preferred way to install Ansible on a Mac is via pip.
+The preferred way to install Ansible on a Mac is via ``pip``.
 
-The instructions can be found in `Latest Releases via Pip`_ section. If you are running macOS version 10.12 or older, then you ought to upgrade to the latest pip (9.0.3 or newer) to connect to the Python Package Index securely.
+The instructions can be found in `Latest Releases via Pip`_ section. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely.
 
 .. _from_pkgutil:
 
@@ -293,30 +293,47 @@ Update of the software will be managed by the swupd tool::
 Latest Releases via Pip
 +++++++++++++++++++++++
 
-Ansible can be installed via "pip", the Python package manager.  If 'pip' isn't already available in
-your version of Python, you can get pip by::
+Ansible can be installed via ``pip``, the Python package manager.  If ``pip`` isn't already available on your system of Python, run the following commands to install it::
 
-   $ sudo easy_install pip
+    $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+    $ python get-pip.py --user
 
-Then install Ansible with [1]_::
+Then install Ansible [1]_::
 
-   $ sudo pip install ansible
+    $ pip install --user ansible
 
 Or if you are looking for the latest development version::
 
-   $ pip install git+https://github.com/ansible/ansible.git@devel
+    $ pip install --user git+https://github.com/ansible/ansible.git@devel
 
-If you are installing on macOS Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
+If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::
 
-   $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
+    $ CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install --user ansible
 
-Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally. Do not use easy_install to install Ansible directly.
+In order to use the ``paramiko`` connection plugin or modules that require ``paramiko``, install the required module [2]_::
+
+    $ pip install --user paramiko
+
+Ansble can also be installed inside a new or existing ``virtualenv``::
+
+    $ python -m virtualenv ansible  # Create a virtualenv if one does not already exist
+    $ source ansible/bin/activate   # Activate the virtual environment
+    $ pip install ansible
+
+If you wish to install Ansible globally, run the following commands::
+
+    $ sudo python get-pip.py
+    $ sudo pip install ansible
 
 .. note::
 
-    Older versions of pip defaults to http://pypi.python.org/simple, which no longer works.
-    Please make sure you have an updated pip (version 10 or greater) installed before installing Ansible.
-    Refer `here <https://pip.pypa.io/en/stable/installing/#installation>`_ about installing latest pip.
+    Running ``pip`` with ``sudo`` will make global changes to the system. Since ``pip`` does not coordinate with system package managers, it could make changes to you system that leave it in an inconsistent on non-functioning state. This is particularly true for macOS. Installing with ``--user`` is recommended unless you understand fully the implications of modifying global files on the system.
+
+.. note::
+
+    Older versions of ``pip`` default to http://pypi.python.org/simple, which no longer works.
+    Please make sure you have the latest version of ``pip`` before installing Ansible.
+    If you have an older version of ``pip`` installed, you can upgrade by following `pip's upgrade instructions <https://pip.pypa.io/en/stable/installing/#upgrading-pip>`_ .
 
 .. _tagged_releases:
 
@@ -335,9 +352,9 @@ These releases are also tagged in the `git repository <https://github.com/ansibl
 Running From Source
 +++++++++++++++++++
 
-Ansible is easy to run from a checkout - root permissions are not required
-to use it and there is no software to actually install.  No daemons
-or database setup are required.  Because of this, many users in our community use the
+Ansible is easy to run from source. You do not need ``root`` permissions
+to use it and there is no software to actually install. No daemons
+or database setup are required. Because of this, many users in our community use the
 development version of Ansible all of the time so they can take advantage of new features
 when they are implemented and easily contribute to the project. Because there is
 nothing to install, following the development version is significantly easier than most
@@ -345,7 +362,7 @@ open source projects.
 
 .. note::
 
-   If you are intending to use Tower as the Control Node, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
+   If you are want to use Ansible Tower as the Control Node, do not use a source installation of Ansible. Please use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version.
 
 
 To install from source, clone the Ansible git repository:
@@ -355,7 +372,7 @@ To install from source, clone the Ansible git repository:
     $ git clone https://github.com/ansible/ansible.git
     $ cd ./ansible
 
-Once git has cloned the Ansible repository, setup the Ansible environment:
+Once ``git`` has cloned the Ansible repository, setup the Ansible environment:
 
 Using Bash:
 
@@ -371,15 +388,16 @@ If you want to suppress spurious warnings/errors, use::
 
     $ source ./hacking/env-setup -q
 
-If you don't have pip installed in your version of Python, install pip::
+If you don't have ``pip`` installed in your version of Python, install it::
 
-    $ sudo easy_install pip
+    $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+    $ python get-pip.py --user
 
 Ansible also uses the following Python modules that need to be installed [1]_:
 
 .. code-block:: bash
 
-    $ sudo pip install -r ./requirements.txt
+    $ pip install --user -r ./requirements.txt
 
 To update ansible checkouts, use pull-with-rebase so any local changes are replayed.
 
@@ -387,18 +405,14 @@ To update ansible checkouts, use pull-with-rebase so any local changes are repla
 
     $ git pull --rebase
 
-Note: when updating Ansible checkouts that are v2.2 and older, be sure to not
-only update the source tree, but also the "submodules" in git which point at
-Ansible's own modules.
-
 .. code-block:: bash
 
     $ git pull --rebase #same as above
     $ git submodule update --init --recursive
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
-will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :ref:`inventory`)
-other than /etc/ansible/hosts:
+will be ``/etc/ansible/hosts``. You can optionally specify an inventory file (see :ref:`inventory`)
+other than ``/etc/ansible/hosts``:
 
 .. code-block:: bash
 
@@ -415,13 +429,98 @@ Now let's test things with a ping command:
 
 You can also use "sudo make install".
 
+.. _shell_completion:
+
+Shell Completion
+````````````````
+
+As of Ansible 2.9 shell completion of the ansible command line utilities is available and provided through an optional dependency
+called ``argcomplete``. ``argcomplete`` supports bash, and limited support for zsh and tcsh
+
+``python-argcomplete`` can be installed from EPEL on Red Hat Enterprise based distributions, and is available in the standard OS repositories for many other distributions.
+
+For more information about installing and configuration see the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>_`.
+
+Installing
+++++++++++
+
+via yum/dnf
+-----------
+
+On Fedora:
+
+.. code-block:: bash
+
+    $ sudo dnf install python-argcomplete
+
+On RHEL and CentOS:
+
+.. code-block:: bash
+
+    $ sudo yum install epel-release
+    $ sudo yum install python-argcomplete
+
+via apt
+-------
+
+.. code-block:: bash
+
+    $ sudo apt install python-argcomplete
+
+via pip
+-------
+
+.. code-block:: bash
+
+    $ pip install argcomplete
+
+Configuring
++++++++++++
+
+There are 2 ways to configure argcomplete to allow shell completion of the Ansible command line utilities. Per command, or globally.
+
+Globally
+--------
+
+Global completion requires bash 4.2
+
+.. code-block:: bash
+
+    $ sudo activate-global-python-argcomplete
+
+This will write a bash completion file to a global location, use ``--dest`` to change the location
+
+Per Command
+-----------
+
+If you do not have bash 4.2, you must register each script independently
+
+.. code-block:: bash
+
+    $ eval $(register-python-argcomplete ansible)
+    $ eval $(register-python-argcomplete ansible-config)
+    $ eval $(register-python-argcomplete ansible-console)
+    $ eval $(register-python-argcomplete ansible-doc)
+    $ eval $(register-python-argcomplete ansible-galaxy)
+    $ eval $(register-python-argcomplete ansible-inventory)
+    $ eval $(register-python-argcomplete ansible-playbook)
+    $ eval $(register-python-argcomplete ansible-pull)
+    $ eval $(register-python-argcomplete ansible-vault)
+
+It would be advisable to place the above commands, into your shells profile file such as ``~/.profile`` or ``~/.bash_profile``.
+
+Zsh or tcsh
+-----------
+
+See the `argcomplete documentation <https://argcomplete.readthedocs.io/en/latest/>_`.
+
 .. _getting_ansible:
 
 Ansible on GitHub
 `````````````````
 
 You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
-you have a GitHub account.  This is also where we keep the issue tracker for sharing
+you have a GitHub account. This is also where we keep the issue tracker for sharing
 bugs and feature ideas.
 
 
@@ -439,3 +538,4 @@ bugs and feature ideas.
        #ansible IRC chat channel
 
 .. [1] If you have issues with the "pycrypto" package install on macOS, then you may need to try ``CC=clang sudo -E pip install pycrypto``.
+.. [2] ``paramiko`` was included in Ansible's ``requirements.txt`` prior to 2.8.

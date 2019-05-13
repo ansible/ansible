@@ -1,10 +1,17 @@
 ---
+- name: Setup server groups
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-group-{{ item }}'
+    type: anti-affinity
+  with_sequence: count=2
+
 - name: Test create a running server in check mode
   cloudscale_server:
     name: '{{ cloudscale_resource_prefix }}-test'
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
   register: server
   check_mode: yes
 - name: Verify create a running server in check mode
@@ -19,12 +26,14 @@
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
   register: server
 - name: Verify create a running server
   assert:
     that:
       - server is changed
       - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
 
 - name: Test create a running server idempotence
   cloudscale_server:
@@ -32,12 +41,14 @@
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
   register: server
 - name: Verify create a running server idempotence
   assert:
     that:
       - server is not changed
       - server.state == 'running'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
 
 - name: Test update flavor of a running server without force in check mode
   cloudscale_server:
@@ -54,6 +65,7 @@
       - server is not changed
       - server.state == 'running'
       - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
 
 - name: Test update flavor of a running server without force
   cloudscale_server:
@@ -69,6 +81,7 @@
       - server is not changed
       - server.state == 'running'
       - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
 
 - name: Test update flavor of a running server without force idempotence
   cloudscale_server:
@@ -84,6 +97,7 @@
       - server is not changed
       - server.state == 'running'
       - server.flavor.slug == '{{ cloudscale_test_flavor }}'
+      - server.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
 
 - name: Test update flavor and name of a running server without force in check mode
   cloudscale_server:
@@ -196,7 +210,7 @@
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
-    anti_affinity_with: '{{ running_server_uuid }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
     use_public_network: no
     use_private_network: yes
     state: stopped
@@ -214,7 +228,7 @@
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
-    anti_affinity_with: '{{ running_server_uuid }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
     use_public_network: no
     use_private_network: yes
     state: stopped
@@ -226,6 +240,7 @@
       - server_stopped.state == 'stopped'
       - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
       - server_stopped.interfaces.0.type == 'private'
+      - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
 
 - name: Test create server stopped in anti affinity and private network only idempotence
   cloudscale_server:
@@ -233,7 +248,7 @@
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
-    anti_affinity_with: '{{ running_server_uuid }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-1'
     use_public_network: no
     use_private_network: yes
     state: stopped
@@ -245,6 +260,27 @@
       - server_stopped.state == 'stopped'
       - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
       - server_stopped.interfaces.0.type == 'private'
+      - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
+
+- name: Test change server group not changed
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-stopped'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-group-2'
+    use_public_network: no
+    use_private_network: yes
+    state: stopped
+  register: server_stopped
+- name: Verify Test update server group not changed
+  assert:
+    that:
+      - server_stopped is not changed
+      - server_stopped.state == 'stopped'
+      - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
+      - server_stopped.interfaces.0.type == 'private'
+      - server_stopped.server_groups.0.name == '{{ cloudscale_resource_prefix }}-group-1'
 
 - name: Test create server with password in check mode
   cloudscale_server:
@@ -370,7 +406,6 @@
       - server.state == 'stopped'
       - server.flavor.slug == '{{ cloudscale_test_flavor }}'
       - server.name == '{{ cloudscale_resource_prefix }}-test'
-
 
 - name: Test update a stopped server idempotence
   cloudscale_server:

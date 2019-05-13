@@ -1,0 +1,52 @@
+---
+- debug:
+    msg: "Executing tests with backend {{ select_crypto_backend }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info
+  openssl_certificate_info:
+    path: '{{ output_dir }}/cert_1.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info
+  openssl_certificate_info:
+    path: '{{ output_dir }}/cert_2.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+    valid_at:
+      today: "+0d"
+      past: "20190101235901Z"
+      twentydays: "+20d"
+  register: result
+- assert:
+    that:
+    - result.valid_at.today
+    - not result.valid_at.past
+    - not result.valid_at.twentydays
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info
+  openssl_certificate_info:
+    path: '{{ output_dir }}/cert_3.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get certificate info
+  openssl_certificate_info:
+    path: '{{ output_dir }}/cert_4.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"

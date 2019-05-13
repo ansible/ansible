@@ -77,7 +77,6 @@
 - name: Check the stat results of the file
   stat:
     path: "{{ remote_file }}"
-    get_md5: yes
   register: stat_results
 
 - debug:
@@ -93,12 +92,6 @@
       - "stat_results.stat.isreg == true"
       - "stat_results.stat.issock == false"
       - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
-
-- name: Verify that the legacy md5sum is correct
-  assert:
-    that:
-      - "stat_results.stat.md5 == ('foo.txt\n'|hash('md5'))"
-  when: ansible_fips|bool != True
 
 - name: Overwrite the file via same means
   copy:
@@ -384,7 +377,7 @@
     content: "foo.txt\n"
     dest: '{{ local_temp_dir }}/foo.txt'
     mode: 0547
-  connection: local
+  delegate_to: localhost
 
 - name: Copy with mode=preserve
   copy:
@@ -435,7 +428,7 @@
   file:
     path: '{{ role_path }}/files/subdir/subdira'
     state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Set the output subdirectory
   set_fact:
@@ -450,13 +443,13 @@
   copy:
     dest: /tmp/ansible-test-abs-link
     content: target
-  connection: local
+  delegate_to: localhost
 
 - name: Setup link target dir for absolute link
   file:
     dest: /tmp/ansible-test-abs-link-dir
     state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Test recursive copy to directory no trailing slash, local_follow=False
   copy:
@@ -607,13 +600,13 @@
   copy:
     dest: /tmp/ansible-test-abs-link
     content: target
-  connection: local
+  delegate_to: localhost
 
 - name: Setup link target dir for absolute link
   file:
     dest: /tmp/ansible-test-abs-link-dir
     state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Test recursive copy to directory trailing slash, local_follow=False
   copy:
@@ -762,13 +755,13 @@
   copy:
     dest: /tmp/ansible-test-abs-link
     content: target
-  connection: local
+  delegate_to: localhost
 
 - name: Setup link target dir for absolute link
   file:
     dest: /tmp/ansible-test-abs-link-dir
     state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Test recursive copy to directory no trailing slash, local_follow=True
   copy:
@@ -940,7 +933,7 @@
     file:
       path: '{{ local_temp_dir }}/dest1'
       state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Recursive copy the source
   copy:
@@ -1003,7 +996,7 @@
     file:
       path: '{{ local_temp_dir }}/destination'
       state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Copy the directory and files within (no trailing slash)
   copy:
@@ -1383,8 +1376,7 @@
       path: '{{ local_temp_dir }}/top_dir/subdir/circle'
       src: '{{ local_temp_dir }}/top_dir/'
       state: link
-
-  connection: local
+    delegate_to: localhost
 
 - name: Copy the directory's link
   copy:

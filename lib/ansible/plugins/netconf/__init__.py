@@ -24,13 +24,17 @@ from functools import wraps
 
 from ansible.errors import AnsibleError
 from ansible.plugins import AnsiblePlugin
-
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import missing_required_lib
 
 try:
     from ncclient.operations import RPCError
     from ncclient.xml_ import to_xml, to_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    HAS_NCCLIENT = True
+    NCCLIENT_IMP_ERR = None
+except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
+    NCCLIENT_IMP_ERR = err
 
 try:
     from lxml.etree import Element, SubElement, tostring, fromstring
@@ -43,6 +47,15 @@ def ensure_connected(func):
     def wrapped(self, *args, **kwargs):
         if not self._connection._connected:
             self._connection._connect()
+        return func(self, *args, **kwargs)
+    return wrapped
+
+
+def ensure_ncclient(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if not HAS_NCCLIENT:
+            raise AnsibleError("%s: %s" % (missing_required_lib('ncclient'), to_native(NCCLIENT_IMP_ERR)))
         return func(self, *args, **kwargs)
     return wrapped
 
@@ -107,6 +120,7 @@ class NetconfBase(AnsiblePlugin):
     def m(self):
         return self._connection._manager
 
+    @ensure_ncclient
     @ensure_connected
     def rpc(self, name):
         """

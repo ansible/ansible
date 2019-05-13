@@ -178,6 +178,10 @@ options:
         description:
             - Load balancer name.
         version_added: "2.5"
+    application_gateway:
+        description:
+            - Application gateway name.
+        version_added: "2.8"
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources.
@@ -421,6 +425,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             data_disks=dict(type='list'),
             subnet_name=dict(type='str', aliases=['subnet']),
             load_balancer=dict(type='str'),
+            application_gateway=dict(type='str'),
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
@@ -455,6 +460,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.tags = None
         self.differences = None
         self.load_balancer = None
+        self.application_gateway = None
         self.enable_accelerated_networking = None
         self.security_group = None
         self.overprovision = None
@@ -466,6 +472,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
              'vm_size'])
         ]
 
+        mutually_exclusive = [('load_balancer', 'application_gateway')]
         self.results = dict(
             changed=False,
             actions=[],
@@ -475,7 +482,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         super(AzureRMVirtualMachineScaleSet, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             supports_check_mode=True,
-            required_if=required_if)
+            required_if=required_if,
+            mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
 
@@ -509,6 +517,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         load_balancer_backend_address_pools = None
         load_balancer_inbound_nat_pools = None
         load_balancer = None
+        application_gateway = None
+        application_gateway_backend_address_pools = None
         support_lb_change = True
 
         resource_group = self.get_resource_group(self.resource_group)
@@ -576,6 +586,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                     for resource in load_balancer.inbound_nat_pools]
                                                    if load_balancer.inbound_nat_pools else None)
 
+            if self.application_gateway:
+                application_gateway = self.get_application_gateway(self.application_gateway)
+                application_gateway_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
+                                                              for resource in application_gateway.backend_address_pools]
+                                                             if application_gateway.backend_address_pools else None)
+
         try:
             self.log("Fetching virtual machine scale set {0}".format(self.name))
             vmss = self.compute_client.virtual_machine_scale_sets.get(self.resource_group, self.name)
@@ -637,14 +653,21 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_dict['zones'] = self.zones
 
                 nicConfigs = vmss_dict['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations']
+
                 backend_address_pool = nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('loadBalancerBackendAddressPools', [])
+                backend_address_pool += nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('applicationGatewayBackendAddressPools', [])
+                lb_or_ag_id = None
                 if (len(nicConfigs) != 1 or len(backend_address_pool) != 1):
                     support_lb_change = False  # Currently not support for the vmss contains more than one loadbalancer
                     self.module.warn('Updating more than one load balancer on VMSS is currently not supported')
                 else:
-                    load_balancer_id = "{0}/".format(load_balancer.id) if load_balancer else None
+                    if load_balancer:
+                        lb_or_ag_id = "{0}/".format(load_balancer.id)
+                    elif application_gateway:
+                        lb_or_ag_id = "{0}/".format(application_gateway.id)
+
                     backend_address_pool_id = backend_address_pool[0].get('id')
-                    if bool(load_balancer_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(load_balancer_id):
+                    if bool(lb_or_ag_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(lb_or_ag_id):
                         differences.append('load_balancer')
                         changed = True
 
@@ -748,7 +771,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                 ),
                                                 primary=True,
                                                 load_balancer_backend_address_pools=load_balancer_backend_address_pools,
-                                                load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools
+                                                load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools,
+                                                application_gateway_backend_address_pools=application_gateway_backend_address_pools
                                             )
                                         ],
                                         enable_accelerated_networking=self.enable_accelerated_networking,
@@ -810,10 +834,20 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.overprovision = self.overprovision
 
                     if support_lb_change:
-                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
-                            .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
-                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
-                            .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
+                        if self.load_balancer:
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].application_gateway_backend_address_pools = None
+                        elif self.application_gateway:
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].application_gateway_backend_address_pools = application_gateway_backend_address_pools
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].load_balancer_backend_address_pools = None
+                            vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                                .ip_configurations[0].load_balancer_inbound_nat_pools = None
 
                     if self.data_disks is not None:
                         data_disks = []
@@ -883,6 +917,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             return self.network_client.load_balancers.get(id_dict.get('resource_group', self.resource_group), id_dict.get('name'))
         except CloudError as exc:
             self.fail("Error fetching load balancer {0} - {1}".format(id, str(exc)))
+
+    def get_application_gateway(self, id):
+        id_dict = parse_resource_id(id)
+        try:
+            return self.network_client.application_gateways.get(id_dict.get('resource_group', self.resource_group), id_dict.get('name'))
+        except CloudError as exc:
+            self.fail("Error fetching application_gateway {0} - {1}".format(id, str(exc)))
 
     def serialize_vmss(self, vmss):
         '''

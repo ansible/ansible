@@ -17,14 +17,21 @@ module: postgresql_db
 short_description: Add or remove PostgreSQL databases from a remote host.
 description:
    - Add or remove PostgreSQL databases from a remote host.
-version_added: "0.6"
+version_added: '0.6'
 options:
   name:
     description:
-      - name of the database to add or remove
+      - Name of the database to add or remove
     type: str
     required: true
     aliases: [ db ]
+  port:
+    description:
+      - Database port to connect (if needed)
+    type: int
+    default: 5432
+    aliases:
+      - login_port
   owner:
     description:
       - Name of the role to set as owner of the database
@@ -51,7 +58,7 @@ options:
     - Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
     - Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
     type: str
-    version_added: "2.8"
+    version_added: '2.8'
   state:
     description:
     - The database state.
@@ -70,19 +77,19 @@ options:
     - File to back up or restore from.
     - Used when I(state) is C(dump) or C(restore).
     type: path
-    version_added: "2.4"
+    version_added: '2.4'
   target_opts:
     description:
     - Further arguments for pg_dump or pg_restore.
     - Used when I(state) is C(dump) or C(restore).
     type: str
-    version_added: "2.4"
+    version_added: '2.4'
   maintenance_db:
     description:
       - The value specifies the initial database (which is also called as maintenance DB) that Ansible connects to.
     type: str
     default: postgres
-    version_added: "2.5"
+    version_added: '2.5'
   conn_limit:
     description:
       - Specifies the database connection limit.

@@ -71,6 +71,7 @@ class AnsibleCoreCI(object):
                 'ios',
                 'tower',
                 'rhel',
+                'hetzner',
             ),
             azure=(
                 'azure',
@@ -300,7 +301,7 @@ class AnsibleCoreCI(object):
             )
 
             if self.connection.password:
-                display.sensitive.add(self.connection.password)
+                display.sensitive.add(str(self.connection.password))
 
         status = 'running' if self.connection.running else 'starting'
 
@@ -452,7 +453,7 @@ class AnsibleCoreCI(object):
         :type config: dict[str, str]
         :rtype: bool
         """
-        self.instance_id = config['instance_id']
+        self.instance_id = str(config['instance_id'])
         self.endpoint = config['endpoint']
         self.started = True
 
@@ -496,7 +497,14 @@ class AnsibleCoreCI(object):
         elif 'errorMessage' in response_json:
             message = response_json['errorMessage'].strip()
             if 'stackTrace' in response_json:
-                trace = '\n'.join([x.rstrip() for x in traceback.format_list(response_json['stackTrace'])])
+                traceback_lines = response_json['stackTrace']
+
+                # AWS Lambda on Python 2.7 returns a list of tuples
+                # AWS Lambda on Python 3.7 returns a list of strings
+                if traceback_lines and isinstance(traceback_lines[0], list):
+                    traceback_lines = traceback.format_list(traceback_lines)
+
+                trace = '\n'.join([x.rstrip() for x in traceback_lines])
                 stack_trace = ('\nTraceback (from remote server):\n%s' % trace)
         else:
             message = str(response_json)

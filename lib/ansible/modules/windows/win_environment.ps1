@@ -50,7 +50,7 @@ if ($state -eq "present" -and $before_value -ne $value) {
     }
     $module.Result.changed = $true
 
-} elseif ($state -eq "absent" -and $before_value -ne $null) {
+} elseif ($state -eq "absent" -and $null -ne $before_value) {
     if (-not $module.CheckMode) {
         [Environment]::SetEnvironmentVariable($name, $null, $level)
     }

@@ -26,7 +26,7 @@ description:
     - Gather facts about your Hetzner Cloud servers.
 
 author:
-    - Lukas Kaemmerling (@lkaemmerling)
+    - Lukas Kaemmerling (@LKaemmerling)
 
 options:
     id:

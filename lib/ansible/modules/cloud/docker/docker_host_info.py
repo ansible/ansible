@@ -245,15 +245,18 @@ class DockerHostManager(DockerBaseClass):
         header_images = ['Id', 'RepoTags', 'Created', 'Size']
         header_networks = ['Id', 'Driver', 'Name', 'Scope']
 
+        filter_arg = dict()
+        if filters:
+            filter_arg['filters'] = filters
         try:
             if docker_object == 'containers':
-                items = self.client.containers(filters=filters)
+                items = self.client.containers(**filter_arg)
             elif docker_object == 'networks':
-                items = self.client.networks(filters=filters)
+                items = self.client.networks(**filter_arg)
             elif docker_object == 'images':
-                items = self.client.images(filters=filters)
+                items = self.client.images(**filter_arg)
             elif docker_object == 'volumes':
-                items = self.client.volumes(filters=filters)
+                items = self.client.volumes(**filter_arg)
         except APIError as exc:
             self.client.fail("Error inspecting docker host for object '%s': %s" %
                              (docker_object, to_native(exc)))
@@ -301,11 +304,17 @@ def main():
         verbose_output=dict(type='bool', default=False),
     )
 
+    option_minimal_versions = dict(
+        network_filters=dict(docker_py_version='2.0.2'),
+        disk_usage=dict(docker_py_version='2.2.0'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
         min_docker_version='1.10.0',
         min_docker_api_version='1.21',
+        option_minimal_versions=option_minimal_versions,
         fail_results=dict(
             can_talk_to_docker=False,
         ),

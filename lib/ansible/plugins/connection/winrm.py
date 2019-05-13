@@ -123,7 +123,6 @@ from ansible.module_utils.six import binary_type, PY3
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.hashing import secure_hash
-from ansible.utils.path import makedirs_safe
 from ansible.utils.display import Display
 
 # getargspec is deprecated in favour of getfullargspec in Python 3 but
@@ -623,9 +622,9 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
+        # consistent with other connection plugins, we assume the caller has created the target dir
         display.vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         buffer_size = 2**19  # 0.5MB chunks
-        makedirs_safe(os.path.dirname(out_path))
         out_file = None
         try:
             offset = 0
@@ -668,7 +667,6 @@ class Connection(ConnectionBase):
                     else:
                         data = base64.b64decode(result.std_out.strip())
                     if data is None:
-                        makedirs_safe(out_path)
                         break
                     else:
                         if not out_file:

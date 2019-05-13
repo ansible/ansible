@@ -206,6 +206,7 @@ from copy import deepcopy
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config, is_netconf, is_cliconf
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, build_xml, etree_findall
@@ -215,12 +216,6 @@ try:
     HAS_B64 = True
 except ImportError:
     HAS_B64 = False
-
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 
 
 class PublicKeyManager(object):
@@ -690,7 +685,7 @@ def main():
                 msg='library base64 is required but does not appear to be '
                     'installed. It can be installed using `pip install base64`'
             )
-        if not HAS_PARAMIKO:
+        if paramiko is None:
             module.fail_json(
                 msg='library paramiko is required but does not appear to be '
                     'installed. It can be installed using `pip install paramiko`'
@@ -705,8 +700,9 @@ def main():
 
     config_object = None
     if is_cliconf(module):
-        module.deprecate(msg="cli support for 'iosxr_user' is deprecated. Use transport netconf instead",
-                         version="2.9")
+        # Commenting the below cliconf deprecation support call for Ansible 2.9 as it'll be continued to be supported
+        # module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
+        #                  version='2.9')
         config_object = CliConfiguration(module, result)
     elif is_netconf(module):
         config_object = NCConfiguration(module, result)

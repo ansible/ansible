@@ -555,7 +555,7 @@ if ($null -ne $secret) {
     if ($secret_format -eq "base64") {
         $secret = [System.Convert]::FromBase64String($secret)
     } else {
-        $secret = [System.Text.Encoding]::UTF8.GetBytes($secret)
+        $secret = [System.Text.Encoding]::Unicode.GetBytes($secret)
     }
 }
 

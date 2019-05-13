@@ -86,9 +86,10 @@ options:
     description:
     - The network that this route applies to.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: true
   priority:
     description:
@@ -117,9 +118,10 @@ options:
       instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
       .'
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_instance
-      task and then set this next_hop_instance field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_instance task and then set this next_hop_instance field to
+      "{{ name-of-resource }}"'
     required: false
   next_hop_ip:
     description:
@@ -129,9 +131,10 @@ options:
     description:
     - URL to a VpnTunnel that should handle matching packets.
     - 'This field represents a link to a VpnTunnel resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_vpn_tunnel
-      task and then set this next_hop_vpn_tunnel field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_vpn_tunnel task and then set this next_hop_vpn_tunnel field
+      to "{{ name-of-resource }}"'
     required: false
 extends_documentation_fragment: gcp
 notes:
@@ -191,7 +194,7 @@ network:
   description:
   - The network that this route applies to.
   returned: success
-  type: str
+  type: dict
 priority:
   description:
   - The priority of this route. Priority is used to break ties in cases where there
@@ -222,7 +225,7 @@ nextHopInstance:
     instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
     .'
   returned: success
-  type: str
+  type: dict
 nextHopIp:
   description:
   - Network IP address of an instance that should handle matching packets.
@@ -232,7 +235,7 @@ nextHopVpnTunnel:
   description:
   - URL to a VpnTunnel that should handle matching packets.
   returned: success
-  type: str
+  type: dict
 nextHopNetwork:
   description:
   - URL to a Network that should handle matching packets.
@@ -262,13 +265,13 @@ def main():
             dest_range=dict(required=True, type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True),
+            network=dict(required=True, type='dict'),
             priority=dict(type='int'),
             tags=dict(type='list', elements='str'),
             next_hop_gateway=dict(type='str'),
-            next_hop_instance=dict(),
+            next_hop_instance=dict(type='dict'),
             next_hop_ip=dict(type='str'),
-            next_hop_vpn_tunnel=dict(),
+            next_hop_vpn_tunnel=dict(type='dict'),
         )
     )
 
@@ -309,7 +312,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="Route cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

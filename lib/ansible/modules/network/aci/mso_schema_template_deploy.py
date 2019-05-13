@@ -31,12 +31,17 @@ options:
     - The name of the template.
     type: str
     aliases: [ name ]
+  site:
+    description:
+    - The name of the site B(to undeploy).
+    type: str
   state:
     description:
     - Use C(deploy) to deploy schema template.
     - Use C(status) to get deployment status.
+    - Use C(undeploy) to deploy schema template from a site.
     type: str
-    choices: [ deploy, status ]
+    choices: [ deploy, status, undeploy ]
     default: deploy
 seealso:
 - module: mso_schema_site
@@ -53,6 +58,17 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     state: deploy
+  delegate_to: localhost
+
+- name: Undeploy a schema template
+  mso_schema_template:
+    host: mso_host
+    username: admin
+    password: SomeSecretPassword
+    schema: Schema 1
+    template: Template 1
+    site: Site 1
+    state: undeploy
   delegate_to: localhost
 
 - name: Get deployment status
@@ -79,16 +95,21 @@ def main():
     argument_spec.update(
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True, aliases=['name']),
-        state=dict(type='str', default='deploy', choices=['deploy', 'status']),
+        site=dict(type='str'),
+        state=dict(type='str', default='deploy', choices=['deploy', 'status', 'undeploy']),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['state', 'undeploy', ['site']],
+        ],
     )
 
     schema = module.params['schema']
     template = module.params['template']
+    site = module.params['site']
     state = module.params['state']
 
     mso = MSOModule(module)
@@ -101,13 +122,18 @@ def main():
         templateName=template,
     )
 
+    qs = None
     if state == 'deploy':
         path = 'execute/schema/{0}/template/{1}'.format(schema_id, template)
     elif state == 'status':
         path = 'status/schema/{0}/template/{1}'.format(schema_id, template)
+    elif state == 'undeploy':
+        path = 'execute/schema/{0}/template/{1}'.format(schema_id, template)
+        site_id = mso.lookup_site(site)
+        qs = dict(undeploy=site_id)
 
     if not module.check_mode:
-        status = mso.request(path, method='GET', data=payload)
+        status = mso.request(path, method='GET', data=payload, qs=qs)
 
     mso.exit_json(**status)
 

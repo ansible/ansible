@@ -11,7 +11,7 @@
   check_mode: True
 
 - name: get result of create group (check mode)
-  script: grouplist.sh "{{ ansible_distribution }}"
+  script: 'grouplist.sh "{{ ansible_distribution }}"'
   register: create_group_actual_check
 
 - name: assert create group (check mode)
@@ -27,7 +27,7 @@
   register: create_group
 
 - name: get result of create group
-  script: grouplist.sh "{{ ansible_distribution }}"
+  script: 'grouplist.sh "{{ ansible_distribution }}"'
   register: create_group_actual
 
 - name: assert create group
@@ -89,7 +89,7 @@
   check_mode: True
 
 - name: get result of create a group with a gid (check mode)
-  script: grouplist.sh "{{ ansible_distribution }}"
+  script: 'grouplist.sh "{{ ansible_distribution }}"'
   register: create_group_gid_actual_check
 
 - name: assert create group with a gid (check mode)
@@ -143,7 +143,7 @@
           that:
           - create_group_gid_non_unique is changed
           - create_group_gid_non_unique.gid | int == gid.stdout_lines[0] | int
-  when: ansible_facts.system != 'Darwin'
+  when: ansible_facts.distribution not in ['MacOSX', 'Alpine']
 
 ##
 ## group remove

@@ -85,7 +85,7 @@ EXAMPLES = '''
       name: deadbeef
       queue: qux
       namespace: bar
-      resource_group: foo
+      resource_group: myResourceGroup
       rights: send
 '''
 RETURN = '''

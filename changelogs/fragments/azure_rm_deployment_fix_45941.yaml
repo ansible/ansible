@@ -1,2 +1,0 @@
-bugfixes:
-- azure_rm_deployment - fixed regression that prevents resource group from being created (https://github.com/ansible/ansible/issues/45941)

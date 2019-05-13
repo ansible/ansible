@@ -605,7 +605,7 @@ def main():
             ssh_pub_key=dict(type='str'),
             swap=dict(type='int', default=512),
             wait=dict(type='bool', default=True),
-            wait_timeout=dict(default=300),
+            wait_timeout=dict(type='int', default=300),
             watchdog=dict(type='bool', default=True),
         ),
     )

@@ -52,14 +52,15 @@ options:
     description:
     - Path of the file to link to.
     - This applies only to C(state=link) and C(state=hard).
-    - Will accept absolute, relative and non-existing paths.
+    - Will accept absolute and non-existing paths.
+    - Will accept relative paths unless state=hard.
     - Relative paths are relative to the file being created (C(path)) which is how
       the Unix command C(ln -s SRC DEST) treats relative paths.
     type: path
   recurse:
     description:
     - Recursively set the specified file attributes on directory contents.
-    - This applies only to C(state=directory).
+    - This applies only when C(state) is set to C(directory).
     type: bool
     default: no
     version_added: '1.1'
@@ -187,6 +188,15 @@ EXAMPLES = r'''
     path: /etc/another_file
     state: file
     access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
+
+- name: Recursively change ownership of a directory
+  file:
+    path: /etc/foo
+    state: directory
+    recurse: yes
+    owner: foo
+    group: foo
+
 '''
 RETURN = r'''
 

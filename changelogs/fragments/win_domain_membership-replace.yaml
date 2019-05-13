@@ -1,2 +1,0 @@
-minor_changes:
-- win_domain_membership - will now fail if an existing AD object for the host exists and ``allow_existing_computer_account=no`` - https://github.com/ansible/ansible/pull/53542

@@ -306,6 +306,7 @@ options:
         description:
             - Accept terms for marketplace images that require it
             - Only Azure service admin/account admin users can purchase images from the marketplace
+            - C(plan) must be set when C(accept_terms) is true
         type: bool
         default: false
         version_added: "2.7"
@@ -314,6 +315,43 @@ options:
             - A list of Availability Zones for your virtual machine
         type: list
         version_added: "2.8"
+    license_type:
+        description:
+            - Specifies that the image or disk that is being used was licensed on-premises. This element is only
+              used for images that contain the Windows Server operating system.
+            - "Note: To unset this value, it has to be set to the string 'None'."
+        version_added: 2.8
+        choices:
+            - Windows_Server
+            - Windows_Client
+    vm_identity:
+        description:
+            - Identity for the virtual machine.
+        version_added: 2.8
+        choices:
+            - SystemAssigned
+    winrm:
+        description:
+            - List of Windows Remote Management configurations of the VM.
+        version_added: 2.8
+        suboptions:
+            protocol:
+                description:
+                    - Specifies the protocol of listener
+                required: true
+                choices:
+                    - http
+                    - https
+            source_vault:
+                description:
+                    - The relative URL of the Key Vault containing the certificate
+            certificate_url:
+                description:
+                    - This is the URL of a certificate that has been uploaded to Key Vault as a secret.
+            certificate_store:
+                description:
+                    - Specifies the certificate store on the Virtual Machine to which the certificate
+                      should be added. The specified certificate store is implicitly in the LocalMachine account.
 
 extends_documentation_fragment:
     - azure
@@ -322,6 +360,8 @@ extends_documentation_fragment:
 author:
     - "Chris Houseknecht (@chouseknecht)"
     - "Matt Davis (@nitzmahone)"
+    - "Christopher Perrin (@cperrin88)"
+
 '''
 EXAMPLES = '''
 
@@ -754,8 +794,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             generalized=dict(type='bool', default=False),
             data_disks=dict(type='list'),
             plan=dict(type='dict'),
+            zones=dict(type='list'),
             accept_terms=dict(type='bool', default=False),
-            zones=dict(type='list')
+            license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client']),
+            vm_identity=dict(type='str', choices=['SystemAssigned']),
+            winrm=dict(type='list')
         )
 
         self.resource_group = None
@@ -797,6 +840,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.plan = None
         self.accept_terms = None
         self.zones = None
+        self.license_type = None
+        self.vm_identity = None
 
         self.results = dict(
             changed=False,
@@ -996,6 +1041,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     differences.append('Zones')
                     changed = True
 
+                if self.license_type is not None and vm_dict['properties'].get('licenseType') != self.license_type:
+                    differences.append('License Type')
+                    changed = True
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -1087,6 +1135,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                         publisher=self.plan.get('publisher'),
                                                         promotion_code=self.plan.get('promotion_code'))
 
+                    license_type = self.license_type
+
                     vm_resource = self.compute_models.VirtualMachine(
                         location=self.location,
                         tags=self.tags,
@@ -1115,6 +1165,46 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         plan=plan,
                         zones=self.zones,
                     )
+
+                    if self.license_type is not None:
+                        vm_resource.license_type = self.license_type
+
+                    if self.vm_identity:
+                        vm_resource.identity = self.compute_models.VirtualMachineIdentity(type=self.vm_identity)
+
+                    if self.winrm:
+                        winrm_listeners = list()
+                        for winrm_listener in self.winrm:
+                            winrm_listeners.append(self.compute_models.WinRMListener(
+                                protocol=winrm_listener.get('protocol'),
+                                certificate_url=winrm_listener.get('certificate_url')
+                            ))
+                            if winrm_listener.get('source_vault'):
+                                if not vm_resource.os_profile.secrets:
+                                    vm_resource.os_profile.secrets = list()
+
+                                vm_resource.os_profile.secrets.append(self.compute_models.VaultSecretGroup(
+                                    source_vault=self.compute_models.SubResource(
+                                        id=winrm_listener.get('source_vault')
+                                    ),
+                                    vault_certificates=[
+                                        self.compute_models.VaultCertificate(
+                                            certificate_url=winrm_listener.get('certificate_url'),
+                                            certificate_store=winrm_listener.get('certificate_store')
+                                        ),
+                                    ]
+                                ))
+
+                        winrm = self.compute_models.WinRMConfiguration(
+                            listeners=winrm_listeners
+                        )
+
+                        if not vm_resource.os_profile.windows_configuration:
+                            vm_resource.os_profile.windows_configuration = self.compute_models.WindowsConfiguration(
+                                win_rm=winrm
+                            )
+                        elif not vm_resource.os_profile.windows_configuration.win_rm:
+                            vm_resource.os_profile.windows_configuration.win_rm = winrm
 
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
@@ -1193,7 +1283,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     # Before creating VM accept terms of plan if `accept_terms` is True
                     if self.accept_terms is True:
-                        if not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
+                        if not self.plan or not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
                             self.fail("parameter error: plan must be specified and include name, product, and publisher")
                         try:
                             plan_name = self.plan.get('name')
@@ -1263,6 +1353,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         )
                     else:
                         os_profile = None
+                    license_type = None
+                    if self.license_type is None:
+                        license_type = "None"
 
                     vm_resource = self.compute_models.VirtualMachine(
                         location=vm_dict['location'],
@@ -1285,8 +1378,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         availability_set=availability_set_resource,
                         network_profile=self.compute_models.NetworkProfile(
                             network_interfaces=nics
-                        ),
+                        )
                     )
+
+                    if self.license_type is not None:
+                        vm_resource.license_type = self.license_type
 
                     if vm_dict.get('tags'):
                         vm_resource.tags = vm_dict['tags']
@@ -1894,8 +1990,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         if self.public_ip_allocation_method != 'Disabled':
             self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
             sku = self.network_models.PublicIPAddressSku(name="Standard") if self.zones else None
-            pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method, sku=sku)
-            pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid, sku=sku)
+            pip_facts = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method, sku=sku)
+            pip = self.network_models.PublicIPAddress(id=pip_facts.id, location=pip_facts.location, resource_guid=pip_facts.resource_guid, sku=sku)
             self.tags['_own_pip_'] = self.name + '01'
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))

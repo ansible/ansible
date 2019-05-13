@@ -65,6 +65,16 @@ options:
         description:
         - Absolute path of folder to place the virtual machine.
         - If not specified, defaults to the value of C(datacenter.vmFolder).
+        - 'Examples:'
+        - '   folder: /ha-datacenter/vm'
+        - '   folder: ha-datacenter/vm'
+        - '   folder: /datacenter1/vm'
+        - '   folder: datacenter1/vm'
+        - '   folder: /datacenter1/vm/folder1'
+        - '   folder: datacenter1/vm/folder1'
+        - '   folder: /folder1/datacenter1/vm'
+        - '   folder: folder1/datacenter1/vm'
+        - '   folder: /folder1/datacenter1/vm/folder2'
     inject_ovf_env:
         description:
         - Force the given properties to be inserted into an OVF Environment and injected through VMware Tools.
@@ -370,6 +380,8 @@ class VMwareDeployOvf:
 
         if self.params['folder']:
             folder = self.si.searchIndex.FindByInventoryPath(self.params['folder'])
+            if not folder:
+                self.module.fail_json(msg="Unable to find the specified folder %(folder)s" % self.params)
         else:
             folder = datacenter.vmFolder
 

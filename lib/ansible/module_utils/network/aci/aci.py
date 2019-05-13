@@ -39,7 +39,7 @@ from copy import deepcopy
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 # Optional, only used for APIC signature-based authentication
 try:
@@ -140,23 +140,6 @@ class ACIModule(object):
             return true
         elif value is False:
             return false
-
-        # When we expect value is of type=raw, deprecate in Ansible v2.8 (and all modules use type=bool)
-        try:
-            # This supports all Ansible boolean types
-            bool_value = boolean(value)
-            if bool_value is True:
-                return true
-            elif bool_value is False:
-                return false
-        except Exception:
-            # This provides backward compatibility to Ansible v2.4, deprecate in Ansible v2.8
-            if value == true:
-                self.module.deprecate("Boolean value '%s' is no longer valid, please use 'yes' as a boolean value." % value, '2.9')
-                return true
-            elif value == false:
-                self.module.deprecate("Boolean value '%s' is no longer valid, please use 'no' as a boolean value." % value, '2.9')
-                return false
 
         # If all else fails, escalate back to user
         self.module.fail_json(msg="Boolean value '%s' is an invalid ACI boolean value.")
@@ -267,7 +250,7 @@ class ACIModule(object):
         self.headers['Cookie'] = 'APIC-Certificate-Algorithm=v1.0; ' +\
                                  'APIC-Certificate-DN=%s; ' % sig_dn +\
                                  'APIC-Certificate-Fingerprint=fingerprint; ' +\
-                                 'APIC-Request-Signature=%s' % sig_signature
+                                 'APIC-Request-Signature=%s' % to_native(sig_signature)
 
     def response_json(self, rawoutput):
         ''' Handle APIC JSON response output '''
@@ -335,7 +318,7 @@ class ACIModule(object):
             self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
-        if not self.params['private_key']:
+        if self.params['private_key']:
             self.cert_auth(path=path, payload=payload)
 
         # Perform request
@@ -372,7 +355,7 @@ class ACIModule(object):
             self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
-        if not self.params['private_key']:
+        if self.params['private_key']:
             self.cert_auth(path=path, method='GET')
 
         # Perform request
@@ -659,7 +642,7 @@ class ACIModule(object):
 
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
-            if not self.params['private_key']:
+            if self.params['private_key']:
                 self.cert_auth(method='DELETE')
 
             resp, info = fetch_url(self.module, self.url,
@@ -795,7 +778,7 @@ class ACIModule(object):
         uri = self.url + self.filter_string
 
         # Sign and encode request as to APIC's wishes
-        if not self.params['private_key']:
+        if self.params['private_key']:
             self.cert_auth(path=self.path + self.filter_string, method='GET')
 
         resp, info = fetch_url(self.module, uri,
@@ -896,7 +879,7 @@ class ACIModule(object):
             return
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
-            if not self.params['private_key']:
+            if self.params['private_key']:
                 self.cert_auth(method='POST', payload=json.dumps(self.config))
 
             resp, info = fetch_url(self.module, self.url,

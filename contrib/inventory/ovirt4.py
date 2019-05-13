@@ -65,10 +65,7 @@ import sys
 
 from collections import defaultdict
 
-try:
-    import ConfigParser as configparser
-except ImportError:
-    import configparser
+from ansible.module_utils.six.moves import configparser
 
 import json
 

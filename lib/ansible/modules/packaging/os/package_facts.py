@@ -44,12 +44,13 @@ author:
 '''
 
 EXAMPLES = '''
-- name: get the rpm package facts
+- name: Gather the rpm package facts
   package_facts:
-    manager: "auto"
+    manager: auto
 
-- name: show them
-  debug: var=ansible_facts.packages
+- name: Print the rpm package facts
+  debug:
+    var: ansible_facts.packages
 
 '''
 
@@ -155,6 +156,7 @@ ansible_facts:
 
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_managers
 
 
@@ -177,6 +179,10 @@ class APT(LibMgr):
 
     LIB = 'apt'
 
+    def __init__(self):
+        self._cache = None
+        super(APT, self).__init__()
+
     @property
     def pkg_cache(self):
         if self._cache:
@@ -184,6 +190,16 @@ class APT(LibMgr):
 
         self._cache = self._lib.Cache()
         return self._cache
+
+    def is_available(self):
+        ''' we expect the python bindings installed, but if there is apt/apt-get give warning about missing bindings'''
+        we_have_lib = super(APT, self).is_available()
+        if not we_have_lib:
+            for exe in ('apt', 'apt-get'):
+                if get_bin_path(exe):
+                    self.warnings.append('Found "%s" but python bindings are missing, so we cannot get package information.' % exe)
+                    break
+        return we_have_lib
 
     def list_installed(self):
         return [pk for pk in self.pkg_cache.keys() if self.pkg_cache[pk].is_installed]
@@ -295,10 +311,14 @@ def main():
                 if manager.is_available():
                     found += 1
                     packages.update(manager.get_packages())
+
             except Exception as e:
                 if pkgmgr in module.params['manager']:
                     module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
                 continue
+
+            for warning in getattr(manager, 'warnings', []):
+                module.warn(warning)
 
         except Exception as e:
             if pkgmgr in module.params['manager']:
