@@ -811,7 +811,8 @@ class NxosCmdRef:
                 elif 'list' == kind:
                     ref[k]['default'] = [str(i) for i in ref[k]['default']]
                 elif 'dict' == kind:
-                    ref[k]['default'] = {k:str(v) for k,v in ref[k]['default'].items()}
+                    for key,v in ref[k]['default'].items():
+                        ref[k]['default'][key] = str(v)
 
 
     def execute_show_command(self, command, format):
@@ -904,7 +905,8 @@ class NxosCmdRef:
                 # match up with the setval named placeholder keys; e.g.
                 #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
                 #   setval: my-cmd {foo} bar {baz}
-                ref[k]['existing'] = {k:str(match.group(k)) for k in match.groupdict().keys()}
+                for key in match.groupdict().keys():
+                    ref[k]['existing'][key] = str(match.group(key))
             elif 'str' == kind:
                 ref[k]['existing'] = match[0]
             else:
@@ -926,7 +928,8 @@ class NxosCmdRef:
                 elif 'list' == ref[k]['kind']:
                     playval = [str(i) for i in playval]
                 elif 'dict' == ref[k]['kind']:
-                    playval = {k:str(v) for k,v in playval.items()}
+                    for key,v in playval.items():
+                        playval[key] = str(v)
                 ref[k]['playval'] = playval
 
 
