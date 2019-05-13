@@ -15,7 +15,7 @@
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
         validate_certs: False
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         kernel_module_name: "tcpip4"
         kernel_module_option: "ipv6=0"
       register: my_results_01
@@ -23,8 +23,8 @@
     - name: Check that the provided kernel_module_name has kernel_module_option set
       assert:
         that:
-          - "'original_options' in my_results_01['ansible_module_results']['{{ hostvars[esxi1].ansible_host }}']"
-          - "my_results_01['ansible_module_results']['{{ hostvars[esxi1].ansible_host }}'].original_options == 'ipv6=0'"
+          - "'original_options' in my_results_01['ansible_module_results']['{{ esxi1 }}']"
+          - "my_results_01['ansible_module_results']['{{ esxi1 }}'].original_options == 'ipv6=0'"
 
     - name: host connected, module exists, same options for idempotence test
       vmware_host_kernel_manager:
@@ -32,7 +32,7 @@
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
         validate_certs: False
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         kernel_module_name: "tcpip4"
         kernel_module_option: "ipv6=0"
       register: my_results_02

@@ -23,7 +23,7 @@
       password: "{{ vcenter_password }}"
       validate_certs: False
       state: power-down-to-standby
-      esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+      esxi_hostname: '{{ esxi1 }}'
       force: True
     register: host_powerstate
 

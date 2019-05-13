@@ -48,7 +48,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
   register: capability_0002_results
 
 - debug: var=capability_0002_results
@@ -65,7 +65,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
   register: capability_0002_results
   check_mode: yes
 
