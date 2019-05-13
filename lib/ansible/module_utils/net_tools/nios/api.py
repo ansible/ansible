@@ -369,8 +369,8 @@ class WapiModule(WapiBase):
             temp = ib_spec['restart_if_needed']
             del ib_spec['restart_if_needed']
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
-            # reinstate restart_if_needed key if it's set to true in play
-            if module.params['restart_if_needed']:
+            # reinstate restart_if_needed if ib_obj is none, meaning there's no existing nios_zone ref
+            if not ib_obj:
                 ib_spec['restart_if_needed'] = temp
         else:
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
