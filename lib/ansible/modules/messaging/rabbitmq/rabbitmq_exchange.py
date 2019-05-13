@@ -52,7 +52,7 @@ options:
     default: no
   internal:
     description:
-    - hether the exchange is available only for other exchanges.
+    - Whether the exchange is available only for other exchanges.
     type: bool
     default: no
   arguments:
