@@ -175,10 +175,6 @@ files:
     ignored: andyhky
   $modules/cloud/opennebula/: ilicmilan kustodian
   $modules/cloud/openstack/: $team_openstack
-  $modules/cloud/oracle/: &oracle
-    labels: [ cloud, oracle ]
-    maintainers: $team_oracle
-    support: community
   $modules/cloud/ovirt/: *ovirt
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/rackspace/:
@@ -817,7 +813,6 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
-  $module_utils/oracle/: *oracle
   $module_utils/ovirt.py: *ovirt
   $module_utils/postgres.py: *postgresql
   $module_utils/powershell: *windows_core
@@ -1129,7 +1124,6 @@ files:
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
-  $plugins/doc_fragments/oracle*: *oracle
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -1505,7 +1499,6 @@ macros:
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull gtema
   team_openswitch: Qalthos gdpak
-  team_oracle: nalsaber manojmeda mross22
   team_ovirt: machacekondra mwperina mnecas
   team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem tcraxs
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych opslounge
