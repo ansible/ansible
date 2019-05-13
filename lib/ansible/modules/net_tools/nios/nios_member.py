@@ -330,11 +330,11 @@ EXAMPLES = '''
     router_id: 150
     node_info:
       - lan_ha_port_setting:
-          ha_ip_address: 192.168.1.70
-          mgmt_lan: 192.168.1.80
+         - ha_ip_address: 192.168.1.70
+           mgmt_lan: 192.168.1.80
       - lan_ha_port_setting:
-          ha_ip_address: 192.168.1.71
-          mgmt_lan: 192.168.1.81
+         - ha_ip_address: 192.168.1.71
+           mgmt_lan: 192.168.1.81
     comment: "Created by Ansible"
     state: present
     provider:
