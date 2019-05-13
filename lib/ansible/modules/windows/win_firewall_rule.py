@@ -33,7 +33,6 @@ options:
     description:
       - The rule's display name.
     type: str
-    required: yes
   group:
     description:
       - The group name for the rule.
