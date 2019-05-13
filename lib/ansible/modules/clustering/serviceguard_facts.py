@@ -19,7 +19,7 @@ module: serviceguard_facts
 
 short_description: HP ServiceGuard facts module
 
-version_added: "2.8"
+version_added: "2.9"
 
 description:
     - Returns facts of a HP ServiceGuard cluster
