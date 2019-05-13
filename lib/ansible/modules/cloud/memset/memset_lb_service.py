@@ -63,7 +63,7 @@ options:
     service_name:
         required: true
         description:
-            - Unique name to identify the service by (must be unique).
+            - Unique name to identify the service by (must be unique). Changing this will cause a new service to be created.
             - It can only consist of letters, numbers, underscores and hyphens and must be a maximum of 64 characters.
         aliases: [ 'name' ]
     virtual_ip:
