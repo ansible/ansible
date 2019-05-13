@@ -42,7 +42,7 @@ options:
     - Specify whether the limits are to be set or cleared.
     - If set to C(absent), the limits of both I(max_connections) and I(max-queues) will be cleared.
     default: present
-    choices: [present, absent]
+    choices: [absent, present]
   vhost:
     description:
     - Name of the virtual host to manage.
