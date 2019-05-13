@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_appgateway
 version_added: "2.7"
-short_description: Manage Application Gateway instance.
+short_description: Manage Application Gateway instance
 description:
     - Create, update and delete instance of Application Gateway.
 
@@ -134,18 +134,18 @@ options:
         suboptions:
             data:
                 description:
-                    - Certificate public data - base64 encoded pfx
+                    - Certificate public data - base64 encoded pfx.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
     redirect_configurations:
         version_added: "2.8"
         description:
-            - Redirect configurations of the application gateway resource
+            - Redirect configurations of the application gateway resource.
         suboptions:
             redirect_type:
                 description:
-                    - Redirection type
+                    - Redirection type.
                 choices:
                     - 'permanent'
                     - 'found'
@@ -153,16 +153,16 @@ options:
                     - 'temporary'
             target_listener:
                 description:
-                    - Reference to a listener to redirect the request to
+                    - Reference to a listener to redirect the request to.
             include_path:
                 description:
-                    - Include path in the redirected url
+                    - Include path in the redirected url.
             include_query_string:
                 description:
-                    - Include query string in the redirected url
+                    - Include query string in the redirected url.
             name:
                 description:
-                    - Name of the resource that is unique within a resource group
+                    - Name of the resource that is unique within a resource group.
     ssl_certificates:
         description:
             - SSL certificates of the application gateway resource.
@@ -204,7 +204,7 @@ options:
         suboptions:
             port:
                 description:
-                    - Frontend port
+                    - Frontend port.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -214,14 +214,14 @@ options:
         suboptions:
             backend_addresses:
                 description:
-                    - List of backend addresses
+                    - List of backend addresses.
                 suboptions:
                     fqdn:
                         description:
-                            - Fully qualified domain name (FQDN).
+                            - Fully qualified domain name I(FQDN).
                     ip_address:
                         description:
-                            - IP address
+                            - IP address.
             name:
                 description:
                     - Resource that is unique within a resource group. This name can be used to access the resource.
@@ -232,38 +232,41 @@ options:
         suboptions:
             name:
                 description:
-                    - Name
+                    - Name.
             protocol:
                 description:
-                    - Protocol
+                    - Protocol.
                 choices:
                     - 'http'
                     - 'https'
             host:
                 description:
-                    - Host
+                    - Host.
             path:
                 description:
-                    - Path
+                    - Path.
             timeout:
                 description:
-                    - Timeout
+                    - Timeout.
+                    - Acceptable values are from 1 second to 86400 seconds.
             interval:
                 description:
-                    - Interval
+                    - Interval.
+                    - Acceptable values are from 1 second to 86400 seconds.
             unhealthy_threshold:
                 description:
-                    - Unhealthy Threshold
+                    - Unhealthy Threshold.
+                    - Acceptable values are from 1 second to 20.
     backend_http_settings_collection:
         description:
             - Backend http settings of the application gateway resource.
         suboptions:
             probe:
                 description:
-                    - Probe
+                    - Probe.
             port:
                 description:
-                    - Port
+                    - Port.
             protocol:
                 description:
                     - Protocol.
@@ -278,8 +281,8 @@ options:
                     - 'disabled'
             request_timeout:
                 description:
-                    - "Request timeout in seconds. Application Gateway will fail the request if response is not received within RequestTimeout. Acceptable va
-                      lues are from 1 second to 86400 seconds."
+                    - Request timeout in seconds. Application Gateway will fail the request if response is not received within RequestTimeout. Acceptable va
+                      lues are from 1 second to 86400 seconds.
             authentication_certificates:
                 description:
                     - List of references to application gateway authentication certificates.
@@ -354,7 +357,7 @@ options:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
             redirect_configuration:
                 description:
-                    - Redirect configuration resource of the application gateway
+                    - Redirect configuration resource of the application gateway.
     state:
         description:
             - Assert the state of the Public IP. Use C(present) to create or update a and
