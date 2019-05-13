@@ -13,7 +13,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         ad_domain: '{{ active_directory_domain }}'
         ad_user: '{{ active_directory_user }}'
         ad_password: '{{ active_directory_password }}'
@@ -34,7 +34,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         ad_domain: example.local
         ad_user: adjoin
         ad_password: Password123$
@@ -55,7 +55,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         ad_state: absent
         validate_certs: no
       register: host_active_directory_facts_2_check_mode
@@ -73,7 +73,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         ad_state: absent
         validate_certs: no
       register: host_active_directory_facts_2

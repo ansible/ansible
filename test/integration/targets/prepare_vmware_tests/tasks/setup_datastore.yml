@@ -2,7 +2,7 @@
 - debug: var=datastores
 - name: Mount NFS (ds1) datastores to ESXi
   vmware_host_datastore:
-    hostname: '{{ hostvars[item].ansible_host }}'
+    hostname: '{{ item }}'
     username: '{{ hostvars[item].ansible_user }}'
     password: '{{ hostvars[item].ansible_password }}'
     datastore_name: '{{ ds1 }}'
@@ -10,14 +10,14 @@
     nfs_server: '{{ infra.datastores[ds1].server }}'
     nfs_path: '{{ infra.datastores[ds1].path }}'
     nfs_ro: '{{ infra.datastores[ds2].ro }}'
-    esxi_hostname: '{{ hostvars[item].ansible_host }}'
+    esxi_hostname: '{{ item }}'
     state: present
     validate_certs: no
   with_items: "{{ groups['esxi-lab'] }}"
 
 - name: Mount NFS (ds2) datastores on the ESXi
   vmware_host_datastore:
-    hostname: '{{ hostvars[item].ansible_host }}'
+    hostname: '{{ item }}'
     username: '{{ hostvars[item].ansible_user }}'
     password: '{{ hostvars[item].ansible_password }}'
     datastore_name: '{{ ds2 }}'
@@ -25,7 +25,7 @@
     nfs_server: '{{ infra.datastores[ds2].server }}'
     nfs_path: '{{ infra.datastores[ds2].path }}'
     nfs_ro: '{{ infra.datastores[ds2].ro }}'
-    esxi_hostname: '{{ hostvars[item].ansible_host }}'
+    esxi_hostname: '{{ item }}'
     state: present
     validate_certs: no
   with_items: "{{ groups['esxi-lab'] }}"

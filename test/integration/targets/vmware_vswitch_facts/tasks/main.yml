@@ -14,7 +14,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
     validate_certs: no
   register: switch_facts
 
@@ -29,7 +29,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
     validate_certs: no
   register: switch_facts_check_mode
   check_mode: yes

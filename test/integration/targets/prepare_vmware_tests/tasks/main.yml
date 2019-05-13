@@ -52,9 +52,6 @@
     - name: add the hosts in the inventory
       add_host:
         hostname: '{{ item | basename }}'
-        ansible_host: '{{ item | basename }}'
-        ansible_user: 'root'
-        ansible_password: 'pass'
         groups:
           - 'esxi-lab'
       with_items: '{{ vcsim_host_list.json }}'
