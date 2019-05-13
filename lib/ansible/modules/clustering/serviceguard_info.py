@@ -15,14 +15,14 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: serviceguard_facts
+module: serviceguard_info
 
-short_description: HP ServiceGuard facts module
+short_description: HP ServiceGuard info module
 
 version_added: "2.9"
 
 description:
-    - Returns facts of a HP ServiceGuard cluster
+    - Returns info of a HP ServiceGuard cluster
 
 options:
     path:
@@ -36,10 +36,10 @@ author:
 '''
 
 EXAMPLES = '''
-# Get the SG Cluster facts into the sg_facts variable
-- name: Get ServiceGuard facts from the node
-  serviceguard_facts:
-  register: sg_facts
+# Get the SG Cluster info into the sg_info variable
+- name: Get ServiceGuard info from the node
+  serviceguard_info:
+  register: sg_info
 '''
 
 RETURN = '''

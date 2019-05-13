@@ -1,7 +1,7 @@
 ---
 # Test cases
-# - 000 - Get facts
-- serviceguard_facts:
+# - 000 - Get info
+- serviceguard_info:
   register: state    
 
 - debug:
