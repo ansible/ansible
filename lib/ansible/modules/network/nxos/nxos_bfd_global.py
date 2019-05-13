@@ -29,8 +29,8 @@ version_added: "2.9"
 short_description: Bidirectional Forwarding Detection (BFD) global-level configuration
 description:
   - Manages Bidirectional Forwarding Detection (BFD) global-level configuration.
-
-author: Chris Van Heuveln (@chrisvanheuveln)
+author:
+  - Chris Van Heuveln (@chrisvanheuveln)
 notes:
     - Tested against NXOSv 9.2(2)
     - BFD global will automatically enable 'feature bfd' if it is disabled.
@@ -76,7 +76,7 @@ options:
   ipv4_interval:
     description:
       - BFD IPv4 interval timer values.
-      - Value must be a dict defining values for keys: tx, min_rx, and multiplier.
+      - Value must be a dict defining values for keys (tx, min_rx, and multiplier).
     required: false
     type: dict
   ipv4_slow_timer:
