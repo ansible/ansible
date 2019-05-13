@@ -540,14 +540,14 @@ class AzureRMModuleBase(object):
     def get_blob_client(self, resource_group_name, storage_account_name, storage_blob_type='block', provided_access_key=None):
         keys = dict()
         try:
-            # Get keys from the storage account
             self.log('Getting keys')
-            account_keys = self.storage_client.storage_accounts.list_keys(resource_group_name, storage_account_name)
-            account_key = account_keys.keys[0].value
-        except Exception as exc:
             if provided_access_key is not None:
                 account_key = provided_access_key
+            # Get keys from the storage account
             else:
+                account_keys = self.storage_client.storage_accounts.list_keys(resource_group_name, storage_account_name)
+                account_key = account_keys.keys[0].value
+        except Exception as exc:
                 self.fail("Error getting keys for account {0} - {1}".format(storage_account_name, str(exc)))
 
         try:
