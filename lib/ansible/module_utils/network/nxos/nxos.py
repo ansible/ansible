@@ -30,9 +30,7 @@
 
 import collections
 import json
-import re
-import sys
-import yaml
+import re, sys, yaml
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -811,7 +809,7 @@ class NxosCmdRef:
                 elif 'list' == kind:
                     ref[k]['default'] = [str(i) for i in ref[k]['default']]
                 elif 'dict' == kind:
-                    for key,v in ref[k]['default'].items():
+                    for key, v in ref[k]['default'].items():
                         ref[k]['default'][key] = str(v)
 
 
@@ -929,7 +927,7 @@ class NxosCmdRef:
                 elif 'list' == ref[k]['kind']:
                     playval = [str(i) for i in playval]
                 elif 'dict' == ref[k]['kind']:
-                    for key,v in playval.items():
+                    for key, v in playval.items():
                         playval[key] = str(v)
                 ref[k]['playval'] = playval
 
