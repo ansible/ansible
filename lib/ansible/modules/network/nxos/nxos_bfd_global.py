@@ -139,8 +139,7 @@ cmds:
 '''
 
 
-import re, yaml
-
+import re
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands

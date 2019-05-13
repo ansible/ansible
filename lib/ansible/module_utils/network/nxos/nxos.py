@@ -30,7 +30,9 @@
 
 import collections
 import json
-import re, sys, yaml
+import re
+import sys
+import yaml
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -686,7 +688,7 @@ class NxosCmdRef:
 
     interval:
       kind: dict
-      getval: bfd interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
+      getval: bfd interval (?P<tx>\\d+) min_rx (?P<min_rx>\\d+) multiplier (?P<multiplier>\\d+)
       setval: bfd interval {tx} min_rx {min_rx} multiplier {multiplier}
       default:
         tx: 50
@@ -741,7 +743,6 @@ class NxosCmdRef:
                 ref['_proposed'].append('feature {0}'.format(feature))
                 ref['_cli_is_feature_disabled'] = ref['_proposed']
 
-
     def get_platform_shortname(self):
         """Query device for platform type, normalize to a shortname/nickname.
         Returns platform shortname (e.g. 'N3K-3058P' returns 'N3K') or None.
@@ -777,7 +778,6 @@ class NxosCmdRef:
                     shortname += '-F'
                     break
         return shortname
-
 
     def get_platform_defaults(self):
         """Update ref with platform specific defaults"""
@@ -835,7 +835,6 @@ class NxosCmdRef:
                 raise
         return output
 
-
     def pattern_match_existing(self, output, k):
         """Pattern matching helper for `get_existing`.
         `k` is the command name string. Use the pattern from cmd_ref to
@@ -874,7 +873,6 @@ class NxosCmdRef:
 
         return match
 
-
     def get_existing(self):
         """Update ref with existing command states from the device.
         Store these states in each command's 'existing' key.
@@ -911,7 +909,6 @@ class NxosCmdRef:
             else:
                 raise "get_existing: unknown 'kind' value specified for key '{0}'".format(k)
 
-
     def get_playvals(self):
         """Update ref with values from the playbook.
         Store these values in each command's 'playval' key.
@@ -930,7 +927,6 @@ class NxosCmdRef:
                     for key, v in playval.items():
                         playval[key] = str(v)
                 ref[k]['playval'] = playval
-
 
     def get_proposed(self):
         """Compare playbook values against existing states and create a list
