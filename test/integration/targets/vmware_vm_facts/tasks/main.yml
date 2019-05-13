@@ -20,22 +20,20 @@
   register: vm_facts_0001
 
 - debug: var=vm_facts_0001
+- set_fact:
+    first_vm: "{{ vm_facts_0001['virtual_machines'][0] }}"
 
 - &vm_fact_check
   name: Verify if VM facts exist
   assert:
     that:
-      - "item.esxi_hostname is defined"
-      - "item.guest_fullname is defined"
-      - "item.ip_address is defined"
-      - "item.mac_address is defined"
-      - "item.power_state is defined"
-      - "item.uuid is defined"
-      - "item.vm_network is defined"
-  with_items:
-    - "{{ vm_facts_0001.virtual_machines | json_query(query) }}"
-  vars:
-    query: "[?guest_name=='DC0_H0_VM0']"
+      - first_vm.esxi_hostname is defined
+      - first_vm.guest_fullname is defined
+      - first_vm.ip_address is defined
+      - first_vm.mac_address is defined
+      - first_vm.power_state is defined
+      - first_vm.uuid is defined
+      - first_vm.vm_network is defined
 
 - <<: *vm_data
   name: Get facts about available vms in check mode
@@ -50,7 +48,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "DC0_H0_VM0"
+    name: "{{ first_vm.guest_name }}"
   register: folder_path_info
 
 - set_fact:
