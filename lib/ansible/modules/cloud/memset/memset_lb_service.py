@@ -192,6 +192,8 @@ def create_lb_service(args=None, service=None, loadbalancer=None):
             if not retvals['failed']:
                 retvals['changed'] = True
                 retvals['memset_api'] = payload
+            else:
+                retvals['msg'] = msg
     else:
         # perform various contortions in order to compare the existing service
         # to the payload we intend to POST.
