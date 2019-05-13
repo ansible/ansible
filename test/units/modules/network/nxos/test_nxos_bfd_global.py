@@ -139,8 +139,6 @@ class TestNxosBfdGlobalModule(TestNxosModule):
         ))
         self.execute_module(changed=False)
 
-
-
     def test_bfd_existing_n9k(self):
         module_name = self.module.__name__.rsplit('.', 1)[1]
         self.execute_show_command.return_value = load_fixture(module_name, 'N9K.cfg')

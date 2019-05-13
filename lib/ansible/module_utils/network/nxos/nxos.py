@@ -810,8 +810,9 @@ class NxosCmdRef:
                     ref[k]['default'] = [str(i) for i in ref[k]['default']]
                 elif 'dict' == kind:
                     for key, v in ref[k]['default'].items():
-                        ref[k]['default'][key] = str(v)
-
+                        if v:
+                            v = str(v)
+                        ref[k]['default'][key] = v
 
     def execute_show_command(self, command, format):
         """Generic show command helper.
@@ -857,7 +858,7 @@ class NxosCmdRef:
             if len(match) > 1:
                 # TBD: Add support for multiple instances
                 raise "get_existing: multiple match instances are not currently supported"
-            match = list(match[0]) # tuple to list
+            match = list(match[0])  # tuple to list
 
             # Handle config strings that nvgen with the 'no' prefix.
             # Example match behavior:
