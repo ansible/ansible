@@ -157,7 +157,7 @@ def api_validation(args=None, loadbalancer=None):
     if len(loadbalancer.all_ips()) == 0:
         errors['misc'] = 'No IPs attached to loadbalancer'
     if args['virtual_ip'] and args['virtual_ip'] not in loadbalancer.all_ips():
-            errors['virtual_ip'] = "{0} is not assigned to {1}" . format(args['virtual_ip'], args['load_balancer'])
+        errors['virtual_ip'] = "{0} is not assigned to {1}" . format(args['virtual_ip'], args['load_balancer'])
 
     if len(errors) > 0:
         module.fail_json(failed=True, msg=errors)
