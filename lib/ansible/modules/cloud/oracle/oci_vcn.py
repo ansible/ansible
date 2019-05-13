@@ -21,8 +21,6 @@ module: oci_vcn
 short_description: Manage Virtual Cloud Networks(VCN) in OCI
 description:
     - This module allows the user to create, delete and update virtual cloud networks(VCNs) in OCI.
-      The complete Oracle Cloud Infrastructure Ansible Modules can be downloaded from
-      U(https://github.com/oracle/oci-ansible-modules/releases).
 version_added: "2.8"
 options:
     cidr_block:
