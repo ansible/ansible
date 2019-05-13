@@ -1,0 +1,2 @@
+bugfixes:
+- To fix the nios_zone module idempotency failure  - https://github.com/ansible/ansible/pull/55595
