@@ -373,7 +373,7 @@ def initial_diff(path, state, prev_state):
                     walklist['files'].append(filepath)
 
             diff['before']['path_content'] = walklist
-            
+
     return diff
 
 #
