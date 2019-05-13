@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2018, Simon Weald <ansible@simonweald.com>
+# Copyright (c) 2019, Simon Weald <ansible@simonweald.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -27,7 +27,7 @@ notes:
     I(loadbalancer.service.list), I(loadbalancer.service.remove),
     I(loadbalancer.service.update).
 description:
-    - Manage Memset loadbalancer services.
+    - Manage Memset loadbalancer services
 options:
     state:
         required: false
