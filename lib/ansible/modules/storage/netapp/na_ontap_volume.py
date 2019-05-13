@@ -225,12 +225,12 @@ options:
 
   qos_policy_group:
     description:
-    - Allows a QoS policy group to be set on volume creation.
+    - Specifies a QoS policy group to be set on volume.
     version_added: '2.9'
 
   qos_adaptive_policy_group:
     description:
-    - Allows a QoS adaptive policy group to be set on volume creation.
+    - Specifies a QoS adaptive policy group to be set on volume.
     version_added: '2.9'
 
 '''
@@ -248,6 +248,7 @@ EXAMPLES = """
         space_guarantee: none
         policy: default
         percent_snapshot_space: 60
+        qos_policy_group: max_performance_gold
         vserver: ansibleVServer
         wait_for_completion: True
         hostname: "{{ netapp_hostname }}"
