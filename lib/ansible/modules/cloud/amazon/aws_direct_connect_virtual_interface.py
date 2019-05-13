@@ -163,8 +163,16 @@ direct_connect_gateway_id:
   description: Direct connect gateway id
   returned: always
   type: string
+<<<<<<< HEAD
   sample: fa407c39-6fb7-4e78-92d8-f95339a3186a
 >>>>>>> DC virtual interface - support DC gateway
+=======
+direct_connect_gateway_id:
+  description: Direct connect gateway id
+  returned: always
+  type: string
+  sample: fa407c39-6fb7-4e78-92d8-f95339a3186a
+>>>>>>> 8f168cf17d7340a074ba3e067124d36ac842e6ff
 location:
   description: Where the connection is located.
   returned: always
