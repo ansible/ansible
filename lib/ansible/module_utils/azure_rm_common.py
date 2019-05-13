@@ -548,7 +548,7 @@ class AzureRMModuleBase(object):
                 account_keys = self.storage_client.storage_accounts.list_keys(resource_group_name, storage_account_name)
                 account_key = account_keys.keys[0].value
         except Exception as exc:
-                self.fail("Error getting keys for account {0} - {1}".format(storage_account_name, str(exc)))
+            self.fail("Error getting keys for account {0} - {1}".format(storage_account_name, str(exc)))
 
         try:
             self.log('Create blob service')
