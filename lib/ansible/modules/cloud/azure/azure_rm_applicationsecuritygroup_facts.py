@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_applicationsecuritygroup_facts
 version_added: "2.8"
-short_description: Get Azure Application Security Group facts.
+short_description: Get Azure Application Security Group facts
 description:
     - Get facts of Azure Application Security Group.
 
