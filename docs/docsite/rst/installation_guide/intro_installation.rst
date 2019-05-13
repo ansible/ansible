@@ -175,7 +175,7 @@ Then run these commands:
 
 .. code-block:: bash
 
-    $ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+    $ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 93C4A3FD7BB9C367
     $ sudo apt update
     $ sudo apt install ansible
 
