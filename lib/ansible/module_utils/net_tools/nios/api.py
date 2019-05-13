@@ -156,7 +156,10 @@ def member_normalize(member_spec):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> d998791... Bug fixes for the nios member object (#56045)
 =======
 >>>>>>> d998791... Bug fixes for the nios member object (#56045)
 =======
