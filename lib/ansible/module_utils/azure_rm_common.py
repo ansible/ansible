@@ -543,8 +543,8 @@ class AzureRMModuleBase(object):
             self.log('Getting keys')
             if provided_access_key is not None:
                 account_key = provided_access_key
-            # Get keys from the storage account
             else:
+                # Get keys from the storage account
                 account_keys = self.storage_client.storage_accounts.list_keys(resource_group_name, storage_account_name)
                 account_key = account_keys.keys[0].value
         except Exception as exc:

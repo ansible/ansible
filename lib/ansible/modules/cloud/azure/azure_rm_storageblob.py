@@ -80,8 +80,9 @@ options:
         default: no
     resource_group:
         description:
-            - Name of the resource group to use.
-            - If C(resource_group) is not provided, the field C(shared_access_key) must be provided.
+            - Resource group name of the storage account.
+            - If the storage account is in another subscription rather than AZURE_SUBSCRIPTION_ID, use I(shared_access_key) to access it.
+            - Required when I(shared_access_key) not defined.
         aliases:
             - resource_group_name
     src:
@@ -114,7 +115,7 @@ options:
     shared_access_key:
         description:
             - Use shared access key to authenticate your applications.
-            - Required when making requests to the storage account in other subscription.
+            - Required when I(resource_group) not defined
         version_added: "2.9"
 
 extends_documentation_fragment:
