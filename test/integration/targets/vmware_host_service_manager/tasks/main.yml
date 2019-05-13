@@ -29,7 +29,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         validate_certs: no
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         service_name: ntpd
         state: absent
       register: single_hosts_result
@@ -60,7 +60,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         validate_certs: no
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         service_name: ntpd
         state: absent
       register: single_hosts_result_check_mode

@@ -12,7 +12,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
   register: firewall_0004_results
   check_mode: yes
 
@@ -49,7 +49,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
-      esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+      esxi_hostname: '{{ esxi1 }}'
     register: firewall_0002_results
 
   - assert:
