@@ -159,7 +159,7 @@ def member_normalize(member_spec):
                        'ha_port_setting', 'lan_port_setting', 'lan2_physical_setting',
                        'lan_ha_port_setting', 'mgmt_network_setting', 'v6_mgmt_network_setting']
     for key in member_spec.keys():
-        if key in member_elements and not(member_spec[key] is None):
+        if key in member_elements and member_spec[key] is not None:
             member_spec[key] = member_spec[key][0]
         if isinstance(member_spec[key], dict):
             member_spec[key] = member_normalize(member_spec[key])
