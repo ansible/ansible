@@ -27,7 +27,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
   register: portgroup_0002_results
 
 - assert:
@@ -41,7 +41,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
     policies: true
   register: portgroup_0003_results
 
@@ -56,7 +56,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
     policies: true
   register: portgroup_0004_results
   check_mode: yes

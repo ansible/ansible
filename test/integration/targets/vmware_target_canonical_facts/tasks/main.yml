@@ -29,7 +29,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: False
-    esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+    esxi_hostname: '{{ esxi1 }}'
   register: target_0002_results
 
 - assert:
