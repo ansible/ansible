@@ -688,7 +688,7 @@ class NxosCmdRef:
 
     interval:
       kind: dict
-      getval: bfd interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
+      getval: r'bfd interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)'
       setval: bfd interval {tx} min_rx {min_rx} multiplier {multiplier}
       default:
         tx: 50
@@ -804,7 +804,7 @@ class NxosCmdRef:
         """Update ref defaults with normalized data"""
         ref = self._ref
         for k in ref['commands']:
-            if ref[k]['default']:
+            if 'default' in ref[k] and ref[k]['default']:
                 kind = ref[k]['kind']
                 if 'int' == kind:
                     ref[k]['default'] = int(ref[k]['default'])
@@ -905,6 +905,7 @@ class NxosCmdRef:
                 # match up with the setval named placeholder keys; e.g.
                 #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
                 #   setval: my-cmd {foo} bar {baz}
+                ref[k]['existing'] = {}
                 for key in match.groupdict().keys():
                     ref[k]['existing'][key] = str(match.group(key))
             elif 'str' == kind:
@@ -950,7 +951,7 @@ class NxosCmdRef:
             existing = ref[k].get('existing', ref[k]['default'])
             if playval == existing and ref['_state'] == 'present':
                 continue
-            if isinstance(existing, dict) and all(x==None for x in existing.values()):
+            if isinstance(existing, dict) and all(x is None for x in existing.values()):
                 existing = None
             if existing is None and ref['_state'] == 'absent':
                 continue
