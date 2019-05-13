@@ -95,7 +95,7 @@ you can use the following configuration:
        project: my-project
        auth_kind: serviceaccount
        scopes:
-         - www.googleapis.com/auth/compute
+         - https://www.googleapis.com/auth/compute
 
      tasks:
 
