@@ -26,7 +26,7 @@
 - name: Remove the vSwitches
   vmware_vswitch:
     validate_certs: no
-    hostname: '{{ hostvars[item].ansible_host }}'
+    hostname: '{{ item }}'
     username: '{{ hostvars[item].ansible_user }}'
     password: '{{ hostvars[item].ansible_password }}'
     switch_name: "{{ switch1 }}"
@@ -40,7 +40,7 @@
     password: '{{ vcenter_password }}'
     datacenter_name: '{{ dc1 }}'
     cluster_name: ccr1
-    esxi_hostname: '{{ hostvars[item].ansible_host }}'
+    esxi_hostname: '{{ item }}'
     esxi_username: '{{ hostvars[item].ansible_user }}'
     esxi_password: '{{ hostvars[item].ansible_password }}'
     state: absent
@@ -60,7 +60,7 @@
 
 - name: Umount NFS datastores to ESXi (1/2)
   vmware_host_datastore:
-      hostname: '{{ hostvars[item].ansible_host }}'
+      hostname: '{{ item }}'
       username: '{{ hostvars[item].ansible_user }}'
       password: '{{ hostvars[item].ansible_password }}'
       datastore_name: '{{ ds1 }}'
@@ -76,7 +76,7 @@
 
 - name: Umount NFS datastores to ESXi (2/2)
   vmware_host_datastore:
-      hostname: '{{ hostvars[item].ansible_host }}'
+      hostname: '{{ item }}'
       username: '{{ hostvars[item].ansible_user }}'
       password: '{{ hostvars[item].ansible_password }}'
       datastore_name: '{{ ds2 }}'
@@ -93,7 +93,7 @@
 # - name: get a final list of the datastore
 #   vmware_datastore_facts:
 #     validate_certs: False
-#     hostname: '{{ hostvars[item].ansible_host }}'
+#     hostname: '{{ item }}'
 #     username: '{{ hostvars[item].ansible_user }}'
 #     password: '{{ hostvars[item].ansible_password }}'
 #   register: datastore_facts

@@ -23,7 +23,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         validate_certs: no
         state: enabled
       register: host_ipv6_facts
@@ -38,7 +38,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         validate_certs: no
         state: enabled
       register: host_ipv6_facts_check_mode

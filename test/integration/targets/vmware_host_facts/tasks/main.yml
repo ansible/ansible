@@ -10,7 +10,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
       register: facts
     - debug: var=facts
     - name: verify some data,like ansible_processor
@@ -22,7 +22,7 @@
     - name: get host facts through from a host
       vmware_host_facts:
         validate_certs: False
-        hostname: '{{ hostvars[esxi1].ansible_host }}'
+        hostname: '{{ esxi1 }}'
         username: '{{ hostvars[esxi1].ansible_user }}'
         password: '{{ hostvars[esxi1].ansible_password }}'
       register: facts
