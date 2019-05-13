@@ -247,7 +247,7 @@ options:
             path:
                 description:
                     - Path.
-                    - Valid path starts from '/'. Probe is sentto <Protocol>://<host>:<port><path>.
+                    - Valid path starts from '/'. Probe is sent to <Protocol>://<host>:<port><path>.
             timeout:
                 description:
                     - Timeout.
