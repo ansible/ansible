@@ -202,7 +202,7 @@ class AzureRMBatchAccount(AzureRMModuleBaseExt):
             self.batch_account['auto_storage'] = {
                 'storage_account_id': self.normalize_resource_id(
                     self.batch_account.pop('auto_storage_account'),
-                    '/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.Storage/storageAccounts/{{ name }}')
+                    '/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{name}')
             }
         self.batch_account['pool_allocation_mode'] = _snake_to_camel(self.batch_account['pool_allocation_mode'], True)
 
