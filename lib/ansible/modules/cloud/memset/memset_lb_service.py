@@ -210,7 +210,7 @@ def create_lb_service(args=None, service=None, loadbalancer=None):
             # the payload and the service are the same, so we just exit unchanged
             retvals['memset_api'] = payload
         else:
-            _diff = dict(payload.items() ^ _service.items())
+            _diff = dict(set(payload.items()) ^ set(_service.items()))
             # add load_balancer to the payload after we've compared the dicts
             payload['load_balancer'] = args['load_balancer']
             # update service
