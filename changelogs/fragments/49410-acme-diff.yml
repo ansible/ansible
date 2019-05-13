@@ -1,3 +1,0 @@
-minor_changes:
-- "acme_account: add support for diff mode."
-- "acme_account_facts: also return ``public_account_key`` in JWK format."

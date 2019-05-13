@@ -1,9 +1,0 @@
----
-
-- block:
-    - name: run test case
-      include: "{{ test_case_to_run }}"
-      with_fileglob: "{{ role_path }}/tests/{{ testcase }}.yaml"
-      loop_control:
-        loop_var: test_case_to_run
-  when: "ansible_python_version is version('2.7', '>=')"

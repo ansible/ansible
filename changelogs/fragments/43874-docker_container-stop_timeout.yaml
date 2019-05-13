@@ -1,2 +1,0 @@
-minor_changes:
-- "docker_container - ``stop_timeout`` is now also used to set the ``StopTimeout`` property of the docker container when creating the container."

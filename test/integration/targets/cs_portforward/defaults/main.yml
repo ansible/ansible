@@ -1,3 +1,0 @@
----
-cs_portforward_public_ip: "10.100.212.5"
-cs_portforward_vm: "cs-{{ cs_resource_prefix }}-pf-vm"

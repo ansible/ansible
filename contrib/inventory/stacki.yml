@@ -1,7 +1,0 @@
----
-stacki:
-  auth:
-    stacki_user: admin
-    stacki_password: GhYgWut1hfGbbnstmbW3m-bJbeME-3EvC20rF1LHrDM
-    stacki_endpoint: http://192.168.200.50/stack
-use_hostnames: false

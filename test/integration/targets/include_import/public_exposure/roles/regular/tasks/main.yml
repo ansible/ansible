@@ -1,5 +1,0 @@
-- debug:
-    msg: regular
-
-- set_fact:
-    regular_tasks_var: regular_tasks

@@ -1,5 +1,0 @@
-network 10.0.0.0 prefixlen 8 := "Network1",
-network 172.16.0.0 prefixlen 12 := "Network2",
-network 192.168.0.0 prefixlen 16 := "Network3",
-host 192.168.20.1 := "Host1",
-host 172.16.1.1 := "Host2",

@@ -1,3 +1,0 @@
----
-
-aws_inspector_scan_name: "aws_inspector_scan-{{ ansible_date_time.epoch }}"

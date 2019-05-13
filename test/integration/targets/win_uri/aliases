@@ -1,3 +1,0 @@
-shippable/windows/group6
-needs/httptester
-skip/windows/2008  # httptester requires SSH which doesn't work with 2008

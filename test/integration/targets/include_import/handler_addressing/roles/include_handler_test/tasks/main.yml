@@ -1,3 +1,0 @@
-- command: "true"
-  notify:
-    - do_include

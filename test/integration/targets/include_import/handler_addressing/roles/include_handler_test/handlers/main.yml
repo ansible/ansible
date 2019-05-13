@@ -1,2 +1,0 @@
-- name: do_include
-  include_tasks: tasks/handlers.yml

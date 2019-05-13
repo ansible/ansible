@@ -1,7 +1,0 @@
----
-- name: create nobody user
-  user:
-    name: nobody
-    create_home: no
-    state: present
-  notify: remove nobody user

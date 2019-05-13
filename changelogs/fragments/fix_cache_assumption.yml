@@ -1,2 +1,0 @@
-bugfixes:
-    - rely on method existing vs loosely related _cache attribute, also fix data persistence issue on plugin reuse across sources.

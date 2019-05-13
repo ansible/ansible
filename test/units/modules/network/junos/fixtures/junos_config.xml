@@ -1,9 +1,0 @@
-<interfaces>
-    <interface>
-        <name>ae11</name>
-        <unit>
-            <name>0</name>
-            <description>Test</description>
-        </unit>
-    </interface>
-</interfaces>

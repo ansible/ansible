@@ -1,8 +1,0 @@
----
-# defaults file for test_gce_mig
-mig_name: "{{ resource_prefix|lower }}"
-service_account_email: "{{ gce_service_account_email }}"
-pem_file: "{{ gce_pem_file }}"
-project_id: "{{ gce_project_id }}"
-zone: "us-central1-c"
-instance_template_name: "my-instance-template-1"

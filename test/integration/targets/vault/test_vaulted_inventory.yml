@@ -1,5 +1,0 @@
-- hosts: vaulted_host
-  gather_facts: no
-  tasks:
-  - name: See if we knew vaulted_host
-    debug: msg="Found vaulted_host from vaulted.inventory"

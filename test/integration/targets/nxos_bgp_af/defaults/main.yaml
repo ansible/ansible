@@ -1,5 +1,0 @@
----
-testcase: "*"
-vrfs:
-  - default
-  - myvrf

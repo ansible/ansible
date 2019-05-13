@@ -1,3 +1,0 @@
----
-bugfixes:
-  - Allow to use rundeck_acl_policy with python 2 and 3

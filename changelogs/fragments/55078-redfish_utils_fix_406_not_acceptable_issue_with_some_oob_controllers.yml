@@ -1,2 +1,0 @@
-bugfixes:
-- redfish_utils - fix "406 Not Acceptable" issue with some OOB controllers (https://github.com/ansible/ansible/issues/55078)

@@ -1,3 +1,0 @@
----
-minor_changes:
-- junit callback plug-in - introduce a new option to hide task arguments similar to no_log.

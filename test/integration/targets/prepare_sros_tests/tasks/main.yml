@@ -1,6 +1,0 @@
----
-- debug: msg="START prepare_sros_tests/main.yaml"
-
-- name: wait until everything is ready to go
-  pause:
-    seconds: 1

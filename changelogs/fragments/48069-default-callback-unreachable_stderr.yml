@@ -1,2 +1,0 @@
-minor_changes:
-- Allow default callback plugin to send unreachable host/task to stderr using toggle flag.

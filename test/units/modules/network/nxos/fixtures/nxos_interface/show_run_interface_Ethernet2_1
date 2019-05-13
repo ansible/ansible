@@ -1,8 +1,0 @@
-interface Ethernet1/5
-  description to csr02
-  no switchport
-  speed 1000
-  mtu 1500
-  mac-address fa16.3e00.000b
-  ip address 172.31.0.66/30
-  no shutdown

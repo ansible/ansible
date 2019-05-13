@@ -1,8 +1,0 @@
----
-  - include_tasks: cleanup.yml
-  - include_tasks: snmp_community.yml
-  - include_tasks: cleanup.yml
-  - include_tasks: snmp_managers.yml
-  - include_tasks: output_only.yml
-  - include_tasks: cleanup_using_module.yml
-  - include_tasks: cleanup.yml

@@ -1,3 +1,0 @@
-test_win_regedit_local_key: 'HKLM:\Software\Moo []{}!@#$%^&*()-_=+/key''"?<>'
-test_win_regedit_classes_key: HKCR:\.test-ansible
-test_win_regedit_hive_key: HKLM:\ANSIBLE\NewKey

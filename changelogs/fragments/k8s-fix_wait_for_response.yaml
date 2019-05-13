@@ -1,2 +1,0 @@
-minor_changes:
-  - Fix API call to _wait_for_response in k8s modules (https://github.com/ansible/ansible/pull/53937).

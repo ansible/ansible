@@ -1,4 +1,0 @@
----
-bugfixes:
-  - vsphere_guest - creating machines without vm_extra_config allowed
-  - vsphere_guest - powering on/off absent virtual machine will fail

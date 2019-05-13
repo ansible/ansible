@@ -1,5 +1,0 @@
-ansible (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
-
-  * %VERSION% release
-
- -- Ansible, Inc. <info@ansible.com>  %DATE%

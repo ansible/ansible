@@ -1,3 +1,0 @@
----
-  permitted_managers_key: 'HKLM:\System\CurrentControlSet\services\SNMP\Parameters\PermittedManagers'
-  valid_communities_key: 'HKLM:\System\CurrentControlSet\services\SNMP\Parameters\ValidCommunities'

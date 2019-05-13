@@ -1,3 +1,0 @@
----
-# use some weird chars to test out the parser
-test_chocolatey_name: test'|"source 123^

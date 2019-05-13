@@ -1,2 +1,0 @@
-- set_fact:
-    include_role_result: true

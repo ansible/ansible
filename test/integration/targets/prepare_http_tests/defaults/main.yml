@@ -1,4 +1,0 @@
-badssl_host: wrong.host.badssl.com
-httpbin_host: httpbin.org
-sni_host: ci-files.testing.ansible.com
-badssl_host_substring: wrong.host.badssl.com

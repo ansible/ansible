@@ -1,6 +1,0 @@
----
-- hosts: testhost
-  gather_facts: no
-  tasks:
-    - import_role:
-        name: "{{ import_playbook_role_name }}"

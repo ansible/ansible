@@ -1,9 +1,0 @@
----
-- hosts: 127.0.0.1
-  connection: local
-  gather_facts: no
-  tasks:
-    - name: write inventory config file
-      copy:
-        dest: ../test.aws_rds.yml
-        content: ""

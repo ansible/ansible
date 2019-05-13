@@ -1,3 +1,0 @@
----
-# defaults file for test_ec2_eip
-tag_prefix: '{{resource_prefix}}'

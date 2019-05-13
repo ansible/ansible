@@ -1,3 +1,0 @@
----
-cnos_template_data:
-  - {vlanid1: 13, slot_chassis_number1: "1/2", portchannel_interface_number1: 100, portchannel_mode1: "active"}

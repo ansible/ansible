@@ -1,5 +1,0 @@
----
-cli:
-  host: "{{ ansible_ssh_host }}"
-#  username: "{{ vyos_cli_user | default('ansible-admin') }}"
-#  password: "{{ vyos_cli_pass | default('adminpw') }}"

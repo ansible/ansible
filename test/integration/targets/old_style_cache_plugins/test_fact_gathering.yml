@@ -1,8 +1,0 @@
----
-- hosts: localhost
-  connection: local
-  gather_facts: no
-
-- hosts: localhost
-  connection: local
-  gather_facts: yes

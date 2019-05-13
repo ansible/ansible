@@ -1,5 +1,0 @@
-- hosts: [localhost, nonexistent]
-  gather_facts: false
-  tasks:
-    - name: Hi
-      ping:

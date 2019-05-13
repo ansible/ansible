@@ -1,2 +1,0 @@
-bugfixes:
-  - inventory plugins - Fix creating groups from composed variables by getting the latest host variables

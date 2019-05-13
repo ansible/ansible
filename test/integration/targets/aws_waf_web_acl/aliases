@@ -1,6 +1,0 @@
-cloud/aws
-aws_waf_facts
-aws_waf_web_acl
-aws_waf_web_match
-aws_waf_web_rule
-unsupported

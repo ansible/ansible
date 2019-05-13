@@ -1,6 +1,0 @@
-<rpc-reply>
-    <load-configuration-results>
-        <load-success/>
-        <load-error-count>0</load-error-count>
-    </load-configuration-results>
-</rpc-reply>

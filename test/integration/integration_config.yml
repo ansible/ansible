@@ -1,3 +1,0 @@
----
-win_output_dir: 'C:\ansible_testing'
-output_dir: ~/ansible_testing

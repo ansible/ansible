@@ -1,2 +1,0 @@
-bugfixes:
-- Fixes replacing load balancer with application gateway in Azure virtualmachine scaleset, as leaning up old load balancer was not done properly.

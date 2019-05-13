@@ -1,2 +1,0 @@
-minor_changes:
-- vmware_portgroup accepts list of ESXi hostsystem. Modified get_all_host_objs API to accept list of hostsystems.

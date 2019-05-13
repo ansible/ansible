@@ -1,3 +1,0 @@
----
-cs_firewall_ip_address: 10.100.212.5
-cs_firewall_network: ansible test

@@ -1,4 +1,0 @@
-- name: remove temporary flatpak link
-  file:
-    state: absent
-    path: /tmp/flatpak
