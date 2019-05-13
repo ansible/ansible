@@ -48,7 +48,7 @@ options:
     default: []
   vhost:
     description:
-    - vhost to apply access privileges.
+    - Vhost to apply access privileges.
     - This option will be ignored when permissions option is used.
     type: str
     default: /
