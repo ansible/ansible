@@ -541,7 +541,7 @@ class AzureRMModuleBase(object):
         keys = dict()
         try:
             self.log('Getting keys')
-            if provided_access_key: ## avoid empty string
+            if provided_access_key:  # avoid empty string
                 account_key = provided_access_key
             else:
                 # Get keys from the storage account
