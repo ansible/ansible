@@ -153,6 +153,11 @@ def member_normalize(member_spec):
     The remainder of the value validation is performed by WAPI
     '''
     for key in member_spec.keys():
+<<<<<<< HEAD
+=======
+        if key in member_elements and member_spec[key] is not None:
+            member_spec[key] = member_spec[key][0]
+>>>>>>> d998791... Bug fixes for the nios member object (#56045)
         if isinstance(member_spec[key], dict):
             member_spec[key] = member_normalize(member_spec[key])
         elif isinstance(member_spec[key], list):
