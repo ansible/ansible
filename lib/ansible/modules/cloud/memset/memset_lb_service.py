@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: memset_lb_service
 author: "Simon Weald (@glitchcrab)"
 version_added: "2.9"
-short_description: Manage Memset loadbalancer services.
+short_description: Manage Memset loadbalancer services
 notes:
   - A loadbalancer service is logically the Internet-facing 'frontend'. This must
     be backed by one or more servers using the C(memset_lb_server) module.
