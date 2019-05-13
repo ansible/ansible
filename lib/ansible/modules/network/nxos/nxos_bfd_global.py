@@ -41,7 +41,7 @@ options:
   echo_interface:
     description:
       - Loopback interface used for echo frames.
-        Valid values are loopback interface name or 'deleted'.
+      - Valid values are loopback interface name or 'deleted'.
       - Not supported on N5K/N6K
     required: false
     type: str
@@ -53,7 +53,7 @@ options:
   interval:
     description:
       - BFD interval timer values.
-        Value must be a dict defining values for keys: tx, min_rx, and multiplier.
+      - Value must be a dict defining values for keys: tx, min_rx, and multiplier.
     required: false
     type: dict
   slow_timer:
@@ -77,7 +77,7 @@ options:
   ipv4_interval:
     description:
       - BFD IPv4 interval timer values.
-        Value must be a dict defining values for keys: tx, min_rx, and multiplier.
+      - Value must be a dict defining values for keys: tx, min_rx, and multiplier.
     required: false
     type: dict
   ipv4_slow_timer:
@@ -93,7 +93,7 @@ options:
   ipv6_interval:
     description:
       - BFD IPv6 interval timer values.
-        Value must be a dict defining values for keys: tx, min_rx, and multiplier.
+      - Value must be a dict defining values for keys: tx, min_rx, and multiplier.
     required: false
     type: dict
   ipv6_slow_timer:
@@ -106,7 +106,7 @@ options:
   fabricpath_interval:
     description:
       - BFD fabricpath interval timer values.
-        Value must be a dict defining values for keys: tx, min_rx, and multiplier.
+      - Value must be a dict defining values for keys: tx, min_rx, and multiplier.
     required: false
     type: dict
   fabricpath_slow_timer:
