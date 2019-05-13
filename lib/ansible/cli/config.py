@@ -35,7 +35,7 @@ class ConfigCLI(CLI):
     def init_parser(self):
 
         super(ConfigCLI, self).init_parser(
-            desc="View, edit, and manage ansible configuration.",
+            desc="View ansible configuration.",
         )
 
         common = opt_help.argparse.ArgumentParser(add_help=False)
