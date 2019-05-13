@@ -170,9 +170,11 @@ options:
             data:
                 description:
                     - Base-64 encoded pfx certificate.
+                    - Only applicable in PUT Request.
             password:
                 description:
                     - Password for the pfx file specified in I(data).
+                    - Only applicable in PUT request.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -218,7 +220,7 @@ options:
                 suboptions:
                     fqdn:
                         description:
-                            - Fully qualified domain name I(FQDN).
+                            - Fully qualified domain name (FQDN).
                     ip_address:
                         description:
                             - IP address.
@@ -245,6 +247,7 @@ options:
             path:
                 description:
                     - Path.
+                    - Valid path starts from '/'. Probe is sentto <Protocol>://<host>:<port><path>.
             timeout:
                 description:
                     - Timeout.
@@ -339,7 +342,7 @@ options:
         suboptions:
             rule_type:
                 description:
-                    - Rule I(type).
+                    - Rule type.
                 choices:
                     - 'basic'
                     - 'path_based_routing'
