@@ -19,7 +19,7 @@ author:
 version_added: "2.0"
 short_description: Manage RabbitMQ queues
 description:
-- This module uses RabbitMQ Rest API to create/delete queues.
+- This module uses the RabbitMQ Rest API to create/delete queues.
 requirements:
 - requests >= 1.0.0
 options:
