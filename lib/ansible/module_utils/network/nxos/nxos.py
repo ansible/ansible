@@ -686,7 +686,7 @@ class NxosCmdRef:
 
     interval:
       kind: dict
-      getval: r'bfd interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)'
+      getval: bfd interval (?P<tx>\d+) min_rx (?P<min_rx>\d+) multiplier (?P<multiplier>\d+)
       setval: bfd interval {tx} min_rx {min_rx} multiplier {multiplier}
       default:
         tx: 50
