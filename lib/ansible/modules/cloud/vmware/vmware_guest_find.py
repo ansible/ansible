@@ -86,7 +86,7 @@ folders:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_vm_by_id
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_vm_by_id, find_vm_by_name
 
 try:
     from pyVmomi import vim
@@ -102,29 +102,17 @@ class PyVmomiHelper(PyVmomi):
         self.use_instance_uuid = self.params['use_instance_uuid']
 
     def getvm_folder_paths(self):
-        results = []
-        vms = []
-
-        if self.uuid:
-            if self.use_instance_uuid:
-                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="instance_uuid")
-            else:
-                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
-            if vm_obj is None:
-                self.module.fail_json(msg="Failed to find the virtual machine with UUID : %s" % self.uuid)
-            vms = [vm_obj]
-
+        if self.uuid and self.use_instance_uuid:
+            vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="instance_uuid")
+        elif self.uuid:
+            vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
         elif self.name:
-            objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
-            for temp_vm_object in objects:
-                if temp_vm_object.obj.name == self.name:
-                    vms.append(temp_vm_object.obj)
+            vm_obj = find_vm_by_name(self.content, vm_name=self.name)
 
-        for vm in vms:
-            folder_path = self.get_vm_path(self.content, vm)
-            results.append(folder_path)
+        if vm_obj is None:
+            self.module.fail_json(msg="Failed to find the virtual machine with UUID: %s, name: %s" % (self.uuid, self.name))
 
-        return results
+        return [self.get_vm_path(self.content, vm_obj)]
 
 
 def main():
