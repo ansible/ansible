@@ -18,9 +18,13 @@
 
 from __future__ import absolute_import, division, print_function
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -49,10 +53,14 @@ options:
       - The FortiSIEM's FQDN or IP Address.
     required: true
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
@@ -60,17 +68,23 @@ options:
     required: false
     default: "enable"
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 
 =======
     options: ["enable", "disable"]
     
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   network_protocol:
     description:
       - Handles how the syslog is transmitted. TCP or UDP, with or without TLS 1.2.
     required: false
     default: "udp"
+<<<<<<< HEAD
 <<<<<<< HEAD
     choices: ["udp", "tcp", "tcp-tls1.2"]
 
@@ -78,16 +92,24 @@ options:
     options: ["udp", "tcp", "tcp-tls1.2"]
     
 >>>>>>> Full FSM Commit
+=======
+    choices: ["udp", "tcp", "tcp-tls1.2"]
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   network_port:
     description:
       - Handles which port to send the log on, TCP or UDP. Default 514
     required: false
     default: 514
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   syslog_message:
     description:
       - The actual message to send.
@@ -98,6 +120,7 @@ options:
       - If defined, will be used as the syslog header after the priority <##> (we specify that for you)
       - If left empty, we generate a header for you.
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 
   syslog_facility:
@@ -122,7 +145,27 @@ options:
 =======
     
 '''
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
+  syslog_facility:
+    description:
+      - The facility of the syslog.
+    default: "USER"
+    required: false
+    choices: ['KERN', 'USER', 'MAIL', 'DAEMON', 'AUTH', 'SYSLOG',
+              'LPR', 'NEWS', 'UUCP', 'CRON', 'AUTHPRIV', 'FTP',
+              'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3',
+              'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7']
+
+  syslog_level:
+    description:
+      - The level of the syslog.
+    default: "INFO"
+    required: false
+    choices: [ 'EMERG', 'ALERT', 'CRIT', 'ERR', 'WARNING', 'NOTICE', 'INFO', 'DEBUG' ]
+
+'''
 
 >>>>>>> Full FSM Commit
 EXAMPLES = '''
@@ -134,11 +177,15 @@ EXAMPLES = '''
 
 - name: SEND UDP/514 SYSLOG WITH AUTO HEADER
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   fsm_send_syslog:
     syslog_host: "10.7.220.61"
     ignore_ssl_errors: "enable"
     syslog_message: "This is a test syslog from Ansible!"
 
+<<<<<<< HEAD
 =======
     fsm_send_syslog:
       syslog_host: "10.7.220.61"
@@ -146,6 +193,8 @@ EXAMPLES = '''
       syslog_message: "This is a test syslog from Ansible!"
       
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 - name: SEND UDP/514 SYSLOG CUSTOM HEADER
   fsm_send_syslog:
     syslog_host: "10.7.220.61"
@@ -171,6 +220,9 @@ EXAMPLES = '''
     syslog_message: "This is a test syslog from Ansible!"
     syslog_header: "This is a TEST HEADER TCP TLS PORT 6514 :"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 - name: SEND UDP/514 SYSLOG WITH AUTO HEADER AND DIFF FACILITY AND LEVEL
   fsm_send_syslog:
@@ -179,8 +231,11 @@ EXAMPLES = '''
     syslog_facility: "AUTH"
     syslog_level: "CRIT"
     syslog_message: "This is a test syslog from Ansible! WITH CRIT AND AUTH AS LEVELS AND FACILITY."
+<<<<<<< HEAD
 =======
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 '''
 
 RETURN = """
@@ -188,20 +243,29 @@ api_result:
   description: full API response, includes status code and message
   returned: always
 <<<<<<< HEAD
+<<<<<<< HEAD
   type: str
 =======
   type: string
 >>>>>>> Full FSM Commit
+=======
+  type: str
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 <<<<<<< HEAD
+<<<<<<< HEAD
 from ansible.module_utils.network.fortisiem.common import SyslogFacility
 from ansible.module_utils.network.fortisiem.common import SyslogLevel
 =======
 >>>>>>> Full FSM Commit
+=======
+from ansible.module_utils.network.fortisiem.common import SyslogFacility
+from ansible.module_utils.network.fortisiem.common import SyslogLevel
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
 
@@ -216,6 +280,9 @@ def main():
         syslog_message=dict(required=False, type="str"),
         syslog_header=dict(required=False, type="str", default=None),
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         syslog_facility=dict(required=False, type="str", default="USER", choices=['KERN', 'USER', 'MAIL',
                                                                                   'DAEMON', 'AUTH', 'SYSLOG', 'LPR',
                                                                                   'NEWS', 'UUCP', 'CRON', 'AUTHPRIV',
@@ -225,8 +292,11 @@ def main():
         syslog_level=dict(required=False, type="str", default="INFO", choices=['EMERG', 'ALERT', 'CRIT', 'ERR',
                                                                                'WARNING', 'NOTICE',
                                                                                'INFO', 'DEBUG']),
+<<<<<<< HEAD
 =======
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     )
     module = AnsibleModule(argument_spec, supports_check_mode=False)
@@ -240,15 +310,21 @@ def main():
         "syslog_message": module.params["syslog_message"],
         "syslog_header": module.params["syslog_header"],
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         "syslog_facility": module.params["syslog_facility"],
         "syslog_level": module.params["syslog_level"],
     }
 
     # SET THE APPROPRIATE PORT IF NOT SUPPLIED
+<<<<<<< HEAD
 =======
     }
 
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     if paramgram["network_port"] == 0:
         if paramgram["network_protocol"] == "udp":
             paramgram["network_port"] = 514
@@ -257,6 +333,9 @@ def main():
         if paramgram["network_protocol"] == "tcp-tls1.2":
             paramgram["network_port"] = 6514
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     # GET THE PROPER VALUES FROM FACILITY AND LEVELS
     try:
@@ -270,10 +349,13 @@ def main():
         paramgram["syslog_level"] = eval(level_search)
     except BaseException as err:
         raise FSMBaseException(msg="An error occured converted Syslog Facility to an integer. Error: " + str(err))
+<<<<<<< HEAD
 =======
         if paramgram["network_protocol"] == "udp-tls1.2":
             paramgram["network_port"] = 6514
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     module.paramgram = paramgram
 
@@ -286,10 +368,14 @@ def main():
 
     if not paramgram["syslog_header"]:
 <<<<<<< HEAD
+<<<<<<< HEAD
         paramgram["syslog_header"] = str(fsm._tools.get_current_datetime() + " ansible_module:fsm_send_syslog")
 =======
         paramgram["syslog_header"] = str(fsm.get_current_datetime() + " ansible_module:fsm_send_syslog")
 >>>>>>> Full FSM Commit
+=======
+        paramgram["syslog_header"] = str(fsm._tools.get_current_datetime() + " ansible_module:fsm_send_syslog")
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         module.paramgram = paramgram
 
     # EXECUTE THE MODULE OPERATION

@@ -32,6 +32,7 @@ from ansible.module_utils.network.fortisiem.common import FSMEndpoints
 from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import FSMCommon
 <<<<<<< HEAD
+<<<<<<< HEAD
 from ansible.module_utils.network.fortisiem.common import SyslogLevel
 from ansible.module_utils.network.fortisiem.common import SendSyslog
 from ansible.module_utils.network.fortisiem.common import scrub_dict
@@ -42,6 +43,12 @@ from ansible.module_utils.network.fortisiem.common import SyslogLevel
 from ansible.module_utils.network.fortisiem.common import SendSyslog
 from ansible.module_utils.network.fortisiem.common import scrub_dict
 >>>>>>> Full FSM Commit
+=======
+from ansible.module_utils.network.fortisiem.common import SyslogLevel
+from ansible.module_utils.network.fortisiem.common import SendSyslog
+from ansible.module_utils.network.fortisiem.common import scrub_dict
+from ansible.module_utils.network.fortisiem.fsm_xml_generators import FSMXMLGenerators
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 import base64
 import urllib2
@@ -49,6 +56,7 @@ import ssl
 import json
 import xml.dom.minidom
 import re
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 
@@ -71,26 +79,27 @@ import datetime
 from xml.dom.minidom import parseString
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
-
-import pydevd
-
-
-# check for xmltodict
-try:
-    import xmltodict
-    HAS_XML2DICT = True
-except ImportError as err:
-    HAS_XML2DICT = False
-    raise FSMBaseException("You don't really want to use XML for responses, do you? We use with JSON in these parts. "
-                           "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 # BEGIN HANDLER CLASSES
+
+
 class FortiSIEMHandler(object):
+    """
+    This class handles every aspect of FortiSIEM modules that could be considered re-usable or repeated code.
+    It also makes extensive use of self.<attribute> methodology to keep track of variables and trade them
+    between the various methods that perform the work.
+    """
     def __init__(self, module):
         self._module = module
         self._tools = FSMCommon
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
+=======
+        self._xml = FSMXMLGenerators(module)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         self.ssl_context = self.create_ssl_context()
         self.last_http_return_code = None
         self.last_http_return_headers = None
@@ -102,10 +111,14 @@ class FortiSIEMHandler(object):
             self.export_xml_to_file_path = module.paramgram["export_xml_to_file_path"]
             self.export_csv_to_file_path = module.paramgram["export_csv_to_file_path"]
 <<<<<<< HEAD
+<<<<<<< HEAD
         except BaseException:
 =======
         except:
 >>>>>>> Full FSM Commit
+=======
+        except BaseException:
+>>>>>>> Full FSM Commit. Ready for shippable tests.
             self.export_json_to_screen = None
             self.export_json_to_file_path = None
             self.export_xml_to_file_path = None
@@ -117,6 +130,7 @@ class FortiSIEMHandler(object):
     def get_organizations(self):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         Gets a list of organizations from a target FortiSIEM Supervisor.
 
         :return: dict
@@ -124,10 +138,16 @@ class FortiSIEMHandler(object):
 
         :return:
 >>>>>>> Full FSM Commit
+=======
+        Gets a list of organizations from a target FortiSIEM Supervisor.
+
+        :return: dict
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         url = "https://" + self._module.paramgram["host"] + FSMEndpoints.GET_ORGS
         auth = self.create_auth_header()
         output_xml = self.submit_simple_request(auth, url)
+<<<<<<< HEAD
 <<<<<<< HEAD
         output_json = self._tools.xml2dict(output_xml)
         formatted_output_dict = self.format_results(output_json, output_xml)
@@ -140,244 +160,22 @@ class FortiSIEMHandler(object):
         :return: ssl context object
 =======
         output_json = self.xml2dict(output_xml)
+=======
+        output_json = self._tools.xml2dict(output_xml)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         formatted_output_dict = self.format_results(output_json, output_xml)
         return formatted_output_dict
 
-    def create_org_payload(self):
-        """
-
-        :return:
-        """
-        organizations = ET.Element("organizations")
-        organization = ET.Element("organization")
-        organizations.append(organization)
-        name = ET.SubElement(organization, "name")
-        name.text = self._module.paramgram["org_name"]
-        fullName = ET.SubElement(organization, "fullName")
-        fullName.text = self._module.paramgram["org_display_name"]
-        description = ET.SubElement(organization, "description")
-        description.text = self._module.paramgram["org_description"]
-        if self._module.paramgram["uri"] == FSMEndpoints.ADD_ORGS:
-            adminUser = ET.SubElement(organization, "adminUser")
-            adminUser.text = self._module.paramgram["org_admin_username"]
-            adminPwd = ET.SubElement(organization, "adminPwd")
-            adminPwd.text = self._module.paramgram["org_admin_password"]
-            adminEmail = ET.SubElement(organization, "adminEmail")
-            adminEmail.text = self._module.paramgram["org_admin_email"]
-        includeRange = ET.SubElement(organization, "includeRange")
-        includeRange.text = self._module.paramgram["org_include_ip_range"]
-        excludeRange = ET.SubElement(organization, "excludeRange")
-        excludeRange.text = self._module.paramgram["org_exclude_ip_range"]
-        if self._module.paramgram["uri"] == FSMEndpoints.ADD_ORGS:
-            custResource = ET.Element("custResource")
-            organization.append(custResource)
-            eps = ET.SubElement(custResource, "eps")
-            eps.text = self._module.paramgram["org_eps"]
-
-        # CONCAT COLLECTORS BEFORE APPENDING IF SPECIFIED
-        if self._module.paramgram["org_collectors"]:
-            # EXPECTS A LIST
-            collector_data = self._module.paramgram["org_collectors"]
-            if isinstance(collector_data, list):
-                #collector_xml = "<collectors>"
-                collectors = ET.Element("collectors")
-                organization.append(collectors)
-                for col in collector_data:
-                    collector = ET.SubElement(collectors, "collector")
-                    col_eps = ET.SubElement(collector, "eps")
-                    col_eps.text = col["eps"]
-                    col_name = ET.SubElement(collector, "name")
-                    col_name.text = col["name"]
-
-        # OR IF A SINGLE COLLECTOR VIA PARAMETERS IS DEFINED
-        elif self._module.paramgram["org_collector_name"] and self._module.paramgram["org_collector_eps"]:
-            collectors = ET.Element("collectors")
-            organization.append(collectors)
-            collector = ET.SubElement(collectors, "collector")
-            col_eps = ET.SubElement(collector, "eps")
-            col_eps.text = self._module.paramgram["org_collector_eps"]
-            col_name = ET.SubElement(collector, "name")
-            col_name.text = self._module.paramgram["org_collector_name"]
-
-        xmlstr = ET.tostring(organizations, 'utf-8')
-        return xmlstr
-
-    def create_credential_payload(self):
-        """
-
-        :return:
-        """
-        accessConfigs = ET.Element("accessConfigs")
-        accessMethods = ET.Element("accessMethods")
-        accessConfigs.append(accessMethods)
-        accessMethod = ET.Element("accessMethod")
-        accessMethods.append(accessMethod)
-        name = ET.SubElement(accessMethod, "name")
-        name.text = self._module.paramgram["friendly_name"]
-        accessProtocol = ET.SubElement(accessMethod, "accessProtocol")
-        accessProtocol.text = str(self._module.paramgram["access_protocol"]).upper()
-        description = ET.SubElement(accessMethod, "description")
-        description.text = self._module.paramgram["description"]
-        port = ET.SubElement(accessMethod, "port")
-        port.text = self._module.paramgram["port"]
-        pwdType = ET.SubElement(accessMethod, "pwdType")
-        pwdType.text = self._module.paramgram["password_type"]
-        baseDN = ET.SubElement(accessMethod, "baseDN")
-
-        pullInterval = ET.SubElement(accessMethod, "pullInterval")
-        pullInterval.text = self._module.paramgram["pull_interval"]
-
-        # ADD CREDENTIAL
-        credential = ET.Element("credential")
-        accessMethod.append(credential)
-        password = ET.SubElement(credential, "password")
-        password.text = self._module.paramgram["cred_password"]
-        principal = ET.SubElement(credential, "principal")
-        principal.text = self._module.paramgram["cred_username"]
-        suPassword = ET.SubElement(credential, "suPassword")
-        if self._module.paramgram["super_password"]:
-            suPassword.text = self._module.paramgram["super_password"]
-
-        # ADD DEV TYPE
-        deviceType = ET.Element("deviceType")
-        accessMethod.append(deviceType)
-        accessProtocols = ET.SubElement(deviceType, "accessProtocols")
-        accessProtocols.text = self._module.paramgram["access_protocol"]
-        model = ET.SubElement(deviceType, "model")
-        model.text = "Generic"
-        vendor = ET.SubElement(deviceType, "vendor")
-        vendor.text = "Generic"
-        version = ET.SubElement(deviceType, "version")
-        version.text = "ANY"
-
-        # ADD IP ACCESS MAPPINGS
-        if self._module.paramgram["ip_range"]:
-            ipAccessMappings = ET.Element("ipAccessMappings")
-            accessConfigs.append(ipAccessMappings)
-            ipAccessMapping = ET.Element("ipAccessMapping")
-            ipAccessMappings.append(ipAccessMapping)
-            if self._module.paramgram["access_id"]:
-                ipAccessMethodId = ET.SubElement(ipAccessMapping, "accessMethodId")
-                ipAccessMethodId.text = self._module.paramgram["access_id"]
-            ipRange = ET.SubElement(ipAccessMapping, "ipRange")
-            ipRange.text = self._module.paramgram["ip_range"]
-        else:
-            ipAccessMappings = ET.Element("ipAccessMappings")
-            accessConfigs.append(ipAccessMappings)
-
-        xmlstr = ET.tostring(accessConfigs, 'utf-8')
-        return xmlstr
-
-    def create_discover_payload(self):
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
-        discoverRequest = ET.Element("discoverRequest")
-        type = ET.SubElement(discoverRequest, "type")
-        type.text = self._module.paramgram["type"]
-        if self._module.paramgram["root_ip"] and self._module.paramgram["type"] == "SmartScan":
-            rootIP = ET.SubElement(discoverRequest, "rootIP")
-            rootIP.text = self._module.paramgram["root_ip"]
-        includeRange = ET.SubElement(discoverRequest, "includeRange")
-        includeRange.text = self._module.paramgram["include_range"]
-        excludeRange = ET.SubElement(discoverRequest, "excludeRange")
-        excludeRange.text = self._module.paramgram["exclude_range"]
-        # PROCESS OPTIONS
-        noPing = ET.SubElement(discoverRequest, "noPing")
-        noPing.text = str(self._module.paramgram["no_ping"]).lower()
-        onlyPing = ET.SubElement(discoverRequest, "onlyPing")
-        onlyPing.text = str(self._module.paramgram["only_ping"]).lower()
-
-        delta = ET.SubElement(discoverRequest, "delta")
-        delta.text = str(self._module.paramgram["delta"]).lower()
-
-        vmOff = ET.SubElement(discoverRequest, "vmOff")
-        vmOff.text = str(self._module.paramgram["vm_off"]).lower()
-
-        vmTemplate = ET.SubElement(discoverRequest, "vmTemplate")
-        vmTemplate.text = str(self._module.paramgram["vm_templates"]).lower()
-
-        discoverRoute = ET.SubElement(discoverRequest, "discoverRoute")
-        discoverRoute.text = str(self._module.paramgram["discover_routes"]).lower()
-
-        winexeBased = ET.SubElement(discoverRequest, "winexeBased")
-        winexeBased.text = str(self._module.paramgram["winexe_based"]).lower()
-
-        unmanaged = ET.SubElement(discoverRequest, "unmanaged")
-        unmanaged.text = str(self._module.paramgram["unmanaged"]).lower()
-
-        monitorWinEvents = ET.SubElement(discoverRequest, "monitorWinEvents")
-        monitorWinEvents.text = str(self._module.paramgram["monitor_win_events"]).lower()
-
-        monitorWinPatch = ET.SubElement(discoverRequest, "monitorWinPatch")
-        monitorWinPatch.text = str(self._module.paramgram["monitor_win_patches"]).lower()
-
-        monitorInstSw = ET.SubElement(discoverRequest, "monitorInstSw")
-        monitorInstSw.text = str(self._module.paramgram["monitor_installed_sw"]).lower()
-
-        nameResolutionDnsFirst = ET.SubElement(discoverRequest, "nameResolutionDnsFirst")
-        nameResolutionDnsFirst.text = str(self._module.paramgram["name_resolution_dns_first"]).lower()
-
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
-        xmlstr = ET.tostring(discoverRequest, 'utf-8')
-        return xmlstr
-
-    def create_maint_payload(self):
-        """
-
-        :return:
-        """
-        MaintSchedules = ET.Element("MaintSchedules")
-        MaintSchedule = ET.Element("MaintSchedule")
-        MaintSchedules.append(MaintSchedule)
-        name = ET.SubElement(MaintSchedule, "name")
-        name.text = self._module.paramgram["name"]
-        description = ET.SubElement(MaintSchedule, "description")
-        description.text = self._module.paramgram["description"]
-        fireIncidents = ET.SubElement(MaintSchedule, "fireIncidents")
-        fireIncidents.text = str(self._module.paramgram["fire_incidents"]).lower()
-        timeZoneId = ET.SubElement(MaintSchedule, "timeZoneId")
-        timeZoneId.text = self._module.paramgram["time_zone_id"]
-
-        # ADD DEVICES, LOOP IF NEEDED
-        devices = ET.SubElement(MaintSchedule, "devices")
-        device = ET.SubElement(devices, "device")
-        device.text = self._module.paramgram["devices"]
-
-        # ADD GROUPS, LOOP IF NEEDED
-        if self._module.paramgram["groups"]:
-            groups = ET.SubElement(MaintSchedule, "groups")
-            group = ET.SubElement(groups, "group")
-            group.text = self._module.paramgram["groups"]
-        else:
-            groups = ET.SubElement(MaintSchedule, "groups")
-
-        # ADD SCHEDULE
-        schedule = ET.Element("schedule")
-        MaintSchedule.append(schedule)
-        startHour = ET.SubElement(schedule, "startHour")
-        startHour.text = self._module.paramgram["start_hour"]
-        startMin = ET.SubElement(schedule, "startMin")
-        startMin.text = self._module.paramgram["start_min"]
-        duration = ET.SubElement(schedule, "duration")
-        duration.text = self._module.paramgram["duration"]
-        timeZone = ET.SubElement(schedule, "timeZone")
-        timeZone.text = self._module.paramgram["time_zone"]
-        startDate = ET.SubElement(schedule, "startDate")
-        startDate.text = self._module.paramgram["start_date"]
-        endDate = ET.SubElement(schedule, "endDate")
-        endDate.text = self._module.paramgram["end_date"]
-        endDateOpen = ET.SubElement(schedule, "endDateOpen")
-        endDateOpen.text = "false"
-        if self._module.paramgram["end_date_open"]:
-            endDateOpen.text = "true"
-
-        xmlstr = ET.tostring(MaintSchedules, 'utf-8')
-        return xmlstr
-
     def create_ssl_context(self):
         """
+        Creates the SSL context for handling certificates.
 
+<<<<<<< HEAD
         :return:
 >>>>>>> Full FSM Commit
+=======
+        :return: ssl context object
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         ignore_ssl_setting = None
         ctx = None
@@ -385,10 +183,14 @@ class FortiSIEMHandler(object):
             ignore_ssl_setting = self._module.paramgram["ignore_ssl_errors"]
         except BaseException as err:
 <<<<<<< HEAD
+<<<<<<< HEAD
             FSMBaseException(msg="create_ssl_context() failed to ignore ssl setting" + str(err))
 =======
             FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+            FSMBaseException(msg="create_ssl_context() failed to ignore ssl setting" + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
         if ignore_ssl_setting == "enable":
             ctx = ssl.create_default_context()
@@ -404,6 +206,7 @@ class FortiSIEMHandler(object):
     def create_auth_header(self):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         Creates authentication header for FortiSIEM API calls based on username and password.
 
         :return: Base64 Encoded string
@@ -412,17 +215,27 @@ class FortiSIEMHandler(object):
                                            self._module.paramgram["password"])
         auth = "Basic %s" % encode_password
 =======
+=======
+        Creates authentication header for FortiSIEM API calls based on username and password.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
-        :return:
+        :return: Base64 Encoded string
         """
+<<<<<<< HEAD
         encodePassword = base64.b64encode(self._module.paramgram["username"] + ":" +
                                           self._module.paramgram["password"])
         auth = "Basic %s" % encodePassword
 >>>>>>> Full FSM Commit
+=======
+        encode_password = base64.b64encode(self._module.paramgram["username"] + ":" +
+                                           self._module.paramgram["password"])
+        auth = "Basic %s" % encode_password
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return auth
 
     def create_endpoint_url(self):
         """
+<<<<<<< HEAD
 <<<<<<< HEAD
         Joins the host and URI into a full URL for the FortiSIEMHandler class to use.
 
@@ -431,12 +244,18 @@ class FortiSIEMHandler(object):
 
         :return:
 >>>>>>> Full FSM Commit
+=======
+        Joins the host and URI into a full URL for the FortiSIEMHandler class to use.
+
+        :return: string
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         url = "https://" + self._module.paramgram["host"] + self._module.paramgram["uri"]
         return url
 
     def submit_simple_request(self, auth, url):
         """
+<<<<<<< HEAD
 <<<<<<< HEAD
         Submits a simple GET request without an XML payload.
 
@@ -450,6 +269,14 @@ class FortiSIEMHandler(object):
         :param url:
         :return:
 >>>>>>> Full FSM Commit
+=======
+        Submits a simple GET request without an XML payload.
+
+        :param auth: Authentication header created in create_auth_header()
+        :param url: URL created in create_endpoint_url()
+
+        :return: xml
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         req = urllib2.Request(url, None, {"Authorization": auth})
         out_xml = None
@@ -462,6 +289,7 @@ class FortiSIEMHandler(object):
                 self.last_http_return_url = url
             except BaseException as err:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 raise FSMBaseException(msg="submit_simple_request() failed to get http codes. Error: " + str(err))
         except BaseException as err:
             raise FSMBaseException(msg="submit_simple_request() failed" + str(err))
@@ -470,16 +298,25 @@ class FortiSIEMHandler(object):
         except BaseException as err:
             raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+                raise FSMBaseException(msg="submit_simple_request() failed to get http codes. Error: " + str(err))
+        except BaseException as err:
+            raise FSMBaseException(msg="submit_simple_request() failed" + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return out_xml
 
     def submit_simple_payload_request(self, auth, url, payload):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         Submits a simple GET request with an XML payload.
 
         :param auth: Authentication header created in create_auth_header()
         :param url: URL created in create_endpoint_url()
         :param payload: XML payload in string form
+<<<<<<< HEAD
 
         :return: xml
 =======
@@ -489,6 +326,10 @@ class FortiSIEMHandler(object):
         :param payload:
         :return:
 >>>>>>> Full FSM Commit
+=======
+
+        :return: xml
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         req = urllib2.Request(url, payload, {"Authorization": auth,
                                              "Content-Type": "text/xml",
@@ -507,6 +348,7 @@ class FortiSIEMHandler(object):
                 self.last_http_return_headers = handle.info()
                 self.last_http_return_url = url
             except BaseException as err:
+<<<<<<< HEAD
 <<<<<<< HEAD
                 raise FSMBaseException(msg="submit_simple_payload_request() couldn't "
                                            "get the HTTP codes. Error: " + str(err))
@@ -532,10 +374,26 @@ class FortiSIEMHandler(object):
                 raise FSMBaseException(msg)
             raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+                raise FSMBaseException(msg="submit_simple_payload_request() couldn't "
+                                           "get the HTTP codes. Error: " + str(err))
+        except urllib2.HTTPError as err:
+            error_msg = err.read()
+            if "HTTP Status 500" in error_msg:
+                raise FSMBaseException(msg="submit_simple_payload_request(): "
+                                           "500 Internal Server Error. In our experience, "
+                                           "this means the object exists or doesn't. "
+                                           "If that doesn't work, double check your inputs. "
+                                           "Perhaps it already exists? "
+                                           "You should change the mode, most likely. "
+                                           "HTTP Error: " + str(error_msg))
+            raise FSMBaseException(msg="submit_simple_payload_request() HTTP Error: " + str(error_msg))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return out_xml
 
     def handle_simple_request(self):
         """
+<<<<<<< HEAD
 <<<<<<< HEAD
         Handles the "simple" get request without an XML payload, from end-to-end, including result formatting.
 
@@ -543,10 +401,17 @@ class FortiSIEMHandler(object):
         """
         formatted_output_dict = None
 =======
+=======
+        Handles the "simple" get request without an XML payload, from end-to-end, including result formatting.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
-        :return:
+        :return: dict
         """
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
+=======
+        formatted_output_dict = None
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         auth = self.create_auth_header()
         url = self.create_endpoint_url()
         output_xml = self.submit_simple_request(auth, url)
@@ -554,6 +419,7 @@ class FortiSIEMHandler(object):
             if "<password>" in output_xml:
                 output_xml = re.sub(r'(<password>.*?<\/password>)', '', output_xml)
                 output_xml = re.sub(r'(<suPassword>.*?<\/suPassword>)', '', output_xml)
+<<<<<<< HEAD
 <<<<<<< HEAD
         except BaseException as err:
             pass
@@ -567,6 +433,13 @@ class FortiSIEMHandler(object):
             try:
                 output_json = self.xml2dict(output_xml)
 >>>>>>> Full FSM Commit
+=======
+        except BaseException as err:
+            pass
+        if output_xml:
+            try:
+                output_json = self._tools.xml2dict(output_xml)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
                 formatted_output_dict = self.format_results(output_json, output_xml)
             except BaseException as err:
                 try:
@@ -575,11 +448,16 @@ class FortiSIEMHandler(object):
                     formatted_output_dict = self.format_results(output_json, output_xml)
                 except BaseException as err:
 <<<<<<< HEAD
+<<<<<<< HEAD
                     raise FSMBaseException(msg="handle_simple_request() couldn't deal with the response. "
                                                "Error:" + str(err))
 =======
                     raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+                    raise FSMBaseException(msg="handle_simple_request() couldn't deal with the response. "
+                                               "Error:" + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
         elif not output_xml:
             output_json = {"status": "OK"}
@@ -590,6 +468,7 @@ class FortiSIEMHandler(object):
     def handle_simple_payload_request(self, payload):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         Handles the  get request with an XML payload, from end-to-end, including result formatting.
 
         :return: dict
@@ -598,19 +477,26 @@ class FortiSIEMHandler(object):
         auth = self.create_auth_header()
         url = self.create_endpoint_url()
 =======
+=======
+        Handles the  get request with an XML payload, from end-to-end, including result formatting.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
-        :param payload:
-        :return:
+        :return: dict
         """
+        formatted_output_dict = None
         auth = self.create_auth_header()
         url = self.create_endpoint_url()
+<<<<<<< HEAD
         #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         output_xml = self.submit_simple_payload_request(auth, url, payload)
         try:
             if "<password>" in output_xml:
                 output_xml = re.sub(r'(<password>.*?<\/password>)', '', output_xml)
                 output_xml = re.sub(r'(<suPassword>.*?<\/suPassword>)', '', output_xml)
+<<<<<<< HEAD
 <<<<<<< HEAD
         except BaseException as err:
             pass
@@ -624,6 +510,13 @@ class FortiSIEMHandler(object):
             try:
                 output_json = self.xml2dict(output_xml)
 >>>>>>> Full FSM Commit
+=======
+        except BaseException as err:
+            pass
+        if output_xml:
+            try:
+                output_json = self._tools.xml2dict(output_xml)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
                 formatted_output_dict = self.format_results(output_json, output_xml)
                 formatted_output_dict["payload"] = payload
             except BaseException as err:
@@ -634,11 +527,16 @@ class FortiSIEMHandler(object):
                     formatted_output_dict["payload"] = payload
                 except BaseException as err:
 <<<<<<< HEAD
+<<<<<<< HEAD
                     raise FSMBaseException(msg="handle_simple_payload_request() couldn't deal with the response. "
                                                "Error:" + str(err))
 =======
                     raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+                    raise FSMBaseException(msg="handle_simple_payload_request() couldn't deal with the response. "
+                                               "Error:" + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
         elif not output_xml:
             output_json = {"status": "OK"}
@@ -649,18 +547,25 @@ class FortiSIEMHandler(object):
 
     def handle_syslog_request(self):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         Handles a syslog request from end-to-end, and reports on the results.
 
         :return: dict
         """
+<<<<<<< HEAD
 =======
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         output_dict = {"status": "FAILED", "message": "None"}
         try:
             log = SendSyslog(host=self._module.paramgram["syslog_host"],
                              port=self._module.paramgram["network_port"],
                              protocol=self._module.paramgram["network_protocol"],
+<<<<<<< HEAD
 <<<<<<< HEAD
                              level=self._module.paramgram["syslog_level"],
                              facility=self._module.paramgram["syslog_facility"],
@@ -679,10 +584,21 @@ class FortiSIEMHandler(object):
         except BaseException(err):
             raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+                             level=self._module.paramgram["syslog_level"],
+                             facility=self._module.paramgram["syslog_facility"],
+                             ssl_context=self.create_ssl_context(),
+                             )
+            output_dict = log.send(header=self._module.paramgram["syslog_header"],
+                                   message=self._module.paramgram["syslog_message"])
+        except BaseException as err:
+            raise FSMBaseException(msg="handle_syslog_request() couldn't send the syslog. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return output_dict
 
     def format_results(self, json_results, xml_results):
         """
+<<<<<<< HEAD
 <<<<<<< HEAD
         Takes the JSON and XML results from multiple "handlers" and formats them into a structured return dictionary.
 
@@ -694,16 +610,20 @@ class FortiSIEMHandler(object):
 
 =======
         Formats the payload from the module, into a payload exit_json() can work with, and that we can rely on.
+=======
+        Takes the JSON and XML results from multiple "handlers" and formats them into a structured return dictionary.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
-        :param method: The preferred API Request method (GET, ADD, POST, etc....)
-        :type method: basestring
-        :param results: JSON Package of the results
-        :type results: dict
+        :param json_results: The results from an API call, in JSON form
+        :param xml_results: The results from an API call, in XML form
 
-        :return: Properly formatted dictionary payload exit_json() can work with, and that we can rely on.
-        :rtype: dict
+        :return:dict
         """
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         formatted_results = dict()
         formatted_results["rc"] = self.last_http_return_code
         formatted_results["http_metadata"] = {
@@ -741,6 +661,9 @@ class FortiSIEMHandler(object):
     def format_verify_judge_device_results(self, ip_to_verify, cmdb, events, monitors):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         Does the same as format_results(), however, it is specific to the fsm_verify_device module.
         These calls require careful formatting.
 
@@ -748,23 +671,25 @@ class FortiSIEMHandler(object):
         :param cmdb: cmdb results from verification
         :param events: event results from verification
         :param monitors: monitor results from verifiction
+<<<<<<< HEAD
 
         :return: dict
         """
 
         return_dict = dict()
 =======
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
-        :param ip_to_verify:
-        :param cmdb:
-        :param events:
-        :param monitors:
-        :return:
+        :return: dict
         """
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
 
+<<<<<<< HEAD
         return_dict = {}
 >>>>>>> Full FSM Commit
+=======
+        return_dict = dict()
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return_dict["device"] = {}
         return_dict["json_results"] = {}
         missing = []
@@ -776,10 +701,14 @@ class FortiSIEMHandler(object):
             try:
                 return_dict["device"]["cmdb_results"] = cmdb["json_results"]["device"]
 <<<<<<< HEAD
+<<<<<<< HEAD
             except BaseException as err:
 =======
             except:
 >>>>>>> Full FSM Commit
+=======
+            except BaseException as err:
+>>>>>>> Full FSM Commit. Ready for shippable tests.
                 return_dict["device"]["cmdb_results"] = None
         if not events:
             missing.append("events")
@@ -790,18 +719,26 @@ class FortiSIEMHandler(object):
                 self._tools.get_events_info_for_specific_ip(events)
 =======
             return_dict["device"]["event_results"] =\
+<<<<<<< HEAD
                 self.get_events_info_for_specific_ip(events)
 >>>>>>> Full FSM Commit
+=======
+                self._tools.get_events_info_for_specific_ip(events)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         if not monitors:
             missing.append("monitors")
         else:
             present.append("monitors")
             return_dict["device"]["monitor_results"] = \
 <<<<<<< HEAD
+<<<<<<< HEAD
                 self._tools.get_monitors_info_for_specific_ip(monitors, ip_to_verify)
 =======
                 self.get_monitors_info_for_specific_ip(monitors, ip_to_verify)
 >>>>>>> Full FSM Commit
+=======
+                self._tools.get_monitors_info_for_specific_ip(monitors, ip_to_verify)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
         return_dict["rc"] = self.last_http_return_code
         return_dict["http_metadata"] = {
@@ -815,6 +752,7 @@ class FortiSIEMHandler(object):
 
         try:
             return_dict["json_results"]["Name"] = return_dict["device"]["cmdb_results"]["name"]
+<<<<<<< HEAD
 <<<<<<< HEAD
         except BaseException as err:
             return_dict["json_results"]["Name"] = "Not Found"
@@ -854,266 +792,57 @@ class FortiSIEMHandler(object):
         :param json_results: json to write to file
 =======
         except:
+=======
+        except BaseException as err:
+>>>>>>> Full FSM Commit. Ready for shippable tests.
             return_dict["json_results"]["Name"] = "Not Found"
         try:
             return_dict["json_results"]["Access IP"] = return_dict["device"]["cmdb_results"]["accessIp"]
-        except:
+        except BaseException as err:
             return_dict["json_results"]["Access IP"] = self._module.paramgram["ip_to_verify"]
         try:
             return_dict["json_results"]["Discover Methods"] = return_dict["device"]["cmdb_results"]["discoverMethod"]
-        except:
+        except BaseException as err:
             return_dict["json_results"]["Discover Methods"] = "Not Found"
         try:
             return_dict["json_results"]["Distinct Event Types"] = len(return_dict["device"]["event_results"])
-        except:
+        except BaseException as err:
             return_dict["json_results"]["Distinct Event Types"] = None
         try:
-            return_dict["json_results"]["Num of Events"] = self.get_event_count_for_specific_ip(events)
-        except:
+            return_dict["json_results"]["Num of Events"] = self._tools.get_event_count_for_specific_ip(events)
+        except BaseException as err:
             return_dict["json_results"]["Num of Events"] = None
         try:
             return_dict["json_results"]["missing_items"] = missing
-        except:
+        except BaseException as err:
             pass
         try:
             return_dict["json_results"]["present_items"] = present
-        except:
+        except BaseException as err:
             pass
         # SCORE IT
-        scored_dict = self.score_device_verification(return_dict)
+        scored_dict = self._tools.score_device_verification(return_dict)
 
         return scored_dict
 
-    @staticmethod
-    def score_device_verification(return_dict):
-        """
-
-        :param return_dict:
-        :return:
-        """
-
-        points_per_100_events = 10
-        points_per_event_types = 10
-        points_per_discover_methods = 20
-        points_per_missing_item = -10
-        points_per_present_item = 10
-        bad_score = 100
-        ok_score = 200
-        good_score = 300
-        great_score = 500
-
-        score = 0
-        try:
-            score += (points_per_100_events * (return_dict["json_results"]["Num of Events"] / 100))
-        except BaseException as err:
-            pass
-        try:
-            score += (points_per_event_types * (return_dict["json_results"]["Distinct Event Types"]))
-        except BaseException as err:
-            pass
-        try:
-            discover_methods = str(return_dict["json_results"]["Discover Methods"])
-            score += (points_per_discover_methods * len((discover_methods.split(","))))
-        except BaseException as err:
-            pass
-        try:
-            score += (points_per_missing_item * (len(return_dict["json_results"]["missing_items"])))
-        except BaseException as err:
-            pass
-        try:
-            score += (points_per_present_item * (len(return_dict["json_results"]["present_items"])))
-        except BaseException as err:
-            pass
-        verified_dict = return_dict
-        verified_dict["json_results"]["score"] = score
-        if score < 0:
-            verified_dict["json_results"]["verified_status"] = "MISSING"
-        if score > 0 and score < bad_score:
-            verified_dict["json_results"]["verified_status"] = "BAD"
-        if score > bad_score and score < ok_score:
-            verified_dict["json_results"]["verified_status"] = "OK"
-        if score > ok_score and score < good_score:
-            verified_dict["json_results"]["verified_status"] = "GOOD"
-        if score > good_score and score < great_score:
-            verified_dict["json_results"]["verified_status"] = "GREAT"
-        if score > great_score:
-            verified_dict["json_results"]["verified_status"] = "AWESOME"
-        return verified_dict
-
-    @staticmethod
-    def append_file_with_device_results(results, file_path):
-        """
-
-        :param results:
-        :param file_path:
-        :return:
-        """
-        # CHECK IF FILE EXISTS
-        fh_contents = None
-        try:
-            fh = open(file_path, 'r')
-            fh_contents = fh.read()
-            fh.close()
-        except:
-            pass
-        # BASED ON THAT TEST, EITHER APPEND, OR OPEN A NEW FILE AND WRITE THE CSV HEADER
-        if fh_contents:
-            f = open(file_path, "a+")
-            append_string = str(results["json_results"]["Access IP"]) + \
-                            "," + str(results["json_results"]["score"]) + \
-                            "," + str(results["json_results"]["verified_status"]) + \
-                            "," + str(results["json_results"]["Name"]) + \
-                            "," + str(results["json_results"]["Distinct Event Types"]) + \
-                            "," + str(results["json_results"]["Num of Events"])
-            try:
-                missing_list = results["json_results"]["missing_items"]
-                append_string = append_string + "," + "-".join(missing_list)
-            except:
-                pass
-            try:
-                present_list = results["json_results"]["present_items"]
-                append_string = append_string + "," + "-".join(present_list)
-            except:
-                pass
-            append_string = append_string + "\n"
-            f.write(append_string)
-            f.close()
-        else:
-            f = open(file_path, "w")
-            f.write("ip, score, verified_status, Name, DistinctEventTypes, NumOfEvents, missing, present\n")
-            append_string = str(results["json_results"]["Access IP"]) + \
-                            "," + str(results["json_results"]["score"]) + \
-                            "," + str(results["json_results"]["verified_status"]) + \
-                            "," + str(results["json_results"]["Name"]) + \
-                            "," + str(results["json_results"]["Distinct Event Types"]) + \
-                            "," + str(results["json_results"]["Num of Events"])
-            try:
-                missing_list = results["json_results"]["missing_items"]
-                append_string = append_string + "," + "-".join(missing_list)
-            except:
-                pass
-            try:
-                present_list = results["json_results"]["present_items"]
-                append_string = append_string + "," + "-".join(present_list)
-            except:
-                pass
-            append_string = append_string + "\n"
-            f.write(append_string)
-            f.close()
-
-    @staticmethod
-    def get_event_count_for_specific_ip(events):
-        """
-
-        :param events:
-        :return:
-        """
-        event_count = 0
-        try:
-            for item in events["json_results"]:
-                try:
-                   current_count = int(item["COUNT(*)"])
-                   event_count += current_count
-                except:
-                    pass
-        except:
-            pass
-
-        return event_count
-
-    @staticmethod
-    def get_events_info_for_specific_ip(events):
-        """
-
-        :param events:
-        :return:
-        """
-        return_events = []
-        try:
-            for item in events["json_results"]:
-                event_dict = {
-                    "event_type": item["eventType"],
-                    "event_name": item["eventName"],
-                    "count": item["COUNT(*)"]
-                }
-                return_events.append(event_dict)
-        except:
-            pass
-
-        return return_events
-
-    @staticmethod
-    def get_monitors_summary_for_short_all(results):
-        return_dict = results
-        num_of_event_pulling_devices = 0
-        num_of_event_pulling_monitors = 0
-        num_of_perf_mon_devices = 0
-        num_of_perf_mon_monitors = 0
-        try:
-            for event_device in results["json_results"]["monitoredDevices"]["perfMonDevices"]["device"]:
-                num_of_event_pulling_devices += 1
-                for monitor in event_device["monitors"]["monitor"]:
-                    num_of_event_pulling_monitors += 1
-        except:
-            pass
-        try:
-            for perf_mon_device in results["json_results"]["monitoredDevices"]["eventPullingDevices"]["device"]:
-                num_of_perf_mon_devices += 1
-                for monitor in event_device["monitors"]["monitor"]:
-                    num_of_perf_mon_monitors += 1
-        except:
-                pass
-
-        return_dict["json_results"]["summary"] = {
-            "num_of_event_pulling_devices": str(num_of_event_pulling_devices),
-            "num_of_event_pulling_monitors": str(num_of_event_pulling_monitors),
-            "num_of_perf_mon_devices": str(num_of_perf_mon_devices),
-            "num_of_perf_mon_monitors": str(num_of_perf_mon_monitors),
-        }
-
-        return return_dict
-
-    @staticmethod
-    def get_monitors_info_for_specific_ip(monitors, ip_to_verify):
-        """
-
-        :param monitors:
-        :param ip_to_verify:
-        :return:
-        """
-        return_monitors = []
-        try:
-            event_pulling_devices = monitors["json_results"]["monitoredDevices"]["eventPullingDevices"]["device"]
-            for item in event_pulling_devices:
-                if str(item["accessIp"]) == ip_to_verify:
-                    return_monitors.append({"access_ip": str(item["accessIp"]),
-                                            "monitors": item["monitors"]["monitor"]})
-        except:
-            pass
-
-        try:
-            perf_mon_devices = monitors["json_results"]["monitoredDevices"]["perfMonDevices"]["device"]
-            for item in perf_mon_devices:
-                if str(item["accessIp"]) == ip_to_verify:
-                    return_monitors.append({"access_ip": str(item["accessIp"]),
-                                            "monitors": item["monitors"]["monitor"]})
-        except:
-            pass
-
-        return return_monitors
-
     def json_results_to_file_path(self, json_results):
         """
+        Writes results to a JSON file. Formats the JSON.
 
+<<<<<<< HEAD
         :param json_results:
         :return:
 >>>>>>> Full FSM Commit
+=======
+        :param json_results: json to write to file
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         try:
             f = open(self.export_json_to_file_path, "w")
             f.write(json.dumps(json_results, indent=4, sort_keys=True))
             f.close()
         except BaseException as err:
+<<<<<<< HEAD
 <<<<<<< HEAD
             raise FSMBaseException(msg="JSON Failed to write to file: " + str(self.export_json_to_file_path) +
                                        "| Error: " + str(err))
@@ -1125,13 +854,22 @@ class FortiSIEMHandler(object):
         :param xml_results: xml to write to file
 =======
             raise FSMBaseException(err)
+=======
+            raise FSMBaseException(msg="JSON Failed to write to file: " + str(self.export_json_to_file_path) +
+                                       "| Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     def xml_results_to_file_path(self, xml_results):
         """
+        Writes results to a XML file. Pretty-Prints the XML.
 
+<<<<<<< HEAD
         :param xml_results:
         :return:
 >>>>>>> Full FSM Commit
+=======
+        :param xml_results: xml to write to file
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         try:
             xml_out = xml.dom.minidom.parseString(xml_results)
@@ -1140,6 +878,7 @@ class FortiSIEMHandler(object):
             f.write(xml_pretty)
             f.close()
         except BaseException as err:
+<<<<<<< HEAD
 <<<<<<< HEAD
             raise FSMBaseException(msg="XML Failed to write to file: " + str(self.export_xml_to_file_path) +
                                        "| Error: " + str(err))
@@ -1151,19 +890,29 @@ class FortiSIEMHandler(object):
         :param csv_results: csv to write to file
 =======
             raise FSMBaseException(err)
+=======
+            raise FSMBaseException(msg="XML Failed to write to file: " + str(self.export_xml_to_file_path) +
+                                       "| Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     def csv_results_to_file_path(self, csv_results):
         """
+        Writes results to a CSV file
 
+<<<<<<< HEAD
         :param csv_results:
         :return:
 >>>>>>> Full FSM Commit
+=======
+        :param csv_results: csv to write to file
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         try:
             f = open(self.export_csv_to_file_path, "w")
             f.write(csv_results)
             f.close()
         except BaseException as err:
+<<<<<<< HEAD
 <<<<<<< HEAD
             raise FSMBaseException(msg="CSV Failed to write to file: " + str(self.export_csv_to_file_path) +
                                        "| Error: " + str(err))
@@ -1196,28 +945,42 @@ class FortiSIEMHandler(object):
         :return: xml
 =======
             raise FSMBaseException(err)
+=======
+            raise FSMBaseException(msg="CSV Failed to write to file: " + str(self.export_csv_to_file_path) +
+                                       "| Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
-    def get_report_source_from_file_path(self, report_file_path):
+    def get_file_contents(self, file_path):
+        """
+        Gets the contents of a file. Commonly used with modules that allow custom XML files.
+
+        :param file_path: path of file to collect contents
+
+        :return: string of file contents
         """
 
-        :param report_file_path:
-        :return:
-        """
+        source = None
         try:
-            f = open(report_file_path, "r")
-            report_source = f.read()
+            f = open(file_path, "r")
+            source = f.read()
             f.close()
-            self.report_xml_source = report_source
+            self.report_xml_source = source
         except BaseException as err:
-            FSMBaseException(err)
+            FSMBaseException(msg="Failed to get file contents at path: " + str(self.export_json_to_file_path) +
+                                       "| Error: " + str(err))
 
-        return report_source
+        return source
 
     def handle_report_submission(self):
         """
+        End-to-End handler for submitting a report. Sends report, waits for finish, and gets results.
 
+<<<<<<< HEAD
         :return:
 >>>>>>> Full FSM Commit
+=======
+        :return: xml
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         self.post_report_get_query_id()
         self.wait_for_query_finish()
@@ -1227,6 +990,7 @@ class FortiSIEMHandler(object):
     def post_report_get_query_id(self):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         Submits report XML for query, and returns the query ID.
 
         No return. Writes query_id to self.
@@ -1235,13 +999,20 @@ class FortiSIEMHandler(object):
         url = self.create_endpoint_url()
         report_xml = self._tools.prepare_report_xml_query(self._module.paramgram["input_xml"])
 =======
+=======
+        Submits report XML for query, and returns the query ID.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
-        :return:
+        No return. Writes query_id to self.
         """
         self.next_http_auth = self.create_auth_header()
         url = self.create_endpoint_url()
+<<<<<<< HEAD
         report_xml = self.prepare_report_xml_query(self._module.paramgram["input_xml"])
 >>>>>>> Full FSM Commit
+=======
+        report_xml = self._tools.prepare_report_xml_query(self._module.paramgram["input_xml"])
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         query_id = self.submit_report_request(self.next_http_auth, url, report_xml)
         self.report_query_id = query_id
 
@@ -1251,11 +1022,15 @@ class FortiSIEMHandler(object):
     def wait_for_query_finish(self):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         Waits for a specified query ID to reach 100% completion, then exits the time loop.
 =======
 
         :return:
 >>>>>>> Full FSM Commit
+=======
+        Waits for a specified query ID to reach 100% completion, then exits the time loop.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         query_id = self.report_query_id
         self._module.paramgram["uri"] = FSMEndpoints.GET_REPORT_PROGRESS + str(query_id)
@@ -1268,6 +1043,7 @@ class FortiSIEMHandler(object):
     def retrieve_finished_query(self):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         Gets results from a finished report. Formats results for return.
 
         :return: dict
@@ -1275,6 +1051,11 @@ class FortiSIEMHandler(object):
 
         :return:
 >>>>>>> Full FSM Commit
+=======
+        Gets results from a finished report. Formats results for return.
+
+        :return: dict
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         query_id = self.report_query_id
         self._module.paramgram["uri"] = FSMEndpoints.GET_REPORT_RESULTS + str(query_id) + "/0/1000"
@@ -1290,11 +1071,16 @@ class FortiSIEMHandler(object):
             row_count = int(row_count)
         except BaseException as err:
 <<<<<<< HEAD
+<<<<<<< HEAD
             raise FSMBaseException(msg="retrieve_finished_query() couldn't count the rows. "
                                        "This suggest a major change in API return format. Error: " + str(err))
 =======
             raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+            raise FSMBaseException(msg="retrieve_finished_query() couldn't count the rows. "
+                                       "This suggest a major change in API return format. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
         if row_count > 1000:
             pages = int(row_count) / 1000
@@ -1309,6 +1095,9 @@ class FortiSIEMHandler(object):
 
         # FORMAT THE RETURN DICTIONARY
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         if row_count > 0:
             combined_xml_string = self._tools.merge_xml_from_list_to_string(out_xml)
             raw_output_json = self._tools.xml2dict(combined_xml_string)
@@ -1330,6 +1119,7 @@ class FortiSIEMHandler(object):
             formatted_output_dict["row_count"] = "0"
             formatted_output_dict["query_id"] = query_id
             formatted_output_dict["xml_query"] = self.report_xml_source
+<<<<<<< HEAD
 =======
         combined_xml_string = self.merge_xml_from_list_to_string(out_xml)
         raw_output_json = self.xml2dict(combined_xml_string)
@@ -1344,17 +1134,23 @@ class FortiSIEMHandler(object):
         formatted_output_dict["query_id"] = formatted_output_dict["json_results_raw"]["queryResult"]["@queryId"]
         formatted_output_dict["xml_query"] = self.report_xml_source
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
         return formatted_output_dict
 
     def submit_report_request(self, auth, url, report_xml):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         Submits the report request to the API.
 
         :param auth: Authentication header created in create_auth_header()
         :param url: URL created in create_endpoint_url()
         :param report_xml: string format of the report XML to be submitted.
+<<<<<<< HEAD
 
         :return: xml
 =======
@@ -1364,6 +1160,10 @@ class FortiSIEMHandler(object):
         :param report_xml:
         :return:
 >>>>>>> Full FSM Commit
+=======
+
+        :return: xml
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         headers = {'Content-Type': 'text/xml', 'Authorization': auth}
         req = urllib2.Request(url, report_xml, headers)
@@ -1377,6 +1177,7 @@ class FortiSIEMHandler(object):
                 self.last_http_return_url = url
             except BaseException as err:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 raise FSMBaseException(msg="submit_report_request() failed to get last HTTP codes. Error: " + str(err))
         except BaseException as err:
             raise FSMBaseException(msg="submit_report_request() failed. Error: " + str(err))
@@ -1385,15 +1186,24 @@ class FortiSIEMHandler(object):
         except BaseException as err:
             raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+                raise FSMBaseException(msg="submit_report_request() failed to get last HTTP codes. Error: " + str(err))
+        except BaseException as err:
+            raise FSMBaseException(msg="submit_report_request() failed. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return out_xml
 
     def get_query_progress(self, auth, url):
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         Checks on the progress of a query ID.
 
         :param auth: Authentication header created in create_auth_header()
         :param url: URL created in create_endpoint_url()
+<<<<<<< HEAD
 
         :return: xml
 =======
@@ -1402,6 +1212,10 @@ class FortiSIEMHandler(object):
         :param url:
         :return:
 >>>>>>> Full FSM Commit
+=======
+
+        :return: xml
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
 
         headers = {'Content-Type': 'text/xml', 'Authorization': auth}
@@ -1414,14 +1228,19 @@ class FortiSIEMHandler(object):
                 raise FSMBaseException(msg="Query Error, invalid query_id used to query progress.")
         except BaseException as err:
 <<<<<<< HEAD
+<<<<<<< HEAD
             raise FSMBaseException(msg="get_query_progress() failed. Error: " + str(err))
 =======
             raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+            raise FSMBaseException(msg="get_query_progress() failed. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return out_xml
 
     def get_query_results(self, auth, url):
         """
+<<<<<<< HEAD
 <<<<<<< HEAD
         Gets the results of a specific query ID.
 
@@ -1435,6 +1254,14 @@ class FortiSIEMHandler(object):
         :param url:
         :return:
 >>>>>>> Full FSM Commit
+=======
+        Gets the results of a specific query ID.
+
+        :param auth: Authentication header created in create_auth_header()
+        :param url: URL created in create_endpoint_url()
+
+        :return: xml
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         headers = {'Content-Type': 'text/xml', 'Authorization': auth}
         req = urllib2.Request(url, None, headers)
@@ -1445,6 +1272,7 @@ class FortiSIEMHandler(object):
             if 'error code="255"' in out_xml:
                 raise FSMBaseException(msg="Query Error.")
         except BaseException as err:
+<<<<<<< HEAD
 <<<<<<< HEAD
             raise FSMBaseException(msg="get_query_results() failed. Error: " + str(err))
         return out_xml
@@ -1459,142 +1287,18 @@ class FortiSIEMHandler(object):
         current_epoch = self._tools.convert_timestamp_to_epoch(current_datetime)
 =======
             raise FSMBaseException(err)
+=======
+            raise FSMBaseException(msg="get_query_results() failed. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return out_xml
 
-    @staticmethod
-    def prepare_report_xml_query(xml_report):
+    def get_relative_epoch(self, relative_mins):
         """
-
-        :param xml_report:
-        :return:
+        Returns an EPOCH value which has subtracted X relative_mins.
+        :param relative_mins: Number of minutes to subtract from current time before converting to epoch
+        :return: epoch
         """
-        try:
-            doc = xml.dom.minidom.parseString(xml_report)
-            t = doc.toxml()
-            if '<DataRequest' in t:
-                t1 = t.replace("<DataRequest", "<Reports><Report")
-            else:
-                t1 = t
-            if '</DataRequest>' in t1:
-                t2 = t1.replace("</DataRequest>", "</Report></Reports>")
-            else:
-                t2 = t1
-        except BaseException as err:
-            raise FSMBaseException(err)
-        return t2
-
-    @staticmethod
-    def merge_xml_from_list_to_string(input_list):
-        """
-
-        :param input_list:
-        :return:
-        """
-        out_string = ""
-        loop_count = 1
-        list_len = len(input_list)
-        for item in input_list:
-            if loop_count == 1:
-                out_string = out_string + item.replace('</events>\n', '').replace('</queryResult>\n', '')
-                out_string = re.sub(u'(?imu)^\s*\n', u'', out_string)
-            if loop_count > 1 and loop_count <= list_len:
-                stripped_item = item.replace('</events>\n', '').replace('</queryResult>\n', '')
-                stripped_item = stripped_item.replace('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n', '')
-                stripped_item = re.sub("<queryResult.*\n", "", stripped_item)
-                stripped_item = re.sub("<events>\n", "", stripped_item)
-                out_string = out_string + stripped_item
-            if loop_count == list_len:
-                out_string = out_string + "\n    </events>\n</queryResult>"
-            loop_count += 1
-        return out_string
-
-    @staticmethod
-    def xml2dict(xml_in):
-        """
-
-        :param xml_in:
-        :return:
-        """
-        xml_out = xmltodict.parse(xml_in, process_namespaces=True)
-        json_out = json.dumps(xml_out)
-        dict_out = json.loads(json_out)
-        return dict_out
-
-    @staticmethod
-    def dict2xml(dict_in):
-        xml_out = xmltodict.unparse(dict_in, pretty=True)
-        return xml_out
-
-    @staticmethod
-    def print_report_result(param):
-        """
-
-        :param param:
-        :return:
-        """
-        if len(param) == 0:
-            print "No records found. Exit"
-            exit()
-        else:
-            print "Total records %d" % len(param)
-            keys = param[0].keys()
-            print ','.join(keys)
-            for item in param:
-                itemKeys = item.keys()
-                value = []
-                for key in keys:
-                    if key not in itemKeys:
-                        value.append('')
-                    else:
-                        value.append(item[key])
-                print ','.join(value)
-
-    @staticmethod
-    def report_result_to_csv(param):
-        """
-
-        :param param:
-        :return:
-        """
-        return_string = ""
-        if len(param) == 0:
-            return_string = "No records found. Exit"
-            exit()
-        else:
-            keys = param[0].keys()
-            return_string = return_string + ','.join(keys)
-            return_string = return_string + "\n"
-            for item in param:
-                itemKeys = item.keys()
-                value = []
-                for key in keys:
-                    if key not in itemKeys:
-                        value.append('')
-                    else:
-                        value.append(item[key])
-                return_string = return_string + ','.join(value)
-                return_string = return_string + "\n"
-        return return_string
-
-    @staticmethod
-    def validate_xml(input_xml):
-        """
-
-        :param input_xml:
-        :return:
-        """
-        try:
-            doc = xml.dom.minidom.parseString(input_xml)
-        except BaseException as err:
-            raise FSMBaseException(err)
-
-    @staticmethod
-    def dump_xml(xml_list):
-        """
-
-        :param xml_list:
-        :return:
-        """
+<<<<<<< HEAD
         param = []
         for item in xml_list:
             doc = xml.dom.minidom.parseString(item.encode('ascii', 'xmlcharrefreplace'))
@@ -1622,18 +1326,26 @@ class FortiSIEMHandler(object):
         current_datetime = self.get_current_datetime()
         current_epoch = self.convert_timestamp_to_epoch(current_datetime)
 >>>>>>> Full FSM Commit
+=======
+        current_datetime = self._tools.get_current_datetime()
+        current_epoch = self._tools.convert_timestamp_to_epoch(current_datetime)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         subtract_seconds = relative_mins * 60
         relative_epoch = float(current_epoch) - float(subtract_seconds)
         return relative_epoch
 
     def get_absolute_epoch(self):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         Returns two epoch values, begin and end dates. Dates are specified in absolute parameters in the
         fsm_report_query module. These epoch values are then "slipped" into the XML before submitting.
 
         :return: two epoch values, begin and end dates.
         """
+<<<<<<< HEAD
         start_epoch = None
         end_epoch = None
         # BUILD THE TIMESTAMP
@@ -1658,59 +1370,39 @@ class FortiSIEMHandler(object):
         high_epoch = self._tools.convert_timestamp_to_epoch(self._module.paramgram["report_absolute_end_date"] + " " +
                                                             self._module.paramgram["report_absolute_end_time"])
 =======
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         start_epoch = None
         end_epoch = None
         # BUILD THE TIMESTAMP
-        begin_timestamp = self._module.paramgram["report_absolute_begin_date"] + " " + \
-                          self._module.paramgram["report_absolute_begin_time"]
-        end_timestamp = self._module.paramgram["report_absolute_end_date"] + " " + \
-                        self._module.paramgram["report_absolute_end_time"]
-        start_epoch = self.convert_timestamp_to_epoch(begin_timestamp)
-        end_epoch = self.convert_timestamp_to_epoch(end_timestamp)
+        begin_timestamp = self._module.paramgram["report_absolute_begin_date"]\
+                          + " " + self._module.paramgram["report_absolute_begin_time"]
+        end_timestamp = self._module.paramgram["report_absolute_end_date"]\
+                        + " " + self._module.paramgram["report_absolute_end_time"]
+        start_epoch = self._tools.convert_timestamp_to_epoch(begin_timestamp)
+        end_epoch = self._tools.convert_timestamp_to_epoch(end_timestamp)
 
         return start_epoch, end_epoch
 
-    @staticmethod
-    def convert_epoch_to_datetime(epoch):
-        return_time = datetime.datetime.fromtimestamp(float(epoch)).strftime('%m/%d/%Y %H:%M:%S')
-        return_time_utc = datetime.datetime.utcfromtimestamp(float(epoch)).strftime('%m/%d/%Y %H:%M:%S')
-        return return_time, return_time_utc
-
-    @staticmethod
-    def convert_timestamp_to_epoch(timestamp):
-        parsed_date = re.findall(r'\d{2}\/\d{2}\/\d{4}\s', timestamp)
-        parsed_date2 = parsed_date[0].split("/")
-        parsed_month = parsed_date2[0]
-        parsed_day = parsed_date2[1]
-        parsed_year = parsed_date2[2]
-
-        parsed_time = re.findall(r'\s\d{6}', timestamp)
-        if not parsed_time:
-            parsed_time = re.findall(r'\s\d{2}:\d{2}:\d{2}', timestamp)
-        if not parsed_time:
-            parsed_time = re.findall(r'\s\d{4}', timestamp)
-        if not parsed_time:
-            parsed_time = re.findall(r'\s\d{2}:\d{2}', timestamp)
-        parsed_time2 = re.findall(r'\d{2}', parsed_time[0])
-        parsed_hour = parsed_time2[0]
-        parsed_mins = parsed_time2[1]
-        try:
-            parsed_secs = parsed_time2[2]
-        except:
-            parsed_secs = "00"
-            pass
-
-        epoch = datetime.datetime(int(parsed_year), int(parsed_month), int(parsed_day),
-                                  int(parsed_hour), int(parsed_mins), int(parsed_secs)).strftime('%s')
-        return epoch
-
     def replace_fsm_report_timestamp_absolute(self):
+        """
+        Takes an absolute timestamp from the fsm_report_query module and replaces report XML with the proper values.
+
+        :return: xml
+        """
         # GET DESIRED ABSOLUTE TIME
+<<<<<<< HEAD
         low_epoch = self.convert_timestamp_to_epoch(self._module.paramgram["report_absolute_begin_date"] + " " +
                                                     self._module.paramgram["report_absolute_begin_time"])
         high_epoch = self.convert_timestamp_to_epoch(self._module.paramgram["report_absolute_end_date"] + " " +
                                                      self._module.paramgram["report_absolute_end_time"])
 >>>>>>> Full FSM Commit
+=======
+        low_epoch = self._tools.convert_timestamp_to_epoch(self._module.paramgram["report_absolute_begin_date"] + " " +
+                                                           self._module.paramgram["report_absolute_begin_time"])
+        high_epoch = self._tools.convert_timestamp_to_epoch(self._module.paramgram["report_absolute_end_date"] + " " +
+                                                            self._module.paramgram["report_absolute_end_time"])
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         new_xml = self._module.paramgram["input_xml"]
         if "<ReportInterval>" in new_xml:
             new_xml = re.sub(r'<Low>.*</Low>', '<Low>' + str(low_epoch) + '</Low>', new_xml)
@@ -1723,15 +1415,21 @@ class FortiSIEMHandler(object):
 
     def replace_fsm_report_timestamp_relative(self):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         Takes a relative timestamp from the fsm_report_query module and replaces report XML with the proper values.
 
         :return: xml
         """
         high_epoch = self._tools.convert_timestamp_to_epoch(self._tools.get_current_datetime())
+<<<<<<< HEAD
 =======
         high_epoch = self.convert_timestamp_to_epoch(self.get_current_datetime())
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         low_epoch = self.get_relative_epoch(self._module.paramgram["report_relative_mins"])
         new_xml = self._module.paramgram["input_xml"]
         if "<ReportInterval>" in new_xml:
@@ -1748,11 +1446,17 @@ class FortiSIEMHandler(object):
         return new_xml
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     ###########################
     # BEGIN EXIT HANDLING CODE
     ###########################
 =======
 >>>>>>> Full FSM Commit
+=======
+    ###########################
+    # BEGIN EXIT HANDLING CODE
+    ###########################
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     def govern_response(self, module, results, msg=None, good_codes=None,
                         stop_on_fail=None, stop_on_success=None, skipped=None,
@@ -1841,6 +1545,7 @@ class FortiSIEMHandler(object):
         if self.export_json_to_file_path:
             try:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if results["json_results"]:
                     self.json_results_to_file_path(results["json_results"])
             except BaseException as err:
@@ -1859,19 +1564,29 @@ class FortiSIEMHandler(object):
                 raise FSMBaseException(msg="Writing CSV results to file failed. Error: " + str(err))
 =======
                 self.json_results_to_file_path(results["json_results"])
+=======
+                if results["json_results"]:
+                    self.json_results_to_file_path(results["json_results"])
+>>>>>>> Full FSM Commit. Ready for shippable tests.
             except BaseException as err:
-                raise FSMBaseException(err)
+                raise FSMBaseException(msg="Writing JSON results to file failed. Error: " + str(err))
         if self.export_xml_to_file_path:
             try:
-                self.xml_results_to_file_path(results["xml_results"])
+                if results["xml_results"]:
+                    self.xml_results_to_file_path(results["xml_results"])
             except BaseException as err:
-                raise FSMBaseException(err)
+                raise FSMBaseException(msg="Writing XML results to file failed. Error: " + str(err))
         if self.export_csv_to_file_path:
             try:
-                self.csv_results_to_file_path(results["csv_results"])
+                if results["csv_results"]:
+                    self.csv_results_to_file_path(results["csv_results"])
             except BaseException as err:
+<<<<<<< HEAD
                 raise FSMBaseException(err)
 >>>>>>> Full FSM Commit
+=======
+                raise FSMBaseException(msg="Writing CSV results to file failed. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
         return self.return_response(module=module,
                                     results=results,
@@ -1932,9 +1647,13 @@ class FortiSIEMHandler(object):
         :rtype: str
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         return_results = None
 =======
 >>>>>>> Full FSM Commit
+=======
+        return_results = None
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         # VALIDATION ERROR
         if (len(results) == 0) or (failed and success) or (changed and unreachable):
             module.exit_json(msg="Handle_response was called with no results, or conflicting failed/success or "
@@ -1993,11 +1712,16 @@ class FortiSIEMHandler(object):
         return msg
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     @staticmethod
     def construct_ansible_facts(response, ansible_params, paramgram, *args, **kwargs):
 =======
     def construct_ansible_facts(self, response, ansible_params, paramgram, *args, **kwargs):
 >>>>>>> Full FSM Commit
+=======
+    @staticmethod
+    def construct_ansible_facts(response, ansible_params, paramgram, *args, **kwargs):
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         Constructs a dictionary to return to ansible facts, containing various information about the execution.
 

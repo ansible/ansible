@@ -18,9 +18,13 @@
 
 from __future__ import absolute_import, division, print_function
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -48,20 +52,28 @@ options:
       - The FortiSIEM's FQDN or IP Address.
     required: true
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   password:
     description:
       - The password associated with the username account.
@@ -73,10 +85,14 @@ options:
     required: false
     default: "enable"
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable", "disable"]
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_screen:
     description:
@@ -84,10 +100,14 @@ options:
     required: false
     default: "enable"
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable, "disable"]
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_file_path:
     description:
@@ -96,10 +116,14 @@ options:
     required: false
     default: None
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -107,15 +131,20 @@ options:
     required: false
     default: None
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   mode:
     description:
       - Tells module to get, update or delete organizations.
     required: false
     default: "get"
+<<<<<<< HEAD
 <<<<<<< HEAD
     choices: ["add", "get", "update"]
 
@@ -123,46 +152,67 @@ options:
     options: ["add", "get", "update"]
     
 >>>>>>> Full FSM Commit
+=======
+    choices: ["add", "get", "update"]
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_name:
     description:
       - The short-hand camelCase (preferred) name of the organization
     required: false
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
   
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_display_name:
     description:
       - The full display name for the organization.
     required: false
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
   
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_description:
     description:
       - The description of the organization.
     required: false
 <<<<<<< HEAD
-
-=======
-  
->>>>>>> Full FSM Commit
-  org_admin_username:
-    description:
-      - Organization root admin username to be created.
-    required: false
 <<<<<<< HEAD
 
 =======
   
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
+  org_admin_username:
+    description:
+      - Organization root admin username to be created.
+    required: false
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+=======
+  
+>>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_admin_password:
     description:
       - Organization root admin password to be used.
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 
   org_admin_email:
@@ -172,17 +222,27 @@ options:
 
 =======
   
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_admin_email:
     description:
-      - Organization administration email. Either internal, or customer alias. 
+      - Organization administration email. Either internal, or customer alias.
     required: false
+<<<<<<< HEAD
   
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_eps:
     description:
       - Events per second limit for organization.
     required: false
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   org_max_devices:
     description:
@@ -190,31 +250,43 @@ options:
     required: false
     default: 0
 
+<<<<<<< HEAD
 =======
   
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_include_ip_range:
     description:
       - Included IP Range. Typically only used for Orgs without a collector.
     required: false
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
   
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_exclude_ip_range:
     description:
       - Excluded IP range. Typically only used for Orgs without a collector.
     required: false
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_collectors:
     description:
       - If specified, other org_collector_ options are ignored. List with JSON dicts format expected.
       - Only name and eps are valid arguments for each dictionary within the list.
+<<<<<<< HEAD
 <<<<<<< HEAD
       - See playbook examples
     required: false
@@ -224,10 +296,16 @@ options:
     required: false
   
 >>>>>>> Full FSM Commit
+=======
+      - See playbook examples
+    required: false
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_collector_name:
     description:
       - Organization collector name.
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 
   org_collector_eps:
@@ -240,16 +318,21 @@ options:
 
 =======
   
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   org_collector_eps:
     description:
       - Organization collector allowed events per second.
-    required: false 
-  
-    
+    required: false
+
+
+<<<<<<< HEAD
+>>>>>>> Full FSM Commit
+=======
 '''
 
-
->>>>>>> Full FSM Commit
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 EXAMPLES = '''
 - name: GET LIST OF ORGS
   fsm_organizations:
@@ -258,6 +341,9 @@ EXAMPLES = '''
     password: "Fortinet!1"
     ignore_ssl_errors: "enable"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 - name: ADD AN ORG WITH COLLECTOR VIA PARAMETERS
   fsm_organizations:
@@ -332,8 +418,11 @@ EXAMPLES = '''
     org_exclude_ip_range: "192.168.20.51-192.168.20.255"
     org_collectors: [{'name': 'ansibleOrg2Col1', 'eps': '100'},{'name': 'ansibleOrg2Col2', 'eps': '100'}]
   ignore_errors: yes
+<<<<<<< HEAD
 =======
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 '''
 
 RETURN = """
@@ -341,10 +430,14 @@ api_result:
   description: full API response, includes status code and message
   returned: always
 <<<<<<< HEAD
+<<<<<<< HEAD
   type: str
 =======
   type: string
 >>>>>>> Full FSM Commit
+=======
+  type: str
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -354,9 +447,13 @@ from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import pydevd
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 def main():
     argument_spec = dict(
@@ -379,9 +476,13 @@ def main():
         org_admin_email=dict(required=False, type="str"),
         org_eps=dict(required=False, type="str"),
 <<<<<<< HEAD
+<<<<<<< HEAD
         org_max_devices=dict(required=False, type="int", default=0),
 =======
 >>>>>>> Full FSM Commit
+=======
+        org_max_devices=dict(required=False, type="int", default=0),
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         org_include_ip_range=dict(required=False, type="str"),
         org_exclude_ip_range=dict(required=False, type="str"),
         org_collectors=dict(required=False, type="list"),
@@ -391,6 +492,9 @@ def main():
     )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     required_if = [
         ['mode', 'add', ['org_admin_username', 'org_admin_password', 'org_admin_email',
                          'org_name', 'org_display_name', 'org_description']],
@@ -398,9 +502,12 @@ def main():
     ]
 
     module = AnsibleModule(argument_spec, supports_check_mode=False, required_if=required_if)
+<<<<<<< HEAD
 =======
     module = AnsibleModule(argument_spec, supports_check_mode=False, )
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     paramgram = {
         "host": module.params["host"],
@@ -424,9 +531,13 @@ def main():
         "org_admin_email": module.params["org_admin_email"],
         "org_eps": module.params["org_eps"],
 <<<<<<< HEAD
+<<<<<<< HEAD
         "org_max_devices": module.params["org_max_devices"],
 =======
 >>>>>>> Full FSM Commit
+=======
+        "org_max_devices": module.params["org_max_devices"],
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         "org_include_ip_range": module.params["org_include_ip_range"],
         "org_exclude_ip_range": module.params["org_exclude_ip_range"],
         "org_collectors": module.params["org_collectors"],
@@ -451,6 +562,7 @@ def main():
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
 <<<<<<< HEAD
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
@@ -462,6 +574,13 @@ def main():
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
 >>>>>>> Full FSM Commit
+=======
+    results = DEFAULT_EXIT_MSG
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     # EXECUTE THE MODULE OPERATION
     if paramgram["mode"] in ['get']:
         try:
@@ -472,10 +591,14 @@ def main():
         try:
             # CREATE PAYLOAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             paramgram["input_xml"] = fsm._xml.create_org_payload()
 =======
             paramgram["input_xml"] = fsm.create_org_payload()
 >>>>>>> Full FSM Commit
+=======
+            paramgram["input_xml"] = fsm._xml.create_org_payload()
+>>>>>>> Full FSM Commit. Ready for shippable tests.
             results = fsm.handle_simple_payload_request(payload=paramgram["input_xml"])
         except BaseException as err:
             raise FSMBaseException(err)
@@ -486,10 +609,14 @@ def main():
                                                                   paramgram))
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     return module.exit_json(msg=results)
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
 >>>>>>> Full FSM Commit
+=======
+    return module.exit_json(msg=results)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 if __name__ == "__main__":

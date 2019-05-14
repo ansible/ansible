@@ -28,6 +28,7 @@
 
 import socket
 <<<<<<< HEAD
+<<<<<<< HEAD
 import datetime
 import struct
 import ssl
@@ -44,13 +45,25 @@ class FSMMethods:
     """
 =======
 import ssl
+=======
+import datetime
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 import struct
+import ssl
+import json
+import xml.dom.minidom
+import re
 
-import pydevd
 
 # BEGIN STATIC DATA / MESSAGES
 class FSMMethods:
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
+=======
+    """
+    A static list of methods.
+    """
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     GET = "get"
     SET = "set"
     EXEC = "exec"
@@ -69,6 +82,7 @@ BASE_HEADERS = {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 class SyslogFacility:
     """Syslog facilities"""
@@ -84,6 +98,9 @@ class SyslogLevel:
     EMERG, ALERT, CRIT, ERR, \
     WARNING, NOTICE, INFO, DEBUG = range(8)
 =======
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 class SyslogFacility:
   """Syslog facilities"""
   KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
@@ -102,11 +119,17 @@ class SyslogLevel:
 # FSM URL ENDPOINTS
 class FSMEndpoints:
 <<<<<<< HEAD
+<<<<<<< HEAD
     """
     UNIVERSAL REFERENCE TO ENDPOINTS. CHANGE HERE AND CHANGE FOR ALL MODULES.
     """
 =======
 >>>>>>> Full FSM Commit
+=======
+    """
+    UNIVERSAL REFERENCE TO ENDPOINTS. CHANGE HERE AND CHANGE FOR ALL MODULES.
+    """
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     GET_CMDB_SHORT = "/phoenix/rest/cmdbDeviceInfo/devices"
     GET_CMDB_IPRANGE = "/phoenix/rest/cmdbDeviceInfo/devices?includeIps="
     GET_CMDB_DETAILED_SINGLE = "/phoenix/rest/cmdbDeviceInfo/device?ip="
@@ -297,6 +320,7 @@ DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response()
 DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response() that resulted in an exit. "
                            "This shouldn't happen. Please report to @ftntcorecse on Github."}
 
+<<<<<<< HEAD
 # DEFAULT REPORTS
 
 # ## ALL DEVICES EVENT TYPES AND COUNT LAST 12 HOURS
@@ -321,6 +345,8 @@ RPT_ALL_DEVICES_EVENT_TYPE_COUNTS = '<?xml version="1.0" encoding="UTF-8"?><Repo
                                     '</Reports>'
 
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 # BEGIN ERROR EXCEPTIONS
 class FSMBaseException(Exception):
@@ -336,6 +362,7 @@ class FSMBaseException(Exception):
 # END ERROR CLASSES
 
 
+<<<<<<< HEAD
 # try:
 #     import xmltodict
 #
@@ -345,6 +372,16 @@ class FSMBaseException(Exception):
 #     raise FSMBaseException(
 #         "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
 #         "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
+=======
+try:
+    import xmltodict
+    HAS_XML2DICT = True
+except ImportError as err:
+    HAS_XML2DICT = False
+    raise FSMBaseException(
+        "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
+        "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 # BEGIN CLASSES
@@ -352,6 +389,7 @@ class FSMCommon(object):
     """
     A collection of static methods that are commonly used between FortiSIEM modules.
     """
+<<<<<<< HEAD
 =======
 # END ERROR CLASSES
 
@@ -359,6 +397,8 @@ class FSMCommon(object):
 # BEGIN CLASSES
 class FSMCommon(object):
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     @staticmethod
     def split_comma_strings_into_lists(obj):
@@ -440,14 +480,20 @@ class FSMCommon(object):
     @staticmethod
     def local_syslog(module, msg):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         Creates a local log entry in the linux computer running this. Logs through ansible module methods.
 
         :param module: the module object to log through
         :param msg: the message to log
         """
+<<<<<<< HEAD
 =======
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         try:
             module.log(msg=msg)
         except BaseException:
@@ -456,6 +502,9 @@ class FSMCommon(object):
     @staticmethod
     def get_ip_list_from_range(start, end):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         Take an IP range like this: x.x.x.x-x.x.x.x and turns it into a list of individual IPs in the range specified.
 
@@ -463,14 +512,20 @@ class FSMCommon(object):
         :param end: end ip address of range
         :return: list
         """
+<<<<<<< HEAD
 =======
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         ipstruct = struct.Struct('>I')
         start, = ipstruct.unpack(socket.inet_aton(start))
         end, = ipstruct.unpack(socket.inet_aton(end))
         return [socket.inet_ntoa(ipstruct.pack(i)) for i in range(start, end + 1)]
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     @staticmethod
     def score_device_verification(return_dict):
         """
@@ -832,6 +887,7 @@ class FSMCommon(object):
         for item in xml_list:
             doc = xml.dom.minidom.parseString(item.encode('ascii', 'xmlcharrefreplace'))
             for node in doc.getElementsByTagName("events"):
+<<<<<<< HEAD
                 for node1 in node.getElementsByTagName("event"):
                     mapping = {}
                     for node2 in node1.getElementsByTagName("attributes"):
@@ -844,6 +900,20 @@ class FSMCommon(object):
                                         message = message.replace('\n', '')
                                     mapping[itemName] = message
                     param.append(mapping)
+=======
+                    for node1 in node.getElementsByTagName("event"):
+                        mapping = {}
+                        for node2 in node1.getElementsByTagName("attributes"):
+                            for node3 in node2.getElementsByTagName("attribute"):
+                                itemName = node3.getAttribute("name")
+                                for node4 in node3.childNodes:
+                                    if node4.nodeType == node.TEXT_NODE:
+                                        message = node4.data
+                                        if '\n' in message:
+                                            message = message.replace('\n', '')
+                                        mapping[itemName] = message
+                        param.append(mapping)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return param
 
     @staticmethod
@@ -902,8 +972,11 @@ class FSMCommon(object):
                                   int(parsed_hour), int(parsed_mins), int(parsed_secs)).strftime('%s')
         return epoch
 
+<<<<<<< HEAD
 =======
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 class SendSyslog(object):
     """
@@ -913,6 +986,7 @@ class SendSyslog(object):
     def __init__(self,
                  host="localhost",
                  port=514,
+<<<<<<< HEAD
 <<<<<<< HEAD
                  facility=SyslogFacility.USER,
                  level=SyslogLevel.INFO,
@@ -924,18 +998,27 @@ class SendSyslog(object):
         self.level = level
 =======
                  facility=SyslogFacility.DAEMON,
+=======
+                 facility=SyslogFacility.USER,
+                 level=SyslogLevel.INFO,
+>>>>>>> Full FSM Commit. Ready for shippable tests.
                  protocol="",
                  ssl_context=None,):
         self.host = host
         self.port = port
         self.facility = facility
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
+=======
+        self.level = level
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         self.protocol = protocol
         self.ssl_context = ssl_context
         self.create_socket()
 
     def create_socket(self):
         """
+<<<<<<< HEAD
 <<<<<<< HEAD
         Creates the socket for the SendSyslog class upon init().
 
@@ -944,6 +1027,11 @@ class SendSyslog(object):
 
         :return:
 >>>>>>> Full FSM Commit
+=======
+        Creates the socket for the SendSyslog class upon init().
+
+        :return: socket
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
         if self.protocol == "udp":
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -966,6 +1054,7 @@ class SendSyslog(object):
                 raise FSMBaseException(err)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def send(self, header, message):
         """
         Actually sends the syslog. Returns an appropriate error message based on the network protocol picked.
@@ -981,19 +1070,21 @@ class SendSyslog(object):
 =======
 
     def create_full_message(self, header, message, level):
+=======
+    def send(self, header, message):
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         """
+        Actually sends the syslog. Returns an appropriate error message based on the network protocol picked.
 
-        :param header:
-        :param message:
-        :param level:
-        :return:
+        :param header: custom header, if any
+        :param message: message.
+
+        :return: dict
         """
-        message = "<%d>%s" % (level + self.facility * 8, str(header + " host:" + socket.gethostname() + " | " + message))
-        return message
+        data = "<%d> %s" % (self.level + self.facility * 8,
+                           str(header + " host:" + socket.gethostname() + " | " + message))
 
-    def send(self, header, message, level):
-        """
-
+<<<<<<< HEAD
         :param header:
         :param message:
         :param level:
@@ -1001,6 +1092,8 @@ class SendSyslog(object):
         """
         data = self.create_full_message(header, message, level)
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         if self.protocol in ["udp", "udp-tls1.2"]:
             try:
                 self.socket.sendto(data, (self.host, self.port))
@@ -1023,9 +1116,13 @@ class SendSyslog(object):
         return {"status": "OK", "message": str(data)}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 # RECURSIVE FUNCTIONS START
 def prepare_dict(obj):
     """
