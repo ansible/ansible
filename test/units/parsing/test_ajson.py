@@ -78,7 +78,6 @@ class TestAnsibleJSONEncoder():
             ({2: 2}, {2: 2}),
             ({1: 2}, {1: 2}),
             ({2: 1}, {2: 1}),
-
         ], indirect=['mapping']
     )
     def test_mapping(self, ansible_json_encoder, mapping, expected):
