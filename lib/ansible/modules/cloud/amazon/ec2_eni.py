@@ -647,11 +647,10 @@ def modify_eni(connection, module, eni):
 def delete_eni(connection, module):
 
     eni = uniquely_find_eni(connection, module)
-    if eni:
-        eni_id = eni["NetworkInterfaceId"]
-    else:
-        module.fail_json_aws("Failed to delete ENI: could not find ENI with params {0}".format(module.params))
+    if not eni:
+        module.exit_json(changed=False)
 
+    eni_id = eni["NetworkInterfaceId"]
     force_detach = module.params.get("force_detach")
 
     try:

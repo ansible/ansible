@@ -35,6 +35,23 @@
     register: vpc_subnet_result
 
   # ============================================================
+  - name: Try to delete an ENI that does not exist
+    ec2_eni:
+      eni_id: eni-0e8c90e60720481ab
+      region: "{{ aws_region }}"
+      <<: *aws_connection_info
+      state: absent
+    register: eni_absent_result
+
+  - debug:
+      var: eni_absent_result
+      verbosity: 2
+
+  - name: Ensure idempotent delete made no changes
+    assert:
+      that: "not eni_absent_result.changed"
+
+  # ============================================================
   - name: create an ENI with 1 primary and 3 secondary IP addresses
     ec2_eni:
       name: "{{ resource_prefix }}-eni"
