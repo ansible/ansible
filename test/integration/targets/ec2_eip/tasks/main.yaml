@@ -93,6 +93,22 @@
         - '"Finance" == eip_result.tags.group'
         - '"Name" in eip_result.tags'
 
+  - name: Prove creation is idempotent
+    ec2_eip:
+      name: myEIP1
+      private_ip_address: "{{ eni_result.interface.private_ip_address }}"
+      device_id: "{{ eni_result.interface.id }}"
+      <<: *aws_connection_info
+      tags:
+        group: Finance
+    register: eip_result_i
+
+  - name: Prove idempotent creation task made no changes
+    assert:
+      that:
+        - 'eip_result_i is success'
+        - 'not eip_result_i.changed'
+  
   #============================================================
   - name: Try to allocate duplicate
     ec2_eip:
@@ -169,32 +185,31 @@
         - '"public_ip" in eip_result3'
         - eip_result.public_ip == eip_result3.public_ip
 
+  # ============================================================
+  - name: create instance
+    ec2_instance:
+      name: TestInstance
+      instance_type: t2.micro
+      image_id: '{{ ec2_region_images[ec2_region] }}'
+      vpc_subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      <<: *aws_connection_info
+      state: present
+    register: ec2_result
+
   #============================================================
-  - name: Allocate EIP for instance
+  - name: Allocate classic EIP for instance
     ec2_eip:
       ec2_classic: true
       <<: *aws_connection_info
+    ignore_errors: true
     register: eip2_result
 
   - debug:
       var: eip2_result
       verbosity: 2
 
-  - name: Ensure address was allocated
-    assert:
-      that:
-        - '"public_ip" in eip2_result'
-
-  # ============================================================
-  - name: create instance
-    ec2_instance:
-      name: TestInstance
-      instance_type: t2.micro
-      image_id: ami-0ff8a91507f77f867
-      vpc_subnet_id: "{{ vpc_subnet_result.subnet.id }}"
-      <<: *aws_connection_info
-      state: present
-    register: ec2_result
+  # note: this allocation may fail if the EC2 account is "too new"
+  #       and does not support ec2_classic
 
   # ============================================================
   - name: Attempt to associate standard EIP to vpc instance
@@ -205,16 +220,19 @@
       <<: *aws_connection_info
     ignore_errors: yes
     register: eip2_result2
+    when: "eip2_result is success"
 
   - debug:
       var: eip2_result2
       verbosity: 2
+    when: "eip2_result is success"
 
   - name: Ensure association failed due to mismatching domain types
     assert:
       that:
         - eip2_result2.failed
         - 'eip2_result2.msg.startswith("Failed to associate address")'
+    when: "eip2_result is success"
 
   #============================================================
   - name: Attempt to reassociate eip that is in use
@@ -290,6 +308,39 @@
         - '"myEIP3" == eip3_result.name'
         - '"Name" in eip3_result.tags'
 
+  - name: Destroy EIP by public ip
+    ec2_eip:
+      public_ip: "{{ eip3_result.public_ip }}"
+      <<: *aws_connection_info
+      state: absent
+    register: eip3_destroy
+
+  - debug:
+      var: eip3_destroy
+      verbosity: 2
+
+  - name: Prove destruction succeeded
+    assert:
+      that:
+        - "eip3_destroy is success"
+
+  - name: Attempt to destroy by public ip again
+    ec2_eip:
+      public_ip: "{{ eip3_result.public_ip }}"
+      <<: *aws_connection_info
+      state: absent
+    register: eip3_destroy_idem
+
+  - debug:
+      var: eip3_destroy_idem
+      verbosity: 2
+
+  - name: Prove redundant destruction by public ip is idempotent
+    assert:
+      that:
+        - "eip3_destroy_idem is success"
+        - "not eip3_destroy_idem.changed"
+
   always:
     # ============================================================
     - name: tidy up instance
@@ -300,10 +351,17 @@
         state: absent
       ignore_errors: true
 
-    - name: tidy up EIP
+    - name: tidy up ENI
+      ec2_eni:
+        eni_id: "{{ eni_result.interface.id }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up EIP3
       ec2_eip:
         release_on_disassociation: true
-        public_ip: "{{ eip_result.public_ip }}"
+        name: myEIP3
         <<: *aws_connection_info
         state: absent
       ignore_errors: true
@@ -318,24 +376,10 @@
         state: absent
       ignore_errors: true
 
-    - name: tidy up EIP3
+    - name: tidy up EIP
       ec2_eip:
         release_on_disassociation: true
-        name: myEIP3
-        <<: *aws_connection_info
-        state: absent
-      ignore_errors: true
-
-    - name: tidy up IGW
-      ec2_vpc_igw:
-        vpc_id: "{{ vpc_result.vpc.id }}"
-        <<: *aws_connection_info
-        state: absent
-      ignore_errors: true
-
-    - name: tidy up ENI
-      ec2_eni:
-        eni_id: "{{ eni_result.interface.id }}"
+        public_ip: "{{ eip_result.public_ip }}"
         <<: *aws_connection_info
         state: absent
       ignore_errors: true
@@ -344,6 +388,13 @@
       ec2_vpc_subnet:
         cidr: "10.232.232.128/28"
         az: "{{ aws_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up IGW
+      ec2_vpc_igw:
         vpc_id: "{{ vpc_result.vpc.id }}"
         <<: *aws_connection_info
         state: absent

@@ -317,13 +317,20 @@ def find_address(ec2, name, public_ip, device_id):
     elif len(filters) == 0 and public_ip is None:
         return None
 
-    addresses = ec2.describe_addresses(**args)["Addresses"]
-    if len(addresses) == 1:
-        return addresses[0]
-    elif len(addresses) > 1:
-        msg = "Found more than one address using args {0}".format(args)
-        msg += "Addresses found: {0}".format(addresses)
-        raise EIPException(msg)
+    try:
+        addresses = ec2.describe_addresses(**args)["Addresses"]
+        if len(addresses) == 1:
+            return addresses[0]
+        elif len(addresses) > 1:
+            msg = "Found more than one address using args {0}".format(args)
+            msg += "Addresses found: {0}".format(addresses)
+            raise EIPException(msg)
+    except botocore.exceptions.ClientError as ce:
+        # search finds nothing is handled as an error (400)
+        if ce.response.get("Error", {}).get("Code", "") == "InvalidAddress.NotFound":
+            return None
+        else:
+            raise
 
 
 def address_is_associated_with_device(ec2, address, device_id):
@@ -358,6 +365,12 @@ def allocate_address(ec2, domain, reuse_existing_ip_allowed):
     if not address:
         changed = True
         address = ec2.allocate_address(Domain=domain)
+        # you can ask for a standard (ec2_classic) domain eip and get a vpc one back
+        if address["Domain"] != domain:
+            release_address(ec2, address, address["Domain"], False)
+            raise EIPException('Attempt to allocate ' +
+                               ("vpc (new style)" if domain == "vpc" else "ec2_classic") +
+                               ' address failed.  Does your account allow this type?')
 
     return address, changed
 
@@ -373,7 +386,7 @@ def release_address(ec2, address, domain, check_mode):
             args = {"PublicIp": address["PublicIp"]}
 
         if not ec2.release_address(**args):
-            EIPException('Release of address {0} failed'.format(address["PublicIp"]))
+            raise EIPException('Release of address {0} failed'.format(address["PublicIp"]))
 
     return True
 
@@ -491,11 +504,14 @@ def ensure_present(ec2, domain, address, private_ip_address, device_id, reuse_ex
     else:
         result["changed"] = False
 
-    if "PublicIp" in address:
-        result["public_ip"] = address["PublicIp"]
-
     if "AllocationId" in address:
         result["allocation_id"] = address["AllocationId"]
+
+    if "Domain" in address and address["Domain"] == "standard":
+        result["ec2_classic"] = True
+
+    if "PublicIp" in address:
+        result["public_ip"] = address["PublicIp"]
 
     if "Tags" in address:
         tags = boto3_tag_list_to_ansible_dict(address["Tags"])
