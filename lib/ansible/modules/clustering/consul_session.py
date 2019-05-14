@@ -168,18 +168,12 @@ def lookup_sessions(module):
                              sessions=sessions_list)
         elif state == 'node':
             node = module.params.get('node')
-            if not node:
-                module.fail_json(
-                    msg="node name is required to retrieve sessions for node")
             sessions = consul_client.session.node(node, dc=datacenter)
             module.exit_json(changed=True,
                              node=node,
                              sessions=sessions)
         elif state == 'info':
             session_id = module.params.get('id')
-            if not session_id:
-                module.fail_json(
-                    msg="session_id is required to retrieve indvidual session info")
 
             session_by_id = consul_client.session.info(session_id, dc=datacenter)
             module.exit_json(changed=True,
@@ -223,9 +217,6 @@ def update_session(module):
 
 def remove_session(module):
     session_id = module.params.get('id')
-    if not session_id:
-        module.fail_json(msg="""A session id must be supplied in order to
-        remove a session.""")
 
     consul_client = get_consul_api(module)
 
@@ -266,7 +257,15 @@ def main():
         datacenter=dict(type='str'),
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=False)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_if=[
+            ('state', 'node', ['name']),
+            ('state', 'info', ['id']),
+            ('state', 'remove', ['id']),
+        ],
+        supports_check_mode=False
+    )
 
     test_dependencies(module)
 
