@@ -658,7 +658,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
     remote.add_argument('--remote-provider',
                         metavar='PROVIDER',
                         help='remote provider to use: %(choices)s',
-                        choices=['default', 'aws', 'azure', 'parallels', 'vmware'],
+                        choices=['default', 'aws', 'azure', 'parallels'],
                         default='default')
 
     remote.add_argument('--remote-aws-region',
