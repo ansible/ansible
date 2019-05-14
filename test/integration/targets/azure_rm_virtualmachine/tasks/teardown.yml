@@ -1,0 +1,62 @@
+- name: Destroy NIC for single nic VM
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      state: absent
+
+- name: Destroy 2nd security group
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name2 }}"
+      state: absent
+
+- name: Destroy security group
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      state: absent
+
+- name: Destroy subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      virtual_network: "{{ vm_name1 }}"
+      name: "{{ vm_name1 }}"
+      state: absent
+
+- name: Destroy virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      state: absent
+
+- name: Destroy public ip
+  azure_rm_publicipaddress:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      state: absent
+
+- name: Destroy 2nd availability set
+  azure_rm_availabilityset:
+      resource_group: "{{ resource_group }}"
+      name: "{{ abs_name2 }}"
+      state: absent
+
+- name: Destroy an availability set
+  azure_rm_availabilityset:
+      resource_group: "{{ resource_group }}"
+      name: "{{ abs_name1 }}"
+      state: absent
+
+- name: Destroy 2nd storage account
+  azure_rm_storageaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ storage_account2 }}"
+      force_delete_nonempty: true
+      state: absent
+
+- name: Destroy storage account
+  azure_rm_storageaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ storage_account }}"
+      force_delete_nonempty: true
+      state: absent
