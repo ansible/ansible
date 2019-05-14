@@ -149,6 +149,8 @@ options:
     - ' - C(cpu_reservation) (integer): The amount of CPU resource that is guaranteed available to the virtual machine.
           Unit is MHz. version_added: 2.5'
     - ' - C(version) (integer): The Virtual machine hardware versions. Default is 10 (ESXi 5.5 and onwards).
+          If value specified as C(latest), version is set to the most current virtual hardware supported on the host.
+          C(latest) is added in version 2.9.
           Please check VMware documentation for correct virtual machine hardware version.
           Incorrect hardware version may lead to failure in deployment. If hardware version is already equal to the given
           version then no action is taken. version_added: 2.6'
@@ -1105,42 +1107,49 @@ class PyVmomiHelper(PyVmomi):
             if 'version' in self.params['hardware']:
                 hw_version_check_failed = False
                 temp_version = self.params['hardware'].get('version', 10)
-                try:
-                    temp_version = int(temp_version)
-                except ValueError:
-                    hw_version_check_failed = True
-
-                if temp_version not in range(3, 15):
-                    hw_version_check_failed = True
-
-                if hw_version_check_failed:
-                    self.module.fail_json(msg="Failed to set hardware.version '%s' value as valid"
-                                              " values range from 3 (ESX 2.x) to 14 (ESXi 6.5 and greater)." % temp_version)
-                # Hardware version is denoted as "vmx-10"
-                version = "vmx-%02d" % temp_version
-                self.configspec.version = version
-                if vm_obj is None or self.configspec.version != vm_obj.config.version:
-                    self.change_detected = True
-                if vm_obj is not None:
-                    # VM exists and we need to update the hardware version
-                    current_version = vm_obj.config.version
-                    # current_version = "vmx-10"
-                    version_digit = int(current_version.split("-", 1)[-1])
-                    if temp_version < version_digit:
-                        self.module.fail_json(msg="Current hardware version '%d' which is greater than the specified"
-                                                  " version '%d'. Downgrading hardware version is"
-                                                  " not supported. Please specify version greater"
-                                                  " than the current version." % (version_digit,
-                                                                                  temp_version))
-                    new_version = "vmx-%02d" % temp_version
-                    try:
-                        task = vm_obj.UpgradeVM_Task(new_version)
+                if temp_version == 'latest':
+                    if vm_obj is not None:
+                        task = vm_obj.UpgradeVM_Task()
                         self.wait_for_task(task)
-                        if task.info.state == 'error':
-                            return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'upgrade'}
-                    except vim.fault.AlreadyUpgraded:
-                        # Don't fail if VM is already upgraded.
-                        pass
+                        if task.info.state == 'error' and 'already' not in task.info.error.msg:
+                            self.module.fail_json(msg="Failed to upgrade hardware version to latest %s " % task.info.error.msg)
+                else:
+                    try:
+                        temp_version = int(temp_version)
+                    except ValueError:
+                        hw_version_check_failed = True
+
+                    if temp_version not in range(3, 15):
+                        hw_version_check_failed = True
+
+                    if hw_version_check_failed:
+                        self.module.fail_json(msg="Failed to set hardware.version '%s' value as valid"
+                                                  " values range from 3 (ESX 2.x) to 14 (ESXi 6.5 and greater)." % temp_version)
+                    # Hardware version is denoted as "vmx-10"
+                    version = "vmx-%02d" % temp_version
+                    self.configspec.version = version
+                    if vm_obj is None or self.configspec.version != vm_obj.config.version:
+                        self.change_detected = True
+                    if vm_obj is not None:
+                        # VM exists and we need to update the hardware version
+                        current_version = vm_obj.config.version
+                        # current_version = "vmx-10"
+                        version_digit = int(current_version.split("-", 1)[-1])
+                        if temp_version < version_digit:
+                            self.module.fail_json(msg="Current hardware version '%d' which is greater than the specified"
+                                                      " version '%d'. Downgrading hardware version is"
+                                                      " not supported. Please specify version greater"
+                                                      " than the current version." % (version_digit,
+                                                                                      temp_version))
+                        new_version = "vmx-%02d" % temp_version
+                        try:
+                            task = vm_obj.UpgradeVM_Task(new_version)
+                            self.wait_for_task(task)
+                            if task.info.state == 'error':
+                                return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'upgrade'}
+                        except vim.fault.AlreadyUpgraded:
+                            # Don't fail if VM is already upgraded.
+                            pass
 
             if 'virt_based_security' in self.params['hardware']:
                 host_version = self.select_host().summary.config.product.version
