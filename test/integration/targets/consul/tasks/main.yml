@@ -21,6 +21,8 @@
     - name: Install python-consul
       pip:
         name: python-consul
+      register: result
+      until: result is success
 
     - when: pyopenssl_version.stdout is version('0.15', '>=')
       block:
@@ -47,6 +49,8 @@
     - name: 'Install unzip'
       package:
         name: unzip
+      register: result
+      until: result is success
       when: ansible_distribution != "MacOSX"  # unzip already installed
 
     - assert:
@@ -64,6 +68,8 @@
         src: '{{ consul_uri }}'
         dest: '{{ output_dir }}'
         remote_src: true
+      register: result
+      until: result is success
 
     - block:
         # output_dir is hardcoded/created in test/runner/lib/executor.py and
