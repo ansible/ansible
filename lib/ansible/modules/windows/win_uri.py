@@ -150,7 +150,7 @@ options:
     version_added: '2.5'
   use_default_credentials:
     description:
-    - Use default windows credentials for authentication. 
+    - Use default windows credentials for authentication.
     - Note that you must be using kerberos, ntlm or credssp for this to take effect.
     type: bool
     default: no
