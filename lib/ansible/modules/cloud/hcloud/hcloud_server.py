@@ -240,7 +240,7 @@ class AnsibleHcloudServer(Hcloud):
         if self.client.images.get_by_name(self.module.params.get("image")) is not None:
             # When image name is not available look for id instead
             params["image"] = self.client.images.get_by_name(self.module.params.get("image"))
-        else: 
+        else:
             params["image"] = self.client.images.get_by_id(self.module.params.get("image"))
 
         if self.module.params.get("ssh_keys") is not None:
