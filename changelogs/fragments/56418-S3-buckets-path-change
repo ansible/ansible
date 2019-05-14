@@ -1,0 +1,2 @@
+bugfixes:
+- Implement new supported path for bucket access (https://github.com/ansible/ansible/issues/56124)
