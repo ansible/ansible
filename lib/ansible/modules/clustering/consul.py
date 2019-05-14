@@ -44,24 +44,29 @@ options:
         required: true
         choices: ['present', 'absent']
     service_name:
+        type: str
         description:
           - Unique name for the service on a node, must be unique per node,
             required if registering a service. May be omitted if registering
             a node level check
     service_id:
+        type: str
         description:
           - the ID for the service, must be unique per node, defaults to the
             service name if the service name is supplied
         default: service_name if supplied
     host:
+        type: str
         description:
           - host of the consul agent defaults to localhost
         default: localhost
     port:
+        type: int
         description:
           - the port on which the consul agent is running
         default: 8500
     scheme:
+        type: str
         description:
           - the protocol scheme on which the consul agent is running
         default: http
@@ -73,13 +78,16 @@ options:
         default: 'yes'
         version_added: "2.1"
     notes:
+        type: str
         description:
           - Notes to attach to check when registering it.
     service_port:
+        type: int
         description:
           - the port on which the service is listening. Can optionally be supplied for
             registration of a service, i.e. if service_name or service_id is set
     service_address:
+        type: str
         description:
           - the address to advertise that the service will be listening on.
             This value will be passed as the I(Address) parameter to Consul's
@@ -87,27 +95,33 @@ options:
             documentation for further details.
         version_added: "2.1"
     tags:
+        type: list
         description:
-          - a list of tags that will be attached to the service registration.
+          - tags that will be attached to the service registration.
     script:
+        type: str
         description:
           - the script/command that will be run periodically to check the health
             of the service. Scripts require an interval and vise versa
     interval:
+        type: str
         description:
           - the interval at which the service check will be run. This is a number
             with a s or m suffix to signify the units of seconds or minutes e.g
             15s or 1m. If no suffix is supplied, m will be used by default e.g.
             1 will be 1m. Required if the script param is specified.
     check_id:
+        type: str
         description:
           - an ID for the service check, defaults to the check name, ignored if
             part of a service definition.
     check_name:
+        type: str
         description:
           - a name for the service check, defaults to the check id. required if
             standalone, ignored if part of service definition.
     ttl:
+        type: str
         description:
           - checks can be registered with a ttl instead of a script and interval
             this means that the service will check in with the agent before the
@@ -117,18 +131,21 @@ options:
             signify the units of seconds or minutes e.g 15s or 1m. If no suffix
             is supplied, m will be used by default e.g. 1 will be 1m
     http:
+        type: str
         description:
           - checks can be registered with an http endpoint. This means that consul
             will check that the http endpoint returns a successful http status.
             Interval must also be provided with this option.
         version_added: "2.0"
     timeout:
+        type: str
         description:
           - A custom HTTP check timeout. The consul default is 10 seconds.
             Similar to the interval this is a number with a s or m suffix to
             signify the units of seconds or minutes, e.g. 15s or 1m.
         version_added: "2.0"
     token:
+        type: str
         description:
           - the token key indentifying an ACL rule set. May be required to register services.
 """

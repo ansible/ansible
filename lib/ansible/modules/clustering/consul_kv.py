@@ -48,11 +48,13 @@ options:
     key:
         description:
           - The key at which the value should be stored.
+        type: str
         required: yes
     value:
         description:
           - The value should be associated with the given key, required if C(state)
             is C(present).
+        type: str
         required: yes
     recurse:
         description:
@@ -64,30 +66,37 @@ options:
         description:
           - The session that should be used to acquire or release a lock
             associated with a key/value pair.
+        type: str
     token:
         description:
           - The token key indentifying an ACL rule set that controls access to
             the key value pair
+        type: str
     cas:
         description:
           - Used when acquiring a lock with a session. If the C(cas) is C(0), then
             Consul will only put the key if it does not already exist. If the
             C(cas) value is non-zero, then the key is only set if the index matches
             the ModifyIndex of that key.
+        type: str
     flags:
         description:
           - Opaque integer value that can be passed when setting a value.
+        type: str
     host:
         description:
           - Host of the consul agent.
+        type: str
         default: localhost
     port:
         description:
           - The port on which the consul agent is running.
+        type: int
         default: 8500
     scheme:
         description:
           - The protocol scheme on which the consul agent is running.
+        type: str
         default: http
         version_added: "2.1"
     validate_certs:

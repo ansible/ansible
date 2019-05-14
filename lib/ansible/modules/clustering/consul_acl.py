@@ -48,8 +48,9 @@ options:
         this will be a UUID
     required: false
   rules:
+    type: list
     description:
-      - a list of the rules that should be associated with a given token
+      - rules that should be associated with a given token
     required: false
   host:
     description:
@@ -57,6 +58,7 @@ options:
     required: false
     default: localhost
   port:
+    type: int
     description:
       - the port on which the consul agent is running
     required: false
@@ -68,6 +70,7 @@ options:
     default: http
     version_added: "2.1"
   validate_certs:
+    type: bool
     description:
       - whether to verify the tls certificate of the consul agent
     required: false
