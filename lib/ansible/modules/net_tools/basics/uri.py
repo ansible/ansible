@@ -269,7 +269,7 @@ EXAMPLES = r'''
   until: _result.status == 200
   retries: 720 # 720 * 5 seconds = 1hour (60*60/5)
   delay: 5 # Every 5 seconds
-  
+
 # There are issues in a supporting Python library that is discussed in
 # https://github.com/ansible/ansible/issues/52705 where a proxy is defined
 # but you want to bypass proxy use on CIDR masks by using no_proxy
