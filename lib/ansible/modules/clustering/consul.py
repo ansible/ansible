@@ -33,7 +33,6 @@ description:
    stage change management will be added.
  - "See http://consul.io for more details."
 requirements:
-  - "python >= 2.6"
   - python-consul
   - requests
 version_added: "2.0"

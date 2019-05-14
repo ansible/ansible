@@ -24,7 +24,6 @@ description:
     value if any is returned as part of the results.
   - See http://www.consul.io/docs/agent/http.html#kv for more details.
 requirements:
-  - python >= 2.6
   - python-consul
   - requests
 version_added: "2.0"
