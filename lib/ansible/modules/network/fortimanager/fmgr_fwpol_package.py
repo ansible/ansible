@@ -81,13 +81,6 @@ options:
     required: True
     choices: ['pkg','folder']
 
-  package_folder:
-    description:
-      - Name of the folder you want to put the package into.
-      - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
-      - Do not include leading or trailing forwardslashes. We take care of that for you.
-    required: false
-
   central_nat:
     description:
       - Central NAT setting.
@@ -147,6 +140,8 @@ options:
   parent_folder:
     description:
       - The parent folder name you want to add this object under.
+      - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
+      - Do not include leading or trailing forwardslashes. We take care of that for you.
     required: false
 '''
 
@@ -545,7 +540,6 @@ def main():
 
         name=dict(required=False, type="str"),
         object_type=dict(required=True, type="str", choices=['pkg', 'folder']),
-        package_folder=dict(required=False, type="str"),
         central_nat=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
         fwpolicy_implicit_log=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
         fwpolicy6_implicit_log=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
@@ -565,7 +559,6 @@ def main():
         "name": module.params["name"],
         "mode": module.params["mode"],
         "object_type": module.params["object_type"],
-        "package-folder": module.params["package_folder"],
         "central-nat": module.params["central_nat"],
         "fwpolicy-implicit-log": module.params["fwpolicy_implicit_log"],
         "fwpolicy6-implicit-log": module.params["fwpolicy6_implicit_log"],
