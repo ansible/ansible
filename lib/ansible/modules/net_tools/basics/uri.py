@@ -175,7 +175,6 @@ notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
   - For Windows targets, use the M(win_uri) module instead.
-
 seealso:
 - module: get_url
 - module: win_uri
