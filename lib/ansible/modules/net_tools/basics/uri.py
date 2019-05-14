@@ -175,9 +175,7 @@ notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
   - For Windows targets, use the M(win_uri) module instead.
-  - The uri module does not honor the no_proxy environment variable for CIDR masks. To work around this, you would need to
-      parse the no_proxy environment variable (`{{ lookup('env', 'no_proxy') }}`) using the ipaddr filter and compare it
-      against the IP address of the host you're trying to connect to.
+
 seealso:
 - module: get_url
 - module: win_uri
@@ -270,8 +268,33 @@ EXAMPLES = r'''
     method: GET
   register: _result
   until: _result.status == 200
-  retries: 10000
-  delay: 5
+  retries: 720 # 720 * 5 seconds = 1hour (60*60/5)
+  delay: 5 # Every 5 seconds
+  
+# There are issues in a supporting Python library that is discussed in
+# https://github.com/ansible/ansible/issues/52705 where a proxy is defined
+# but you want to bypass proxy use on CIDR masks by using no_proxy
+- name: Work around a python issue that doesn't support no_proxy envvar
+  uri:
+    follow_redirects: none
+    validate_certs: False
+    timeout: 5
+    url: "http://{{ ip_address }}:{{ port | default(80) }}"
+  register: uri_data
+  failed_when: False
+  changed_when: False
+  vars:
+    ip_address: 192.0.2.1
+  environment: |
+      {
+        {% for no_proxy in (lookup('env', 'no_proxy') | replace(',', '') ).split() %}
+          {% if no_proxy| ipaddr | type_debug != 'NoneType' %}
+            {% if ip_address | ipaddr(no_proxy) | type_debug != 'NoneType' %}
+              "no_proxy": "{{ ip_address }}"
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      }
 '''
 
 RETURN = r'''
