@@ -62,6 +62,12 @@ options:
             retrieved by setting this to C(yes).
         type: bool
         default: 'no'
+    retrieve:
+        description:
+            - If the I(state) is C(present) and I(value) is set, perform a
+              read after setting the value and return this value.
+        default: True
+        type: bool
     session:
         description:
           - The session that should be used to acquire or release a lock
