@@ -3,7 +3,7 @@
 
   vars:
     consul_version: '1.5.0'
-    consul_uri: https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_{{ ansible_system | lower }}_{{ consul_arch }}.zip
+    consul_uri: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/consul/consul_{{ consul_version }}_{{ ansible_system | lower }}_{{ consul_arch }}.zip
     consul_cmd: '{{ output_dir }}/consul'
 
   block:
