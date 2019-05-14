@@ -17,6 +17,7 @@ import traceback
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
+from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_text, to_native
@@ -599,21 +600,7 @@ class TaskExecutor:
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
         # Apply default params for action/module, if present
-        # These are collected as a list of dicts, so we need to merge them
-        module_defaults = {}
-        for default in self._task.module_defaults:
-            module_defaults.update(default)
-        if module_defaults:
-            module_defaults = templar.template(module_defaults)
-        if self._task.action in module_defaults:
-            tmp_args = module_defaults[self._task.action].copy()
-            tmp_args.update(self._task.args)
-            self._task.args = tmp_args
-        if self._task.action in C.config.module_defaults_groups:
-            for group in C.config.module_defaults_groups.get(self._task.action, []):
-                tmp_args = (module_defaults.get('group/{0}'.format(group)) or {}).copy()
-                tmp_args.update(self._task.args)
-                self._task.args = tmp_args
+        self._task.args = get_action_args_with_defaults(self._task.action, self._task.args, self._task.module_defaults, templar)
 
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
