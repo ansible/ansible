@@ -89,7 +89,7 @@ class VmwareCloudProvider(CloudProvider):
         """
         return AnsibleCoreCI(self.args, 'Vmware', 'Vmware',
                              persist=False, stage=self.args.remote_stage,
-                             provider=self.args.remote_provider)
+                             provider='vmware')
 
 
 class VmwareEnvironment(CloudEnvironment):
