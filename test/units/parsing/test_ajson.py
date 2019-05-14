@@ -16,6 +16,7 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
+
 def test_AnsibleJSONDecoder_vault():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/ajson.json')) as f:
         data = json.load(f, cls=AnsibleJSONDecoder)
