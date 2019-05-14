@@ -152,7 +152,7 @@ def ensure(module, state, packages, params):
     else:
         no_refresh = ['--no-refresh']
 
-    to_modify = filter(behaviour[state]['filter'], packages)
+    to_modify = list(filter(behaviour[state]['filter'], packages))
     if to_modify:
         rc, out, err = module.run_command(['pkg', behaviour[state]['subcommand']] + dry_run + accept_licenses + beadm + no_refresh + ['-q', '--'] + to_modify)
         response['rc'] = rc
