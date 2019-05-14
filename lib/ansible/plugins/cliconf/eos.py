@@ -226,8 +226,10 @@ class Cliconf(CliconfBase):
             if self._session_support:
                 return self._session_support
 
-            response = self.get('show configuration sessions')
-            self._session_support = 'error' not in response
+            try:
+                self.get('show configuration sessions')
+            except AnsibleConnectionFailure:
+                self._session_support = False
 
         return self._session_support
 
