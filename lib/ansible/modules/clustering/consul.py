@@ -41,7 +41,7 @@ options:
     state:
         description:
           - register or deregister the consul service, defaults to present
-        required: true
+        default: present
         choices: ['present', 'absent']
     service_name:
         type: str

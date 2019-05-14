@@ -308,7 +308,6 @@ lib/ansible/modules/cloud/vmware/vca_vapp.py E324
 lib/ansible/modules/cloud/vmware/vmware_guest.py E322
 lib/ansible/modules/cloud/vmware/vsphere_copy.py E322
 lib/ansible/modules/clustering/consul.py E322
-lib/ansible/modules/clustering/consul.py E324
 lib/ansible/modules/clustering/consul_session.py E322
 lib/ansible/modules/clustering/etcd3.py E326
 lib/ansible/modules/clustering/znode.py E326
