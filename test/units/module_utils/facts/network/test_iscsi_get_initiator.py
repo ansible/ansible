@@ -50,5 +50,5 @@ def test_get_iscsi_info(mocker):
     mocker.patch('sys.platform', 'hp-ux')
     mocker.patch('ansible.module_utils.facts.network.iscsi.get_bin_path', return_value='/opt/iscsi/bin/iscsiutil')
     mocker.patch.object(module, 'run_command', return_value=(0, ISCSIUTIL_OUTPUT, ''))
-    hpux_iscsi_expected = {"iscsi_iqn": " iqn.2001-04.com.hp.stor:svcio"}
+    hpux_iscsi_expected = {"iscsi_iqn": "iqn.2001-04.com.hp.stor:svcio"}
     assert hpux_iscsi_expected == inst.collect(module=module)
