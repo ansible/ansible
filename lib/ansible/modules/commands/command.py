@@ -36,6 +36,7 @@ options:
       - See the examples on how to use this module.
     required: yes
   argv:
+    type: list
     description:
       - Passes the command as a list rather than a string.
       - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
@@ -43,13 +44,16 @@ options:
         provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
+    type: path
     description:
       - A filename or (since 2.0) glob pattern. If it already exists, this step B(won't) be run.
   removes:
+    type: path
     description:
       - A filename or (since 2.0) glob pattern. If it already exists, this step B(will) be run.
     version_added: "0.8"
   chdir:
+    type: path
     description:
       - Change into this directory before running the command.
     version_added: "0.6"
