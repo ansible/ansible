@@ -1,71 +1,4 @@
-- name: Create random names
-  set_fact:
-      storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
-      vm_name1: "vm1{{ resource_group | hash('md5') | truncate(5, True, '') }}"
-      vm_name2: "vm2{{ resource_group | hash('md5') | truncate(5, True, '') }}"
-      vm_name3: "vm3{{ resource_group | hash('md5') | truncate(5, True, '') }}"
-      abs_name1: "avbs1{{ resource_group | hash('md5') | truncate(3, True, '') }}"
-      abs_name2: "avbs2{{ resource_group | hash('md5') | truncate(3, True, '') }}"
-
-- name: Create storage account
-  azure_rm_storageaccount:
-      resource_group: "{{ resource_group }}"
-      name: "{{ storage_account }}"
-      account_type: Standard_LRS
-
-- name: Create an availability set
-  azure_rm_availabilityset:
-    name: "{{ abs_name1 }}"
-    resource_group: "{{ resource_group }}"
-
-- name: Create virtual network
-  azure_rm_virtualnetwork:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name1 }}"
-      address_prefixes: "10.10.0.0/16"
-
-- name: Add subnet
-  azure_rm_subnet:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name1 }}"
-      address_prefix: "10.10.0.0/24"
-      virtual_network: "{{ vm_name1 }}"
-
-- name: Create public ip
-  azure_rm_publicipaddress:
-      resource_group: "{{ resource_group }}"
-      allocation_method: Static
-      name: "{{ vm_name1 }}"
-
-- name: Create security group
-  azure_rm_securitygroup:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name1 }}"
-      purge_rules: yes
-      rules:
-        - name: ALLOW_SSH
-          protocol: Tcp
-          destination_port_range: 22
-          access: Allow
-          priority: 100
-          direction: Inbound
-        - name: ALLOW_HTTP
-          protocol: Tcp
-          destination_port_range: 80
-          access: Allow
-          priority: 110
-          direction: Inbound
-
-- name: Create NIC for single nic VM
-  azure_rm_networkinterface:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name1 }}"
-      virtual_network: "{{ vm_name1 }}"
-      subnet: "{{ vm_name1 }}"
-      public_ip_name: "{{ vm_name1 }}"
-      security_group: "{{ vm_name1 }}"
-
-- name: Create virtual machine with a single NIC
+- name: Create virtual machine with a single NIC and no boot diagnostics
   register: output
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
@@ -91,7 +24,92 @@
 
 - assert:
       that:
+        - azure_vm.properties.provisioningState == 'Succeeded'
         - azure_vm.properties.availabilitySet.id
+        # initial response from creation has no diagnosticsProfile
+        # if you run it again however, there is one in the response
+        # so we handle both cases
+        - "'diagnosticsProfile' not in azure_vm.properties or not azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled"
+
+- name: Get facts for virtual machine without boot diagnostics disabled
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}"
+  register: output
+
+- assert:
+    that:
+      - output.vms != []
+      - not output.vms[0].boot_diagnostics.enabled
+      - not output.vms[0].boot_diagnostics.storage_uri
+
+- name: Enable boot diagnostics on an existing VM for the first time without specifying a storage account
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      boot_diagnostics:
+        enabled: true
+        # without specifying storage_account you get a new default storage account for the VM
+  register: output
+
+- assert:
+    that:
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.storageUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.consoleScreenshotBlobUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
+
+- name: Get facts for virtual machine with boot diagnostics enabled
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}"
+  register: output
+
+- assert:
+    that:
+      - output.vms != []
+      - output.vms[0].boot_diagnostics.enabled
+      - output.vms[0].boot_diagnostics.storage_uri is defined
+      - output.vms[0].boot_diagnostics.console_screenshot_uri is defined
+      - output.vms[0].boot_diagnostics.serial_console_log_uri is defined
+
+- name: Change the boot diagnostics storage account while enabled
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      boot_diagnostics:
+        enabled: true
+        storage_account: "{{ storage_account2 }}"
+  ignore_errors: true
+  register: output
+
+- name: Disable boot diagnostics and change the storage account at the same time
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      boot_diagnostics:
+        enabled: false
+        storage_account: "{{ storage_account }}"
+  register: output
+
+- assert:
+    that:
+      - not azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
+
+- name: Re-enable boot diagnostics on an existing VM where it was previously configured
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      boot_diagnostics:
+        enabled: true
+  register: output
+
+- assert:
+    that:
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.storageUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.consoleScreenshotBlobUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
 
 # - add_host:
 #       name: new_azure_vm
@@ -244,8 +262,7 @@
 - assert:
       that: azure_publicipaddresses | length == 0
 
-- name: Create virtual machine without public ip address
-  register: output
+- name: Create virtual machine without public ip address and with boot diagnostics enabled
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvmnoip
@@ -256,14 +273,21 @@
       os_type: Linux
       public_ip_allocation_method: Disabled
       availability_set: "{{ abs_name1 }}"
+      boot_diagnostics:
+        enabled: true
       image:
         offer: UbuntuServer
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
+  register: output
 
 - assert:
       that:
+        - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
+        - azure_vm.properties.diagnosticsProfile.bootDiagnostics.storageUri is defined
+        - azure_vm.properties.instanceView.bootDiagnostics.consoleScreenshotBlobUri is defined
+        - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
         - not 'publicIPAddress' in output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties
 
 - name: Delete VM with no public ip
@@ -271,6 +295,7 @@
       resource_group: "{{ resource_group }}"
       name: testvmnoip
       state: absent
+      remove_on_absent: all_autocreated
       vm_size: Standard_A0
   async: 5000
   poll: 0
@@ -280,7 +305,7 @@
          - name: testnic011
            resource_group: "{{ resource_group_secondary }}"
          - name: testnic012
-           resource_group: "{{ resource_group_secondary  }}"
+           resource_group: "{{ resource_group_secondary }}"
 
 - name: Create an availability set
   azure_rm_availabilityset:
@@ -307,11 +332,10 @@
       name: "{{ item.name }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: "{{ vm_name2 }}"
-      security_group: "{{ vm_name1 }}"
+      security_group: "{{ vm_name2 }}"
   loop: "{{ niclist }}"
 
 - name: Create virtual machine with two NICs
-  register: output
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name2 }}"
@@ -334,6 +358,8 @@
         version: latest
       tags:
         abc: def
+  register: output
+
 - assert:
       that:
         - azure_vm.properties.availabilitySet.id
@@ -350,7 +376,7 @@
     that: 
       - results.vms | length == 1
       - results.vms[0].name == "{{ vm_name2 }}"
-      - results.vms[0].location == 'eastus'
+      - results.vms[0].location
       - results.vms[0].admin_username == 'adminuser'
       - results.vms[0].resource_group == "{{ resource_group }}"
       - results.vms[0].power_state != None
@@ -548,6 +574,7 @@
 - name: Assert that autocreated resources were deleted
   assert:
     that: 
+      # what about the default storage group?
       - output_nic.ansible_facts.azure_networkinterfaces | length == 0
       - output_nsg.ansible_facts.azure_securitygroups | length == 0
       - output_pip.ansible_facts.azure_publicipaddresses | length == 0
