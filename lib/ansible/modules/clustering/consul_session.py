@@ -34,19 +34,19 @@ options:
     state:
         description:
           - Whether the session should be present i.e. created if it doesn't
-            exist, or absent, removed if present. If created, the ID for the
-            session is returned in the output. If absent, the name or ID is
+            exist, or absent, removed if present. If created, the I(id) for the
+            session is returned in the output. If C(absent), I(id) is
             required to remove the session. Info for a single session, all the
             sessions for a node or all available sessions can be retrieved by
-            specifying info, node or list for the state; for node or info, the
-            node name or session id is required as parameter.
+            specifying C(info), C(node) or C(list) for the I(state); for C(node)
+            or C(info), the node I(name) or session I(id) is required as parameter.
         choices: [ absent, info, list, node, present ]
         type: str
         default: present
     name:
         description:
-          - The name that should be associated with the session. This is opaque
-            to Consul and not required.
+          - The name that should be associated with the session. Required when
+            I(state=node) is used.
         type: str
     delay:
         description:
@@ -90,7 +90,7 @@ options:
         version_added: "2.1"
     validate_certs:
         description:
-          - Whether to verify the tls certificate of the consul agent.
+          - Whether to verify the TLS certificate of the consul agent.
         type: bool
         default: True
         version_added: "2.1"
