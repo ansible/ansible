@@ -25,7 +25,40 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
-__all__ = ['unfrackpath', 'makedirs_safe']
+__all__ = ['realpath_safe', 'unfrackpath', 'makedirs_safe']
+
+
+def realpath_safe(path):
+    '''
+    Returns a path that with symlinks resolved, preserving existence.
+
+    Paths such as /dev/fd/$FD on some Linuxes may exist but have a realpath
+    that does not exist. In those cases, do a best-effort realpath on parents.
+
+    :arg path: A byte or text string representing a path to be canonicalized
+    :rtype: A text string (unicode on python2, str on python3).
+    :returns: An absolute path with symlinks expanded, unless the expansion
+        would change the existence of the file.
+    '''
+
+    path = to_text(path, errors='surrogate_or_strict')
+    path = os.path.abspath(path)
+
+    real = os.path.realpath(path)
+    if os.path.exists(real) or not os.path.exists(path):
+        return real
+
+    root = os.path.abspath(os.sep)
+    head, tail = os.path.split(path)
+    while head != root:
+        realhead = os.path.realpath(head)
+        if os.path.isdir(realhead):
+            return os.path.join(realhead, tail)
+        head, name = os.path.split(head)
+        tail = os.path.join(name, tail)
+
+    # no parent realpath exists, just return real and let it die downstream
+    return real
 
 
 def unfrackpath(path, follow=True, basedir=None):
@@ -57,7 +90,7 @@ def unfrackpath(path, follow=True, basedir=None):
         b_final_path = os.path.join(b_basedir, b_final_path)
 
     if follow:
-        b_final_path = os.path.realpath(b_final_path)
+        b_final_path = realpath_safe(b_final_path)
 
     return to_text(os.path.normpath(b_final_path), errors='surrogate_or_strict')
 
