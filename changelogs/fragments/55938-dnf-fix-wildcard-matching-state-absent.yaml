@@ -1,0 +1,2 @@
+bugfixes:
+  - "dnf - fix wildcard matching for state: absent (https://github.com/ansible/ansible/issues/55938)"
