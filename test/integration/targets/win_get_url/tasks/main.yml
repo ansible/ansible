@@ -15,7 +15,7 @@
 
 - name: download SlimFTPd binary
   win_get_url:
-    url: https://ansible-ci-files.s3.amazonaws.com//test/integration/roles/test_win_get_url/SlimFTPd.exe
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_get_url/SlimFTPd.exe
     dest: '{{ testing_dir }}\SlimFTPd.exe'
 
 # SlimFTPd does not work with special chars because it is so old, use a symlink as a workaround

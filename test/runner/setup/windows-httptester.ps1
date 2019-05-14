@@ -113,7 +113,7 @@ if ($os_version -ge [Version]"6.2") {
     # versions of Windows. Use custom application Port Mapper to acheive the
     # same outcome
     # http://www.analogx.com/contents/download/Network/pmapper/Freeware.htm
-    $s3_url = "https://ansible-ci-files.s3.amazonaws.com//ansible-test/pmapper-1.04.exe"
+    $s3_url = "https://ansible-ci-files.s3.amazonaws.com/ansible-test/pmapper-1.04.exe"
 
     # download the Port Mapper executable to a temporary directory
     $pmapper_folder = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())

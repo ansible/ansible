@@ -10,7 +10,7 @@
 
 - name: Download PsExec
   win_get_url:
-    url: https://ansible-ci-files.s3.amazonaws.com//test/integration/targets/win_psexec/PsExec.exe
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_psexec/PsExec.exe
     dest: '{{ testing_dir }}\PsExec.exe'
 
 - name: Get the existing PATH env var

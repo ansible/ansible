@@ -1,5 +1,5 @@
 ---
-test_win_service_binary_url: https://ansible-ci-files.s3.amazonaws.com//test/integration/targets/win_service/SleepService.exe
+test_win_service_binary_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_service/SleepService.exe
 test_win_service_dir: C:\ansible testing\[win_service]
 test_win_service_path: '{{ test_win_service_dir }}\SleepService.exe'
 test_win_service_name: TestService [*abc]

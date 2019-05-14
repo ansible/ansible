@@ -93,7 +93,7 @@
 
 - name: download binary the outputs argv to stdout
   win_get_url:
-    url: https://ansible-ci-files.s3.amazonaws.com//test/integration/roles/test_win_module_utils/PrintArgv.exe
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_module_utils/PrintArgv.exe
     dest: C:\ansible testing\PrintArgv.exe
 
 - name: call module with CommandUtil tests

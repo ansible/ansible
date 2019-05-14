@@ -8,7 +8,7 @@
   win_get_url:
     # this was downloaded straight off the Pester GitHub release page and uploaded to the S3 bucket
     # https://github.com/pester/Pester/releases 
-    url: 'https://ansible-ci-files.s3.amazonaws.com//test/integration/roles/test_win_pester/Pester-4.3.1.zip'
+    url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_pester/Pester-4.3.1.zip'
     dest: '{{test_win_pester_path}}\Pester-4.3.1.zip'
 
 - name: unzip Pester module
