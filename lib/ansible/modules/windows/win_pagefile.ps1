@@ -40,7 +40,7 @@ $result = @{
 if ($removeAll) {
     $currentPageFiles = Get-CIMInstance Win32_PageFileSetting
     if ($null -ne $currentPageFiles) {
-        $currentPageFiles | Remove-CIMInstance -WhatIf:$check_mode | Out-Null
+        $currentPageFiles | Remove-CIMInstance -WhatIf:$check_mode > $null
         $result.changed = $true
     }
 }
@@ -55,7 +55,7 @@ if ($null -ne $automatic) {
     if ($computerSystem.AutomaticManagedPagefile -ne $automatic) {
         if (-not $check_mode) {
             try {
-            	$computerSystem | Set-CimInstance -Property @{automaticmanagedpagefile="$automatic"} | Out-Null
+            	$computerSystem | Set-CimInstance -Property @{automaticmanagedpagefile="$automatic"} > $null
             } catch {
                 Fail-Json $result "Failed to set AutomaticManagedPagefile $($_.Exception.Message)"
             }

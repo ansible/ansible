@@ -226,7 +226,7 @@ if($gather_subset.Contains('env')) {
 if($gather_subset.Contains('facter')) {
     # See if Facter is on the System Path
     Try {
-        Get-Command facter -ErrorAction Stop | Out-Null
+        Get-Command facter -ErrorAction Stop > $null
         $facter_installed = $true
     } Catch {
         $facter_installed = $false
@@ -234,7 +234,7 @@ if($gather_subset.Contains('facter')) {
 
     # Get JSON from Facter, and parse it out.
     if ($facter_installed) {
-        &facter -j | Tee-Object  -Variable facter_output | Out-Null
+        &facter -j | Tee-Object  -Variable facter_output > $null
         $facts = "$facter_output" | ConvertFrom-Json
         ForEach($fact in $facts.PSObject.Properties) {
             $fact_name = $fact.Name

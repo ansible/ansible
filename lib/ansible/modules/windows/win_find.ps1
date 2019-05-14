@@ -307,7 +307,7 @@ Function Get-FilesInFolder($path) {
     try {
         $dir_files = $dir.EnumerateFileSystemInfos("*", [System.IO.SearchOption]::TopDirectoryOnly)
     } catch [System.IO.DirectoryNotFoundException] { # Broken ReparsePoint/Symlink, cannot enumerate
-    	  Add-Warning -obj $result -message "symlink enumeration error: $($_.Exception.Message)"
+    	Add-Warning -obj $result -message "symlink enumeration error: $($_.Exception.Message)"
     } catch [System.UnauthorizedAccessException] {  # No ListDirectory permissions, Get-ChildItem ignored this
         Add-Warning -obj $result -message "symlink enumeration error: $($_.Exception.Message)"
     }

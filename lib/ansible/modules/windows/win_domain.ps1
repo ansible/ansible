@@ -18,7 +18,6 @@ Function Ensure-Prereqs {
         $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
         $result.reboot_required = $awf.RestartNeeded
         # FUTURE: Check if reboot necessary
-        $result.reboot_required = $awf.RestartNeeded
 
         return $true
     }

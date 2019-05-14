@@ -52,6 +52,7 @@ Function Ensure-FeatureInstallation {
     Write-DebugLog "Ensuring required Windows features are installed..."
     $feature_result = Install-WindowsFeature $required_features
     $result.reboot_required = $feature_result.RestartNeeded
+    
     If(-not $feature_result.Success) {
         Exit-Json -message ("Error installing AD-Domain-Services and RSAT-ADDS features: {0}" -f ($feature_result | Out-String))
     }
@@ -213,7 +214,7 @@ Try {
                 if ($site_name) {
                     $install_params.SiteName = $site_name
                 }
-                Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params | Out-Null
+                Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
 
                 Write-DebugLog "Installation complete, trying to start the Netlogon service"
                 # The Netlogon service is set to auto start but is not started. This is
@@ -258,7 +259,7 @@ Try {
             $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
 
             Write-DebugLog "Uninstalling domain controller..."
-            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred | Out-Null
+            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
             Write-DebugLog "Uninstallation complete, needs reboot..."
         }
         default { throw ("invalid state {0}" -f $state) }
