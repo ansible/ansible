@@ -33,6 +33,7 @@ import json
 import re
 import sys
 import yaml
+from collections import OrderedDict
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -857,7 +858,7 @@ class NxosCmdRef:
                 return None
             if len(match) > 1:
                 # TBD: Add support for multiple instances
-                raise "get_existing: multiple match instances are not currently supported"
+                raise ValueError("get_existing: multiple match instances are not currently supported")
             match = list(match[0])  # tuple to list
 
             # Handle config strings that nvgen with the 'no' prefix.
@@ -908,7 +909,7 @@ class NxosCmdRef:
             elif 'str' == kind:
                 ref[k]['existing'] = match[0]
             else:
-                raise "get_existing: unknown 'kind' value specified for key '{0}'".format(k)
+                raise ValueError("get_existing: unknown 'kind' value specified for key '{0}'".format(k))
 
     def get_playvals(self):
         """Update ref with values from the playbook.
@@ -969,24 +970,38 @@ class NxosCmdRef:
                 else:
                     cmd = ref[k]['setval'].format(playval)
             else:
-                raise "get_proposed: unknown 'kind' value specified for key '{0}'".format(k)
+                raise ValueError("get_proposed: unknown 'kind' value specified for key '{0}'".format(k))
             if cmd:
                 if 'absent' == ref['_state'] and not re.search(r'^no', cmd):
                     cmd = 'no ' + cmd
-                # This command may require parent commands for proper context
-                # Global _template context is replaced by parameter context
-                parent_context = ref['_template'].get('context', [])
-                parent_context = ref[k].get('context', parent_context)
-                for context in parent_context:
-                    if isinstance(context, list):
-                        for ctx_cmd in context:
-                            proposed.append(ctx_cmd)
-                    elif isinstance(context, str):
-                        proposed.append(context)
+                # Add processed command to cmd_ref object
+                ref[k]['setcmd'] = cmd
 
-                proposed.append(cmd)
+        # Commands may require parent commands for proper context.
+        # Global _template context is replaced by parameter context
+        for k in play_keys:
+            if ref[k].get('setcmd') is None:
+                continue
+            parent_context = ref['_template'].get('context', [])
+            parent_context = ref[k].get('context', parent_context)
+            if isinstance(parent_context, list):
+                for ctx_cmd in parent_context:
+                    if re.search(r'setval::', ctx_cmd):
+                        ctx_cmd = ref[ctx_cmd.split('::')[1]].get('setcmd')
+                        if ctx_cmd is None:
+                            continue
+                    proposed.append(ctx_cmd)
+            elif isinstance(parent_context, str):
+                if re.search(r'setval::', parent_context):
+                    parent_context = ref[parent_context.split('::')[1]].get('setcmd')
+                    if parent_context is None:
+                        continue
+                proposed.append(parent_config)
 
-        return proposed
+            proposed.append(ref[k]['setcmd'])
+
+        # Remove duplicate commands from proposed before returning
+        return OrderedDict.fromkeys(proposed).keys()
 
 
 def is_json(cmd):
