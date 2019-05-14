@@ -270,7 +270,7 @@ class AnsibleHcloudServer(Hcloud):
         if not self.module.check_mode:
             resp = self.client.servers.create(**params)
             self.result["root_password"] = resp.root_password
-            resp.action.wait_until_finished()
+            resp.action.wait_until_finished(max_retries=1000)
             [action.wait_until_finished() for action in resp.next_actions]
         self._mark_as_changed()
         self._get_server()
