@@ -3,7 +3,7 @@
 - name: setup
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     state: absent
     type: A
@@ -18,7 +18,7 @@
 - name: Test record creation
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     state: present
     type: A
@@ -41,7 +41,7 @@
 - name: Test answer append
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     state: present
     record_mode: append
@@ -67,7 +67,7 @@
 - name: Test record no change
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     state: present
     record_mode: append
@@ -92,7 +92,7 @@
 - name: Test answer update with purge
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     state: present
     type: A
@@ -116,7 +116,7 @@
 - name: Test filter append
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     state: present
     record_mode: append
@@ -138,7 +138,7 @@
 - name: Test filter purge
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     record_mode: purge
     state: present
@@ -156,7 +156,7 @@
 - name: Test meta update
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     record_mode: purge
     state: present
@@ -178,7 +178,7 @@
 - name: Test answer purge
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     record_mode: purge
     state: present
@@ -195,7 +195,7 @@
 - name: Test record deletion
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "{{ test_zone }}"
     state: absent
     type: A
@@ -210,7 +210,7 @@
 - name: Test record deletion without existing zone
   ns1_record:
     apiKey: "{{ ns1_token }}"
-    name: www
+    name: "{{ test_record }}"
     zone: "missing-{{ test_zone }}"
     state: absent
     type: A

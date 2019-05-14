@@ -4,7 +4,7 @@
   ns1_record:
     apiKey: "{{ ns1_token }}"
     zone: "{{ test_zone }}"
-    name: "{{ test_zone }}"
+    name: "{{ test_record }}"
     state: absent
     type: MX
     answers: []
@@ -19,7 +19,7 @@
   ns1_record:
     apiKey: "{{ ns1_token }}"
     zone: "{{ test_zone }}"
-    name: "{{ test_zone }}"
+    name: "{{ test_record }}"
     state: present
     type: MX 
     answers:
@@ -38,7 +38,7 @@
   ns1_record:
     apiKey: "{{ ns1_token }}"
     zone: "{{ test_zone }}"
-    name: "{{ test_zone }}"
+    name: "{{ test_record }}"
     state: present
     record_mode: append
     type: MX 
@@ -59,7 +59,7 @@
   ns1_record:
     apiKey: "{{ ns1_token }}"
     zone: "{{ test_zone }}"
-    name: "{{ test_zone }}"
+    name: "{{ test_record }}"
     record_mode: purge
     state: present
     type: MX 
@@ -80,7 +80,7 @@
   ns1_record:
     apiKey: "{{ ns1_token }}"
     zone: "{{ test_zone }}"
-    name: "{{ test_zone }}"
+    name: "{{ test_record }}"
     state: absent
     type: MX 
     answers: []

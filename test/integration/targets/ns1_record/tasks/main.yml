@@ -1,2 +1,6 @@
+- name: Create random domain name
+  set_fact:
+    test_record: '{{ 99999999 | random | to_uuid | replace("-", "") | truncate(16, True, "") }}'
+
 - include: a_record.yml
 - include: mx_record.yml
