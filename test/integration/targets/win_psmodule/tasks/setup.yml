@@ -107,7 +107,7 @@
 # Used in the script below to create the .nupkg for each test module
 - name: download NuGet binary for module publishing
   win_get_url:
-    url: https://ansible-ci-files.s3.amazonaws.comtest/integration/targets/win_psmodule/nuget.exe
+    url: https://ansible-ci-files.s3.amazonaws.com//test/integration/targets/win_psmodule/nuget.exe
     dest: '{{ remote_tmp_dir }}'
 
 - name: create test PowerShell modules

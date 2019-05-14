@@ -53,12 +53,12 @@
 # Cannot use httpbin as the Last-Modified date is generated dynamically
 - name: download file for force=no tests
   win_get_url:
-    url: https://ansible-ci-files.s3.amazonaws.comtest/integration/roles/test_win_get_url/SlimFTPd.exe
+    url: https://ansible-ci-files.s3.amazonaws.com//test/integration/roles/test_win_get_url/SlimFTPd.exe
     dest: '{{ testing_dir }}\output'
 
 - name: download single file with force no
   win_get_url:
-    url: https://ansible-ci-files.s3.amazonaws.comtest/integration/roles/test_win_get_url/SlimFTPd.exe
+    url: https://ansible-ci-files.s3.amazonaws.com//test/integration/roles/test_win_get_url/SlimFTPd.exe
     dest: '{{ testing_dir }}\output'
     force: no
   register: http_download_no_force
@@ -76,7 +76,7 @@
 
 - name: download newer file with force no
   win_get_url:
-    url: https://ansible-ci-files.s3.amazonaws.comtest/integration/roles/test_win_get_url/SlimFTPd.exe
+    url: https://ansible-ci-files.s3.amazonaws.com//test/integration/roles/test_win_get_url/SlimFTPd.exe
     dest: '{{ testing_dir }}\output'
     force: no
   register: http_download_newer_no_force
