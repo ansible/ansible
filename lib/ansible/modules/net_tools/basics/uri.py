@@ -175,6 +175,9 @@ notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
   - For Windows targets, use the M(win_uri) module instead.
+  - The uri module does not honor the no_proxy environment variable for CIDR masks. To work around this, you would need to
+      parse the no_proxy environment variable (`{{ lookup('env', 'no_proxy') }}`) using the ipaddr filter and compare it
+      against the IP address of the host you're trying to connect to.
 seealso:
 - module: get_url
 - module: win_uri
@@ -259,6 +262,16 @@ EXAMPLES = r'''
     method: POST
     src: /path/to/my/file.json
     remote_src: yes
+
+- name: Pause play until a URL is reachable from this host
+  uri:
+    url: "http://192.0.2.1/some/test"
+    follow_redirects: none
+    method: GET
+  register: _result
+  until: _result.status == 200
+  retries: 10000
+  delay: 5
 '''
 
 RETURN = r'''
