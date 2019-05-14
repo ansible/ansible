@@ -1,7 +1,6 @@
 - hosts: localhost
   gather_facts: false
-  vars:
-    mytest: '{{ und }}'
   tasks:
     - debug:
-      when: mytest is defined and not mytest
+      vars:
+        mytest: '{{ und }}'
