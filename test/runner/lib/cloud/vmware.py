@@ -87,7 +87,7 @@ class VmwareCloudProvider(CloudProvider):
         """
         :rtype: AnsibleCoreCI
         """
-        return AnsibleCoreCI(self.args, 'Vmware', 'Vmware',
+        return AnsibleCoreCI(self.args, 'vmware', 'vmware',
                              persist=False, stage=self.args.remote_stage,
                              provider='vmware')
 
