@@ -471,7 +471,7 @@ class Configuration:
         self.scheme = scheme    # type: str
         self.validate_certs = validate_certs    # type: bool
         self.name = name    # type: str
-        self.port = port    # type: bool
+        self.port = port    # type: int
         self.rules = rules    # type: RuleCollection
         self.state = state    # type: str
         self.token = token    # type: str
