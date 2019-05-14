@@ -131,6 +131,7 @@ Another example is how to run handlers after an error occurred :
       block:
         - debug:
             msg: 'I execute normally'
+          changed_when: yes
           notify: run me even after an error
         - command: /bin/false
       rescue:
