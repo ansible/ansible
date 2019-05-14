@@ -12,9 +12,9 @@ import pytest
 
 from datetime import date, datetime
 
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-
 
 def test_AnsibleJSONDecoder_vault():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/ajson.json')) as f:
@@ -26,8 +26,31 @@ def test_AnsibleJSONDecoder_vault():
 
 
 class TestAnsibleJSONEncoder():
+    """
+    Class for testing AnsibleJSONEncoder
+    """
 
-    @pytest.fixture
+    @pytest.yield_fixture
+    def mapping(self, request):
+        """
+        Returns object of Mapping mock class
+        """
+        class M(Mapping):
+            def __init__(self, *args, **kwargs):
+                self.__dict__.update(*args, **kwargs)
+
+            def __getitem__(self, key):
+                return self.__dict__[key]
+
+            def __iter__(self):
+                return iter(self.__dict__)
+
+            def __len__(self):
+                return len(self.__dict__)
+
+        yield M(request.param)
+
+    @pytest.yield_fixture
     def ansible_json_encoder(self):
         yield AnsibleJSONEncoder()
 
@@ -41,4 +64,26 @@ class TestAnsibleJSONEncoder():
         ]
     )
     def test_date_datetime(self, ansible_json_encoder, test_input, expected):
+        """
+        Test for passing datetime.date or datetime.datetime objects
+        to AnsibleJSONEncoder.default()
+        """
         assert(ansible_json_encoder.default(test_input) == expected)
+
+    @pytest.mark.parametrize(
+        'mapping,expected',
+        [
+            ({1: 1}, {1: 1}),
+            ({2: 2}, {2: 2}),
+            ({1: 2}, {1: 2}),
+            ({2: 1}, {2: 1}),
+
+        ], indirect=['mapping']
+    )
+    def test_mapping(self, ansible_json_encoder, mapping, expected):
+        """
+        Test for passing Mapping object to AnsibleJSONEncoder.default()
+        """
+        m = mapping
+        assert(isinstance(m, Mapping))
+        assert(ansible_json_encoder.default(m) == expected)
