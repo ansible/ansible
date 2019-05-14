@@ -249,8 +249,6 @@ options:
                     - Relative path of I(probe).
                     - Valid path starts from '/'.
                     - Probe is sent to <Protocol>://<host>:<port><path>.
-                    - Path.
-                    - Valid path starts from '/'. Probe is sent to <Protocol>://<host>:<port><path>.
             timeout:
                 description:
                     - The probe timeout in seconds.
