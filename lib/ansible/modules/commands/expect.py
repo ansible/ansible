@@ -29,21 +29,26 @@ options:
       - The command module takes command to run.
     required: true
   creates:
+    type: path
     description:
       - A filename, when it already exists, this step will B(not) be run.
   removes:
+    type: path
     description:
       - A filename, when it does not exist, this step will B(not) be run.
   chdir:
+    type: path
     description:
       - Change into this directory before running the command.
   responses:
+    type: dict
     description:
       - Mapping of expected string/regex and string to respond with. If the
         response is a list, successive matches return successive
         responses. List functionality is new in 2.1.
     required: true
   timeout:
+    type: int
     description:
       - Amount of time in seconds to wait for the expected strings. Use
         C(null) to disable timeout.
