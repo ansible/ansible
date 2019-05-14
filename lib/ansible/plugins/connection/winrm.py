@@ -482,8 +482,8 @@ class Connection(ConnectionBase):
                 except ValueError:
                     # stdout does not contain a return response, stdin input was a fatal error
                     stderr = to_bytes(response.std_err, encoding='utf-8')
-                    if self.is_clixml(stderr):
-                        stderr = self.parse_clixml_stream(stderr)
+                    if stderr.startswith(b"#< CLIXML"):
+                        stderr = _parse_clixml(stderr)
 
                     raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s'
                                        % (to_native(response.std_out), to_native(stderr)))
