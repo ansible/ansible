@@ -246,14 +246,11 @@ options:
                     - Host name to send the I(probe) to.
             path:
                 description:
-<<<<<<< HEAD
                     - Relative path of I(probe).
                     - Valid path starts from '/'.
                     - Probe is sent to <Protocol>://<host>:<port><path>.
-=======
                     - Path.
                     - Valid path starts from '/'. Probe is sent to <Protocol>://<host>:<port><path>.
->>>>>>> origin/azure_rm_appgateway
             timeout:
                 description:
                     - The probe timeout in seconds.
