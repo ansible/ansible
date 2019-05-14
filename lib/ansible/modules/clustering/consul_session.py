@@ -26,6 +26,11 @@ version_added: "2.0"
 author:
 - Steve Gargan (@sgargan)
 options:
+    id:
+        description:
+          - ID of the session, required when I(state) is either C(info) or
+            C(remove).
+        type: str
     state:
         description:
           - Whether the session should be present i.e. created if it doesn't
