@@ -234,31 +234,40 @@ options:
         suboptions:
             name:
                 description:
-                    - Name.
+                    - Name of the I(probe) that is unique within an Application Gateway.
             protocol:
                 description:
-                    - Protocol.
+                    - The protocol used for the I(probe).
                 choices:
                     - 'http'
                     - 'https'
             host:
                 description:
-                    - Host.
+                    - Host name to send the I(probe) to.
             path:
                 description:
+<<<<<<< HEAD
+                    - Relative path of I(probe).
+                    - Valid path starts from '/'.
+                    - Probe is sent to <Protocol>://<host>:<port><path>.
+=======
                     - Path.
                     - Valid path starts from '/'. Probe is sent to <Protocol>://<host>:<port><path>.
+>>>>>>> origin/azure_rm_appgateway
             timeout:
                 description:
-                    - Timeout.
+                    - The probe timeout in seconds.
+                    - Probe marked as failed if valid response is not received with this timeout period.
                     - Acceptable values are from 1 second to 86400 seconds.
             interval:
                 description:
-                    - Interval.
+                    - The probing interval in seconds.
+                    - This is the time interval between two consecutive probes.
                     - Acceptable values are from 1 second to 86400 seconds.
             unhealthy_threshold:
                 description:
-                    - Unhealthy Threshold.
+                    - The I(probe) retry count.
+                    - Backend server is marked down after consecutive probe failure count reaches UnhealthyThreshold.
                     - Acceptable values are from 1 second to 20.
     backend_http_settings_collection:
         description:
@@ -266,13 +275,13 @@ options:
         suboptions:
             probe:
                 description:
-                    - Probe.
+                    - Probe resource of an application gateway.
             port:
                 description:
-                    - Port.
+                    - The destination port on the backend.
             protocol:
                 description:
-                    - Protocol.
+                    - The protocol used to communicate with the backend.
                 choices:
                     - 'http'
                     - 'https'
@@ -284,8 +293,9 @@ options:
                     - 'disabled'
             request_timeout:
                 description:
-                    - Request timeout in seconds. Application Gateway will fail the request if response is not received within RequestTimeout. Acceptable va
-                      lues are from 1 second to 86400 seconds.
+                    - Request timeout in seconds.
+                    - Application Gateway will fail the request if response is not received within RequestTimeout.
+                    - Acceptable values are from 1 second to 86400 seconds.
             authentication_certificates:
                 description:
                     - List of references to application gateway authentication certificates.
@@ -304,7 +314,8 @@ options:
                     - Cookie name to use for the affinity cookie.
             path:
                 description:
-                    - Path which should be used as a prefix for all C(http) requests. Null means no path will be prefixed. Default value is null.
+                    - Path which should be used as a prefix for all C(http) requests.
+                    - Null means no path will be prefixed. Default value is null.
             name:
                 description:
                     - Name of the resource that is unique within a resource group. This name can be used to access the resource.
@@ -320,7 +331,7 @@ options:
                     - Frontend port resource of an application gateway.
             protocol:
                 description:
-                    - Protocol.
+                    - Protocol of the c(http) listener.
                 choices:
                     - 'http'
                     - 'https'
@@ -351,7 +362,7 @@ options:
                     - Backend address pool resource of the application gateway.
             backend_http_settings:
                 description:
-                    - Frontend port resource of the application gateway.
+                    - Backend C(http) settings resource of the application gateway.
             http_listener:
                 description:
                     - Http listener resource of the application gateway.
