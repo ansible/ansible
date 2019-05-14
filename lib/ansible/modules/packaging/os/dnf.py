@@ -1108,6 +1108,14 @@ class DnfModule(YumDnf):
 
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
+                    # short-circuit installed check for wildcard matching
+                    if '*' in pkg_spec:
+                        try:
+                            self.base.remove(pkg_spec)
+                        except dnf.exceptions.MarkingError as e:
+                            failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
+                        continue
+
                     installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
                     if installed_pkg:
                         candidate_pkg = self._packagename_dict(installed_pkg[0])
