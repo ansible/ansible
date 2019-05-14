@@ -84,7 +84,10 @@ class FortiSIEMHandler(object):
     It also makes extensive use of self.<attribute> methodology to keep track of variables and trade them
     between the various methods that perform the work.
     """
+<<<<<<< HEAD
 
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     def __init__(self, module):
         self._module = module
         self._tools = FSMCommon
@@ -1040,7 +1043,13 @@ class FortiSIEMHandler(object):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
             return_dict["device"]["event_results"] = \
+=======
+            return_dict["device"]["event_results"] =\
+>>>>>>> Full FSM Commit. Ready for shippable tests.
                 self._tools.get_events_info_for_specific_ip(events)
 =======
             return_dict["device"]["event_results"] =\
@@ -1429,9 +1438,15 @@ class FortiSIEMHandler(object):
     def get_file_contents(self, file_path):
         """
         Gets the contents of a file. Commonly used with modules that allow custom XML files.
+<<<<<<< HEAD
 
         :param file_path: path of file to collect contents
 
+=======
+
+        :param file_path: path of file to collect contents
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         :return: string of file contents
         """
 
@@ -1443,7 +1458,11 @@ class FortiSIEMHandler(object):
             self.report_xml_source = source
         except BaseException as err:
             FSMBaseException(msg="Failed to get file contents at path: " + str(self.export_json_to_file_path) +
+<<<<<<< HEAD
                                  "| Error: " + str(err))
+=======
+                                       "| Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
         return source
 
@@ -1684,6 +1703,13 @@ class FortiSIEMHandler(object):
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
         Submits the report request to the API.
+<<<<<<< HEAD
+
+        :param auth: Authentication header created in create_auth_header()
+        :param url: URL created in create_endpoint_url()
+        :param report_xml: string format of the report XML to be submitted.
+
+=======
 
         :param auth: Authentication header created in create_auth_header()
         :param url: URL created in create_endpoint_url()
@@ -1710,6 +1736,7 @@ class FortiSIEMHandler(object):
 >>>>>>> Full FSM Commit
 =======
 
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         :return: xml
 >>>>>>> Full FSM Commit. Ready for shippable tests.
         """
@@ -1846,11 +1873,18 @@ class FortiSIEMHandler(object):
 
 =======
         Gets the results of a specific query ID.
+<<<<<<< HEAD
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
         :param auth: Authentication header created in create_auth_header()
         :param url: URL created in create_endpoint_url()
 
+=======
+
+        :param auth: Authentication header created in create_auth_header()
+        :param url: URL created in create_endpoint_url()
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         :return: xml
 <<<<<<< HEAD
 >>>>>>> Full FSM Commit. Ready for shippable tests.
@@ -2023,9 +2057,15 @@ class FortiSIEMHandler(object):
         start_epoch = None
         end_epoch = None
         # BUILD THE TIMESTAMP
+<<<<<<< HEAD
         begin_timestamp = self._module.paramgram["report_absolute_begin_date"] \
                           + " " + self._module.paramgram["report_absolute_begin_time"]
         end_timestamp = self._module.paramgram["report_absolute_end_date"] \
+=======
+        begin_timestamp = self._module.paramgram["report_absolute_begin_date"]\
+                          + " " + self._module.paramgram["report_absolute_begin_time"]
+        end_timestamp = self._module.paramgram["report_absolute_end_date"]\
+>>>>>>> Full FSM Commit. Ready for shippable tests.
                         + " " + self._module.paramgram["report_absolute_end_time"]
         start_epoch = self._tools.convert_timestamp_to_epoch(begin_timestamp)
         end_epoch = self._tools.convert_timestamp_to_epoch(end_timestamp)

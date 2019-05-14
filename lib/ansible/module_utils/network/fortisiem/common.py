@@ -37,7 +37,10 @@ import ssl
 import json
 import xml.dom.minidom
 import re
+<<<<<<< HEAD
 import xmltodict
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 # BEGIN STATIC DATA / MESSAGES
@@ -507,6 +510,7 @@ class FSMCommon(object):
 # END ERROR CLASSES
 
 
+<<<<<<< HEAD
 # try:
 #     import xmltodict
 #
@@ -516,6 +520,16 @@ class FSMCommon(object):
 #     raise FSMBaseException(
 #         "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
 #         "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
+=======
+try:
+    import xmltodict
+    HAS_XML2DICT = True
+except ImportError as err:
+    HAS_XML2DICT = False
+    raise FSMBaseException(
+        "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
+        "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 # BEGIN CLASSES
@@ -1046,10 +1060,13 @@ class FSMCommon(object):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> Bug Fixes according to shippable... re-running
 =======
 >>>>>>> Bug Fixes according to shippable... re-running
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
                 for node1 in node.getElementsByTagName("event"):
                     mapping = {}
                     for node2 in node1.getElementsByTagName("attributes"):
@@ -1064,6 +1081,10 @@ class FSMCommon(object):
                     param.append(mapping)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
@@ -1080,6 +1101,7 @@ class FSMCommon(object):
                                         mapping[itemName] = message
                         param.append(mapping)
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Bug Fixes according to shippable... re-running
@@ -1087,6 +1109,9 @@ class FSMCommon(object):
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Bug Fixes according to shippable... re-running
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         return param
 
     @staticmethod
@@ -1277,10 +1302,17 @@ class SendSyslog(object):
         :return: dict
         """
         data = "<%d> %s" % (self.level + self.facility * 8,
+<<<<<<< HEAD
                             str(header + " host:" + socket.gethostname() + " | " + message))
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 =======
+=======
+=======
+                           str(header + " host:" + socket.gethostname() + " | " + message))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     def create_full_message(self, header, message, level):
 =======
