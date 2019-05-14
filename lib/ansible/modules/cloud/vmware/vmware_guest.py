@@ -318,6 +318,11 @@ options:
     - ' - C(domain) (string): DNS domain name to use.'
     - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter). Allowed characters are alphanumeric (uppercase and lowercase)
           and minus, rest of the characters are dropped as per RFC 952.'
+    - 'Parameters related to Linux customization:'
+    - ' - C(timezone) (string): Timezone (See List of supported time zones for different vSphere versions in Linux/Unix
+          systems (2145518) U(https://kb.vmware.com/s/article/2145518)). version_added: 2.9'
+    - ' - C(hwclockUTC) (bool): Specifies whether the hardware clock is in UTC or local time.
+          True when the hardware clock is in UTC, False when the hardware clock is in local time. version_added: 2.9'
     - 'Parameters related to Windows customization:'
     - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False).'
     - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
@@ -1649,6 +1654,13 @@ class PyVmomiHelper(PyVmomi):
             # Remove all characters except alphanumeric and minus which is allowed by RFC 952
             valid_hostname = re.sub(r"[^a-zA-Z0-9\-]", "", hostname)
             ident.hostName.name = valid_hostname
+
+            # List of supported time zones for different vSphere versions in Linux/Unix systems
+            # https://kb.vmware.com/s/article/2145518
+            if 'timezone' in self.params['customization']:
+                ident.timeZone = str(self.params['customization']['timezone'])
+            if 'hwclockUTC' in self.params['customization']:
+                ident.hwClockUTC = self.params['customization']['hwclockUTC']
 
         self.customspec = vim.vm.customization.Specification()
         self.customspec.nicSettingMap = adaptermaps
