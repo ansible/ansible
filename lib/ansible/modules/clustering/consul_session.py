@@ -36,42 +36,51 @@ options:
             specifying info, node or list for the state; for node or info, the
             node name or session id is required as parameter.
         choices: [ absent, info, list, node, present ]
+        type: str
         default: present
     name:
         description:
           - The name that should be associated with the session. This is opaque
             to Consul and not required.
+        type: str
     delay:
         description:
           - The optional lock delay that can be attached to the session when it
             is created. Locks for invalidated sessions ar blocked from being
             acquired until this delay has expired. Durations are in seconds.
+        type: int
         default: 15
     node:
         description:
           - The name of the node that with which the session will be associated.
             by default this is the name of the agent.
+        type: str
     datacenter:
         description:
           - The name of the datacenter in which the session exists or should be
             created.
+        type: str
     checks:
         description:
-          - A list of checks that will be used to verify the session health. If
+          - Checks that will be used to verify the session health. If
             all the checks fail, the session will be invalidated and any locks
             associated with the session will be release and can be acquired once
             the associated lock delay has expired.
+        type: list
     host:
         description:
           - The host of the consul agent defaults to localhost.
+        type: str
         default: localhost
     port:
         description:
           - The port on which the consul agent is running.
+        type: int
         default: 8500
     scheme:
         description:
           - The protocol scheme on which the consul agent is running.
+        type: str
         default: http
         version_added: "2.1"
     validate_certs:
@@ -85,6 +94,7 @@ options:
           - The optional behavior that can be attached to the session when it
             is created. This controls the behavior when a session is invalidated.
         choices: [ delete, release ]
+        type: str
         default: release
         version_added: "2.2"
 """
