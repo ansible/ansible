@@ -17,10 +17,10 @@ export ANSIBLE_ROLES_PATH=../
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-less-than-1.10.16"
 source "${MYTMPDIR}/botocore-less-than-1.10.16/bin/activate"
 "${PYTHON}" -m pip install 'botocore<1.10.16' 'boto3<1.7.16'
-ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/version_fail.yml "$@"
+ansible-playbook -i ../../inventory -e @../../integration_config.yml -v playbooks/version_fail.yml "$@"
 
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-recent"
 source "${MYTMPDIR}/botocore-recent/bin/activate"
 $PYTHON -m pip install 'botocore>=1.10.16' boto3
-ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/full_test.yml "$@"
+ansible-playbook -i ../../inventory -e @../../integration_config.yml -v playbooks/full_test.yml "$@"

@@ -85,7 +85,7 @@
         name: '{{ resource_prefix }}_ecs_cluster'
         state: present
         <<: *aws_connection_info
-      when: ec2_keypair is not defined  # allow override in cloud-config-aws.yml
+      when: ec2_keypair is not defined  # allow override in cloud-config-aws.ini
       register: setup_key
 
     - name: create subnets
@@ -951,7 +951,7 @@
 #       <<: *aws_connection_info
 #     ignore_errors: yes
 
-    - name: remove fargate ECS service 
+    - name: remove fargate ECS service
       ecs_service:
         state: absent
         name: "{{ ecs_service_name }}4"
