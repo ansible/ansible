@@ -19,7 +19,7 @@ module: azure_rm_automationaccount
 version_added: "2.9"
 short_description: Manage Azure automation account.
 description:
-    - Create, delete an automation account from virtual machine, blob uri, managed disk or snapshot.
+    - Create, delete an automation account.
 options:
     resource_group:
         description:
