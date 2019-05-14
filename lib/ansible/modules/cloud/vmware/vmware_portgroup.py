@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
-# Copyright: (c) 2017-18, Ansible Project
-# Copyright: (c) 2017-18, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright: (c) 2017, Ansible Project
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -65,13 +65,13 @@ options:
             - '- C(forged_transmits) (bool): indicates whether forged transmits are allowed. (default: None)'
             - '- C(mac_changes) (bool): indicates whether mac changes are allowed. (default: None)'
         required: False
-        version_added: "2.8"
+        version_added: "2.2"
         aliases: [ 'security_policy', 'network_policy' ]
     teaming:
         description:
             - Dictionary which configures the different teaming values for portgroup.
             - 'Valid attributes are:'
-            - '- C(load_balancing) (string): Network adapter teaming policy. (default: loadbalance_srcid)'
+            - '- C(load_balancing) (string): Network adapter teaming policy. C(load_balance_policy) is also alias to this option. (default: loadbalance_srcid)'
             - '   - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, failover_explicit ]'
             - '- C(network_failure_detection) (string): Network failure detection. (default: link_status_only)'
             - '   - choices: [ link_status_only, beacon_probing ]'
@@ -94,7 +94,7 @@ options:
             - '- C(peak_bandwidth) (int): Peak bandwidth (kbit/s). (default: None)'
             - '- C(burst_size) (int): Burst size (KB). (default: None)'
         required: False
-        version_added: '2.8'
+        version_added: '2.9'
     cluster_name:
         description:
             - Name of cluster name for host membership.
@@ -265,6 +265,9 @@ class VMwareHostPortGroup(PyVmomi):
             self.sec_mac_changes = None
         if self.params['traffic_shaping']:
             self.ts_enabled = self.params['traffic_shaping'].get('enabled')
+            for value in ['average_bandwidth', 'peak_bandwidth', 'burst_size']:
+                if not self.params['traffic_shaping'].get(value):
+                    self.module.fail_json(msg="traffic_shaping.%s is a required parameter if traffic_shaping is enabled." % value)
             self.ts_average_bandwidth = self.params['traffic_shaping'].get('average_bandwidth')
             self.ts_peak_bandwidth = self.params['traffic_shaping'].get('peak_bandwidth')
             self.ts_burst_size = self.params['traffic_shaping'].get('burst_size')
@@ -312,7 +315,7 @@ class VMwareHostPortGroup(PyVmomi):
             results['result'][host.name] = dict()
             switch_state = self.check_if_vswitch_exists(host_system=host)
             if switch_state == 'absent':
-                self.module.fail_json(msg="The vSwitch '%s' doesn't exist on host '%s'" % (self.switch, host))
+                self.module.fail_json(msg="The vSwitch '%s' doesn't exist on host '%s'" % (self.switch, host.name))
             portgroup_state = self.check_if_portgroup_exists(host_system=host)
             if self.state == 'present' and portgroup_state == 'present':
                 changed, host_results = self.update_host_port_group(
@@ -725,8 +728,14 @@ class VMwareHostPortGroup(PyVmomi):
                     spec.policy.nicTeaming.nicOrder = None
                     changed = True
                     changed_list.append("Failover order")
-                    host_results['failover_active_previous'] = spec.policy.nicTeaming.nicOrder.activeNic
-                    host_results['failover_standby_previous'] = spec.policy.nicTeaming.nicOrder.standbyNic
+                    if hasattr(spec.policy.nicTeaming.nicOrder, 'activeNic'):
+                        host_results['failover_active_previous'] = spec.policy.nicTeaming.nicOrder.activeNic
+                    else:
+                        host_results['failover_active_previous'] = []
+                    if hasattr(spec.policy.nicTeaming.nicOrder, 'standbyNic'):
+                        host_results['failover_standby_previous'] = spec.policy.nicTeaming.nicOrder.standbyNic
+                    else:
+                        host_results['failover_standby_previous'] = []
             else:
                 if self.teaming_failover_order_active or self.teaming_failover_order_standby:
                     changed = True
