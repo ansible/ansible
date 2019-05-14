@@ -25,7 +25,7 @@ notes:
   - An API key generated via the Memset customer control panel is needed with the
     following minimum scope - I(loadbalancer.service.add), I(loadbalancer.service.info),
     I(loadbalancer.service.list), I(loadbalancer.service.remove),
-    I(loadbalancer.service.update).
+    I(loadbalancer.service.update), I(server.info).
 description:
     - Manage Memset loadbalancer services
 options:
