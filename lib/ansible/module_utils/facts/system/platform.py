@@ -53,6 +53,11 @@ class PlatformFactCollector(BaseFactCollector):
 
         platform_facts['domain'] = '.'.join(platform_facts['fqdn'].split('.')[1:])
 
+        # this is what `hostname -f` returns
+        platform_facts['hostname_f'] = socket.getaddrinfo(socket.gethostname(), None, 0, socket.SOCK_DGRAM, 0, socket.AI_CANONNAME)[0][3]
+        # this is what `hostname -d` returns
+        platform_facts['hostname_d'] = '.'.join(platform_facts['hostname_f'].split('.')[1:])
+
         arch_bits = platform.architecture()[0]
 
         platform_facts['userspace_bits'] = arch_bits.replace('bit', '')
