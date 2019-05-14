@@ -575,6 +575,9 @@ class PluginLoader:
 
         if not class_only:
             try:
+                # A plugin may need to use its _load_name in __init__ (for example, to use self.set_options or self.get_option).
+                # Update the object before instantiating the class in case this is true
+                self._update_object(obj, name, path)
                 obj = obj(*args, **kwargs)
             except TypeError as e:
                 if "abstract" in e.args[0]:

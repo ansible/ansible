@@ -43,4 +43,27 @@ ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBO
 export ANSIBLE_COLLECTIONS_PATHS=''
 ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=1 ansible-inventory -i a.statichost.yml --list --export --playbook-dir=. -v "$@"
 
+# use an inventory source with caching enabled
+ansible-playbook -i a.statichost.yml -i ./cache.statichost.yml -v check_populated_inventory.yml
+
+# Check that the inventory source with caching enabled was stored
+if [[ "$(find ./inventory_cache -type f ! -path "./inventory_cache/.keep" | wc -l)" -ne "1" ]]; then
+    echo "Failed to find the expected single cache"
+    exit 1
+fi
+
+CACHEFILE="$(find ./inventory_cache -type f ! -path './inventory_cache/.keep')"
+
+# Check the cache for the expected hosts
+
+if [[ "$(grep -wc "cache_host_a" "$CACHEFILE")" -ne "1" ]]; then
+    echo "Failed to cache host as expected"
+    exit 1
+fi
+
+if [[ "$(grep -wc "dynamic_host_a" "$CACHEFILE")" -ne "0" ]]; then
+    echo "Cached an incorrect source"
+    exit 1
+fi
+
 ./vars_plugin_tests.sh
