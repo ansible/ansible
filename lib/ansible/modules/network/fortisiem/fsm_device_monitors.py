@@ -17,6 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -40,31 +41,31 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
-    
+
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
-    
+
   password:
     description:
       - The password associated with the username account.
     required: false
-    
+
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
-    options: ["enable", "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
-    options: ["enable, "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_file_path:
     description:
@@ -72,60 +73,83 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
-    
+
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
       - An error will be thrown if this fails.
     required: false
     default: None
-    
+
   mode:
     description:
       - Handles how the query is formatted upon return.
       - When in update mode, update_xml_file is required.
     required: false
     default: "short_all"
-    options: ["short_all", "ip_range", "detailed_single", "update"]
-    
+    choices: ["short_all", "ip_range", "detailed_single", "update"]
+
   ip_range:
     description:
       - Specifies the IP Range of devices to search for and return.
       - Ignored unless "ip_range" is set for mode
     required: false
-    
+
   ip:
     description:
       - Specifies the single IP address of a device to get detailed information from.
       - Ignored unless "detailed_single" is set for mode
     required: false
-    
+
   update_xml_file:
     description:
-      - Specifies the XML file path that contains the pre-formatted XML to update the monitor with. 
+      - Specifies the XML file path that contains the pre-formatted XML to update the monitor with.
     required: false
-    
+
 '''
 
-
 EXAMPLES = '''
-- name: GET SIMPLE DEVICE LIST FROM CMDB
-      fsm_device_monitors:
-        host: "10.0.0.15"
-        username: "super/api_user"
-        password: "Fortinet!1"
-        ignore_ssl_errors: "enable"
-        mode: "short_all"
-        export_json_to_screen: "enable"
-        export_json_to_file_path: "/root/monitors_out1.json"
-        export_xml_to_file_path: "/root/monitors_out1.xml"
+- name: GET SIMPLE MONITOR LIST FROM CMDB
+  fsm_device_monitors:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "short_all"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/monitors_out1.json"
+    export_xml_to_file_path: "/root/monitors_out1.xml"
+
+- name: GET SIMPLE MONITOR LIST FROM CMDB IP RANGE
+  fsm_device_monitors:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "ip_range"
+    ip_range: "10.0.0.5-10.0.0.15"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/monitors_out2.json"
+    export_xml_to_file_path: "/root/monitors_out2.xml"
+
+- name: GET DETAILED MONITOR INFO ON ONE DEVICE
+  fsm_device_monitors:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "detailed_single"
+    ip: "10.0.0.5"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/monitors_out3.json"
+    export_xml_to_file_path: "/root/monitors_out3.xml"
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -136,7 +160,6 @@ from ansible.module_utils.network.fortisiem.common import FSMCommon
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 import re
 
-import pydevd
 
 def main():
     argument_spec = dict(
@@ -180,8 +203,6 @@ def main():
         "uri": None
     }
 
-    # TODO: BUILD IN UPDATE FEATURE
-
     # DETERMINE THE MODE AND ADD THE CORRECT DATA TO THE PARAMGRAM
     if paramgram["mode"] in ["short_all", "ip_range", "detailed_single"]:
         paramgram["uri"] = FSMEndpoints.GET_MONITORED_DEVICES
@@ -195,10 +216,11 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+    results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 
     # RUN IF MODE = SHORT ALL
     if paramgram["mode"] == "short_all":
@@ -208,7 +230,7 @@ def main():
             raise FSMBaseException(err)
         # ADD A SUMMARY TO THE RESULTS
         try:
-            results = fsm.get_monitors_summary_for_short_all(results)
+            results = fsm._tools.get_monitors_summary_for_short_all(results)
         except BaseException as err:
             raise FSMBaseException(err)
 
@@ -228,7 +250,7 @@ def main():
         try:
             results_append_list = []
             for ip in ipr_list:
-                append = fsm.get_monitors_info_for_specific_ip(results, str(ip))
+                append = fsm._tools.get_monitors_info_for_specific_ip(results, str(ip))
                 if len(append) > 0:
                     results_append_list.append(append)
             results["json_results"]["summary"] = results_append_list
@@ -239,13 +261,12 @@ def main():
 
     # RUN IF MODE = SINGLE IP ADDRESS
     if paramgram["mode"] == "detailed_single":
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
         try:
             results = fsm.handle_simple_request()
         except BaseException as err:
             raise FSMBaseException(err)
         results_append_list = []
-        append = fsm.get_monitors_info_for_specific_ip(results, paramgram["ip"])
+        append = fsm._tools.get_monitors_info_for_specific_ip(results, paramgram["ip"])
         if len(append) > 0:
             results_append_list.append(append)
         results["json_results"]["summary"] = results_append_list
@@ -253,19 +274,18 @@ def main():
         del results["json_results"]["monitoredDevices"]
         if isinstance(results["json_results"]["summary"], dict):
             # CONVERT SUMMARY DICT INTO XML
-            results["xml_results"] = fsm.dict2xml(results["json_results"]["summary"])
+            results["xml_results"] = fsm._tools.dict2xml(results["json_results"]["summary"])
         elif isinstance(results["json_results"]["summary"], list):
             temp_xml_dict = {"results": results["xml_results"]}
-            results["xml_results"] = fsm.dict2xml(temp_xml_dict)
+            results["xml_results"] = fsm._tools.dict2xml(temp_xml_dict)
 
     # RUN IF MODE = UPDATE
-    #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
     if paramgram["mode"] == "update":
         try:
-            paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["update_xml_file"])
+            paramgram["input_xml"] = fsm.get_file_contents(paramgram["update_xml_file"])
             paramgram["input_xml"] = re.sub(r'\n', '', paramgram["input_xml"])
         except BaseException as err:
-            raise FSMBaseException(msg="Couldn't find or load update_xml_file path. Double check.")
+            raise FSMBaseException(msg="Couldn't find or load update_xml_file path. Double check. Error: " + str(err))
         # REFRESH PARAMGRAM
         module.paramgram = paramgram
         try:
@@ -273,7 +293,7 @@ def main():
         except BaseException as err:
             raise FSMBaseException(err)
         # CONVERT SUMMARY DICT INTO XML
-        results["xml_results"] = fsm.dict2xml(results["json_results"])
+        results["xml_results"] = fsm._tools.dict2xml(results["json_results"])
 
     # EXIT USING GOVERN_RESPONSE()
     fsm.govern_response(module=module, results=results, changed=False, good_codes=[200, 204],
@@ -282,7 +302,7 @@ def main():
                                                                   paramgram))
     # elif paramgram["mode"] == "update":
 
-    return module.exit_json(DEFAULT_EXIT_MSG)
+    return module.exit_json(msg=results)
 
 
 if __name__ == "__main__":

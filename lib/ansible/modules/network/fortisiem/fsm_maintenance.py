@@ -17,6 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -39,31 +40,31 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
-    
+
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
-    
+
   password:
     description:
       - The password associated with the username account.
     required: false
-    
+
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
-    options: ["enable", "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
-    options: ["enable, "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_file_path:
     description:
@@ -71,7 +72,7 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
-    
+
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -87,10 +88,12 @@ options:
   mode:
     description:
       - Defines which operation to use (add or delete).
+      - When deleting, the entire playbook and all parameters must match. It's not enough to use the name.
+      - Recommend copy and paste task used to create org, and change mode to delete.
     required: false
     default: "add"
     choices: ["add", "delete"]
-    
+
   name:
     description:
       - Friendly Name of Schedule Entry.
@@ -161,20 +164,173 @@ options:
       - When true then end_date is ignored.
     required: false
     default: False
-    type: bool    
+    type: bool
 '''
 
-
 EXAMPLES = '''
-  
+- name: SET BASIC MAINT SCHEDULE
+   fsm_maintenance:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "add"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_main_1.json"
+    export_xml_to_file_path: "/root/xml_main_1.json"
+    name: "testMaintAnsible1"
+    description: "created by ansible test workbook"
+    devices: "10.0.0.5"
+    fire_incidents: False
+    time_zone_id: "Americas/Los_Angeles"
+    start_hour: "08"
+    start_min: "30"
+    duration: "380"
+    time_zone: "-8"
+    start_date: "2019-05-02"
+    end_date: "2019-05-10"
 
+- name: SET BASIC MAINT SCHEDULE w/ open end date
+  fsm_maintenance:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "add"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_main_2.json"
+    export_xml_to_file_path: "/root/xml_main_2.json"
+    name: "testMaintAnsible2"
+    description: "created by ansible test workbook"
+    devices: "10.0.0.5"
+    fire_incidents: False
+    time_zone_id: "Americas/Los_Angeles"
+    start_hour: "08"
+    start_min: "30"
+    duration: "380"
+    time_zone: "-8"
+    start_date: "2019-05-02"
+    end_date_open: True
+
+- name: SET BASIC MAINT SCHEDULE w/ open end date 2
+  fsm_maintenance:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "add"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_main_3.json"
+    export_xml_to_file_path: "/root/xml_main_3.json"
+    name: "testMaintAnsible4"
+    description: "created by ansible test workbook"
+    groups: "Firewall"
+    fire_incidents: False
+    time_zone_id: "Americas/Los_Angeles"
+    start_hour: "08"
+    start_min: "30"
+    duration: "380"
+    time_zone: "-8"
+    start_date: "2019-05-02"
+    end_date_open: True
+
+
+- name: SET BASIC MAINT SCHEDULE VIA INPUT FILE
+  fsm_maintenance:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "add"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_main_4.json"
+    export_xml_to_file_path: "/root/xml_main_4.json"
+    input_xml_file: "/root/scheduleDef.xml"
+
+- name: DELETE SCHEDULE THAT MATCHES AN XML FILE
+  fsm_maintenance:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "delete"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_main_1.json"
+    export_xml_to_file_path: "/root/xml_main_1.json"
+    input_xml_file: "/root/scheduleDef.xml"
+
+- name: DELETE BASED ON NAME
+  fsm_maintenance:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "delete"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_main_2_del.json"
+    export_xml_to_file_path: "/root/xml_main_2_del.json"
+    name: "testMaintAnsible1"
+    description: "created by ansible test workbook"
+    devices: "10.0.0.5"
+    fire_incidents: False
+    time_zone_id: "Americas/Los_Angeles"
+    start_hour: "08"
+    start_min: "30"
+    duration: "380"
+    time_zone: "-8"
+    start_date: "2019-05-02"
+    end_date: "2019-05-10"
+
+- name: SET BASIC MAINT SCHEDULE w/ open end date 2
+  fsm_maintenance:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "delete"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_main_3_del.json"
+    export_xml_to_file_path: "/root/xml_main_3_del.json"
+    name: "testMaintAnsible4"
+    description: "created by ansible test workbook"
+    groups: "Firewall"
+    fire_incidents: False
+    time_zone_id: "Americas/Los_Angeles"
+    start_hour: "08"
+    start_min: "30"
+    duration: "380"
+    time_zone: "-8"
+    start_date: "2019-05-02"
+    end_date_open: True
+
+- name: DELETE BASED ON NAME 2
+  fsm_maintenance:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    mode: "delete"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_main_3_del.json"
+    export_xml_to_file_path: "/root/xml_main_3_del.json"
+    name: "testMaintAnsible2"
+    description: "created by ansible test workbook"
+    devices: "10.0.0.5"
+    fire_incidents: False
+    time_zone_id: "Americas/Los_Angeles"
+    start_hour: "08"
+    start_min: "30"
+    duration: "380"
+    time_zone: "-8"
+    start_date: "2019-05-02"
+    end_date_open: True
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -183,7 +339,6 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
-import pydevd
 
 def main():
     argument_spec = dict(
@@ -250,20 +405,20 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+    results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 
-    #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
     # EXECUTE THE MODULE OPERATION
     if paramgram["mode"] == "add":
         paramgram["uri"] = FSMEndpoints.SET_MAINTENANCE
         try:
             if paramgram["input_xml_file"]:
-                paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["input_xml_file"])
+                paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
             else:
-                paramgram["input_xml"] = fsm.create_maint_payload()
+                paramgram["input_xml"] = fsm._xml.create_maint_payload()
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
             raise FSMBaseException(err)
@@ -271,21 +426,20 @@ def main():
         paramgram["uri"] = FSMEndpoints.DEL_MAINTENANCE
         try:
             if paramgram["input_xml_file"]:
-                paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["input_xml_file"])
+                paramgram["input_xml"] = fsm.get_file_contents(paramgram["input_xml_file"])
             else:
-                paramgram["input_xml"] = fsm.create_maint_payload()
+                paramgram["input_xml"] = fsm._xml.create_maint_payload()
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
             raise FSMBaseException(err)
 
-
     # EXIT USING GOVERN_RESPONSE()
-    fsm.govern_response(module=module, results=results, changed=False, good_codes=[200,204,],
+    fsm.govern_response(module=module, results=results, changed=False, good_codes=[200, 204, ],
                         ansible_facts=fsm.construct_ansible_facts(results["json_results"],
                                                                   module.params,
                                                                   paramgram))
 
-    return module.exit_json(DEFAULT_EXIT_MSG)
+    return module.exit_json(msg=results)
 
 
 if __name__ == "__main__":

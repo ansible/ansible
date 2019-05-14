@@ -57,14 +57,14 @@ options:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
-    options: ["enable", "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
-    options: ["enable, "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_file_path:
     description:
@@ -89,7 +89,7 @@ options:
 
   report_name:
     description:
-      - Exact name match of a report in the CMDB that has been saved. 
+      - Exact name match of a report in the CMDB that has been saved.
       - Ansible will fetch XML from FortiSIEM before running.
     required: false
 
@@ -102,7 +102,7 @@ options:
     description:
       - Specifies PATH to File containing report XML.
     required: false
-    
+
   report_relative_mins:
     description:
       - Number of minutes of history to include in current report. Overrides any time filters in XML file path.
@@ -114,35 +114,67 @@ options:
       - Changes report time to begin date in MM/DD/YYYY format Overrides any time filters in XML file path.
       - Mutually exclusive with report_relative_mins
     required: false
-  
+
   report_absolute_begin_time:
     description:
       - Changes report time to begin time in 24h military format Overrides any time filters in XML file path.
+      - Includes seconds, so there are six digits. First two are hours, second two are mins, third two are seconds.
       - Also accepts seconds in six-digit military. i.e. 103030
     required: false
-  
+
   report_absolute_end_date:
     description:
       - Changes report time to end date in MM/DD/YYYY format Overrides any time filters in XML file path.
     required: false
-  
+
   report_absolute_end_time:
     description:
       - Changes report time to end time in 24h military format Overrides any time filters in XML file path.
+      - Includes seconds, so there are six digits. First two are hours, second two are mins, third two are seconds.
       - Also accepts seconds in six-digit military. i.e. 103030
     required: false
 
 '''
 
 EXAMPLES = '''
+- name: SUBMIT REPORT
+  fsm_report_query:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    report_file_path: "/root/top_fortisiem_events_by_count.xml"
+    export_json_to_file_path: "/root/report.json"
+    export_xml_to_file_path: "/root/report.xml"
+    export_csv_to_file_path: "/root/report.csv"
 
+- name: GET REPORT WITH RELATIVE TIME DEFINED
+  fsm_report_query:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    report_file_path: "/root/top_fortisiem_events_by_count.xml"
+    report_relative_mins: "60"
+
+- name: GET REPORT WITH ABSOLUTE TIME DEFINED
+  fsm_report_query:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    report_file_path: "/root/top_fortisiem_events_by_count.xml"
+    report_absolute_begin_date: "04/17/2019"
+    report_absolute_begin_time: "060000"
+    report_absolute_end_date: "04/17/2019"
+    report_absolute_end_time: "070000"
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -150,8 +182,6 @@ from ansible.module_utils.network.fortisiem.common import FSMEndpoints
 from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
-
-import pydevd
 
 
 def main():
@@ -212,50 +242,45 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+    results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
-
-    # TODO: FUTURE CODE
-    # if paramgram["report_name"]:
-    #     # CODE TO GO GET THE REPORT XML VIA QUERY
-    #     paramgram["input_xml"] = fsm.get_report_source_from_api(paramgram["report_name"])
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 
     if paramgram["report_string"]:
         paramgram["input_xml"] = paramgram["report_string"]
     if paramgram["report_file_path"]:
-        paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["report_file_path"])
+        paramgram["input_xml"] = fsm.get_file_contents(paramgram["report_file_path"])
 
     # IF REPORT TIME PARAMETERS HAVE BEEN SET, THEN PROCESS THOSE, AND EDIT THE REPORT XML
     if paramgram["report_relative_mins"]:
-        # current_timestamp = fsm.get_current_datetime()
-        # end_epoch = fsm.convert_timestamp_to_epoch(current_timestamp)
-        # start_epoch = fsm.get_relative_epoch(paramgram["report_relative_mins"])
         new_xml = fsm.replace_fsm_report_timestamp_relative()
         paramgram["input_xml"] = new_xml
     elif paramgram["report_absolute_begin_date"] and paramgram["report_absolute_begin_time"] \
-        and paramgram["report_absolute_end_date"] and paramgram["report_absolute_end_time"]:
+            and paramgram["report_absolute_end_date"] and paramgram["report_absolute_end_time"]:
         new_xml = fsm.replace_fsm_report_timestamp_absolute()
         paramgram["input_xml"] = new_xml
 
     # CHECK IF INPUT XML IS ACTUALLY VALID XML
     try:
-        fsm.validate_xml(paramgram["input_xml"])
+        fsm._tools.validate_xml(paramgram["input_xml"])
     except BaseException as err:
-        raise FSMBaseException("XML Report Provided was unable to be parsed. Please double check source XML.")
+        raise FSMBaseException("XML Report Provided was unable to be parsed. "
+                               "Please double check source XML. Error: " + str(err))
     # EXECUTE MODULE OPERATION
     try:
         results = fsm.handle_report_submission()
     except BaseException as err:
         raise FSMBaseException(err)
+
     # EXIT USING GOVERN_RESPONSE()
     fsm.govern_response(module=module, results=results, changed=False,
                         ansible_facts=fsm.construct_ansible_facts(results["json_results"],
                                                                   module.params,
                                                                   paramgram))
 
-    return module.exit_json(DEFAULT_EXIT_MSG)
+    return module.exit_json(msg=results)
 
 
 if __name__ == "__main__":

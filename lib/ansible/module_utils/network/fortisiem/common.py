@@ -27,13 +27,19 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import socket
-import ssl
+import datetime
 import struct
+import ssl
+import json
+import xml.dom.minidom
+import re
 
-import pydevd
 
 # BEGIN STATIC DATA / MESSAGES
 class FSMMethods:
+    """
+    A static list of methods.
+    """
     GET = "get"
     SET = "set"
     EXEC = "exec"
@@ -51,6 +57,7 @@ BASE_HEADERS = {
     'Accept': 'application/json'
 }
 
+
 class SyslogFacility:
   """Syslog facilities"""
   KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
@@ -67,6 +74,9 @@ class SyslogLevel:
 
 # FSM URL ENDPOINTS
 class FSMEndpoints:
+    """
+    UNIVERSAL REFERENCE TO ENDPOINTS. CHANGE HERE AND CHANGE FOR ALL MODULES.
+    """
     GET_CMDB_SHORT = "/phoenix/rest/cmdbDeviceInfo/devices"
     GET_CMDB_IPRANGE = "/phoenix/rest/cmdbDeviceInfo/devices?includeIps="
     GET_CMDB_DETAILED_SINGLE = "/phoenix/rest/cmdbDeviceInfo/device?ip="
@@ -247,29 +257,6 @@ FAIL_SOCKET_MSG = {"msg": "Socket Path Empty! The persistent connection manager 
 DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response() that resulted in an exit. "
                            "This shouldn't happen. Please report to @ftntcorecse on Github."}
 
-# DEFAULT REPORTS
-
-# ## ALL DEVICES EVENT TYPES AND COUNT LAST 12 HOURS
-RPT_ALL_DEVICES_EVENT_TYPE_COUNTS = '<?xml version="1.0" encoding="UTF-8"?><Reports><Report baseline="" rsSync="">' \
-                                    '<Name>All Devices Reporting Events Last 12 Hours</Name><Description>All Devices ' \
-                                    'Reporting Events Last 12 Hours - 05:07:22 PM Apr 16 2019</Description>' \
-                                    '<CustomerScope groupByEachCustomer="true">' \
-                                    '<Include>1</Include>' \
-                                    '<Exclude/>' \
-                                    '</CustomerScope>' \
-                                    '<SelectClause>' \
-                                    '<AttrList>reptDevIpAddr,eventType,eventName,COUNT(*)</AttrList>' \
-                                    '</SelectClause>' \
-                                    '<PatternClause>' \
-                                    '<SubPattern id="2446600" name="">' \
-                                    '<SingleEvtConstr>(reptDevIpAddr = <IP_TO_VERIFY>)' \
-                                    '</SingleEvtConstr>' \
-                                    '<GroupByAttr>reptDevIpAddr,eventType,eventName</GroupByAttr>' \
-                                    '</SubPattern>' \
-                                    '</PatternClause>' \
-                                    '</Report>' \
-                                    '</Reports>'
-
 
 # BEGIN ERROR EXCEPTIONS
 class FSMBaseException(Exception):
@@ -283,8 +270,21 @@ class FSMBaseException(Exception):
 # END ERROR CLASSES
 
 
+try:
+    import xmltodict
+    HAS_XML2DICT = True
+except ImportError as err:
+    HAS_XML2DICT = False
+    raise FSMBaseException(
+        "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
+        "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
+
+
 # BEGIN CLASSES
 class FSMCommon(object):
+    """
+    A collection of static methods that are commonly used between FortiSIEM modules.
+    """
 
     @staticmethod
     def split_comma_strings_into_lists(obj):
@@ -365,6 +365,12 @@ class FSMCommon(object):
 
     @staticmethod
     def local_syslog(module, msg):
+        """
+        Creates a local log entry in the linux computer running this. Logs through ansible module methods.
+
+        :param module: the module object to log through
+        :param msg: the message to log
+        """
         try:
             module.log(msg=msg)
         except BaseException:
@@ -372,10 +378,448 @@ class FSMCommon(object):
 
     @staticmethod
     def get_ip_list_from_range(start, end):
+        """
+        Take an IP range like this: x.x.x.x-x.x.x.x and turns it into a list of individual IPs in the range specified.
+
+        :param start: start ip address of range
+        :param end: end ip address of range
+        :return: list
+        """
         ipstruct = struct.Struct('>I')
         start, = ipstruct.unpack(socket.inet_aton(start))
         end, = ipstruct.unpack(socket.inet_aton(end))
         return [socket.inet_ntoa(ipstruct.pack(i)) for i in range(start, end + 1)]
+
+    @staticmethod
+    def score_device_verification(return_dict):
+        """
+        Takes the results from fsm_verify_device module, and scores them.
+
+        :param return_dict: the formatted dictionary results from the fsm_verify_device module.
+
+        :return: dict
+        """
+
+        points_per_100_events = 10
+        points_per_event_types = 10
+        points_per_discover_methods = 20
+        points_per_missing_item = -10
+        points_per_present_item = 10
+        bad_score = 100
+        ok_score = 200
+        good_score = 300
+        great_score = 500
+
+        score = 0
+        try:
+            score += (points_per_100_events * (return_dict["json_results"]["Num of Events"] / 100))
+        except BaseException:
+            pass
+        try:
+            score += (points_per_event_types * (return_dict["json_results"]["Distinct Event Types"]))
+        except BaseException:
+            pass
+        try:
+            discover_methods = str(return_dict["json_results"]["Discover Methods"])
+            score += (points_per_discover_methods * len((discover_methods.split(","))))
+        except BaseException:
+            pass
+        try:
+            score += (points_per_missing_item * (len(return_dict["json_results"]["missing_items"])))
+        except BaseException:
+            pass
+        try:
+            score += (points_per_present_item * (len(return_dict["json_results"]["present_items"])))
+        except BaseException:
+            pass
+        verified_dict = return_dict
+        verified_dict["json_results"]["score"] = score
+        if score < 0:
+            verified_dict["json_results"]["verified_status"] = "MISSING"
+        if score > 0 and score < bad_score:
+            verified_dict["json_results"]["verified_status"] = "BAD"
+        if score > bad_score and score < ok_score:
+            verified_dict["json_results"]["verified_status"] = "OK"
+        if score > ok_score and score < good_score:
+            verified_dict["json_results"]["verified_status"] = "GOOD"
+        if score > good_score and score < great_score:
+            verified_dict["json_results"]["verified_status"] = "GREAT"
+        if score > great_score:
+            verified_dict["json_results"]["verified_status"] = "AWESOME"
+        return verified_dict
+
+    @staticmethod
+    def append_file_with_device_results(results, file_path):
+        """
+        Specific to fsm_verify_device module. Writes the results of a devices score, to a file, in append mode.
+
+        :param results: results to write.
+        :param file_path: file path to append to.
+        """
+        # CHECK IF FILE EXISTS
+        fh_contents = None
+        try:
+            fh = open(file_path, 'r')
+            fh_contents = fh.read()
+            fh.close()
+        except:
+            pass
+        # BASED ON THAT TEST, EITHER APPEND, OR OPEN A NEW FILE AND WRITE THE CSV HEADER
+        if fh_contents:
+            f = open(file_path, "a+")
+            append_string = str(results["json_results"]["Access IP"]) + \
+                            "," + str(results["json_results"]["score"]) + \
+                            "," + str(results["json_results"]["verified_status"]) + \
+                            "," + str(results["json_results"]["Name"]) + \
+                            "," + str(results["json_results"]["Distinct Event Types"]) + \
+                            "," + str(results["json_results"]["Num of Events"])
+            try:
+                missing_list = results["json_results"]["missing_items"]
+                append_string = append_string + "," + "-".join(missing_list)
+            except:
+                pass
+            try:
+                present_list = results["json_results"]["present_items"]
+                append_string = append_string + "," + "-".join(present_list)
+            except:
+                pass
+            append_string = append_string + "\n"
+            f.write(append_string)
+            f.close()
+        else:
+            f = open(file_path, "w")
+            f.write("ip, score, verified_status, Name, DistinctEventTypes, NumOfEvents, missing, present\n")
+            append_string = str(results["json_results"]["Access IP"]) + \
+                            "," + str(results["json_results"]["score"]) + \
+                            "," + str(results["json_results"]["verified_status"]) + \
+                            "," + str(results["json_results"]["Name"]) + \
+                            "," + str(results["json_results"]["Distinct Event Types"]) + \
+                            "," + str(results["json_results"]["Num of Events"])
+            try:
+                missing_list = results["json_results"]["missing_items"]
+                append_string = append_string + "," + "-".join(missing_list)
+            except:
+                pass
+            try:
+                present_list = results["json_results"]["present_items"]
+                append_string = append_string + "," + "-".join(present_list)
+            except:
+                pass
+            append_string = append_string + "\n"
+            f.write(append_string)
+            f.close()
+
+    @staticmethod
+    def get_event_count_for_specific_ip(events):
+        """
+        Specific to fsm_verify_device module.
+        Counts a list that's really a dictionary of events. So we're counting dictionaries. Returns count of events.
+
+        :param events: event dictionary to count
+        :return: int
+        """
+        event_count = 0
+        try:
+            for item in events["json_results"]:
+                try:
+                    current_count = int(item["COUNT(*)"])
+                    event_count += current_count
+                except:
+                    pass
+        except:
+            pass
+
+        return event_count
+
+    @staticmethod
+    def get_events_info_for_specific_ip(events):
+        """
+        Specific to fsm_verify_device module.
+        Converts a dictionary of events into a list of events.
+
+        :param events: dict
+        :return: list
+        """
+        return_events = []
+        try:
+            for item in events["json_results"]:
+                event_dict = {
+                    "event_type": item["eventType"],
+                    "event_name": item["eventName"],
+                    "count": item["COUNT(*)"]
+                }
+                return_events.append(event_dict)
+        except:
+            pass
+
+        return return_events
+
+    @staticmethod
+    def get_monitors_summary_for_short_all(results):
+        """
+        Adds monitor-specific counters to the results from this modules output, but for a range of devices.
+
+        :param results: dict
+        :return: dict
+        """
+        return_dict = results
+        num_of_event_pulling_devices = 0
+        num_of_event_pulling_monitors = 0
+        num_of_perf_mon_devices = 0
+        num_of_perf_mon_monitors = 0
+        try:
+            for event_device in results["json_results"]["monitoredDevices"]["perfMonDevices"]["device"]:
+                num_of_event_pulling_devices += 1
+                for monitor in event_device["monitors"]["monitor"]:
+                    num_of_event_pulling_monitors += 1
+        except:
+            pass
+        try:
+            for perf_mon_device in results["json_results"]["monitoredDevices"]["eventPullingDevices"]["device"]:
+                num_of_perf_mon_devices += 1
+                for monitor in event_device["monitors"]["monitor"]:
+                    num_of_perf_mon_monitors += 1
+        except:
+            pass
+
+        return_dict["json_results"]["summary"] = {
+            "num_of_event_pulling_devices": str(num_of_event_pulling_devices),
+            "num_of_event_pulling_monitors": str(num_of_event_pulling_monitors),
+            "num_of_perf_mon_devices": str(num_of_perf_mon_devices),
+            "num_of_perf_mon_monitors": str(num_of_perf_mon_monitors),
+        }
+
+        return return_dict
+
+    @staticmethod
+    def get_monitors_info_for_specific_ip(monitors, ip_to_verify):
+        """
+        Adds monitor-specific counters to the results for a specific IP. Because we have to return all monitors, we
+        have to search for a specific IP in the results returned.
+
+        :param monitors: a list of monitors
+        :param ip_to_verify: the ip address to pick out of the list of monitors
+        :return: list
+        """
+        return_monitors = []
+        try:
+            event_pulling_devices = monitors["json_results"]["monitoredDevices"]["eventPullingDevices"]["device"]
+            for item in event_pulling_devices:
+                if str(item["accessIp"]) == ip_to_verify:
+                    return_monitors.append({"access_ip": str(item["accessIp"]),
+                                            "monitors": item["monitors"]["monitor"]})
+        except:
+            pass
+
+        try:
+            perf_mon_devices = monitors["json_results"]["monitoredDevices"]["perfMonDevices"]["device"]
+            for item in perf_mon_devices:
+                if str(item["accessIp"]) == ip_to_verify:
+                    return_monitors.append({"access_ip": str(item["accessIp"]),
+                                            "monitors": item["monitors"]["monitor"]})
+        except:
+            pass
+
+        return return_monitors
+
+    @staticmethod
+    def prepare_report_xml_query(xml_report):
+        """
+        Removes a specific element from a report XML input if needed.
+
+        :param xml_report: string xml report to "strip" of the elements.
+        :return: xml
+        """
+        try:
+            doc = xml.dom.minidom.parseString(xml_report)
+            t = doc.toxml()
+            if '<DataRequest' in t:
+                t1 = t.replace("<DataRequest", "<Reports><Report")
+            else:
+                t1 = t
+            if '</DataRequest>' in t1:
+                t2 = t1.replace("</DataRequest>", "</Report></Reports>")
+            else:
+                t2 = t1
+        except BaseException as err:
+            raise FSMBaseException(err)
+        return t2
+
+    @staticmethod
+    def merge_xml_from_list_to_string(input_list):
+        """
+        Specific to fsm_report_query.
+        Concats multiple pages of XML, into one contiguous XML file/string.
+        Removes un-needed headers in each page, etc.
+
+        :param input_list: List of XML pages to concat
+        :return: xml
+        """
+        out_string = ""
+        loop_count = 1
+        list_len = len(input_list)
+        for item in input_list:
+            if loop_count == 1:
+                out_string = out_string + item.replace('</events>\n', '').replace('</queryResult>\n', '')
+                out_string = re.sub(u'(?imu)^\s*\n', u'', out_string)
+            if loop_count > 1 and loop_count <= list_len:
+                stripped_item = item.replace('</events>\n', '').replace('</queryResult>\n', '')
+                stripped_item = stripped_item.replace('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n', '')
+                stripped_item = re.sub("<queryResult.*\n", "", stripped_item)
+                stripped_item = re.sub("<events>\n", "", stripped_item)
+                out_string = out_string + stripped_item
+            if loop_count == list_len:
+                out_string = out_string + "\n    </events>\n</queryResult>"
+            loop_count += 1
+        return out_string
+
+    @staticmethod
+    def xml2dict(xml_in):
+        """
+        Converts an XML structure to JSON.
+
+        :param xml_in: xml to convert
+        :return: dict
+        """
+        xml_out = xmltodict.parse(str(xml_in), process_namespaces=True)
+        json_out = json.dumps(xml_out)
+        dict_out = json.loads(json_out)
+        return dict_out
+
+    @staticmethod
+    def dict2xml(dict_in):
+        """
+        Converts a JSON dictionary to XML.
+
+        :param dict_in: dict to convert
+        :return: xml
+        """
+        xml_out = xmltodict.unparse(dict_in, pretty=True)
+        return xml_out
+
+    @staticmethod
+    def report_result_to_csv(param):
+        """
+        Takes a list of dictionaries and turns it into a CSV. Used with reports.
+
+        :param param: list
+        :return: csv string
+        """
+        return_string = ""
+        if len(param) == 0:
+            return_string = "No records found. Exit"
+            exit()
+        else:
+            keys = param[0].keys()
+            return_string = return_string + ','.join(keys)
+            return_string = return_string + "\n"
+            for item in param:
+                itemKeys = item.keys()
+                value = []
+                for key in keys:
+                    if key not in itemKeys:
+                        value.append('')
+                    else:
+                        value.append(item[key])
+                return_string = return_string + ','.join(value)
+                return_string = return_string + "\n"
+        return return_string
+
+    @staticmethod
+    def validate_xml(input_xml):
+        """
+        Attempts to use the parseString method in xml.dom.minidom to help validate the XML.
+        If the XML can't be parsed, it raises an error.
+
+        :param input_xml: xml to be parsed
+        """
+        try:
+            doc = xml.dom.minidom.parseString(input_xml)
+        except BaseException as err:
+            raise FSMBaseException(err)
+
+    @staticmethod
+    def dump_xml(xml_list):
+        """
+        Specific to fsm_report_query.
+        Takes a list of XML strings (events) and converts them to one contiguous XML string
+
+        :param xml_list: list of xml strings to concat
+        :return: xml
+        """
+        param = []
+        for item in xml_list:
+            doc = xml.dom.minidom.parseString(item.encode('ascii', 'xmlcharrefreplace'))
+            for node in doc.getElementsByTagName("events"):
+                    for node1 in node.getElementsByTagName("event"):
+                        mapping = {}
+                        for node2 in node1.getElementsByTagName("attributes"):
+                            for node3 in node2.getElementsByTagName("attribute"):
+                                itemName = node3.getAttribute("name")
+                                for node4 in node3.childNodes:
+                                    if node4.nodeType == node.TEXT_NODE:
+                                        message = node4.data
+                                        if '\n' in message:
+                                            message = message.replace('\n', '')
+                                        mapping[itemName] = message
+                        param.append(mapping)
+        return param
+
+    @staticmethod
+    def get_current_datetime():
+        """
+        Returns current timestamp in specific format.
+
+        :return: datetime
+        """
+        return_datetime = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        return return_datetime
+
+    @staticmethod
+    def convert_epoch_to_datetime(epoch):
+        """
+        Returns epoch timestamp to datetime format.
+
+        :param epoch: epoch to convert
+        :return: datetime
+        """
+        return_time = datetime.datetime.fromtimestamp(float(epoch)).strftime('%m/%d/%Y %H:%M:%S')
+        return_time_utc = datetime.datetime.utcfromtimestamp(float(epoch)).strftime('%m/%d/%Y %H:%M:%S')
+        return return_time, return_time_utc
+
+    @staticmethod
+    def convert_timestamp_to_epoch(timestamp):
+        """
+        Converts a timestamp to epoch.
+
+        :param timestamp: datetime timestamp to convert
+        :return: epoch
+        """
+        parsed_date = re.findall(r'\d{2}\/\d{2}\/\d{4}\s', timestamp)
+        parsed_date2 = parsed_date[0].split("/")
+        parsed_month = parsed_date2[0]
+        parsed_day = parsed_date2[1]
+        parsed_year = parsed_date2[2]
+
+        parsed_time = re.findall(r'\s\d{6}', timestamp)
+        if not parsed_time:
+            parsed_time = re.findall(r'\s\d{2}:\d{2}:\d{2}', timestamp)
+        if not parsed_time:
+            parsed_time = re.findall(r'\s\d{4}', timestamp)
+        if not parsed_time:
+            parsed_time = re.findall(r'\s\d{2}:\d{2}', timestamp)
+        parsed_time2 = re.findall(r'\d{2}', parsed_time[0])
+        parsed_hour = parsed_time2[0]
+        parsed_mins = parsed_time2[1]
+        try:
+            parsed_secs = parsed_time2[2]
+        except:
+            parsed_secs = "00"
+            pass
+
+        epoch = datetime.datetime(int(parsed_year), int(parsed_month), int(parsed_day),
+                                  int(parsed_hour), int(parsed_mins), int(parsed_secs)).strftime('%s')
+        return epoch
 
 
 class SendSyslog(object):
@@ -386,20 +830,23 @@ class SendSyslog(object):
     def __init__(self,
                  host="localhost",
                  port=514,
-                 facility=SyslogFacility.DAEMON,
+                 facility=SyslogFacility.USER,
+                 level=SyslogLevel.INFO,
                  protocol="",
                  ssl_context=None,):
         self.host = host
         self.port = port
         self.facility = facility
+        self.level = level
         self.protocol = protocol
         self.ssl_context = ssl_context
         self.create_socket()
 
     def create_socket(self):
         """
+        Creates the socket for the SendSyslog class upon init().
 
-        :return:
+        :return: socket
         """
         if self.protocol == "udp":
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -421,27 +868,18 @@ class SendSyslog(object):
             except BaseException as err:
                 raise FSMBaseException(err)
 
-
-    def create_full_message(self, header, message, level):
+    def send(self, header, message):
         """
+        Actually sends the syslog. Returns an appropriate error message based on the network protocol picked.
 
-        :param header:
-        :param message:
-        :param level:
-        :return:
-        """
-        message = "<%d>%s" % (level + self.facility * 8, str(header + " host:" + socket.gethostname() + " | " + message))
-        return message
+        :param header: custom header, if any
+        :param message: message.
 
-    def send(self, header, message, level):
+        :return: dict
         """
+        data = "<%d> %s" % (self.level + self.facility * 8,
+                           str(header + " host:" + socket.gethostname() + " | " + message))
 
-        :param header:
-        :param message:
-        :param level:
-        :return:
-        """
-        data = self.create_full_message(header, message, level)
         if self.protocol in ["udp", "udp-tls1.2"]:
             try:
                 self.socket.sendto(data, (self.host, self.port))
@@ -462,6 +900,7 @@ class SendSyslog(object):
                 raise FSMBaseException(msg="Failed to close connection to TCP server. Error: " + str(err))
 
         return {"status": "OK", "message": str(data)}
+
 
 # RECURSIVE FUNCTIONS START
 def prepare_dict(obj):

@@ -17,6 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -39,31 +40,31 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
-    
+
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
-    
+
   password:
     description:
       - The password associated with the username account.
     required: false
-    
+
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
-    options: ["enable", "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
-    options: ["enable, "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_file_path:
     description:
@@ -71,66 +72,52 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
-    
+
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
       - An error will be thrown if this fails.
     required: false
     default: None
-    
+
   mode:
     description:
-      - Handles how the query is formatted. 
+      - Handles how the query is formatted.
     required: false
     default: "get"
-    options: ["get", "set", "update", "delete", "add"]
-    
+    choices: ["get", "set", "update", "delete", "add"]
+
   uri:
     description:
       - Custom URI to query.
     required: false
-    
+
   payload_file:
     description:
       - Specifies the file path to a custom XML payload file.
     required: false
-    
+
 '''
 
-
 EXAMPLES = '''
-- name: 
+- name: SIMPLE CUSTOM QUERY FOR ORGANIZATIONS
   fsm_custom_query:
-    host: "10.0.0.15"
-    username: "super/api_user"
-    password: "Fortinet!1"
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
     ignore_ssl_errors: "enable"
-
-- name: 
-  fsm_custom_query:
-    host: "10.0.0.15"
-    username: "super/api_user"
-    password: "Fortinet!1"
-    ignore_ssl_errors: "enable"
-
-
-- name: 
-  fsm_custom_query:
-    host: "10.0.0.15"
-    username: "super/api_user"
-    password: "Fortinet!1"
-    ignore_ssl_errors: "enable"
-
-  
-
+    mode: "get"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/custom_query1.json"
+    export_xml_to_file_path: "/root/custom_query1.xml"
+    uri: "/phoenix/rest/config/Domain"
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -138,7 +125,6 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
-import pydevd
 
 def main():
     argument_spec = dict(
@@ -180,13 +166,14 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+    results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 
     if paramgram["payload_file"]:
-        paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["payload_file"])
+        paramgram["input_xml"] = fsm.get_file_contents(paramgram["payload_file"])
         try:
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
@@ -203,7 +190,7 @@ def main():
                                                                   module.params,
                                                                   paramgram))
 
-    return module.exit_json(DEFAULT_EXIT_MSG)
+    return module.exit_json(msg=results)
 
 
 if __name__ == "__main__":

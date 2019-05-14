@@ -17,6 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -39,31 +40,31 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
-    
+
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
-    
+
   password:
     description:
       - The password associated with the username account.
     required: false
-    
+
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
-    options: ["enable", "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
-    options: ["enable, "disable"]
+    choices: ["enable", "disable"]
 
   export_json_to_file_path:
     description:
@@ -71,7 +72,7 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
-    
+
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -93,24 +94,24 @@ options:
     description:
       - Discovery type to use in FortiSIEM.
     required: true
-    options: ["RangeScan", "SmartScan", "L2Scan", "status"]
-    
+    choices: ["RangeScan", "SmartScan", "L2Scan", "status"]
+
   root_ip:
     description:
       - Specifies the IP of a device to use as the "root" scanning device. Usually a router or switch.
       - Ignored unless "SmartScan" is set for mode
     required: false
-    
+
   include_range:
     description:
-      - Specifies the IP ranges to specify, in comma seperated format. 
+      - Specifies the IP ranges to specify, in comma seperated format.
     required: false
-    
+
   exclude_range:
     description:
-      - Specifies the IP ranges to specify, in comma seperated format. 
+      - Specifies the IP ranges to specify, in comma seperated format.
     required: false
-    
+
   no_ping:
     description:
       - Tells FortiSIEM not to attempt to ping a device before attempting to discover it.
@@ -118,83 +119,83 @@ options:
     required: false
     default: false
     type: bool
-    
+
   only_ping:
     description:
       - Tells FortiSIEM to only discover devices with ICMP pings.
     required: false
     default: false
     type: bool
-    
+
   task_id:
     description:
       - Tells the module which task ID to query for when type = status.
     required: false
     type: int
-    
+
   delta:
     description:
       - Only discovers new devices.
     required: false
     default: false
     type: bool
-    
+
   vm_off:
     description:
       - Doesn't discover VMs.
     required: false
     default: false
     type: bool
-    
+
   vm_templates:
     description:
       - Discover VM templates.
     required: false
     default: false
     type: bool
-    
+
   discover_routes:
     description:
       - Discovers routes and follows those in smart scans.
     required: false
     default: true
     type: bool
-    
+
   winexe_based:
     description:
       - Discovers windows boxes with winExe.
     required: false
     default: false
     type: bool
-    
+
   unmanaged:
     description:
       - Sets newly discovered devices to unmanaged.
     required: false
     default: false
     type: bool
-    
+
   monitor_win_events:
     description:
       - Turns on or off Windows Event log mointor for newly discovered devices.
     required: false
     default: true
     type: bool
-    
+
   monitor_win_patches:
     description:
       - Turns on or off Windows Patching logging.
     required: false
     default: true
     type: bool
-    
+
   monitor_installed_sw:
     description:
       - Turns on or off Windows Installed Software monitoring.
     required: false
     default: true
     type: bool
-    
+
   name_resolution_dns_first:
     description:
       - Specifies to use DNS for name resolution first, and then SNMP/NETBIOS/SSH.
@@ -202,44 +203,104 @@ options:
     required: false
     default: true
     type: bool
-    
+
 '''
 
 EXAMPLES = '''
-- name: GET SIMPLE DEVICE LIST FROM CMDB
+- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE
   fsm_discovery:
-    host: "10.0.0.15"
-    username: "super/api_user"
-    password: "Fortinet!1"
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
     ignore_ssl_errors: "enable"
-    mode: "short_all"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/range_scan.json"
+    export_xml_to_file_path: "/root/range_scan.xml"
+    type: "RangeScan"
+    include_range: "10.0.0.254"
 
-- name: GET SIMPLE DEVICE LIST FROM CMDB IP RANGE
+- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE AND WAIT FOR FINISH WITH MANY OPTIONS
   fsm_discovery:
-    host: "10.0.0.15"
-    username: "super/api_user"
-    password: "Fortinet!1"
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
     ignore_ssl_errors: "enable"
-    mode: "ip_range"
-    ip_range: "10.0.0.100-10.0.0.120"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/range_scan2.json"
+    export_xml_to_file_path: "/root/range_scan2.xml"
+    type: "RangeScan"
+    include_range: "10.0.0.5-10.0.0.20"
+    wait_to_finish: True
+    only_ping: False
+    vm_off: True
+    unmanaged: True
+    delta: True
+    name_resolution_dns_first: False
+    winexe_based: True
+    vm_templates: True
+    discover_routes: True
+    monitor_win_events: False
+    monitor_win_patches: False
+    monitor_installed_sw: False
 
-- name: GET DETAILED INFO ON ONE DEVICE
+- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE AND WAIT FOR FINISH WITH NO PING
   fsm_discovery:
-    host: "10.0.0.15"
-    username: "super/api_user"
-    password: "Fortinet!1"
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
     ignore_ssl_errors: "enable"
-    mode: "detailed_single"
-    ip: "10.0.0.5"
-  
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_test_out.json"
+    export_xml_to_file_path: "/root/xml_test_out.xml"
+    type: "RangeScan"
+    include_range: "10.0.0.5-10.0.0.50"
+    wait_to_finish: True
+    no_ping: True
 
+
+- name: SUBMIT RANGE SCAN FOR RANGE OF DEVICES
+  fsm_discovery:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_test_out.json"
+    export_xml_to_file_path: "/root/xml_test_out.xml"
+    type: "RangeScan"
+    include_range: "10.0.0.1-10.0.0.10"
+    exclude_range: "10.0.0.5-10.0.0.6"
+
+- name: SUBMIT SMART SCAN
+  fsm_discovery:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_test_out.json"
+    export_xml_to_file_path: "/root/xml_test_out.xml"
+    type: "SmartScan"
+    root_ip: "10.0.0.254"
+
+- name: SUBMIT L2SCAN
+  fsm_discovery:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    ignore_ssl_errors: "enable"
+    export_json_to_screen: "enable"
+    export_json_to_file_path: "/root/json_test_out.json"
+    export_xml_to_file_path: "/root/xml_test_out.xml"
+    type: "L2Scan"
+    include_range: "10.0.0.1-10.0.0.254"
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -249,7 +310,6 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
-import pydevd
 
 def main():
     argument_spec = dict(
@@ -329,16 +389,16 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
+    results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 
     # EXECUTE THE MODULE OPERATION
     # SEND THE DISCOVERY XML PAYLOAD
     if paramgram["type"] != "status":
-        paramgram["input_xml"] = fsm.create_discover_payload()
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
+        paramgram["input_xml"] = fsm._xml.create_discover_payload()
         try:
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
@@ -370,7 +430,6 @@ def main():
 
             # PROCESS WAIT TO FINISH!
             if paramgram["wait_to_finish"]:
-                #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
                 try:
                     task_status_result = results["json_results"]["fsm_response"].split(":")
 
@@ -385,17 +444,18 @@ def main():
                         try:
                             if results["json_results"]["taskResults"]:
                                 task_status_result = [str(paramgram["task_id"]), "Done"]
-                        except:
+                        except BaseException:
                             try:
                                 task_status_result = results["json_results"]["fsm_response"].split(":")
                             except BaseException as err:
                                 raise FSMBaseException(err)
-                except BaseException as err:
+                except BaseException:
                     try:
                         if results["json_results"]["taskResults"]:
                             pass
                     except BaseException as err:
-                        raise FSMBaseException(msg="Something happened while looping for the status. Error: " + str(err))
+                        raise FSMBaseException(msg="Something happened while looping "
+                                                   "for the status. Error: " + str(err))
                     pass
 
     # EXIT USING GOVERN_RESPONSE()
@@ -404,7 +464,7 @@ def main():
                                                                   module.params,
                                                                   paramgram))
 
-    return module.exit_json(DEFAULT_EXIT_MSG)
+    return module.exit_json(msg=results)
 
 
 if __name__ == "__main__":
