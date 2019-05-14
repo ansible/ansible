@@ -38,10 +38,9 @@ options:
 
     sku:
         description:
-            - The pricing tiers, e.g., F1, D1, B1, B2, B3, S1, P1, P1V2 etc.
+            - The pricing tiers, e.g., C(F1), C(D1), C(B1), C(B2), C(B3), C(S1), C(P1), C(P1V2) etc.
             - Please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/plans/) for more detail.
-            - For linux app service plan, please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/) for more detail.
-
+            - For Linux app service plan, please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/) for more detail.
     is_linux:
         description:
             - Describe whether to host webapp on Linux worker.
@@ -54,12 +53,12 @@ options:
 
     state:
       description:
-        - Assert the state of the app service plan.
-        - Use C(present) to create or update an app service plan and C(absent) to delete it.
+          - Assert the state of the app service plan.
+          - Use C(present) to create or update an app service plan and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
@@ -97,7 +96,7 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_appserviceplan:
-    description: Facts about the current state of the app service plan
+    description: Facts about the current state of the app service plan.
     returned: always
     type: dict
     sample: {
