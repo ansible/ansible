@@ -100,6 +100,7 @@ options:
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
   package_folder:
     description:
       - Name of the folder you want to put the package into.
@@ -108,6 +109,8 @@ options:
     required: false
 >>>>>>> Fixed issues:
 
+=======
+>>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
   central_nat:
     description:
       - Central NAT setting.
@@ -186,6 +189,7 @@ options:
     description:
       - The parent folder name you want to add this object under.
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
+<<<<<<< HEAD
       - Do not include leading or trailing forwardslashes.
     required: false
 <<<<<<< HEAD
@@ -195,6 +199,9 @@ options:
       - Only used when mode equals move.
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
       - Do not include leading or trailing forwardslashes.
+=======
+      - Do not include leading or trailing forwardslashes. We take care of that for you.
+>>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
     required: false
     version_added: 2.9
 
@@ -741,9 +748,12 @@ def main():
         name=dict(required=False, type="str"),
         object_type=dict(required=True, type="str", choices=['pkg', 'folder']),
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         package_folder=dict(required=False, type="str"),
 >>>>>>> Fixed issues:
+=======
+>>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
         central_nat=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
         fwpolicy_implicit_log=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
         fwpolicy6_implicit_log=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
