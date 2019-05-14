@@ -109,6 +109,8 @@ class Cliconf(CliconfBase):
                 self.discard_changes()
         else:
             self.send_command('exit')
+            if to_text(self._connection.get_prompt(), errors='surrogate_or_strict').strip().endswith('#'):
+                self.discard_changes()
 
         if diff_config:
             resp['diff'] = diff_config
