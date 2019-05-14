@@ -128,6 +128,7 @@ options:
 >>>>>>> Fixed issues:
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   package_folder:
     description:
       - Name of the folder you want to put the package into.
@@ -136,6 +137,8 @@ options:
     required: false
 >>>>>>> Fixed issues:
 
+=======
+>>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
 =======
 >>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
   central_nat:
@@ -234,6 +237,7 @@ options:
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       - Do not include leading or trailing forwardslashes.
     required: false
 <<<<<<< HEAD
@@ -250,6 +254,9 @@ options:
 =======
       - Do not include leading or trailing forwardslashes.
 >>>>>>> Shippable cancelled for unknown reason. Doc change to restart.
+=======
+      - Do not include leading or trailing forwardslashes. We take care of that for you.
+>>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
     required: false
 <<<<<<< HEAD
     version_added: 2.9
@@ -931,11 +938,14 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> Fixed issues:
         package_folder=dict(required=False, type="str"),
 >>>>>>> Fixed issues:
+=======
+>>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
 =======
 >>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
         central_nat=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
