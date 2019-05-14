@@ -34,7 +34,7 @@ options:
     default: present
   token_type:
     description:
-      - the type of token that should be created, either management or client
+      - the type of token that should be created
     choices: ['client', 'management']
     default: client
   name:

@@ -19,8 +19,8 @@ short_description: Manipulate entries in the key/value store of a consul cluster
 description:
   - Allows the retrieval, addition, modification and deletion of key/value entries in a
     consul cluster via the agent. The entire contents of the record, including
-    the indices, flags and session are returned as 'value'.
-  - If the key represents a prefix then Note that when a value is removed, the existing
+    the indices, flags and session are returned as C(value).
+  - If the C(key) represents a prefix then note that when a value is removed, the existing
     value if any is returned as part of the results.
   - See http://www.consul.io/docs/agent/http.html#kv for more details.
 requirements:
@@ -81,7 +81,7 @@ options:
         type: str
     flags:
         description:
-          - Opaque integer value that can be passed when setting a value.
+          - Opaque positive integer value that can be passed when setting a value.
         type: str
     host:
         description:
