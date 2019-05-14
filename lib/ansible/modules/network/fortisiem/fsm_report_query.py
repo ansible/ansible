@@ -72,6 +72,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable", "disable"]
@@ -82,6 +83,9 @@ options:
 =======
     options: ["enable", "disable"]
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_screen:
     description:
@@ -91,6 +95,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable, "disable"]
@@ -101,6 +106,9 @@ options:
 =======
     options: ["enable, "disable"]
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_file_path:
     description:
@@ -128,6 +136,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       - Exact name match of a report in the CMDB that has been saved.
 =======
       - Exact name match of a report in the CMDB that has been saved. 
@@ -138,6 +147,9 @@ options:
 =======
       - Exact name match of a report in the CMDB that has been saved. 
 >>>>>>> Full FSM Commit
+=======
+      - Exact name match of a report in the CMDB that has been saved.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
       - Ansible will fetch XML from FortiSIEM before running.
     required: false
 
@@ -153,6 +165,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -163,6 +176,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   report_relative_mins:
     description:
       - Number of minutes of history to include in current report. Overrides any time filters in XML file path.
@@ -177,6 +193,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   report_absolute_begin_time:
     description:
@@ -204,13 +221,21 @@ options:
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
   
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   report_absolute_begin_time:
     description:
       - Changes report time to begin time in 24h military format Overrides any time filters in XML file path.
+      - Includes seconds, so there are six digits. First two are hours, second two are mins, third two are seconds.
       - Also accepts seconds in six-digit military. i.e. 103030
     required: false
+<<<<<<< HEAD
   
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   report_absolute_end_date:
     description:
       - Changes report time to end date in MM/DD/YYYY format Overrides any time filters in XML file path.
@@ -218,6 +243,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   report_absolute_end_time:
     description:
@@ -241,6 +267,13 @@ options:
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Full FSM Commit
+=======
+
+  report_absolute_end_time:
+    description:
+      - Changes report time to end time in 24h military format Overrides any time filters in XML file path.
+      - Includes seconds, so there are six digits. First two are hours, second two are mins, third two are seconds.
+>>>>>>> Full FSM Commit. Ready for shippable tests.
       - Also accepts seconds in six-digit military. i.e. 103030
     required: false
 
@@ -250,6 +283,9 @@ EXAMPLES = '''
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 - name: SUBMIT REPORT
@@ -284,6 +320,7 @@ EXAMPLES = '''
     report_absolute_end_date: "04/17/2019"
     report_absolute_end_time: "070000"
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> Full FSM Commit
@@ -292,6 +329,8 @@ EXAMPLES = '''
 =======
 
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 '''
 
 RETURN = """
@@ -301,6 +340,7 @@ api_result:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   type: str
 =======
   type: string
@@ -311,6 +351,9 @@ api_result:
 =======
   type: string
 >>>>>>> Full FSM Commit
+=======
+  type: str
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -322,6 +365,7 @@ from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import pydevd
 
@@ -332,6 +376,8 @@ import pydevd
 import pydevd
 
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 def main():
     argument_spec = dict(
@@ -394,6 +440,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
@@ -422,6 +469,13 @@ def main():
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Full FSM Commit
+=======
+    results = DEFAULT_EXIT_MSG
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     if paramgram["report_string"]:
         paramgram["input_xml"] = paramgram["report_string"]
@@ -429,6 +483,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         paramgram["input_xml"] = fsm.get_file_contents(paramgram["report_file_path"])
 
     # IF REPORT TIME PARAMETERS HAVE BEEN SET, THEN PROCESS THOSE, AND EDIT THE REPORT XML
@@ -456,17 +511,21 @@ def main():
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
         paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["report_file_path"])
+=======
+        paramgram["input_xml"] = fsm.get_file_contents(paramgram["report_file_path"])
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
     # IF REPORT TIME PARAMETERS HAVE BEEN SET, THEN PROCESS THOSE, AND EDIT THE REPORT XML
     if paramgram["report_relative_mins"]:
-        # current_timestamp = fsm.get_current_datetime()
-        # end_epoch = fsm.convert_timestamp_to_epoch(current_timestamp)
-        # start_epoch = fsm.get_relative_epoch(paramgram["report_relative_mins"])
         new_xml = fsm.replace_fsm_report_timestamp_relative()
         paramgram["input_xml"] = new_xml
     elif paramgram["report_absolute_begin_date"] and paramgram["report_absolute_begin_time"] \
+<<<<<<< HEAD
         and paramgram["report_absolute_end_date"] and paramgram["report_absolute_end_time"]:
 >>>>>>> Full FSM Commit
+=======
+            and paramgram["report_absolute_end_date"] and paramgram["report_absolute_end_time"]:
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         new_xml = fsm.replace_fsm_report_timestamp_absolute()
         paramgram["input_xml"] = new_xml
 
@@ -475,6 +534,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         fsm._tools.validate_xml(paramgram["input_xml"])
     except BaseException as err:
         raise FSMBaseException("XML Report Provided was unable to be parsed. "
@@ -495,6 +555,12 @@ def main():
     except BaseException as err:
         raise FSMBaseException("XML Report Provided was unable to be parsed. Please double check source XML.")
 >>>>>>> Full FSM Commit
+=======
+        fsm._tools.validate_xml(paramgram["input_xml"])
+    except BaseException as err:
+        raise FSMBaseException("XML Report Provided was unable to be parsed. "
+                               "Please double check source XML. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     # EXECUTE MODULE OPERATION
     try:
         results = fsm.handle_report_submission()
@@ -503,6 +569,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
@@ -511,6 +578,9 @@ def main():
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     # EXIT USING GOVERN_RESPONSE()
     fsm.govern_response(module=module, results=results, changed=False,
                         ansible_facts=fsm.construct_ansible_facts(results["json_results"],
@@ -520,6 +590,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     return module.exit_json(msg=results)
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
@@ -530,6 +601,9 @@ def main():
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
 >>>>>>> Full FSM Commit
+=======
+    return module.exit_json(msg=results)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 if __name__ == "__main__":

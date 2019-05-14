@@ -20,6 +20,7 @@ from __future__ import absolute_import, division, print_function
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
@@ -28,6 +29,9 @@ from __future__ import absolute_import, division, print_function
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -65,6 +69,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -75,6 +80,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   username:
     description:
       - The username used to authenticate with the FortiManager.
@@ -83,6 +91,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -93,6 +102,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   password:
     description:
       - The password associated with the username account.
@@ -100,6 +112,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -110,6 +123,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
@@ -118,6 +134,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable", "disable"]
@@ -128,6 +145,9 @@ options:
 =======
     options: ["enable", "disable"]
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_screen:
     description:
@@ -137,6 +157,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable, "disable"]
@@ -147,6 +168,9 @@ options:
 =======
     options: ["enable, "disable"]
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_file_path:
     description:
@@ -157,6 +181,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -167,6 +192,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -176,6 +204,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   mode:
     description:
@@ -204,14 +233,22 @@ options:
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
     
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   mode:
     description:
-      - Handles how the query is formatted. 
+      - Handles how the query is formatted.
     required: false
     default: "get"
+<<<<<<< HEAD
     options: ["get", "set", "update", "delete", "add"]
     
 >>>>>>> Full FSM Commit
+=======
+    choices: ["get", "set", "update", "delete", "add"]
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   uri:
     description:
       - Custom URI to query.
@@ -219,6 +256,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -229,10 +267,14 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   payload_file:
     description:
       - Specifies the file path to a custom XML payload file.
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -270,15 +312,19 @@ EXAMPLES = '''
 =======
     
 '''
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
+'''
 
 EXAMPLES = '''
-- name: 
+- name: SIMPLE CUSTOM QUERY FOR ORGANIZATIONS
   fsm_custom_query:
-    host: "10.0.0.15"
-    username: "super/api_user"
-    password: "Fortinet!1"
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
     ignore_ssl_errors: "enable"
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit
 
 - name: 
@@ -301,14 +347,19 @@ EXAMPLES = '''
 <<<<<<< HEAD
 >>>>>>> Full FSM Commit
 =======
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     mode: "get"
     export_json_to_screen: "enable"
     export_json_to_file_path: "/root/custom_query1.json"
     export_xml_to_file_path: "/root/custom_query1.xml"
     uri: "/phoenix/rest/config/Domain"
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 '''
 
 RETURN = """
@@ -318,6 +369,7 @@ api_result:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   type: str
 =======
   type: string
@@ -328,6 +380,9 @@ api_result:
 =======
   type: string
 >>>>>>> Full FSM Commit
+=======
+  type: str
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -338,6 +393,7 @@ from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import pydevd
 >>>>>>> Full FSM Commit
@@ -346,6 +402,8 @@ import pydevd
 =======
 import pydevd
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 def main():
     argument_spec = dict(
@@ -390,6 +448,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
@@ -415,14 +474,21 @@ def main():
         paramgram["input_xml"] = fsm.get_file_contents(paramgram["payload_file"])
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
+=======
+    results = DEFAULT_EXIT_MSG
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
 
     if paramgram["payload_file"]:
+<<<<<<< HEAD
         paramgram["input_xml"] = fsm.get_report_source_from_file_path(paramgram["payload_file"])
 >>>>>>> Full FSM Commit
+=======
+        paramgram["input_xml"] = fsm.get_file_contents(paramgram["payload_file"])
+>>>>>>> Full FSM Commit. Ready for shippable tests.
         try:
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
@@ -442,6 +508,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     return module.exit_json(msg=results)
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
@@ -452,6 +519,9 @@ def main():
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
 >>>>>>> Full FSM Commit
+=======
+    return module.exit_json(msg=results)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 if __name__ == "__main__":

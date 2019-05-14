@@ -20,6 +20,7 @@ from __future__ import absolute_import, division, print_function
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
@@ -28,6 +29,9 @@ from __future__ import absolute_import, division, print_function
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -65,6 +69,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -75,6 +80,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   username:
     description:
       - The username used to authenticate with the FortiManager.
@@ -83,6 +91,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -93,6 +102,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   password:
     description:
       - The password associated with the username account.
@@ -100,6 +112,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -110,6 +123,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
@@ -118,6 +134,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable", "disable"]
@@ -128,6 +145,9 @@ options:
 =======
     options: ["enable", "disable"]
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_screen:
     description:
@@ -137,6 +157,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     choices: ["enable", "disable"]
 =======
     options: ["enable, "disable"]
@@ -147,6 +168,9 @@ options:
 =======
     options: ["enable, "disable"]
 >>>>>>> Full FSM Commit
+=======
+    choices: ["enable", "disable"]
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_file_path:
     description:
@@ -157,6 +181,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -167,6 +192,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -176,6 +204,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   mode:
     description:
@@ -204,14 +233,22 @@ options:
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
     
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   mode:
     description:
-      - Handles how the query is formatted. 
+      - Handles how the query is formatted.
     required: false
     default: "short_all"
+<<<<<<< HEAD
     options: ["short_all", "ip_range", "detailed_single"]
     
 >>>>>>> Full FSM Commit
+=======
+    choices: ["short_all", "ip_range", "detailed_single"]
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   ip_range:
     description:
       - Specifies the IP Range of devices to search for and return.
@@ -220,6 +257,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     
@@ -230,6 +268,9 @@ options:
 =======
     
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
   ip:
     description:
       - Specifies the single IP address of a device to get detailed information from.
@@ -238,6 +279,7 @@ options:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 '''
 
@@ -253,6 +295,10 @@ options:
 =======
     
 '''
+=======
+
+'''
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 >>>>>>> Full FSM Commit
@@ -285,6 +331,7 @@ EXAMPLES = '''
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
   
@@ -295,6 +342,9 @@ EXAMPLES = '''
 =======
   
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 '''
 
@@ -305,6 +355,7 @@ api_result:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   type: str
 =======
   type: string
@@ -315,6 +366,9 @@ api_result:
 =======
   type: string
 >>>>>>> Full FSM Commit
+=======
+  type: str
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -326,6 +380,7 @@ from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import pydevd
 >>>>>>> Full FSM Commit
@@ -334,6 +389,8 @@ import pydevd
 =======
 import pydevd
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 def main():
     argument_spec = dict(
@@ -391,6 +448,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
@@ -414,6 +472,13 @@ def main():
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 =======
 >>>>>>> Full FSM Commit
+=======
+    results = DEFAULT_EXIT_MSG
+    try:
+        fsm = FortiSIEMHandler(module)
+    except BaseException as err:
+        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
+>>>>>>> Full FSM Commit. Ready for shippable tests.
     # EXECUTE THE MODULE OPERATION
     try:
         results = fsm.handle_simple_request()
@@ -428,6 +493,7 @@ def main():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     return module.exit_json(msg=results)
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
@@ -438,6 +504,9 @@ def main():
 =======
     return module.exit_json(DEFAULT_EXIT_MSG)
 >>>>>>> Full FSM Commit
+=======
+    return module.exit_json(msg=results)
+>>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 if __name__ == "__main__":
