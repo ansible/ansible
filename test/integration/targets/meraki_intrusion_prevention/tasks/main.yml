@@ -1,0 +1,131 @@
+# Test code for the Meraki IPS module
+# Copyright: (c) 2019, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+    
+  # - name: Use an invalid domain
+  #   meraki_vlan:
+  #     auth_key: '{{ auth_key }}'
+  #     host: marrrraki.com
+  #     state: present
+  #     org_name: IntTestOrg
+  #     output_level: debug
+  #   delegate_to: localhost
+  #   register: invalid_domain
+  #   ignore_errors: yes
+    
+  # - name: Disable HTTP
+  #   meraki_vlan:
+  #     auth_key: '{{ auth_key }}'
+  #     use_https: false
+  #     state: query
+  #     output_level: debug
+  #   delegate_to: localhost
+  #   register: http
+  #   ignore_errors: yes
+
+  # - name: Connection assertions
+  #   assert:
+  #     that:
+  #       - '"Failed to connect to" in invalid_domain.msg'
+  #       - '"http" in http.url'
+
+  # - name: Create test network
+  #   meraki_network:
+  #     auth_key: '{{auth_key}}'
+  #     state: present
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     type: appliance
+  #   delegate_to: localhost
+
+  # - debug:
+  #     var: test_org_name
+
+  # - name: Query IPS info for organization
+  #   meraki_intrusion_prevention:
+  #     auth_key: '{{auth_key}}'
+  #     state: query
+  #     org_name: '{{test_org_name}}'
+  #   delegate_to: localhost
+  #   register: query_org
+
+  # - debug:
+  #     var: query_org
+
+  # - name: Query IPS info for network
+  #   meraki_intrusion_prevention:
+  #     auth_key: '{{auth_key}}'
+  #     state: query
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #   delegate_to: localhost
+  #   register: query_net
+
+  # - debug:
+  #     var: query_net
+
+  # - name: Set whitelist for organization in check mode
+  #   meraki_intrusion_prevention:
+  #     auth_key: '{{auth_key}}'
+  #     state: present
+  #     org_name: '{{test_org_name}}'
+  #     whitelisted_rules:
+  #       - rule_id: "meraki:intrusion/snort/GID/01/SID/5805"
+  #         message: Test rule
+  #   delegate_to: localhost
+  #   check_mode: yes
+  #   register: create_org_check
+
+  # - debug:
+  #     var: create_org_check
+
+  # - name: Set whitelist for organization
+  #   meraki_intrusion_prevention:
+  #     auth_key: '{{auth_key}}'
+  #     state: present
+  #     org_id: '{{test_org_id}}'
+  #     whitelisted_rules:
+  #       - rule_id: "meraki:intrusion/snort/GID/01/SID/5805"
+  #         message: Test rule
+  #   delegate_to: localhost
+  #   register: create_org
+
+  # - debug:
+  #     var: create_org
+
+  - name: Set whitelist for organization with idempotency
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      whitelisted_rules:
+        - rule_id: "meraki:intrusion/snort/GID/01/SID/5805"
+          message: Test rule
+    delegate_to: localhost
+    register: create_org_idempotent
+
+  - debug:
+      var: create_org_idempotent
+
+  # always:
+  # #############################################################################
+  # # Tear down starts here
+  # #############################################################################
+  # - name: Delete network
+  #   meraki_network:
+  #     auth_key: '{{auth_key}}'
+  #     state: absent
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #   delegate_to: localhost
+  #   register: delete_net
+
+  # - debug:
+  #     msg: '{{delete_net}}'
