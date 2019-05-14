@@ -234,10 +234,14 @@ class AnsibleHcloudServer(Hcloud):
             "server_type": self.client.server_types.get_by_name(
                 self.module.params.get("server_type")
             ),
-            "image": self.client.images.get_by_name(self.module.params.get("image")),
             "user_data": self.module.params.get("user_data"),
             "labels": self.module.params.get("labels"),
         }
+        if self.client.images.get_by_name(self.module.params.get("image")) is not None:
+            # When image name is not available look for id instead
+            params["image"] = self.client.images.get_by_name(self.module.params.get("image"))
+        else: 
+            params["image"] = self.client.images.get_by_id(self.module.params.get("image"))
 
         if self.module.params.get("ssh_keys") is not None:
             params["ssh_keys"] = [
