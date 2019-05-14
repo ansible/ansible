@@ -1106,3 +1106,32 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         b_module_data = b"\n".join(b_lines)
 
     return (b_module_data, module_style, shebang)
+
+
+def get_action_args_with_defaults(action, args, defaults, templar):
+
+    tmp_args = {}
+    module_defaults = {}
+
+    # Merge latest defaults into dict, since they are a list of dicts
+    if isinstance(defaults, list):
+        for default in defaults:
+            module_defaults.update(default)
+
+    # if I actually have defaults, template and merge
+    if module_defaults:
+        module_defaults = templar.template(module_defaults)
+
+        # deal with configured group defaults first
+        if action in C.config.module_defaults_groups:
+            for group in C.config.module_defaults_groups.get(action, []):
+                tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
+
+        # handle specific action defaults
+        if action in module_defaults:
+            tmp_args.update(module_defaults[action].copy())
+
+    # direct args override all
+    tmp_args.update(args)
+
+    return tmp_args
