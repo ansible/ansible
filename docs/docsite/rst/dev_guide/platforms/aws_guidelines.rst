@@ -9,6 +9,9 @@ If you are planning to contribute AWS modules to Ansible then getting in touch w
 group will be a good way to start, especially because a similar module may already be under
 development.
 
+.. contents::
+   :local:
+
 Choose Boto3 not Boto
 =====================
 

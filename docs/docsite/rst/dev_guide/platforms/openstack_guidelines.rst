@@ -6,6 +6,9 @@ or an end user. If the module does not begin with os_, it's either deprecated
 or soon to be. This document serves as developer coding guidelines for
 modules intended to be here.
 
+.. contents::
+   :local:
+
 Naming
 ------
 

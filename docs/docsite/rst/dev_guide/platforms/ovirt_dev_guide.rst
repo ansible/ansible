@@ -4,6 +4,9 @@ oVirt Ansible Modules
 This is a set of modules for interacting with oVirt/RHV. This document
 serves as developer coding guidelines for creating oVIRT/RHV modules.
 
+.. contents::
+   :local:
+
 Naming
 ------
 
@@ -39,14 +42,14 @@ Libraries
    along with ``ovirt_full_argument_spec``.
 -  All facts modules should use ``extends_documentation_fragment``:
    ``ovirt_facts`` to go along with ``ovirt_facts_full_argument_spec``.
--  Functions that are common to all modules should be implemeneted in the 
+-  Functions that are common to all modules should be implemeneted in the
    ``module_utils/ovirt.py`` file, so they can be reused.
 -  Python SDK version 4 must be used.
 
 New module development
 ----------------------
 
-Please read 
+Please read
 `link <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules.html>`__,
 first to know what common properties, functions and features every module must
 have.
@@ -134,7 +137,7 @@ entity of the SDK.
 
     try:
         auth = module.params.pop('auth')
-        
+
         # Create the connection to the oVirt engine:
         connection = create_connection(auth)
 
@@ -170,7 +173,7 @@ entity of the SDK.
         # parameter:
         connection.close(logout=auth.get('token') is None)
 
-If your module must support action handling (for example, 
+If your module must support action handling (for example,
 virtual machine start) you must ensure that you handle the states of the
 virtual machine correctly, and document the behavior of the
 module:
