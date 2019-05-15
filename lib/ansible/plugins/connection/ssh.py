@@ -413,7 +413,7 @@ def _ssh_retry(func):
                 break
 
             # 5 = Invalid/incorrect password from sshpass
-            except AnsibleAuthenticationFailure as e:
+            except AnsibleAuthenticationFailure:
                 # Raising this exception, which is subclassed from AnsibleConnectionFailure, prevents further retries
                 raise
 
@@ -686,15 +686,15 @@ class Connection(ConnectionBase):
         try:
             fh.write(to_bytes(in_data))
             fh.close()
-        except (OSError, IOError):
+        except (OSError, IOError) as e:
             # The ssh connection may have already terminated at this point, with a more useful error
             # Only raise AnsibleConnectionFailure if the ssh process is still alive
             time.sleep(0.001)
             ssh_process.poll()
             if getattr(ssh_process, 'returncode', None) is None:
                 raise AnsibleConnectionFailure(
-                    'SSH Error: data could not be sent to remote host "%s". Make sure this host can be reached '
-                    'over ssh' % self.host
+                    'Data could not be sent to remote host "%s". Make sure this host can be reached '
+                    'over ssh: %s' % (self.host, to_native(e)), orig_exc=e
                 )
 
         display.debug('Sent initial data (%d bytes)' % len(in_data))
