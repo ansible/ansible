@@ -31,6 +31,9 @@ class TestAnsibleJSONEncoder():
     Class for testing AnsibleJSONEncoder
     """
 
+    #################
+    # Fixture section
+
     @pytest.fixture
     def mapping(self, request):
         """
@@ -54,6 +57,15 @@ class TestAnsibleJSONEncoder():
     @pytest.fixture
     def ansible_json_encoder(self):
         return AnsibleJSONEncoder()
+
+    @pytest.fixture
+    def vault_data(self):
+        with open(os.path.join(os.path.dirname(__file__), 'fixtures/ajson.json')) as f:
+            data = json.load(f, cls=AnsibleJSONDecoder)
+        return (data['password'], data['bar']['baz'][0]['password'])
+
+    # The end of the fixture section
+    ################################
 
     @pytest.mark.parametrize(
         'test_input,expected',
@@ -87,3 +99,37 @@ class TestAnsibleJSONEncoder():
         m = mapping
         assert(isinstance(m, Mapping))
         assert(ansible_json_encoder.default(m) == expected)
+
+    # The pytest.mark.parametrize decorator is not used for this function
+    # because, at least, it's difficult to read it in this particular case.
+    def test_ansible_json_decoder_vault(self, ansible_json_encoder, vault_data):
+        """
+        Test for passing AnsibleVaultEncryptedUnicode to AnsibleJSONEncoder.default()
+        """
+
+        # prepare test data and expected results:
+        data_0, data_1 = vault_data[0], vault_data[1]
+
+        expected_0 = (u'$ANSIBLE_VAULT;1.1;AES256\n34646264306632313333393636316'
+                      '562356435376162633631326264383934326565333633366238\n3863'
+                      '373264326461623132613931346165636465346337310a32643431383'
+                      '0316337393263616439\n646539373134633963666338613632666334'
+                      '65663730303633323534363331316164623237363831\n35363335613'
+                      '93238370a313330316263373938326162386433313336613532653538'
+                      '376662306435\n3339\n')
+
+        expected_1 = (u'$ANSIBLE_VAULT;1.1;AES256\n34646264306632313333393636316'
+                      '562356435376162633631326264383934326565333633366238\n3863'
+                      '373264326461623132613931346165636465346337310a32643431383'
+                      '0316337393263616439\n646539373134633963666338613632666334'
+                      '65663730303633323534363331316164623237363831\n35363335613'
+                      '93238370a313330316263373938326162386433313336613532653538'
+                      '376662306435\n3338\n')
+
+        # previously check that test data is a suitable type:
+        assert(isinstance(data_0, AnsibleVaultEncryptedUnicode))
+        assert(isinstance(data_1, AnsibleVaultEncryptedUnicode))
+
+        # main assertions:
+        assert(ansible_json_encoder.default(data_0) == {'__ansible_vault': expected_0})
+        assert(ansible_json_encoder.default(data_1) == {'__ansible_vault': expected_1})
