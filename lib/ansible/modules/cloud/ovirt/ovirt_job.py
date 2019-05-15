@@ -159,10 +159,10 @@ def attach_steps(module, job_id, jobs_service):
                     changed = True
             if step_entity is not None and step_entity.status not in [otypes.StepStatus.FINISHED, otypes.StepStatus.FAILED]:
                 if step_state in ['absent', 'finished']:
-                    steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FINISHED, succeeded=True)
+                    steps_service.step_service(step_entity.id).end(succeeded=True)
                     changed = True
                 elif step_state == 'failed':
-                    steps_service.step_service(step_entity.id).end(status=otypes.StepStatus.FAILED, succeeded=False)
+                    steps_service.step_service(step_entity.id).end(succeeded=False)
                     changed = True
     return changed
 
@@ -206,11 +206,11 @@ def main():
 
         if job is not None and job.status not in [otypes.JobStatus.FINISHED, otypes.JobStatus.FAILED]:
             if state in ['absent', 'finished']:
-                jobs_service.job_service(job.id).end(status=otypes.JobStatus.FINISHED, succeeded=True)
+                jobs_service.job_service(job.id).end(succeeded=True)
                 changed = True
 
             elif state == 'failed':
-                jobs_service.job_service(job.id).end(status=otypes.JobStatus.FAILED, succeeded=False)
+                jobs_service.job_service(job.id).end(succeeded=False)
                 changed = True
 
         ret = {
