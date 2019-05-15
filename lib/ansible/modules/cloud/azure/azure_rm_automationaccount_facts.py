@@ -248,7 +248,7 @@ class AzureRMAutomationAccountFacts(AzureRMModuleBase):
         self.name = None
         self.tags = None
         self.list_statistics = None
-        self.list_usages= None
+        self.list_usages = None
         self.list_keys = None
         super(AzureRMAutomationAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
