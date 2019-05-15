@@ -166,7 +166,7 @@ class PyVmomiHelper(PyVmomi):
         disks_facts = dict()
         if vm_obj is None:
             return disks_facts
-        
+
         controller_index = 0
         for controller in vm_obj.config.hardware.device:
             if isinstance(controller, vim.vm.device.ParaVirtualSCSIController):
@@ -176,7 +176,7 @@ class PyVmomiHelper(PyVmomi):
                     devices=controller.device
                 )
                 controller_index += 1
-                
+
         disk_index = 0
         for disk in vm_obj.config.hardware.device:
             if isinstance(disk, vim.vm.device.VirtualDisk):
@@ -251,7 +251,6 @@ class PyVmomiHelper(PyVmomi):
 
                 disk_index += 1
         return disks_facts
-
 
 def main():
     argument_spec = vmware_argument_spec()
