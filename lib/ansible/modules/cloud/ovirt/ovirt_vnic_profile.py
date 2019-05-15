@@ -78,14 +78,14 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 - name: Add vNIC
-  ovirt_vnics_profile:
+  ovirt_vnic_profile:
     name: myvnic
     network: mynetwork
     state: present
     data_center: datacenter
 
 - name: Editing vNICs network_filter, custom_properties, qos
-  ovirt_vnics_profile:
+  ovirt_vnic_profile:
     name: myvnic
     network: mynetwork
     data_center: datacenter
@@ -96,7 +96,7 @@ EXAMPLES = '''
     network_filter: allow-dhcp
 
 - name: Editing vNICs network_filter, custom_properties, qos
-  ovirt_vnics_profile:
+  ovirt_vnic_profile:
     name: myvnic
     network: mynetwork
     data_center: datacenter
@@ -107,7 +107,7 @@ EXAMPLES = '''
     network_filter: allow-dhcp
 
 - name: Dont use migratable
-  ovirt_vnics_profile:
+  ovirt_vnic_profile:
     name: myvnic
     network: mynetwork
     data_center: datacenter
@@ -115,7 +115,7 @@ EXAMPLES = '''
     pass_through: enabled
 
 - name: Remove vNIC
-  ovirt_vnics_profile:
+  ovirt_vnic_profile:
     name: myvnic
     network: mynetwork
     state: absent
