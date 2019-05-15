@@ -1,0 +1,2 @@
+bugfixes:
+    - remove any tempdirs generated while ansible-config dumps any temp type values.

@@ -9,6 +9,8 @@ import shlex
 import subprocess
 import yaml
 
+from shutil import rmtree
+
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
@@ -163,10 +165,14 @@ class ConfigCLI(CLI):
         '''
         # FIXME: deal with plugins, not just base config
         text = []
+        tempdirs = set()
         defaults = self.config.get_configuration_definitions().copy()
         for setting in self.config.data.get_settings():
             if setting.name in defaults:
                 defaults[setting.name] = setting
+
+            if setting.type in ('tmp', 'temppath', 'tmppath'):
+                tempdirs.add(setting.value)
 
         for setting in sorted(defaults):
             if isinstance(defaults[setting], Setting):
@@ -182,3 +188,7 @@ class ConfigCLI(CLI):
                 text.append(stringc(msg, color))
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
+
+        # ensure we clean up any temp dirs created while we examined the config values
+        for tdir in tempdirs:
+            rmtree(tdir, True)
