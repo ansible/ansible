@@ -35,7 +35,7 @@ from ansible.module_utils.basic import env_fallback
 
 import json
 
-# BEGIN DEPRECATED 
+# BEGIN DEPRECATED
 
 # check for pyFG lib
 try:

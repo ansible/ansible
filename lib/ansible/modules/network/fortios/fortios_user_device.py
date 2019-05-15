@@ -30,7 +30,7 @@ description:
       user to set and modify user feature and device category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.2
-version_added: "2.8"
+version_added: "2.9"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
     - Nicolas Thomas (@thomnico)
@@ -247,6 +247,7 @@ version:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
 
 def login(data, fos):
