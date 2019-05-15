@@ -33,6 +33,9 @@ import traceback
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import env_fallback
 
+import json
+
+# BEGIN DEPRECATED 
 
 # check for pyFG lib
 try:
@@ -72,6 +75,105 @@ fortios_error_codes = {
     '-61': "Command error"
 }
 
+# END DEPRECATED
+
+
+class FortiOSHandler(object):
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def cmdb_url(self, path, name, vdom=None, mkey=None):
+
+        url = '/api/v2/cmdb/' + path + '/' + name
+        if mkey:
+            url = url + '/' + str(mkey)
+        if vdom:
+            if vdom == "global":
+                url += '?global=1'
+            else:
+                url += '?vdom=' + vdom
+        return url
+
+    def schema(self, path, name, vdom=None):
+        if vdom is None:
+            url = self.cmdb_url(path, name) + "?action=schema"
+        else:
+            url = self.cmdb_url(path, name, vdom=vdom) + "&action=schema"
+
+        status, result_data = self._conn.send_request(url=url)
+
+        if status == 200:
+            if vdom == "global":
+                return json.loads(result_data.decode('utf-8'))[0]['results']
+            else:
+                return json.loads(result_data.decode('utf-8'))['results']
+        else:
+            return json.loads(result_data.decode('utf-8'))
+
+    def get_mkeyname(self, path, name, vdom=None):
+        schema = self.schema(path, name, vdom=vdom)
+        try:
+            keyname = schema['mkey']
+        except KeyError:
+            return False
+        return keyname
+
+    def get_mkey(self, path, name, data, vdom=None):
+
+        keyname = self.get_mkeyname(path, name, vdom)
+        if not keyname:
+            return None
+        else:
+            try:
+                mkey = data[keyname]
+            except KeyError:
+                return None
+        return mkey
+
+    def set(self, path, name, data, mkey=None, vdom=None, parameters=None):
+
+        if not mkey:
+            mkey = self.get_mkey(path, name, data, vdom=vdom)
+        url = self.cmdb_url(path, name, vdom, mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='PUT')
+
+        if status == 404 or status == 405 or status == 500:
+            return self.post(path, name, data, vdom, mkey)
+        else:
+            return self.formatresponse(result_data, vdom=vdom)
+
+    def post(self, path, name, data, vdom=None,
+             mkey=None, parameters=None):
+
+        if mkey:
+            mkeyname = self.get_mkeyname(path, name, vdom)
+            data[mkeyname] = mkey
+
+        url = self.cmdb_url(path, name, vdom, mkey=None)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='POST')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def delete(self, path, name, vdom=None, mkey=None, parameters=None, data=None):
+        if not mkey:
+            mkey = self.get_mkey(path, name, data, vdom=vdom)
+        url = self.cmdb_url(path, name, vdom, mkey)
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='DELETE')
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def formatresponse(self, res, vdom=None):
+        if vdom == "global":
+            resp = json.loads(res.decode('utf-8'))[0]
+            resp['vdom'] = "global"
+        else:
+            resp = json.loads(res.decode('utf-8'))
+        return resp
+
+# BEGIN DEPRECATED
+
 
 def backup(module, running_config):
     backup_path = module.params['backup_path']
@@ -79,7 +181,7 @@ def backup(module, running_config):
     if not os.path.exists(backup_path):
         try:
             os.mkdir(backup_path)
-        except:
+        except Exception:
             module.fail_json(msg="Can't create directory {0} Permission denied ?".format(backup_path))
     tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
     if 0 < len(backup_filename):
@@ -88,7 +190,7 @@ def backup(module, running_config):
         filename = '%s/%s_config.%s' % (backup_path, module.params['host'], tstamp)
     try:
         open(filename, 'w').write(running_config)
-    except:
+    except Exception:
         module.fail_json(msg="Can't create backup file {0} Permission denied ?".format(filename))
 
 
@@ -198,3 +300,5 @@ class AnsibleFortios(object):
 
     def get_empty_configuration_block(self, block_name, block_type):
         return FortiConfig(block_name, block_type)
+
+# END DEPRECATED
