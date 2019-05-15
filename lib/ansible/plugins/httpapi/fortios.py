@@ -44,6 +44,7 @@ version_added: "2.9"
 
 from ansible.plugins.httpapi import HttpApiBase
 from ansible.module_utils.basic import to_text
+import urllib
 import json
 import re
 
@@ -68,7 +69,7 @@ class HttpApi(HttpApiBase):
     def login(self, username, password):
         """Call a defined login endpoint to receive an authentication token."""
 
-        data = "username=" + username + "&secretkey=" + password + "&ajax=1"
+        data = "username=" + urllib.parse.quote(username) + "&secretkey=" + urllib.parse.quote(password) + "&ajax=1"
         dummy, result_data = self.send_request(url='/logincheck', data=data, method='POST')
         if result_data[0] != '1':
             raise Exception('Wrong credentials. Please check')
