@@ -1083,9 +1083,8 @@ class YumModule(YumDnf):
             res['msg'] = err
 
             if rc != 0:
-                if self.autoremove:
-                    if 'No such command' in out:
-                        self.module.fail_json(msg='Version of YUM too old for autoremove: Requires yum 3.4.3 (RHEL/CentOS 7+)')
+                if self.autoremove and 'No such command' in out:
+                    self.module.fail_json(msg='Version of YUM too old for autoremove: Requires yum 3.4.3 (RHEL/CentOS 7+)')
                 else:
                     self.module.fail_json(**res)
 
