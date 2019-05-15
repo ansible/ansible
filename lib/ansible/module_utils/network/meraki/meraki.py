@@ -37,7 +37,7 @@ from ansible.module_utils._text import to_native, to_bytes, to_text
 
 
 def meraki_argument_spec():
-    return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
+    return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY']), required=True),
                 host=dict(type='str', default='api.meraki.com'),
                 use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
