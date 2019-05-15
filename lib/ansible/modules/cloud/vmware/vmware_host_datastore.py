@@ -206,6 +206,15 @@ class VMwareHostDatastore(PyVmomi):
                 return 'present'
         return 'absent'
 
+    def get_used_disks_names(self):
+        used_disks = []
+        storage_system = self.esxi.configManager.storageSystem
+        for each_vol_mount_info in storage_system.fileSystemVolumeInfo.mountInfo:
+            if hasattr(each_vol_mount_info.volume, 'extent'):
+                for each_partition in each_vol_mount_info.volume.extent:
+                    used_disks.append(each_partition.diskName)
+        return used_disks
+
     def umount_datastore_host(self):
         ds = find_datastore_by_name(self.content, self.datastore_name)
         if not ds:
@@ -264,6 +273,9 @@ class VMwareHostDatastore(PyVmomi):
             ds_path = "/vmfs/devices/disks/" + str(self.vmfs_device_name)
             host_ds_system = self.esxi.configManager.datastoreSystem
             ds_system = vim.host.DatastoreSystem
+            if self.vmfs_device_name in self.get_used_disks_names():
+                error_message_used_disk = "VMFS disk %s already in use" % self.vmfs_device_name
+                self.module.fail_json(msg="%s" % error_message_used_disk)
             error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi_hostname)
             try:
                 vmfs_ds_options = ds_system.QueryVmfsDatastoreCreateOptions(host_ds_system,
