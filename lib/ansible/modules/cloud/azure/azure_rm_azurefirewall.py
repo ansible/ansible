@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Zim Kalinowski, (@zikalino), Jurijs Fadejevs
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino), Jurijs Fadejevs (@needgithubid)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -214,7 +214,7 @@ extends_documentation_fragment:
   - azure_tags
 author:
   - Zim Kalinowski (@zikalino)
-  - Jurijs Fadejevs
+  - Jurijs Fadejevs (@needgithubid)
 
 '''
 
@@ -279,13 +279,13 @@ EXAMPLES = '''
         name: netrulecoll
     ip_configurations:
       - subnet: >-
-          /subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group
-          }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name
-          }}/subnets/{{ subnet_name }}
+          /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
+          /providers/Microsoft.Network/virtualNetworks/myVirtualNetwork
+          /subnets/AzureFirewallSubnet
         public_ip_address: >-
-          /subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group
-          }}/providers/Microsoft.Network/publicIPAddresses/{{
-          public_ip_address_name }}
+          /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
+          /providers/Microsoft.Network/publicIPAddresses/
+          myPublicIpAddress
         name: azureFirewallIpConfiguration
 - name: Delete Azure Firewall
   azure_rm_azurefirewall:
@@ -301,8 +301,7 @@ id:
     - Resource ID.
   returned: always
   type: str
-  sample: null
-
+  sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/azureFirewalls/myAzureFirewall
 '''
 
 import time
