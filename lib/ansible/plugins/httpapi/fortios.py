@@ -47,6 +47,7 @@ from ansible.module_utils.basic import to_text
 import json
 import re
 
+
 class HttpApi(HttpApiBase):
     def __init__(self, connection):
         super(HttpApi, self).__init__(connection)
@@ -68,7 +69,7 @@ class HttpApi(HttpApiBase):
         """Call a defined login endpoint to receive an authentication token."""
 
         data = "username=" + username + "&secretkey=" + password + "&ajax=1"
-        _, result_data = self.send_request(url='/logincheck', data=data, method='POST')
+        dummy, result_data = self.send_request(url='/logincheck', data=data, method='POST')
         if result_data[0] != '1':
             raise Exception('Wrong credentials. Please check')
 

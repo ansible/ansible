@@ -33,6 +33,7 @@ def connection_mock(mocker):
     connection_class_mock = mocker.patch('ansible.modules.network.fortios.fortios_user_device.Connection')
     return connection_class_mock
 
+
 fos_instance = FortiOSHandler(connection_mock)
 
 
