@@ -448,7 +448,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             'customValue',
         ]
         field_mgr = []
-        if self.content.customFieldsManager:
+        if self.pyv.content.customFieldsManager:
             field_mgr = self.pyv.content.customFieldsManager.field
 
         for vm_prop in vm_properties:
