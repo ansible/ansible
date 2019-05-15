@@ -1,2 +1,2 @@
 bugfixes:
-  - postgresql_db - the module fails not always when pg_dump errors occured (https://github.com/ansible/ansible/issues/40424).
+  - postgresql_db - the module fails not always when pg_dump errors occurred (https://github.com/ansible/ansible/issues/40424).

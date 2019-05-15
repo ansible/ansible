@@ -1,2 +1,2 @@
 bugfixes:
-- delegate_to - Fix issue where delegate_to was upplied via ``apply`` on an include, where a loop was present on the include
+- delegate_to - Fix issue where delegate_to was applied via ``apply`` on an include, where a loop was present on the include
