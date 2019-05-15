@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ec2_instance - fix tags rename in check mode

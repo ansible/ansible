@@ -802,6 +802,12 @@ def manage_tags(match, new_tags, purge_tags, ec2):
         old_tags, new_tags,
         purge_tags=purge_tags,
     )
+
+    if module.check_mode:
+        if tags_to_set or tags_to_delete:
+            changed |= True
+        return changed
+
     if tags_to_set:
         ec2.create_tags(
             Resources=[match['InstanceId']],
