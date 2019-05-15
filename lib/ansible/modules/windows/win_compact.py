@@ -20,8 +20,8 @@ description:
   - This module sets the compressed attribute for directories on an NTFS file system.
   - NTFS compression can be used to save disk space.
 options:
-  state:
-    path:
+  path:
+    description:
       - The full path of the directory to modify.
       - The folder must exist on an NTFS FileSystem.
     required: yes
@@ -67,8 +67,9 @@ EXAMPLES = r'''
 
 RETURN = r'''
 rc:
-  description: The return code of the compress/uncompress operation.
-    If no changes are made or the operation is successful, rc is 0.
+  description:
+    - The return code of the compress/uncompress operation.
+    - If no changes are made or the operation is successful, rc is 0.
   returned: always
   sample: 0
   type: int
