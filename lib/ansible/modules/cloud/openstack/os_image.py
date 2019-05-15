@@ -60,7 +60,7 @@ options:
      type: bool
      default: 'yes'
    protected:
-     version_added: "2.8"
+     version_added: "2.9"
      description:
         - Prevent image from being deleted
      type: bool
