@@ -235,7 +235,7 @@ from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli, boole
 from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
-def is_valid(param_name, param_val, min_val, max_val):
+def is_valid(module, param_name, param_val, min_val, max_val):
     if int(param_val) < min_val or int(param_val) > max_val:
         module.fail_json(
             failed=True,
@@ -404,8 +404,8 @@ def main():
     if command == 'vrouter-bgp-add':
         if NEIGHBOR_EXISTS is True:
             module.exit_json(
-                  skipped=True,
-                  msg='BGP neighbor with IP %s already exists on %s' % (neighbor, vrouter_name)
+                skipped=True,
+                msg='BGP neighbor with IP %s already exists on %s' % (neighbor, vrouter_name)
             )
 
     cli += ' %s vrouter-name %s neighbor %s ' % (command, vrouter_name, neighbor)
@@ -418,20 +418,20 @@ def main():
         if prefix_list_in:
             cli += ' prefix-list-in ' + prefix_list_in
         if neighbor_holdtime:
-            is_valid('neighbor holdtime', neighbor_holdtime, '0', '65535')
+            is_valid(module, 'neighbor holdtime', neighbor_holdtime, '0', '65535')
             cli += ' neighbor-holdtime ' + neighbor_holdtime
         if connect_retry_interval:
-            is_valid('connect retry interval', connect_retry_interval, '0', '65535')
+            is_valid(module, 'connect retry interval', connect_retry_interval, '0', '65535')
             cli += ' connect-retry-interval ' + connect_retry_interval
         if advertisement_interval:
-            is_valid('advertisement interval', advertisement_interval, '0', '65535')
+            is_valid(module, 'advertisement interval', advertisement_interval, '0', '65535')
             cli += ' advertisement-interval ' + advertisement_interval
         if route_map_out:
             cli += ' route-map-out ' + route_map_out
         if update_source:
             cli += ' update-source ' + update_source
         if neighbor_keepalive_interval:
-            is_valid('neighbor keepalive interval', neighbor_keepalive_interval, '0', '65535')
+            is_valid(module, 'neighbor keepalive interval', neighbor_keepalive_interval, '0', '65535')
             cli += ' neighbor-keepalive-interval ' + neighbor_keepalive_interval
         if max_prefix:
             cli += ' max-prefix ' + max_prefix
@@ -442,7 +442,7 @@ def main():
         if route_map_in:
             cli += ' route-map-in ' + route_map_in
         if ebgp_multihop:
-            is_valid('ebgp_multihop', ebgp_multihop, '1', '255')
+            is_valid(module, 'ebgp_multihop', ebgp_multihop, '1', '255')
             cli += ' ebgp-multihop ' + ebgp_multihop
         if remote_as:
             cli += ' remote-as ' + remote_as
