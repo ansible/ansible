@@ -70,6 +70,7 @@ options:
     upgrade_policy:
         description:
             - Upgrade policy.
+            - Required when creating the Azure virtual machine scale sets.
         choices:
             - Manual
             - Automatic
@@ -239,6 +240,7 @@ EXAMPLES = '''
     vm_size: Standard_DS1_v2
     capacity: 2
     virtual_network_name: testvnet
+    upgrade_policy: Manual
     subnet_name: testsubnet
     admin_username: adminUser
     ssh_password_enabled: false
@@ -264,6 +266,7 @@ EXAMPLES = '''
     vm_size: Standard_DS1_v2
     capacity: 2
     virtual_network_name: testvnet
+    upgrade_policy: Manual
     subnet_name: testsubnet
     admin_username: adminUser
     admin_password: password01
@@ -277,6 +280,7 @@ EXAMPLES = '''
     vm_size: Standard_DS1_v2
     capacity: 2
     virtual_network_name: testvnet
+    upgrade_policy: Manual
     subnet_name: testsubnet
     admin_username: adminUser
     admin_password: password01
