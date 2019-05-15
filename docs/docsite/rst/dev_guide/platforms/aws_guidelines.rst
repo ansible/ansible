@@ -23,6 +23,25 @@ Fixing bugs
 Bug fixes to code that relies on boto will still be accepted. When possible,
 the code should be ported to use boto3.
 
+Adding new features
+-------------------
+
+Try to keep backward compatibility with relatively recent versions of boto3. That means that if you
+want to implement some functionality that uses a new feature of boto3, it should only fail if that
+feature actually needs to be run, with a message stating the missing feature and minimum required
+version of boto3.
+
+Use feature testing (e.g. ``hasattr('boto3.module', 'shiny_new_method')``) to check whether boto3
+supports a feature rather than version checking. For example, from the ``ec2`` module:
+
+.. code-block:: python
+
+   if boto_supports_profile_name_arg(ec2):
+       params['instance_profile_name'] = instance_profile_name
+   else:
+       if instance_profile_name is not None:
+           module.fail_json(msg="instance_profile_name parameter requires boto version 2.5.0 or higher")
+
 Migrating to boto3
 ------------------
 
@@ -100,25 +119,6 @@ something is a well known abbreviation of a major component of AWS (for example,
 don't create new ones independently.
 
 Unless the name of your service is quite unique, please consider using ``aws_`` as a prefix. For example ``aws_lambda``.
-
-Adding new features
--------------------
-
-Try to keep backward compatibility with relatively recent versions of boto3. That means that if you
-want to implement some functionality that uses a new feature of boto3, it should only fail if that
-feature actually needs to be run, with a message stating the missing feature and minimum required
-version of boto3.
-
-Use feature testing (e.g. ``hasattr('boto3.module', 'shiny_new_method')``) to check whether boto3
-supports a feature rather than version checking. For example, from the ``ec2`` module:
-
-.. code-block:: python
-
-   if boto_supports_profile_name_arg(ec2):
-       params['instance_profile_name'] = instance_profile_name
-   else:
-       if instance_profile_name is not None:
-           module.fail_json(msg="instance_profile_name parameter requires boto version 2.5.0 or higher")
 
 Importing botocore and boto3
 ----------------------------
@@ -210,7 +210,7 @@ and that the more esoteric connection options are documented. For example:
 
    DOCUMENTATION = '''
    module: my_module
-   ...
+   # some lines omitted here
    requirements: [ 'botocore', 'boto3' ]
    extends_documentation_fragment:
        - aws
@@ -263,13 +263,12 @@ amounts of exception handling to existing modules, we recommend migrating the mo
    from ansible.module_utils.aws.core import AnsibleAWSModule
 
    # Set up module parameters
-   ...
+   # module params code here
 
    # Connect to AWS
-   ...
+   # connection code here
 
    # Make a call to AWS
-
    name = module.params.get['name']
    try:
        result = connection.describe_frooble(FroobleName=name)
@@ -310,7 +309,7 @@ along with the message.
        pass  # caught by imported HAS_BOTO3
 
    # Connect to AWS
-   ...
+   # connection code here
 
    # Make a call to AWS
    name = module.params.get['name']
