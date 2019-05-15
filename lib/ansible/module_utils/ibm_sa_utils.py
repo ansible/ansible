@@ -27,7 +27,8 @@ AVAILABLE_PYXCLI_FIELDS = ['pool', 'size', 'snapshot_size',
                            'fcaddress', 'iscsi_name', 'max_dms',
                            'max_cgs', 'ldap_id', 'max_mirrors',
                            'max_pools', 'max_volumes', 'hard_capacity',
-                           'soft_capacity']
+                           'soft_capacity', 'category', 'user',
+                           'password_verify', 'cg', 'alu']
 
 
 def xcli_wrapper(func):
@@ -71,15 +72,17 @@ def spectrum_accelerate_spec():
 
 
 @xcli_wrapper
-def execute_pyxcli_command(module, xcli_command, xcli_client):
-    pyxcli_args = build_pyxcli_command(module.params)
+def execute_pyxcli_command(module, xcli_command, xcli_client, user_module=False):
+    pyxcli_args = build_pyxcli_command(module.params, user_module)
     getattr(xcli_client.cmd, xcli_command)(**(pyxcli_args))
     return True
 
 
-def build_pyxcli_command(fields):
+def build_pyxcli_command(fields, user_module=False):
     """ Builds the args for pyxcli using the exact args from ansible"""
     pyxcli_args = {}
+    if user_module:
+        AVAILABLE_PYXCLI_FIELDS.append('password')
     for field in fields:
         if not fields[field]:
             continue
