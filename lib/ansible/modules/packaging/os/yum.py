@@ -332,7 +332,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
@@ -389,6 +389,26 @@ class YumModule(YumDnf):
 
         self.pkg_mgr_name = "yum"
         self.lockfile = '/var/run/yum.pid'
+
+    def _enablerepos_with_error_checking(self, yumbase):
+        # NOTE: This seems unintuitive, but it mirrors yum's CLI bahavior
+        if len(self.enablerepo) == 1:
+            try:
+                yumbase.repos.enableRepo(self.enablerepo[0])
+            except yum.Errors.YumBaseError as e:
+                if u'repository not found' in to_text(e):
+                    self.module.fail_json(msg="Repository %s not found." % self.enablerepo[0])
+                else:
+                    raise e
+        else:
+            for rid in self.enablerepo:
+                try:
+                    yumbase.repos.enableRepo(rid)
+                except yum.Errors.YumBaseError as e:
+                    if u'repository not found' in to_text(e):
+                        self.module.warn("Repository %s not found." % rid)
+                    else:
+                        raise e
 
     def yum_base(self):
         my = yum.YumBase()
@@ -459,8 +479,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 e, m, _ = my.rpmdb.matchPackageNames([pkgspec])
                 pkgs = e + m
@@ -514,8 +533,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 e, m, _ = my.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
@@ -554,8 +572,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 pkgs = my.returnPackagesByDep(pkgspec) + my.returnInstalledPackagesByDep(pkgspec)
                 if not pkgs:
@@ -595,8 +612,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 try:
                     pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
@@ -1438,8 +1454,7 @@ class YumModule(YumDnf):
                 current_repos = my.repos.repos.keys()
                 if self.enablerepo:
                     try:
-                        for rid in self.enablerepo:
-                            my.repos.enableRepo(rid)
+                        self._enablerepos_with_error_checking(my)
                         new_repos = my.repos.repos.keys()
                         for i in new_repos:
                             if i not in current_repos:
