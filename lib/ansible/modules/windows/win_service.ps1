@@ -26,7 +26,7 @@ $username = Get-AnsibleParam -obj $params -name 'username' -type 'str'
 
 $rec_actions_params = @{
     reset_period = Get-AnsibleParam -obj $params -name 'reset_period' -type 'int' -default $null;
-    first_failure = @{ 
+    first_failure = @{
         action = Get-AnsibleParam -obj $params -name 'first_failure_action' -type 'int' -default 0;
         timer = Get-AnsibleParam -obj $params -name 'first_failure_timer' -type 'int' -default 60000
     };
@@ -76,11 +76,11 @@ if ($null -ne $path) {
 }
 
 Function ReversedHexValue ($v) {
-    
-  $res = (("{0:x8}" -f $v) -split '(..)' | ? { $_ }).split(" ")
-  
+
+  $res = (("{0:x8}" -f $v) -split '(..)' | Where-Object { $_ }).split(" ")
+
   [array]::Reverse($res)
-  
+
   $res = [system.string]::Join('', $res)
 
   $res
@@ -435,7 +435,7 @@ Function Set-ServiceRecovery($name, $actions) {
     # 01 00 00 00 60 EA 00 00
     # 01 00 00 00 60 EA 00 00
     # 01 00 00 00 60 EA 00 00
-    # actions: 
+    # actions:
     #   0 for nothing
     #   1 for restart service
     #   2 for computer reboot
@@ -451,7 +451,7 @@ Function Set-ServiceRecovery($name, $actions) {
     #     action: 1
     #     timer: 60000 (ms)
     # 2c,01,00,00,00,00,00,00,00,00,00,00,03,00,00,00,14,00,00,00,01,00,00,00,60,ea,00,00,01,00,00,00,60,ea,00,00,01,00,00,00,60,ea,00,00
-    
+
     $reg_key_name = 'FailureActions'
 
     # Default untouched actions
@@ -478,16 +478,16 @@ Function Set-ServiceRecovery($name, $actions) {
 
     if ($result.recovery_actions -ne $processed_actions) {
 
-        $split_processed_actions = (("{0:x8}" -f $processed_actions) -split '(..)' | ? { $_ })
+        $split_processed_actions = (("{0:x8}" -f $processed_actions) -split '(..)' | Where-Object { $_ })
 
         try {
             $recovery_actions_key = "HKLM:\System\CurrentControlSet\Services\$name"
             # Because the key is non-existing by default and Set-ItemProperty cannot create a REG_BINARY key
             if ($result.recovery_actions -eq '') {
-                New-ItemProperty -Path $recovery_actions_key -Name $reg_key_name -PropertyType Binary -Value ([byte[]]($split_processed_actions | % { "0x$_" })) -WhatIf:$check_mode
+                New-ItemProperty -LiteralPath $recovery_actions_key -Name $reg_key_name -PropertyType Binary -Value ([byte[]]($split_processed_actions | ForEach-Object { "0x$_" })) -WhatIf:$check_mode
             } else
             {
-                Set-ItemProperty -Path $recovery_actions_key -Name $reg_key_name -Value ([byte[]]($split_processed_actions | % { "0x$_" })) -WhatIf:$check_mode
+                Set-ItemProperty -LiteralPath $recovery_actions_key -Name $reg_key_name -Value ([byte[]]($split_processed_actions | ForEach-Object { "0x$_" })) -WhatIf:$check_mode
             }
         } catch {
             Fail-Json $result $_.Exception.Message
