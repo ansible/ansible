@@ -11,7 +11,9 @@ export ANSIBLE_CONFIG=ansible.cfg
 export VMWARE_SERVER="${VCENTER_HOST}"
 export VMWARE_USERNAME="${VMWARE_USERNAME:-user}"
 export VMWARE_PASSWORD="${VMWARE_PASSWORD:-pass}"
+port=5000
 VMWARE_CONFIG=test-config.vmware.yaml
+inventory_cache="$(pwd)/inventory_cache"
 
 cat > "$VMWARE_CONFIG" <<VMWARE_YAML
 plugin: vmware_vm_inventory
@@ -25,9 +27,9 @@ cleanup() {
     if [ -f "${VMWARE_CONFIG}" ]; then
         rm -f "${VMWARE_CONFIG}"
     fi
-    if [ -d "$(pwd)/inventory_cache" ]; then
-        echo "Removing $(pwd)/inventory_cache"
-        rm -rf "$(pwd)/inventory_cache"
+    if [ -d "${inventory_cache}" ]; then
+        echo "Removing ${inventory_cache}"
+        rm -rf "${inventory_cache}"
     fi
     echo "Done"
     exit 0
@@ -38,33 +40,42 @@ trap cleanup INT TERM EXIT
 echo "DEBUG: Using ${VCENTER_HOST} with username ${VMWARE_USERNAME} and password ${VMWARE_PASSWORD}"
 
 echo "Kill all previous instances"
-curl "http://${VCENTER_HOST}:5000/killall" > /dev/null 2>&1
+curl "http://${VCENTER_HOST}:${port}/killall" > /dev/null 2>&1
 
 echo "Start new VCSIM server"
-curl "http://${VCENTER_HOST}:5000/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
+curl "http://${VCENTER_HOST}:${port}/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
 
 echo "Debugging new instances"
-curl "http://${VCENTER_HOST}:5000/govc_find"
+curl "http://${VCENTER_HOST}:${port}/govc_find"
 
 # Get inventory
 ansible-inventory -i ${VMWARE_CONFIG} --list
+
+echo "Check if cache is working for inventory plugin"
+if [ ! -n "$(find "${inventory_cache}" -maxdepth 1 -name 'vmware_vm_inventory_*' -print -quit)" ]; then
+    echo "Cache directory not found. Please debug"
+    exit 1
+fi
+echo "Cache is working"
 
 # Get inventory using YAML
 ansible-inventory -i ${VMWARE_CONFIG} --list --yaml
 
 # Install TOML for --toml
-${PYTHON} -m pip install toml
+${PYTHON} -m pip freeze | grep toml > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "Installing TOML package"
+    ${PYTHON} -m pip install toml
+else
+    echo "TOML package already exists, skipping installation"
+fi
 
 # Get inventory using TOML
 ansible-inventory -i ${VMWARE_CONFIG} --list --toml
-
-echo "Check if cache is working for inventory plugin"
-ls "$(pwd)/inventory_cache/vmware_vm_*" > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo "Cache directory not found. Please debug"
+    echo "Inventory plugin failed to list inventory host using --toml, please debug"
     exit 1
 fi
-echo "Cache is working"
 
 # Test playbook with given inventory
 ansible-playbook -i ${VMWARE_CONFIG} test_vmware_vm_inventory.yml --connection=local "$@"
