@@ -62,7 +62,7 @@ options:
    protected:
      version_added: "2.8"
      description:
-        - Prevent image from being deleted.
+        - Prevent image from being deleted
      type: bool
      default: 'no'
    filename:
