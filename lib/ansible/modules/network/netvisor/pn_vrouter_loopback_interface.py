@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pn_vrouter_loopback_interface
-author: "Pluribus Networks (devops@pluribusnetworks.com)"
+author: "Pluribus Networks (@rajaspachipulusu17)"
 version_added: "2.9"
 short_description: CLI command to add/remove vrouter-loopback-interface
 description:
@@ -152,7 +152,7 @@ def main():
         required_if=(
             ["state", "present", ["pn_vrouter_name", "pn_ip"]],
             ["state", "absent", ["pn_vrouter_name", "pn_ip", "pn_index"]]
-            ),
+        ),
     )
 
     # Accessing the arguments
