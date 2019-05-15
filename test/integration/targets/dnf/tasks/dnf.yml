@@ -468,20 +468,12 @@
   changed_when: '"Nothing to do" not in coreutils_install.msg'
   register: coreutils_install
 
-- block:
-  - name: install Web Server environment
-    dnf:
-      name: "@Web Server"
-      state: latest
-    register: dnf_result
-
-  always:
-  - name: reinstall coreutils-single if coreutils was installed
-    dnf:
-      name: coreutils-single
-      state: present
-      allowerasing: yes
-    when: coreutils_install is changed
+- name: reinstall coreutils-single if coreutils was installed
+  dnf:
+    name: coreutils-single
+    state: present
+    allowerasing: yes
+  when: coreutils_install is changed
 
 - name: verify installation of the environment
   assert:
