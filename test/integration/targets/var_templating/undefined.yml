@@ -11,5 +11,3 @@
       assert:
         that:
           - mytest is defined or 'VARIABLE IS NOT DEFINED!' in var_undefined['mytest']
-
-
