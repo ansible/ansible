@@ -15,6 +15,7 @@ from datetime import date, datetime
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.utils.unsafe_proxy import AnsibleUnsafe as unsafe
 
 
 def test_AnsibleJSONDecoder_vault():
@@ -133,3 +134,15 @@ class TestAnsibleJSONEncoder():
         # main assertions:
         assert(ansible_json_encoder.default(data_0) == {'__ansible_vault': expected_0})
         assert(ansible_json_encoder.default(data_1) == {'__ansible_vault': expected_1})
+
+    @pytest.mark.parametrize('test_input,expected', [(unsafe(), ''), ])
+    def test_ansible_unsafe(self, ansible_json_encoder):
+        """
+        Test for passing AnsibleUnsafe objects
+        to AnsibleJSONEncoder.default()
+        """
+        # does not make sense to implement objects of class:
+        # class AnsibleUnsafe(object):
+        #   __UNSAFE__ = True
+        # See lib/ansible/utils/unsafe_proxy.py
+        pass
