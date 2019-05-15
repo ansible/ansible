@@ -288,7 +288,7 @@ def main():
 
     result = {'ansible_facts': {'cloudformation': {}}}
 
-    for stack_name in module.params.get('stack_names'):
+    for stack_name in module.params.get('stack_name'):
         for stack_description in service_mgr.describe_stacks(stack_name):
             facts = {'stack_description': stack_description}
             stack_name = stack_description.get('StackName')
