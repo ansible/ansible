@@ -100,7 +100,7 @@ state:
     description: Current state of the availability set.
     returned: always
     type: dict
-    example:
+    example:{
         "id": "/subscriptions/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/resourceGroups/v-xisuRG/providers/Microsoft.Compute/availabilitySets/myavailabilityset2",
         "location": "eastus",
         "name": "myavailabilityset2",
@@ -108,12 +108,12 @@ state:
         "platform_update_domain_count": 5,
         "sku": "Aligned",
         "tags": null
+    }
 
 changed:
     description: Whether or not the resource has changed
     returned: always
     type: bool
-    example: false
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
