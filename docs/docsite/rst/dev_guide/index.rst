@@ -22,9 +22,12 @@ Find the task that best describes what you want to do:
    * What do I need to know before I start coding?
    * I want to :ref:`set up my Python development environment <environment_setup>`.
    * I want to :ref:`get started writing a module <developing_modules_general>`.
-   * I want to :ref:`write a network module <developing_modules_network>`.
-   * I want to :ref:`write a Windows module <developing_modules_general_windows>`.
-   * I want to write an :ref:`Amazon module <AWS_module_development>`, an :ref:`OpenStack module <OpenStack_module_development>`, or an :ref:`oVirt/RHV module <oVirt_module_development>`.
+   * I want to write a specific kind of module:
+      * a :ref:`network module <developing_modules_network>`
+      * a :ref:`Windows module <developing_modules_general_windows>`.
+      * an :ref:`Amazon module <AWS_module_development>`.
+      * an :ref:`OpenStack module <OpenStack_module_development>`.
+      * an :ref:`oVirt/RHV module <oVirt_module_development>`.
    * I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
 
 * I want to refine my code:
@@ -62,6 +65,9 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_modules_documenting
    developing_modules_general_windows
    developing_modules_general_aci
+   AWS_module_development
+   OpenStack_module_development
+   oVirt_module_development
    developing_modules_in_groups
    testing
    module_lifecycle
