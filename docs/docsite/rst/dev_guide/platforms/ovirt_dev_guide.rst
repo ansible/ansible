@@ -4,7 +4,7 @@ oVirt Ansible Modules
 =====================
 
 This is a set of modules for interacting with oVirt/RHV. This document
-serves as developer coding guidelines for creating oVIRT/RHV modules.
+serves as developer coding guidelines for creating oVirt/RHV modules.
 
 .. contents::
    :local:
@@ -51,8 +51,7 @@ Libraries
 New module development
 ----------------------
 
-Please read
-`link <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules.html>`__,
+Please read :ref:`developing_modules`,
 first to know what common properties, functions and features every module must
 have.
 
@@ -215,8 +214,8 @@ Testing
 -------
 
 -  Integration testing is currently done in oVirt's CI system
-   `here <http://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
+   `on Jenkins <http://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
    and
-   `here <https://github.com/oVirt/ovirt-system-tests/tree/master/ansible-suite-master/>`__.
--  Please consider using these integrationtests if you create a new module or add a new feature to an existing
+   `on GitHub <https://github.com/oVirt/ovirt-system-tests/tree/master/ansible-suite-master/>`__.
+-  Please consider using these integration tests if you create a new module or add a new feature to an existing
    module.
