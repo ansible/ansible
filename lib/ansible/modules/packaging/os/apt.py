@@ -137,8 +137,9 @@ requirements:
 author: "Matthew Williams (@mgwilliams)"
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
-   - apt starts newly installed services by default, this is what the underlying tooling does,
-     to avoid this you can set the ``RUNLEVEL`` environment variable to 1.
+   - In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this.
+     For example when installing Postgresql-9.5 in Debian 9, creating an excutable shell script (/usr/sbin/policy-rc.d) that throws 
+     a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or remove its execute permission afterwards.
    - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
      Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
@@ -146,17 +147,15 @@ notes:
 '''
 
 EXAMPLES = '''
+- name: Install apache httpd  (state=present is optional)
+  apt:
+    name: apache2
+    state: present
+
 - name: Update repositories cache and install "foo" package
   apt:
     name: foo
     update_cache: yes
-
-- name: Install apache httpd but avoid starting it immediately (state=present is optional)
-  apt:
-    name: apache2
-    state: present
-  environment:
-    RUNLEVEL: 1
 
 - name: Remove "foo" package
   apt:
