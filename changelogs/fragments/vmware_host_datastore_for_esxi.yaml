@@ -1,0 +1,2 @@
+minor_changes:
+    - vmware_host_datastore - Ability to directly target a ESXi.
