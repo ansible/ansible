@@ -243,7 +243,7 @@ options:
           require_ssl:
             description:
             - Whether the mysqld should default to 'REQUIRE X509' for users connecting
-              over IP.
+              over IP.':
             required: false
             type: bool
       tier:
@@ -252,6 +252,17 @@ options:
           For MySQL instances, this field determines whether the instance is Second
           Generation (recommended) or First Generation.
         required: false
+      database_flags:
+        description:
+        - Configure a database flag for Cloud SQL. You use database flags to adjust MySQL or PostgreSQL parameters and options, to configure and tune your instance.
+        required: false
+          name:
+            description:
+            - The Flag's name.
+            required: false
+          value:
+            description:
+            - The Flag's value.
       availability_type:
         description:
         - The availabilityType define if your postgres instance is run zonal or regional.
@@ -654,6 +665,7 @@ def main():
                         ),
                     ),
                     tier=dict(type='str'),
+                    database_flags=dict(type='list', elements=dict(type='str')),
                     availability_type=dict(type='str', choices=['ZONAL', 'REGIONAL']),
                     backup_configuration=dict(
                         type='dict', options=dict(enabled=dict(type='bool'), binary_log_enabled=dict(type='bool'), start_time=dict(type='str'))
@@ -970,6 +982,7 @@ class InstanceSettings(object):
             {
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
                 u'tier': self.request.get('tier'),
+                u'databaseFlags': self.request.get('database_flags'),
                 u'availabilityType': self.request.get('availability_type'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get('backup_configuration', {}), self.module).to_request(),
             }
@@ -980,6 +993,7 @@ class InstanceSettings(object):
             {
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
                 u'tier': self.request.get(u'tier'),
+                u'databaseFlags': self.request.get(u'databaseFlags'),
                 u'availabilityType': self.request.get(u'availabilityType'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
             }
