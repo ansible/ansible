@@ -159,7 +159,7 @@ options:
     type: int
     default: 60000
     version_added: '2.9'
-  
+ 
 seealso:
 - module: service
 - module: win_nssm
