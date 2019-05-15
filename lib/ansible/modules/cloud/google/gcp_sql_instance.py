@@ -243,7 +243,7 @@ options:
           require_ssl:
             description:
             - Whether the mysqld should default to 'REQUIRE X509' for users connecting
-              over IP.':
+              over IP.
             required: false
             type: bool
       tier:
