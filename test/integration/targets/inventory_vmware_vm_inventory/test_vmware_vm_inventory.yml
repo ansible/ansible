@@ -16,3 +16,9 @@
       with_items:
       - all
       - otherGuest
+
+    - name: Check if Hostname and other details are populated in hostvars
+      assert:
+        that:
+        - hostvars[item].name is defined
+      with_items: "{{  groups['all'] }}"
