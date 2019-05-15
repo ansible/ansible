@@ -86,7 +86,7 @@ options:
    dns_domain:
      description:
        -  The DNS domain value to set.
-          Network will use Openstack defaults if this option is 
+          Network will use Openstack defaults if this option is
           not provided.
      version_added: "2.9"
 requirements:
