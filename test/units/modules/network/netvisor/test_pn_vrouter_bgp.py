@@ -70,6 +70,6 @@ class TestVrouterBGPModule(TestNvosModule):
     def test_vrouter_bgp_modify(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vrouter_name': 'sw01-vrouter', 'pn_neighbor': '105.104.104.1',
                          'pn_remote_as': '65000', 'pn_bfd': False, 'state': 'update'})
-        result = self.execute_module(changed=True, state='absent')
+        result = self.execute_module(changed=True, state='update')
         expected_cmd = ' switch sw01 vrouter-bgp-modify vrouter-name sw01-vrouter neighbor 105.104.104.1  remote-as 65000 no-bfd '
         self.assertEqual(result['cli_cmd'], expected_cmd)
