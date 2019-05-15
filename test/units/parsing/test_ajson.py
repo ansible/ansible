@@ -136,7 +136,7 @@ class TestAnsibleJSONEncoder():
         assert(ansible_json_encoder.default(data_1) == {'__ansible_vault': expected_1})
 
     @pytest.mark.parametrize('test_input,expected', [(unsafe(), ''), ])
-    def test_ansible_unsafe(self, ansible_json_encoder):
+    def test_ansible_unsafe(self, ansible_json_encoder, test_input, expected):
         """
         Test for passing AnsibleUnsafe objects
         to AnsibleJSONEncoder.default()
@@ -146,3 +146,38 @@ class TestAnsibleJSONEncoder():
         #   __UNSAFE__ = True
         # See lib/ansible/utils/unsafe_proxy.py
         pass
+
+    @pytest.mark.parametrize(
+        'test_input,expected',
+        [
+            ({1: 'first'}, {1: 'first'}),
+            ({2: 'second'}, {2: 'second'}),
+        ]
+    )
+    def test_default_encoder(self, ansible_json_encoder, test_input, expected):
+        """
+        Test for the default encoder of json.JSONEncoder superclass
+        by passing objects of different classes that are not tested above
+        """
+        assert(ansible_json_encoder.default(test_input) == expected)
+
+    @pytest.mark.xfail(raises=TypeError)
+    @pytest.mark.parametrize(
+        'test_input,expected',
+        [
+            (1, 1),
+            (1.1, 1.1),
+            ('string', 'string'),
+            ([1, 2], [1, 2]),
+            (True, True),
+            (None, None),
+            ({'set'}, {'set'}),
+        ]
+    )
+    def test_default_encoder_unserializable(self, ansible_json_encoder, test_input, expected):
+        """
+        Test for the default encoder of json.JSONEncoder superclass
+        by passing unserializable objects of different classes.
+        It must fail with TypeError 'object is not serializable'
+        """
+        assert(ansible_json_encoder.default(test_input) == expected)
