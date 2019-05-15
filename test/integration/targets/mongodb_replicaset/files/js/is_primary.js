@@ -5,7 +5,7 @@ while(rs.status()['myState'] != 1) {
 			//print("State is not yet PRIMARY. Waiting...");
 			done = true
 		}
-		sleep(10000);
+		sleep(1000);
 		iterations++;
 		if (iterations == 10) {
 			throw new Error("Exceeded iterations limit.");
