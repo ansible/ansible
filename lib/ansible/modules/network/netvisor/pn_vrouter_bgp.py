@@ -37,12 +37,12 @@ options:
   pn_neighbor:
     description:
       - IP address for BGP neighbor.
-    required: false
+    required: true
     type: str
   pn_vrouter_name:
     description:
       - name of service config.
-    required: false
+    required: true
     type: str
   pn_send_community:
     description:
@@ -215,7 +215,7 @@ RETURN = """
 command:
   description: the CLI command run on the target node.
   returned: always
-  type: string
+  type: str
 stdout:
   description: set of responses from the vrouter-bgp command.
   returned: always
@@ -290,8 +290,8 @@ def main():
     argument_spec = dict(
         pn_cliswitch=dict(required=False, type='str'),
         state=dict(required=False, type='str', choices=state_map.keys(), default='present'),
-        pn_neighbor=dict(required=False, type='str'),
-        pn_vrouter_name=dict(required=False, type='str'),
+        pn_neighbor=dict(required=True, type='str'),
+        pn_vrouter_name=dict(required=True, type='str'),
         pn_send_community=dict(required=False, type='bool'),
         pn_weight=dict(required=False, type='str'),
         pn_multi_protocol=dict(required=False, type='str', choices=['ipv4-unicast', 'ipv6-unicast']),
@@ -320,7 +320,8 @@ def main():
         pn_prefix_list_out=dict(required=False, type='str'),
         pn_no_route_map_out=dict(required=False, type='str'),
         pn_no_route_map_in=dict(required=False, type='str'),
-    ),
+    )
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_if=(
