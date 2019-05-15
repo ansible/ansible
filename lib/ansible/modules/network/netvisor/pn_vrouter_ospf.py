@@ -46,12 +46,12 @@ options:
   pn_network:
     description:
       - OSPF network IP address.
-    required: false
+    required: true
     type: str
   pn_vrouter_name:
     description:
       - name of service config.
-    required: false
+    required: true
     type: str
 """
 
@@ -143,8 +143,8 @@ def main():
         state=dict(required=False, type='str', choices=state_map.keys(), default='present'),
         pn_netmask=dict(required=False, type='str'),
         pn_ospf_area=dict(required=False, type='str'),
-        pn_network=dict(required=False, type='str'),
-        pn_vrouter_name=dict(required=False, type='str'),
+        pn_network=dict(required=True, type='str'),
+        pn_vrouter_name=dict(required=True, type='str'),
     )
 
     module = AnsibleModule(
