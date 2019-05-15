@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cdnendpoint
 version_added: "2.8"
-short_description: Manage a Azure CDN endpoint.
+short_description: Manage a Azure CDN Endpoint
 description:
     - Create, update, start, stop and delete a Azure CDN endpoint.
 
@@ -33,16 +33,16 @@ options:
             - Valid azure location. Defaults to location of the resource group.
     started:
         description:
-            - Use with I(state) C(present) to start the endpoint. Set to C(false) to stop the endpoint. Set to C(true) to start the endpoint.
+            - Use with I(state=present) to start the endpoint. Set to C(false) to stop the endpoint. Set to C(true) to start the endpoint.
         type: bool
     purge:
         description:
-            - Use with I(state) C(present) to purge the endpoint. Set to C(true) to have the endpoint be purged.
+            - Use with I(state=present) to purge the endpoint. Set to C(true) to have the endpoint be purged.
         type: bool
         default: false
     purge_content_paths:
         description:
-            - Use with I(state) C(present) and I(purge) C(true) to specify content paths to be purged.
+            - Use with I(state=present) and I(purge=true) to specify content paths to be purged.
         type: list
         default: ['/']
     profile_name:
@@ -55,30 +55,35 @@ options:
         suboptions:
             name:
                 description:
-                    - Origin name
+                    - Origin name.
                 required: true
             host_name:
                 description:
-                    - The address of the origin. It can be a domain name, IPv4 address, or IPv6 address.
+                    - The address of the origin.
+                    - It can be a domain name, IPv4 address, or IPv6 address.
                 required: true
             http_port:
                 description:
-                    - The value of the HTTP port. Must be between 1 and 65535
+                    - The value of the HTTP port. Must be between C(1) and C(65535).
             https_port:
                 description:
-                    - The value of the HTTPS port. Must be between 1 and 65535
+                    - The value of the HTTPS port. Must be between C(1) and C(65535).
         required: true
     origin_host_header:
         description:
             - The host header value sent to the origin with each request.
+            - If you leave this blank, the request hostname determines this value.
+            - Azure CDN I(origins), such as Web Apps,Blob Storage and Cloud Services require this host header value to match the origin hostname by default.
         type: str
     origin_path:
         description:
             - A directory path on the origin that CDN can use to retrieve content from.
+            - E.g. contoso.cloudapp.net/originpath.
         type: str
     content_types_to_compress:
         description:
             - List of content types on which compression applies.
+            - This value should be a valid MIME type.
         type: list
     is_compression_enabled:
         description:
@@ -88,16 +93,18 @@ options:
     is_http_allowed:
         description:
             - Indicates whether HTTP traffic is allowed on the endpoint.
+            - At least one protocol (HTTP or HTTPS) must be allowed.
         type: bool
         default: true
     is_https_allowed:
         description:
             - Indicates whether HTTPS traffic is allowed on the endpoint.
+            - At least one protocol (HTTP or HTTPS) must be allowed.
         type: bool
         default: true
     query_string_caching_behavior:
         description:
-            - Defines how CDN caches requests that include query strings
+            - Defines how CDN caches requests that include query strings.
         type: str
         choices:
             - ignore_query_string
@@ -143,7 +150,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 state:
-    description: Current state of the Azure CDN endpoint
+    description: Current state of the Azure CDN endpoint.
     returned: always
     type: str
 id:
