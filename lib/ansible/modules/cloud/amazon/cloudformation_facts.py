@@ -66,7 +66,7 @@ EXAMPLES = '''
 
 # Get summary information about multiple stacks
 - cloudformation_facts:
-    stack_names:
+    stack_name:
       - my-cloudformation-stack
       - my-other-cloudformation-stacks
 
