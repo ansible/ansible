@@ -23,7 +23,7 @@ requirements:
 version_added: "2.2"
 author: Justin Menga (@jmenga)
 options:
-    stack_names:
+    stack_name:
         description:
           - The name(s) or id(s) of the CloudFormation stacks. Gathers facts for all stacks by default.
         type: list
@@ -271,7 +271,7 @@ def to_dict(items, key, value):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        stack_names=dict(type='list', aliases=['stack_name']),
+        stack_name=dict(type='list', aliases=['stack_names']),
         all_facts=dict(required=False, default=False, type='bool'),
         stack_policy=dict(required=False, default=False, type='bool'),
         stack_events=dict(required=False, default=False, type='bool'),
