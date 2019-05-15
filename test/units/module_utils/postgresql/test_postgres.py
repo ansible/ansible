@@ -31,7 +31,7 @@ class TestPostgresCommonArgSpec():
         assert(expected_dict == actual_dict)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def m_psycopg2():
     """
     Returns mock object for psycopg2 emulation
@@ -86,7 +86,7 @@ def m_psycopg2():
 
             return DbConnection()
 
-    yield DummyPsycopg2()
+    return DummyPsycopg2()
 
 
 class TestEnsureReqLibs():
@@ -99,7 +99,7 @@ class TestEnsureReqLibs():
     1. value of err_msg attribute of m_ansible_module mock object
     """
 
-    @pytest.yield_fixture
+    @pytest.fixture
     def m_ansible_module(self):
         class Dummym_ansible_module():
             def __init__(self):
@@ -109,7 +109,7 @@ class TestEnsureReqLibs():
             def fail_json(self, msg):
                 self.err_msg = msg
 
-        yield Dummym_ansible_module()
+        return Dummym_ansible_module()
 
     def test_ensure_req_libs_has_not_psycopg2(self, m_ansible_module):
         """
@@ -168,7 +168,7 @@ class TestConnectToDb():
     2. types of return objects (db_connection and cursor)
     """
 
-    @pytest.yield_fixture
+    @pytest.fixture
     def m_ansible_module(self):
         class DummyAnsibleModule():
             def __init__(self):
@@ -182,7 +182,7 @@ class TestConnectToDb():
             def warn(self, msg):
                 self.warn_msg = msg
 
-        yield DummyAnsibleModule()
+        return DummyAnsibleModule()
 
     def test_connect_to_db(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
