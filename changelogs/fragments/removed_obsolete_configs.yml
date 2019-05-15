@@ -1,0 +1,2 @@
+minor_changes:
+    - All previouslly deprecated sudo/su and module locale global settings have been removed.
