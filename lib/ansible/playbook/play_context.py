@@ -292,17 +292,6 @@ class PlayContext(Base):
         for become_pass_name in C.MAGIC_VARIABLE_MAPPING.get('become_pass'):
             if become_pass_name in variables:
                 break
-        else:  # This is a for-else
-            if new_info.become_method == 'sudo':
-                for sudo_pass_name in C.MAGIC_VARIABLE_MAPPING.get('sudo_pass'):
-                    if sudo_pass_name in variables:
-                        setattr(new_info, 'become_pass', variables[sudo_pass_name])
-                        break
-            elif new_info.become_method == 'su':
-                for su_pass_name in C.MAGIC_VARIABLE_MAPPING.get('su_pass'):
-                    if su_pass_name in variables:
-                        setattr(new_info, 'become_pass', variables[su_pass_name])
-                        break
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
