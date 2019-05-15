@@ -252,6 +252,7 @@ class PyVmomiHelper(PyVmomi):
                 disk_index += 1
         return disks_facts
 
+
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
