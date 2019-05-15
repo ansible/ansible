@@ -1,3 +1,5 @@
+.. _oVirt_module_development:
+
 oVirt Ansible Modules
 =====================
 

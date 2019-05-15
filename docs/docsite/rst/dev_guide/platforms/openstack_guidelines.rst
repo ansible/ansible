@@ -1,3 +1,5 @@
+.. _OpenStack_module_development:
+
 OpenStack Ansible Modules
 =========================
 

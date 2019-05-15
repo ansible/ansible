@@ -1,3 +1,5 @@
+.. _AWS_module_development:
+
 ****************************************************
 Guidelines for Ansible Amazon AWS module development
 ****************************************************
