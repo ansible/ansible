@@ -18,10 +18,10 @@ module: azure_rm_availabilityset
 
 version_added: "2.4"
 
-short_description: Manage Azure availability set
+short_description: Manage Azure Availability Set
 
 description:
-    - Create, update and delete Azure availability set.
+    - Create, update and delete Azure Availability Set.
     - An availability set cannot be updated, you will have to recreate one instead.
     - The only update operation will be for the tags.
 
@@ -44,16 +44,18 @@ options:
             - present
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
+            - Valid Azure location. Defaults to location of the resource group.
     platform_update_domain_count:
         description:
-            - Update domains indicate groups of virtual machines and underlying physical hardware that can be rebooted at the same time. Default is C(5).
+            - Update domains indicate groups of virtual machines and underlying physical hardware that can be rebooted at the same time.
         default: 5
+        type: int
     platform_fault_domain_count:
         description:
             - Fault domains define the group of virtual machines that share a common power source and network switch.
-            - Should be between C(1) and C(3). Default is C(3).
+            - Should be between C(1) and C(3).
         default: 3
+        type: int
     sku:
         description:
             - Define if the availability set supports managed disks.
@@ -98,10 +100,20 @@ state:
     description: Current state of the availability set.
     returned: always
     type: dict
+    example:
+        "id": "/subscriptions/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/resourceGroups/v-xisuRG/providers/Microsoft.Compute/availabilitySets/myavailabilityset2",
+        "location": "eastus",
+        "name": "myavailabilityset2",
+        "platform_fault_domain_count": 2,
+        "platform_update_domain_count": 5,
+        "sku": "Aligned",
+        "tags": null
+
 changed:
     description: Whether or not the resource has changed
     returned: always
     type: bool
+    example: false
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

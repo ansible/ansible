@@ -17,7 +17,7 @@ module: azure_rm_availabilityset_facts
 
 version_added: "2.4"
 
-short_description: Get availability set facts
+short_description: Get Azure Availability Set facts
 
 description:
     - Get facts for a specific availability set or all availability sets.
