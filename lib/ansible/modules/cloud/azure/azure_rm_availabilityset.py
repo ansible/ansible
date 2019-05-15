@@ -51,7 +51,8 @@ options:
         default: 5
     platform_fault_domain_count:
         description:
-            - Fault domains define the group of virtual machines that share a common power source and network switch. Should be between C(1) and C(3). Default is C(3).
+            - Fault domains define the group of virtual machines that share a common power source and network switch.
+            - Should be between C(1) and C(3). Default is C(3).
         default: 3
     sku:
         description:
