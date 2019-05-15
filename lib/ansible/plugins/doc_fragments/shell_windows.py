@@ -31,15 +31,6 @@ options:
       key: remote_tmp
     vars:
     - name: ansible_remote_tmp
-  set_module_language:
-    description:
-    - Controls if we set the locale for modules when executing on the
-      target.
-    - Windows only supports C(no) as an option.
-    type: bool
-    default: 'no'
-    choices:
-    - 'no'
   environment:
     description:
     - List of dictionaries of environment variables and their values to use when
