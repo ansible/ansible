@@ -30,6 +30,11 @@ ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_import_tasks_tags.yml -i inv
 ANSIBLE_STRATEGY='linear' ansible-playbook role/test_import_role.yml -i inventory "$@"
 ANSIBLE_STRATEGY='free' ansible-playbook role/test_import_role.yml -i inventory "$@"
 
+# issue 39543
+ANSIBLE_STRATEGY='linear' ansible-playbook role/test_issue_39543.yml -i inventory "$@"
+# ANSIBLE_STRATEGY='debug' ansible-playbook role/test_issue_39543.yml -i inventory "$@"
+ANSIBLE_STRATEGY='free' ansible-playbook role/test_issue_39543.yml -i inventory "$@"
+
 
 ## Include (dynamic)
 
