@@ -1,21 +1,25 @@
 #!/usr/bin/python
-# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Copyright: (c) 2017-18, Abhijeet Kasurde <akasurde@redhat.com>
+#
+#  GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
 module: github_issue
 short_description: View GitHub issue.
 description:
-    - View GitHub issue for a given repository.
+    - View GitHub issue for a given repository and organization.
 version_added: "2.4"
 options:
   repo:
@@ -35,12 +39,9 @@ options:
         - Get various details about issue depending upon action specified.
     default: 'get_status'
     choices:
-        - ['get_status']
-
+        - 'get_status'
 author:
     - Abhijeet Kasurde (@Akasurde)
-requirements:
-    - "github3.py >= 1.0.0a4"
 '''
 
 RETURN = '''
@@ -66,17 +67,10 @@ EXAMPLES = '''
   when: r.issue_status == 'open'
 '''
 
-import traceback
+import json
 
-GITHUB_IMP_ERR = None
-try:
-    import github3
-    HAS_GITHUB_PACKAGE = True
-except ImportError:
-    GITHUB_IMP_ERR = traceback.format_exc()
-    HAS_GITHUB_PACKAGE = False
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 
 def main():
@@ -84,15 +78,11 @@ def main():
         argument_spec=dict(
             organization=dict(required=True),
             repo=dict(required=True),
-            issue=dict(required=True),
-            action=dict(required=False, choices=['get_status']),
+            issue=dict(type='int', required=True),
+            action=dict(choices=['get_status'], default='get_status'),
         ),
         supports_check_mode=True,
     )
-
-    if not HAS_GITHUB_PACKAGE:
-        module.fail_json(msg=missing_required_lib('github3.py >= 1.0.0a4'),
-                         exception=GITHUB_IMP_ERR)
 
     organization = module.params['organization']
     repo = module.params['repo']
@@ -101,17 +91,26 @@ def main():
 
     result = dict()
 
-    gh_obj = github3.issue(organization, repo, issue)
-    if gh_obj is None:
-        module.fail_json(msg="Failed to get details about issue specified. "
-                             "Please check organization, repo and issue "
-                             "details and try again.")
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github.v3+json',
+    }
+
+    url = "https://api.github.com/repos/%s/%s/issues/%s" % (organization, repo, issue)
+
+    response, info = fetch_url(module, url, headers=headers)
+    if not (200 <= info['status'] < 400):
+        if info['status'] == 404:
+            module.fail_json(msg="Failed to find issue %s" % issue)
+        module.fail_json(msg="Failed to send request to %s: %s" % (url, info['msg']))
+
+    gh_obj = json.loads(response.read())
 
     if action == 'get_status' or action is None:
         if module.check_mode:
             result.update(changed=True)
         else:
-            result.update(changed=True, issue_status=gh_obj.state)
+            result.update(changed=True, issue_status=gh_obj['state'])
 
     module.exit_json(**result)
 
