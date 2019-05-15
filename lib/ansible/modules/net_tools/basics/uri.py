@@ -276,19 +276,19 @@ EXAMPLES = r'''
 - name: Work around a python issue that doesn't support no_proxy envvar
   uri:
     follow_redirects: none
-    validate_certs: False
+    validate_certs: false
     timeout: 5
     url: "http://{{ ip_address }}:{{ port | default(80) }}"
   register: uri_data
-  failed_when: False
-  changed_when: False
+  failed_when: false
+  changed_when: false
   vars:
     ip_address: 192.0.2.1
   environment: |
       {
         {% for no_proxy in (lookup('env', 'no_proxy') | replace(',', '') ).split() %}
-          {% if no_proxy| ipaddr | type_debug != 'NoneType' %}
-            {% if ip_address | ipaddr(no_proxy) | type_debug != 'NoneType' %}
+          {% if no_proxy| ipaddr is not none %}
+            {% if ip_address | ipaddr(no_proxy) is not none %}
               "no_proxy": "{{ ip_address }}"
             {% endif %}
           {% endif %}
