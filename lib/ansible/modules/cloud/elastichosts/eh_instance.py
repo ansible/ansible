@@ -20,6 +20,11 @@ description:
 version_added: "2.9"
 author: "Konrad D. Pisarczyk (@nickyfow)"
 options:
+    distro:
+        description:
+            - Linux distribution for the instance to use
+            - Used only with I(state=present)
+        default: centos7
     force:
         description:
             - Ignore warnings and complete actions.
@@ -27,16 +32,13 @@ options:
             - If C(no) is used with I(state=absent), the modle will fail on powered-on instances.
         type: bool
         default: no
-    username:
-        description:
-            - User name used for API authentication (user UUID).
-    password:
-        description:
-            - Password used for API authentication (secret API key).
     name:
         description:
             - Name of the instance to be created.
             - Required if I(state=present).
+    password:
+        description:
+            - Password used for API authentication (secret API key).
     ssh_key:
         description:
             - The public SSH key to be added to C(authorized_keys) on the created instance.
@@ -59,6 +61,9 @@ options:
             - container
             - vm
         default: present
+    username:
+        description:
+            - User name used for API authentication (user UUID).
     uuid:
         description:
             - The UUID of the instance to destroy.
@@ -196,6 +201,7 @@ except Exception:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            distro=dict(required=False, type='str', default='centos7'),
             force=dict(type='bool', default=False),
             name=dict(type='str'),
             password=dict(type='str', no_log=True, default=os.environ.get('EHPASS')),
@@ -237,6 +243,7 @@ def main():
     if state == 'present':
         # Create instance
         instance.update(
+            distro=module.params['distro'],
             name=module.params['name'],
             type=module.params['type']
         )
