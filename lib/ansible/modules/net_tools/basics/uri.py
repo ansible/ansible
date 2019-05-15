@@ -286,11 +286,15 @@ EXAMPLES = r'''
     ip_address: 192.0.2.1
   environment: |
       {
-        {% for no_proxy in (lookup('env', 'no_proxy') | replace(',', '') ).split() %}
-          {% if no_proxy| ipaddr is not none %}
-            {% if ip_address | ipaddr(no_proxy) is not none %}
-              "no_proxy": "{{ ip_address }}"
-            {% endif %}
+        {% for no_proxy in (lookup('env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
+          {% if no_proxy | regex_search('\/') and no_proxy | ipaddr('net') != '' and no_proxy | ipaddr('net') != false and ip_address | ipaddr(no_proxy) is not none and ip_address | ipaddr(no_proxy) != false %}
+            'no_proxy': '{{ ip_address }}'
+          {% elif no_proxy | regex_search(':') != '' and no_proxy | regex_search(':') != false and no_proxy == ip_address + ':' + (port | default(80)) %}
+            'no_proxy': '{{ ip_address }}:{{ port | default(80) }}'
+          {% elif no_proxy | ipaddr('host') != '' and no_proxy | ipaddr('host') != false and no_proxy == ip_address %}
+            'no_proxy': '{{ ip_address }}'
+          {% elif no_proxy | regex_search('^(\*|)\.') != '' and no_proxy | regex_search('^(\*|)\.') != false and no_proxy | regex_replace('\*', '') in ip_address %}
+            'no_proxy': '{{ ip_address }}'
           {% endif %}
         {% endfor %}
       }
