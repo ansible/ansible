@@ -44,7 +44,7 @@
     #tags:
     #  key1: value1
     application_rule_collections:
-      - priority: '110'
+      - priority: 110
         action: deny
         rules:
           - name: rule1
@@ -59,7 +59,7 @@
               - www.test.com
         name: apprulecoll
     nat_rule_collections:
-      - priority: '112'
+      - priority: 112
         action: dnat
         rules:
           - name: DNAT-HTTPS-traffic
@@ -76,7 +76,7 @@
             translated_port: '8443'
         name: natrulecoll
     network_rule_collections:
-      - priority: '112'
+      - priority: 112
         action: deny
         rules:
           - name: L4-traffic
@@ -113,10 +113,8 @@
   azure_rm_azurefirewall:
     resource_group: '{{resource_group}}'
     name: '{{azure_firewall_name}}'
-    #tags:
-    #  key1: value1
     application_rule_collections:
-      - priority: '110'
+      - priority: 110
         action: deny
         rules:
           - name: rule1
@@ -131,7 +129,7 @@
               - www.test.com
         name: apprulecoll
     nat_rule_collections:
-      - priority: '112'
+      - priority: 112
         action: dnat
         rules:
           - name: DNAT-HTTPS-traffic
@@ -148,7 +146,7 @@
             translated_port: '8443'
         name: natrulecoll
     network_rule_collections:
-      - priority: '112'
+      - priority: 112
         action: deny
         rules:
           - name: L4-traffic
@@ -185,10 +183,8 @@
   azure_rm_azurefirewall:
     resource_group: '{{resource_group}}'
     name: '{{azure_firewall_name}}'
-    #tags:
-    #  key1: value1
     application_rule_collections:
-      - priority: '110'
+      - priority: 110
         action: deny
         rules:
           - name: rule1
@@ -203,7 +199,7 @@
               - www.test.com
         name: apprulecoll
     nat_rule_collections:
-      - priority: '112'
+      - priority: 112
         action: dnat
         rules:
           - name: DNAT-HTTPS-traffic
@@ -220,7 +216,7 @@
             translated_port: '8443'
         name: natrulecoll
     network_rule_collections:
-      - priority: '112'
+      - priority: 112
         action: deny
         rules:
           - name: L4-traffic

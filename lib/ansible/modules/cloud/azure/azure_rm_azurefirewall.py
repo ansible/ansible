@@ -40,6 +40,7 @@ options:
       priority:
         description:
           - Priority of the application rule collection resource.
+        type: int
       action:
         description:
           - The action type of a rule collection
@@ -86,6 +87,7 @@ options:
       priority:
         description:
           - Priority of the NAT rule collection resource.
+        type: int
       action:
         description:
           - The action type of a NAT rule collection
@@ -140,6 +142,7 @@ options:
       priority:
         description:
           - Priority of the network rule collection resource.
+        type: int
       action:
         description:
           - The action type of a rule collection
@@ -226,7 +229,7 @@ EXAMPLES = '''
     tags:
       key1: value1
     application_rule_collections:
-      - priority: '110'
+      - priority: 110
         action:
           type: deny
         rules:
@@ -242,7 +245,7 @@ EXAMPLES = '''
               - www.test.com
         name: apprulecoll
     nat_rule_collections:
-      - priority: '112'
+      - priority: 112
         action:
           type: dnat
         rules:
@@ -260,7 +263,7 @@ EXAMPLES = '''
             translated_port: '8443'
         name: natrulecoll
     network_rule_collections:
-      - priority: '112'
+      - priority: 112
         action:
           type: deny
         rules:
@@ -334,10 +337,6 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 disposition='azure_firewall_name',
                 required=True
             ),
-            id=dict(
-                type='str',
-                disposition='/'
-            ),
             location=dict(
                 type='str',
                 updatable=False,
@@ -349,7 +348,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 disposition='/properties/applicationRuleCollections',
                 options=dict(
                     priority=dict(
-                        type='number',
+                        type='int',
                         disposition='properties/*'
                     ),
                     action=dict(
@@ -405,7 +404,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 disposition='/properties/natRuleCollections',
                 options=dict(
                     priority=dict(
-                        type='number',
+                        type='int',
                         disposition='properties/*'
                     ),
                     action=dict(
@@ -460,7 +459,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                 disposition='/properties/networkRuleCollections',
                 options=dict(
                     priority=dict(
-                        type='number',
+                        type='int',
                         disposition='properties/*'
                     ),
                     action=dict(
