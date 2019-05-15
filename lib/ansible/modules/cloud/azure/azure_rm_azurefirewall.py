@@ -582,7 +582,7 @@ class AzureRMAzureFirewalls(AzureRMModuleBaseExt):
                     '/providers' +
                     '/Microsoft.Network' +
                     '/azureFirewalls' +
-                    '/' + self.azure_firewall_name)
+                    '/' + self.name)
 
         old_response = self.get_resource()
 
