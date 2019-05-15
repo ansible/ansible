@@ -4,7 +4,7 @@
 # Copyright: (c) 2014, Chris Hoffman <choffman@chathamfinancial.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
@@ -113,6 +113,46 @@ options:
     - A newly created service will default to C(LocalSystem).
     type: str
     version_added: '2.3'
+  reset_period:
+    description:
+      - The reset period for the service recovery actions in seconds.
+      - This needs to be defined for the recovery actions to be set/updated.
+    type: int
+    default: null
+  first_failure_action:
+    description:
+      - The first failure action to take (can be 0, 1, 2, 3)
+      - https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_sc_action
+    type: int
+    default: 0
+  first_failure_timer:
+    description:
+      - The first timer to wait for your first action to take effect in miliseconds.
+    type: int
+    default: 60000
+  second_failure_action:
+    description:
+      - The second failure action to take (can be 0, 1, 2, 3)
+      - https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_sc_action
+    type: int
+    default: 0
+  second_failure_timer:
+    description:
+      - The second timer to wait for your second action to take effect in miliseconds.
+    type: int
+    default: 60000
+  subseq_failure_action:
+    description:
+      - The subsequent failures action to take (can be 0, 1, 2, 3)
+      - https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_sc_action
+    type: int
+    default: 0
+  subseq_failure_timer:
+    description:
+      - The subesquent timer to wait for your subsequent action to take effect in miliseconds.
+    type: int
+    default: 60000
+  
 seealso:
 - module: service
 - module: win_nssm
@@ -229,6 +269,17 @@ EXAMPLES = r'''
     - service1
     - service2
     dependency_action: remove
+
+ - name: Set recovery actions
+   win_service:
+     name: service name
+     reset_period: 300
+     first_failure_action: 1
+     first_failure_timer: 60000
+     second_failure_action: 1
+     second_failure_timer: 60000
+     subseq_failure_action: 1
+     subseq_failure_timer: 60000
 '''
 
 RETURN = r'''

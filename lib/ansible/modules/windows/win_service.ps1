@@ -24,6 +24,22 @@ $start_mode = Get-AnsibleParam -obj $params -name 'start_mode' -type 'str' -vali
 $state = Get-AnsibleParam -obj $params -name 'state' -type 'str' -validateset 'started','stopped','restarted','absent','paused'
 $username = Get-AnsibleParam -obj $params -name 'username' -type 'str'
 
+$rec_actions_params = @{
+    reset_period = Get-AnsibleParam -obj $params -name 'reset_period' -type 'int' -default $null;
+    first_failure = @{ 
+        action = Get-AnsibleParam -obj $params -name 'first_failure_action' -type 'int' -default 0;
+        timer = Get-AnsibleParam -obj $params -name 'first_failure_timer' -type 'int' -default 60000
+    };
+    second_failure = @{
+        action = Get-AnsibleParam -obj $params -name 'second_failure_action' -type 'int' -default 0;
+        timer = Get-AnsibleParam -obj $params -name 'second_failure_timer' -type 'int' -default 60000
+    };
+    subseq_failure = @{
+        action = Get-AnsibleParam -obj $params -name 'subseq_failure_action' -type 'int' -default 0;
+        timer = Get-AnsibleParam -obj $params -name 'subseq_failure_timer' -type 'int' -default 60000
+    };
+}
+
 $result = @{
     changed = $false
 }
@@ -59,6 +75,17 @@ if ($null -ne $path) {
     $path = [System.Environment]::ExpandEnvironmentVariables($path)
 }
 
+Function ReversedHexValue ($v) {
+    
+  $res = (("{0:x8}" -f $v) -split '(..)' | ? { $_ }).split(" ")
+  
+  [array]::Reverse($res)
+  
+  $res = [system.string]::Join('', $res)
+
+  $res
+}
+
 Function Get-ServiceInfo($name) {
     # Need to get new objects so we have the latest info
     $svc = Get-Service | Where-Object { $_.Name -eq $name -or $_.DisplayName -eq $name }
@@ -70,6 +97,8 @@ Function Get-ServiceInfo($name) {
     if ($delayed -and $actual_start_mode -eq 'auto') {
         $actual_start_mode = 'delayed'
     }
+
+    $recovery_actions = Get-RecoveryActions($svc.Name)
 
     $existing_dependencies = @()
     $existing_depended_by = @()
@@ -100,6 +129,7 @@ Function Get-ServiceInfo($name) {
     $result.dependencies = $existing_dependencies
     $result.depended_by = $existing_depended_by
     $result.can_pause_and_continue = $svc.CanPauseAndContinue
+    $result.recovery_actions = $recovery_actions
 }
 
 Function Get-WmiErrorMessage($return_value) {
@@ -142,6 +172,21 @@ Function Get-DelayedStatus($name) {
     }
 
     $delayed
+}
+
+Function Get-RecoveryActions($name) {
+  $recovery_actions_key = "HKLM:\System\CurrentControlSet\Services\$name"
+  try {
+      $recovery_actions = ""
+      $bytes = (Get-ItemProperty -LiteralPath $recovery_actions_key).FailureActions
+      $bytes | ForEach-Object { $recovery_actions+=('{0:x2}' -f $_).ToString() }
+      $recovery_actions = $recovery_actions.substring(0,$recovery_actions.length)
+  } catch {
+      $recovery_actions = $false
+  }
+
+  $recovery_actions
+
 }
 
 Function Set-ServiceStartMode($svc, $start_mode) {
@@ -371,6 +416,87 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
     }
 }
 
+Function Set-ServiceRecovery($name, $actions) {
+
+    # https://stackoverflow.com/questions/36462623/what-reg-binary-to-set-for-failureaction-for-service
+
+    # dwResetPeriod 2C 01 00 00
+
+    # lpRebootMsg 00 00 00 00
+
+    # lpCommand 00 00 00 00
+
+    # cActions 03 00 00 00 (never changes)
+
+    # lpsaActions 14 00 00 00 (never changes)
+
+    # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_sc_action
+
+    # 01 00 00 00 60 EA 00 00
+    # 01 00 00 00 60 EA 00 00
+    # 01 00 00 00 60 EA 00 00
+    # actions: 
+    #   0 for nothing
+    #   1 for restart service
+    #   2 for computer reboot
+    #   3 for run command (not implemented)
+    #   reset_period: 300 (seconds)
+    #   first_failure:
+    #     action: 1
+    #     timer: 60000 (ms)
+    #   second_failure: 1
+    #     action: 1
+    #     timer: 60000 (ms)
+    #   subsequent_failures: 1
+    #     action: 1
+    #     timer: 60000 (ms)
+    # 2c,01,00,00,00,00,00,00,00,00,00,00,03,00,00,00,14,00,00,00,01,00,00,00,60,ea,00,00,01,00,00,00,60,ea,00,00,01,00,00,00,60,ea,00,00
+    
+    $reg_key_name = 'FailureActions'
+
+    # Default untouched actions
+    $lp_reboot_msg = '00000000'
+    $lp_command = '00000000'
+    $ca_actions = '03000000'
+    $lpsaActions = '14000000'
+
+    $reset_period = ReversedHexValue $actions.reset_period
+
+    $first_failure_action = ReversedHexValue $actions.first_failure.action
+    $first_failure_timer = ReversedHexValue $actions.first_failure.timer
+
+    $second_failure_action = ReversedHexValue $actions.second_failure.action
+    $second_failure_timer = ReversedHexValue $actions.second_failure.timer
+
+    $subseq_failure_action = ReversedHexValue $actions.subseq_failure.action
+    $subseq_failure_timer = ReversedHexValue $actions.subseq_failure.timer
+
+    $processed_actions = ($reset_period + $lp_reboot_msg + $lp_command + $ca_actions + $lpsaActions `
+                        + $first_failure_action + $first_failure_timer `
+                        + $second_failure_action + $second_failure_timer `
+                        + $subseq_failure_action + $subseq_failure_timer)
+
+    if ($result.recovery_actions -ne $processed_actions) {
+
+        $split_processed_actions = (("{0:x8}" -f $processed_actions) -split '(..)' | ? { $_ })
+
+        try {
+            $recovery_actions_key = "HKLM:\System\CurrentControlSet\Services\$name"
+            # Because the key is non-existing by default and Set-ItemProperty cannot create a REG_BINARY key
+            if ($result.recovery_actions -eq '') {
+                New-ItemProperty -Path $recovery_actions_key -Name $reg_key_name -PropertyType Binary -Value ([byte[]]($split_processed_actions | % { "0x$_" })) -WhatIf:$check_mode
+            } else
+            {
+                Set-ItemProperty -Path $recovery_actions_key -Name $reg_key_name -Value ([byte[]]($split_processed_actions | % { "0x$_" })) -WhatIf:$check_mode
+            }
+        } catch {
+            Fail-Json $result $_.Exception.Message
+        }
+
+        $result.changed = $true
+    }
+}
+
 Function Set-ServiceConfiguration($svc) {
     $wmi_svc = Get-CimInstance -ClassName Win32_Service -Filter "name='$($svc.Name)'"
     Get-ServiceInfo -name $svc.Name
@@ -408,6 +534,10 @@ Function Set-ServiceConfiguration($svc) {
 
     if ($null -ne $state) {
         Set-ServiceState -svc $svc -wmi_svc $wmi_svc -state $state
+    }
+
+    if ($null -ne $rec_actions_params.reset_period) {
+        Set-ServiceRecovery -name $svc.Name -actions $rec_actions_params
     }
 }
 
@@ -459,5 +589,4 @@ if ($state -eq 'absent') {
 } elseif ($null -ne $svc) {
     Get-ServiceInfo -name $name
 }
-
 Exit-Json -obj $result
