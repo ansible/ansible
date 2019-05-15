@@ -54,7 +54,7 @@
         - facts.automation_accounts[0].state == "Ok"
 
 - name: Delete account
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount:
         name: "{{ name }}"
         resource_group: "{{ resource_group }}"
         state: absent
@@ -66,7 +66,7 @@
             - output.changed
 
 - name: Delete account
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount:
         name: "{{ name }}"
         resource_group: "{{ resource_group }}"
         state: absent
@@ -77,7 +77,7 @@
             - output.changed
 
 - name: Delete account
-  azure_rm_automationaccount_facts:
+  azure_rm_automationaccount:
         name: "{{ name }}"
         resource_group: "{{ resource_group }}"
         state: absent
