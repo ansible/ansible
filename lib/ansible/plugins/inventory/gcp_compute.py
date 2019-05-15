@@ -121,7 +121,8 @@ import json
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_text
-from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException, HAS_GOOGLE_LIBRARIES
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 
@@ -415,6 +416,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return interface[u'networkIP']
 
     def parse(self, inventory, loader, path, cache=True):
+
+        if not HAS_GOOGLE_LIBRARIES:
+            raise AnsibleParserError('gce inventory plugin cannot start: %s' % missing_required_lib('google-auth'))
+
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = {}
