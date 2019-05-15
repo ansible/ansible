@@ -7,7 +7,7 @@ while(rs.status()['myState'] != 1) {
 		}
 		sleep(1000);
 		iterations++;
-		if (iterations == 10) {
+		if (iterations == 100) {
 			throw new Error("Exceeded iterations limit.");
 		}
 	}

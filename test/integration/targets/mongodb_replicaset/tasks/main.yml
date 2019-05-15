@@ -76,7 +76,17 @@
   when: test_mongo_auth
 
 - name: Murder all mongod processes
-  shell: pkill mongod && sleep 10;
+  shell: pkill -{{ kill_signal }} mongod;
+
+- name: Ensure mongod instances have drained
+  wait_for:
+    host: localhost
+    port: "{{ item }}"
+    state: drained
+  with_items:
+    - 3001
+    - 3002
+    - 3003
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset1 }}"

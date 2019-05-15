@@ -1,9 +1,9 @@
 - name: Kill all mongod processes
-  command: pkill mongod
+  command: pkill  -{{ kill_signal }} mongod
   ignore_errors: true
 
 - name: Kill all mongos processes
-  command: pkill mongos
+  command: pkill  -{{ kill_signal }} mongos
   ignore_errors: true
 
 - name: Ensure mongod instances have drained

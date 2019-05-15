@@ -27,14 +27,14 @@
   when: mongod_auth == True
 
 - name: Spawn mongod process without auth
-  command: mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
+  command: mongod --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
   args:
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"
   when: mongod_auth == False
 
 - name: Spawn mongod process with auth
-  command: mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
+  command: mongod --shardsvr --smallfiles {{ mongod_storage_engine_opts }} --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
   args:
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"

@@ -299,7 +299,20 @@
   when: mongodb_version in ["3.2", "4.0"]
 
 - name: Murder all mongod processes
-  shell: pkill mongod && sleep 10 || sleep 10;
+  shell: pkill -{{ kill_signal }} mongod || true;
+
+- name: Ensure mongod instances have drained
+  wait_for:
+    host: localhost
+    port: "{{ item }}"
+    state: drained
+  with_items:
+    - 3001
+    - 3002
+    - 3003
+    - 3004
+    - 3005
+    - 3006
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset1 }}"
