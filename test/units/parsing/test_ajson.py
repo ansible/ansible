@@ -171,7 +171,7 @@ class TestAnsibleJSONEncoder():
             ([1, 2], [1, 2]),
             (True, True),
             (None, None),
-            ({'set'}, {'set'}),
+            (set('set'), ''),
         ]
     )
     def test_default_encoder_unserializable(self, ansible_json_encoder, test_input, expected):
