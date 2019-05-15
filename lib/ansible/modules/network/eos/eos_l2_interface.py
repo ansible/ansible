@@ -189,6 +189,7 @@ def map_obj_to_commands(updates, module):
                         if access_vlan != obj_in_have['access_vlan']:
                             commands.append('switchport access vlan {0}'.format(access_vlan))
                     else:
+                        commands.append('switchport mode {0}'.format(mode))
                         if native_vlan != obj_in_have['native_vlan'] and native_vlan:
                             commands.append('switchport trunk native vlan {0}'.format(native_vlan))
                         if trunk_allowed_vlans != obj_in_have['trunk_allowed_vlans'] and trunk_allowed_vlans:
