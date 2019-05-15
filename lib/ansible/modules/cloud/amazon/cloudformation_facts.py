@@ -26,6 +26,7 @@ options:
     stack_names:
         description:
           - The name(s) or id(s) of the CloudFormation stacks. Gathers facts for all stacks by default.
+        type: list
     all_facts:
         description:
             - Get all stack information for the stack
@@ -65,7 +66,7 @@ EXAMPLES = '''
 
 # Get summary information about multiple stacks
 - cloudformation_facts:
-    stack_name:
+    stack_names:
       - my-cloudformation-stack
       - my-other-cloudformation-stacks
 
