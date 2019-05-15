@@ -167,28 +167,31 @@ class ConfigCLI(CLI):
         text = []
         tempdirs = set()
         defaults = self.config.get_configuration_definitions().copy()
-        for setting in self.config.data.get_settings():
-            if setting.name in defaults:
-                defaults[setting.name] = setting
 
-            if setting.type in ('tmp', 'temppath', 'tmppath'):
-                tempdirs.add(setting.value)
+        try:
+            for setting in self.config.data.get_settings():
+                if setting.name in defaults:
+                    defaults[setting.name] = setting
 
-        for setting in sorted(defaults):
-            if isinstance(defaults[setting], Setting):
-                if defaults[setting].origin == 'default':
-                    color = 'green'
+                if setting.type in ('tmp', 'temppath', 'tmppath'):
+                    tempdirs.add(setting.value)
+
+            for setting in sorted(defaults):
+                if isinstance(defaults[setting], Setting):
+                    if defaults[setting].origin == 'default':
+                        color = 'green'
+                    else:
+                        color = 'yellow'
+                    msg = "%s(%s) = %s" % (setting, defaults[setting].origin, defaults[setting].value)
                 else:
-                    color = 'yellow'
-                msg = "%s(%s) = %s" % (setting, defaults[setting].origin, defaults[setting].value)
-            else:
-                color = 'green'
-                msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))
-            if not context.CLIARGS['only_changed'] or color == 'yellow':
-                text.append(stringc(msg, color))
+                    color = 'green'
+                    msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))
+                if not context.CLIARGS['only_changed'] or color == 'yellow':
+                    text.append(stringc(msg, color))
 
-        self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
+            self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
 
-        # ensure we clean up any temp dirs created while we examined the config values
-        for tdir in tempdirs:
-            rmtree(tdir, True)
+        finally:
+            # ensure we clean up any temp dirs created while we examined the config values
+            for tdir in tempdirs:
+                rmtree(tdir, True)
