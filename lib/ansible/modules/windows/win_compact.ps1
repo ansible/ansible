@@ -62,6 +62,13 @@ function Get-ReturnCodeMessage {
     }
 }
 
+function Get-EscapedFileName {
+    param(
+        [string]$FullName
+    )
+    return $FullName.Replace("\","\\").Replace("'","\'")
+}
+
 if($recurse) {
     # could be a subfolder that is not compressed in this case
     $folders = ([System.IO.Directory]::GetDirectories($item.FullName, '*', [System.IO.SearchOption]::AllDirectories)) + $item.FullName
@@ -81,15 +88,16 @@ foreach ($folder in $folders) {
 
 if($needs_changed) {
     $module.Result.changed = $true
+    $cim_obj = Get-CimInstance -ClassName 'Win32_Directory' -Filter "Name='$(Get-EscapedFileName -FullName $item.FullName)'"
     if($compressed) {
         if(-not $module.CheckMode) {
-            $wmi = Invoke-WmiMethod -Path "Win32_Directory.Name='$($item.FullName)'" -Name CompressEx -ArgumentList $recurse
-            $module.Result.rc = $wmi.ReturnValue
+            $ret = Invoke-CimMethod -InputObject $cim_obj -MethodName 'CompressEx' -Arguments @{ Recursive = $recurse }
+            $module.Result.rc = $ret.ReturnValue
         }
     } else {
         if(-not $module.CheckMode) {
-            $wmi = Invoke-WmiMethod -Path "Win32_Directory.Name='$($item.FullName)'" -Name UnCompressEx -ArgumentList $recurse
-            $module.Result.rc = $wmi.ReturnValue
+            $ret = $ret = Invoke-CimMethod -InputObject $cim_obj -MethodName 'UnCompressEx' -Arguments @{ Recursive = $recurse }
+            $module.Result.rc = $ret.ReturnValue
         }
     }
 }
