@@ -12,4 +12,4 @@ kill_signal: SIGTERM
 # Should be one of
 # --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M"
 # --storageEngine mmapv1 --nojournal
-mongod_storage_engine_opts: "--storageEngine mmapv1 --nojournal"
+mongod_storage_engine_opts: "--storageEngine wiredTiger --wiredTigerEngineConfigString='cache_size=200M'"
