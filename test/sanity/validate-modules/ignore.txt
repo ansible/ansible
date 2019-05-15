@@ -738,8 +738,6 @@ lib/ansible/modules/remote_management/ucs/ucs_vsans.py E322
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py E322
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py E323
 lib/ansible/modules/source_control/github_deploy_key.py E336
-lib/ansible/modules/source_control/github_issue.py E324
-lib/ansible/modules/source_control/github_issue.py E326
 lib/ansible/modules/source_control/subversion.py E322
 lib/ansible/modules/storage/infinidat/infini_export.py E323
 lib/ansible/modules/storage/infinidat/infini_export.py E324
