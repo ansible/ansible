@@ -31,7 +31,7 @@ class TestAnsibleJSONEncoder():
     Class for testing AnsibleJSONEncoder
     """
 
-    @pytest.yield_fixture
+    @pytest.fixture
     def mapping(self, request):
         """
         Returns object of Mapping mock class
@@ -49,11 +49,11 @@ class TestAnsibleJSONEncoder():
             def __len__(self):
                 return len(self.__dict__)
 
-        yield M(request.param)
+        return M(request.param)
 
-    @pytest.yield_fixture
+    @pytest.fixture
     def ansible_json_encoder(self):
-        yield AnsibleJSONEncoder()
+        return AnsibleJSONEncoder()
 
     @pytest.mark.parametrize(
         'test_input,expected',
