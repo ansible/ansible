@@ -17,7 +17,7 @@ module: azure_rm_availabilityset_facts
 
 version_added: "2.4"
 
-short_description: Get availability set facts.
+short_description: Get availability set facts
 
 description:
     - Get facts for a specific availability set or all availability sets.
@@ -25,13 +25,13 @@ description:
 options:
     name:
         description:
-            - Limit results to a specific availability set
+            - Limit results to a specific availability set.
     resource_group:
         description:
-            - The resource group to search for the desired availability set
+            - The resource group to search for the desired availability set.
     tags:
         description:
-            - List of tags to be matched
+            - List of tags to be matched.
 
 extends_documentation_fragment:
     - azure
