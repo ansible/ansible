@@ -1,0 +1,156 @@
+---
+- name: Compress parent directory
+  win_compact:
+    path: "{{ test_directory.path }}"
+    compressed: yes
+    recurse: no
+  register: result
+
+- name: Get actual attributes for parent directory
+  win_stat:
+    path: "{{ test_directory.path }}"
+  register: folder_info
+
+- assert:
+    that:
+      - "'Compressed' in folder_info.stat.attributes"
+      - "result.changed == true"
+
+- name: Get actual attributes for sub directories
+  win_stat:
+    path: "{{ test_directory.path }}\\{{ item }}"
+  register: subfolder_info
+  loop: "{{ test_win_compact_sub_directories }}"
+
+- assert:
+    that:
+      - "'Compressed' not in item.stat.attributes"
+  loop: "{{ subfolder_info.results }}"
+
+- name: Compress parent directory (idempotent)
+  win_compact:
+    path: "{{ test_directory.path }}"
+    compressed: yes
+    recurse: no
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Compress parent directory and all subdirectories
+  win_compact:
+    path: "{{ test_directory.path }}"
+    compressed: yes
+    recurse: yes
+  register: result
+
+- name: Get actual attributes for parent directory
+  win_stat:
+    path: "{{ test_directory.path }}"
+  register: folder_info
+
+- assert:
+    that:
+      - "'Compressed' in folder_info.stat.attributes"
+      - "result.changed == true"
+
+- name: Get actual attributes for sub directories
+  win_stat:
+    path: "{{ test_directory.path }}\\{{ item }}"
+  register: subfolder_info
+  loop: "{{ test_win_compact_sub_directories }}"
+
+- assert:
+    that:
+      - "'Compressed' in item.stat.attributes"
+  loop: "{{ subfolder_info.results }}"
+
+- name: Compress parent directory and all subdirectories (idempotent)
+  win_compact:
+    path: "{{ test_directory.path }}"
+    compressed: yes
+    recurse: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Uncompress parent directory
+  win_compact:
+    path: "{{ test_directory.path }}"
+    compressed: no
+    recurse: no
+  register: result
+
+- name: Get actual attributes for parent directory
+  win_stat:
+    path: "{{ test_directory.path }}"
+  register: folder_info
+
+- assert:
+    that:
+      - "'Compressed' not in folder_info.stat.attributes"
+      - "result.changed == true"
+
+- name: Get actual attributes for sub directories
+  win_stat:
+    path: "{{ test_directory.path }}\\{{ item }}"
+  register: subfolder_info
+  loop: "{{ test_win_compact_sub_directories }}"
+
+- assert:
+    that:
+      - "'Compressed' in item.stat.attributes"
+  loop: "{{ subfolder_info.results }}"
+
+- name: Uncompress parent directory (idempotent)
+  win_compact:
+    path: "{{ test_directory.path }}"
+    compressed: no
+    recurse: no
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Uncompress parent directory and all subdirectories
+  win_compact:
+    path: "{{ test_directory.path }}"
+    compressed: no
+    recurse: yes
+  register: result
+
+- name: Get actual attributes for parent directory
+  win_stat:
+    path: "{{ test_directory.path }}"
+  register: folder_info
+
+- assert:
+    that:
+      - "'Compressed' not in folder_info.stat.attributes"
+      - "result.changed == true"
+
+- name: Get actual attributes for sub directories
+  win_stat:
+    path: "{{ test_directory.path }}\\{{ item }}"
+  register: subfolder_info
+  loop: "{{ test_win_compact_sub_directories }}"
+
+- assert:
+    that:
+      - "'Compressed' not in item.stat.attributes"
+  loop: "{{ subfolder_info.results }}"
+
+- name: Uncompress parent directory and all subdirectories (idempotent)
+  win_compact:
+    path: "{{ test_directory.path }}"
+    compressed: no
+    recurse: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"

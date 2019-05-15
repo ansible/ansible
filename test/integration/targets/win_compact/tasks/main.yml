@@ -1,0 +1,22 @@
+---
+- name: create temporary test folder
+  win_tempfile:
+    suffix: "{{ test_win_compact_suffix }}"
+    state: directory
+  register: test_directory
+
+- name: create sub directories
+  win_file:
+    state: directory
+    path: "{{ test_directory.path}}\\{{ item }}"
+  loop: "{{ test_win_compact_sub_directories }}"
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: remove test folder
+    win_file:
+      path: '{{ test_directory.path }}'
+      state: absent
