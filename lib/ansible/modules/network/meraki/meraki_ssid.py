@@ -216,6 +216,50 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
+- delegate_to: localhost
+  block:
+    - name: Enable and name SSID
+      meraki_ssid:
+        auth_key: abc123
+        state: present
+        org_name: YourOrg
+        net_name: WiFi
+        name: GuestSSID
+        enabled: true
+
+    - name: Set PSK with invalid encryption mode
+      meraki_ssid:
+        auth_key: abc123
+        state: present
+        org_name: YourOrg
+        net_name: WiFi
+        name: GuestSSID
+        auth_mode: psk
+        psk: abc1234
+        encryption_mode: eap
+      ignore_errors: yes
+
+    - name: Configure RADIUS servers
+      meraki_ssid:
+        auth_key: abc123
+        state: present
+        org_name: YourOrg
+        net_name: WiFi
+        name: GuestSSID
+        auth_mode: open-with-radius
+        radius_servers:
+          - host: 192.0.1.200
+            port: 1234
+            secret: abc98765
+
+    - name: Enable click-through splash page
+      meraki_ssid:
+        auth_key: abc123
+        state: present
+        org_name: YourOrg
+        net_name: WiFi
+        name: GuestSSID
+        splash_page: Click-through splash page
 '''
 
 RETURN = r'''
