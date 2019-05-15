@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_automationaccount
 version_added: "2.9"
-short_description: Manage Azure automation account.
+short_description: Manage Azure Automation account
 description:
-    - Create, delete an automation account.
+    - Create, delete an Azure Automation account.
 options:
     resource_group:
         description:
