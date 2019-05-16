@@ -19,9 +19,7 @@
     cluster_name: '{{ ccr1 }}'
     datacenter_name: '{{ dc1 }}'
     group_name: TEST_VM_01
-    vms:
-      - DC0_C0_RP0_VM0
-      - DC0_C0_RP0_VM1
+    vms: "{{ virtual_machines_in_cluster | map(attribute='name') | list }}"
     state: present
   register: drs_vm_group_01_results
 
@@ -32,7 +30,7 @@
     that:
       - "drs_vm_group_01_results.changed"
 
-- when: vcsim is defined or groups['esxi-lab'] | length >= 3
+- when: vcsim is defined or esxi_hosts | length >= 3
   block:
   - name: Create DRS Host group
     vmware_drs_group:
@@ -43,7 +41,7 @@
       cluster_name: '{{ ccr1 }}'
       datacenter_name: '{{ dc1 }}'
       group_name: TEST_HOST_01
-      hosts: "{{ groups['esxi-lab'][0:3] }}"
+      hosts: "{{ esxi_hosts[0:3] }}"
       state: present
     register: drs_host_group_01_results
 

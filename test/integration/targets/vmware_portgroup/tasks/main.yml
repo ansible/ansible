@@ -4,9 +4,13 @@
 
 - when: vcsim is not defined
   block:
-    - debug: var=ccr1
 
-    - debug: var=host1
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_datacenter: true
+        setup_attach_host: true
+        setup_cluster: true
 
     - name: Create portgroup without Portgroup and vSwitch
       vmware_portgroup:

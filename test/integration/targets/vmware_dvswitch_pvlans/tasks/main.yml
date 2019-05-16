@@ -60,15 +60,15 @@
     that:
       - pvlans_result is changed
 
-- <<: *pv_data
-  name: Configure PVLANs in check mode
-  register: pvlans_result_check_mode
-  check_mode: yes
-
-- debug:
-    var: pvlans_result_check_mode
-
-- name: ensure pvlans were configured
-  assert:
-    that:
-      - pvlans_result_check_mode is changed
+- when: vcsim is not defined
+  block:
+    - <<: *pv_data
+      name: Configure PVLANs in check mode
+      register: pvlans_result_check_mode
+      check_mode: yes
+    - debug:
+        var: pvlans_result_check_mode
+    - name: ensure pvlans were not changed
+      assert:
+        that:
+          - not (pvlans_result_check_mode is changed)

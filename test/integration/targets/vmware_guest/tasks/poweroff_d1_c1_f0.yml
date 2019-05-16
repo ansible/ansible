@@ -8,9 +8,9 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ item }}"
+    name: "{{ item.name }}"
     state: poweredoff
-  with_items: "{{ infra.vm_list }}"
+  with_items: "{{ virtual_machines }}"
   register: poweroff_d1_c1_f0
 
 - debug:

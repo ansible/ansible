@@ -1,15 +1,15 @@
 ---
-- name: Remove "{{ vm_name }}"
+- name: Remove VM
   vmware_guest:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     cluster: "{{ ccr1 }}"
-    name: "{{ item }}"
+    name: "{{ item.name }}"
     force: yes
     state: absent
-  with_items: '{{ infra.vm_list }}'
+  with_items: '{{ virtual_machines + virtual_machines_in_cluster }}'
   ignore_errors: yes
 
 - name: Remove the DVSwitch
@@ -27,11 +27,12 @@
   vmware_vswitch:
     validate_certs: no
     hostname: '{{ item }}'
-    username: '{{ hostvars[item].ansible_user }}'
-    password: '{{ hostvars[item].ansible_password }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
     switch_name: "{{ switch1 }}"
     state: absent
-  with_items: "{{ groups['esxi-lab'] }}"
+  with_items: "{{ esxi_hosts }}"
+  ignore_errors: yes
 
 - name: Remove ESXi Hosts to vCenter
   vmware_host:
@@ -41,69 +42,34 @@
     datacenter_name: '{{ dc1 }}'
     cluster_name: ccr1
     esxi_hostname: '{{ item }}'
-    esxi_username: '{{ hostvars[item].ansible_user }}'
-    esxi_password: '{{ hostvars[item].ansible_password }}'
+    esxi_username: '{{ esxi_user }}'
+    esxi_password: '{{ esxi_password }}'
     state: absent
     validate_certs: no
-  with_items: "{{ groups['esxi-lab'] }}"
+  with_items: "{{ esxi_hosts }}"
   ignore_errors: yes
-
-- name: Manually umount the datastores
-  # Work around to avoid an error from vmware_host_datastore saying
-  # the FS is still in use
-  shell: >
-    esxcli storage nfs remove -v nfs_ro;
-    esxcli storage nfs remove -v nfs_rw
-  with_items: "{{ groups['esxi-lab'] }}"
-  delegate_to: '{{ item }}'
-  ignore_errors: true
 
 - name: Umount NFS datastores to ESXi (1/2)
   vmware_host_datastore:
       hostname: '{{ item }}'
-      username: '{{ hostvars[item].ansible_user }}'
-      password: '{{ hostvars[item].ansible_password }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
+      esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
       datastore_name: '{{ ds1 }}'
-      esxi_hostname: '{{ item }}'
       state: absent
       validate_certs: no
-  with_items: "{{ groups['esxi-lab'] }}"
-  register: teardown_umount_nfs
-  until: teardown_umount_nfs is succeeded
-  retries: 15
-  delay: 1
-  ignore_errors: true
+  with_items: "{{ esxi_hosts }}"
 
 - name: Umount NFS datastores to ESXi (2/2)
   vmware_host_datastore:
       hostname: '{{ item }}'
-      username: '{{ hostvars[item].ansible_user }}'
-      password: '{{ hostvars[item].ansible_password }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
+      esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
       datastore_name: '{{ ds2 }}'
-      esxi_hostname: '{{ item }}'
       state: absent
       validate_certs: no
-  with_items: "{{ groups['esxi-lab'] }}"
-  register: teardown_umount_nfs
-  until: teardown_umount_nfs is succeeded
-  retries: 15
-  delay: 1
-  ignore_errors: true
-
-# - name: get a final list of the datastore
-#   vmware_datastore_facts:
-#     validate_certs: False
-#     hostname: '{{ item }}'
-#     username: '{{ hostvars[item].ansible_user }}'
-#     password: '{{ hostvars[item].ansible_password }}'
-#   register: datastore_facts
-#   with_items: "{{ groups['esxi-lab'] }}"
-
-# - name: Ensure nothing is mounted
-#   fail:
-#     msg: "Some datastore are still mounted!"
-#   when: "item.datastores|length > 0"
-#   with_items: "{{ datastore_facts.results }}"
+  with_items: "{{ esxi_hosts }}"
 
 - name: Remove the datacenter
   vmware_datacenter:

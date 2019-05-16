@@ -17,8 +17,8 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    folder: "{{ f0 }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
   register: vm_snapshot_facts
 
 - debug: var=vm_snapshot_facts

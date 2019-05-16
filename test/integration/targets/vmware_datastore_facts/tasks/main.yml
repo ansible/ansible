@@ -3,20 +3,6 @@
 # Copyright (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Testcase 0001: Get a full list of datastores in a datacenter
-# - name: get list of facts about datastores
-#   vmware_datastore_facts:
-#     validate_certs: False
-#     hostname: "{{ vcenter_hostname }}"
-#     username: "{{ vcenter_username }}"
-#     password: "{{ vcenter_password }}"
-#     datacenter: "{{ dc1 }}"
-#   register: datastore_facts_0001
-
-# - assert:
-#     that:
-#       - "datastore_facts_0001.datastores|length == 0"
-
 
 - import_role:
     name: prepare_vmware_tests
@@ -29,11 +15,11 @@
     - name: get list of facts about datastores from the ESXi
       vmware_datastore_facts:
         validate_certs: False
-        hostname: '{{ hostvars[item].ansible_host }}'
-        username: '{{ hostvars[item].ansible_user }}'
-        password: '{{ hostvars[item].ansible_password }}'
+        hostname: '{{ item }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
       register: facts_from_esxi
-      with_items: "{{ groups['esxi-lab'] }}"
+      with_items: "{{ esxi_hosts }}"
     - assert:
         that:
           - "facts_from_esxi.results[0].datastores|length == 2"
@@ -48,7 +34,6 @@
     gather_nfs_mount_info: true
   register: facts_from_vcenter_with_dc_filter
 
-# Depends-On: https://github.com/ansible/ansible/pull/54879
 - when: vcsim is not defined
   block:
     - name: get list of facts about datastores
