@@ -34,7 +34,7 @@ options:
     default: present
   token_type:
     description:
-      - the type of token that should be created, either management or client
+      - the type of token that should be created
     choices: ['client', 'management']
     default: client
   name:
@@ -48,8 +48,9 @@ options:
         this will be a UUID
     required: false
   rules:
+    type: list
     description:
-      - a list of the rules that should be associated with a given token
+      - rules that should be associated with a given token
     required: false
   host:
     description:
@@ -57,6 +58,7 @@ options:
     required: false
     default: localhost
   port:
+    type: int
     description:
       - the port on which the consul agent is running
     required: false
@@ -68,13 +70,13 @@ options:
     default: http
     version_added: "2.1"
   validate_certs:
+    type: bool
     description:
       - whether to verify the tls certificate of the consul agent
     required: false
     default: True
     version_added: "2.1"
 requirements:
-  - "python >= 2.6"
   - python-consul
   - pyhcl
   - requests
@@ -469,7 +471,7 @@ class Configuration:
         self.scheme = scheme    # type: str
         self.validate_certs = validate_certs    # type: bool
         self.name = name    # type: str
-        self.port = port    # type: bool
+        self.port = port    # type: int
         self.rules = rules    # type: RuleCollection
         self.state = state    # type: str
         self.token = token    # type: str
