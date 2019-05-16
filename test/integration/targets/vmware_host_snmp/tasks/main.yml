@@ -12,9 +12,9 @@
     # SNMP works only with standalone ESXi server
     - name: Enable and configure SNMP community in check mode
       vmware_host_snmp:
-        hostname: '{{ hostvars[esxi1].ansible_host }}'
-        username: '{{ hostvars[esxi1].ansible_user }}'
-        password: '{{ hostvars[esxi1].ansible_password }}'
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
         community: [ test ]
         state: enabled
         validate_certs: no
@@ -28,9 +28,9 @@
 
     - name: Enable and configure SNMP community
       vmware_host_snmp:
-        hostname: '{{ hostvars[esxi1].ansible_host }}'
-        username: '{{ hostvars[esxi1].ansible_user }}'
-        password: '{{ hostvars[esxi1].ansible_password }}'
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
         community: [ test ]
         state: enabled
         validate_certs: no
@@ -43,9 +43,9 @@
 
     - name: Disable SNMP
       vmware_host_snmp:
-        hostname: '{{ hostvars[esxi1].ansible_host }}'
-        username: '{{ hostvars[esxi1].ansible_user }}'
-        password: '{{ hostvars[esxi1].ansible_password }}'
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
         state: disabled
         validate_certs: no
       register: snmp_disabled

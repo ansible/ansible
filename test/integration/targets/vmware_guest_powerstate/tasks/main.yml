@@ -14,9 +14,9 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: powered-off
-    folder: '/dc1/vm/f0'
   register: poweroff_d1_c1_f0
 
 - debug: var=poweroff_d1_c1_f0

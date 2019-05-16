@@ -8,9 +8,9 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'newvm_' + item|basename }}"
+    name: "{{ 'newvm_' + item.name }}"
     guest_id: centos64Guest
-    datacenter: "{{ (item|basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 4
         boot_firmware: "bios"
@@ -20,8 +20,8 @@
           type: thin
           autoselect_datastore: True
     state: poweredoff
-    folder: "{{ item|dirname }}"
-  with_items: "{{ vmlist['json'] }}"
+    folder: "{{ item.folder }}"
+  with_items: "{{ virtual_machines }}"
   register: clone_d1_c1_f0
 
 - debug: var=clone_d1_c1_f0
@@ -32,34 +32,34 @@
         - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
 
 # VCSIM does not recognizes existing VMs boot firmware
-#- name: create new VMs again with boot_firmware as 'bios'
-#  vmware_guest:
-#    validate_certs: False
-#    hostname: "{{ vcenter_hostname }}"
-#    username: "{{ vcenter_username }}"
-#    password: "{{ vcenter_password }}"
-#    name: "{{ 'newvm_' + item|basename }}"
-#    guest_id: centos64Guest
-#    datacenter: "{{ (item|basename).split('_')[0] }}"
-#    hardware:
-#        num_cpus: 4
-#        boot_firmware: "bios"
-#        memory_mb: 512
-#    disk:
-#        - size: 1gb
-#          type: thin
-#          autoselect_datastore: True
-#    state: poweredoff
-#    folder: "{{ item|dirname }}"
-#  with_items: "{{ vmlist['json'] }}"
-#  register: clone_d1_c1_f0
-
-#- debug: var=clone_d1_c1_f0
-
-#- name: assert that changes were not made
-#  assert:
-#    that:
-#        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
+- when: vcsim is not defined
+  block:
+    - name: create new VMs again with boot_firmware as 'bios'
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        name: "{{ 'newvm_' + item.name }}"
+        guest_id: centos64Guest
+        datacenter: "{{ dc1 }}"
+        hardware:
+          num_cpus: 4
+          boot_firmware: "bios"
+          memory_mb: 512
+        disk:
+          - size: 1gb
+            type: thin
+            autoselect_datastore: True
+        state: poweredoff
+        folder: "{{ item.folder }}"
+      with_items: "{{ virtual_machines }}"
+      register: clone_d1_c1_f0
+    - debug: var=clone_d1_c1_f0
+    - name: assert that changes were not made
+      assert:
+        that:
+          - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
 
 - name: create new VMs with boot_firmware as 'efi'
   vmware_guest:
@@ -67,9 +67,9 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'newvm_efi_' + item|basename }}"
+    name: "{{ 'newvm_efi_' + item.name }}"
     guest_id: centos64Guest
-    datacenter: "{{ (item|basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 4
         boot_firmware: "efi"
@@ -79,8 +79,8 @@
           type: thin
           autoselect_datastore: True
     state: poweredoff
-    folder: "{{ item|dirname }}"
-  with_items: "{{ vmlist['json'] }}"
+    folder: "{{ item.folder }}"
+  with_items: "{{ virtual_machines }}"
   register: clone_d1_c1_f0
 
 - debug: var=clone_d1_c1_f0
@@ -91,31 +91,31 @@
         - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
 
 # VCSIM does not recognizes existing VMs boot firmware
-#- name: create new VMs again with boot_firmware as 'efi'
-#  vmware_guest:
-#    validate_certs: False
-#    hostname: "{{ vcenter_hostname }}"
-#    username: "{{ vcenter_username }}"
-#    password: "{{ vcenter_password }}"
-#    name: "{{ 'newvm_efi_' + item|basename }}"
-#    guest_id: centos64Guest
-#    datacenter: "{{ (item|basename).split('_')[0] }}"
-#    hardware:
-#        num_cpus: 4
-#        boot_firmware: "efi"
-#        memory_mb: 512
-#    disk:
-#        - size: 1gb
-#          type: thin
-#          autoselect_datastore: True
-#    state: poweredoff
-#    folder: "{{ item|dirname }}"
-#  with_items: "{{ vmlist['json'] }}"
-#  register: clone_d1_c1_f0
-
-#- debug: var=clone_d1_c1_f0
-
-#- name: assert that changes were not made
-#  assert:
-#    that:
-#        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
+- when: vcsim is not defined
+  block:
+    - name: create new VMs again with boot_firmware as 'efi'
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        name: "{{ 'newvm_efi_' + item.name }}"
+        guest_id: centos64Guest
+        datacenter: "{{ dc1 }}"
+        hardware:
+          num_cpus: 4
+          boot_firmware: "efi"
+          memory_mb: 512
+        disk:
+          - size: 1gb
+            type: thin
+            autoselect_datastore: True
+        state: poweredoff
+        folder: "{{ item.folder }}"
+      with_items: "{{ virtual_machines }}"
+      register: clone_d1_c1_f0
+    - debug: var=clone_d1_c1_f0
+    - name: assert that changes were not made
+      assert:
+        that:
+          - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
