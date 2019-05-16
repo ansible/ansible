@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_keyvaultkey_facts
+module: azure_rm_keyvaultkey_info
 version_added: "2.9"
 short_description: Get Azure Key Vault key facts.
 description:
@@ -56,28 +56,28 @@ author:
 
 EXAMPLES = '''
   - name: Get latest version of specific key
-    azure_rm_keyvaultkey_facts:
+    azure_rm_keyvaultkey_info:
       vault_uri: "https://myVault.vault.azure.net"
       name: myKey
 
   - name: List all versions of specific key
-    azure_rm_keyvaultkey_facts:
+    azure_rm_keyvaultkey_info:
       vault_uri: "https://myVault.vault.azure.net"
       name: myKey
       version: all
 
   - name: List specific version of specific key
-    azure_rm_keyvaultkey_facts:
+    azure_rm_keyvaultkey_info:
       vault_uri: "https://myVault.vault.azure.net"
       name: myKey
       version: fd2682392a504455b79c90dd04a1bf46
 
   - name: List all keys in specific key vault
-    azure_rm_keyvaultkey_facts:
+    azure_rm_keyvaultkey_info:
         vault_uri: "https://myVault.vault.azure.net"
 
   - name: List deleted keys in specific key vault
-    azure_rm_keyvaultkey_facts:
+    azure_rm_keyvaultkey_info:
         vault_uri: "https://myVault.vault.azure.net"
         show_deleted_key: True
 '''
@@ -253,7 +253,7 @@ def deletedkeyitem_to_dict(keyitem):
     return item
 
 
-class AzureRMKeyVaultKeyFacts(AzureRMModuleBase):
+class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -272,7 +272,7 @@ class AzureRMKeyVaultKeyFacts(AzureRMModuleBase):
         self.results = dict(changed=False)
         self._client = None
 
-        super(AzureRMKeyVaultKeyFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMKeyVaultKeyInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                       supports_check_mode=False,
                                                       supports_tags=False)
 
@@ -445,7 +445,7 @@ class AzureRMKeyVaultKeyFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMKeyVaultKeyFacts()
+    AzureRMKeyVaultKeyInfo()
 
 
 if __name__ == '__main__':

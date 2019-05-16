@@ -176,7 +176,7 @@
         key_name: testkey
 
 - name: Get key current version
-  azure_rm_keyvaultkey_facts:
+  azure_rm_keyvaultkey_info:
     vault_uri: https://vault{{ rpfx }}.vault.azure.net
     name: testkey
   register: facts
