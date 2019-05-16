@@ -58,28 +58,28 @@
     that:
       - output.changed
 
-- name: Get facts by subsription
-  azure_rm_policydefinition_facts:
-  register: facts
+- name: Get information by subsription
+  azure_rm_policydefinition_info:
+  register: info
 
-- name: Assert facts
+- name: Assert information
   assert:
     that:
-      - facts['policydefinitions'] | length > 1
+      - info['policydefinitions'] | length > 1
 
-- name: Get facts by name
-  azure_rm_policydefinition_facts:
+- name: Get information by name
+  azure_rm_policydefinition_info:
     name: "{{ policy_name }}"
-  register: facts
+  register: info
 
-- name: Assert facts
+- name: Assert information
   assert:
     that:
-      - facts['policydefinitions'] | length == 1
-      - facts['policydefinitions'][0]['id'] != None
-      - facts['policydefinitions'][0]['metadata'] != None
-      - facts['policydefinitions'][0]['policy_rule'] != None
-      - facts['policydefinitions'][0]['mode'] != None
+      - info['policydefinitions'] | length == 1
+      - info['policydefinitions'][0]['id'] != None
+      - info['policydefinitions'][0]['metadata'] != None
+      - info['policydefinitions'][0]['policy_rule'] != None
+      - info['policydefinitions'][0]['mode'] != None
 
 - name: Update a policy definition (idempontent)
   azure_rm_policydefinition:
