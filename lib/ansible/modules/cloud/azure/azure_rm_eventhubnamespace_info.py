@@ -13,11 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_eventhubnamespace_facts
+module: azure_rm_eventhubnamespace_info
 version_added: "2.9"
-short_description: Get Azure eventhub namespace facts.
+short_description: Get Azure eventhub namespace information.
 description:
-    - Get facts for an a specific eventhub namespace or all eventhub namespaces.
+    - Get information for an a specific eventhub namespace or all eventhub namespaces.
 
 options:
     resource_group:
@@ -29,7 +29,7 @@ options:
     show_sas_policies:
         description:
             - Whether to show the SAS policies.
-            - Note if enable this option, the facts module will raise two more HTTP call for each resources, need more network overhead.
+            - Note if enable this option, the info module will raise two more HTTP call for each resources, need more network overhead.
         type: bool
     tags:
         description:
@@ -44,20 +44,20 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: list all azure_rm_eventhubnamespace_facts
-      azure_rm_eventhubnamespace_facts:
+    - name: list all eventhubnamespace information by subscription
+      azure_rm_eventhubnamespace_info:
 
-    - name: list all azure_rm_eventhubnamespace_facts in RG
-      azure_rm_eventhubnamespace_facts:
+    - name: list all eventhubnamespace information in RG
+      azure_rm_eventhubnamespace_info:
         resource_group: myResourceGroup
 
-    - name: list all azure_rm_eventhubnamespace_facts by name
-      azure_rm_eventhubnamespace_facts:
+    - name: list the eventhubnamespace information by name
+      azure_rm_eventhubnamespace_info:
         name: myEventhubNamespace
         resource_group: myResourceGroup
 
-    - name: Get facts by tags
-      azure_rm_eventhubnamespace_facts:
+    - name: Get information by tags
+      azure_rm_eventhubnamespace_info:
         tags:
         - testing
 '''
@@ -79,7 +79,7 @@ except ImportError:
     pass
 
 
-class AzureRMEventHubNamespaceFacts(AzureRMModuleBase):
+class AzureRMEventHubNamespaceInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -108,7 +108,7 @@ class AzureRMEventHubNamespaceFacts(AzureRMModuleBase):
         self.tags = None
         self.show_sas_policies = None
 
-        super(AzureRMEventHubNamespaceFacts, self).__init__(self.module_arg_spec, supports_tags=False, info_module=True)
+        super(AzureRMEventHubNamespaceInfo, self).__init__(self.module_arg_spec, supports_tags=False, info_module=True)
 
     def exec_module(self, **kwargs):
 
@@ -203,7 +203,7 @@ class AzureRMEventHubNamespaceFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMEventHubNamespaceFacts()
+    AzureRMEventHubNamespaceInfo()
 
 
 if __name__ == '__main__':
