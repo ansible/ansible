@@ -31,7 +31,7 @@ options:
     version_added: "2.9"
   username:
     version_added: "2.9"
-    aliases: [login']
+    aliases: ['login']
   src:
     description:
       - The file to push to vCenter.
