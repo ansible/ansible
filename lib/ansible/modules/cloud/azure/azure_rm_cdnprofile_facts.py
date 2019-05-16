@@ -29,7 +29,7 @@ options:
             - Limit results to a specific CDN profile.
     resource_group:
         description:
-            - The resource group to search for the desired CDN profile
+            - The resource group to search for the desired CDN profile.
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -38,8 +38,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
-    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
+    - "Hai Cao (@caohai)"
+    - "Yunge Zhu (@yungezz)"
 '''
 
 EXAMPLES = '''
