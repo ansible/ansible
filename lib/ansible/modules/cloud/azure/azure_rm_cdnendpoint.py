@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cdnendpoint
 version_added: "2.8"
-short_description: Manage a Azure CDN Endpoint
+short_description: Manage a Azure CDN endpoint
 description:
     - Create, update, start, stop and delete a Azure CDN endpoint.
 
@@ -33,11 +33,11 @@ options:
             - Valid azure location. Defaults to location of the resource group.
     started:
         description:
-            - Use with I(state=present) to start the endpoint. Set to C(false) to stop the endpoint. Set to C(true) to start the endpoint.
+            - Use with I(state=present) to start the endpoint.
         type: bool
     purge:
         description:
-            - Use with I(state=present) to purge the endpoint. Set to C(true) to have the endpoint be purged.
+            - Use with I(state=present) to purge the endpoint.
         type: bool
         default: false
     purge_content_paths:
@@ -65,15 +65,15 @@ options:
             http_port:
                 description:
                     - The value of the HTTP port. Must be between C(1) and C(65535).
+                type: int
             https_port:
                 description:
                     - The value of the HTTPS port. Must be between C(1) and C(65535).
+                type: int
         required: true
     origin_host_header:
         description:
             - The host header value sent to the origin with each request.
-            - If you leave this blank, the request hostname determines this value.
-            - Azure CDN I(origins), such as Web Apps,Blob Storage and Cloud Services require this host header value to match the origin hostname by default.
         type: str
     origin_path:
         description:
@@ -93,13 +93,11 @@ options:
     is_http_allowed:
         description:
             - Indicates whether HTTP traffic is allowed on the endpoint.
-            - At least one protocol (HTTP or HTTPS) must be allowed.
         type: bool
         default: true
     is_https_allowed:
         description:
             - Indicates whether HTTPS traffic is allowed on the endpoint.
-            - At least one protocol (HTTP or HTTPS) must be allowed.
         type: bool
         default: true
     query_string_caching_behavior:

@@ -18,7 +18,7 @@ module: azure_rm_cdnendpoint_facts
 
 version_added: "2.8"
 
-short_description: Get Azure CDN Endpoint facts
+short_description: Get Azure CDN endpoint facts
 
 description:
     - Get facts for a specific Azure CDN endpoint or all Azure CDN endpoints.
