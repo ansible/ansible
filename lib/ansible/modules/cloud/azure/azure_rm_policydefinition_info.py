@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_policydefinition_facts
+module: azure_rm_policydefinition_info
 version_added: "2.9"
 short_description: Gather Information of Azure Policy Definition
 description:
@@ -45,14 +45,14 @@ author:
 
 EXAMPLES = '''
 - name: List all policy definitions in subscription
-  azure_rm_policydefinition_facts:
+  azure_rm_policydefinition_info:
 
 - name: List all built-in policy definitions in subscription
-  azure_rm_policydefinition_facts:
+  azure_rm_policydefinition_info:
     built_in: true
 
 - name: List a built-in policy definition by name
-  azure_rm_policydefinition_facts:
+  azure_rm_policydefinition_info:
     name: testpolicydefinition
 '''
 
@@ -163,7 +163,7 @@ except ImportError:
     pass
 
 
-class AzureRMPolicyDefinitionFacts(AzureRMModuleBase):
+class AzureRMPolicyDefinitionInfo(AzureRMModuleBase):
     """Configuration class for an Azure RM Policy definition resource"""
 
     def __init__(self):
@@ -190,10 +190,10 @@ class AzureRMPolicyDefinitionFacts(AzureRMModuleBase):
             policydefinitions=[]
         )
 
-        super(AzureRMPolicyDefinitionFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                           facts_module=True,
-                                                           supports_tags=False,
-                                                           mutually_exclusive=mutually_exclusive)
+        super(AzureRMPolicyDefinitionInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                          info_module=True,
+                                                          supports_tags=False,
+                                                          mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
 
@@ -247,7 +247,7 @@ class AzureRMPolicyDefinitionFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMPolicyDefinitionFacts()
+    AzureRMPolicyDefinitionInfo()
 
 
 if __name__ == '__main__':
