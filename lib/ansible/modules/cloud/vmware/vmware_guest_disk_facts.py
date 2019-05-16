@@ -112,6 +112,7 @@ guest_disk_facts:
             "backing_uuid": "200C3A00-f82a-97af-02ff-62a595f0020a",
             "capacity_in_bytes": 10485760,
             "capacity_in_kb": 10240,
+            "controller_bus_number": 0,
             "controller_key": 1000,
             "key": 2000,
             "label": "Hard disk 1",
@@ -128,6 +129,7 @@ guest_disk_facts:
             "backing_uuid": null,
             "capacity_in_bytes": 15728640,
             "capacity_in_kb": 15360,
+            "controller_bus_number": 0,
             "controller_key": 1000,
             "key": 2001,
             "label": "Hard disk 3",
@@ -160,9 +162,20 @@ class PyVmomiHelper(PyVmomi):
         Returns: A list of dict containing disks information
 
         """
+        controller_facts = dict()
         disks_facts = dict()
         if vm_obj is None:
             return disks_facts
+
+        controller_index = 0
+        for controller in vm_obj.config.hardware.device:
+            if isinstance(controller, vim.vm.device.ParaVirtualSCSIController):
+                controller_facts[controller_index] = dict(
+                    key=controller.key,
+                    bus_number=controller.busNumber,
+                    devices=controller.device
+                )
+                controller_index += 1
 
         disk_index = 0
         for disk in vm_obj.config.hardware.device:
@@ -231,6 +244,11 @@ class PyVmomiHelper(PyVmomi):
                     disks_facts[disk_index]['backing_split'] = bool(disk.backing.split)
                     disks_facts[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
                     disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                for controller_index in range(len(controller_facts)):
+                    if controller_facts[controller_index]['key'] == disks_facts[disk_index]['controller_key']:
+                        disks_facts[disk_index]['controller_bus_number'] = controller_facts[controller_index]['bus_number']
+
                 disk_index += 1
         return disks_facts
 
