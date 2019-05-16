@@ -820,6 +820,9 @@
 # Test postgresql_tablespace module
 - include: postgresql_tablespace.yml
 
+# Test postgresql_db module, specific options:
+- include: postgresql_db.yml
+
 # Test postgresql_privs
 - include: postgresql_privs.yml
 
