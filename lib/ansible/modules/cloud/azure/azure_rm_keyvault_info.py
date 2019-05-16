@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_keyvault_facts
+module: azure_rm_keyvault_info
 version_added: "2.9"
 short_description: Get Azure Key Vault facts.
 description:
@@ -42,16 +42,16 @@ author:
 
 EXAMPLES = '''
   - name: Get Key Vault by name
-    azure_rm_keyvault_facts:
+    azure_rm_keyvault_info:
       resource_group: myResourceGroup
       name: myVault
 
   - name: List Key Vault in specific resource group
-    azure_rm_keyvault_facts:
+    azure_rm_keyvault_info:
       resource_group: myResourceGroup
 
   - name: List Key Vault in current subscription
-    azure_rm_keyvault_facts:
+    azure_rm_keyvault_info:
 '''
 
 RETURN = '''
@@ -208,7 +208,7 @@ def keyvault_to_dict(vault):
     )
 
 
-class AzureRMKeyVaultFacts(AzureRMModuleBase):
+class AzureRMKeyVaultInfo(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -224,7 +224,7 @@ class AzureRMKeyVaultFacts(AzureRMModuleBase):
         self.results = dict(changed=False)
         self._client = None
 
-        super(AzureRMKeyVaultFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMKeyVaultInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                    supports_check_mode=False,
                                                    supports_tags=False)
 
@@ -316,7 +316,7 @@ class AzureRMKeyVaultFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMKeyVaultFacts()
+    AzureRMKeyVaultInfo()
 
 
 if __name__ == '__main__':

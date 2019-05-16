@@ -140,7 +140,7 @@
       - output.changed == true
 
 - name: Get key vault facts
-  azure_rm_keyvault_facts:
+  azure_rm_keyvault_info:
     resource_group: "{{ resource_group }}"
     name: "vault{{ rpfx }}"
   register: facts
