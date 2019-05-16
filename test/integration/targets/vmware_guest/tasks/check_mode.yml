@@ -8,7 +8,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
     datacenter: "{{ dc1 }}"
     state: "{{ item }}"
   with_items:
@@ -30,7 +30,7 @@
   assert:
     that:
       - "check_mode_state.results|map(attribute='changed')|unique|list == [true]"
-      - "check_mode_state.results|map(attribute='vm_name')|unique|list == [ infra.vm_list[0] ]"
+      - "check_mode_state.results|map(attribute='vm_name')|unique|list == [ virtual_machines[0].name ]"
 
 - name: Perform all operation on non-existent VM in check mode
   vmware_guest:

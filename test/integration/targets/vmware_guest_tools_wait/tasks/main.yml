@@ -15,10 +15,10 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     datacenter: "{{ dc1 }}"
     state: poweredon
-    folder: "{{ f0 }}"
 
 # FixMe: govcsim does not support VMware tools status reporting
 ## Testcase 0001: Wait for VMware tools to become available by name

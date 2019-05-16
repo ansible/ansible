@@ -8,13 +8,13 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'thin_' + item|basename }}"
-    template: "{{ item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
+    name: "{{ 'thin_' + item.name }}"
+    template: "{{ item.name }}"
+    datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: "{{ item|dirname }}"
+    folder: "{{ item.folder }}"
     convert: thin
-  with_items: "{{ vmlist['json'] }}"
+  with_items: "{{ virtual_machines }}"
   register: clone_thin
 
 - debug: var=clone_thin
@@ -30,13 +30,13 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'thick_' + item|basename }}"
-    template: "{{ item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
+    name: "{{ 'thick_' + item.name }}"
+    template: "{{ item.name }}"
+    datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: "{{ item|dirname }}"
+    folder: "{{ item.folder }}"
     convert: thick
-  with_items: "{{ vmlist['json'] }}"
+  with_items: "{{ virtual_machines }}"
   register: clone_thick
 
 - debug: var=clone_thick
@@ -52,13 +52,13 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'eagerzeroedthick_' + item|basename }}"
-    template: "{{ item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
+    name: "{{ 'eagerzeroedthick_' + item.name }}"
+    template: "{{ item.name }}"
+    datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: "{{ item|dirname }}"
+    folder: "{{ item.folder }}"
     convert: eagerzeroedthick
-  with_items: "{{ vmlist['json'] }}"
+  with_items: "{{ virtual_machines }}"
   register: clone_eagerzeroedthick
 
 - debug: var=clone_eagerzeroedthick

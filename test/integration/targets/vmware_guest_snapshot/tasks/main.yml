@@ -13,8 +13,8 @@
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter: "{{ dc1 }}"
-    folder: "{{ f0 }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: absent
     snapshot_name: snap_a
 
@@ -26,8 +26,8 @@
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter: "{{ dc1 }}"
-    folder: "{{ f0 }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: present
     snapshot_name: "snap_{{item}}"
     description: "snap named {{item}}"
@@ -45,8 +45,8 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       datacenter: "{{ dc1 }}"
-      folder: "{{ f0 }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
+      folder: "{{ virtual_machines[0].folder }}"
       state: present
       snapshot_name: snap_a
       new_snapshot_name: snap_c
@@ -59,8 +59,8 @@
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter: "{{ dc1 }}"
-    folder: "{{ f0 }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: present
     snapshot_name: snap_a
     description: "snap named a"
@@ -73,8 +73,8 @@
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter: "{{ dc1 }}"
-    folder: "{{ f0 }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: present
     snapshot_name: snap_c
     new_description: "renamed to snap_c from snap_a"
@@ -89,8 +89,8 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       datacenter: "{{ dc1 }}"
-      folder: "{{ f0 }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
+      folder: "{{ virtual_machines[0].folder }}"
       state: absent
       snapshot_name: snap_b
       remove_children: True
@@ -103,8 +103,8 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       datacenter: "{{ dc1 }}"
-      folder: "{{ f0 }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
+      folder: "{{ virtual_machines[0].folder }}"
       state: remove_all
 
 # Test0008: Create snap_a again and revert to it
@@ -115,8 +115,8 @@
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter: "{{ dc1 }}"
-    folder: "{{ f0 }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: present
     snapshot_name: snap_a
     description: "snap named a"
@@ -130,8 +130,8 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       datacenter: "{{ dc1 }}"
-      folder: "{{ f0 }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
+      folder: "{{ virtual_machines[0].folder }}"
       state: revert
       snapshot_name: snap_a
 
@@ -143,8 +143,8 @@
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter: "{{ dc1 }}"
-    folder: "{{ f0 }}"
-    name: "{{ infra.vm_list[0] }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: present
     snapshot_name: snap_a
     description: "snap named a"

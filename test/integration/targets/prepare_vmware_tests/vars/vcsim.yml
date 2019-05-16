@@ -1,0 +1,25 @@
+---
+dc1: DC0
+ccr1: DC0_C0
+ds1: LocalDS_0
+ds2: LocalDS_1
+f0: F0
+esxi_hosts:
+  - DC0_C0_H0
+  - DC0_C0_H1
+  - DC0_C0_H2
+esxi1: '{{ esxi_hosts[0] }}'
+esxi2: '{{ esxi_hosts[1] }}'
+esxi3: '{{ esxi_hosts[2] }}'
+switch1: switch1
+dvswitch1: DVS0
+virtual_machines:
+  - name: DC0_H0_VM0
+    folder: /F0/DC0/vm/F0
+  - name: DC0_H0_VM1
+    folder: /F0/DC0/vm/F0
+virtual_machines_in_cluster:
+  - name: DC0_C0_RP0_VM0
+    cluster: '{{ ccr1 }}'
+  - name: DC0_C0_RP0_VM1
+    cluster: '{{ ccr1 }}'

@@ -18,8 +18,8 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ infra.vm_list[0] }}"
-    folder: "{{ f0 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
   register: guest_facts_0001
 
 - debug:
@@ -27,7 +27,7 @@
 
 - assert:
     that:
-      - "guest_facts_0001['instance']['hw_name'] == infra.vm_list[0]"
+      - "guest_facts_0001['instance']['hw_name'] == virtual_machines[0].name"
       - "guest_facts_0001['instance']['hw_product_uuid'] is defined"
       - "guest_facts_0001['instance']['hw_cores_per_socket'] is defined"
       - "guest_facts_0001['instance']['hw_datastores'] is defined"
@@ -86,7 +86,7 @@
 
 - assert:
     that:
-      - "guest_facts_0002['instance']['hw_name'] == infra.vm_list[0]"
+      - "guest_facts_0002['instance']['hw_name'] == virtual_machines[0].name"
       - "guest_facts_0002['instance']['hw_product_uuid'] is defined"
       - "guest_facts_0002['instance']['hw_product_uuid'] == vm1_uuid"
       - "guest_facts_0002['instance']['hw_cores_per_socket'] is defined"
@@ -124,8 +124,8 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ infra.vm_list[0] }}"
-    folder: "{{ f0 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
     state: present
     snapshot_name: snap1
 
@@ -172,7 +172,7 @@
 
 - assert:
     that:
-      - "guest_facts_0005['instance']['hw_name'] == infra.vm_list[0]"
+      - "guest_facts_0005['instance']['hw_name'] == virtual_machines[0].name"
       - "guest_facts_0005['instance']['hw_product_uuid'] is defined"
       - "guest_facts_0005['instance']['hw_product_uuid'] == vm1_uuid"
       - "guest_facts_0005['instance']['hw_cores_per_socket'] is defined"

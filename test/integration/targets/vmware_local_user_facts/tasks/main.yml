@@ -15,9 +15,9 @@
     - &user_fact_data
       name: Gather facts about users
       vmware_local_user_facts:
-        hostname: "{{ hostvars[esxi1].ansible_host }}"
-        username: "{{ hostvars[esxi1].ansible_user }}"
-        password: "{{ hostvars[esxi1].ansible_password }}"
+        hostname: "{{ esxi1 }}"
+        username: "{{ esxi_user }}"
+        password: "{{ esxi_password }}"
         validate_certs: False
       register: all_user_facts
 

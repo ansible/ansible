@@ -73,5 +73,5 @@
       assert:
         that:
             - not (all_hosts_result is changed)
-            - "all_hosts_result.result['{{ esxi1 }}']current_state == 'balanced'"
-            - "all_hosts_result.result['{{ esxi2 }}']current_state == 'balanced'"
+            - "all_hosts_result.result['{{ esxi1 }}'].current_state == 'balanced'"
+            - "all_hosts_result.result['{{ esxi2 }}'].current_state == 'balanced'"
