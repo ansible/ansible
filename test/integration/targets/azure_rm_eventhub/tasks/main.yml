@@ -80,7 +80,7 @@
        - output.id != None
 
 - name: Get facts for an eventhub namespace
-  azure_rm_eventhubnamespace_facts:
+  azure_rm_eventhubnamespace_info:
     name: "{{ namespace_aname }}"
     resource_group: "{{ resource_group }}"
   register: output
@@ -98,7 +98,7 @@
        - output.eventhubnamespaces[0]['kafka_enabled'] != None
 
 - name: Get all facts for eventhub namespace in the resource group
-  azure_rm_eventhubnamespace_facts:
+  azure_rm_eventhubnamespace_info:
     resource_group: "{{ resource_group }}"
     show_sas_policies: true
   register: output
