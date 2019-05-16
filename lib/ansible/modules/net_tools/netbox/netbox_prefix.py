@@ -226,30 +226,12 @@ msg:
   type: str
 """
 
-import json
-import traceback
-import re
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import (
-    find_ids,
-    normalize_data,
-    create_netbox_object,
-    delete_netbox_object,
-    update_netbox_object,
-    PREFIX_STATUS,
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.net_tools.netbox.netbox_ipam import (
+    NetboxIpamModule,
+    NB_PREFIXES,
 )
-from ansible.module_utils.compat import ipaddress
-from ansible.module_utils._text import to_text
-
-
-PYNETBOX_IMP_ERR = None
-try:
-    import pynetbox
-    HAS_PYNETBOX = True
-except ImportError:
-    PYNETBOX_IMP_ERR = traceback.format_exc()
-    HAS_PYNETBOX = False
 
 
 def main():
@@ -265,196 +247,11 @@ def main():
         validate_certs=dict(type="bool", default=True),
     )
 
-    global module
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    # Fail module if pynetbox is not installed
-    if not HAS_PYNETBOX:
-        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
-
-    # Assign variables to be used with module
-    app = "ipam"
-    endpoint = "prefixes"
-    url = module.params["netbox_url"]
-    token = module.params["netbox_token"]
-    data = module.params["data"]
-    state = module.params["state"]
-    first_available = module.params["first_available"]
-    validate_certs = module.params["validate_certs"]
-
-    # Attempt to create Netbox API object
-    try:
-        nb = pynetbox.api(url, token=token, ssl_verify=validate_certs)
-    except Exception:
-        module.fail_json(msg="Failed to establish connection to Netbox API")
-    try:
-        nb_app = getattr(nb, app)
-    except AttributeError:
-        module.fail_json(msg="Incorrect application specified: %s" % (app))
-    nb_endpoint = getattr(nb_app, endpoint)
-    norm_data = normalize_data(data)
-    try:
-        norm_data = _check_and_adapt_data(nb, norm_data)
-        if "present" in state:
-            return module.exit_json(**ensure_prefix_present(
-                nb, nb_endpoint, norm_data, first_available
-            ))
-        else:
-            return module.exit_json(
-                **ensure_prefix_absent(nb, nb_endpoint, norm_data)
-            )
-    except pynetbox.RequestError as e:
-        return module.fail_json(msg=json.loads(e.error))
-    except ValueError as e:
-        return module.fail_json(msg=str(e))
-    except AttributeError as e:
-        return module.fail_json(msg=str(e))
-
-
-def ensure_prefix_present(nb, nb_endpoint, data, first_available=False):
-    """
-    :returns dict(prefix, msg, changed): dictionary resulting of the request,
-    where 'prefix' is the serialized device fetched or newly created in Netbox
-    """
-    if not isinstance(data, dict):
-        changed = False
-        return {"msg": data, "changed": changed}
-
-    if first_available:
-        for k in ("parent", "prefix_length"):
-            if k not in data:
-                raise ValueError("'%s' is required with first_available" % k)
-
-        return get_new_available_prefix(nb_endpoint, data)
-    else:
-        if "prefix" not in data:
-            raise ValueError("'prefix' is required without first_available")
-
-        return get_or_create_prefix(nb_endpoint, data)
-
-
-def _check_and_adapt_data(nb, data):
-    data = find_ids(nb, data)
-
-    if data.get("vrf") and not isinstance(data["vrf"], int):
-        raise ValueError(
-            "%s does not exist - Please create VRF" % (data["vrf"])
-        )
-
-    if data.get("status"):
-        data["status"] = PREFIX_STATUS.get(data["status"].lower())
-
-    return data
-
-
-def _search_prefix(nb_endpoint, data):
-    if data.get("prefix"):
-        prefix = ipaddress.ip_network(data["prefix"])
-    elif data.get("parent"):
-        prefix = ipaddress.ip_network(data["parent"])
-
-    network = to_text(prefix.network_address)
-    mask = prefix.prefixlen
-
-    if data.get("vrf"):
-        if not isinstance(data["vrf"], int):
-            raise ValueError("%s does not exist - Please create VRF" % (data["vrf"]))
-        else:
-            prefix = nb_endpoint.get(q=network, mask_length=mask, vrf_id=data["vrf"])
-    else:
-        prefix = nb_endpoint.get(q=network, mask_length=mask, vrf="null")
-
-    return prefix
-
-
-def _error_multiple_prefix_results(data):
-    changed = False
-
-    if data.get("vrf"):
-        return {"msg": "Returned more than one result", "changed": changed}
-    else:
-        return {
-            "msg": "Returned more than one result - Try specifying VRF.",
-            "changed": changed
-        }
-
-
-def get_or_create_prefix(nb_endpoint, data):
-    try:
-        nb_prefix = _search_prefix(nb_endpoint, data)
-    except ValueError:
-        return _error_multiple_prefix_results(data)
-
-    result = dict()
-    if not nb_prefix:
-        prefix, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
-        changed = True
-        msg = "Prefix %s created" % (prefix["prefix"])
-        result["diff"] = diff
-    else:
-        prefix, diff = update_netbox_object(nb_prefix, data, module.check_mode)
-        if prefix is False:
-            module.fail_json(
-                msg="Request failed, couldn't update prefix: %s" % (data["prefix"])
-            )
-        if diff:
-            msg = "Prefix %s updated" % (data["prefix"])
-            changed = True
-            result["diff"] = diff
-        else:
-            msg = "Prefix %s already exists" % (data["prefix"])
-            changed = False
-
-    result.update({"prefix": prefix, "msg": msg, "changed": changed})
-    return result
-
-
-def get_new_available_prefix(nb_endpoint, data):
-    try:
-        parent_prefix = _search_prefix(nb_endpoint, data)
-    except ValueError:
-        return _error_multiple_prefix_results(data)
-
-    result = dict()
-    if not parent_prefix:
-        changed = False
-        msg = "Parent prefix does not exist: %s" % (data["parent"])
-        return {"msg": msg, "changed": changed}
-    elif parent_prefix.available_prefixes.list():
-        prefix, diff = create_netbox_object(parent_prefix.available_prefixes, data, module.check_mode)
-        changed = True
-        msg = "Prefix %s created" % (prefix["prefix"])
-        result["diff"] = diff
-    else:
-        changed = False
-        msg = "No available prefixes within %s" % (data["parent"])
-
-    result.update({"prefix": prefix, "msg": msg, "changed": changed})
-    return result
-
-
-def ensure_prefix_absent(nb, nb_endpoint, data):
-    """
-    :returns dict(msg, changed)
-    """
-    try:
-        nb_prefix = _search_prefix(nb_endpoint, data)
-    except ValueError:
-        return _error_multiple_prefix_results(data)
-
-    result = dict()
-    if nb_prefix:
-        dummy, diff = delete_netbox_object(nb_prefix, module.check_mode)
-        changed = True
-        msg = "Prefix %s deleted" % (nb_prefix.prefix)
-        result["diff"] = diff
-    else:
-        msg = "Prefix %s already absent" % (data["prefix"])
-        changed = False
-
-    result.update({"msg": msg, "changed": changed})
-    return result
+    prefix = NetboxIpamModule(module, NB_PREFIXES)
+    prefix.run()
 
 
 if __name__ == "__main__":

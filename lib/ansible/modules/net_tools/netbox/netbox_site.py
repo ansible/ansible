@@ -190,29 +190,11 @@ msg:
   type: str
 """
 
-import json
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import (
-    find_ids,
-    normalize_data,
-    create_netbox_object,
-    delete_netbox_object,
-    update_netbox_object,
-    SITE_STATUS,
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.net_tools.netbox.netbox_dcim import (
+    NetboxDcimModule,
+    NB_SITES,
 )
-from ansible.module_utils.compat import ipaddress
-from ansible.module_utils._text import to_text
-
-
-PYNETBOX_IMP_ERR = None
-try:
-    import pynetbox
-    HAS_PYNETBOX = True
-except ImportError:
-    PYNETBOX_IMP_ERR = traceback.format_exc()
-    HAS_PYNETBOX = False
 
 
 def main():
@@ -227,121 +209,11 @@ def main():
         validate_certs=dict(type="bool", default=True)
     )
 
-    global module
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    # Fail module if pynetbox is not installed
-    if not HAS_PYNETBOX:
-        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
-    # Assign variables to be used with module
-    app = "dcim"
-    endpoint = "sites"
-    url = module.params["netbox_url"]
-    token = module.params["netbox_token"]
-    data = module.params["data"]
-    state = module.params["state"]
-    validate_certs = module.params["validate_certs"]
-    # Attempt to create Netbox API object
-    try:
-        nb = pynetbox.api(url, token=token, ssl_verify=validate_certs)
-    except Exception:
-        module.fail_json(msg="Failed to establish connection to Netbox API")
-    try:
-        nb_app = getattr(nb, app)
-    except AttributeError:
-        module.fail_json(msg="Incorrect application specified: %s" % (app))
-    nb_endpoint = getattr(nb_app, endpoint)
-    norm_data = normalize_data(data)
-    try:
-        norm_data = _check_and_adapt_data(nb, norm_data)
-
-        if "present" in state:
-            return module.exit_json(
-                **ensure_site_present(nb, nb_endpoint, norm_data)
-            )
-        else:
-            return module.exit_json(
-                **ensure_site_absent(nb, nb_endpoint, norm_data)
-            )
-    except pynetbox.RequestError as e:
-        return module.fail_json(msg=json.loads(e.error))
-    except ValueError as e:
-        return module.fail_json(msg=str(e))
-    except AttributeError as e:
-        return module.fail_json(msg=str(e))
-
-
-def _check_and_adapt_data(nb, data):
-    data = find_ids(nb, data)
-
-    if data.get("status"):
-        data["status"] = SITE_STATUS.get(data["status"].lower())
-
-    if "-" in data["name"]:
-        site_slug = data["name"].replace(" ", "").lower()
-    elif " " in data["name"]:
-        site_slug = data["name"].replace(" ", "-").lower()
-    else:
-        site_slug = data["name"].lower()
-
-    data["slug"] = site_slug
-
-    return data
-
-
-def ensure_site_present(nb, nb_endpoint, data):
-    """
-    :returns dict(interface, msg, changed): dictionary resulting of the request,
-    where 'site' is the serialized interface fetched or newly created in Netbox
-    """
-
-    if not isinstance(data, dict):
-        changed = False
-        return {"msg": data, "changed": changed}
-
-    nb_site = nb_endpoint.get(slug=data["slug"])
-    result = dict()
-    if not nb_site:
-        site, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
-        changed = True
-        msg = "Site %s created" % (data["name"])
-        result["diff"] = diff
-    else:
-        site, diff = update_netbox_object(nb_site, data, module.check_mode)
-        if site is False:
-            module.fail_json(
-                msg="Request failed, couldn't update device: %s" % (data["name"])
-            )
-        if diff:
-            msg = "Site %s updated" % (data["name"])
-            changed = True
-            result["diff"] = diff
-        else:
-            msg = "Site %s already exists" % (data["name"])
-            changed = False
-
-    result.update({"site": site, "msg": msg, "changed": changed})
-    return result
-
-
-def ensure_site_absent(nb, nb_endpoint, data):
-    """
-    :returns dict(msg, changed)
-    """
-    nb_site = nb_endpoint.get(slug=data["slug"])
-    result = dict()
-    if nb_site:
-        dummy, diff = delete_netbox_object(nb_site, module.check_mode)
-        changed = True
-        msg = "Site %s deleted" % (data["name"])
-        result["diff"] = diff
-    else:
-        msg = "Site %s already absent" % (data["name"])
-        changed = False
-
-    result.update({"msg": msg, "changed": changed})
-    return result
+    netbox_site = NetboxDcimModule(module, NB_SITES)
+    netbox_site.run()
 
 
 if __name__ == "__main__":

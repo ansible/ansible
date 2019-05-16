@@ -5,13 +5,26 @@
 
 __metaclass__ = type
 
+# Import necessary packages
+import traceback
+from ansible.module_utils.compat import ipaddress
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+
+PYNETBOX_IMP_ERR = None
+try:
+    import pynetbox
+    HAS_PYNETBOX = True
+except ImportError:
+    PYNETBOX_IMP_ERR = traceback.format_exc()
+    HAS_PYNETBOX = False
+
 API_APPS_ENDPOINTS = dict(
     circuits=[],
     dcim=[
         "devices",
         "device_roles",
         "device_types",
-        "devices",
         "interfaces",
         "platforms",
         "racks",
@@ -27,7 +40,7 @@ API_APPS_ENDPOINTS = dict(
 
 QUERY_TYPES = dict(
     cluster="name",
-    devices="name",
+    device="name",
     device_role="slug",
     device_type="slug",
     manufacturer="slug",
@@ -37,7 +50,7 @@ QUERY_TYPES = dict(
     primary_ip="address",
     primary_ip4="address",
     primary_ip6="address",
-    rack="slug",
+    rack="name",
     region="slug",
     role="slug",
     site="slug",
@@ -90,11 +103,21 @@ NO_DEFAULT_ID = set(
         "nat_inside",
         "nat_outside",
         "region",
+        "role",
         "untagged_vlan",
         "tagged_vlans",
         "tenant",
     ]
 )
+
+ENDPOINT_NAME_MAPPING = {
+    "devices": "device",
+    "interfaces": "interface",
+    "ip_addresses": "ip_address",
+    "prefixes": "prefix",
+    "sites": "site",
+    "tenants": "tenant",
+}
 
 DEVICE_STATUS = dict(offline=0, active=1, planned=2, staged=3, failed=4, inventory=5)
 
@@ -119,12 +142,15 @@ INTF_FORM_FACTOR = {
     "10gbase-cx4 (10ge)": 1170,
     "gbic (1ge)": 1050,
     "sfp (1ge)": 1100,
+    "2.5gbase-t (2.5ge)": 1120,
+    "5gbase-t (5ge)": 1130,
     "sfp+ (10ge)": 1200,
     "xfp (10ge)": 1300,
     "xenpak (10ge)": 1310,
     "x2 (10ge)": 1320,
     "sfp28 (25ge)": 1350,
     "qsfp+ (40ge)": 1400,
+    "qsfp28 (50ge)": 1420,
     "cfp (100ge)": 1500,
     "cfp2 (100ge)": 1510,
     "cfp2 (200ge)": 1650,
@@ -174,184 +200,345 @@ INTF_FORM_FACTOR = {
 INTF_MODE = {"access": 100, "tagged": 200, "tagged all": 300}
 
 ALLOWED_QUERY_PARAMS = {
+    "device": set(["name"]),
     "interface": set(["name", "device"]),
+    "ip_address": set(["address", "vrf"]),
     "lag": set(["name"]),
     "nat_inside": set(["vrf", "address"]),
+    "prefix": set(["prefix", "vrf"]),
+    "site": set(["name"]),
     "vlan": set(["name", "site", "vlan_group", "tenant"]),
     "untagged_vlan": set(["name", "site", "vlan_group", "tenant"]),
     "tagged_vlans": set(["name", "site", "vlan_group", "tenant"]),
 }
 
-QUERY_PARAMS_IDS = set(["vrf", "site", "vlan_group", "tenant"])
+QUERY_PARAMS_IDS = set(["device", "vrf", "site", "vlan_group", "tenant"])
 
+REQUIRED_ID_FIND = {
+    "devices": [{"status": DEVICE_STATUS, "face": FACE_ID}],
+    "interfaces": [{"form_factor": INTF_FORM_FACTOR, "mode": INTF_MODE}],
+    "ip_addresses": [{"status": IP_ADDRESS_STATUS, "role": IP_ADDRESS_ROLE}],
+    "prefixes": [{"status": PREFIX_STATUS}],
+    "sites": [{"status": SITE_STATUS}],
+}
 
-def _build_diff(before=None, after=None):
-    return {"before": before, "after": after}
-
-
-def create_netbox_object(nb_endpoint, data, check_mode):
-    """Create a Netbox object.
-    :returns tuple(serialized_nb_obj, diff): tuple of the serialized created
-    Netbox object and the Ansible diff.
+class NetboxModule(object):
     """
-    if check_mode:
-        serialized_nb_obj = data
-    else:
-        nb_obj = nb_endpoint.create(data)
+    Initialize connection to Netbox, sets AnsibleModule passed in to
+    self.module to be used throughout the class
+    """
+    def __init__(self, module, endpoint, nb_client=None):
+        self.module = module
+        self.state = self.module.params["state"]
+        self.check_mode = self.module.check_mode
+        self.endpoint = endpoint
+
+        if not HAS_PYNETBOX:
+            self.module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
+        # These should not be required after making connection to Netbox
+        url = self.module.params["netbox_url"]
+        token = self.module.params["netbox_token"]
+        ssl_verify = self.module.params["validate_certs"]
+
+        # Attempt to initiate connection to Netbox
+        if nb_client is None:
+            self.nb = self._connect_netbox_api(url, token, ssl_verify)
+        else:
+            self.nb = nb_client
+
+        # These methods will normalize the regular data
+        norm_data = self._normalize_data(module.params["data"])
+        choices_data = self._change_choices_id(self.endpoint, norm_data)
+        self.data = self._find_ids(choices_data)
+
+    def _connect_netbox_api(self, url, token, ssl_verify):
         try:
-            serialized_nb_obj = nb_obj.serialize()
-        except AttributeError:
-            serialized_nb_obj = nb_obj
+            return pynetbox.api(url, token=token, ssl_verify=ssl_verify)
+        except Exception:
+            self.module.fail_json(msg="Failed to establish connection to Netbox API")
 
-    diff = _build_diff(before={"state": "absent"}, after={"state": "present"})
-    return serialized_nb_obj, diff
+    def _handle_errors(self, msg):
+        """
+        Returns message and changed = False
+        :params msg (str): Message indicating why there is no change
+        """
+        if msg:
+            self.module.exit_json(msg=msg, changed=False)
 
+    def _build_diff(self, before=None, after=None):
+        """Builds diff of before and after changes"""
+        return {"before": before, "after": after}
 
-def delete_netbox_object(nb_obj, check_mode):
-    """Delete a Netbox object.
-    :returns tuple(serialized_nb_obj, diff): tuple of the serialized deleted
-    Netbox object and the Ansible diff.
-    """
-    if not check_mode:
-        nb_obj.delete()
-
-    diff = _build_diff(before={"state": "present"}, after={"state": "absent"})
-    return nb_obj.serialize(), diff
-
-
-def update_netbox_object(nb_obj, data, check_mode):
-    """Update a Netbox object.
-    :returns tuple(serialized_nb_obj, diff): tuple of the serialized updated
-    Netbox object and the Ansible diff.
-    """
-    serialized_nb_obj = nb_obj.serialize()
-    updated_obj = serialized_nb_obj.copy()
-    updated_obj.update(data)
-    if serialized_nb_obj == updated_obj:
-        return serialized_nb_obj, None
-    else:
-        data_before, data_after = {}, {}
-        for key in data:
-            if serialized_nb_obj[key] != updated_obj[key]:
-                data_before[key] = serialized_nb_obj[key]
-                data_after[key] = updated_obj[key]
-
-        if not check_mode:
-            nb_obj.update(data)
-            updated_obj = nb_obj.serialize()
-
-        diff = _build_diff(before=data_before, after=data_after)
-        return updated_obj, diff
-
-
-def _get_query_param_id(nb, match, child):
-    endpoint = CONVERT_TO_ID[match]
-    app = find_app(endpoint)
-    nb_app = getattr(nb, app)
-    nb_endpoint = getattr(nb_app, endpoint)
-    result = nb_endpoint.get(**{QUERY_TYPES.get(match): child[match]})
-    if result:
-        return result.id
-    else:
-        return child
-
-
-def find_app(endpoint):
-    for k, v in API_APPS_ENDPOINTS.items():
-        if endpoint in v:
-            nb_app = k
-    return nb_app
-
-
-def build_query_params(nb, parent, module_data, child):
-    query_dict = dict()
-    query_params = ALLOWED_QUERY_PARAMS.get(parent)
-    matches = query_params.intersection(set(child.keys()))
-    for match in matches:
-        if match in QUERY_PARAMS_IDS:
-            value = _get_query_param_id(nb, match, child)
-            query_dict.update({match + "_id": value})
+    def _get_query_param_id(self, match, data):
+        """Used to find IDs of necessary searches when required under _build_query_params
+        :returns id (int) or data (dict): Either returns the ID or original data passed in
+        :params match (str): The key within the user defined data that is required to have an ID
+        :params data (dict): User defined data passed into the module
+        """
+        if isinstance(data.get(match), int):
+            return data[match]
         else:
-            value = child.get(match)
-            query_dict.update({match: value})
-
-    if parent == "lag":
-        query_dict.update({"form_factor": 200})
-        if isinstance(module_data["device"], int):
-            query_dict.update({"device_id": module_data["device"]})
-        else:
-            query_dict.update({"device": module_data["device"]})
-
-    return query_dict
-
-
-def find_ids(nb, data):
-    for k, v in data.items():
-        if k in CONVERT_TO_ID:
-            endpoint = CONVERT_TO_ID[k]
-            search = v
-            app = find_app(endpoint)
-            nb_app = getattr(nb, app)
+            endpoint = CONVERT_TO_ID[match]
+            app = self._find_app(endpoint)
+            nb_app = getattr(self.nb, app)
             nb_endpoint = getattr(nb_app, endpoint)
-
-            if isinstance(v, dict):
-                query_params = build_query_params(nb, k, data, v)
-                query_id = nb_endpoint.get(**query_params)
-
-            elif isinstance(v, list):
-                id_list = list()
-                for index in v:
-                    norm_data = normalize_data(index)
-                    temp_dict = build_query_params(nb, k, data, norm_data)
-                    query_id = nb_endpoint.get(**temp_dict)
-                    if query_id:
-                        id_list.append(query_id.id)
-                    else:
-                        return ValueError("%s not found" % (index))
-
+            result = nb_endpoint.get(**{QUERY_TYPES.get(match): data[match]})
+            if result:
+                return result.id
             else:
+                return data 
+
+    def _build_query_params(self, parent, module_data, child=None):
+        """
+        :returns dict(query_dict): Returns a query dictionary built using mappings to dynamically
+        build available query params for Netbox endpoints
+        :params parent(str): This is either a key from `_find_ids` or a string passed in to determine
+        which keys in the data that we need to use to construct `query_dict`
+        :params module_data(dict): Uses the data provided to the Netbox module
+        :params child(dict): This is used within `_find_ids` and passes the inner dictionary
+        to build the appropriate `query_dict` for the parent
+        """
+        query_dict = dict()
+        query_params = ALLOWED_QUERY_PARAMS.get(parent)
+        if child:
+            matches = query_params.intersection(set(child.keys()))
+        else:
+            matches = query_params.intersection(set(module_data.keys()))
+
+        for match in matches:
+            if match in QUERY_PARAMS_IDS:
+                if child:
+                    query_id = self._get_query_param_id(match, child)
+                else:
+                    query_id = self._get_query_param_id(match, module_data)
+                query_dict.update({match + "_id": query_id})
+            else:
+                if child:
+                    value = child.get(match)
+                else:
+                    value = module_data.get(match)
+                query_dict.update({match: value})
+
+        if parent == "lag":
+            query_dict.update({"form_factor": 200})
+            if isinstance(module_data["device"], int):
+                query_dict.update({"device_id": module_data["device"]})
+            else:
+                query_dict.update({"device": module_data["device"]})
+
+        elif parent == "prefix" and module_data.get("parent"):
+            query_dict.update({"prefix": module_data["parent"]})
+
+        return query_dict
+
+    def _change_choices_id(self, endpoint, data):
+        """Used to change data that is static and under _choices for the application.
+        ex. DEVICE_STATUS
+        :returns data (dict): Returns the user defined data back with updated fields for _choices
+        :params endpoint (str): The endpoint that will be used for mapping to required _choices
+        :params data (dict): User defined data passed into the module
+        """
+        required_choices = REQUIRED_ID_FIND[endpoint]
+        for choice in required_choices:
+            for key, value in choice.items():
+                if data.get(key):
+                    data[key] = value[data[key].lower()]
+        return data
+
+    def _find_app(self, endpoint):
+        """Dynamically finds application of endpoint passed in using the
+        API_APPS_ENDPOINTS for mapping
+        :returns nb_app (str): The application the endpoint lives under
+        :params endpoint (str): The endpoint requiring resolution to application
+        """
+        for k, v in API_APPS_ENDPOINTS.items():
+            if endpoint in v:
+                nb_app = k
+        return nb_app
+
+    def _find_ids(self, data):
+        """Will find the IDs of all user specified data if resolvable
+        :returns data (dict): Returns the updated dict with the IDs of user specified data
+        :params data (dict): User defined data passed into the module
+        """
+        for k, v in data.items():
+            if k in CONVERT_TO_ID:
+                endpoint = CONVERT_TO_ID[k]
+                search = v
+                app = self._find_app(endpoint)
+                nb_app = getattr(self.nb, app)
+                nb_endpoint = getattr(nb_app, endpoint)
+
+                if isinstance(v, dict):
+                    query_params = self._build_query_params(k, data, v)
+                    query_id = nb_endpoint.get(**query_params)
+
+                elif isinstance(v, list):
+                    id_list = list()
+                    for list_item in v:
+                        norm_data = self._normalize_data(list_item)
+                        temp_dict = self._build_query_params(k, data, norm_data)
+                        query_id = nb_endpoint.get(**temp_dict)
+                        if query_id:
+                            id_list.append(query_id.id)
+                        else:
+                            self._handle_errors(msg="%s not found" % (list_item))
+
+                else:
+                    try:
+                        query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
+                    except ValueError:
+                        self._handle_errors(
+                            msg="Multiple results found while searching for key: %s"
+                            % (k)
+                        )
+
+                if isinstance(v, list):
+                    data[k] = id_list
+                elif isinstance(v, int):
+                    pass
+                elif query_id:
+                    data[k] = query_id.id
+                else:
+                   self._handle_errors(msg="Could not resolve id of %s: %s" % (k, v))
+
+        return data
+
+    def _to_slug(self, value):
+        """
+        :returns slug (str): Slugified value
+        :params value (str): Value that needs to be changed to slug format
+        """
+        if " " in value:
+            slug = value.replace(" ", "-").lower()
+        else:
+            slug = value.lower()
+        return slug
+
+    def _normalize_data(self, data):
+        """
+        :returns data (dict): Normalized module data to formats accepted by Netbox searches
+        such as changing from user specified value to slug
+        ex. Test Rack -> test-rack 
+        :params data (dict): Original data from Netbox module
+        """
+        for k, v in data.items():
+            if isinstance(v, dict):
+                for subk, subv in v.items():
+                    sub_data_type = QUERY_TYPES.get(subk, "q")
+                    if sub_data_type == "slug":
+                        data[k][subk] = self._to_slug(subv)
+            else:
+                data_type = QUERY_TYPES.get(k, "q")
+                if data_type == "slug":
+                    data[k] = self._to_slug(v)
+                elif data_type == "timezone":
+                    if " " in v:
+                        data[k] = v.replace(" ", "_")
+        if self.endpoint == "sites":
+            site_slug = self._to_slug(data["name"])
+            data["slug"] = site_slug
+
+        return data
+
+    def _create_netbox_object(self, nb_endpoint, data):
+        """Create a Netbox object.
+        :returns tuple(serialized_nb_obj, diff): tuple of the serialized created
+        Netbox object and the Ansible diff.
+        """
+        if self.check_mode:
+            nb_obj = data
+        else:
+            try:
+                nb_obj = nb_endpoint.create(data)
+            except pynetbox.RequestError as e:
+                self._handle_errors(msg=e.error)
+
+        diff = self._build_diff(before={"state": "absent"}, after={"state": "present"})
+        return nb_obj, diff
+
+    def _delete_netbox_object(self):
+        """Delete a Netbox object.
+        :returns diff (dict): Ansible diff
+        """
+        if not self.check_mode:
+            self.nb_object.delete()
+
+        diff = self._build_diff(before={"state": "present"}, after={"state": "absent"})
+        return diff
+
+    def _update_netbox_object(self, data):
+        """Update a Netbox object.
+        :returns tuple(serialized_nb_obj, diff): tuple of the serialized updated
+        Netbox object and the Ansible diff.
+        """
+        serialized_nb_obj = self.nb_object.serialize()
+        updated_obj = serialized_nb_obj.copy()
+        updated_obj.update(data)
+        if serialized_nb_obj == updated_obj:
+            return serialized_nb_obj, None
+        else:
+            data_before, data_after = {}, {}
+            for key in data:
                 try:
-                    query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
-                except ValueError:
-                    raise ValueError(
-                        "Multiple results found while searching for key: %s" % (k)
+                    if serialized_nb_obj[key] != updated_obj[key]:
+                        data_before[key] = serialized_nb_obj[key]
+                        data_after[key] = updated_obj[key]
+                except KeyError:
+                    self._handle_errors(
+                        msg="%s does not exist on existing object. Check to make sure valid field."
+                            % (key)
                     )
 
-            if isinstance(v, list):
-                data[k] = id_list
-            elif query_id:
-                data[k] = query_id.id
-            elif k in NO_DEFAULT_ID:
-                pass
-            else:
-                raise ValueError("Could not resolve id of %s: %s" % (k, v))
+            if not self.check_mode:
+                self.nb_object.update(data)
+                updated_obj = self.nb_object.serialize()
 
-    return data
+            diff = self._build_diff(before=data_before, after=data_after)
+            return updated_obj, diff
 
-
-def normalize_data(data):
-    for k, v in data.items():
-        if isinstance(v, dict):
-            for subk, subv in v.items():
-                sub_data_type = QUERY_TYPES.get(subk, "q")
-                if sub_data_type == "slug":
-                    if "-" in subv:
-                        data[k][subk] = subv.replace(" ", "").lower()
-                    elif " " in subv:
-                        data[k][subk] = subv.replace(" ", "-").lower()
-                    else:
-                        data[k][subk] = subv.lower()
+    def _ensure_object_exists(self, nb_endpoint, endpoint_name, name, data):
+        """Used when `state` is present to make sure object exists or if the object exists
+        that it is updated
+        :params nb_endpoint (pynetbox endpoint object): This is the nb endpoint to be used
+        to create or update the object
+        :params endpoint_name (str): Endpoint name that was created/updated. ex. device
+        :params name (str): Name of the object
+        :params data (dict): User defined data passed into the module
+        """
+        if not self.nb_object:
+            self.nb_object, diff = self._create_netbox_object(nb_endpoint, data)
+            self.result["msg"] = "%s %s created" % (endpoint_name, name)
+            self.result["changed"] = True
+            self.result["diff"] = diff
         else:
-            data_type = QUERY_TYPES.get(k, "q")
-            if data_type == "slug":
-                if "-" in v:
-                    data[k] = v.replace(" ", "").lower()
-                elif " " in v:
-                    data[k] = v.replace(" ", "-").lower()
-                else:
-                    data[k] = v.lower()
-            elif data_type == "timezone":
-                if " " in v:
-                    data[k] = v.replace(" ", "_")
+            self.nb_object, diff = self._update_netbox_object(data)
+            if self.nb_object is False:
+                self._handle_errors(
+                    msg="Request failed, couldn't update device: %s" % name
+                )
+            if diff:
+                self.result["msg"] = "%s %s updated" % (endpoint_name, name)
+                self.result["changed"] = True
+                self.result["diff"] = diff
+            else:
+                self.result["msg"] = "%s %s already exists" % (endpoint_name, name)
 
-    return data
+    def _ensure_object_absent(self, endpoint_name, name):
+        """Used when `state` is absent to make sure object does not exist
+        :params endpoint_name (str): Endpoint name that was created/updated. ex. device
+        :params name (str): Name of the object
+        """
+        if self.nb_object:
+            diff = self._delete_netbox_object()
+            self.result["msg"] = '%s %s deleted' % (endpoint_name, name)
+            self.result["changed"] = True
+            self.result["diff"] = diff
+        else:
+            self.result["msg"] = '%s %s already absent' % (endpoint_name, name)
+
+    def run(self):
+        """
+        Must be implemented in subclasses
+        """
+        raise NotImplementedError
