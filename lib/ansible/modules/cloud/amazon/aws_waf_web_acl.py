@@ -169,7 +169,7 @@ def create_rule_lookup(client, module):
             rules = list_regional_rules_with_backoff(client)
             return dict((rule['Name'], rule) for rule in rules)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg='Could not list rules')
+            module.fail_json_aws(e, msg='Could not list regional rules')
 
 
 def get_web_acl(client, module, web_acl_id):
