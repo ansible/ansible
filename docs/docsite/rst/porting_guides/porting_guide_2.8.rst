@@ -242,9 +242,9 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 * ``gcdns_record`` use :ref:`gcp_dns_resource_record_set <gcp_dns_resource_record_set_module>` instead.
 * ``gcdns_zone`` use :ref:`gcp_dns_managed_zone <gcp_dns_managed_zone_module>` instead.
 * ``gcp_forwarding_rule`` use :ref:`gcp_compute_global_forwarding_rule <gcp_compute_global_forwarding_rule_module>` or :ref:`gcp_compute_forwarding_rule <gcp_compute_forwarding_rule_module>` instead.
-* ``gcp_healthcheck`` use :ref:`gcp_compute_health_check <gcp_compute_health_check__module>`, :ref:`gcp_compute_http_health_check <gcp_compute_http_health_check_module>`, or :ref:`gcp_compute_https_health_check <gcp_compute_https_health_check_module>` instead.
+* ``gcp_healthcheck`` use :ref:`gcp_compute_health_check <gcp_compute_health_check_module>`, :ref:`gcp_compute_http_health_check <gcp_compute_http_health_check_module>`, or :ref:`gcp_compute_https_health_check <gcp_compute_https_health_check_module>` instead.
 * ``gcp_backend_service`` use :ref:`gcp_compute_backend_service <gcp_compute_backend_service_module>` instead.
-* ``gcp_target_proxy`` use :ref:`gcp_compute_target_proxy <gcp_compute_target_proxy_module>` instead.
+* ``gcp_target_proxy`` use :ref:`gcp_compute_target_http_proxy <gcp_compute_target_http_proxy_module>` instead.
 * ``gcp_url_map`` use :ref:`gcp_compute_url_map <gcp_compute_url_map_module>` instead.
 * ``panos`` use the `Palo Alto Networks Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
