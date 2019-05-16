@@ -222,6 +222,7 @@ class Cliconf(CliconfBase):
 
             try:
                 self.get('show configuration sessions')
+                self._session_support = True
             except AnsibleConnectionFailure:
                 self._session_support = False
 
