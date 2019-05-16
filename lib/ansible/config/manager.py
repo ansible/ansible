@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import atexit
 import io
 import os
 import os.path
@@ -28,8 +29,9 @@ from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.utils import py3compat
-from ansible.utils.path import unfrackpath
+from ansible.utils.path import cleanup_tmp_dir
 from ansible.utils.path import makedirs_safe
+from ansible.utils.path import unfrackpath
 
 
 Plugin = namedtuple('Plugin', 'name type')
@@ -110,6 +112,7 @@ def ensure_type(value, value_type, origin=None):
                 makedirs_safe(value, 0o700)
             prefix = 'ansible-local-%s' % os.getpid()
             value = tempfile.mkdtemp(prefix=prefix, dir=value)
+            atexit.register(cleanup_tmp_dir, value)
 
         elif value_type == 'pathspec':
             if isinstance(value, string_types):

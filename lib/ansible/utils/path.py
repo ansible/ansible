@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import shutil
 
 from errno import EEXIST
 from ansible.errors import AnsibleError
@@ -103,3 +104,9 @@ def basedir(source):
         dname = os.path.abspath(dname)
 
     return to_text(dname, errors='surrogate_or_strict')
+
+
+def cleanup_tmp_dir(path):
+    """Removes directory"""
+    if os.path.isdir(path):
+        shutil.rmtree(path)
