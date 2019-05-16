@@ -31,10 +31,12 @@ options:
             - Whether to show the SAS policies.
             - Note if enable this option, the facts module will raise two more HTTP call for each resources, need more network overhead.
         type: bool
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Fan Qiu (@MyronFanQiu)"
@@ -57,7 +59,7 @@ EXAMPLES = '''
     - name: Get facts by tags
       azure_rm_eventhubnamespace_facts:
         tags:
-          testing
+        - testing
 '''
 
 RETURN = '''
@@ -90,6 +92,9 @@ class AzureRMEventHubNamespaceFacts(AzureRMModuleBase):
             ),
             show_sas_policies=dict(
                 type='bool'
+            ),
+            tags=dict(
+                type='list'
             )
         )
 
@@ -103,11 +108,11 @@ class AzureRMEventHubNamespaceFacts(AzureRMModuleBase):
         self.tags = None
         self.show_sas_policies = None
 
-        super(AzureRMEventHubNamespaceFacts, self).__init__(self.module_arg_spec, supports_tags=True, facts_module=True)
+        super(AzureRMEventHubNamespaceFacts, self).__init__(self.module_arg_spec, supports_tags=False, info_module=True)
 
     def exec_module(self, **kwargs):
 
-        for key in list(self.module_arg_spec.keys()) + ['tags']:
+        for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
 
         response = []
