@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_policysetdefinition_facts
+module: azure_rm_policysetdefinition_info
 version_added: "2.9"
 short_description: Gather Information of Policy Set Definition
 description:
@@ -45,14 +45,14 @@ author:
 
 EXAMPLES = '''
 - name: List all policy set definitions in current subscription
-  azure_rm_policysetdefinition_facts:
+  azure_rm_policysetdefinition_info:
 
 - name: List all built-in policy set definitions in current subscription
-  azure_rm_policysetdefinition_facts:
+  azure_rm_policysetdefinition_info:
     built_in: true
 
 - name: List a built-in policy set definition by name
-  azure_rm_policysetdefinition_facts:
+  azure_rm_policysetdefinition_info:
     name: testpolicysetdefinition
     built_in: true
 '''
@@ -148,7 +148,7 @@ except ImportError:
     pass
 
 
-class AzureRMPolicySetDefinitionFacts(AzureRMModuleBase):
+class AzureRMPolicySetDefinitionInfo(AzureRMModuleBase):
     """Configuration class for an Azure RM Policy definition resource"""
 
     def __init__(self):
@@ -175,10 +175,10 @@ class AzureRMPolicySetDefinitionFacts(AzureRMModuleBase):
             policysetdefinitions=[]
         )
 
-        super(AzureRMPolicySetDefinitionFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                              facts_module=True,
-                                                              supports_tags=False,
-                                                              mutually_exclusive=mutually_exclusive)
+        super(AzureRMPolicySetDefinitionInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                             info_module=True,
+                                                             supports_tags=False,
+                                                             mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
 
@@ -232,7 +232,7 @@ class AzureRMPolicySetDefinitionFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMPolicySetDefinitionFacts()
+    AzureRMPolicySetDefinitionInfo()
 
 
 if __name__ == '__main__':
