@@ -111,7 +111,7 @@ state:
                 - Location where the resource lives.
             type: str
             sample: eastus
-        name: 
+        name:
             description:
                 - Resource name.
             type: str
@@ -136,7 +136,6 @@ state:
                 - Resource tags.
             type: str
             sample: {env: sandbox}
-    }
 
 changed:
     description: Whether or not the resource has changed
