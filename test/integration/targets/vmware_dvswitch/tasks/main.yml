@@ -4,6 +4,8 @@
 
 - import_role:
     name: prepare_vmware_tests
+  vars:
+    setup_datacenter: true
 
 - &dvs_data
   name: Add distributed vSwitch
@@ -26,13 +28,26 @@
     that:
       - dvs_result_0001.changed
 
+- name: Create a VM folder on given Datacenter
+  vcenter_folder:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    folder_name: network_folder
+    folder_type: network
+    state: present
+    validate_certs: no
+  register:
+    network_folder_result
+
 - name: Add distributed vSwitch using folder
   vmware_dvswitch:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "/F0/{{ dc1 }}/network/F0"
+    folder: "{{ network_folder_result.result.path }}"
     state: present
     switch_name: dvswitch_0002
     mtu: 9000
