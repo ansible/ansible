@@ -33,7 +33,7 @@ following:
 Still using Dockerfile to build images? Check out `ansible-bender <https://github.com/ansible-community/ansible-bender>`_,
 and start building images from your Ansible playbooks.
 
-Use `Ansible Operators <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_
+Use `Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_
 to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully
 scalable app in the cloud with Kubernetes in just a few moments.
 
