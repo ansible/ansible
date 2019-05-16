@@ -15,7 +15,6 @@ from datetime import date, datetime
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafe as unsafe
 
 
 def test_AnsibleJSONDecoder_vault():
@@ -38,7 +37,11 @@ class TestAnsibleJSONEncoder():
     @pytest.fixture
     def mapping(self, request):
         """
-        Returns object of Mapping mock class
+        Returns object of Mapping mock class.
+        The object is used for testing handling of Mapping objects
+        in AnsibleJSONEncoder.default().
+        Using a plain dictionary instead is not suitable because
+        it is handled by default encoder of the superclass (json.JSONEncoder).
         """
         class M(Mapping):
             def __init__(self, *args, **kwargs):
@@ -134,18 +137,6 @@ class TestAnsibleJSONEncoder():
         # main assertions:
         assert(ansible_json_encoder.default(data_0) == {'__ansible_vault': expected_0})
         assert(ansible_json_encoder.default(data_1) == {'__ansible_vault': expected_1})
-
-    @pytest.mark.parametrize('test_input,expected', [(unsafe(), ''), ])
-    def test_ansible_unsafe(self, ansible_json_encoder, test_input, expected):
-        """
-        Test for passing AnsibleUnsafe objects
-        to AnsibleJSONEncoder.default()
-        """
-        # does not make sense to implement objects of class:
-        # class AnsibleUnsafe(object):
-        #   __UNSAFE__ = True
-        # See lib/ansible/utils/unsafe_proxy.py
-        pass
 
     @pytest.mark.parametrize(
         'test_input,expected',
