@@ -1030,11 +1030,15 @@ class Connection(ConnectionBase):
         # If we find a broken pipe because of ControlPersist timeout expiring (see #16731),
         # we raise a special exception so that we can retry a connection.
         controlpersist_broken_pipe = b'mux_client_hello_exchange: write packet: Broken pipe' in b_stderr
-        if p.returncode == 255 and controlpersist_broken_pipe:
-            raise AnsibleControlPersistBrokenPipeError('SSH Error: data could not be sent because of ControlPersist broken pipe.')
+        if p.returncode == 255:
 
-        if p.returncode == 255 and in_data and checkrc:
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to remote host "%s". Make sure this host can be reached over ssh' % self.host)
+            additional = to_native(b_stderr)
+            if controlpersist_broken_pipe:
+                raise AnsibleControlPersistBrokenPipeError('SSH Error: data could not be sent because of ControlPersist broken pipe: %s' % additional)
+
+            elif in_data and checkrc:
+                raise AnsibleConnectionFailure('SSH Error: data could not be sent to remote host "%s". Make sure this host can be reached over ssh: %s'
+                                               % (self.host, additional))
 
         return (p.returncode, b_stdout, b_stderr)
 
