@@ -243,9 +243,10 @@ and any other error will be raised for handling elsewhere in the program.
 .. code-block:: python
 
    try:
-       return connection.describe_security_groups(**kwargs)
+       info = connection.describe_security_groups(**kwargs)
    except is_boto3_error_code('InvalidGroup.NotFound'):
-
+       pass
+   do_something(info)  # do something with the info that was successfully returned
 
 Using fail_json_aws()
 ---------------------
@@ -288,7 +289,7 @@ If you need to perform an action based on the error boto3 returned, use the erro
        result = connection.describe_frooble(FroobleName=name)
    except botocore.exceptions.ClientError as e:
        if e.response['Error']['Code'] == 'FroobleNotFound':
-           return None
+           workaround_failure()  # This is an error that we can work around
        else:
            module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
    except botocore.exceptions.BotoCoreError as e:
@@ -333,7 +334,7 @@ If you need to perform an action based on the error boto3 returned, use the erro
        result = connection.describe_frooble(FroobleName=name)
    except botocore.exceptions.ClientError as e:
        if e.response['Error']['Code'] == 'FroobleNotFound':
-           return None
+           workaround_failure()  # This is an error that we can work around
        else:
            module.fail_json(msg="Couldn't obtain frooble %s: %s" % (name, str(e)),
                             exception=traceback.format_exc(),
