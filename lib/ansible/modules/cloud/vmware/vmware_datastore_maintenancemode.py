@@ -120,7 +120,10 @@ class VmwareDatastoreMaintenanceMgr(PyVmomi):
         datastore_cluster = self.params.get('datastore_cluster')
         self.datastore_objs = []
         if datastore_name:
-            self.datastore_objs = [self.find_datastore_by_name(datastore_name=datastore_name)]
+            ds = self.find_datastore_by_name(datastore_name=datastore_name)
+            if not ds:
+                self.module.fail_json(msg='Failed to find datastore "%(datastore)s".' % self.params)
+            self.datastore_objs = [ds]
         elif cluster_name:
             cluster = find_cluster_by_name(self.content, cluster_name)
             if not cluster:
