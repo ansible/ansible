@@ -62,7 +62,7 @@ options:
         default: false
         required: no
         type: bool
-        version_added: 2.8
+        version_added: 2.9
     state:
         description: Whether the condition should be C(present) or C(absent).
         choices:
