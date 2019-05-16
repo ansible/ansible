@@ -1,1 +1,1 @@
-azure_rm_applicationsecuritygroup_info.py
+./azure_rm_applicationsecuritygroup_info.py
