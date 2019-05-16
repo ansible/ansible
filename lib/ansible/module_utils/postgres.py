@@ -55,6 +55,11 @@ def ensure_libs(sslrootcert=None):
 
 
 def postgres_common_argument_spec():
+    """
+    Return a dictionary with connection options.
+
+    The options are commonly used by most of PostgreSQL modules.
+    """
     return dict(
         login_user=dict(default='postgres'),
         login_password=dict(default='', no_log=True),
@@ -67,6 +72,7 @@ def postgres_common_argument_spec():
 
 
 def ensure_required_libs(module):
+    """Check required libraries."""
     if not HAS_PSYCOPG2:
         module.fail_json(msg=missing_required_lib('psycopg2'))
 
@@ -75,10 +81,14 @@ def ensure_required_libs(module):
 
 
 def connect_to_db(module, autocommit=False, fail_on_conn=True, warn_db_default=True):
-    """
-    module arg must be an object of ansible.module_utils.basic.AnsibleModule class
-    """
+    """Return psycopg2 connection object.
 
+    Keyword arguments:
+    module -- object of ansible.module_utils.basic.AnsibleModule class
+    autocommit -- commit automatically (default False)
+    fail_on_conn -- fail if connection failed or just warn and return None (default True)
+    warn_db_default -- warn that the default DB is used (default True)
+    """
     ensure_required_libs(module)
 
     # To use defaults values, keyword arguments must be absent, so
