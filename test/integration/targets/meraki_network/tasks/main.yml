@@ -67,9 +67,6 @@
     delegate_to: localhost
     register: enable_vlan
 
-  - debug:
-      msg: '{{ enable_vlan }}'
-
   - assert:
       that:
         - enable_vlan.data.enabled == True
@@ -84,9 +81,13 @@
     delegate_to: localhost
     register: enable_vlan_idempotent
 
+  - debug:
+      var: enable_vlan_idempotent
+
   - assert:
       that:
         - enable_vlan_idempotent is not changed
+        - enable_vlan_idempotent.data is defined
   
   - name: Disable VLAN support on appliance network
     meraki_network:
@@ -97,9 +98,6 @@
       enable_vlans: no
     delegate_to: localhost
     register: disable_vlan
-
-  - debug:
-      msg: '{{ disable_vlan }}'
 
   - assert:
       that:
@@ -118,6 +116,7 @@
   - assert:
       that:
         - disable_vlan_idempotent is not changed
+        - disable_vlan_idempotent.data is defined
 
   - name: Create network with type wireless
     meraki_network:
@@ -140,6 +139,10 @@
       timezone: America/Chicago
     delegate_to: localhost
     register: create_net_wireless_idempotent
+
+  - assert:
+      that:
+        - create_net_wireless_idempotent.data is defined
 
   - name: Create network with type combined and disable my.meraki.com
     meraki_network:
@@ -176,9 +179,6 @@
       tags: first_tag
     delegate_to: localhost
     register: create_net_tag
-
-  - debug:
-      msg: '{{create_net_tag}}'
     
   - name: Create network with two tags
     meraki_network:
@@ -193,9 +193,6 @@
         - second_tag
     delegate_to: localhost
     register: create_net_tags
-
-  - debug:
-      msg: '{{create_net_tags}}'
 
   - name: Modify network
     meraki_network:
@@ -226,6 +223,10 @@
         - third_tag
     delegate_to: localhost
     register: create_net_modified_idempotent
+
+  - assert:
+      that:
+        - create_net_modified_idempotent.data is defined
 
   - name: Present assertions
     assert:
