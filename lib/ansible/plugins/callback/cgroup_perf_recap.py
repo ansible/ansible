@@ -394,13 +394,14 @@ class CallbackModule(CallbackBase):
     def _profile(self, obj=None):
         prev_task = None
         results = dict.fromkeys(self._features)
-        for dummy, f in self._files.items():
-            if f is None:
-                continue
-            try:
-                f.close()
-            except Exception:
-                pass
+        if not obj or self._file_per_task:
+            for dummy, f in self._files.items():
+                if f is None:
+                    continue
+                try:
+                    f.close()
+                except Exception:
+                    pass
 
         try:
             for name, prof in self._profilers.items():
@@ -420,7 +421,7 @@ class CallbackModule(CallbackBase):
                     pass
 
         if obj is not None:
-            if self._file_per_task:
+            if self._file_per_task or self._counter == 0:
                 self._open_files(task_uuid=obj._uuid)
 
             for feature in self._features:
