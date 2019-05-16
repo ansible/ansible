@@ -104,7 +104,7 @@ class HttpApi(HttpApiBase):
         """
         Not required on Fortinet devices - Skipped
         :param exc: Unused input.
-        :return: None
+        :return: exc
         """
         return exc
 
