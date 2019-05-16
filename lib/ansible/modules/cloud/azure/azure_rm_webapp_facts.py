@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_webapp_facts
+module: azure_rm_webapp_info
 
 version_added: "2.7"
 
@@ -49,16 +49,16 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for web app by name
-      azure_rm_webapp_facts:
+      azure_rm_webapp_info:
         resource_group: myResourceGroup
         name: winwebapp1
 
     - name: Get facts for web apps in resource group
-      azure_rm_webapp_facts:
+      azure_rm_webapp_info:
         resource_group: myResourceGroup
 
     - name: Get facts for web apps with tags
-      azure_rm_webapp_facts:
+      azure_rm_webapp_info:
         tags:
           - testtag
           - foo:bar
@@ -160,7 +160,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_OBJECT_CLASS = 'WebApp'
 
 
-class AzureRMWebAppFacts(AzureRMModuleBase):
+class AzureRMWebAppInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -183,9 +183,8 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
 
         self.framework_names = ['net_framework', 'java', 'php', 'node', 'python', 'dotnetcore', 'ruby']
 
-        super(AzureRMWebAppFacts, self).__init__(self.module_arg_spec,
-                                                 supports_tags=False,
-                                                 facts_module=True)
+        super(AzureRMWebAppInfo, self).__init__(self.module_arg_spec,
+                                                 supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -403,7 +402,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMWebAppFacts()
+    AzureRMWebAppInfo()
 
 
 if __name__ == '__main__':

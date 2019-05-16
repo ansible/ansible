@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualnetworkpeering_facts
+module: azure_rm_virtualnetworkpeering_info
 version_added: "2.8"
 short_description: Get facts of Azure Virtual Network Peering.
 description:
@@ -43,20 +43,20 @@ author:
 
 EXAMPLES = '''
     - name: Get virtual network peering by name
-      azure_rm_virtualnetworkpeering_facts:
+      azure_rm_virtualnetworkpeering_info:
         resource_group: myResourceGroup
         virtual_network: myVnet1
         name: myVnetPeer
 
     - name: List virtual network peering of virtual network
-      azure_rm_virtualnetworkpeering:
+      azure_rm_virtualnetworkpeering_info:
         resource_group: myResourceGroup
         virtual_network: myVnet1
 '''
 
 RETURN = '''
 vnetpeerings:
-    description: A list of Virtual Network Peering facts.
+    description: A list of Virtual Network Peering info.
     returned: always
     type: complex
     contains:
@@ -147,7 +147,7 @@ def vnetpeering_to_dict(vnetpeering):
     return results
 
 
-class AzureRMVirtualNetworkPeeringFacts(AzureRMModuleBase):
+class AzureRMVirtualNetworkPeeringInfo(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -170,7 +170,7 @@ class AzureRMVirtualNetworkPeeringFacts(AzureRMModuleBase):
 
         self.results = dict(changed=False)
 
-        super(AzureRMVirtualNetworkPeeringFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMVirtualNetworkPeeringInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                                 supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -235,7 +235,7 @@ class AzureRMVirtualNetworkPeeringFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMVirtualNetworkPeeringFacts()
+    AzureRMVirtualNetworkPeeringInfo()
 
 
 if __name__ == '__main__':

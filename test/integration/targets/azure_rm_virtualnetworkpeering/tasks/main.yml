@@ -90,7 +90,7 @@
     that: output.changed
 
 - name: Get facts
-  azure_rm_virtualnetworkpeering_facts:
+  azure_rm_virtualnetworkpeering_info:
     resource_group: "{{ resource_group }}"
     name: "{{ peering_name }}"
     virtual_network: "{{ vnetname1 }}"

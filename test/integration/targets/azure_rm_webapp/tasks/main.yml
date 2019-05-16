@@ -36,17 +36,16 @@
     that:
       output.changed
 
-# enable after webapp_facts merged
-# - name: get the web app
-#   azure_rm_webapp_facts:
-#     resource_group: "{{ resource_group }}"
-#     name: "{{ win_app_name }}2"
-#   register: stopped
+- name: get the web app
+  azure_rm_webapp_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}2"
+  register: stopped
 
-# - name: assert web app is stopped
-#   assert:
-#     that:
-#       - stopped.properties.state == "Stopped"
+- name: assert web app is stopped
+  assert:
+    that:
+      - stopped['webapps'][0]['state'] == "Stopped"
 
 - name: Create a windows web app with existing app service plan, try to update some root level params
   azure_rm_webapp:
@@ -60,7 +59,7 @@
   register: output
 
 - name: get web app with resource group and tag
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}3"
     tags:
@@ -91,7 +90,7 @@
     that: output.changed
 
 - name: get web app with name
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
   register: output
@@ -123,7 +122,7 @@
     - output.changed
 
 - name: get web app with name
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
   register: output
@@ -136,7 +135,7 @@
     - output.webapps[0].app_settings['testkey2'] == 'testvalue2'
 
 - name: get web app with return publishing profile
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
     return_publish_profile: true
@@ -333,7 +332,7 @@
     that: output.changed
 
 - name: Get facts with publish profile
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}13"
   no_log: true
