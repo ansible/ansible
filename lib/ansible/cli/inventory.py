@@ -251,6 +251,8 @@ class InventoryCLI(CLI):
             if internal in dump:
                 del dump[internal]
 
+        return dump
+
     @staticmethod
     def _remove_empty(dump):
         # remove empty keys
