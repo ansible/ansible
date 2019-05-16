@@ -14,9 +14,9 @@
 
   - name: Add a nic to a switch
     vmware_vswitch:
-      hostname: '{{ hostvars[esxi1].ansible_host }}'
-      username: '{{ hostvars[esxi1].ansible_user }}'
-      password: '{{ hostvars[esxi1].ansible_password }}'
+      hostname: '{{ esxi1 }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
       validate_certs: no
       switch: vmswitch_0001
       nics: vnic_1
@@ -28,9 +28,9 @@
 
   - name: Add a nic to a switch again
     vmware_vswitch:
-      hostname: '{{ hostvars[esxi1].ansible_host }}'
-      username: '{{ hostvars[esxi1].ansible_user }}'
-      password: '{{ hostvars[esxi1].ansible_password }}'
+      hostname: '{{ esxi1 }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
       validate_certs: no
       switch: vmswitch_0001
       nics: vnic_1
@@ -42,9 +42,9 @@
 
   - name: Remove a switch (check-mode)
     vmware_vswitch:
-      hostname: '{{ hostvars[esxi1].ansible_host }}'
-      username: '{{ hostvars[esxi1].ansible_user }}'
-      password: '{{ hostvars[esxi1].ansible_password }}'
+      hostname: '{{ esxi1 }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
       validate_certs: no
       switch: vmswitch_0001
       state: absent
@@ -58,9 +58,9 @@
   # FIXME: Removing a switch fails
   - name: Remove a switch
     vmware_vswitch:
-      hostname: '{{ hostvars[esxi1].ansible_host }}'
-      username: '{{ hostvars[esxi1].ansible_user }}'
-      password: '{{ hostvars[esxi1].ansible_password }}'
+      hostname: '{{ esxi1 }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
       validate_certs: no
       switch: vmswitch_0001
       state: absent
@@ -71,9 +71,9 @@
 
   - name: Remove a switch again (check-mode)
     vmware_vswitch:
-      hostname: '{{ hostvars[esxi1].ansible_host }}'
-      username: '{{ hostvars[esxi1].ansible_user }}'
-      password: '{{ hostvars[esxi1].ansible_password }}'
+      hostname: '{{ esxi1 }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
       validate_certs: no
       switch: vmswitch_0001
       state: absent
@@ -87,9 +87,9 @@
   # FIXME: Removing a switch fails
   - name: Remove a switch again
     vmware_vswitch:
-      hostname: '{{ hostvars[esxi1].ansible_host }}'
-      username: '{{ hostvars[esxi1].ansible_user }}'
-      password: '{{ hostvars[esxi1].ansible_password }}'
+      hostname: '{{ esxi1 }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
       validate_certs: no
       switch: vmswitch_0001
       state: absent
@@ -101,9 +101,9 @@
   - name: Add vswitch to a specific host system
     vmware_vswitch:
       validate_certs: False
-      hostname: '{{ hostvars[esxi1].ansible_host }}'
-      username: '{{ hostvars[esxi1].ansible_user }}'
-      password: '{{ hostvars[esxi1].ansible_password }}'
+      hostname: '{{ esxi1 }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
       switch: vmswitch_0002
       nics: vnic_1
       esxi_hostname: guest1
