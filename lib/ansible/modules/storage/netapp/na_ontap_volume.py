@@ -315,6 +315,24 @@ EXAMPLES = """
         snapshot_policy: default
         time_out: 0
 
+    - name: Create FlexVol with QoS adaptive
+      na_ontap_volume:
+        state: present
+        name: ansibleVolume15
+        is_infinite: False
+        aggregate_name: ansible_aggr
+        size: 100
+        size_unit: gb
+        space_guarantee: none
+        policy: default
+        percent_snapshot_space: 10
+        qos_adaptive_policy_group: extreme
+        vserver: ansibleVServer
+        wait_for_completion: True
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
 """
 
 RETURN = """
