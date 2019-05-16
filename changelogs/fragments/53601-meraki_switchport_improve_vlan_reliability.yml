@@ -1,0 +1,2 @@
+bugfixes:
+- "meraki_switchport - improve reliability with native VLAN functionality."
