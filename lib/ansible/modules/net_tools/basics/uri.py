@@ -287,7 +287,7 @@ EXAMPLES = r'''
   environment: |
       {
         {% for no_proxy in (lookup('env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
-          {% if no_proxy | regex_search('\/') an
+          {% if no_proxy | regex_search('\/') and
                 no_proxy | ipaddr('net') != '' and
                 no_proxy | ipaddr('net') != false and
                 ip_address | ipaddr(no_proxy) is not none and
