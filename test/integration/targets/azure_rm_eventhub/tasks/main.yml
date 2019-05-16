@@ -17,7 +17,7 @@
        - output.changed
        - output.id != None
 
-- name: Create an eventhub namespace for listing facts
+- name: Create an eventhub namespace for listing information
   azure_rm_eventhubnamespace:
     name: "{{ namespace_bname }}"
     location: eastus
@@ -79,13 +79,13 @@
        - not output.changed
        - output.id != None
 
-- name: Get facts for an eventhub namespace
+- name: Get information for an eventhub namespace
   azure_rm_eventhubnamespace_info:
     name: "{{ namespace_aname }}"
     resource_group: "{{ resource_group }}"
   register: output
 
-- name: Assert that facts are returned
+- name: Assert that information are returned
   assert:
     that:
        - not output.changed
@@ -97,13 +97,13 @@
        - output.eventhubnamespaces[0]['maximum_throughput_units'] != None
        - output.eventhubnamespaces[0]['kafka_enabled'] != None
 
-- name: Get all facts for eventhub namespace in the resource group
+- name: Get all information for eventhub namespace in the resource group
   azure_rm_eventhubnamespace_info:
     resource_group: "{{ resource_group }}"
     show_sas_policies: true
   register: output
 
-- name: Assert that facts are returned
+- name: Assert that information are returned
   assert:
     that:
        - not output.changed
