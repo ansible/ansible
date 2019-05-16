@@ -1,6 +1,6 @@
 ---
 - name: Compress parent directory
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}"
     compressed: yes
     recurse: no
@@ -20,7 +20,7 @@
   win_stat:
     path: "{{ test_directory.path }}\\{{ item }}"
   register: subfolder_info
-  loop: "{{ test_win_compact_sub_directories }}"
+  loop: "{{ test_win_file_compression_sub_directories }}"
 
 - assert:
     that:
@@ -28,7 +28,7 @@
   loop: "{{ subfolder_info.results }}"
 
 - name: Compress parent directory (idempotent)
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}"
     compressed: yes
     recurse: no
@@ -39,7 +39,7 @@
       - "result.changed == false"
 
 - name: Compress parent directory and all subdirectories
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}"
     compressed: yes
     recurse: yes
@@ -59,7 +59,7 @@
   win_stat:
     path: "{{ test_directory.path }}\\{{ item }}"
   register: subfolder_info
-  loop: "{{ test_win_compact_sub_directories }}"
+  loop: "{{ test_win_file_compression_sub_directories }}"
 
 - assert:
     that:
@@ -67,7 +67,7 @@
   loop: "{{ subfolder_info.results }}"
 
 - name: Compress parent directory and all subdirectories (idempotent)
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}"
     compressed: yes
     recurse: yes
@@ -78,7 +78,7 @@
       - "result.changed == false"
 
 - name: Uncompress parent directory
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}"
     compressed: no
     recurse: no
@@ -98,7 +98,7 @@
   win_stat:
     path: "{{ test_directory.path }}\\{{ item }}"
   register: subfolder_info
-  loop: "{{ test_win_compact_sub_directories }}"
+  loop: "{{ test_win_file_compression_sub_directories }}"
 
 - assert:
     that:
@@ -106,7 +106,7 @@
   loop: "{{ subfolder_info.results }}"
 
 - name: Uncompress parent directory (idempotent)
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}"
     compressed: no
     recurse: no
@@ -117,7 +117,7 @@
       - "result.changed == false"
 
 - name: Uncompress parent directory and all subdirectories
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}"
     compressed: no
     recurse: yes
@@ -137,7 +137,7 @@
   win_stat:
     path: "{{ test_directory.path }}\\{{ item }}"
   register: subfolder_info
-  loop: "{{ test_win_compact_sub_directories }}"
+  loop: "{{ test_win_file_compression_sub_directories }}"
 
 - assert:
     that:
@@ -145,10 +145,67 @@
   loop: "{{ subfolder_info.results }}"
 
 - name: Uncompress parent directory and all subdirectories (idempotent)
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}"
     compressed: no
     recurse: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Create test file
+  win_file:
+    state: touch
+    path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
+
+- name: Compress specific file
+  win_compact:
+    path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
+    compressed: yes
+  register: result
+
+- name: Get actual attributes of file
+  win_stat:
+    path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
+  register: testfile_info
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'Compressed' in testfile_info.stat.attributes"
+
+- name: Compress specific file (idempotent)
+  win_compact:
+    path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
+    compressed: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Uncompress specific file
+  win_compact:
+    path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
+    compressed: no
+  register: result
+
+- name: Get actual attributes of file
+  win_stat:
+    path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
+  register: testfile_info
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'Compressed' not in testfile_info.stat.attributes"
+
+- name: Uncompress specific file (idempotent)
+  win_compact:
+    path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
+    compressed: no
   register: result
 
 - assert:

@@ -13,56 +13,78 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: win_compact
+module: win_file_compression
 version_added: '2.9'
-short_description: Alters the compression of directories on NTFS partitions.
+short_description: Alters the compression of files and directories on NTFS partitions.
 description:
-  - This module sets the compressed attribute for directories on an NTFS file system.
+  - This module sets the compressed attribute for files and directories on an NTFS file system.
   - NTFS compression can be used to save disk space.
 options:
   path:
     description:
-      - The full path of the directory to modify.
-      - The folder must exist on an NTFS FileSystem.
+      - The full path of the file or directory to modify.
+      - The path must exist on an NTFS FileSystem.
     required: yes
     type: path
   compressed:
     description:
-      - The compressed state of the directory.
+      - The compressed state of the item.
     type: bool
     default: true
   recurse:
     description:
       - Whether to recursively apply changes to all subdirectories and files.
+      - This option only has an effect when I(path) is a directory.
       - When set to C(false), only applies changes to I(path).
       - When set to C(true), applies changes to I(path) and all subdirectories and files.
     type: bool
     default: false
+  force:
+    description:
+      - This option only has an effect when I(recurse) is C(true)
+      - If C(true), will check the compressed state of all subdirectories and files
+        and make a change if any are different from I(compressed).
+      - If C(false), will only make a change if the compressed state of I(path) is different from I(compressed).
+      - If the folder structure is complex or contains a lot of files, it is recommended to set this
+        option to C(false) so that not every file has to be checked.
+    type: bool
+    default: true
 author:
   - Micah Hunsberger (@mhunsber)
 notes:
-  - C(win_compact) does not create a zip archive file.
+  - C(win_file_compression) sets the NTFS compression state, it does not create a zip archive file.
   - For more about NTFS Compression, see U(http://www.ntfs.com/ntfs-compressed.htm)
 '''
 
 EXAMPLES = r'''
 - name: Compress log files directory
-  win_compact:
+  win_file_compression:
     path: C:\Logs
     compressed: yes
     recurse: no
 
 - name: Decompress log files directory
-  win_compact:
+  win_file_compression:
     path: C:\Logs
     compressed: no
     recurse: no
 
 - name: Compress reports directory and all subdirectories
-  win_compact:
+  win_file_compression:
     path: C:\business\reports
     compressed: yes
     recurse: yes
+
+# This will only check C:\business\reports for the compressed state
+# If C:\business\reports is compressed, it will not make a change
+# even if one of the child items is uncompressed
+
+- name: Compress reports directory and all subdirectories (quick)
+  win_file_compression:
+    path: C:\business\reports
+    compressed: yes
+    recurse: yes
+    force: no
 '''
 
 RETURN = r'''

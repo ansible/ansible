@@ -1,7 +1,7 @@
 ---
 - name: create temporary test folder
   win_tempfile:
-    suffix: "{{ test_win_compact_suffix }}"
+    suffix: "{{ test_win_file_compression_suffix }}"
     state: directory
   register: test_directory
 
@@ -9,7 +9,7 @@
   win_file:
     state: directory
     path: "{{ test_directory.path}}\\{{ item }}"
-  loop: "{{ test_win_compact_sub_directories }}"
+  loop: "{{ test_win_file_compression_sub_directories }}"
 
 - block:
   - name: run tests

@@ -14,6 +14,7 @@ $spec = @{
         path = @{ type = 'path'; required = $true }
         compressed = @{ type = 'bool'; default = $true }
         recurse = @{ type = 'bool'; default = $false }
+        force = @{ type = 'bool'; default = $true }
     }
     supports_check_mode = $true
 }
@@ -23,6 +24,7 @@ $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $path = $module.Params.path
 $compressed = $module.Params.compressed
 $recurse = $module.Params.recurse
+$force = $module.Params.force
 
 $module.Result.rc = 0
 
@@ -31,8 +33,8 @@ if(-not (Test-Path -LiteralPath $path)) {
 }
 
 $item = Get-Item -LiteralPath $path
-if (-not $item.PSIsContainer -or $item.PSDrive.Provider.Name -ne 'FileSystem') {
-    $module.FailJson("Path, $path, is not a folder on the filesystem.")
+if (-not $item.PSIsContainer -and $recurse) {
+    $module.Warn("The recurse option has no effect when path is not a folder.")
 }
 
 $drive_letter = $item.PSDrive.Name
@@ -69,26 +71,43 @@ function Get-EscapedFileName {
     return $FullName.Replace("\","\\").Replace("'","\'")
 }
 
-if($recurse) {
-    # could be a subfolder that is not compressed in this case
-    $folders = ([System.IO.Directory]::GetDirectories($item.FullName, '*', [System.IO.SearchOption]::AllDirectories)) + $item.FullName
-} else {
-    $folders = $item.FullName
-}
+$is_compressed = ($item.Attributes -band [System.IO.FileAttributes]::Compressed) -eq [System.IO.FileAttributes]::Compressed
+$needs_changed = $is_compressed -ne $compressed
 
-$needs_changed = $false
-foreach ($folder in $folders) {
-    $psfolder = Get-Item -LiteralPath $folder
-    $is_compressed = ($psfolder.Attributes -band [System.IO.FileAttributes]::Compressed) -eq [System.IO.FileAttributes]::Compressed
-    if ($is_compressed -ne $compressed) {
-        $needs_changed = $true
-        break
+if($force -and $recurse -and $item.PSIsContainer) {
+    if (-not $needs_changed) {
+        # check subfolders
+        $folders_to_check = [System.IO.Directory]::EnumerateDirectories($item.FullName, '*', [System.IO.SearchOption]::AllDirectories)
+        foreach($folder_to_check in $folders_to_check) {
+            $folder = Get-Item -LiteralPath $folder_to_check
+            $is_compressed = ($folder.Attributes -band [System.IO.FileAttributes]::Compressed) -eq [System.IO.FileAttributes]::Compressed
+            if ($is_compressed -ne $compressed) {
+                $needs_changed = $true
+                break
+            }
+        }
+    }
+    if (-not $needs_changed) {
+        # check subfiles
+        $files_to_check = [System.IO.Directory]::EnumerateFiles($item.FullName, '*', [System.IO.SearchOption]::AllDirectories)
+        foreach($files_to_check in $files_to_check) {
+            $file = Get-Item -LiteralPath $files_to_check
+            $is_compressed = ($file.Attributes -band [System.IO.FileAttributes]::Compressed) -eq [System.IO.FileAttributes]::Compressed
+            if ($is_compressed -ne $compressed) {
+                $needs_changed = $true
+                break
+            }
+        }
     }
 }
 
 if($needs_changed) {
     $module.Result.changed = $true
-    $cim_obj = Get-CimInstance -ClassName 'Win32_Directory' -Filter "Name='$(Get-EscapedFileName -FullName $item.FullName)'"
+    if ($item.PSIsContainer) {
+        $cim_obj = Get-CimInstance -ClassName 'Win32_Directory' -Filter "Name='$(Get-EscapedFileName -FullName $item.FullName)'"
+    } else {
+        $cim_obj = Get-CimInstance -ClassName 'CIM_LogicalFile' -Filter "Name='$(Get-EscapedFileName -FullName $item.FullName)'"
+    }
     if($compressed) {
         if(-not $module.CheckMode) {
             $ret = Invoke-CimMethod -InputObject $cim_obj -MethodName 'CompressEx' -Arguments @{ Recursive = $recurse }
