@@ -54,20 +54,20 @@ def vault_data():
                   '93238370a313330316263373938326162386433313336613532653538'
                   '376662306435\n3338\n')
 
-    return dict(
-        data_0=data_0,
-        data_1=data_1,
-        expected_0=expected_0,
-        expected_1=expected_1,
-    )
+    return {
+        'data_0': data_0,
+        'data_1': data_1,
+        'expected_0': expected_0,
+        'expected_1': expected_1,
+    }
 
 
-class TestAnsibleJSONEncoder():
+class TestAnsibleJSONEncoder:
     """
-    Class for testing AnsibleJSONEncoder
+    Namespace for testing AnsibleJSONEncoder
     """
 
-    @pytest.fixture
+    @pytest.fixture(scope='class')
     def mapping(self, request):
         """
         Returns object of Mapping mock class.
@@ -112,7 +112,7 @@ class TestAnsibleJSONEncoder():
         Test for passing datetime.date or datetime.datetime objects
         to AnsibleJSONEncoder.default()
         """
-        assert(ansible_json_encoder.default(test_input) == expected)
+        assert ansible_json_encoder.default(test_input) == expected
 
     @pytest.mark.parametrize(
         'mapping,expected',
@@ -121,15 +121,13 @@ class TestAnsibleJSONEncoder():
             ({2: 2}, {2: 2}),
             ({1: 2}, {1: 2}),
             ({2: 1}, {2: 1}),
-        ], indirect=['mapping']
+        ], indirect=['mapping'],
     )
     def test_mapping(self, ansible_json_encoder, mapping, expected):
         """
         Test for passing Mapping object to AnsibleJSONEncoder.default()
         """
-        m = mapping
-        assert(isinstance(m, Mapping))
-        assert(ansible_json_encoder.default(m) == expected)
+        assert ansible_json_encoder.default(mapping) == expected
 
     @pytest.mark.parametrize(
         'test_input,expected',
@@ -142,8 +140,7 @@ class TestAnsibleJSONEncoder():
         """
         Test for passing AnsibleVaultEncryptedUnicode to AnsibleJSONEncoder.default()
         """
-        assert(isinstance(test_input, AnsibleVaultEncryptedUnicode))
-        assert(ansible_json_encoder.default(test_input) == {'__ansible_vault': expected})
+        assert ansible_json_encoder.default(test_input) == {'__ansible_vault': expected}
 
     @pytest.mark.parametrize(
         'test_input,expected',
@@ -157,7 +154,7 @@ class TestAnsibleJSONEncoder():
         Test for the default encoder of json.JSONEncoder superclass
         by passing objects of different classes that are not tested above
         """
-        assert(ansible_json_encoder.default(test_input) == expected)
+        assert ansible_json_encoder.default(test_input) == expected
 
     @pytest.mark.parametrize('test_input', [1, 1.1, 'string', [1, 2], set('set'), True, None])
     def test_default_encoder_unserializable(self, ansible_json_encoder, test_input):
@@ -167,4 +164,4 @@ class TestAnsibleJSONEncoder():
         It must fail with TypeError 'object is not serializable'
         """
         with pytest.raises(TypeError):
-            assert(ansible_json_encoder.default(test_input))
+            ansible_json_encoder.default(test_input)
