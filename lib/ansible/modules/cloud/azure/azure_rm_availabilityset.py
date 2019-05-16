@@ -48,14 +48,14 @@ options:
     platform_update_domain_count:
         description:
             - Update domains indicate groups of virtual machines and underlying physical hardware that can be rebooted at the same time.
-        default: 5
         type: int
+        default: 5
     platform_fault_domain_count:
         description:
             - Fault domains define the group of virtual machines that share a common power source and network switch.
             - Should be between C(1) and C(3).
-        default: 3
         type: int
+        default: 3
     sku:
         description:
             - Define if the availability set supports managed disks.
@@ -100,20 +100,49 @@ state:
     description: Current state of the availability set.
     returned: always
     type: dict
-    example: {
-        "id": "/subscriptions/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/resourceGroups/v-xisuRG/providers/Microsoft.Compute/availabilitySets/myavailabilityset2",
-        "location": "eastus",
-        "name": "myavailabilityset2",
-        "platform_fault_domain_count": 2,
-        "platform_update_domain_count": 5,
-        "sku": "Aligned",
-        "tags": null
+    contains:
+        id:
+            description:
+                - Resource ID.
+            type: str
+            sample: "/subscriptions/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/resourceGroups/v-xisuRG/providers/Microsoft.Compute/availabilitySets/myavailabilityset2"
+        location:
+            description:
+                - Location where the resource lives.
+            type: str
+            sample: eastus
+        name: 
+            description:
+                - Resource name.
+            type: str
+            sample: myavailabilityset2
+        platform_fault_domain_count:
+            description:
+                - Fault domains values.
+            type: int
+            sample: 2
+        platform_update_domain_count:
+            description:
+                - Update domains values.
+            type: int
+            sample: 5
+        sku:
+            description:
+                - The availability set supports managed disks.
+            type: str
+            sample: Aligned
+        tags:
+            description:
+                - Resource tags.
+            type: str
+            sample: {env: sandbox}
     }
 
 changed:
     description: Whether or not the resource has changed
     returned: always
     type: bool
+    sample: true
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
