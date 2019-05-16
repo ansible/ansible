@@ -70,6 +70,7 @@ drs_rule_facts:
     sample: {
             "DC0_C0": [
                 {
+                    "rule_affinity": false,
                     "rule_enabled": true,
                     "rule_key": 1,
                     "rule_mandatory": true,
@@ -182,6 +183,7 @@ class VmwareDrsFactManager(PyVmomi):
                     rule_uuid=rule_obj.ruleUuid,
                     rule_vms=[vm.name for vm in rule_obj.vm],
                     rule_type="vm_vm_rule",
+                    rule_affinity=True if isinstance(rule_obj, vim.cluster.AffinityRuleSpec) else False,
                     )
 
     def normalize_vm_host_rule_spec(self, rule_obj=None, cluster_obj=None):
