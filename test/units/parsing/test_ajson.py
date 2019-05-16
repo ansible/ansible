@@ -29,8 +29,9 @@ def test_AnsibleJSONDecoder_vault():
 
 def vault_data():
     """
-    Prepares data for testing handling AnsibleVaultEncryptedUnicode
-    in AnsibleJSONEncoder.default()
+    Prepare AnsibleVaultEncryptedUnicode test data for AnsibleJSONEncoder.default().
+
+    Return a list of tuples (input, expected).
     """
 
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/ajson.json')) as f:
@@ -62,20 +63,26 @@ def vault_data():
 
 
 class TestAnsibleJSONEncoder:
+
     """
-    Namespace for testing AnsibleJSONEncoder
+    Namespace for testing AnsibleJSONEncoder.
     """
 
     @pytest.fixture(scope='class')
     def mapping(self, request):
         """
         Returns object of Mapping mock class.
+
         The object is used for testing handling of Mapping objects
         in AnsibleJSONEncoder.default().
         Using a plain dictionary instead is not suitable because
         it is handled by default encoder of the superclass (json.JSONEncoder).
         """
+
         class M(Mapping):
+
+            """Mock mapping class."""
+
             def __init__(self, *args, **kwargs):
                 self.__dict__.update(*args, **kwargs)
 
@@ -92,6 +99,7 @@ class TestAnsibleJSONEncoder:
 
     @pytest.fixture
     def ansible_json_encoder(self):
+        """Return AnsibleJSONEncoder object."""
         return AnsibleJSONEncoder()
 
     ###############
@@ -110,8 +118,7 @@ class TestAnsibleJSONEncoder:
     )
     def test_date_datetime(self, ansible_json_encoder, test_input, expected):
         """
-        Test for passing datetime.date or datetime.datetime objects
-        to AnsibleJSONEncoder.default()
+        Test for passing datetime.date or datetime.datetime objects to AnsibleJSONEncoder.default().
         """
         assert ansible_json_encoder.default(test_input) == expected
 
@@ -126,14 +133,14 @@ class TestAnsibleJSONEncoder:
     )
     def test_mapping(self, ansible_json_encoder, mapping, expected):
         """
-        Test for passing Mapping object to AnsibleJSONEncoder.default()
+        Test for passing Mapping object to AnsibleJSONEncoder.default().
         """
         assert ansible_json_encoder.default(mapping) == expected
 
     @pytest.mark.parametrize('test_input,expected', vault_data())
     def test_ansible_json_decoder_vault(self, ansible_json_encoder, test_input, expected):
         """
-        Test for passing AnsibleVaultEncryptedUnicode to AnsibleJSONEncoder.default()
+        Test for passing AnsibleVaultEncryptedUnicode to AnsibleJSONEncoder.default().
         """
         assert ansible_json_encoder.default(test_input) == {'__ansible_vault': expected}
 
@@ -146,17 +153,19 @@ class TestAnsibleJSONEncoder:
     )
     def test_default_encoder(self, ansible_json_encoder, test_input, expected):
         """
-        Test for the default encoder of json.JSONEncoder superclass
-        by passing objects of different classes that are not tested above
+        Test for the default encoder of AnsibleJSONEncoder.default().
+
+        If objects of different classes that are not tested above were passed,
+        AnsibleJSONEncoder.default() invokes 'default()' method of json.JSONEncoder superclass.
         """
         assert ansible_json_encoder.default(test_input) == expected
 
     @pytest.mark.parametrize('test_input', [1, 1.1, 'string', [1, 2], set('set'), True, None])
     def test_default_encoder_unserializable(self, ansible_json_encoder, test_input):
         """
-        Test for the default encoder of json.JSONEncoder superclass
-        by passing unserializable objects of different classes.
-        It must fail with TypeError 'object is not serializable'
+        Test for the default encoder of AnsibleJSONEncoder.default(), not serializable objects.
+
+        It must fail with TypeError 'object is not serializable'.
         """
         with pytest.raises(TypeError):
             ansible_json_encoder.default(test_input)
