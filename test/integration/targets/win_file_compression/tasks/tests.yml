@@ -161,7 +161,7 @@
     path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
 
 - name: Compress specific file
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
     compressed: yes
   register: result
@@ -177,7 +177,7 @@
       - "'Compressed' in testfile_info.stat.attributes"
 
 - name: Compress specific file (idempotent)
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
     compressed: yes
   register: result
@@ -187,7 +187,7 @@
       - "result.changed == false"
 
 - name: Uncompress specific file
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
     compressed: no
   register: result
@@ -203,7 +203,7 @@
       - "'Compressed' not in testfile_info.stat.attributes"
 
 - name: Uncompress specific file (idempotent)
-  win_compact:
+  win_file_compression:
     path: "{{ test_directory.path }}\\{{ test_win_file_compression_filename }}"
     compressed: no
   register: result
