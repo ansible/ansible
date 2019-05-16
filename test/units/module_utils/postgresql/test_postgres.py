@@ -7,14 +7,19 @@ import ansible.module_utils.postgres as pg
 
 
 class TestPostgresCommonArgSpec():
+
     """
-    postgres_common_argument_spec() test class.
-    The function just returns a dictionary with the default
-    parameters and their values for PostgreSQL modules.
-    We must compare the return and expected dictionaries.
+    Namespace for testing postgresql_common_arg_spec() function.
     """
 
     def test_postgres_common_argument_spec(self):
+        """
+        Test for postgresql_common_arg_spec() function.
+
+        The tested function just returns a dictionary with the default
+        parameters and their values for PostgreSQL modules.
+        The return and expected dictionaries must be compared.
+        """
         expected_dict = dict(
             login_user=dict(default='postgres'),
             login_password=dict(default='', no_log=True),
@@ -27,15 +32,12 @@ class TestPostgresCommonArgSpec():
             ),
             ca_cert=dict(aliases=['ssl_rootcert']),
         )
-        actual_dict = pg.postgres_common_argument_spec()
-        assert expected_dict == actual_dict
+        assert pg.postgres_common_argument_spec() == expected_dict
 
 
 @pytest.fixture
 def m_psycopg2():
-    """
-    Returns mock object for psycopg2 emulation
-    """
+    """Return mock object for psycopg2 emulation."""
     global Cursor
     Cursor = None
 
@@ -90,17 +92,19 @@ def m_psycopg2():
 
 
 class TestEnsureReqLibs():
+
     """
-    ensure_required_libs() test class
-    if there is something wrong with libs, the function
-    invokes fail_json() method of AnsibleModule object passed as an argument
-    called 'module'.
+    Namespace for testing ensure_required_libs() function.
+
+    If there is something wrong with libs, the function invokes fail_json()
+    method of AnsibleModule object passed as an argument called 'module'.
     Therefore we must check:
-    1. value of err_msg attribute of m_ansible_module mock object
+    1. value of err_msg attribute of m_ansible_module mock object.
     """
 
     @pytest.fixture
-    def m_ansible_module(self):
+    def m_ansible_module(self, scope='class'):
+        """Return an object of dummy AnsibleModule class."""
         class Dummym_ansible_module():
             def __init__(self):
                 self.params = {'ca_cert': False}
@@ -112,17 +116,13 @@ class TestEnsureReqLibs():
         return Dummym_ansible_module()
 
     def test_ensure_req_libs_has_not_psycopg2(self, m_ansible_module):
-        """
-        Test ensure_required_libs() with psycopg2 is None
-        """
+        """Test ensure_required_libs() with psycopg2 is None."""
         # HAS_PSYCOPG2 is False by default
         pg.ensure_required_libs(m_ansible_module)
         assert 'Failed to import the required Python library (psycopg2)' in m_ansible_module.err_msg
 
     def test_ensure_req_libs_has_psycopg2(self, m_ansible_module, monkeypatch):
-        """
-        Test ensure_required_libs() with psycopg2 is not None
-        """
+        """Test ensure_required_libs() with psycopg2 is not None."""
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
 
         pg.ensure_required_libs(m_ansible_module)
@@ -130,8 +130,7 @@ class TestEnsureReqLibs():
 
     def test_ensure_req_libs_ca_cert(self, m_ansible_module, m_psycopg2, monkeypatch):
         """
-        Test ensure_required_libs() with module.params['ca_cert']
-        and a suitable psycopg2 version (is the default in m_psycopg2 mock class)
+        Test with module.params['ca_cert'], psycopg2 version is suitable.
         """
         m_ansible_module.params['ca_cert'] = True
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
@@ -142,8 +141,7 @@ class TestEnsureReqLibs():
 
     def test_ensure_req_libs_ca_cert_low_psycopg2_ver(self, m_ansible_module, m_psycopg2, monkeypatch):
         """
-        Test ensure_required_libs() with module.params['ca_cert']
-        and a wrong psycopg2 version
+        Test with module.params['ca_cert'], psycopg2 version is wrong.
         """
         m_ansible_module.params['ca_cert'] = True
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
@@ -157,19 +155,22 @@ class TestEnsureReqLibs():
 
 
 class TestConnectToDb():
+
     """
-    connect_to_db() test class.
+    Namespace for testing connect_to_db() function.
+
     When some connection errors occure connect_to_db() caught any of them
     and invoke fail_json() or warn() methods of AnsibleModule object
     depending on the passed parameters.
     connect_to_db may return db_connection object or None if errors occured.
     Therefore we must check:
-    1. values of err_msg and warn_msg attributes of m_ansible_module mock object
-    2. types of return objects (db_connection and cursor)
+    1. Values of err_msg and warn_msg attributes of m_ansible_module mock object.
+    2. Types of return objects (db_connection and cursor).
     """
 
     @pytest.fixture
-    def m_ansible_module(self):
+    def m_ansible_module(self, scope='class'):
+        """Return an object of dummy AnsibleModule class."""
         class DummyAnsibleModule():
             def __init__(self):
                 self.params = pg.postgres_common_argument_spec()
@@ -185,9 +186,7 @@ class TestConnectToDb():
         return DummyAnsibleModule()
 
     def test_connect_to_db(self, m_ansible_module, monkeypatch, m_psycopg2):
-        """
-        Test connect_to_db(), common test
-        """
+        """Test connect_to_db(), common test."""
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
 
@@ -201,9 +200,7 @@ class TestConnectToDb():
         assert 'Database name has not been passed' in m_ansible_module.warn_msg
 
     def test_session_role(self, m_ansible_module, monkeypatch, m_psycopg2):
-        """
-        Test connect_to_db(), switch on session_role
-        """
+        """Test connect_to_db(), switch on session_role."""
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
 
@@ -219,7 +216,7 @@ class TestConnectToDb():
 
     def test_warn_db_default_non_default(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
-        Test connect_to_db(), warn_db_default arg passed as False (by default is True)
+        Test connect_to_db(), warn_db_default arg passed as False (by default is True).
         """
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
@@ -238,7 +235,7 @@ class TestConnectToDb():
 
     def test_fail_on_conn_true(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
-        Test connect_to_db(), fail_on_conn arg passed as True (the default behavior)
+        Test connect_to_db(), fail_on_conn arg passed as True (the default behavior).
         """
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
@@ -252,7 +249,7 @@ class TestConnectToDb():
 
     def test_fail_on_conn_false(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
-        Test connect_to_db(), fail_on_conn arg passed as False
+        Test connect_to_db(), fail_on_conn arg passed as False.
         """
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
@@ -267,8 +264,7 @@ class TestConnectToDb():
 
     def test_autocommit_true(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
-        Test connect_to_db(), autocommit arg passed as True
-        (the default is False)
+        Test connect_to_db(), autocommit arg passed as True (the default is False).
         """
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
 
