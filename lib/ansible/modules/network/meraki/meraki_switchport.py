@@ -245,34 +245,32 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
-# param_map isn't used but leaving in as it is a more efficient method for implementation later
-param_map = {'accessPolicyNumber': 'access_policy_number',
-             'allowedVlans': 'allowed_vlans',
+param_map = {'access_policy_number': 'accessPolicyNumber',
+             'allowed_vlans': 'allowedVlans',
              'enabled': 'enabled',
-             'isolationEnabled': 'isolation_enabled',
-             'linkNegotiation': 'link_negotiation',
+             'isolation_enabled': 'isolationEnabled',
+             'link_negotiation': 'linkNegotiation',
              'name': 'name',
              'number': 'number',
-             'poeEnabled': 'poe_enabled',
-             'rstpEnabled': 'rstp_enabled',
-             'stpGuard': 'stp_guard',
+             'poe_enabled': 'poeEnabled',
+             'rstp_enabled': 'rstpEnabled',
+             'stp_guard': 'stpGuard',
              'tags': 'tags',
              'type': 'type',
              'vlan': 'vlan',
-             'voiceVlan': 'voice_vlan',
+             'voice_vlan': 'voiceVlan',
              }
 
 
-def list_to_csv(items):
-    csv = ''
-    count = 0
-    for item in items:
-        if count == len(items) - 1:
-            csv = csv + str(item)
-        else:
-            csv = csv + str(item) + ','
-        count += 1
-    return csv
+def sort_vlans(meraki, vlans):
+    converted = set()
+    for vlan in vlans:
+        converted.add(int(vlan))
+    vlans_sorted = sorted(converted)
+    vlans_str = []
+    for vlan in vlans_sorted:
+        vlans_str.append(str(vlan))
+    return ','.join(vlans_str)
 
 
 def main():
@@ -309,18 +307,13 @@ def main():
     meraki = MerakiModule(module, function='switchport')
     meraki.params['follow_redirects'] = 'all'
 
-    # argument checks
-    # if meraki.params['type'] == 'access':
-    #     if meraki.params['allowed_vlans']:
-    #         meraki.fail_json(msg='allowed_vlans is not allowed on access ports')
     if meraki.params['type'] == 'trunk':
         if not meraki.params['allowed_vlans']:
             meraki.params['allowed_vlans'] = ['all']  # Backdoor way to set default without conflicting on access
 
-    # TODO: Add support for serial in the construct_path() method
-    query_urls = {'switchport': '/devices/serial/switchPorts'}
-    query_url = {'switchport': '/devices/serial/switchPorts/'}
-    update_url = {'switchport': '/devices/serial/switchPorts/'}
+    query_urls = {'switchport': '/devices/{serial}/switchPorts'}
+    query_url = {'switchport': '/devices/{serial}/switchPorts/{number}'}
+    update_url = {'switchport': '/devices/{serial}/switchPorts/{number}'}
 
     meraki.url_catalog['get_all'].update(query_urls)
     meraki.url_catalog['get_one'].update(query_url)
@@ -341,64 +334,53 @@ def main():
     # part where your module will do what it needs to do)
     if meraki.params['state'] == 'query':
         if meraki.params['number']:
-            path = meraki.construct_path('get_one') + meraki.params['number']
-            path = path.replace('serial', meraki.params['serial'])
+            path = meraki.construct_path('get_one', custom={'serial': meraki.params['serial'],
+                                                            'number': meraki.params['number'],
+                                                            })
             response = meraki.request(path, method='GET')
             meraki.result['data'] = response
         else:
-            path = meraki.construct_path('get_all')
-            path = path.replace('serial', meraki.params['serial'])
+            path = meraki.construct_path('get_all', custom={'serial': meraki.params['serial']})
             response = meraki.request(path, method='GET')
             meraki.result['data'] = response
     elif meraki.params['state'] == 'present':
         payload = dict()
-        proposed = dict()
 
-        # if meraki.params['type'] == 'access':
-        payload['name'] = meraki.params['name']
-        payload['tags'] = meraki.params['tags']
-        payload['enabled'] = meraki.params['enabled']
-        payload['poeEnabled'] = meraki.params['poe_enabled']
-        payload['type'] = meraki.params['type']
-        payload['vlan'] = meraki.params['vlan']
-        payload['voiceVlan'] = meraki.params['voice_vlan']
-        payload['isolationEnabled'] = meraki.params['isolation_enabled']
-        payload['rstpEnabled'] = meraki.params['rstp_enabled']
-        payload['stpGuard'] = meraki.params['stp_guard']
-        payload['accessPolicyNumber'] = meraki.params['access_policy_number']
-        payload['linkNegotiation'] = meraki.params['link_negotiation']
-        payload['allowedVlans'] = list_to_csv(meraki.params['allowed_vlans'])
-        proposed['name'] = meraki.params['name']
-        proposed['tags'] = meraki.params['tags']
-        proposed['enabled'] = meraki.params['enabled']
-        proposed['poeEnabled'] = meraki.params['poe_enabled']
-        proposed['type'] = meraki.params['type']
-        proposed['vlan'] = meraki.params['vlan']
-        proposed['voiceVlan'] = meraki.params['voice_vlan']
-        proposed['isolationEnabled'] = meraki.params['isolation_enabled']
-        proposed['rstpEnabled'] = meraki.params['rstp_enabled']
-        proposed['stpGuard'] = meraki.params['stp_guard']
-        proposed['accessPolicyNumber'] = meraki.params['access_policy_number']
-        proposed['linkNegotiation'] = meraki.params['link_negotiation']
-        proposed['allowedVlans'] = list_to_csv(meraki.params['allowed_vlans'])
+        for k, v in meraki.params.items():
+            try:
+                payload[param_map[k]] = v
+            except KeyError:
+                pass
+
+        allowed = set()  # Use a set to remove duplicate items
+        if meraki.params['allowed_vlans'][0] == 'all':
+            allowed.add('all')
+        else:
+            for vlan in meraki.params['allowed_vlans']:
+                allowed.add(str(vlan))
+            if meraki.params['vlan'] is not None:
+                allowed.add(str(meraki.params['vlan']))
+        if len(allowed) > 1:  # Convert from list to comma separated
+            payload['allowedVlans'] = sort_vlans(meraki, allowed)
+        else:
+            payload['allowedVlans'] = next(iter(allowed))
 
         # Exceptions need to be made for idempotency check based on how Meraki returns
-        if meraki.params['type'] == 'trunk':
-            if meraki.params['vlan'] and meraki.params['allowed_vlans'] != 'all':
-                proposed['allowedVlans'] = str(meraki.params['vlan']) + ',' + proposed['allowedVlans']
-        else:
+        if meraki.params['type'] == 'access':
             if not meraki.params['vlan']:  # VLAN needs to be specified in access ports, but can't default to it
                 payload['vlan'] = 1
-                proposed['vlan'] = 1
 
-        query_path = meraki.construct_path('get_one') + meraki.params['number']
-        query_path = query_path.replace('serial', meraki.params['serial'])
+        proposed = payload.copy()
+        query_path = meraki.construct_path('get_one', custom={'serial': meraki.params['serial'],
+                                                              'number': meraki.params['number'],
+                                                              })
         original = meraki.request(query_path, method='GET')
         if meraki.params['type'] == 'trunk':
             proposed['voiceVlan'] = original['voiceVlan']  # API shouldn't include voice VLAN on a trunk port
         if meraki.is_update_required(original, proposed, optional_ignore=('number')):
-            path = meraki.construct_path('update') + meraki.params['number']
-            path = path.replace('serial', meraki.params['serial'])
+            path = meraki.construct_path('update', custom={'serial': meraki.params['serial'],
+                                                           'number': meraki.params['number'],
+                                                           })
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             meraki.result['data'] = response
             meraki.result['changed'] = True
