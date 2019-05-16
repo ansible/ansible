@@ -152,13 +152,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 params['vars'] = role_include.vars
 
             params['from_include'] = from_include
+            if parent_role:
+                params['parent_roles'] = parent_role._parents + [parent_role]
 
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
                     if hashed_params == entry:
-                        if parent_role:
-                            role_obj.add_parent(parent_role)
                         return role_obj
 
             r = Role(play=play, from_files=from_files, from_include=from_include)
