@@ -26,22 +26,12 @@ author:
 options:
   hostname:
     version_added: "2.9"
+    aliases: ['host']
   port:
     version_added: "2.9"
   username:
     version_added: "2.9"
-  host:
-    description:
-      - Use C(hostname) instead like the other VMware modules.
-      - The vCenter or ESXi server on which the datastore is available.
-      - This option is deprecated and will eventually be removed in 2.12.
-    aliases: ['hostname']
-  login:
-    description:
-      - Use C(username) instead like the other VMware modules.
-      - The login name to authenticate on the vCenter or ESXi server.
-      - This option is deprecated and will eventually be removed in 2.12.
-    aliases: ['username']
+    aliases: ['login']
   src:
     description:
       - The file to push to vCenter.
@@ -143,8 +133,8 @@ def vmware_path(datastore, datacenter, path):
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(
-        host=dict(required=False, removedin_version='2.12'),
-        login=dict(required=False, removedin_version='2.12'),
+        hostname=dict(required=False, aliases=['host']),
+        username=dict(required=False, aliases=['login']),
         src=dict(required=True, aliases=['name']),
         datacenter=dict(required=False),
         datastore=dict(required=True),
@@ -158,13 +148,13 @@ def main():
         supports_check_mode=False,
     )
 
-    if module.params['host'] is not None:
+    if module.params.get('host'):
         module.deprecate("The 'host' option is being replaced by 'hostname'", version='2.12')
-    if module.params['login'] is not None:
+    if module.params.get('login'):
         module.deprecate("The 'login' option is being replaced by 'username'", version='2.12')
 
-    hostname = module.params['hostname'] or module.params['host']
-    username = module.params['username'] or module.params['login']
+    hostname = module.params['hostname']
+    username = module.params['username']
     password = module.params.get('password')
     src = module.params.get('src')
     datacenter = module.params.get('datacenter')
