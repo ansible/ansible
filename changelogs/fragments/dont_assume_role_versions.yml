@@ -1,0 +1,2 @@
+bugfixes:
+    - new code assumed role_versions always were present event though rest of code does not.

@@ -200,6 +200,7 @@ class GalaxyAPI(object):
         The url comes from the 'related' field of the role.
         """
 
+        results = []
         try:
             url = '%s/roles/%s/%s/?page_size=50' % (self.baseurl, role_id, related)
             data = self.__call_galaxy(url)
@@ -210,9 +211,9 @@ class GalaxyAPI(object):
                 data = self.__call_galaxy(url)
                 results += data['results']
                 done = (data.get('next_link', None) is None)
-            return results
-        except Exception:
-            return None
+        except Exception as e:
+            display.vvvv("Unable to retrive role (id=%s) data (%s), but this is not fatal so we continue: %s" % (role_id, related, to_native(e)))
+        return results
 
     @g_connect
     def get_list(self, what):
