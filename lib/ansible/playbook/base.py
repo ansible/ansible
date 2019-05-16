@@ -23,7 +23,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
-from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
+from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_keys
 
 display = Display()
 
@@ -459,21 +459,16 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         list into a single dictionary.
         '''
 
-        def _validate_variable_keys(ds):
-            for key in ds:
-                if not isidentifier(key):
-                    raise TypeError("'%s' is not a valid variable name" % key)
-
         try:
             if isinstance(ds, dict):
-                _validate_variable_keys(ds)
+                validate_variable_keys(ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
                 all_vars = self.vars
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
-                    _validate_variable_keys(item)
+                    validate_variable_keys(item)
                     all_vars = combine_vars(all_vars, item)
                 return all_vars
             elif ds is None:

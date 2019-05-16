@@ -28,7 +28,7 @@ from json import dumps
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
@@ -135,6 +135,11 @@ def load_extra_vars(loader):
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
 
+        try:
+            validate_variable_keys(data)
+        except TypeError as e:
+            raise AnsibleError("Invalid variable name in extra vars specified: %s" % e)
+
         if isinstance(data, MutableMapping):
             extra_vars = combine_vars(extra_vars, data)
         else:
@@ -195,3 +200,19 @@ def isidentifier(ident):
         return False
 
     return True
+
+
+def validate_variable_keys(data):
+    """
+    This checks that all variable names are valid or raises an error
+
+    :arg data: dict of 'variable name': value
+    :raises TypeError: if one of the variable names is not valid
+    """
+
+    if not isinstance(data, dict):
+        raise AnsibleAssertionError("'data' must be of type <dict>")
+
+    for key in data:
+        if not isidentifier(key):
+            raise TypeError("'%s' is not a valid variable name" % key)
