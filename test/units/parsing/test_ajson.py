@@ -105,7 +105,7 @@ class TestAnsibleJSONEncoder:
             (date(2019, 5, 14), '2019-05-14'),
             (date(2020, 5, 14), '2020-05-14'),
             (datetime(2019, 6, 15, 14, 45, tzinfo=tz('UTC')), '2019-06-15T14:45:00+00:00'),
-            (datetime(2019, 6, 15, 14, 45, tzinfo=tz("Europe/Helsinki")), '2019-06-15T14:45:00+01:40'),
+            (datetime(2019, 6, 15, 14, 45, tzinfo=tz('Europe/Helsinki')), '2019-06-15T14:45:00+01:40'),
         ]
     )
     def test_date_datetime(self, ansible_json_encoder, test_input, expected):
