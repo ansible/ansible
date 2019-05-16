@@ -30,8 +30,8 @@ description:
 version_added: "2.4"
 options:
   eos_use_sessions:
-    type: int
-    default: 1
+    type: boolean
+    default: yes
     description:
       - Specifies if sessions should be used on remote host or not
     env:
@@ -214,20 +214,16 @@ class Cliconf(CliconfBase):
         return diff
 
     def supports_sessions(self):
-        use_session = self.get_option('eos_use_sessions')
-        try:
-            use_session = int(use_session)
-        except ValueError:
-            pass
-
-        if not bool(use_session):
+        if not self.get_option('eos_use_sessions'):
             self._session_support = False
         else:
             if self._session_support:
                 return self._session_support
 
-            response = self.get('show configuration sessions')
-            self._session_support = 'error' not in response
+            try:
+                self.get('show configuration sessions')
+            except AnsibleConnectionFailure:
+                self._session_support = False
 
         return self._session_support
 
