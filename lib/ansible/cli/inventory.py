@@ -228,13 +228,14 @@ class InventoryCLI(CLI):
     def _get_host_variables(self, host):
 
         if context.CLIARGS['export']:
+            # only get vars defined directly host
             hostvars = host.get_vars()
 
-            # FIXME: add switch to skip vars plugins
-            # add vars plugin info
+            # FIXME: add switch to skip vars plugins, add vars plugin info
             for inventory_dir in self.inventory._sources:
                 hostvars = combine_vars(hostvars, self.get_plugin_vars(inventory_dir, host))
         else:
+            # get all vars flattened by host, but skip magic hostvars
             hostvars = self.vm.get_vars(host=host, include_hostvars=False)
 
         return self._remove_internal(hostvars)
