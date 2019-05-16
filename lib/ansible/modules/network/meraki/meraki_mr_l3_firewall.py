@@ -20,6 +20,7 @@ short_description: Manage MR access point layer 3 firewalls in the Meraki cloud
 version_added: "2.7"
 description:
 - Allows for creation, management, and visibility into layer 3 firewalls implemented on Meraki MR access points.
+- Module is not idempotent as of current release.
 options:
     state:
         description:
