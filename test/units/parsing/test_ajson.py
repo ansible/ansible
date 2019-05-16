@@ -55,12 +55,10 @@ def vault_data():
                   '93238370a313330316263373938326162386433313336613532653538'
                   '376662306435\n3338\n')
 
-    return {
-        'data_0': data_0,
-        'data_1': data_1,
-        'expected_0': expected_0,
-        'expected_1': expected_1,
-    }
+    return [
+        (data_0, expected_0),
+        (data_1, expected_1),
+    ]
 
 
 class TestAnsibleJSONEncoder:
@@ -132,13 +130,7 @@ class TestAnsibleJSONEncoder:
         """
         assert ansible_json_encoder.default(mapping) == expected
 
-    @pytest.mark.parametrize(
-        'test_input,expected',
-        [
-            (vault_data()['data_0'], vault_data()['expected_0']),
-            (vault_data()['data_1'], vault_data()['expected_1']),
-        ]
-    )
+    @pytest.mark.parametrize('test_input,expected', vault_data())
     def test_ansible_json_decoder_vault(self, ansible_json_encoder, test_input, expected):
         """
         Test for passing AnsibleVaultEncryptedUnicode to AnsibleJSONEncoder.default()
