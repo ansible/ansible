@@ -10,6 +10,7 @@
         setup_attach_host: true
         setup_datastore: true
         setup_virtualmachines: true
+
     - name: Create DRS VM group
       vmware_drs_group:
         hostname: "{{ vcenter_hostname }}"
@@ -20,7 +21,7 @@
         cluster_name: '{{ ccr1 }}'
         datacenter_name: '{{ dc1 }}'
         group_name: DC0_C0_VM_GR1
-        vms: '{{ infra.vm_list }}'
+        vms: "{{ virtual_machines_in_cluster | map(attribute='name') | list }}"
         state: present
       register: drs_vm_group_01_results
     - debug: var=drs_vm_group_01_results
@@ -35,9 +36,7 @@
         cluster_name: '{{ ccr1 }}'
         datacenter_name: '{{ dc1 }}'
         group_name: DC0_C0_HOST_GR1
-        hosts:
-          - '{{ hostvars[esxi1].ansible_host }}'
-          - '{{ hostvars[esxi2].ansible_host }}'
+        hosts: '{{ esxi_hosts }}'
         state: present
       register: drs_host_group_01_results
     - debug: var=drs_host_group_01_results

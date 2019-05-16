@@ -18,6 +18,7 @@
     folder_type: vm
     state: present
     validate_certs: no
+  register: dest_folder
 
 # Testcase 0001: Move vm and get changed status
 - name: Move VM (Changed)
@@ -27,8 +28,9 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ infra.vm_list[0] }}"
-    dest_folder: '/F0/DC0/vm/f1'
+    name: "{{ virtual_machines[0].name }}"
+    # Depends-On: https://github.com/ansible/ansible/pull/55237
+    dest_folder: "{{ dest_folder.result.path }}"
   register: vm_facts_0001
 
 
@@ -40,8 +42,8 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ infra.vm_list[0] }}"
-    dest_folder: 'F0/DC0/vm/f1'
+    name: "{{ virtual_machines[0].name }}"
+    dest_folder: "{{ dest_folder.result.path }}"
   register: vm_facts_0002
 
 - debug:

@@ -5,7 +5,7 @@
 - import_role:
     name: prepare_vmware_tests
 
-- when: vcsim is defined or groups['esxi-lab'] | length >= 3
+- when: vcsim is defined or esxi_hosts | length >= 3
   block:
   - name: Gather DRS group facts from given cluster
     vmware_drs_group_facts:

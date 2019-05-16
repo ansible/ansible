@@ -70,7 +70,7 @@
       password: "{{ vcenter_password }}"
       name: disk_mode_d1_c1_f0
       guest_id: centos64Guest
-      datacenter: "{{ (item|basename).split('_')[0] }}"
+      datacenter: "{{ dc1 }}"
       hardware:
         num_cpus: 1
         memory_mb: 512

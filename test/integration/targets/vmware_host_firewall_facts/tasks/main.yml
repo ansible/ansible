@@ -4,7 +4,7 @@
 - import_role:
     name: prepare_vmware_tests
   vars:
-    setup_esxi_instance: true
+    setup_attach_host: true
 
 - name: Gather firewall facts for a given ESXi
   vmware_host_firewall_facts:

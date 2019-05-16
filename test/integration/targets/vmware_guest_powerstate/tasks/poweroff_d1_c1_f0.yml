@@ -40,7 +40,7 @@
     name: "{{ item|basename }}"
     state: powered-off
     folder: "{{ item|dirname }}"
-  with_items: "{{ vmlist['json'] }}"
+  with_items: "{{ virtual_machines }}"
   register: poweroff_d1_c1_f0
 
 - debug: var=poweroff_d1_c1_f0
