@@ -1,4 +1,10 @@
 releases:
+  2.8.0:
+    codename: How Many More Times
+    fragments:
+    - 44811-xml-insertbefore-and-insertafter-parameters.yaml
+    - v2.8.0_summary.yaml
+    release_date: '2019-05-16'
   2.8.0a1:
     codename: How Many More Times
     fragments:
