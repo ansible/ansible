@@ -1,8 +1,8 @@
 .. _RHV_ansible:
 
-******************
+***************
 Ansible for RHV
-******************
+***************
 
 Welcome to the Ansible for RHV Guide!
 
