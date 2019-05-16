@@ -13,11 +13,9 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CamelConversion.psm1 PSA
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 PSProvideCommentHelp  # need to agree on best format for comment location
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSCustomUseLiteralPath
-lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSProvideCommentHelp
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSAvoidUsingWMICmdlet
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSUseApprovedVerbs
-lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 PSAvoidTrailingWhitespace
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.SID.psm1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/async_status.ps1 PSCustomUseLiteralPath

@@ -1498,6 +1498,7 @@ $tests = [Ordered]@{
             $_.Exception.InnerException.Message | Assert-Equals -Expected "The directory is not empty: '$dir_path'"
             $failed = $true
         }
+        $failed | Assert-Equals -Expected $true
 
         [Ansible.IO.FileSystem]::Exists($nested_dir) | Assert-Equals -Expected $true
         [Ansible.IO.FileSystem]::DirectoryExists($nested_dir) | Assert-Equals -Expected $true
@@ -2108,7 +2109,7 @@ $path_tests = [Ordered]@{
         [Ansible.IO.Path]::GetPathRoot("\\server\share") | Assert-Equals -Expected "\\server\share"
         [Ansible.IO.Path]::GetPathRoot("\\?\UNC\server\share") | Assert-Equals -Expected "\\?\UNC\server\share"
         [Ansible.IO.Path]::GetPathRoot("\\server\share\path") | Assert-Equals -Expected "\\server\share"
-        [Ansible.IO.Path]::GetPathRoot("\\?\UNC\server\share\path") | Assert-Equals -Expected "\\?\UNC\server\share" 
+        [Ansible.IO.Path]::GetPathRoot("\\?\UNC\server\share\path") | Assert-Equals -Expected "\\?\UNC\server\share"
     }
 }
 
