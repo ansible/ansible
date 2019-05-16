@@ -1,0 +1,51 @@
+# Test code for the vmware_folder_info module.
+# Copyright: (c) 2019, David Hewitt (@davidmhewitt) <davidmhewitt@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- name: create example toplevel folder
+  vcenter_folder:
+    <<: &vcenter_folder_data
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ dc1 | basename }}"
+      validate_certs: no
+    folder_name: "toplevel"
+
+- name: create an example child folder
+  vcenter_folder:
+    <<: *vcenter_folder_data
+    folder_name: "child_folder"
+    parent_folder: "toplevel"    
+
+# Testcase 0001: Get details about folders
+- name: get info about folders
+  vmware_folder_info:
+    <<: *vcenter_folder_data
+  register: folder_info_0001
+
+- debug: var=folder_info_0001
+
+- assert:
+    that:
+      - "{{ item }} is defined"
+  with_items:
+  - folder_info_0001['folder_info']
+  - folder_info_0001['folder_info']['datastoreFolders']
+  - folder_info_0001['folder_info']['hostFolders']
+  - folder_info_0001['folder_info']['vmFolders']
+  - folder_info_0001['folder_info']['networkFolders']
+  - folder_info_0001['folder_info']['vmFolders']['subfolders']['toplevel']
+  - folder_info_0001['folder_info']['vmFolders']['subfolders']['toplevel']['subfolders']['child_folder']
+
+- assert:
+    that:
+      - "folder_info_0001['folder_info']['datastoreFolders']['path'] == \"/{{ dc1 | basename }}/datastore\""
+      - "folder_info_0001['folder_info']['hostFolders']['path'] == \"/{{ dc1 | basename }}/host\""
+      - "folder_info_0001['folder_info']['vmFolders']['path'] == \"/{{ dc1 | basename }}/vm\""
+      - "folder_info_0001['folder_info']['networkFolders']['path'] == \"/{{ dc1 | basename }}/network\""
+      - "folder_info_0001['folder_info']['vmFolders']['subfolders']['toplevel']['path'] == \"/{{ dc1 | basename }}/vm/toplevel\""
+      - "folder_info_0001['folder_info']['vmFolders']['subfolders']['toplevel']['subfolders']['child_folder']['path'] == \"/{{ dc1 | basename }}/vm/toplevel/child_folder\""
