@@ -50,7 +50,7 @@ options:
         default: false
         type: bool
     waf_regional:
-        description: Wether to use waf_regional module. Defaults to false
+        description: Whether to use waf_regional module. Defaults to false
         default: false
         required: no
         type: bool
