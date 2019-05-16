@@ -22,6 +22,7 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
 .. toctree::
    :maxdepth: 1
    :glob:
+   :reversed:
    :caption: Ansible Release Roadmaps
 
    ROADMAP*
