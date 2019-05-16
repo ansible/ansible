@@ -54,7 +54,7 @@ options:
         default: false
         required: no
         type: bool
-        version_added: "2.8"
+        version_added: "2.9"
 '''
 
 EXAMPLES = '''
