@@ -160,7 +160,7 @@ def list_rules(client, module):
         try:
             return list_regional_rules_with_backoff(client)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg='Could not list WAF rules')
+            module.fail_json_aws(e, msg='Could not list WAF Regional rules')
 
 
 def list_regional_rules(client, module):
