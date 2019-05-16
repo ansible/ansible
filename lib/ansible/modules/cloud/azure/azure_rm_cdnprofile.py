@@ -33,7 +33,7 @@ options:
             - Valid Azure location. Defaults to location of the resource group.
     sku:
         description:
-            - The pricing tier (defines a CDN provider, feature list and rate) of the CDN profile.
+            - The pricing tier, defines a CDN provider, feature list and rate of the CDN profile.
             - Detailed pricing can be find at U(https://azure.microsoft.com/en-us/pricing/details/cdn/).
         choices:
             - standard_verizon
