@@ -1,8 +1,13 @@
+.. _oVirt_module_development:
+
 oVirt Ansible Modules
 =====================
 
 This is a set of modules for interacting with oVirt/RHV. This document
-serves as developer coding guidelines for creating oVIRT/RHV modules.
+serves as developer coding guidelines for creating oVirt/RHV modules.
+
+.. contents::
+   :local:
 
 Naming
 ------
@@ -39,15 +44,14 @@ Libraries
    along with ``ovirt_full_argument_spec``.
 -  All facts modules should use ``extends_documentation_fragment``:
    ``ovirt_facts`` to go along with ``ovirt_facts_full_argument_spec``.
--  Functions that are common to all modules should be implemeneted in the 
+-  Functions that are common to all modules should be implemeneted in the
    ``module_utils/ovirt.py`` file, so they can be reused.
 -  Python SDK version 4 must be used.
 
 New module development
 ----------------------
 
-Please read 
-`link <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules.html>`__,
+Please read :ref:`developing_modules`,
 first to know what common properties, functions and features every module must
 have.
 
@@ -134,7 +138,7 @@ entity of the SDK.
 
     try:
         auth = module.params.pop('auth')
-        
+
         # Create the connection to the oVirt engine:
         connection = create_connection(auth)
 
@@ -170,7 +174,7 @@ entity of the SDK.
         # parameter:
         connection.close(logout=auth.get('token') is None)
 
-If your module must support action handling (for example, 
+If your module must support action handling (for example,
 virtual machine start) you must ensure that you handle the states of the
 virtual machine correctly, and document the behavior of the
 module:
@@ -210,8 +214,8 @@ Testing
 -------
 
 -  Integration testing is currently done in oVirt's CI system
-   `here <http://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
+   `on Jenkins <http://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
    and
-   `here <https://github.com/oVirt/ovirt-system-tests/tree/master/ansible-suite-master/>`__.
--  Please consider using these integrationtests if you create a new module or add a new feature to an existing
+   `on GitHub <https://github.com/oVirt/ovirt-system-tests/tree/master/ansible-suite-master/>`__.
+-  Please consider using these integration tests if you create a new module or add a new feature to an existing
    module.
