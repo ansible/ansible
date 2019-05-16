@@ -28,7 +28,7 @@ class TestPostgresCommonArgSpec():
             ca_cert=dict(aliases=['ssl_rootcert']),
         )
         actual_dict = pg.postgres_common_argument_spec()
-        assert(expected_dict == actual_dict)
+        assert expected_dict == actual_dict
 
 
 @pytest.fixture
@@ -117,7 +117,7 @@ class TestEnsureReqLibs():
         """
         # HAS_PSYCOPG2 is False by default
         pg.ensure_required_libs(m_ansible_module)
-        assert('Failed to import the required Python library (psycopg2)' in m_ansible_module.err_msg)
+        assert 'Failed to import the required Python library (psycopg2)' in m_ansible_module.err_msg
 
     def test_ensure_req_libs_has_psycopg2(self, m_ansible_module, monkeypatch):
         """
@@ -126,7 +126,7 @@ class TestEnsureReqLibs():
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
 
         pg.ensure_required_libs(m_ansible_module)
-        assert(m_ansible_module.err_msg == '')
+        assert m_ansible_module.err_msg == ''
 
     def test_ensure_req_libs_ca_cert(self, m_ansible_module, m_psycopg2, monkeypatch):
         """
@@ -138,7 +138,7 @@ class TestEnsureReqLibs():
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
 
         pg.ensure_required_libs(m_ansible_module)
-        assert(m_ansible_module.err_msg == '')
+        assert m_ansible_module.err_msg == ''
 
     def test_ensure_req_libs_ca_cert_low_psycopg2_ver(self, m_ansible_module, m_psycopg2, monkeypatch):
         """
@@ -153,7 +153,7 @@ class TestEnsureReqLibs():
         monkeypatch.setattr(pg, 'psycopg2', psycopg2)
 
         pg.ensure_required_libs(m_ansible_module)
-        assert('psycopg2 must be at least 2.4.3' in m_ansible_module.err_msg)
+        assert 'psycopg2 must be at least 2.4.3' in m_ansible_module.err_msg
 
 
 class TestConnectToDb():
@@ -194,11 +194,11 @@ class TestConnectToDb():
         db_connection = pg.connect_to_db(m_ansible_module)
         cursor = db_connection.cursor()
         # if errors, db_connection returned as None:
-        assert(isinstance(db_connection, DbConnection))
-        assert(isinstance(cursor, Cursor))
-        assert(m_ansible_module.err_msg == '')
+        assert isinstance(db_connection, DbConnection)
+        assert isinstance(cursor, Cursor)
+        assert m_ansible_module.err_msg == ''
         # The default behaviour, normal in this case:
-        assert('Database name has not been passed' in m_ansible_module.warn_msg)
+        assert 'Database name has not been passed' in m_ansible_module.warn_msg
 
     def test_session_role(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
@@ -211,11 +211,11 @@ class TestConnectToDb():
         db_connection = pg.connect_to_db(m_ansible_module)
         cursor = db_connection.cursor()
         # if errors, db_connection returned as None:
-        assert(isinstance(db_connection, DbConnection))
-        assert(isinstance(cursor, Cursor))
-        assert(m_ansible_module.err_msg == '')
+        assert isinstance(db_connection, DbConnection)
+        assert isinstance(cursor, Cursor)
+        assert m_ansible_module.err_msg == ''
         # The default behaviour, normal in this case:
-        assert('Database name has not been passed' in m_ansible_module.warn_msg)
+        assert 'Database name has not been passed' in m_ansible_module.warn_msg
 
     def test_warn_db_default_non_default(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
@@ -227,10 +227,10 @@ class TestConnectToDb():
         db_connection = pg.connect_to_db(m_ansible_module, warn_db_default=False)
         cursor = db_connection.cursor()
         # if errors, db_connection returned as None:
-        assert(isinstance(db_connection, DbConnection))
-        assert(isinstance(cursor, Cursor))
-        assert(m_ansible_module.err_msg == '')
-        assert(m_ansible_module.warn_msg == '')
+        assert isinstance(db_connection, DbConnection)
+        assert isinstance(cursor, Cursor)
+        assert m_ansible_module.err_msg == ''
+        assert m_ansible_module.warn_msg == ''
         # pay attention that warn_db_defaul=True has been checked
         # in the previous tests by
         # assert('Database name has not been passed' in m_ansible_module.warn_msg)
@@ -247,8 +247,8 @@ class TestConnectToDb():
 
         db_connection = pg.connect_to_db(m_ansible_module, fail_on_conn=True)
 
-        assert('unable to connect to database' in m_ansible_module.err_msg)
-        assert(db_connection is None)
+        assert 'unable to connect to database' in m_ansible_module.err_msg
+        assert db_connection is None
 
     def test_fail_on_conn_false(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
@@ -261,9 +261,9 @@ class TestConnectToDb():
 
         db_connection = pg.connect_to_db(m_ansible_module, fail_on_conn=False)
 
-        assert(m_ansible_module.err_msg == '')
-        assert('PostgreSQL server is unavailable' in m_ansible_module.warn_msg)
-        assert(db_connection is None)
+        assert m_ansible_module.err_msg == ''
+        assert 'PostgreSQL server is unavailable' in m_ansible_module.warn_msg
+        assert db_connection is None
 
     def test_autocommit_true(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
@@ -279,9 +279,9 @@ class TestConnectToDb():
         cursor = db_connection.cursor()
 
         # if errors, db_connection returned as None:
-        assert(isinstance(db_connection, DbConnection))
-        assert(isinstance(cursor, Cursor))
-        assert(m_ansible_module.err_msg == '')
+        assert isinstance(db_connection, DbConnection)
+        assert isinstance(cursor, Cursor)
+        assert m_ansible_module.err_msg == ''
 
         # case 2: psycopg2.__version < 2.4.2
         m_psycopg2.__version__ = '2.4.1'
@@ -291,6 +291,6 @@ class TestConnectToDb():
         cursor = db_connection.cursor()
 
         # if errors, db_connection returned as None:
-        assert(isinstance(db_connection, DbConnection))
-        assert(isinstance(cursor, Cursor))
-        assert('psycopg2 must be at least 2.4.3' in m_ansible_module.err_msg)
+        assert isinstance(db_connection, DbConnection)
+        assert isinstance(cursor, Cursor)
+        assert 'psycopg2 must be at least 2.4.3' in m_ansible_module.err_msg
