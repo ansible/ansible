@@ -1,0 +1,5 @@
+[randomgroup]
+host1
+
+[randomgroup:vars]
+True=1

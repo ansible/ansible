@@ -10,11 +10,12 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import vars_loader
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
+from ansible.vars.validation import validate_variable_names
 
 display = Display()
 
@@ -36,6 +37,12 @@ def get_plugin_vars(loader, plugin, path, entities):
                 raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
             else:
                 raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+
+    try:
+        validate_variable_names(data.keys())
+    except TypeError as e:
+        raise AnsibleError("Invalid variable name specified: '%s'" % to_native(e))
+
     return data
 
 

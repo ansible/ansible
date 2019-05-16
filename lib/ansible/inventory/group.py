@@ -21,10 +21,11 @@ from collections.abc import Mapping, MutableMapping
 from itertools import chain
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
+from ansible.vars.validation import validate_variable_names
 
 display = Display()
 
@@ -246,6 +247,11 @@ class Group:
         if key == 'ansible_group_priority':
             self.set_priority(int(value))
         else:
+            try:
+                validate_variable_names([key])
+            except TypeError as e:
+                raise AnsibleParserError("Invalid variable name in inventory for group '%s' specified: '%s'" % (self.get_name(), to_native(e)))
+
             if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
                 self.vars = combine_vars(self.vars, {key: value})
             else:

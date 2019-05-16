@@ -19,10 +19,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleActionFail
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.vars import isidentifier
+from ansible.vars.validation import validate_variable_names
 
 import ansible.constants as C
 
@@ -44,10 +45,10 @@ class ActionModule(ActionBase):
         if self._task.args:
             for (k, v) in self._task.args.items():
                 k = self._templar.template(k)
-
-                if not isidentifier(k):
-                    raise AnsibleActionFail("The variable name '%s' is not valid. Variables must start with a letter or underscore character, "
-                                            "and contain only letters, numbers and underscores." % k)
+                try:
+                    validate_variable_names([k])
+                except TypeError as e:
+                    raise AnsibleActionFail(to_native(e))
 
                 # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
                 # right now it converts matching explicit YAML strings also when 'jinja2_native' is disabled.

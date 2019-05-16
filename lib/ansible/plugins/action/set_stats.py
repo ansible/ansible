@@ -18,10 +18,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.six import string_types
+
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.vars import isidentifier
+from ansible.vars.validation import validate_variable_names
 
 
 class ActionModule(ActionBase):
@@ -63,10 +63,11 @@ class ActionModule(ActionBase):
 
                 k = self._templar.template(k)
 
-                if not isidentifier(k):
+                try:
+                    validate_variable_names([k])
+                except TypeError as e:
                     result['failed'] = True
-                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
-                                     "letters, numbers and underscores." % k)
+                    result['msg'] = to_text(e)
                     return result
 
                 stats['data'][k] = self._templar.template(v)

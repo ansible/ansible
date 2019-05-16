@@ -32,6 +32,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import string_types, PY3
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.vars.validation import validate_variable_names
 
 
 ADDITIONAL_PY2_KEYWORDS = frozenset(("True", "False", "None"))
@@ -199,6 +200,11 @@ def load_extra_vars(loader):
         else:
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
+
+        try:
+            validate_variable_names(data)
+        except TypeError as e:
+            raise AnsibleError("Invalid variable name in 'extra vars' specified: %s" % to_native(e))
 
         if isinstance(data, MutableMapping):
             extra_vars = combine_vars(extra_vars, data)

@@ -32,7 +32,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import text_type, string_types
 from ansible.plugins.loader import lookup_loader
 from ansible.vars.fact_cache import FactCache
@@ -43,6 +43,7 @@ from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
+from ansible.vars.validation import validate_variable_names
 
 display = Display()
 
@@ -240,6 +241,12 @@ class VariableManager:
                             raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
                         else:
                             raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+
+                try:
+                    validate_variable_names(data.keys())
+                except TypeError as e:
+                    raise AnsibleError("Invalid variable name specified: '%s'" % to_native(e))
+
                 return data
 
             # internal functions that actually do the work
@@ -356,6 +363,10 @@ class VariableManager:
                                 data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache=False))
                                 if data is not None:
                                     for item in data:
+                                        try:
+                                            validate_variable_names(item)
+                                        except TypeError as e:
+                                            raise AnsibleError("Invalid variable name specified in 'vars_files': %s" % to_native(e))
                                         all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
                                 break
                             except AnsibleFileNotFound:
@@ -661,6 +672,11 @@ class VariableManager:
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a Mapping but is a %s" % type(facts))
 
         try:
+            validate_variable_names(facts.keys())
+        except TypeError as e:
+            raise AnsibleError("Invalid variable name specified in facts: '%s'" % to_native(e))
+
+        try:
             host_cache = self._fact_cache[host]
         except KeyError:
             # We get to set this as new
@@ -684,6 +700,11 @@ class VariableManager:
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
         try:
+            validate_variable_names(facts.keys())
+        except TypeError as e:
+            raise AnsibleError("Invalid variable name specified in facts: '%s'" % to_native(e))
+
+        try:
             self._nonpersistent_fact_cache[host] |= facts
         except KeyError:
             self._nonpersistent_fact_cache[host] = facts
@@ -692,6 +713,11 @@ class VariableManager:
         '''
         Sets a value in the vars_cache for a host.
         '''
+        try:
+            validate_variable_names([varname])
+        except TypeError as e:
+            raise AnsibleError("Invalid variable name specified: '%s'" % to_native(e))
+
         if host not in self._vars_cache:
             self._vars_cache[host] = dict()
         if varname in self._vars_cache[host] and isinstance(self._vars_cache[host][varname], MutableMapping) and isinstance(value, MutableMapping):

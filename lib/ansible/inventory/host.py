@@ -21,9 +21,12 @@ __metaclass__ = type
 
 from collections.abc import Mapping, MutableMapping
 
+from ansible.errors import AnsibleParserError
 from ansible.inventory.group import Group
+from ansible.module_utils._text import to_native
 from ansible.parsing.utils.addresses import patterns
 from ansible.utils.vars import combine_vars, get_unique_id
+from ansible.vars.validation import validate_variable_names
 
 
 __all__ = ['Host']
@@ -145,6 +148,11 @@ class Host:
         return removed
 
     def set_variable(self, key, value):
+        try:
+            validate_variable_names([key])
+        except TypeError as e:
+            raise AnsibleParserError("Invalid variable name in inventory for host '%s' specified: '%s'" % (self.get_name(), to_native(e)))
+
         if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
             self.vars = combine_vars(self.vars, {key: value})
         else:

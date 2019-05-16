@@ -19,6 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
@@ -27,13 +30,17 @@ from ansible.utils.display import Display
 
 display = Display()
 
+_INTERNAL_HARDCODED = ('local_action', 'lookup', 'query', 'q')
+
+# FIXME: remove these exceptions if we can
+_RESERVE_EXCEPTIONS = frozenset(('environment', 'gather_subset', 'vars'))
+
 
 def get_reserved_names(include_private=True):
-    ''' this function returns the list of reserved names associated with play objects'''
+    ''' this function returns the list of reserved names associated with play objects and internal template functions '''
+    # FIXME: deal with Jinja tests and filters and with_<lookups>
 
-    public = set()
-    private = set()
-    result = set()
+    result = set(_INTERNAL_HARDCODED)
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
     class_list = [Play, Role, Block, Task]
@@ -75,6 +82,20 @@ def warn_if_reserved(myvars, additional=None):
     varnames.discard('vars')  # we add this one internally, so safe to ignore
     for varname in varnames.intersection(reserved):
         display.warning('Found variable using reserved name: %s' % varname)
+
+
+def handle_reserved_vars(myvars):
+    ''' this function warns if any variable passed conflicts with internally reserved names '''
+
+    if C.RESERVED_VAR_NAMES != 'ignore':
+        varnames = set(myvars)
+        reserved_varnames_used = varnames.intersection(_RESERVED_NAMES).difference(_RESERVE_EXCEPTIONS)
+        for varname in reserved_varnames_used:
+            msg = 'Found variable using reserved name: %s' % to_text(varname)
+            if C.RESERVED_VAR_NAMES == 'warn':
+                display.warning(msg)
+            elif C.RESERVED_VAR_NAMES == 'error':
+                raise AnsibleError(msg)
 
 
 def is_reserved_name(name):

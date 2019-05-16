@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    True: 1
+  tasks:
+    - debug:

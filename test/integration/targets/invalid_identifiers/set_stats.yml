@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: EXPECTED FAILURE
+      set_stats:
+        data:
+          True: 1

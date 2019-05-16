@@ -1,0 +1,16 @@
+- hosts: localhost
+  tasks:
+    - name: prep warning with fact and public attribute
+      set_fact:
+        name: 'basic play objects'
+      tags: fact
+
+    - name: trigger warning with include and private attribute
+      include_vars: loop_with.yml
+      tags: include
+
+    - name: trigger warning with vars and 'hardcoded' internal
+      debug:
+      vars:
+        lookup: {a: 'b'}
+      tags: hardcoded

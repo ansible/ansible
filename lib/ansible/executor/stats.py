@@ -21,7 +21,10 @@ __metaclass__ = type
 
 from collections.abc import MutableMapping
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.utils.vars import merge_hash
+from ansible.vars.validation import validate_variable_names
 
 
 class AggregateStats:
@@ -73,6 +76,10 @@ class AggregateStats:
 
     def set_custom_stats(self, which, what, host=None):
         ''' allow setting of a custom stat'''
+        try:
+            validate_variable_names([which])
+        except TypeError as e:
+            raise AnsibleError("Invalid variable name in 'set_stats' specified: %s" % to_native(e))
 
         if host is None:
             host = '_run'

@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - include_role:
+        name: role-empty
+      vars:
+        True: 1

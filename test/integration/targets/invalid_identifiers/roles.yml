@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: no
+  roles:
+    - role: role-empty
+      vars:
+        True: 1

@@ -25,7 +25,7 @@ from collections.abc import Container, Mapping, Set, Sequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -39,6 +39,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.path import is_subpath
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars
+from ansible.vars.validation import validate_variable_names
 
 __all__ = ['Role', 'hash_params']
 
@@ -210,11 +211,21 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         elif not isinstance(self._role_vars, Mapping):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
+        try:
+            validate_variable_names(self._role_vars.keys())
+        except TypeError as e:
+            raise AnsibleParserError("Invalid variable name in 'vars/main.yml' specified for role '%s': '%s'" % (self._role_name, to_native(e)))
+
         self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
         if self._default_vars is None:
             self._default_vars = {}
         elif not isinstance(self._default_vars, Mapping):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
+
+        try:
+            validate_variable_names(self._default_vars.keys())
+        except TypeError as e:
+            raise AnsibleParserError("Invalid variable name in 'defaults/main.yml' specified for role '%s': '%s'" % (self._role_name, to_native(e)))
 
         # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')
