@@ -84,7 +84,7 @@ specified with:
            name=dict(default='default'),
            # ... and so on ...
        ))
-       module = AnsibleModule(argument_spec=argument_spec, ...)
+       module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,)
 
 These can be replaced with:
 
@@ -96,7 +96,7 @@ These can be replaced with:
            name=dict(default='default'),
            # ... and so on ...
        )
-       module = AnsibleAWSModule(argument_spec=argument_spec, ...)
+       module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True,)
 
 Creating new AWS modules
 ========================
@@ -490,7 +490,7 @@ and returns True if they are different.
 
    import json
 
-   ......
+   # some lines skipped here
 
    # Get the policy from AWS
    current_policy = json.loads(aws_object.get_policy())
