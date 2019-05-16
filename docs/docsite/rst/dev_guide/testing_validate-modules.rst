@@ -129,6 +129,8 @@ Errors
   334       ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
   335       argument_spec implies type="str" but documentation defines it as different data type
   336       argument in argument_spec is not a valid python identifier
+  337       Type value is defined in ``argument_spec`` but documentation doesn't specify a type
+  338       documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
   ..
 ---------   -------------------
   **4xx**   **Syntax**
