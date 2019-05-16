@@ -1,0 +1,2 @@
+minor_changes:
+  - eos_use_sessions is now type boolean instead of int.
