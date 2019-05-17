@@ -15,9 +15,11 @@ short_description: Creates/updates/deletes Gitlab Projects Variables
 description:
   - When a project variable does not exists, it will be created.
   - When a project variable does exists, its value will be updated when the values are different.
-  - Variables which are presented in the playbook, but are not presented in the Gitlab project, they stay untouched (purged_vars = False) or will be deleted (purged_vars = True).
+  - Variables which are presented in the playbook, but are not presented in the Gitlab project,
+    they stay untouched (purged_vars = False) or will be deleted (purged_vars = True).
 version_added: "2.9"
-author: "Markus Bergholz (markuman@gmail.com)"
+author:
+    - "Markus Bergholz (markuman@gmail.com)"
 requirements:
   - python >= 2.7
   - python-gitlab python module
@@ -72,7 +74,7 @@ from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 try:
     import gitlab
     HAS_GITLAB_PACKAGE = True
-except:
+except Exception:
     HAS_GITLAB_PACKAGE = False
 
 
