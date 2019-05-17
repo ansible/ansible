@@ -32,7 +32,10 @@ import collections
 import json
 import re
 import yaml
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -992,7 +995,7 @@ class NxosCmdRef:
                     parent_context = ref[parent_context.split('::')[1]].get('setcmd')
                     if parent_context is None:
                         continue
-                proposed.append(parent_config)
+                proposed.append(parent_context)
 
             proposed.append(ref[k]['setcmd'])
 
