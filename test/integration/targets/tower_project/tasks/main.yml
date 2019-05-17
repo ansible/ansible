@@ -41,6 +41,34 @@
     that:
       - "result is changed"
 
+- name: create a project directory for manual project
+  import_tasks: create_project_dir.yml
+
+- name: Delete the manual project
+  tower_project:
+    name: manual project
+    organization: Default
+    scm_type: manual
+    local_path: "manual_test_project"
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: RE-Create a manual project to validate deletion
+  tower_project:
+    name: manual project
+    organization: Default
+    scm_type: manual
+    local_path: "manual_test_project"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
 - name: Create a git project without credentials
   tower_project:
     name: git project
