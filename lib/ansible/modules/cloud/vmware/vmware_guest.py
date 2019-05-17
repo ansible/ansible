@@ -2228,7 +2228,6 @@ class PyVmomiHelper(PyVmomi):
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
                 self.relospec.pool = resource_pool
-
                 linked_clone = self.params.get('linked_clone')
                 snapshot_src = self.params.get('snapshot_src', None)
                 if linked_clone:
