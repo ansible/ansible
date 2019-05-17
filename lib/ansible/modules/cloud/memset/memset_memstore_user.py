@@ -31,35 +31,38 @@ options:
     state:
         required: true
         default: present
+        type: str
         description:
             - Indicates desired state of resource.
         choices: [ absent, present ]
     api_key:
         required: true
+        type: str
         description:
             - The API key obtained from the Memset control panel.
     username:
         required: true
+        type: str
         description:
             - The name of the user to manage.
         aliases: [ name ]
     memstore:
         required: true
+        type: str
         description:
             - The Memstore product the user belongs to.
     enabled:
-        required: false
         default: false
         type: bool
         description:
             - Whether the user is enabled or disabled. Defaults to false for security.
     password:
-        required: false
+        type: str
         description:
             - A password for the user. Required when the user is present.
             - I(update_password) must be True for an existing user's password to be updated.
     update_password:
-        required: false
+        type: bool
         description:
             - Change the user's password. The user must already exist.
             - This value will only be used if the user already exists prior to the task execution.
@@ -297,7 +300,8 @@ def main():
             enabled=dict(required=False, default=False, type='bool'),
             update_password=dict(required=False, default=False, type='bool')
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if=["update_password", True, ["password"]]
     )
 
     # populate the dict with the user-provided vars.
