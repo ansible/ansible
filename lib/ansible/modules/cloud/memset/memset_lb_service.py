@@ -102,7 +102,7 @@ RETURN = '''
 ---
 memset_api:
   description: Info from the Memset API
-  returned: when changed or state == present
+  returned: when changed
   type: complex
   contains:
     enabled:
@@ -251,6 +251,7 @@ def delete_lb_service(args=None, service=None):
     if service is not None:
         for arg in ['load_balancer', 'service_name']:
             payload[arg] = args[arg]
+        retvals['memset_api'] = payload
         if args['check_mode']:
             retvals['changed'] = True
         else:
