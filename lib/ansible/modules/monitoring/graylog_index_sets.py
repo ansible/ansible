@@ -41,7 +41,7 @@ options:
     type: str
   id:
     description:
-      - Index id.
+      - Index set id.
     required: false
     type: str
   title:
@@ -54,12 +54,22 @@ options:
       - Description.
     required: false
     type: str
+  creation_date:
+    description:
+      - Index set creation date.
+    required: false
+    type: str
   index_prefix:
     description:
       - A unique prefix used in Elasticsearch indices belonging to this index set. The prefix must start
         with a letter or number, and can only contain letters, numbers, '_', '-' and '+'.
     required: false
     type: str
+  field_type_refresh_interval:
+    description:
+      - How often the field type information for the active write index will be updated.
+    required: false
+    type: int
   index_analyzer:
     description:
       - Elasticsearch analyzer for this index set.
