@@ -60,8 +60,9 @@ options:
                   - ip_address: ..."
    extra_dhcp_opts:
      description:
-        - "Extra dhcp options to be assigned to this port.  Extra options are
-          supported with dictionary structure.
+        - "Extra dhcp options to be assigned to this port. Extra options are
+          supported with dictionary structure. Note that options cannot be removed
+          only updated.
           e.g.  extra_dhcp_opts:
                   - opt_name: opt name1
                     opt_value: value1
