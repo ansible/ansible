@@ -19,7 +19,7 @@ description:
     they stay untouched (purged_vars = False) or will be deleted (purged_vars = True).
 version_added: "2.9"
 author:
-    - "Markus Bergholz (markuman@gmail.com)"
+    - "Markus Bergholz (markuman)"
 requirements:
   - python >= 2.7
   - python-gitlab python module
