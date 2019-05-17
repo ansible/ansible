@@ -10,7 +10,7 @@
 - assert:
     that:
       - "result.changed == false"
-      - "'<name>\nem0\n</name>' in result['xml']"
+      - "'<interface-information' in result['xml']"
       - "result.output is defined"
 
 - name: Execute RPC with args on device
