@@ -279,9 +279,9 @@ def run(module, result):
         contents = module.params['config']
         if not contents:
             contents = get_config(module)
-            config = NetworkConfig(indent=1, contents=contents)
-            configobjs = candidate.difference(config, path=path, match=match,
-                                              replace=replace)
+        config = NetworkConfig(indent=1, contents=contents)
+        configobjs = candidate.difference(config, path=path, match=match,
+                                          replace=replace)
 
     else:
         configobjs = candidate.items
