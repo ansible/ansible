@@ -1,0 +1,102 @@
+- name: Install required libs
+  pip:
+    name: python-gitlab
+    state: present
+
+- name: purge all variables at the beginning
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    purge_vars: True
+
+- name: set two test variables
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    vars:
+      - ACCESS_KEY_ID: abc123
+      - SECRET_ACCESS_KEY: 321cba
+  register: gitlab_project_variable_state
+
+- name: set two test variables state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: re-set two test variables
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    vars:
+      - ACCESS_KEY_ID: abc123
+      - SECRET_ACCESS_KEY: 321cba
+  register: gitlab_project_variable_state
+
+- name: re-set two test variables state must not be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
+
+- name: append one variable
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    vars:
+      - some: value
+    purge_vars: False
+  register: gitlab_project_variable_state
+
+- name: append one variable state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: re-set all variables
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    vars:
+      - ACCESS_KEY_ID: abc123
+      - SECRET_ACCESS_KEY: 321cba
+      - some: value
+  register: gitlab_project_variable_state
+
+- name: re-set all variables state must not be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
+
+- name: set one variables and purge all others
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    vars:
+      - some: value
+    purge_vars: True
+  register: gitlab_project_variable_state
+
+- name: set one variables and purge all others state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: only one variable is left
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    vars:
+      - some: value
+    purge_vars: False
+  register: gitlab_project_variable_state
+
+- name: only one variable is left state must not be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
