@@ -102,6 +102,7 @@
   - assert:
       that:
         - create_server_idempotency.changed == False
+        - create_server_idempotency.data is defined
 
   - name: Set multiple syslog servers  # Broken
     meraki_syslog:

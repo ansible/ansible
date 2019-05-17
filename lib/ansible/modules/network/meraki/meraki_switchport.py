@@ -384,6 +384,8 @@ def main():
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             meraki.result['data'] = response
             meraki.result['changed'] = True
+        else:
+            meraki.result['data'] = original
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

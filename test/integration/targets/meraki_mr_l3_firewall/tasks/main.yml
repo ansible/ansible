@@ -41,6 +41,7 @@
       that:
         - create_one.data.0.comment == 'Integration test rule'
         - create_one.data.1.policy == 'deny'
+        - create_one.data is defined
 
   - name: Enable local LAN access
     meraki_mr_l3_firewall:

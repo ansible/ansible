@@ -316,7 +316,6 @@ def main():
                 if meraki.status == 200:
                     meraki.result['data'] = r
                     meraki.result['changed'] = True
-
             else:  # Update existing network
                 net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
                 if meraki.params['enable_vlans'] is not None:
@@ -344,6 +343,8 @@ def main():
                     if meraki.status == 200:
                         meraki.result['data'] = r
                         meraki.result['changed'] = True
+                else:
+                    meraki.result['data'] = net
     elif meraki.params['state'] == 'absent':
         if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
             net_id = meraki.get_net_id(net_name=meraki.params['net_name'],

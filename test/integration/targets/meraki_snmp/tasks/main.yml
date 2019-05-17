@@ -118,6 +118,7 @@
 - assert:
     that:
       - snmp_idempotent.changed == False
+      - snmp_idempotent.data is defined
 
 - name: Add peer IPs
   meraki_snmp:

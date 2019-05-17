@@ -354,7 +354,6 @@ def create_admin(meraki, org_id, name, email):
         if not meraki.params['networks']:
             payload['networks'] = []
         if meraki.is_update_required(is_admin_existing, payload) is True:
-            # meraki.fail_json(msg='Update is required!!!', original=is_admin_existing, proposed=payload)
             path = meraki.construct_path('update', function='admin', org_id=org_id) + is_admin_existing['id']
             r = meraki.request(path,
                                method='PUT',
@@ -364,7 +363,7 @@ def create_admin(meraki, org_id, name, email):
                 meraki.result['changed'] = True
                 return r
         else:
-            # meraki.fail_json(msg='No update is required!!!')
+            meraki.result['data'] = is_admin_existing
             return -1
 
 

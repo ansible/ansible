@@ -94,6 +94,7 @@
   - assert:
       that:
         - enable_name_ssid_idempotent.changed == False
+        - enable_name_ssid_idempotent.data is defined
 
   - name: Query one SSIDs
     meraki_ssid:
