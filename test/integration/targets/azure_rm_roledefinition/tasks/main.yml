@@ -66,7 +66,7 @@
     scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
     role_name: "{{ role_name }}"
   register: facts
-  until: "{{ facts.roledefinitions | length > 0 }}"
+  until: facts.roledefinitions | length > 0
   retries: 50
   delay: 60
 
