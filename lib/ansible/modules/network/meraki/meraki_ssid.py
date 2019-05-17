@@ -519,6 +519,8 @@ def main():
             result = meraki.request(path, 'PUT', payload=json.dumps(payload))
             meraki.result['data'] = result
             meraki.result['changed'] = True
+        else:
+            meraki.result['data'] = original
     elif meraki.params['state'] == 'absent':
         ssids = get_ssids(meraki, net_id)
         ssid_id = meraki.params['number']

@@ -209,7 +209,8 @@ def set_snmp(meraki, org_id):
         if meraki.status == 200:
             meraki.result['changed'] = True
             return r
-    return -1
+    else:
+        return snmp
 
 
 def main():

@@ -165,6 +165,7 @@
   - assert:
       that:
         - update_vlan_idempotent.changed == False
+        - update_vlan_idempotent.data is defined
 
   - name: Add IP assignments and reserved IP ranges
     meraki_vlan:
@@ -262,6 +263,7 @@
   - assert:
       that:
         - update_vlan_idempotent.changed == False
+        - update_vlan_idempotent.data is defined
 
   - name: Update VLAN with list of DNS entries
     meraki_vlan:
