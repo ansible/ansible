@@ -4,7 +4,8 @@
 # Copyright: (c) 2019, Markus Bergholz (markuman@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -16,7 +17,7 @@ short_description: Creates/updates/deletes Gitlab Projects Variables
 description:
   - When a project variable does not exists, it will be created.
   - When a project variable does exists, its value will be updated when the values are different.
-  - Variables which are presented in the playbook, but are not presented in the Gitlab project, they stay untouched (purged_vars: False) or will be deleted (purged_vars: True).
+  - Variables which are presented in the playbook, but are not presented in the Gitlab project, they stay untouched (purged_vars = False) or will be deleted (purged_vars = True).
 version_added: "2.9"
 author:
   - Markus Bergholz (markuman@gmail.com)
@@ -24,7 +25,7 @@ requirements:
   - python >= 2.7
   - python-gitlab python module
 extends_documentation_fragment:
-    - auth_basic
+  - auth_basic
 options:
   server_url:
     description:
@@ -43,7 +44,7 @@ options:
     type: str
   purge_vars:
     description:
-      - When set to true, all variables which are not presented in the task will be deleted. 
+      - When set to true, all variables which are not presented in the task will be deleted.
     default: false
     required: false
     type: bool
