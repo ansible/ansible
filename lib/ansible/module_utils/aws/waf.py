@@ -163,14 +163,37 @@ def list_rules_with_backoff(client):
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_regional_rules_with_backoff(client):
+    resp = client.list_rules()
+    rules = []
+    while resp:
+        rules += resp['Rules']
+        resp = client.list_rules(NextMarker=resp['NextMarker']) if 'NextMarker' in resp else None
+    return rules
+
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def list_web_acls_with_backoff(client):
     paginator = client.get_paginator('list_web_acls')
     return paginator.paginate().build_full_result()['WebACLs']
 
 
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_regional_web_acls_with_backoff(client):
+    resp = client.list_web_acls()
+    acls = []
+    while resp:
+        acls += resp['WebACLs']
+        resp = client.list_web_acls(NextMarker=resp['NextMarker']) if 'NextMarker' in resp else None
+    return acls
+
+
 def list_web_acls(client, module):
     try:
-        return list_web_acls_with_backoff(client)
+        if client.__class__.__name__ == 'WAF':
+            return list_web_acls_with_backoff(client)
+        elif client.__class__.__name__ == 'WAFRegional':
+            return list_regional_web_acls_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't obtain web acls")
 
