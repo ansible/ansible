@@ -36,6 +36,24 @@ Data Digest                : None,CRC32C (default)
 SLP Scope list for iSLPD   :
 """
 
+# Solaris # iscsiadm list initiator-node
+ISCSIADM_OUTPUT = """
+Initiator node name: iqn.1986-03.com.sun:01:00144ffafe39.578e4635
+Initiator node alias: solaris11.nvglabs.local
+        Login Parameters (Default/Configured):
+                Header Digest: NONE/-
+                Data Digest: NONE/-
+                Max Connections: 65535/-
+        Authentication Type: NONE
+        RADIUS Server: NONE
+        RADIUS Access: unknown
+        Tunable Parameters (Default/Configured):
+                Session Login Response Time: 60/-
+                Maximum Connection Retry Time: 180/-
+                Login Retry Time Interval: 60/-
+        Configured Sessions: 1
+"""
+
 
 def test_get_iscsi_info(mocker):
     module = Mock()
@@ -52,3 +70,9 @@ def test_get_iscsi_info(mocker):
     mocker.patch.object(module, 'run_command', return_value=(0, ISCSIUTIL_OUTPUT, ''))
     hpux_iscsi_expected = {"iscsi_iqn": "iqn.2001-04.com.hp.stor:svcio"}
     assert hpux_iscsi_expected == inst.collect(module=module)
+
+    mocker.patch('sys.platform', 'sunos5')
+    mocker.patch('ansible.module_utils.facts.network.iscsi.get_bin_path', return_value='/usr/sbin/iscsiadm')
+    mocker.patch.object(module, 'run_command', return_value=(0, ISCSIADM_OUTPUT, ''))
+    sunos_iscsi_expected = {"iscsi_iqn": "iqn.1986-03.com.sun:01:00144ffafe39.578e4635"}
+    assert sunos_iscsi_expected == inst.collect(module=module)
