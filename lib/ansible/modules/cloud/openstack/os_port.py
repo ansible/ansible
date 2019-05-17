@@ -65,6 +65,7 @@ options:
           e.g.  extra_dhcp_opts:
                   - opt_name: opt name1
                     opt_value: value1
+                    ip_version: 4
                   - opt_name: ..."
    device_owner:
      description:
