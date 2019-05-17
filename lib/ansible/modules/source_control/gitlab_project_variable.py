@@ -4,8 +4,6 @@
 # Copyright: (c) 2019, Markus Bergholz (markuman@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -24,8 +22,6 @@ author:
 requirements:
   - python >= 2.7
   - python-gitlab python module
-extends_documentation_fragment:
-  - auth_basic
 options:
   server_url:
     description:
@@ -72,6 +68,7 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 try:
     import gitlab
