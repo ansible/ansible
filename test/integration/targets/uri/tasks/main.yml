@@ -56,7 +56,7 @@
 
 - name: fetch pass_json
   uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
-  register: pass
+  register: fetch_pass_json
   with_sequence: start=0 end=4 format=pass%d
 
 - name: check pass_json
@@ -66,7 +66,7 @@
       - item.0.stat.checksum == item.1.content | checksum
   with_together:
     - "{{pass_checksum.results}}"
-    - "{{pass.results}}"
+    - "{{fetch_pass_json.results}}"
 
 
 - name: checksum fail_json
