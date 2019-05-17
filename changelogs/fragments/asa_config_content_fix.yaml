@@ -1,0 +1,2 @@
+bugfixes:
+- asa_config fix <https://github.com/ansible/ansible/pull/56559>
