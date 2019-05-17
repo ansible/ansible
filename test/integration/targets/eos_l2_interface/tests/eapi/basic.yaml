@@ -1,6 +1,6 @@
 ---
 - debug:
-    msg: "START eos_l2_interface cli/basic.yaml on connection={{ ansible_connection }}"
+    msg: "START eos_l2_interface eapi/basic.yaml on connection={{ ansible_connection }}"
 
 - name: Delete test interface switchports
   eos_l2_interface: &clear
@@ -105,4 +105,4 @@
   eos_l2_interface: *clear
   become: yes
 
-- debug: msg="END eos_l2_interface cli/basic.yaml on connection={{ ansible_connection }}"
+- debug: msg="END eos_l2_interface eapi/basic.yaml on connection={{ ansible_connection }}"
