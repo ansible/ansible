@@ -37,4 +37,3 @@
     - command: "true"
       notify:
         - Include Me Notify
-
