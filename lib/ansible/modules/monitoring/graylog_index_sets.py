@@ -59,6 +59,7 @@ options:
       - Index set creation date.
     required: false
     type: str
+    default: datetime.datetime.utcnow().isoformat() + 'Z'
   index_prefix:
     description:
       - A unique prefix used in Elasticsearch indices belonging to this index set. The prefix must start
@@ -70,6 +71,7 @@ options:
       - How often the field type information for the active write index will be updated.
     required: false
     type: int
+    default: 5000
   index_analyzer:
     description:
       - Elasticsearch analyzer for this index set.
