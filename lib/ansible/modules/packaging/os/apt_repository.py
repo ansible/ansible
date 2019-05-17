@@ -478,6 +478,17 @@ def get_add_ppa_signing_key_callback(module):
         return _run_command
 
 
+def revert_sources_list(sources_before, sources_after, sourceslist_before):
+    '''Revert the sourcelist files to their previous state.'''
+
+    # First remove any new files that were created:
+    for filename in set(sources_after.keys()).difference(sources_before.keys()):
+        if os.path.exists(filename):
+            os.remove(filename)
+    # Now revert the existing files to their former state:
+    sourceslist_before.save()
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -544,18 +555,21 @@ def main():
         try:
             sourceslist.save()
             if update_cache:
-                cache = apt.Cache()
-                cache.update()
+                err = ''
+                for retry in range(3):
+                    try:
+                        cache = apt.Cache()
+                        cache.update()
+                        break
+                    except apt.cache.FetchFailedException as e:
+                        err = to_native(e)
+                else:
+                    revert_sources_list(sources_before, sources_after, sourceslist_before)
+                    module.fail_json(msg='Failed to update apt cache: %s' % err)
+
         except (OSError, IOError) as err:
-            # Revert the sourcelist files to their previous state.
-            # First remove any new files that were created:
-            for filename in set(sources_after.keys()).difference(sources_before.keys()):
-                if os.path.exists(filename):
-                    os.remove(filename)
-            # Now revert the existing files to their former state:
-            sourceslist_before.save()
-            # Return an error message.
-            module.fail_json(msg='apt cache update failed')
+            revert_sources_list(sources_before, sources_after, sourceslist_before)
+            module.fail_json(msg=to_native(err))
 
     module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 

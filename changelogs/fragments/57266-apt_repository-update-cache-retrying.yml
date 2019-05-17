@@ -1,0 +1,2 @@
+minor_changes:
+  - apt_repository - Implement apt cache update to keep retrying several times as in ``apt`` module.
