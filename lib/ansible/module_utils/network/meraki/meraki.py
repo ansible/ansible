@@ -175,20 +175,23 @@ class MerakiModule(object):
     #             return True
     #     return False
 
-    Option 2 - Unidirectional (proposed -> original ) check
+    # Option 2 - Unidirectional (proposed -> original ) check
     def is_update_required(self, original, proposed, optional_ignore=None):
         ''' Compare two data-structures '''
-        self.ignored_keys = ['net_id']
+        self.ignored_keys.append('net_id')
         if optional_ignore is not None:
             self.ignored_keys = self.ignored_keys + optional_ignore
 
         if type(original) != type(proposed):
+            # self.fail_json(msg="Types don't match")
             return True
         if isinstance(original, list):
             if len(original) != len(proposed):
+                # self.fail_json(msg="Length of lists don't match")
                 return True
             for a, b in zip(original, proposed):
                 if self.is_update_required(a, b):
+                    # self.fail_json(msg="List doesn't match", a=a, b=b)
                     return True
         elif isinstance(original, dict):
             for k, v in proposed.items():
@@ -197,9 +200,11 @@ class MerakiModule(object):
                         if self.is_update_required(original[k], proposed[k]):
                             return True
                     else:
+                        # self.fail_json(msg="Key not in original", k=k)
                         return True
         else:
             if original != proposed:
+                # self.fail_json(msg="Fallback", original=original, proposed=proposed)
                 return True
         return False
 

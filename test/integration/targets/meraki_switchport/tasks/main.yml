@@ -8,16 +8,16 @@
     msg: Please define an API key
   when: auth_key is not defined
   
-# - name: Use an invalid domain
-#   meraki_switchport:
-#     auth_key: '{{ auth_key }}'
-#     host: marrrraki.com
-#     state: query
-#     serial: Q2HP-2C6E-GTLD
-#     org_name: IntTestOrg
-#   delegate_to: localhost
-#   register: invaliddomain
-#   ignore_errors: yes
+- name: Use an invalid domain
+  meraki_switchport:
+    auth_key: '{{ auth_key }}'
+    host: marrrraki.com
+    state: query
+    serial: Q2HP-2C6E-GTLD
+    org_name: IntTestOrg
+  delegate_to: localhost
+  register: invaliddomain
+  ignore_errors: yes
   
 - name: Disable HTTP
   meraki_switchport:
