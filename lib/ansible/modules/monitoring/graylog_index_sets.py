@@ -39,7 +39,7 @@ options:
     default: list
     choices: [ create, update, list, delete, query_index_sets ]
     type: str
-  index_set_id:
+  id:
     description:
       - Index id.
     required: false
@@ -272,7 +272,7 @@ def create(module, base_url, headers, creation_date):
 
     payload = {}
 
-    for key in ['title', 'description', 'index_prefix', 'writable', 'default',
+    for key in ['title', 'description', 'index_prefix', 'field_type_refresh_interval', 'writable', 'default',
                 'index_analyzer', 'shards', 'replicas', 'rotation_strategy_class', 'retention_strategy_class',
                 'rotation_strategy', 'retention_strategy', 'index_optimization_max_num_segments',
                 'index_optimization_disabled']:
@@ -296,11 +296,11 @@ def create(module, base_url, headers, creation_date):
 
 def update(module, base_url, headers):
 
-    url = "/".join([base_url, module.params['index_set_id']])
+    url = "/".join([base_url, module.params['id']])
 
     payload = {}
 
-    for key in ['title', 'description', 'index_prefix', 'writable', 'default',
+    for key in ['title', 'description', 'index_prefix', 'field_type_refresh_interval', 'writable', 'default',
                 'index_analyzer', 'shards', 'replicas', 'rotation_strategy_class', 'retention_strategy_class',
                 'rotation_strategy', 'retention_strategy', 'index_optimization_max_num_segments',
                 'index_optimization_disabled']:
@@ -320,9 +320,9 @@ def update(module, base_url, headers):
     return info['status'], info['msg'], content, url
 
 
-def delete(module, base_url, headers, index_set_id):
+def delete(module, base_url, headers, id):
 
-    url = base_url + "/%s" % (index_set_id)
+    url = base_url + "/%s" % (id)
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='DELETE')
 
@@ -337,10 +337,10 @@ def delete(module, base_url, headers, index_set_id):
     return info['status'], info['msg'], content, url
 
 
-def list(module, base_url, headers, index_set_id):
+def list(module, base_url, headers, id):
 
-    if index_set_id is not None:
-        url = base_url + "/%s" % (index_set_id)
+    if id is not None:
+        url = base_url + "/%s" % (id)
     else:
         url = base_url
 
@@ -372,18 +372,18 @@ def query_index_sets(module, base_url, headers, title):
     except AttributeError:
         content = info.pop('body', '')
 
-    index_set_id = ""
+    id = ""
     if index_sets is not None:
 
         i = 0
         while i < len(index_sets['index_sets']):
             index_set = index_sets['index_sets'][i]
             if title == index_set['title']:
-                index_set_id = index_set['id']
+                id = index_set['id']
                 break
             i += 1
 
-    return index_set_id
+    return id
 
 
 def get_token(module, endpoint, username, password):
@@ -425,11 +425,13 @@ def main():
             action=dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'query_index_sets']),
             title=dict(type='str'),
             description=dict(type='str'),
-            index_set_id=dict(type='str'),
+            creation_date=dict(type='str', required=False, default=datetime.datetime.utcnow().isoformat() + 'Z'),
+            id=dict(type='str'),
             index_prefix=dict(type='str'),
             index_analyzer=dict(type='str', default="standard"),
             shards=dict(type='int', default=4),
             replicas=dict(type='int', default=1),
+            field_type_refresh_interval=dict(type='int', default=5000),
             rotation_strategy_class=dict(type='str',
                                          default='org.graylog2.indexer.rotation.strategies.TimeBasedRotationStrategy'),
             retention_strategy_class=dict(type='str', default='org.graylog2.indexer.retention.strategies.DeletionRetentionStrategy'),
@@ -449,7 +451,7 @@ def main():
     graylog_password = module.params['graylog_password']
     action = module.params['action']
     title = module.params['title']
-    index_set_id = module.params['index_set_id']
+    id = module.params['id']
     creation_date = datetime.datetime.utcnow().isoformat() + 'Z'
 
     base_url = "https://%s/api/system/indices/index_sets" % (endpoint)
@@ -463,14 +465,15 @@ def main():
     elif action == "update":
         status, message, content, url = update(module, base_url, headers)
     elif action == "delete":
-        status, message, content, url = delete(module, base_url, headers, index_set_id)
+        status, message, content, url = delete(module, base_url, headers, id)
     elif action == "list":
-        status, message, content, url = list(module, base_url, headers, index_set_id)
+        status, message, content, url = list(module, base_url, headers, id)
     elif action == "query_index_sets":
-        index_set_id = query_index_sets(module, base_url, headers, title)
-        status, message, content, url = list(module, base_url, headers, index_set_id)
+        id = query_index_sets(module, base_url, headers, title)
+        status, message, content, url = list(module, base_url, headers, id)
 
     uresp = {}
+    content = to_text(content, encoding='UTF-8')
 
     try:
         js = json.loads(content)
