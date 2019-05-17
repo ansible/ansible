@@ -93,6 +93,7 @@ EXAMPLES = '''
 # id: the VM's Azure resource ID, eg /subscriptions/00000000-0000-0000-1111-1111aaaabb/resourceGroups/my_rg/providers/Microsoft.Compute/virtualMachines/my_vm
 # location: the VM's Azure location, eg 'westus', 'eastus'
 # name: the VM's resource name, eg 'myvm'
+# os_profile: The VM OS properties, a dictionary, only system is currently available, eg 'os_profile.system not in ['linux']'
 # powerstate: the VM's current power state, eg: 'running', 'stopped', 'deallocated'
 # provisioning_state: the VM's current provisioning state, eg: 'succeeded'
 # tags: dictionary of the VM's defined tag values
@@ -525,6 +526,13 @@ class AzureHost(object):
         if self._hostvars != {}:
             return self._hostvars
 
+        system = "unknown"
+        if 'osProfile' in self._vm_model['properties']:
+            if 'linuxConfiguration' in self._vm_model['properties']['osProfile']:
+                system = 'linux'
+            if 'windowsConfiguration' in self._vm_model['properties']['osProfile']:
+                system = 'windows'
+
         new_hostvars = dict(
             public_ipv4_addresses=[],
             public_dns_hostnames=[],
@@ -537,6 +545,9 @@ class AzureHost(object):
             tags=self._vm_model.get('tags', {}),
             resource_type=self._vm_model.get('type', "unknown"),
             vmid=self._vm_model['properties']['vmId'],
+            os_profile=dict(
+                system=system,
+            ),
             vmss=dict(
                 id=self._vmss['id'],
                 name=self._vmss['name'],
