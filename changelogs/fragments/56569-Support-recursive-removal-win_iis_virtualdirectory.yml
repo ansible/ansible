@@ -1,0 +1,2 @@
+bugfixes:
+- win_iis_virtualdirectory - "Support recursive removal as per issue #49755"
