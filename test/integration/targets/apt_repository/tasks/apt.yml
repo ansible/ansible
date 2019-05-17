@@ -214,7 +214,7 @@
 - assert:
     that:
       - result is failed
-      - result.msg == 'Please set argument \'repo\' to a non-empty value'
+      - result.msg == "Please set argument 'repos' to a non-empty value"
 
 - name: Test apt_repository with an empty value for repo
   apt_repository:
@@ -225,7 +225,7 @@
 - assert:
     that:
       - result is failed
-      - result.msg == 'Please set argument \'repo\' to a non-empty value'
+      - result.msg == "Please set argument 'repos' to a non-empty value"
 
 #
 # TEARDOWN
