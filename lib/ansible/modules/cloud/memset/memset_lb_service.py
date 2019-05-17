@@ -53,13 +53,11 @@ options:
         description:
             - The name of the load balancer - this is the product name e.g. C(lbtestyaa1).
     port:
-        required: true
         type: int
         description:
             - The port to be exposed to the Internet.
             - Must be in the range 1 > 65535 (inclusive).
     protocol:
-        required: true
         type: str
         description:
             - The protocol to be used by the load balacer.
@@ -308,12 +306,15 @@ def main():
             api_key=dict(required=True, type='str', no_log=True),
             enabled=dict(default="True", type='bool'),
             load_balancer=dict(required=True, type='str'),
-            port=dict(required=True, type=int),
-            protocol=dict(required=True, choices=['tcp', 'http', 'https'], type='str'),
+            port=dict(required=False, type=int),
+            protocol=dict(required=False, choices=['tcp', 'http', 'https'], type='str'),
             service_name=dict(required=True, type='str', aliases=['name']),
             virtual_ip=dict(required=False, type='str')
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if=[
+            ["state", "present", ["protocol", "port"]]
+        ]
     )
 
     # populate the dict with the user-provided vars.
