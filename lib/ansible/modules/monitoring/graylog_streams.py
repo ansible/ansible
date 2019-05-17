@@ -329,15 +329,17 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, headers):
+def create(module, base_url, headers, index_set_id):
 
     url = base_url
 
     payload = {}
 
-    for key in ['title', 'description', 'remove_matches_from_default_stream', 'matching_type', 'rules', 'index_set_id']:
+    for key in ['title', 'description', 'remove_matches_from_default_stream', 'matching_type', 'rules']:
         if module.params[key] is not None and module.params[key] != "":
             payload[key] = module.params[key]
+
+    payload['index_set_id'] = index_set_id
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -697,8 +699,8 @@ def main():
 
     if action == "create":
         if index_set_id is None:
-            index_set_id = default_index_set(module, endpoint, base_url, api_token)
-        status, message, content, url = create(module, base_url, headers)
+            index_set_id = default_index_set(module, endpoint, base_url, headers)
+        status, message, content, url = create(module, base_url, headers, index_set_id)
     elif action == "create_rule":
         status, message, content, url = create_rule(module, base_url, headers, stream_id, field, type, value, inverted, description)
     elif action == "update":
