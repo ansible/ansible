@@ -218,6 +218,7 @@
 - assert:
     that:
       - update_port_access_idempotent.changed == False
+      - update_port_access_idempotent.data is defined
 
 - name: Configure trunk port
   meraki_switchport:
@@ -321,3 +322,4 @@
 - assert:
     that:
       - update_trunk_idempotent.changed == False
+      - update_trunk_idempotent.data is defined
