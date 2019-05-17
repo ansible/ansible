@@ -30,14 +30,15 @@ description:
     - Manage Memset loadbalancer services
 options:
     state:
-        required: false
         default: present
+        type: str
         description:
             - Indicates desired state of resource. Defaults to present.
             - When deleting a service there must be no servers currently attached to it as this will raise an error.
         choices: [ absent, present ]
     api_key:
         required: true
+        type: str
         description:
             - The API key obtained from the Memset control panel.
     enabled:
@@ -48,26 +49,31 @@ options:
             - Whether the service is enabled or not. Defaults to True.
     load_balancer:
         required: true
+        type: str
         description:
             - The name of the load balancer - this is the product name e.g. C(lbtestyaa1).
     port:
         required: true
+        type: int
         description:
             - The port to be exposed to the Internet.
             - Must be in the range 1 > 65535 (inclusive).
     protocol:
         required: true
+        type: str
         description:
             - The protocol to be used by the load balacer.
         choices: [ tcp, http, https ]
     service_name:
         required: true
+        type: str
         description:
             - Unique name to identify the service by (must be unique). Changing this will cause a new service to be created.
             - It can only consist of letters, numbers, underscores and hyphens and must be a maximum of 64 characters.
         aliases: [ 'name' ]
     virtual_ip:
         required: false
+        type: str
         description:
             - The IP address to expose the service on (must be assigned to the loadbalancer product).
             - If not provided, it will default to the primary IP of the loadbalancer.
