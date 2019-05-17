@@ -17,6 +17,12 @@ options:
   name:
     description:
       - The name of a Web Application Firewall
+  waf_regional:
+      description: Wether to use waf_regional module. Defaults to true
+      default: false
+      required: no
+      type: bool
+      version_added: "2.9"
 
 author:
   - Mike Mochan (@mmochan)
@@ -33,6 +39,11 @@ EXAMPLES = '''
 - name: obtain all facts for a single WAF
   aws_waf_facts:
     name: test_waf
+
+- name: obtain all facts for a single WAF Regional
+  aws_waf_facts:
+    name: test_waf
+    waf_regional: true
 '''
 
 RETURN = '''
@@ -113,13 +124,14 @@ def main():
     argument_spec.update(
         dict(
             name=dict(required=False),
+            waf_regional=dict(type='bool', default=False),
         )
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
+    resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
+    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
     web_acls = list_web_acls(client, module)
     name = module.params['name']
     if name:

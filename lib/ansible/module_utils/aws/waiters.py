@@ -305,6 +305,12 @@ waiters_by_name = {
         core_waiter.NormalizedOperationMethod(
             waf.get_change_token_status
         )),
+    ('WAFRegional', 'change_token_in_sync'): lambda waf: core_waiter.Waiter(
+        'change_token_in_sync',
+        waf_model('ChangeTokenInSync'),
+        core_waiter.NormalizedOperationMethod(
+            waf.get_change_token_status
+        )),
     ('EKS', 'cluster_active'): lambda eks: core_waiter.Waiter(
         'cluster_active',
         eks_model('ClusterActive'),
