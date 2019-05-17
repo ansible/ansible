@@ -573,8 +573,17 @@ def main():
         try:
             sourceslist.save()
             if update_cache:
-                cache = apt.Cache()
-                cache.update()
+                err = ''
+                for retry in range(3):
+                    try:
+                        cache = apt.Cache()
+                        cache.update()
+                        break
+                    except apt.cache.FetchFailedException as e:
+                        err = to_native(e)
+                else:
+                    module.fail_json(msg='Failed to update apt cache: %s' % err)
+
         except OSError as err:
             module.fail_json(msg=to_native(err))
 
