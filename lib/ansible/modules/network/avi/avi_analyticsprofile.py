@@ -49,7 +49,6 @@ options:
             - Greater than this number and the client's request is considered frustrated.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 500.
-            - Units(MILLISECONDS).
     apdex_response_tolerated_factor:
         description:
             - Client tolerated response latency factor.
@@ -61,7 +60,6 @@ options:
             - Satisfactory client to avi round trip time(rtt).
             - Allowed values are 1-2000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 250.
-            - Units(MILLISECONDS).
     apdex_rtt_tolerated_factor:
         description:
             - Tolerated client to avi round trip time(rtt) factor.
@@ -76,7 +74,6 @@ options:
             - A pageload includes the time for dns lookup, download of all http objects, and page render time.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5000.
-            - Units(MILLISECONDS).
     apdex_rum_tolerated_factor:
         description:
             - Virtual service threshold factor for tolerated page load time (plt) as multiple of apdex_rum_threshold.
@@ -89,7 +86,6 @@ options:
             - Greater than this number and the server response is considered frustrated.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 400.
-            - Units(MILLISECONDS).
     apdex_server_response_tolerated_factor:
         description:
             - Server tolerated response latency factor.
@@ -101,7 +97,6 @@ options:
             - Satisfactory client to avi round trip time(rtt).
             - Allowed values are 1-2000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 125.
-            - Units(MILLISECONDS).
     apdex_server_rtt_tolerated_factor:
         description:
             - Tolerated client to avi round trip time(rtt) factor.
@@ -121,52 +116,52 @@ options:
             - A connection between client and avi is considered lossy when more than this percentage of out of order packets are received.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
-            - Units(PERCENT).
     conn_lossy_timeo_rexmt_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of packets are retransmitted due to timeout.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
-            - Units(PERCENT).
     conn_lossy_total_rexmt_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of packets are retransmitted.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
-            - Units(PERCENT).
     conn_lossy_zero_win_size_event_threshold:
         description:
             - A client connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
             - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
-            - Units(PERCENT).
     conn_server_lossy_ooo_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of out of order packets are received.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
-            - Units(PERCENT).
     conn_server_lossy_timeo_rexmt_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of packets are retransmitted due to timeout.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
-            - Units(PERCENT).
     conn_server_lossy_total_rexmt_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of packets are retransmitted.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
-            - Units(PERCENT).
     conn_server_lossy_zero_win_size_event_threshold:
         description:
             - A server connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
             - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
-            - Units(PERCENT).
     description:
         description:
             - User defined description for the object.
+    disable_ondemand_metrics:
+        description:
+            - Virtual service (vs) metrics are processed only when there is live data traffic on the vs.
+            - In case, vs is idle for a period of time as specified by ondemand_metrics_idle_timeout then metrics processing is suspended for that vs.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.9"
+        type: bool
     disable_se_analytics:
         description:
             - Disable node (service engine) level analytics forvs metrics.
@@ -175,8 +170,26 @@ options:
     disable_server_analytics:
         description:
             - Disable analytics on backend servers.
-            - This may be desired in container environment when there are large number of  ephemeral servers.
+            - This may be desired in container environment when there are large number of ephemeral servers.
+            - Additionally, no healthscore of servers is computed when server analytics is disabled.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
+    disable_vs_analytics:
+        description:
+            - Disable virtualservice (frontend) analytics.
+            - This flag disables metrics and healthscore for virtualservice.
+            - Field introduced in 18.2.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.9"
+        type: bool
+    enable_advanced_analytics:
+        description:
+            - Enables advanced analytics features like anomaly detection.
+            - If set to false, anomaly computation (and associated rules/events) for vs, pool and server metrics will be disabled.
+            - However, setting it to false reduces cpu and memory requirements for analytics subsystem.
+            - Field introduced in 17.2.13, 18.1.5, 18.2.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        version_added: "2.9"
         type: bool
     exclude_client_close_before_request_as_error:
         description:
@@ -235,6 +248,11 @@ options:
             - It is common for applications like ms exchange.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
+    exclude_sip_error_codes:
+        description:
+            - List of sip status codes to be excluded from being classified as an error.
+            - Field introduced in 17.2.13, 18.1.5, 18.2.1.
+        version_added: "2.9"
     exclude_syn_retransmit_as_error:
         description:
             - Exclude 'server unanswered syns' from the list of errors.
@@ -250,6 +268,14 @@ options:
             - Exclude unsupported dns queries from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         type: bool
+    healthscore_max_server_limit:
+        description:
+            - Skips health score computation of pool servers when number of servers in a pool is more than this setting.
+            - Allowed values are 0-5000.
+            - Special values are 0- 'server health score is disabled'.
+            - Field introduced in 17.2.13, 18.1.4.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+        version_added: "2.9"
     hs_event_throttle_window:
         description:
             - Time window (in secs) within which only unique health change events should occur.
@@ -381,6 +407,13 @@ options:
         description:
             - The name of the analytics profile.
         required: true
+    ondemand_metrics_idle_timeout:
+        description:
+            - This flag sets the time duration of no live data traffic after which virtual service metrics processing is suspended.
+            - It is applicable only when disable_ondemand_metrics is set to false.
+            - Field introduced in 18.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1800.
+        version_added: "2.9"
     ranges:
         description:
             - List of http status code ranges to be excluded from being classified as an error.
@@ -388,6 +421,19 @@ options:
         description:
             - Block of http response codes to be excluded from being classified as an error.
             - Enum options - AP_HTTP_RSP_4XX, AP_HTTP_RSP_5XX.
+    sensitive_log_profile:
+        description:
+            - Rules applied to the http application log for filtering sensitive information.
+            - Field introduced in 17.2.10, 18.1.2.
+        version_added: "2.9"
+    sip_log_depth:
+        description:
+            - Maximum number of sip messages added in logs for a sip transaction.
+            - By default, this value is 20.
+            - Allowed values are 1-1000.
+            - Field introduced in 17.2.13, 18.1.5, 18.2.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+        version_added: "2.9"
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -472,7 +518,7 @@ obj:
 from ansible.module_utils.basic import AnsibleModule
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+        avi_common_argument_spec, avi_ansible_api, HAS_AVI)
 except ImportError:
     HAS_AVI = False
 
@@ -505,8 +551,11 @@ def main():
         conn_server_lossy_total_rexmt_threshold=dict(type='int',),
         conn_server_lossy_zero_win_size_event_threshold=dict(type='int',),
         description=dict(type='str',),
+        disable_ondemand_metrics=dict(type='bool',),
         disable_se_analytics=dict(type='bool',),
         disable_server_analytics=dict(type='bool',),
+        disable_vs_analytics=dict(type='bool',),
+        enable_advanced_analytics=dict(type='bool',),
         exclude_client_close_before_request_as_error=dict(type='bool',),
         exclude_dns_policy_drop_as_significant=dict(type='bool',),
         exclude_gs_down_as_error=dict(type='bool',),
@@ -518,9 +567,11 @@ def main():
         exclude_persistence_change_as_error=dict(type='bool',),
         exclude_server_dns_error_as_error=dict(type='bool',),
         exclude_server_tcp_reset_as_error=dict(type='bool',),
+        exclude_sip_error_codes=dict(type='list',),
         exclude_syn_retransmit_as_error=dict(type='bool',),
         exclude_tcp_reset_as_error=dict(type='bool',),
         exclude_unsupported_dns_query_as_error=dict(type='bool',),
+        healthscore_max_server_limit=dict(type='int',),
         hs_event_throttle_window=dict(type='int',),
         hs_max_anomaly_penalty=dict(type='int',),
         hs_max_resources_penalty=dict(type='int',),
@@ -548,8 +599,11 @@ def main():
         hs_security_tls12_score=dict(type='float',),
         hs_security_weak_signature_algo_penalty=dict(type='float',),
         name=dict(type='str', required=True),
+        ondemand_metrics_idle_timeout=dict(type='int',),
         ranges=dict(type='list',),
         resp_code_block=dict(type='list',),
+        sensitive_log_profile=dict(type='dict',),
+        sip_log_depth=dict(type='int',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
@@ -559,7 +613,7 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) or requests is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'analyticsprofile',
                            set([]))
