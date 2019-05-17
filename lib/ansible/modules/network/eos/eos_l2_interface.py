@@ -119,9 +119,8 @@ def search_obj_in_list(name, lst):
     return None
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(want, have, module):
     commands = list()
-    want, have = updates
 
     for w in want:
         name = w['name']
@@ -170,11 +169,10 @@ def map_obj_to_commands(updates, module):
                 if mode != obj_in_have['mode']:
                     if obj_in_have['mode'] == 'access':
                         commands.append('no switchport access vlan {0}'.format(obj_in_have['access_vlan']))
+                        commands.append('switchport mode trunk')
                         if native_vlan:
-                            commands.append('switchport mode trunk')
                             commands.append('switchport trunk native vlan {0}'.format(native_vlan))
                         if trunk_allowed_vlans:
-                            commands.append('switchport mode trunk')
                             commands.append('switchport trunk allowed vlan {0}'.format(trunk_allowed_vlans))
                     else:
                         if obj_in_have['native_vlan']:
@@ -189,7 +187,6 @@ def map_obj_to_commands(updates, module):
                         if access_vlan != obj_in_have['access_vlan']:
                             commands.append('switchport access vlan {0}'.format(access_vlan))
                     else:
-                        commands.append('switchport mode {0}'.format(mode))
                         if native_vlan != obj_in_have['native_vlan'] and native_vlan:
                             commands.append('switchport trunk native vlan {0}'.format(native_vlan))
                         if trunk_allowed_vlans != obj_in_have['trunk_allowed_vlans'] and trunk_allowed_vlans:
@@ -307,7 +304,7 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module, warnings)
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:
