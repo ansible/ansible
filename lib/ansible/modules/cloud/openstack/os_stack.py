@@ -249,7 +249,7 @@ def main():
             if not stack:
                 stack = _create_stack(module, stack, cloud, sdk)
             else:
-                if module.params['tags']:
+                if module.params['tag']:
                     from distutils.version import StrictVersion
                     min_version = '0.28.0'
                     if StrictVersion(sdk.version.__version__) < StrictVersion(min_version):
