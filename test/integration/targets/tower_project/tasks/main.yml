@@ -41,8 +41,8 @@
     that:
       - "result is changed"
 
-- name: create a project directory for manual project
-  import_tasks: create_project_dir.yml
+#- name: create a project directory for manual project
+#  import_tasks: create_project_dir.yml
 
 - name: Delete the manual project
   tower_project:
