@@ -24,10 +24,12 @@ notes:
     - This module works on Debian, Ubuntu and their derivatives.
     - This module supports Debian Squeeze (version 6) as well as its successors.
 options:
-    repo:
+    repos:
         description:
-            - A source string for the repository.
+            - A list of source strings for the repository.
         required: true
+        type: list
+        aliases: [ repo ]
     state:
         description:
             - A source string state.
@@ -40,7 +42,7 @@ options:
         version_added: "1.6"
     update_cache:
         description:
-            - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
+            - Run the equivalent of C(apt-get update) when a change occurs. Cache updates are run after making changes.
         type: bool
         default: "yes"
     validate_certs:
@@ -70,36 +72,63 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Add specified repository into sources list.
-- apt_repository:
+---
+- name: Add specified repository into sources list.
+  apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: present
 
-# Add specified repository into sources list using specified filename.
-- apt_repository:
+- name: Add a list of specified repositories into sources list. Update cache is running once.
+  apt_repository:
+    repos:
+      - deb http://archive.canonical.com/ubuntu hardy partner
+      - deb-src http://archive.canonical.com/ubuntu hardy partner
+    state: present
+
+- name: Add specified repository into sources list using specified filename.
+  apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
 
-# Add source repository into sources list.
-- apt_repository:
+- name: Add source repository into sources list.
+  apt_repository:
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
-# Remove specified repository from sources list.
-- apt_repository:
+- name: Remove specified repository from sources list.
+  apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: absent
 
-# Add nginx stable repository from PPA and install its signing key.
 # On Ubuntu target:
-- apt_repository:
+- name: Add nginx stable repository from PPA and install its signing key.
+  apt_repository:
     repo: ppa:nginx/stable
 
 # On Debian target
-- apt_repository:
-    repo: 'ppa:nginx/stable'
+- name: Add nginx stable repository from PPA and install its signing key.
+  apt_repository:
+    repo: ppa:nginx/stable
     codename: trusty
+'''
+
+RETURN = '''
+---
+repos:
+  description: List of source repos
+  returned: success
+  type: list
+  version_added: "2.9"
+repo:
+  description: The source repo
+  returned: if only one repo given
+  type: str
+state:
+  description: State of the source repos
+  returned: success
+  type: str
+  sample: present
 '''
 
 import glob
@@ -480,7 +509,7 @@ def get_add_ppa_signing_key_callback(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            repo=dict(type='str', required=True),
+            repos=dict(type='list', required=True, aliases=['repo']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             mode=dict(type='raw'),
             update_cache=dict(type='bool', default=True, aliases=['update-cache']),
@@ -494,7 +523,7 @@ def main():
     )
 
     params = module.params
-    repo = module.params['repo']
+    repos = module.params['repos']
     state = module.params['state']
     update_cache = module.params['update_cache']
     # Note: mode is referenced in SourcesList class via the passed in module (self here)
@@ -507,8 +536,8 @@ def main():
         else:
             module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
 
-    if not repo:
-        module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
+    if not repos or not any(repos):
+        module.fail_json(msg="Please set argument 'repos' to a non-empty value")
 
     if isinstance(distro, aptsources_distro.Distribution):
         sourceslist = UbuntuSourcesList(module, add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
@@ -519,9 +548,11 @@ def main():
 
     try:
         if state == 'present':
-            sourceslist.add_source(repo)
+            for repo in repos:
+                sourceslist.add_source(repo)
         elif state == 'absent':
-            sourceslist.remove_source(repo)
+            for repo in repos:
+                sourceslist.remove_source(repo)
     except InvalidSource as err:
         module.fail_json(msg='Invalid repository string: %s' % to_native(err))
 
@@ -547,7 +578,13 @@ def main():
         except OSError as err:
             module.fail_json(msg=to_native(err))
 
-    module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
+    result = dict(changed=changed, repos=repos, state=state, diff=diff)
+
+    # For backwards compatibilty return also "repo" if only one or less is given
+    if len(repos) == 1:
+        result['repo'] = repos[0]
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
