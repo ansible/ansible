@@ -46,7 +46,8 @@ options:
             - present
     ip_address:
         description:
-            - The IP address type of the container group (default is 'none').
+            - The IP address type of the container group.
+            - Default is C(none) and creating an instance without public IP.
         choices:
             - public
             - none
@@ -59,6 +60,7 @@ options:
     ports:
         description:
             - List of ports exposed within the container group.
+            - This option is deprecated, using I(ports) under I(containers)".
         type: list
     location:
         description:
