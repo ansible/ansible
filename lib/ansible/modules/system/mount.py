@@ -80,7 +80,7 @@ options:
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
-      - You should npt use this option unless you really know what you are doing.
+      - You should not use this option unless you really know what you are doing.
       - This might be useful if you need to configure mountpoints in a chroot environment.
       - OpenBSD does not allow specifying alternate fstab files with mount so do not
         use this on OpenBSD with any state that operates on the live filesystem.
