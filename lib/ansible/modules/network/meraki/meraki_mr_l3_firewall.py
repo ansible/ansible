@@ -20,6 +20,7 @@ short_description: Manage MR access point layer 3 firewalls in the Meraki cloud
 version_added: "2.7"
 description:
 - Allows for creation, management, and visibility into layer 3 firewalls implemented on Meraki MR access points.
+- Module is not idempotent as of current release.
 options:
     state:
         description:
@@ -278,6 +279,8 @@ def main():
             if meraki.status == 200:
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
+        else:
+            meraki.result['data'] = rules
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

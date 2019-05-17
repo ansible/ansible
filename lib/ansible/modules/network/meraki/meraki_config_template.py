@@ -247,6 +247,8 @@ def main():
                 meraki.fail_json(msg='Unable to bind configuration template to network')
             meraki.result['changed'] = True
             meraki.result['data'] = template_bind
+        else:
+            meraki.result['data'] = {}
     elif meraki.params['state'] == 'absent':
         if not meraki.params['net_name'] and not meraki.params['net_id']:
             meraki.result['data'] = delete_template(meraki,
@@ -266,6 +268,8 @@ def main():
                     meraki.fail_json(msg='Unable to unbind configuration template from network')
                 meraki.result['changed'] = True
                 meraki.result['data'] = config_unbind
+            else:
+                meraki.result['data'] = {}
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
