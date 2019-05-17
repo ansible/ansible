@@ -90,6 +90,14 @@ EXAMPLES = '''
     service_name: my_https_service
     virtual_ip: 1.2.3.4
   delegate_to: localhost
+
+- name: delete a loadbalanced service
+  memset_lb_service:
+    state: absent
+    api_key: 5eb86c9196ab03919abcf03857163741
+    load_balancer: lbtestyaa1
+    service_name: my_https_service
+  delegate_to: localhost
 '''
 
 RETURN = '''
