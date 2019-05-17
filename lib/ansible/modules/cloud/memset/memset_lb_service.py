@@ -307,7 +307,7 @@ def main():
             api_key=dict(required=True, type='str', no_log=True),
             enabled=dict(default="True", type='bool'),
             load_balancer=dict(required=True, type='str'),
-            port=dict(required=False, type=int),
+            port=dict(required=False, type='int'),
             protocol=dict(required=False, choices=['tcp', 'http', 'https'], type='str'),
             service_name=dict(required=True, type='str', aliases=['name']),
             virtual_ip=dict(required=False, type='str')
