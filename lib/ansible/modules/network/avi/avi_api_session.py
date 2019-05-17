@@ -11,6 +11,7 @@
 #
 """
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -108,6 +109,7 @@ obj:
     type: dict
 '''
 
+
 import json
 import time
 from ansible.module_utils.basic import AnsibleModule
@@ -115,10 +117,10 @@ from copy import deepcopy
 
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, ansible_return, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession, AviCredentials
-    from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
-
+        avi_common_argument_spec, ansible_return, avi_obj_cmp,
+        cleanup_absent_fields, HAS_AVI)
+    from ansible.module_utils.network.avi.avi_api import (
+        ApiSession, AviCredentials)
 except ImportError:
     HAS_AVI = False
 
@@ -135,12 +137,10 @@ def main():
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(argument_spec=argument_specs)
-
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) or requests is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
-
     api_creds = AviCredentials()
     api_creds.update_from_ansible_module(module)
     api = ApiSession.get_session(
@@ -167,33 +167,42 @@ def main():
     gparams = deepcopy(params) if params else {}
     gparams.update({'include_refs': '', 'include_name': ''})
 
-    if method == 'post':
+    # API methods not allowed
+    api_get_not_allowed = ["cluster", "gslbsiteops"]
+    api_post_not_allowed = ["alert", "fileservice"]
+    api_put_not_allowed = ["backup"]
+
+    if method == 'post' and not any(path.startswith(uri) for uri in api_post_not_allowed):
+        # TODO: Above condition should be updated after AV-38981 is fixed
         # need to check if object already exists. In that case
         # change the method to be put
         try:
             using_collection = False
-            if not path.startswith('cluster'):
-                gparams['name'] = data['name']
+            if not any(path.startswith(uri) for uri in api_get_not_allowed):
+                if 'name' in data:
+                    gparams['name'] = data['name']
                 using_collection = True
-            rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                          params=gparams, api_version=api_version)
-            existing_obj = rsp.json()
-            if using_collection:
-                existing_obj = existing_obj['results'][0]
-        except IndexError:
+            if not any(path.startswith(uri) for uri in api_get_not_allowed):
+                rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
+                              params=gparams, api_version=api_version)
+                existing_obj = rsp.json()
+                if using_collection:
+                    existing_obj = existing_obj['results'][0]
+        except (IndexError, KeyError):
             # object is not found
             pass
         else:
-            # object is present
-            method = 'put'
-            path += '/' + existing_obj['uuid']
+            if not any(path.startswith(uri) for uri in api_get_not_allowed):
+                # object is present
+                method = 'put'
+                path += '/' + existing_obj['uuid']
 
-    if method == 'put':
+    if method == 'put' and not any(path.startswith(uri) for uri in api_put_not_allowed):
         # put can happen with when full path is specified or it is put + post
         if existing_obj is None:
             using_collection = False
             if ((len(path.split('/')) == 1) and ('name' in data) and
-                    (not path.startswith('cluster'))):
+                    (not any(path.startswith(uri) for uri in api_get_not_allowed))):
                 gparams['name'] = data['name']
                 using_collection = True
             rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
