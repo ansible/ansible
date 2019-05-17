@@ -27,7 +27,7 @@ options:
     mode:
         description:
             - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave
-              (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
+              (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetmaster (RESET MASTER), resetslaveall (RESET SLAVE ALL)
         type: str
         choices:
             - getslave
@@ -36,6 +36,7 @@ options:
             - stopslave
             - startslave
             - resetslave
+            - resetmaster
             - resetslaveall
         default: getslave
     master_host:
@@ -162,6 +163,15 @@ def stop_slave(cursor):
 def reset_slave(cursor):
     try:
         cursor.execute("RESET SLAVE")
+        reset = True
+    except Exception:
+        reset = False
+    return reset
+
+
+def reset_master(cursor):
+    try:
+        cursor.execute("RESET MASTER")
         reset = True
     except Exception:
         reset = False
@@ -358,6 +368,12 @@ def main():
             module.exit_json(msg="Slave reset", changed=True)
         else:
             module.exit_json(msg="Slave already reset", changed=False)
+    elif mode in "resetmaster":
+        reset = reset_master(cursor)
+        if reset is True:
+            module.exit_json(msg="Master reset", changed=True)
+        else:
+            module.exit_json(msg="Master already reset", changed=False)
     elif mode in "resetslaveall":
         reset = reset_slave_all(cursor)
         if reset is True:
