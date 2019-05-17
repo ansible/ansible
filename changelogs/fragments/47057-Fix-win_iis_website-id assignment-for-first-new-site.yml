@@ -1,0 +1,2 @@
+bugfixes:
+  - win_iis_website - "Fixed #47057 , site_id not used if no sites exist already and creating a new site"

@@ -84,7 +84,13 @@ Try {
     # This is a bug in the New-WebSite commandlet. Apparently there must be at least one site configured in IIS otherwise New-WebSite crashes.
     # For more details, see http://stackoverflow.com/questions/3573889/ps-c-new-website-blah-throws-index-was-outside-the-bounds-of-the-array
     $sites_list = get-childitem -Path IIS:\sites
-    if ($null -eq $sites_list) { $site_parameters.ID = 1 }
+    if ($null -eq $sites_list) { 
+      if ($site_id) {
+        $site_parameters.ID = $site_id
+      } else {
+        $site_parameters.ID = 1 
+      }
+    }
 
     $site = New-Website @site_parameters -Force
     $result.changed = $true
