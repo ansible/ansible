@@ -17,8 +17,7 @@ description:
   - When a project variable does exists, its value will be updated when the values are different.
   - Variables which are presented in the playbook, but are not presented in the Gitlab project, they stay untouched (purged_vars = False) or will be deleted (purged_vars = True).
 version_added: "2.9"
-author:
-  - Markus Bergholz (markuman@gmail.com)
+author: "Markus Bergholz (markuman@gmail.com)"
 requirements:
   - python >= 2.7
   - python-gitlab python module
@@ -76,12 +75,6 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 
 class gitlab_project_variables(object):
 
@@ -127,24 +120,20 @@ def native_python_main(server_url, login_token, project_name, purge_vars, var_li
     for idx in range(len(var_list)):
         key = list(var_list[idx].keys())[0]
         if key in existing_variables:
-            display.vvvv("update {key}".format(key=key))
             change = this_gitlab.update_variable(
                 key, var_list[idx][key]) or change
             pop_index = existing_variables.index(key)
             existing_variables.pop(pop_index)
         else:
-            display.vvvv("create {key}".format(key=key))
             this_gitlab.create_variable(key, var_list[idx][key])
             change = True
 
     if len(existing_variables) > 0 and purge_vars:
         for item in existing_variables:
-            display.vvvv("delete {key}".format(key=item))
             this_gitlab.delete_variable(item)
             change = True
 
     existing_variables = this_gitlab.list_all_project_variables()
-    display.vvvv(existing_variables)
     return change
 
 
