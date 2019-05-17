@@ -207,12 +207,8 @@ def main():
             payload = {'name': meraki.params['org_name'],
                        'id': meraki.params['org_id'],
                        }
-            if meraki.is_update_required(
-                get_org(
-                    meraki,
-                    meraki.params['org_id'],
-                    orgs),
-                    payload):
+            original = get_org(meraki, meraki.params['org_id'], orgs)
+            if meraki.is_update_required(original, payload):
                 response = meraki.request(meraki.construct_path('update',
                                                                 org_id=meraki.params['org_id']
                                                                 ),
@@ -222,6 +218,9 @@ def main():
                     meraki.fail_json(msg='Organization update failed')
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
+            else:
+                meraki.result['data'] = original
+
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     meraki.exit_json(**meraki.result)

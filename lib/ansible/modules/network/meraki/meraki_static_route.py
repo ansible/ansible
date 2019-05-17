@@ -363,6 +363,8 @@ def main():
                 path = meraki.construct_path('update', net_id=net_id, custom={'route_id': meraki.params['route_id']})
                 meraki.result['data'] = meraki.request(path, method="PUT", payload=json.dumps(payload))
                 meraki.result['changed'] = True
+            else:
+                meraki.result['data'] = existing_route
         else:
             if module.check_mode:
                 meraki.result['data'] = payload

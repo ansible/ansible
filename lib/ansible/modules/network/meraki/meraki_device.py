@@ -378,6 +378,8 @@ def main():
                     updated_device.append(meraki.request(path, method='PUT', payload=json.dumps(payload)))
                     meraki.result['data'] = updated_device
                     meraki.result['changed'] = True
+                else:
+                    meraki.result['data'] = device_data
         else:
             if net_id is None:
                 device_list = get_org_devices(meraki, org_id)

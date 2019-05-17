@@ -183,6 +183,7 @@
       tags: recently-added
       state: present
       move_map_marker: True
+      note: Test device notes
     delegate_to: localhost
     register: update_device_idempotent
 
@@ -192,6 +193,7 @@
   - assert:
       that:
         - update_device_idempotent.changed == False
+        - update_device_idempotent.data is defined
 
   always:
   - name: Remove a device from a network

@@ -278,6 +278,8 @@ def main():
             if meraki.status == 200:
                 meraki.result['data'] = r
                 meraki.result['changed'] = True
+        else:
+            meraki.result['data'] = original
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
