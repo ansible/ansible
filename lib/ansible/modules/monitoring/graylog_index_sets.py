@@ -266,18 +266,20 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def create(module, base_url, headers):
+def create(module, base_url, headers, creation_date):
 
     url = base_url
 
     payload = {}
 
-    for key in ['title', 'description', 'index_prefix', 'creation_date', 'writable', 'default',
+    for key in ['title', 'description', 'index_prefix', 'writable', 'default',
                 'index_analyzer', 'shards', 'replicas', 'rotation_strategy_class', 'retention_strategy_class',
                 'rotation_strategy', 'retention_strategy', 'index_optimization_max_num_segments',
                 'index_optimization_disabled']:
         if module.params[key] is not None:
             payload[key] = module.params[key]
+
+    payload['creation_date'] = creation_date
 
     response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='POST', data=module.jsonify(payload))
 
@@ -448,6 +450,7 @@ def main():
     action = module.params['action']
     title = module.params['title']
     index_set_id = module.params['index_set_id']
+    creation_date = datetime.datetime.utcnow().isoformat() + 'Z'
 
     base_url = "https://%s/api/system/indices/index_sets" % (endpoint)
 
@@ -456,7 +459,7 @@ def main():
                 "Authorization": "Basic ' + api_token.decode() + '" }'
 
     if action == "create":
-        status, message, content, url = create(module, base_url, headers)
+        status, message, content, url = create(module, base_url, headers, creation_date)
     elif action == "update":
         status, message, content, url = update(module, base_url, headers)
     elif action == "delete":
