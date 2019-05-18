@@ -690,6 +690,9 @@ def main():
     index_set_id = module.params['index_set_id']
     inverted = module.params['inverted']
     description = module.params['description']
+    remove_matches_from_default_stream = module.params['remove_matches_from_default_stream']
+    matching_type = module.params['matching_type']
+    rules = module.params['rules']
 
     base_url = "https://%s/api/streams" % (endpoint)
 
@@ -702,9 +705,9 @@ def main():
             index_set_id = default_index_set(module, endpoint, base_url, headers)
         status, message, content, url = create(module, base_url, headers, index_set_id)
     elif action == "create_rule":
-        status, message, content, url = create_rule(module, base_url, headers, stream_id, field, type, value, inverted, description)
+        status, message, content, url = create_rule(module, base_url, headers)
     elif action == "update":
-        status, message, content, url = update(module, base_url, headers)
+        status, message, content, url = update(module, base_url, headers, stream_id, title, description, remove_matches_from_default_stream, matching_type, rules, index_set_id)
     elif action == "update_rule":
         status, message, content, url = update_rule(module, base_url, headers, stream_id, rule_id, field, type, value, inverted, description)
     elif action == "delete":
