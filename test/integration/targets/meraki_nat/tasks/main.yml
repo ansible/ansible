@@ -4,136 +4,183 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 # - block:
-#   - name: Query all NAT rules
-#     meraki_nat:
-#       auth_key: '{{auth_key}}'
-#       org_name: '{{test_org_name}}'
-#       net_name: '{{test_net_name}}'
-#       state: query
-#       subset: all
-#     delegate_to: localhost
-#     register: query_all
+  # - name: Query all NAT rules
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: query
+  #     subset: all
+  #   delegate_to: localhost
+  #   register: query_all
 
-#   - debug:
-#       var: query_all
+  # - debug:
+  #     var: query_all
 
-#   - name: Query 1:1 NAT rules
-#     meraki_nat:
-#       auth_key: '{{auth_key}}'
-#       org_name: '{{test_org_name}}'
-#       net_name: '{{test_net_name}}'
-#       state: query
-#       subset: '1:1'
-#     delegate_to: localhost
-#     register: query_1to1
+  # - name: Query 1:1 NAT rules
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: query
+  #     subset: '1:1'
+  #   delegate_to: localhost
+  #   register: query_1to1
 
-#   - debug:
-#       var: query_1to1
+  # - debug:
+  #     var: query_1to1
 
-#   - name: Query 1:many NAT rules
-#     meraki_nat:
-#       auth_key: '{{auth_key}}'
-#       org_name: '{{test_org_name}}'
-#       net_name: '{{test_net_name}}'
-#       state: query
-#       subset: '1:many'
-#     delegate_to: localhost
-#     register: query_1tomany
+  # - name: Query 1:many NAT rules
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: query
+  #     subset: '1:many'
+  #   delegate_to: localhost
+  #   register: query_1tomany
 
-#   - debug:
-#       var: query_1tomany
+  # - debug:
+  #     var: query_1tomany
 
-#   - name: Query port forwarding rules
-#     meraki_nat:
-#       auth_key: '{{auth_key}}'
-#       org_name: '{{test_org_name}}'
-#       net_name: '{{test_net_name}}'
-#       state: query
-#       subset: port_forwarding
-#     delegate_to: localhost
-#     register: query_pf
+  # - name: Query port forwarding rules
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: query
+  #     subset: port_forwarding
+  #   delegate_to: localhost
+  #   register: query_pf
 
-#   - debug:
-#       var: query_pf
+  # - debug:
+  #     var: query_pf
 
-#   - name: Query multiple rules
-#     meraki_nat:
-#       auth_key: '{{auth_key}}'
-#       org_name: '{{test_org_name}}'
-#       net_name: '{{test_net_name}}'
-#       state: query
-#       subset:
-#         - '1:1'
-#         - '1:many'
-#     delegate_to: localhost
-#     register: query_multiple
+  # - name: Query multiple rules
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: query
+  #     subset:
+  #       - '1:1'
+  #       - '1:many'
+  #   delegate_to: localhost
+  #   register: query_multiple
 
-#   - debug:
-#       var: query_multiple
+  # - debug:
+  #     var: query_multiple
 
-  - name: Create 1:1 rule
+  # - name: Create 1:1 rule with check mode
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: present
+  #     one_to_one:
+  #       - name: Service behind NAT
+  #         public_ip: 1.2.1.2
+  #         lan_ip: 192.168.128.1
+  #         uplink: internet1
+  #         allowed_inbound:
+  #           - protocol: tcp
+  #             destination_ports:
+  #               - 80
+  #             allowed_ips: 
+  #               - 10.10.10.10
+  #   delegate_to: localhost
+  #   register: create_one_one_check
+  #   check_mode: yes
+
+  # - debug:
+  #     var: create_one_one_check
+
+  # - name: Create 1:1 rule
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: present
+  #     one_to_one:
+  #       - name: Service behind NAT
+  #         public_ip: 1.2.1.2
+  #         lan_ip: 192.168.128.1
+  #         uplink: internet1
+  #         allowed_inbound:
+  #           - protocol: tcp
+  #             destination_ports:
+  #               - 80
+  #             allowed_ips: 
+  #               - 10.10.10.10
+  #   delegate_to: localhost
+  #   register: create_one_one
+
+  # - debug:
+  #     var: create_one_one
+
+  # - name: Create 1:1 rule with idempotency
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: present
+  #     one_to_one:
+  #       - name: Service behind NAT
+  #         public_ip: 1.2.1.2
+  #         lan_ip: 192.168.128.1
+  #         uplink: internet1
+  #         allowed_inbound:
+  #           - protocol: tcp
+  #             destination_ports:
+  #               - 80
+  #             allowed_ips: 
+  #               - 10.10.10.10
+  #   delegate_to: localhost
+  #   register: create_one_one_idempotent
+
+  # - debug:
+  #     var: create_one_one_idempotent
+
+  - name: Create 1:many rule
     meraki_nat:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
       net_name: '{{test_net_name}}'
       state: present
-      one_to_one:
-        - name: Service behind NAT
-          public_ip: 1.2.1.2
-          lan_ip: 10.200.1.10
-          uplink: both
-          allowed_inbound:
-            - protocol: tcp
-              destination_ports: 80
-              allowed_ips: 10.10.10.10
+      one_to_many:
+        - public_ip: 1.1.1.1
+          uplink: internet1
+          port_rules:
+            - name: Test rule
+              protocol: tcp
+              public_port: 10
+              local_ip: 192.168.128.1
+              local_port: 11
+              allowed_ips:
+                - any
     delegate_to: localhost
-    register: create_one_one
+    register: create_one_many
 
   - debug:
-      var: create_one_one
+      var: create_one_many
 
-  # - name: Create 1:many rule
-  #   meraki_nat:
-  #     auth_key: '{{auth_key}}'
-  #     org_name: '{{test_org_name}}'
-  #     net_name: '{{test_net_name}}'
-  #     state: present
-  #     one_to_many:
-  #       - name: Test map
-  #         public_ip: 1.1.1.1
-  #         lan_ip: 10.200.1.10
-  #         uplink: both
-  #         protocol: tcp
-  #         allowed_ips:
-  #           - 1.1.1.1
-  #         port_rules:
-  #           - Hello
-  #         public_port: 10
-  #         local_ip: 1.1.1.1
-  #         local_port: 11
-  #   delegate_to: localhost
-  #   register: create_one_many
+  - name: Create port forwarding rule
+    meraki_nat:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      port_forwarding:
+        - name: Test map
+          lan_ip: 10.200.1.10
+          uplink: both
+          protocol: tcp
+          allowed_ips:
+            - 1.1.1.1
+          public_port: 10
+          local_port: 11
+    delegate_to: localhost
+    register: create_pf
 
-  # - debug:
-  #     var: create_one_many
-
-  # - name: Create port forwarding rule
-  #   meraki_nat:
-  #     auth_key: '{{auth_key}}'
-  #     org_name: '{{test_org_name}}'
-  #     net_name: '{{test_net_name}}'
-  #     state: present
-  #     port_forwarding:
-  #       - name: Test map
-  #         lan_ip: 10.200.1.10
-  #         uplink: both
-  #         protocol: tcp
-  #         allowed_ips:
-  #           - 1.1.1.1
-  #         public_port: 10
-  #         local_port: 11
-  #   delegate_to: localhost
-  #   register: create_pf
-
-  # - debug:
-  #     var: create_pf
+  - debug:
+      var: create_pf

@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 ---
 module: meraki_nat
 short_description: Manage NAT rules in Meraki cloud
-version_added: "2.8"
+version_added: "2.9"
 description:
 - Allows for creation, management, and visibility of NAT rules (1:1, 1:many, port forwarding) within Meraki.
 
@@ -443,6 +443,10 @@ def construct_payload(params):
     elif isinstance(params, str) or isinstance(params, int):
         return params
 
+def list_int_to_str(data):
+    for item in data:
+        item = str(item)
+    return data
 
 def main():
 
@@ -450,9 +454,17 @@ def main():
     # the module
 
     one_to_one_allowed_inbound_spec = dict(protocol=dict(type='str', choices=['tcp', 'udp', 'icmp-ping', 'any'], default='any'),
-                                           destination_ports=dict(type='list'),
+                                           destination_ports=dict(type='list', element='str'),
                                            allowed_ips=dict(type='list'),
                                            )
+
+    one_to_many_port_inbound_spec = dict(protocol=dict(type='str', choices=['tcp', 'udp']),
+                                         name=dict(type='str'),
+                                         local_ip=dict(type='str'),
+                                         local_port=dict(type='str'),
+                                         allowed_ips=dict(type='list'),
+                                         public_port=dict(type='str'),
+                                         )
 
     one_to_one_spec = dict(name=dict(type='str'),
                            public_ip=dict(type='str'),
@@ -461,16 +473,9 @@ def main():
                            allowed_inbound=dict(type='list', element='dict', options=one_to_one_allowed_inbound_spec),
                            )
 
-    one_to_many_spec = dict(name=dict(type='str'),
-                            public_ip=dict(type='str'),
-                            lan_ip=dict(type='str'),
+    one_to_many_spec = dict(public_ip=dict(type='str'),
                             uplink=dict(type='str', choices=['internet1', 'internet2', 'both']),
-                            protocol=dict(type='str', choices=['tcp', 'udp']),
-                            allowed_ips=dict(type='list'),
-                            port_rules=dict(type='list'),
-                            public_port=dict(type='int'),
-                            local_ip=dict(type='str'),
-                            local_port=dict(type='str'),
+                            port_rules=dict(type='list', element='dict', options=one_to_many_port_inbound_spec),
                             )
 
     port_forwarding_spec = dict(name=dict(type='str'),
@@ -498,7 +503,7 @@ def main():
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+                           supports_check_mode=True,
                            )
 
     meraki = MerakiModule(module, function='nat')
@@ -509,9 +514,37 @@ def main():
     port_forwarding_payload = None
     if meraki.params['state'] == 'present':
         if meraki.params['one_to_one'] is not None:
-            one_to_one_payload = {'rules': construct_payload(meraki.params['one_to_one'])}
+            rules = []
+            for i in meraki.params['one_to_one']:
+                data = {'name': i['name'],
+                        'publicIp': i['public_ip'],
+                        'uplink': i['uplink'],
+                        'lanIp': i['lan_ip'],
+                        'allowedInbound': construct_payload(i['allowed_inbound'])
+                        }
+                for inbound in data['allowedInbound']:
+                    inbound['allowedIps'] = list_int_to_str(inbound['allowedIps'])
+                rules.append(data)
+            one_to_one_payload = {'rules': rules}
         if meraki.params['one_to_many'] is not None:
-            one_to_many_payload = {'rules': construct_payload(meraki.params['one_to_many'])}
+            rules = []
+            for i in meraki.params['one_to_many']:
+                data = {'publicIp': i['public_ip'],
+                        'uplink': i['uplink'],
+                        }
+                port_rules = []
+                for port_rule in i['port_rules']:
+                    rule = {'name': port_rule['name'],
+                            'protocol': port_rule['protocol'],
+                            'publicPort': str(port_rule['public_port']),
+                            'localIp': port_rule['local_ip'],
+                            'localPort': str(port_rule['local_port']),
+                            'allowedIps': port_rule['allowed_ips'],
+                            }
+                    port_rules.append(rule)
+                data['portRules'] = port_rules
+                rules.append(data)
+            one_to_many_payload = {'rules': rules}
         if meraki.params['port_forwarding'] is not None:
             port_forwarding_payload = {'rules': construct_payload(meraki.params['port_forwarding'])}
 
@@ -519,8 +552,8 @@ def main():
     # meraki.fail_json(msg="Payload", one_to_many=one_to_many_payload)
     # meraki.fail_json(msg="Payload", port_forwarding=port_forwarding_payload)
 
-    onetomany_urls = {'nat': '/networks/{net_id}/oneToOneNatRules'}
-    onetoone_urls = {'nat': '/networks/{net_id}/oneToManyNatRules'}
+    onetomany_urls = {'nat': '/networks/{net_id}/oneToManyNatRules'}
+    onetoone_urls = {'nat': '/networks/{net_id}/oneToOneNatRules'}
     port_forwarding_urls = {'nat': '/networks/{net_id}/portForwardingRules'}
     meraki.url_catalog['1:many'] = onetomany_urls
     meraki.url_catalog['1:1'] = onetoone_urls
@@ -558,27 +591,40 @@ def main():
         if one_to_one_payload is not None:
             path = meraki.construct_path('1:1', net_id=net_id)
             current = meraki.request(path, method='GET')
+            # meraki.fail_json(msg="Compare", original=current, payload=one_to_one_payload)
             if meraki.is_update_required(current, one_to_one_payload):
-                r = meraki.request(path, method='PUT', payload=one_to_one_payload)
-                if meraki.status == 200:
-                    meraki.result['data'] = {'one_to_one': r}
+                if meraki.module.check_mode is True:
+                    current.update(one_to_one_payload)
+                    meraki.result['data'] = {'one_to_one': current}
                     meraki.result['changed'] = True
+                else:
+                    r = meraki.request(path, method='PUT', payload=json.dumps(one_to_one_payload))
+                    if meraki.status == 200:
+                        meraki.result['data'] = {'one_to_one': r}
+                        meraki.result['changed'] = True
+            else:
+                meraki.result['data']['one_to_one'] = current
         if one_to_many_payload is not None:
             path = meraki.construct_path('1:many', net_id=net_id)
             current = meraki.request(path, method='GET')
+            # meraki.fail_json(msg="Compare", current=current, payload=one_to_many_payload)
             if meraki.is_update_required(current, one_to_many_payload):
-                r = meraki.request(path, method='PUT', payload=one_to_many_payload)
+                r = meraki.request(path, method='PUT', payload=json.dumps(one_to_many_payload))
                 if meraki.status == 200:
                     meraki.result['data'] = {'one_to_many': r}
                     meraki.result['changed'] = True
+            else:
+                meraki.result['data'] = {'one_to_many': current}
         if port_forwarding_payload is not None:
             path = meraki.construct_path('port_forwarding', net_id=net_id)
             current = meraki.request(path, method='GET')
             if meraki.is_update_required(current, port_forwarding_payload):
-                r = meraki.request(path, method='PUT', payload=port_forwarding_payload)
+                r = meraki.request(path, method='PUT', payload=json.dumps(port_forwarding_payload))
                 if meraki.status == 200:
                     meraki.result['data'] = {'port_forwarding': r}
                     meraki.result['changed'] = True
+            else:
+                meraki.result['data']['port_forwarding'] = current
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
