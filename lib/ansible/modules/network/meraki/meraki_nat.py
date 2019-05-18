@@ -208,12 +208,14 @@ EXAMPLES = r'''
     one_to_one:
       - name: Service behind NAT
         public_ip: 1.2.1.2
-        lan_ip: 10.200.1.10
-        uplink: both
+        lan_ip: 192.168.128.1
+        uplink: internet1
         allowed_inbound:
           - protocol: tcp
-            destination_ports: 80
-            allowed_ips: 10.10.10.10
+            destination_ports:
+              - 80
+            allowed_ips:
+              - 10.10.10.10
   delegate_to: localhost
 
 - name: Create 1:many rule
@@ -223,18 +225,16 @@ EXAMPLES = r'''
     net_name: YourNet
     state: present
     one_to_many:
-      - name: Test map
-        public_ip: 1.1.1.1
-        lan_ip: 10.200.1.10
-        uplink: both
-        protocol: tcp
-        allowed_ips:
-          - 1.1.1.1
+      - public_ip: 1.1.1.1
+        uplink: internet1
         port_rules:
-          - Hello
-        public_port: 10
-        local_ip: 1.1.1.1
-        local_port: 11
+          - name: Test rule
+            protocol: tcp
+            public_port: 10
+            local_ip: 192.168.128.1
+            local_port: 11
+            allowed_ips:
+              - any
   delegate_to: localhost
 
 - name: Create port forwarding rule
@@ -245,7 +245,7 @@ EXAMPLES = r'''
     state: present
     port_forwarding:
       - name: Test map
-        lan_ip: 10.200.1.10
+        lan_ip: 192.168.128.1
         uplink: both
         protocol: tcp
         allowed_ips:
@@ -301,6 +301,11 @@ data:
                                     returned: success, when 1:1 NAT object is in task
                                     type: string
                                     example: tcp
+                                destinationPorts:
+                                    description: Ports to apply NAT rule to.
+                                    returned: success, when 1:1 NAT object is in task
+                                    type: string
+                                    example: 80
                                 allowedIps:
                                     description: List of IP addresses to be forwarded.
                                     returned: success, when 1:1 NAT object is in task
@@ -443,10 +448,13 @@ def construct_payload(params):
     elif isinstance(params, str) or isinstance(params, int):
         return params
 
+
 def list_int_to_str(data):
+    new_list = []
     for item in data:
-        item = str(item)
-    return data
+        new_list.append(str(item))
+    return new_list
+
 
 def main():
 
@@ -547,10 +555,9 @@ def main():
             one_to_many_payload = {'rules': rules}
         if meraki.params['port_forwarding'] is not None:
             port_forwarding_payload = {'rules': construct_payload(meraki.params['port_forwarding'])}
-
-    # meraki.fail_json(msg="Payload", one_to_one=one_to_one_payload)
-    # meraki.fail_json(msg="Payload", one_to_many=one_to_many_payload)
-    # meraki.fail_json(msg="Payload", port_forwarding=port_forwarding_payload)
+            for rule in port_forwarding_payload['rules']:
+                rule['localPort'] = str(rule['localPort'])
+                rule['publicPort'] = str(rule['publicPort'])
 
     onetomany_urls = {'nat': '/networks/{net_id}/oneToManyNatRules'}
     onetoone_urls = {'nat': '/networks/{net_id}/oneToOneNatRules'}
@@ -588,6 +595,7 @@ def main():
                 except KeyError:
                     meraki.result['data'] = {subset: data}
     elif meraki.params['state'] == 'present':
+        meraki.result['data'] = dict()
         if one_to_one_payload is not None:
             path = meraki.construct_path('1:1', net_id=net_id)
             current = meraki.request(path, method='GET')
@@ -607,22 +615,31 @@ def main():
         if one_to_many_payload is not None:
             path = meraki.construct_path('1:many', net_id=net_id)
             current = meraki.request(path, method='GET')
-            # meraki.fail_json(msg="Compare", current=current, payload=one_to_many_payload)
             if meraki.is_update_required(current, one_to_many_payload):
-                r = meraki.request(path, method='PUT', payload=json.dumps(one_to_many_payload))
-                if meraki.status == 200:
-                    meraki.result['data'] = {'one_to_many': r}
+                if meraki.module.check_mode is True:
+                    current.update(one_to_many_payload)
+                    meraki.result['data']['one_to_many'] = current
                     meraki.result['changed'] = True
+                else:
+                    r = meraki.request(path, method='PUT', payload=json.dumps(one_to_many_payload))
+                    if meraki.status == 200:
+                        meraki.result['data']['one_to_many'] = r
+                        meraki.result['changed'] = True
             else:
-                meraki.result['data'] = {'one_to_many': current}
+                meraki.result['data']['one_to_many'] =  current
         if port_forwarding_payload is not None:
             path = meraki.construct_path('port_forwarding', net_id=net_id)
             current = meraki.request(path, method='GET')
             if meraki.is_update_required(current, port_forwarding_payload):
-                r = meraki.request(path, method='PUT', payload=json.dumps(port_forwarding_payload))
-                if meraki.status == 200:
-                    meraki.result['data'] = {'port_forwarding': r}
+                if meraki.module.check_mode is True:
+                    current.update(port_forwarding_payload)
+                    meraki.result['data']['port_forwarding'] = current
                     meraki.result['changed'] = True
+                else:
+                    r = meraki.request(path, method='PUT', payload=json.dumps(port_forwarding_payload))
+                    if meraki.status == 200:
+                        meraki.result['data']['port_forwarding'] = r
+                        meraki.result['changed'] = True
             else:
                 meraki.result['data']['port_forwarding'] = current
 
