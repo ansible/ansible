@@ -879,7 +879,7 @@ def main():
         if client.module.params[option] != default_value:
             if client.module.params['build'] is None:
                 client.module.params['build'] = dict()
-            if client.module.params['build'].get(build_option) != default_value:
+            if client.module.params['build'].get(build_option, default_value) != default_value:
                 client.fail('Cannot specify both %s and build.%s!' % (option, build_option))
             client.module.params['build'][build_option] = client.module.params[option]
             client.module.warn('Please specify build.%s instead of %s. The %s option '
