@@ -10,7 +10,7 @@ DOCUMENTATION = '''
     version_added: "2.6"
     short_description: Uses nmap to find hosts to target
     description:
-        - Uses a YAML configuration file with a valid YAML extension.
+        - Uses a YAML configuration file that ends with C(nmap.(yml|yaml)).
     extends_documentation_fragment:
       - constructed
       - inventory_cache
@@ -50,12 +50,10 @@ EXAMPLES = '''
     address: 192.168.0.0/24
 '''
 
-import os
 import re
 
 from subprocess import Popen, PIPE
 
-from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
@@ -72,18 +70,35 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self._nmap = None
         super(InventoryModule, self).__init__()
 
-    def verify_file(self, path):
+    def _populate(self, hosts):
+        # Use constructed if applicable
+        strict = self.get_option('strict')
 
+        for host in hosts:
+            hostname = host['name']
+            self.inventory.add_host(hostname)
+            for var, value in host.items():
+                self.inventory.set_variable(hostname, var, value)
+
+            # Composed variables
+            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
+
+            # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
+            self._add_host_to_composed_groups(self.get_option('groups'), host, hostname, strict=strict)
+
+            # Create groups based on variable values and add the corresponding hosts to it
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
+
+    def verify_file(self, path):
+        ''' return true/false if this is possibly a valid file for this plugin to consume '''
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            file_name, ext = os.path.splitext(path)
-
-            if not ext or ext in C.YAML_FILENAME_EXTENSIONS:
+            # base class verifies that file exists and is readable by current user
+            if path.endswith(('nmap.yaml', 'nmap.yml')):
                 valid = True
-
         return valid
 
-    def parse(self, inventory, loader, path, cache=False):
+    def parse(self, inventory, loader, path, cache=True):
 
         try:
             self._nmap = get_bin_path('nmap', True)
@@ -97,71 +112,93 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         self._read_config_data(path)
 
-        # setup command
-        cmd = [self._nmap]
-        if not self._options['ports']:
-            cmd.append('-sP')
+        cache_key = self.get_cache_key(path)
+        user_cache_setting = self.get_option('cache')
+        attempt_to_read_cache = user_cache_setting and cache
+        cache_needs_update = user_cache_setting and not cache
 
-        if self._options['ipv4'] and not self._options['ipv6']:
-            cmd.append('-4')
-        elif self._options['ipv6'] and not self._options['ipv4']:
-            cmd.append('-6')
-        elif not self._options['ipv6'] and not self._options['ipv4']:
-            raise AnsibleParserError('One of ipv4 or ipv6 must be enabled for this plugin')
-
-        if self._options['exclude']:
-            cmd.append('--exclude')
-            cmd.append(','.join(self._options['exclude']))
-
-        cmd.append(self._options['address'])
-        try:
-            # execute
-            p = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            stdout, stderr = p.communicate()
-            if p.returncode != 0:
-                raise AnsibleParserError('Failed to run nmap, rc=%s: %s' % (p.returncode, to_native(stderr)))
-
-            # parse results
-            host = None
-            ip = None
-            ports = []
-
+        if attempt_to_read_cache:
             try:
-                t_stdout = to_text(stdout, errors='surrogate_or_strict')
-            except UnicodeError as e:
-                raise AnsibleParserError('Invalid (non unicode) input returned: %s' % to_native(e))
+                results = self._cache[cache_key]
+            except KeyError:
+                cache_needs_update = True
 
-            for line in t_stdout.splitlines():
-                hits = self.find_host.match(line)
-                if hits:
-                    if host is not None:
-                        self.inventory.set_variable(host, 'ports', ports)
+        if not user_cache_setting or cache_needs_update:
+            # setup command
+            cmd = [self._nmap]
+            if not self._options['ports']:
+                cmd.append('-sP')
 
-                    # if dns only shows arpa, just use ip instead as hostname
-                    if hits.group(1).endswith('.in-addr.arpa'):
-                        host = hits.group(2)
-                    else:
-                        host = hits.group(1)
+            if self._options['ipv4'] and not self._options['ipv6']:
+                cmd.append('-4')
+            elif self._options['ipv6'] and not self._options['ipv4']:
+                cmd.append('-6')
+            elif not self._options['ipv6'] and not self._options['ipv4']:
+                raise AnsibleParserError('One of ipv4 or ipv6 must be enabled for this plugin')
 
-                    ip = hits.group(2)
+            if self._options['exclude']:
+                cmd.append('--exclude')
+                cmd.append(','.join(self._options['exclude']))
 
-                    if host is not None:
-                        # update inventory
-                        self.inventory.add_host(host)
-                        self.inventory.set_variable(host, 'ip', ip)
-                        ports = []
-                    continue
+            cmd.append(self._options['address'])
+            try:
+                # execute
+                p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = p.communicate()
+                if p.returncode != 0:
+                    raise AnsibleParserError('Failed to run nmap, rc=%s: %s' % (p.returncode, to_native(stderr)))
 
-                host_ports = self.find_port.match(line)
-                if host is not None and host_ports:
-                    ports.append({'port': host_ports.group(1), 'protocol': host_ports.group(2), 'state': host_ports.group(3), 'service': host_ports.group(4)})
-                    continue
+                # parse results
+                host = None
+                ip = None
+                ports = list()
+                results = list()
 
-                # TODO: parse more data, OS?
+                try:
+                    t_stdout = to_text(stdout, errors='surrogate_or_strict')
+                except UnicodeError as e:
+                    raise AnsibleParserError('Invalid (non unicode) input returned: %s' % to_native(e))
 
-            # if any leftovers
-            if host and ports:
-                self.inventory.set_variable(host, 'ports', ports)
+                for line in t_stdout.splitlines():
+                    hits = self.find_host.match(line)
+                    if hits:
+                        if host is not None and ports:
+                            results[-1]['ports'] = ports
 
-        except Exception as e:
-            raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))
+                        # if dns only shows arpa, just use ip instead as hostname
+                        if hits.group(1).endswith('.in-addr.arpa'):
+                            host = hits.group(2)
+                        else:
+                            host = hits.group(1)
+
+                        ip = hits.group(2)
+
+                        if host is not None:
+                            # update inventory
+                            results.append(dict())
+                            results[-1]['name'] = host
+                            results[-1]['ip'] = ip
+                            ports = []
+                        continue
+
+                    host_ports = self.find_port.match(line)
+                    if host is not None and host_ports:
+                        ports.append({'port': host_ports.group(1),
+                                      'protocol': host_ports.group(2),
+                                      'state': host_ports.group(3),
+                                      'service': host_ports.group(4)})
+                        continue
+
+                    # TODO: parse more data, OS?
+
+                # if any leftovers
+                if host and ports:
+                    results[-1]['ports'] = ports
+
+            except Exception as e:
+                raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))
+
+        self._populate(results)
+
+        if cache_needs_update:
+            self._cache[cache_key] = results
