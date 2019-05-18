@@ -103,7 +103,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                 rc, out, err = module.run_command(cmd)
                 if rc == 0 and out:
                     line = self.findstr(out, 'Initiator node name')
-                    iscsi_facts['iscsi_iqn'] = line.split()[3].strip()
+                    iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].strip()
         return iscsi_facts
 
     def findstr(self, text, match):
