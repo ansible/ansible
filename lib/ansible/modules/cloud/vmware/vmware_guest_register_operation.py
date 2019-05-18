@@ -19,7 +19,7 @@ module: vmware_guest_register_operation
 short_description: VM inventory registration operation
 author:
   - sky-joker (@sky-joker)
-version_added: '2.8'
+version_added: '2.9'
 description:
   - This module can register or unregister VMs to the inventory.
 requirements:
@@ -28,7 +28,7 @@ requirements:
 options:
   datacenter:
     description:
-    - Destination datacenter for the deploy operation.
+    - Destination datacenter for the register/unregister operation.
     - This parameter is case sensitive.
     default: ha-datacenter
   cluster_name:
@@ -46,13 +46,14 @@ options:
     - '   folder: datacenter1/vm'
     - '   folder: /datacenter1/vm/folder1'
     - '   folder: datacenter1/vm/folder1'
-    - '   folder: /folder1/datacenter1/vm'
-    - '   folder: folder1/datacenter1/vm'
-    - '   folder: /folder1/datacenter1/vm/folder2'
-    default: /vm
   name:
     description:
     - Specify VM name to be registered in the inventory.
+    required: True
+  uuid:
+    description:
+    - UUID of the virtual machine to manage if known, this is VMware's unique identifier.
+    - If virtual machine does not exists, then this parameter is ignored.
   esxi_hostname:
     description:
     - The ESXi hostname where the virtual machine will run.
@@ -146,7 +147,7 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_resource_pool_by_name, find_vm_by_name,\
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_resource_pool_by_name, \
     wait_for_task, compile_folder_path_for_object, find_cluster_by_name
 from ansible.module_utils.basic import AnsibleModule
 
@@ -168,11 +169,11 @@ class VMwareGuestRegisterOperation(PyVmomi):
         result = dict(changed=False)
 
         datacenter = self.find_datacenter_by_name(self.datacenter)
-        if(not(datacenter)):
+        if not datacenter:
             self.module.fail_json(msg="Cannot find the specified Datacenter: %s" % self.datacenter)
 
         dcpath = compile_folder_path_for_object(datacenter)
-        if(not(dcpath.endswith("/"))):
+        if not dcpath.endswith("/"):
             dcpath += "/"
 
         if(self.folder in [None, "", "/"]):
@@ -183,7 +184,7 @@ class VMwareGuestRegisterOperation(PyVmomi):
             fullpath = "%s%s" % (dcpath, self.folder)
 
         folder_obj = self.content.searchIndex.FindByInventoryPath(inventoryPath="%s" % fullpath)
-        if(not(folder_obj)):
+        if not folder_obj:
             details = {
                 'datacenter': datacenter.name,
                 'datacenter_path': dcpath,
@@ -193,26 +194,26 @@ class VMwareGuestRegisterOperation(PyVmomi):
             self.module.fail_json(msg="No folder %s matched in the search path : %s" % (self.folder, fullpath),
                                   details=details)
 
-        if(self.state == "present"):
-            if(find_vm_by_name(self.content, self.name, folder=folder_obj)):
+        if self.state == "present":
+            if self.get_vm():
                 self.module.exit_json(**result)
             else:
-                if(self.esxi_hostname):
+                if self.esxi_hostname:
                     host_obj = self.find_hostsystem_by_name(self.esxi_hostname)
-                    if(not(host_obj)):
+                    if not host_obj:
                         self.module.fail_json(msg="Cannot find the specified ESXi host: %s" % self.esxi_hostname)
                 else:
                     host_obj = None
 
-                if(self.cluster_name):
+                if self.cluster_name:
                     cluster_obj = find_cluster_by_name(self.content, self.cluster_name, datacenter)
-                    if(not(cluster_obj)):
+                    if not cluster_obj:
                         self.module.fail_json(msg="Cannot find the specified cluster name: %s" % self.cluster_name)
 
                     resource_pool_obj = cluster_obj.resourcePool
-                elif(self.resource_pool):
+                elif self.resource_pool:
                     resource_pool_obj = find_resource_pool_by_name(self.content, self.resource_pool)
-                    if(not(resource_pool_obj)):
+                    if not resource_pool_obj:
                         self.module.fail_json(msg="Cannot find the specified resource pool: %s" % self.resource_pool)
                 else:
                     resource_pool_obj = host_obj.parent.resourcePool
@@ -220,17 +221,18 @@ class VMwareGuestRegisterOperation(PyVmomi):
                 task = folder_obj.RegisterVM_Task(path=self.path, name=self.name, asTemplate=self.template,
                                                   pool=resource_pool_obj, host=host_obj)
 
+                changed = False
                 try:
-                    wait_for_task(task)
+                    changed, info = wait_for_task(task)
                 except Exception as task_e:
                     self.module.fail_json(msg=to_native(task_e))
 
-                result.update(changed=True)
+                result.update(changed=changed)
                 self.module.exit_json(**result)
 
         else:
-            vm_obj = find_vm_by_name(self.content, self.name, folder=folder_obj)
-            if(vm_obj):
+            vm_obj = self.get_vm()
+            if vm_obj:
                 try:
                     vm_obj.UnregisterVM()
                     result.update(changed=True)
@@ -244,8 +246,9 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(datacenter=dict(type="str", default="ha-datacenter"),
                          cluster_name=dict(type="str"),
-                         folder=dict(type="str", default="/vm"),
+                         folder=dict(type="str"),
                          name=dict(type="str", required=True),
+                         uuid=dict(type="str"),
                          esxi_hostname=dict(type="str"),
                          path=dict(type="str"),
                          template=dict(type="bool", default=False),
