@@ -100,3 +100,31 @@
   assert:
     that:
       - gitlab_project_variable_state is not changed
+
+- name: delete the last left variable
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    state: absent
+    vars:
+      - some: value
+  register: gitlab_project_variable_state
+
+- name: no variable is left state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: check that no variables are left
+  gitlab_project_variable:
+    server_url: "{{ gitlab_host }}"
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    purge_vars: True
+  register: gitlab_project_variable_state
+
+- name: check that no variables are presented state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
