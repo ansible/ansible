@@ -66,7 +66,7 @@ options:
 EXAMPLES = '''
 - name: Set or update some CI/CD variables
   gitlab_project_variables:
-    server_url: gitlab.com
+    server_url: https://gitlab.com
     login_token: secret_access_token
     name: markuman/dotfiles
     purge_vars: False
@@ -76,7 +76,7 @@ EXAMPLES = '''
 
 - name: delete one variable
   gitlab_project_variables:
-    server_url: gitlab.com
+    server_url: https://gitlab.com
     login_token: secret_access_token
     name: markuman/dotfiles
     state: absent
