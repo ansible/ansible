@@ -11,6 +11,7 @@ __metaclass__ = type
 
 import datetime
 import glob
+import json
 import optparse
 import os
 import re
@@ -398,6 +399,10 @@ def jinja2_environment(template_dir, typ, plugin_type):
     if 'max' not in env.filters:
         # Jinja < 2.10
         env.filters['max'] = do_max
+
+    if 'tojson' not in env.filters:
+        # Jinja < 2.9
+        env.filters['tojson'] = json.dumps
 
     templates = {}
     if typ == 'rst':
