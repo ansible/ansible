@@ -26,6 +26,13 @@ requirements:
   - python >= 2.7
   - python-gitlab python module
 options:
+  state:
+    description:
+      - create or delete project variable.
+      - Possible values are present and absent.
+    default: present
+    type: str
+    choices: ["present", "absent"]
   server_url:
     description:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
@@ -67,6 +74,14 @@ EXAMPLES = '''
       - ACCESS_KEY_ID: abc123
       - SECRET_ACCESS_KEY: 321cba
 
+- name: delete one variable
+  gitlab_project_variables:
+    server_url: gitlab.com
+    login_token: secret_access_token
+    name: markuman/dotfiles
+    state: absent
+    vars:
+      - ACCESS_KEY_ID: abc123
 '''
 
 RETURN = '''# '''
@@ -113,7 +128,7 @@ class gitlab_project_variables(object):
         return self.project.variables.delete(key)
 
 
-def native_python_main(server_url, login_token, project_name, purge_vars, var_list):
+def native_python_main(server_url, login_token, project_name, purge_vars, var_list, state):
 
     change = False
     this_gitlab = gitlab_project_variables(
@@ -123,13 +138,16 @@ def native_python_main(server_url, login_token, project_name, purge_vars, var_li
 
     for idx in range(len(var_list)):
         key = list(var_list[idx].keys())[0]
-        if key in existing_variables:
+        if key in existing_variables and state == 'present':
             change = this_gitlab.update_variable(
                 key, var_list[idx][key]) or change
             pop_index = existing_variables.index(key)
             existing_variables.pop(pop_index)
-        else:
+        elif key not in existing_variables and state == 'present':
             this_gitlab.create_variable(key, var_list[idx][key])
+            change = True
+        elif key in existing_variables and state == 'absent':
+            this_gitlab.delete_variable(key)
             change = True
 
     if len(existing_variables) > 0 and purge_vars:
@@ -148,7 +166,8 @@ def main():
             login_token=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             purge_vars=dict(required=False, default=False, type='bool'),
-            vars=dict(required=False, default=list(), type='list')
+            vars=dict(required=False, default=list(), type='list'),
+            state=dict(type='str', default="present", choices=["absent", "present"])
         )
     )
 
@@ -161,9 +180,10 @@ def main():
     purge_vars = module.params['purge_vars']
     var_list = module.params['vars']
     project_name = module.params['name']
+    state = module.params['state']
 
     change = native_python_main(
-        server_url, login_token, project_name, purge_vars, var_list)
+        server_url, login_token, project_name, purge_vars, var_list, state)
 
     module.exit_json(changed=change, gitlab_project_variables=None)
 
