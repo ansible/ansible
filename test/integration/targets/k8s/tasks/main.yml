@@ -13,6 +13,7 @@
 - pip:
     name:
       - openshift==0.8.8
+      - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
@@ -31,6 +32,7 @@
     name:
       - openshift==0.8.8
       - kubernetes-validate==1.12.0
+      - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
@@ -50,6 +52,7 @@
     name:
       - openshift==0.6.0
       - kubernetes==6.0.0
+      - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
@@ -69,6 +72,7 @@
 - pip:
     name:
       - openshift==0.8.8
+      - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
