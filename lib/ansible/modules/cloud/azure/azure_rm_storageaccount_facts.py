@@ -37,15 +37,13 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-    show_connection_info:
+    show_connection_string:
         description:
             - Show the connection string for each of the storageaccount's endpoints.
             - For convenient usage, C(show_connection_string) will also show the access keys for each of the storageaccount's endpoints.
             - Note that it will cost a lot of time when list all storageaccount rather than query a single one.
         type: bool
         version_added: "2.8"
-        aliases:
-            - show_connection_string
     show_blob_cors:
         description:
             - Show the blob CORS settings for each of the storageaccount's blob.
