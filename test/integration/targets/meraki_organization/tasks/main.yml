@@ -50,7 +50,7 @@
 
 - assert:
     that:
-      - new_org_check is not changed
+      - new_org_check is changed
 
 - name: Create a new organization named IntTestOrg
   meraki_organization:
@@ -79,7 +79,7 @@
 
 - assert:
     that:
-      - cloned_org_check is not changed
+      - cloned_org_check is changed
 
 - name: Clone IntTestOrg
   meraki_organization:
@@ -108,7 +108,7 @@
 
 - assert:
     that:
-      - modify_org_check is not changed
+      - modify_org_check is changed
 
 - name: Rename IntTestOrg idempotent with check mode
   meraki_organization:
@@ -122,7 +122,7 @@
 
 - assert:
     that:
-      - modify_org_idempotent_check is not changed 
+      - modify_org_idempotent_check is changed 
 
 - name: Rename IntTestOrg
   meraki_organization:

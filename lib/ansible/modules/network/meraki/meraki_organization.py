@@ -187,6 +187,7 @@ def main():
             payload = {'name': meraki.params['org_name']}
             if meraki.module.check_mode is True:
                 meraki.result['data'] = payload
+                meraki.result['changed'] = True
                 meraki.exit_json(**meraki.result)
             response = meraki.request(meraki.construct_path('clone',
                                                             org_name=meraki.params['clone']
@@ -201,6 +202,7 @@ def main():
             payload = {'name': meraki.params['org_name']}
             if meraki.module.check_mode is True:
                 meraki.result['data'] = payload
+                meraki.result['changed'] = True
                 meraki.exit_json(**meraki.result)
             response = meraki.request(meraki.construct_path('create'),
                                       method='POST',
@@ -221,6 +223,7 @@ def main():
                                              }
                     org.update(payload)
                     meraki.result['data'] = org
+                    meraki.result['changed'] = True
                     meraki.exit_json(**meraki.result)
                 response = meraki.request(meraki.construct_path('update',
                                                                 org_id=meraki.params['org_id']
@@ -236,10 +239,7 @@ def main():
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
             else:
-                meraki.result['data'] = original
-                if meraki.module.check_mode is True:
-                    meraki.result['data'] = org
-                    meraki.exit_json(**meraki.result)
+                meraki.result['data'] = org
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     meraki.exit_json(**meraki.result)
