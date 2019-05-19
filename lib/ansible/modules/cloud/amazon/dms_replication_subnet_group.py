@@ -1,18 +1,6 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -32,19 +20,23 @@ options:
             - State of the subnet group
         default: present
         choices: ['present', 'absent']
-    subnetgroupidentifier:
+        type: string
+    identifier:
         description:
             - The name for the replication subnet group.
               This value is stored as a lowercase string.
               Must contain no more than 255 alphanumeric characters,
               periods, spaces, underscores, or hyphens. Must not be "default".
-    subnetgroupdescription:
+        type: string
+    description:
         description:
             - The description for the subnet group.
+        type: string
     subnetids:
         description:
             - A list containing the subnet ids for the replication subnet group,
               needs to be at least 2 items in the list
+        type: list
 author:
     - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment:
@@ -55,8 +47,8 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - dms_replication_subnet_group:
     state: present
-    subnetgroupidentifier: "dev-sngroup"
-    subnetgroupdescription: "Development Subnet Group asdasdas"
+    identifier: "dev-sngroup"
+    description: "Development Subnet Group asdasdas"
     subnetids: ['subnet-id1','subnet-id2']
 '''
 
@@ -96,7 +88,7 @@ def replication_subnet_group_modify(connection, **modify_params):
 
 @AWSRetry.backoff(**backoff_params)
 def replication_subnet_group_delete(connection):
-    subnetid = module.params.get('subnetgroupidentifier')
+    subnetid = module.params.get('identifier')
     delete_parameters = dict(ReplicationSubnetGroupIdentifier=subnetid)
     return connection.delete_replication_subnet_group(**delete_parameters)
 
@@ -128,8 +120,8 @@ def create_module_params():
     """
     instance_parameters = dict(
         # ReplicationSubnetGroupIdentifier gets translated to lower case anyway by the API
-        ReplicationSubnetGroupIdentifier=module.params.get('subnetgroupidentifier').lower(),
-        ReplicationSubnetGroupDescription=module.params.get('subnetgroupdescription'),
+        ReplicationSubnetGroupIdentifier=module.params.get('identifier').lower(),
+        ReplicationSubnetGroupDescription=module.params.get('description'),
         SubnetIds=module.params.get('subnetids'),
     )
 
@@ -200,14 +192,13 @@ def delete_replication_subnet_group(connection):
 def main():
     argument_spec = dict(
         state=dict(choices=['present', 'absent'], default='present'),
-        subnetgroupidentifier=dict(required=True),
-        subnetgroupdescription=dict(required=True),
+        identifier=dict(required=True),
+        description=dict(required=True),
         subnetids=dict(type='list', required=True),
     )
     global module
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        required_if=[],
         supports_check_mode=False
     )
     exit_message = None
@@ -220,7 +211,7 @@ def main():
         get_aws_connection_info(module, boto3=True)
     dmsclient = get_dms_client(aws_connect_params, aws_config_region, ec2_url)
     subnet_group = describe_subnet_group(dmsclient,
-                                         module.params.get('subnetgroupidentifier'))
+                                         module.params.get('identifier'))
     if state == 'present':
         if replication_subnet_exists(subnet_group):
             if compare_params(subnet_group["ReplicationSubnetGroups"][0]):
