@@ -205,7 +205,9 @@ class Connection(ConnectionBase):
 
         local_cmd = self._build_exec_cmd([self._play_context.executable, '-c', cmd])
 
-        display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
+        display.vvv(u"EXEC {0}".format(to_text(local_cmd)), host=self._play_context.remote_addr)
+        display.debug("opening command with Popen()")
+
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
 
         p = subprocess.Popen(
@@ -214,12 +216,11 @@ class Connection(ConnectionBase):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+        display.debug("done running command with Popen()")
 
         if self.become and self.become.expect_prompt() and sudoable:
-            display.debug("handling privilege escalation")
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
-
             selector = selectors.DefaultSelector()
             selector.register(p.stdout, selectors.EVENT_READ)
             selector.register(p.stderr, selectors.EVENT_READ)
@@ -235,7 +236,6 @@ class Connection(ConnectionBase):
                     for key, event in events:
                         if key.fileobj == p.stdout:
                             chunk = p.stdout.read()
-                            break
                         elif key.fileobj == p.stderr:
                             chunk = p.stderr.read()
 
