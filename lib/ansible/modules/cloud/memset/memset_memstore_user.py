@@ -60,7 +60,7 @@ options:
         type: str
         description:
             - A password for the user. Required when the user is present.
-            - I(update_password) must be True for an existing user's password to be updated.
+            - I(update_password) must be C(True) for an existing user's password to be updated.
     update_password:
         type: bool
         description:
