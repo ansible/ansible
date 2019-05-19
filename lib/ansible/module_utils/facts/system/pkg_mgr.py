@@ -87,6 +87,8 @@ class PkgMgrFactCollector(BaseFactCollector):
             # can define a provider to either the package or yum action plugins.
             if int(collected_facts['ansible_distribution_major_version']) < 8:
                 pkg_mgr_name = 'yum'
+            elif (collected_facts['ansible_distribution']) == 'Amazon':
+                pkg_mgr_name = 'yum'
             else:
                 pkg_mgr_name = 'dnf'
         return pkg_mgr_name
