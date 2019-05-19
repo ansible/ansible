@@ -37,12 +37,15 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-    show_connection_string:
+    show_connection_info:
         description:
             - Show the connection string for each of the storageaccount's endpoints.
+            - For convenient usage, C(show_connection_string) will also show the access keys for each of the storageaccount's endpoints.
             - Note that it will cost a lot of time when list all storageaccount rather than query a single one.
         type: bool
         version_added: "2.8"
+        aliases:
+            - show_connection_string
     show_blob_cors:
         description:
             - Show the blob CORS settings for each of the storageaccount's blob.
@@ -218,6 +221,10 @@ storageaccounts:
                             description:
                                 - Connectionstring of the table endpoint
                             sample: "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=X;AccountKey=X;TableEndpoint=X"
+                key:
+                    description:
+                        - The account key for the primary_endpoints
+                    sample: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         secondary_endpoints:
             description:
                 - Gets the URLs that are used to perform a retrieval of a public blob, queue, or table object from the secondary location.
@@ -263,6 +270,10 @@ storageaccounts:
                             description:
                                 - Connectionstring of the table endpoint
                             sample: "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=X;AccountKey=X;TableEndpoint=X"
+                key:
+                    description:
+                        - The account key for the secondary_endpoints
+                    sample: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         tags:
             description:
                 - Resource tags.
@@ -409,6 +420,8 @@ class AzureRMStorageAccountFacts(AzureRMModuleBase):
                 queue=self.format_endpoint_dict(account_dict['name'], account_key[0], account_obj.primary_endpoints.queue, 'queue'),
                 table=self.format_endpoint_dict(account_dict['name'], account_key[0], account_obj.primary_endpoints.table, 'table')
             )
+            if account_key[0]:
+                account_dict['primary_endpoints']['key'] = '{0}'.format(account_key[0])
         account_dict['secondary_endpoints'] = None
         if account_obj.secondary_endpoints:
             account_dict['secondary_endpoints'] = dict(
@@ -416,6 +429,8 @@ class AzureRMStorageAccountFacts(AzureRMModuleBase):
                 queue=self.format_endpoint_dict(account_dict['name'], account_key[1], account_obj.primary_endpoints.queue, 'queue'),
                 table=self.format_endpoint_dict(account_dict['name'], account_key[1], account_obj.primary_endpoints.table, 'table'),
             )
+            if account_key[1]:
+                account_dict['secondary_endpoints']['key'] = '{0}'.format(account_key[1])
         account_dict['tags'] = None
         if account_obj.tags:
             account_dict['tags'] = account_obj.tags
