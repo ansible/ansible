@@ -120,7 +120,15 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 
     # from a webserver, where the role is packaged in a tar.gz
     - src: https://some.webserver.example.com/files/master.tar.gz
-      name: http-role
+      name: http-role-gz
+
+    # from a webserver, where the role is packaged in a tar.bz2
+    - src: https://some.webserver.example.com/files/master.tar.bz2
+      name: http-role-bz2
+
+    # from a webserver, where the role is packaged in a tar.xz (Python 3.x only)
+    - src: https://some.webserver.example.com/files/master.tar.xz
+      name: http-role-xz
 
     # from Bitbucket
     - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
