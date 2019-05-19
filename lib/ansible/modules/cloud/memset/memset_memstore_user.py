@@ -127,11 +127,8 @@ def api_validation(args=None):
     username_re = r'^[a-z0-9-\_]{1}[a-z0-9-\.\_]{1,49}$'
     errors = dict()
 
-    if args['state'] == 'present':
-        try:
-            args['password']
-        except KeyError:
-            errors['password'] = "A password is required when state is present."
+    if args['state'] == 'present' and not args['passsword']:
+        errors['password'] = "A password is required when state is present."
     if not re.match(username_re, args['username'].lower()):
         errors['username'] = "Username can only contain numbers, letters, dots, dashes and underscores, and can't start with a dot. Must be 50 chars or less."
 
