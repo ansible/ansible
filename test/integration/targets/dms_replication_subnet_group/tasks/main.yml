@@ -39,8 +39,8 @@
     - name: create replication subnet subnet group
       dms_replication_subnet_group:
         state: present
-        subnetgroupidentifier: "dev-sngroup"
-        subnetgroupdescription: "Development Subnet Group asdasdas"
+        identifier: "dev-sngroup"
+        description: "Development Subnet Group asdasdas"
         subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         register: result
 
@@ -52,8 +52,8 @@
     - name: create subnet group no change
       dms_replication_subnet_group:
         state: present
-        subnetgroupidentifier: "{{ dms_sg_identifier }}"
-        subnetgroupdescription: "Development Subnet Group"
+        identifier: "{{ dms_sg_identifier }}"
+        description: "Development Subnet Group"
         subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
@@ -66,8 +66,8 @@
     - name: update subnet group
       dms_replication_subnet_group:
         state: present
-        subnetgroupidentifier: "{{ dms_sg_identifier }}"
-        subnetgroupdescription: "Development Subnet Group updated"
+        identifier: "{{ dms_sg_identifier }}"
+        description: "Development Subnet Group updated"
         subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
@@ -80,8 +80,8 @@
     - name: update subnet group no change
       dms_replication_subnet_group:
         state: present
-        subnetgroupidentifier: "{{ dms_sg_identifier }}"
-        subnetgroupdescription: "Development Subnet Group updated"
+        identifier: "{{ dms_sg_identifier }}"
+        description: "Development Subnet Group updated"
         subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
@@ -95,8 +95,8 @@
     - name: delete subnet group no change
       dms_replication_subnet_group:
         state: absent
-        subnetgroupidentifier: "{{ dms_sg_identifier }}"
-        subnetgroupdescription: "Development Subnet Group updated"
+        identifier: "{{ dms_sg_identifier }}"
+        description: "Development Subnet Group updated"
         subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
@@ -109,8 +109,8 @@
     - name: delete subnet group no change
       dms_replication_subnet_group:
         state: absent
-        subnetgroupidentifier: "{{ dms_sg_identifier }}"
-        subnetgroupdescription: "Development Subnet Group updated"
+        identifier: "{{ dms_sg_identifier }}"
+        description: "Development Subnet Group updated"
         subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
