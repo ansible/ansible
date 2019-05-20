@@ -76,7 +76,7 @@ options:
                     - The name of the region.
             failover_priority:
                 description:
-                    - The failover priority of the region. A failover priority of 0 indicates a write region. 
+                    - The failover priority of the region. A failover priority of 0 indicates a write region.
                     - The maximum value for a failover priority = (total number of regions - 1).
                     - Failover priority values must be unique for each of the regions in which the database account exists.
                 type: int
@@ -86,7 +86,7 @@ options:
             - Required when C(state) is I(present).
     ip_range_filter:
         description:
-            - Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list of client IPs for a given database account.
+            - "Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list of client IPs for a given database account."
             - IP addresses/ranges must be comma separated and must not contain any spaces.
     is_virtual_network_filter_enabled:
         description:
