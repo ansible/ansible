@@ -198,10 +198,10 @@ def native_python_main(this_gitlab, purge, var_list, state):
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(
-        api_token=dict(required=True, no_log=True, type='str'),
-        project=dict(required=True, type='str'),
-        purge=dict(required=False, default=False, type='bool'),
-        vars=dict(required=False, default=dict(), type='dict'),
+        api_token=dict(type='str', required=True, no_log=True),
+        project=dict(type='str', required=True),
+        purge=dict(type='bool', required=False, default=False),
+        vars=dict(type='dict', required=False, default=dict()),
         state=dict(type='str', default="present", choices=["absent", "present"])
     )
 
