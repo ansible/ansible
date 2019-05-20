@@ -86,12 +86,16 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
+import traceback
+
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
+GITLAB_IMP_ERR = None
 try:
     import gitlab
     HAS_GITLAB_PACKAGE = True
 except Exception:
+    GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
 
@@ -178,6 +182,9 @@ def main():
     var_list = module.params['vars']
     project_name = module.params['name']
     state = module.params['state']
+
+    if not HAS_GITLAB_PACKAGE:
+        module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     this_gitlab = gitlab_project_variables(
         login_token=login_token, project_name=project_name, server_url=server_url)
