@@ -84,11 +84,30 @@ EXAMPLES = '''
       - ACCESS_KEY_ID: abc123
 '''
 
-RETURN = '''# '''
+RETURN = '''
+msg:
+  description: Success or failure message
+  returned: always
+  type: str
+  sample: "Success"
+
+error:
+  description: the error message returned by the Gitlab API
+  returned: failed
+  type: str
+  sample: "Failed to connect to Gitlab server: 401: 401 Unauthorized"
+
+gitlab_project_variable:
+  description: three lists of the variablenames which were added, updated or removed.
+  returned: always
+  type: dict
+'''
 
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils._text import to_native
+
 
 GITLAB_IMP_ERR = None
 try:
@@ -103,8 +122,10 @@ class gitlab_project_variables(object):
 
     def __init__(self, login_token, project_name, server_url):
         self.repo = gitlab.Gitlab(server_url, private_token=login_token)
-        self.repo.auth()
         self.project = self.get_project(project_name)
+
+    def auth(self):
+        self.repo.auth()
 
     def get_project(self, project_name):
         return self.repo.projects.get(project_name)
@@ -134,6 +155,7 @@ class gitlab_project_variables(object):
 def native_python_main(this_gitlab, purge, var_list, state):
 
     change = False
+    return_value = dict(added=list(), updated=list(), removed=list())
 
     existing_variables = this_gitlab.list_all_project_variables()
 
@@ -144,20 +166,24 @@ def native_python_main(this_gitlab, purge, var_list, state):
                 key, var_list[idx][key]) or change
             pop_index = existing_variables.index(key)
             existing_variables.pop(pop_index)
+            return_value['updated'].append(key)
         elif key not in existing_variables and state == 'present':
             this_gitlab.create_variable(key, var_list[idx][key])
             change = True
+            return_value['added'].append(key)
         elif key in existing_variables and state == 'absent':
             this_gitlab.delete_variable(key)
             change = True
+            return_value['removed'].append(key)
 
     if len(existing_variables) > 0 and purge:
         for item in existing_variables:
             this_gitlab.delete_variable(item)
             change = True
+            return_value['removed'].append(item)
 
     existing_variables = this_gitlab.list_all_project_variables()
-    return change
+    return change, return_value
 
 
 def main():
@@ -186,12 +212,19 @@ def main():
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
-    this_gitlab = gitlab_project_variables(
-        login_token=login_token, project_name=project_name, server_url=server_url)
+    try:
+        this_gitlab = gitlab_project_variables(
+            login_token=login_token, project_name=project_name, server_url=server_url)
+        this_gitlab.auth()
+    except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+    except (gitlab.exceptions.GitlabHttpError) as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
+            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
 
-    change = native_python_main(this_gitlab, purge, var_list, state)
+    change, return_value = native_python_main(this_gitlab, purge, var_list, state)
 
-    module.exit_json(changed=change, gitlab_project_variables=None)
+    module.exit_json(changed=change, gitlab_project_variable=return_value)
 
 
 if __name__ == '__main__':
