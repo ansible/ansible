@@ -128,11 +128,9 @@ class gitlab_project_variables(object):
         return self.project.variables.delete(key)
 
 
-def native_python_main(server_url, login_token, project_name, purge, var_list, state):
+def native_python_main(this_gitlab, purge, var_list, state):
 
     change = False
-    this_gitlab = gitlab_project_variables(
-        login_token=login_token, project_name=project_name, server_url=server_url)
 
     existing_variables = this_gitlab.list_all_project_variables()
 
@@ -182,8 +180,10 @@ def main():
     project_name = module.params['name']
     state = module.params['state']
 
-    change = native_python_main(
-        server_url, login_token, project_name, purge, var_list, state)
+    this_gitlab = gitlab_project_variables(
+        login_token=login_token, project_name=project_name, server_url=server_url)
+
+    change = native_python_main(this_gitlab, purge, var_list, state)
 
     module.exit_json(changed=change, gitlab_project_variables=None)
 
