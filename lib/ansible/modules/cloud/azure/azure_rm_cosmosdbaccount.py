@@ -33,7 +33,7 @@ options:
     location:
         description:
             - The location of the resource group to which the resource belongs.
-            - Required when I(state) is C(present).
+            - Required when I(state=present).
     kind:
         description:
             - Indicates the type of database account. This can only be set at database account creation.
@@ -48,7 +48,7 @@ options:
             default_consistency_level:
                 description:
                     - The default consistency level and configuration settings of the Cosmos DB account.
-                    - Required when I(state) is C(present).
+                    - Required when I(state=present).
                 choices:
                     - 'eventual'
                     - 'session'
@@ -58,17 +58,17 @@ options:
             max_staleness_prefix:
                 description:
                     - When used with the Bounded Staleness consistency level, this value represents the number of stale requests tolerated.
-                    - Accepted range for this value is 1 - 2,147,483,647. Required when I(default_consistency_policy) is set to C(bounded_staleness).
+                    - Accepted range for this value is 1 - 2,147,483,647. Required when I(default_consistency_policy=bounded_staleness).
                 type: int
             max_interval_in_seconds:
                 description:
                     - When used with the Bounded Staleness consistency level, this value represents the time amount of staleness (in seconds) tolerated.
-                    - Accepted range for this value is 5 - 86400. Required when I(default_consistency_policy) is set to C(bounded_staleness).
+                    - Accepted range for this value is 5 - 86400. Required when I(default_consistency_policy=bounded_staleness).
                 type: int
     geo_rep_locations:
         description:
             - An array that contains the georeplication locations enabled for the Cosmos DB account.
-            - Required when I(state) is C(present).
+            - Required when I(state=present).
         type: list
         suboptions:
             name:
@@ -83,7 +83,7 @@ options:
     database_account_offer_type:
         description:
             - Database account offer type, for example I(Standard)
-            - Required when C(state) is I(present).
+            - Required when I(state=present).
     ip_range_filter:
         description:
             - Cosmos DB Firewall support.
