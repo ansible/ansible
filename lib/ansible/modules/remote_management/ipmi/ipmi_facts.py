@@ -19,7 +19,7 @@ module: ipmi_facts
 short_description: Facts collection for ipmi BMC devices
 description:
   - Use this module for querying ipmi informations
-version_added: "2.8"
+version_added: "2.9"
 notes:
     - "This module creates a new top-level C(ipmi_facts) fact,
       which contains IPMI powerstate and boot informations"
