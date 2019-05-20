@@ -619,7 +619,7 @@ class RequestWithMethod(urllib_request.Request):
             return urllib_request.Request.get_method(self)
 
 
-def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
+def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, client_cert=None, client_key=None):
     """This is a class factory that closes over the value of
     ``follow_redirects`` so that the RedirectHandler class has access to
     that value without having to use globals, and potentially cause problems
@@ -634,7 +634,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
         """
 
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
-            handler = maybe_add_ssl_handler(newurl, validate_certs)
+            handler = maybe_add_ssl_handler(newurl, validate_certs, client_cert, client_key)
             if handler:
                 urllib_request._opener.add_handler(handler)
 
@@ -746,9 +746,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\n"
 
-    def __init__(self, hostname, port):
+    def __init__(self, hostname, port, client_cert, client_key):
         self.hostname = hostname
         self.port = port
+        self.client_cert = client_cert
+        self.client_key = client_key
 
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
@@ -911,22 +913,48 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                             raise ProxyError('Proxy sent too verbose headers. Only 128KiB allowed.')
                     self.validate_proxy_response(connect_result)
                     if context:
+                        if self.client_cert is not None and self.client_key is not None:
+                            context.load_cert_chain(self.client_cert, self.client_key)
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
                     elif HAS_URLLIB3_SSL_WRAP_SOCKET:
-                        ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
+                        ssl_s = ssl_wrap_socket(s,
+                                                ca_certs=tmp_ca_cert_path,
+                                                keyfile=self.client_key,
+                                                certfile=self.client_cert,
+                                                cert_reqs=ssl.CERT_REQUIRED,
+                                                ssl_version=PROTOCOL,
+                                                server_hostname=self.hostname)
                     else:
-                        ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
+                        ssl_s = ssl.wrap_socket(s,
+                                                ca_certs=tmp_ca_cert_path,
+                                                keyfile=self.client_key,
+                                                certfile=self.client_cert,
+                                                cert_reqs=ssl.CERT_REQUIRED,
+                                                ssl_version=PROTOCOL)
                         match_hostname(ssl_s.getpeercert(), self.hostname)
                 else:
                     raise ProxyError('Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
             else:
                 s = socket.create_connection((self.hostname, self.port))
                 if context:
+                    if self.client_cert is not None and self.client_key is not None:
+                        context.load_cert_chain(self.client_cert, self.client_key)
                     ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
                 elif HAS_URLLIB3_SSL_WRAP_SOCKET:
-                    ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
+                    ssl_s = ssl_wrap_socket(s,
+                                            ca_certs=tmp_ca_cert_path,
+                                            keyfile=self.client_key,
+                                            certfile=self.client_cert,
+                                            cert_reqs=ssl.CERT_REQUIRED,
+                                            ssl_version=PROTOCOL,
+                                            server_hostname=self.hostname)
                 else:
-                    ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
+                    ssl_s = ssl.wrap_socket(s,
+                                            ca_certs=tmp_ca_cert_path,
+                                            keyfile=self.client_key,
+                                            certfile=self.client_cert,
+                                            cert_reqs=ssl.CERT_REQUIRED,
+                                            ssl_version=PROTOCOL)
                     match_hostname(ssl_s.getpeercert(), self.hostname)
             # close the ssl connection
             # ssl_s.unwrap()
@@ -956,7 +984,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     https_request = http_request
 
 
-def maybe_add_ssl_handler(url, validate_certs):
+def maybe_add_ssl_handler(url, validate_certs, client_cert, client_key):
     parsed = generic_urlparse(urlparse(url))
     if parsed.scheme == 'https' and validate_certs:
         if not HAS_SSL:
@@ -975,7 +1003,7 @@ def maybe_add_ssl_handler(url, validate_certs):
             port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(hostname, port, client_cert, client_key)
 
 
 def rfc2822_date_string(timetuple, zone='-0000'):
@@ -1114,7 +1142,7 @@ class Request:
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        ssl_handler = maybe_add_ssl_handler(url, validate_certs)
+        ssl_handler = maybe_add_ssl_handler(url, validate_certs, client_cert, client_key)
         if ssl_handler:
             handlers.append(ssl_handler)
         if HAS_GSSAPI and use_gssapi:
