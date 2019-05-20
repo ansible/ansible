@@ -29,6 +29,12 @@ options:
         description:
             - Name of the host
         required: true
+    use:
+        description:
+            - Which strategy to use to update the hostname.
+            - If not set we try to autodetect, but this can be problematic, specially with containers as they can present misleading information.
+        choices: ['generic', 'debian','sles', 'redhat', 'alpine', 'systemd', 'openrc', 'openbsd', 'solaris', 'freebsd']
+        version_added: '2.9'
 '''
 
 EXAMPLES = '''
@@ -49,6 +55,9 @@ from ansible.module_utils.basic import (
 )
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils._text import to_native
+
+STRATS = {'generic': 'Generic', 'debian': 'Debian', 'sles': 'SLES', 'redhat': 'RedHat', 'alpine': 'Alpine',
+          'systemd': 'Systemd', 'openrc': 'OpenRC', 'openbsd': 'OpenBSD', 'solaris': 'Solaris', 'freebsd': 'FreeBSD'}
 
 
 class UnimplementedStrategy(object):
@@ -107,7 +116,12 @@ class Hostname(object):
     def __init__(self, module):
         self.module = module
         self.name = module.params['name']
-        if self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
+        self.use = module.params['use']
+
+        if self.use is not None:
+            strat = globals()['%sStrategy' % STRATS[self.use]]
+            self.strategy = strat(module)
+        elif self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
             self.strategy = SystemdStrategy(module)
         else:
             self.strategy = self.strategy_class(module)
@@ -724,7 +738,8 @@ class NeonHostname(Hostname):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True)
+            name=dict(type='str', required=True),
+            use=dict(type='str', choices=['generic', 'debian', 'sles', 'redhat', 'alpine', 'systemd', 'openrc', 'openbsd', 'solaris', 'freebsd'])
         ),
         supports_check_mode=True,
     )
