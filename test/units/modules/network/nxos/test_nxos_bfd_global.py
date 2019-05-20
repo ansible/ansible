@@ -24,7 +24,12 @@ from ansible.modules.network.nxos import nxos_bfd_global
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
-
+# TBD: These imports / import checks are only needed as a workaround for
+# shippable, which fails this test due to import yaml & import ordereddict.
+import pytest
+from ansible.module_utils.network.nxos.nxos import nxosCmdRef_import_check
+msg = nxosCmdRef_import_check()
+@pytest.mark.skipif(len(msg), reason=msg)
 class TestNxosBfdGlobalModule(TestNxosModule):
 
     module = nxos_bfd_global

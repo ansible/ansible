@@ -31,11 +31,6 @@
 import collections
 import json
 import re
-try:
-    import yaml
-    HAS_YAML = True
-except ImportError:
-    HAS_YAML = False
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -45,6 +40,12 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems, string_types, PY2, PY3
 from ansible.module_utils.urls import fetch_url
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 try:
     if PY3:
@@ -721,30 +722,19 @@ class NxosCmdRef:
             self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
         ref = self._ref
 
-        # Process module state key
-        if module.params.get('state') is None:
-            ref['_state'] = 'present'
-        else:
-            ref['_state'] = module.params.get('state')
-
         # Create a list of supported commands based on ref keys
-        ref['commands'] = [k for k in ref if not k.startswith('_')]
-        ref['commands'].sort()
+        ref['commands'] = sorted([k for k in ref if not k.startswith('_')])
         ref['_proposed'] = []
+        ref['_state'] = module.params.get('state', 'present')
         self.feature_enable()
         self.get_platform_defaults()
         self.normalize_defaults()
 
     def _check_imports(self):
         module = self._module
-        if PY2:
-            if not HAS_ORDEREDDICT:
-                module.fail_json(msg="Mandatory python library 'ordereddict' is not present, try 'pip install ordereddict'")
-            if not HAS_YAML:
-                module.fail_json(msg="Mandatory python yaml library is not present, try 'pip install yaml'")
-        elif PY3:
-            if not HAS_YAML:
-                module.fail_json(msg="Mandatory python yaml library is not present, try 'pip install PyYAML'")
+        msg = nxosCmdRef_import_check()
+        if msg:
+            module.fail_json(msg=msg)
 
     def __getitem__(self, key=None):
         if key is None:
@@ -1023,6 +1013,19 @@ class NxosCmdRef:
         # Remove duplicate commands from proposed before returning
         return OrderedDict.fromkeys(proposed).keys()
 
+
+def nxosCmdRef_import_check():
+    """Return import error messages or empty string"""
+    msg=''
+    if PY2:
+        if not HAS_ORDEREDDICT:
+            msg += "Mandatory python library 'ordereddict' is not present, try 'pip install ordereddict'\n"
+        if not HAS_YAML:
+            msg += "Mandatory python library 'yaml' is not present, try 'pip install yaml'\n"
+    elif PY3:
+        if not HAS_YAML:
+            msg += "Mandatory python library 'PyYAML' is not present, try 'pip install PyYAML'\n"
+    return msg
 
 def is_json(cmd):
     return to_text(cmd).endswith('| json')
