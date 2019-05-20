@@ -17,7 +17,7 @@ module: azure_rm_availabilityset_facts
 
 version_added: "2.4"
 
-short_description: Get availability set facts.
+short_description: Get Azure Availability Set facts
 
 description:
     - Get facts for a specific availability set or all availability sets.
@@ -25,13 +25,13 @@ description:
 options:
     name:
         description:
-            - Limit results to a specific availability set
+            - Limit results to a specific availability set.
     resource_group:
         description:
-            - The resource group to search for the desired availability set
+            - The resource group to search for the desired availability set.
     tags:
         description:
-            - List of tags to be matched
+            - List of tags to be matched.
 
 extends_documentation_fragment:
     - azure
@@ -56,18 +56,53 @@ RETURN = '''
 azure_availabilityset:
     description: List of availability sets dicts.
     returned: always
-    type: list
-    example: [{
-        "location": "eastus2",
-        "name": "myAvailabilitySet",
-        "properties": {
-            "platformFaultDomainCount": 3,
-            "platformUpdateDomainCount": 2,
-            "virtualMachines": []
-        },
-        "sku": "Aligned",
-        "type": "Microsoft.Compute/availabilitySets"
-    }]
+    type: complex
+    contains:
+        location:
+            description:
+                - Location where the resource lives.
+            type: str
+            sample: eastus2
+        name:
+            description:
+                - Resource name.
+            type: str
+            sample: myAvailabilitySet
+        properties:
+            description:
+                - The properties of the resource.
+            type: dict
+            contains:
+                platformFaultDomainCount:
+                    description:
+                        - Fault Domain count.
+                    type: int
+                    sample: 3
+                platformUpdateDomainCount:
+                    description:
+                        - Update Domain count.
+                    type: int
+                    sample: 2
+                virtualMachines:
+                    description:
+                        - A list of references to all virtualmachines in the availability set.
+                    type: list
+                    sample: []
+        sku:
+            description:
+                - Location where the resource lives.
+            type: str
+            sample: Aligned
+        type:
+            description:
+                - Resource type.
+            type: str
+            sample: "Microsoft.Compute/availabilitySets"
+        tags:
+            description:
+                - Resource tags.
+            type: dict
+            sample: { env: sandbox }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
