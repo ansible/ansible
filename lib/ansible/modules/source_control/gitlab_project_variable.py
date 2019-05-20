@@ -138,9 +138,8 @@ class gitlab_project_variables(object):
     def list_all_project_variables(self):
         raw_variable_list = self.project.variables.list()
         retval = []
-        if len(raw_variable_list) > 0:
-            for item in raw_variable_list:
-                retval.append(item.get_id())
+        for item in raw_variable_list:
+            retval.append(item.get_id())
         return retval
 
     def create_variable(self, key, value):
@@ -192,7 +191,6 @@ def native_python_main(this_gitlab, purge, var_list, state):
             change = True
             return_value['removed'].append(item)
 
-    existing_variables = this_gitlab.list_all_project_variables()
     return change, return_value
 
 
