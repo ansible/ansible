@@ -348,7 +348,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     # FUTURE: fix underlying inventory stuff to allow us to quickly access known groupvars from reconciled host
     def _filter_host(self, inventory_hostname, hostvars):
-        self.templar.set_available_variables(hostvars)
+        self.templar.available_variables = hostvars
 
         for condition in self._filters:
             # FUTURE: should warn/fail if conditional doesn't return True or False
