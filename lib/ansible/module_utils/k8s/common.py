@@ -180,6 +180,10 @@ class K8sAnsibleMixin(object):
                     setattr(configuration, key, {'authorization': "Bearer {0}".format(value)})
                 else:
                     setattr(configuration, key, value)
+                    aliases = AUTH_ARG_SPEC[key].get('aliases')
+                    if aliases:
+                        for alias in aliases:
+                            setattr(configuration, alias, value)
 
         kubernetes.client.Configuration.set_default(configuration)
         return DynamicClient(kubernetes.client.ApiClient(configuration))
