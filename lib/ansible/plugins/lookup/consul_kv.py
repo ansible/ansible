@@ -33,7 +33,7 @@ DOCUMENTATION = """
           - If the key has a value with the specified index then this is returned allowing access to historical values.
       datacenter:
         default: None
-        description: 
+        description:
           - Retrieve the key from a consul datatacenter other than the default for the consul host.
         version_added: "2.9"
       token:
