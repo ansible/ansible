@@ -28,6 +28,15 @@ Catch {
     $module.FailJson("Value '$version' for parameter 'version' is not a valid version format")
 }
 
+# Make sure path is a real path
+Try {
+    $path = (Get-item -LiteralPath $path).FullName
+    Test-Path $path
+}
+Catch {
+    $module.FailJson("Cannot find file or directory: '$path' as it does not exist")
+}
+
 # Import Pester module if available
 $Pester = 'Pester'
 
@@ -48,11 +57,6 @@ If ((-not (Get-Module -Name $Pester -ErrorAction SilentlyContinue | Where-Object
     $module.FailJson("$Pester version is not greater or equal to $version")
 }
 
-# Testing if test file or directory exist
-If (-not (Test-Path -LiteralPath $path)) {
-    $module.FailJson("Cannot find file or directory: '$path' as it does not exist")
-}
-
 #Prepare Invoke-Pester parameters depending of the Pester's version.
 #Invoke-Pester output deactivation behave differently depending on the Pester's version
 If ($module.result.pester_version -ge "4.0.0") {
@@ -68,34 +72,8 @@ If ($module.result.pester_version -ge "4.0.0") {
 }
 
 # Run Pester tests
-if (Test-Path -LiteralPath $path -PathType Leaf) {
-    if ($check_mode) {
-        $module.result.output = "Run pester test in the file: $path"
-    } else {
-        try {
-            $module.result.output = Invoke-Pester $path @Parameters
-        } catch {
-            $module.FailJson($_.Exception)
-        }
-    }
-} else {
-    # Run Pester tests against all the .ps1 file in the local folder
-    $files = Get-ChildItem -Path $path | Where-Object {$_.extension -eq ".ps1"}
-
-    if ($check_mode) {
-        $module.result.output = "Run pester test(s) who are in the folder: $path"
-    } else {
-        try {
-            $module.result.output = Invoke-Pester $files.FullName @Parameters
-        } catch {
-            $module.FailJson($_.Exception)
-        }
-    }
-}
-
-# Run Pester tests
 if ($check_mode) {
-    $module.result.output = "Run pester tests: $path"
+    $module.result.output = "Run Pester test(s): $path"
 } else {
     try {
         $module.result.output = Invoke-Pester $path @Parameters
