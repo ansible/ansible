@@ -5,15 +5,15 @@
 
 - name: purge all variables at the beginning
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     purge: True
 
 - name: set two test variables
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     vars:
       - ACCESS_KEY_ID: abc123
@@ -27,8 +27,8 @@
 
 - name: re-set two test variables
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     vars:
       - ACCESS_KEY_ID: abc123
@@ -42,8 +42,8 @@
 
 - name: append one variable
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     vars:
       - some: value
@@ -57,8 +57,8 @@
 
 - name: re-set all variables
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     vars:
       - ACCESS_KEY_ID: abc123
@@ -73,8 +73,8 @@
 
 - name: set one variables and purge all others
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     vars:
       - some: value
@@ -88,8 +88,8 @@
 
 - name: only one variable is left
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     vars:
       - some: value
@@ -103,8 +103,8 @@
 
 - name: delete the last left variable
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     state: absent
     vars:
@@ -118,8 +118,8 @@
 
 - name: check that no variables are left
   gitlab_project_variable:
-    server_url: "{{ gitlab_host }}"
-    login_token: "{{ gitlab_login_token }}"
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
     purge: True
   register: gitlab_project_variable_state

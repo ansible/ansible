@@ -33,12 +33,12 @@ options:
     default: present
     type: str
     choices: ["present", "absent"]
-  server_url:
+  api_url:
     description:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
     type: str
-  login_token:
+  api_token:
     description:
       - Gitlab access token with api permissions.
     required: true
@@ -66,8 +66,8 @@ options:
 EXAMPLES = '''
 - name: Set or update some CI/CD variables
   gitlab_project_variable:
-    server_url: https://gitlab.com
-    login_token: secret_access_token
+    api_url: https://gitlab.com
+    api_token: secret_access_token
     name: markuman/dotfiles
     purge: False
     vars:
@@ -76,8 +76,8 @@ EXAMPLES = '''
 
 - name: delete one variable
   gitlab_project_variable:
-    server_url: https://gitlab.com
-    login_token: secret_access_token
+    api_url: https://gitlab.com
+    api_token: secret_access_token
     name: markuman/dotfiles
     state: absent
     vars:
@@ -90,6 +90,11 @@ msg:
   returned: always
   type: str
   sample: "Success"
+
+result:
+  description: json parsed response from the server
+  returned: always
+  type: dict
 
 error:
   description: the error message returned by the Gitlab API
@@ -107,6 +112,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+from ansible.module_utils.api import basic_auth_argument_spec
 
 
 GITLAB_IMP_ERR = None
@@ -120,8 +126,8 @@ except Exception:
 
 class gitlab_project_variables(object):
 
-    def __init__(self, login_token, project_name, server_url):
-        self.repo = gitlab.Gitlab(server_url, private_token=login_token)
+    def __init__(self, api_token, project_name, api_url):
+        self.repo = gitlab.Gitlab(api_url, private_token=api_token)
         self.project = self.get_project(project_name)
 
     def auth(self):
@@ -189,8 +195,8 @@ def native_python_main(this_gitlab, purge, var_list, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, type='str'),
-            login_token=dict(required=True, type='str'),
+            api_url=dict(required=True, type='str'),
+            api_token=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             purge=dict(required=False, default=False, type='bool'),
             vars=dict(required=False, default=list(), type='list'),
@@ -202,8 +208,8 @@ def main():
         module.fail_json(
             msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
-    server_url = module.params['server_url']
-    login_token = module.params['login_token']
+    api_url = module.params['api_url']
+    api_token = module.params['api_token']
     purge = module.params['purge']
     var_list = module.params['vars']
     project_name = module.params['name']
@@ -214,7 +220,7 @@ def main():
 
     try:
         this_gitlab = gitlab_project_variables(
-            login_token=login_token, project_name=project_name, server_url=server_url)
+            api_token=api_token, project_name=project_name, api_url=api_url)
         this_gitlab.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
