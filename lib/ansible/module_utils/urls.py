@@ -559,8 +559,24 @@ def generic_urlparse(parts):
         generic_parts['fragment'] = parts.fragment
         generic_parts['username'] = parts.username
         generic_parts['password'] = parts.password
-        generic_parts['hostname'] = parts.hostname
-        generic_parts['port'] = parts.port
+        hostname = parts.hostname
+        if hostname and hostname[0] == '[' and '[' in parts.netloc and ']' in parts.netloc:
+            # Py2.6 doesn't parse IPv6 addresses correctly
+            hostname = parts.netloc.split(']')[0][1:].lower()
+        generic_parts['hostname'] = hostname
+
+        try:
+            port = parts.port
+        except ValueError:
+            # Py2.6 doesn't parse IPv6 addresses correctly
+            netloc = parts.netloc.split('@')[-1].split(']')[-1]
+            if ':' in netloc:
+                port = netloc.split(':')[1]
+                if port:
+                    port = int(port)
+            else:
+                port = None
+        generic_parts['port'] = port
     else:
         # we have to use indexes, and then parse out
         # the other parts not supported by indexing
@@ -963,19 +979,9 @@ def maybe_add_ssl_handler(url, validate_certs):
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
-        # do the cert validation
-        netloc = parsed.netloc
-        if '@' in netloc:
-            netloc = netloc.split('@', 1)[1]
-        if ':' in netloc:
-            hostname, port = netloc.split(':', 1)
-            port = int(port)
-        else:
-            hostname = netloc
-            port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(parsed.hostname, parsed.port or 443)
 
 
 def rfc2822_date_string(timetuple, zone='-0000'):
