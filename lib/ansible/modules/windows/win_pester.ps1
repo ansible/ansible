@@ -68,7 +68,7 @@ If ($module.result.pester_version -ge "4.0.0") {
 }
 
 # Run Pester tests
-If (Test-Path -LiteralPath $path -PathType Leaf) {
+if (Test-Path -LiteralPath $path -PathType Leaf) {
     if ($check_mode) {
         $module.result.output = "Run pester test in the file: $path"
     } else {
@@ -90,6 +90,17 @@ If (Test-Path -LiteralPath $path -PathType Leaf) {
         } catch {
             $module.FailJson($_.Exception)
         }
+    }
+}
+
+# Run Pester tests
+if ($check_mode) {
+    $module.result.output = "Run pester tests: $path"
+} else {
+    try {
+        $module.result.output = Invoke-Pester $path @Parameters
+    } catch {
+        $module.FailJson($_.Exception)
     }
 }
 
