@@ -451,7 +451,12 @@ class Templar:
 
         return jinja_exts
 
-    def set_available_variables(self, variables):
+    @property
+    def available_variables(self):
+        return self._available_variables
+
+    @available_variables.setter
+    def available_variables(self, variables):
         '''
         Sets the list of template variables this Templar instance will use
         to template things, so we don't have to pass them around between
@@ -463,6 +468,13 @@ class Templar:
             raise AnsibleAssertionError("the type of 'variables' should be a dict but was a %s" % (type(variables)))
         self._available_variables = variables
         self._cached_result = {}
+
+    def set_available_variables(self, variables):
+        display.deprecated(
+            'set_available_variables is being deprecated. Use "@available_variables.setter" instead.',
+            version='2.13'
+        )
+        self.available_variables = variables
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
                  convert_data=True, static_vars=None, cache=True, disable_lookups=False):

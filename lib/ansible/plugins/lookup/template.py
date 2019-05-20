@@ -68,7 +68,7 @@ class LookupModule(LookupBase):
         variable_start_string = kwargs.get('variable_start_string', None)
         variable_end_string = kwargs.get('variable_end_string', None)
 
-        old_vars = self._templar._available_variables
+        old_vars = self._templar.available_variables
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
@@ -105,7 +105,7 @@ class LookupModule(LookupBase):
                 vars = deepcopy(variables)
                 vars.update(generate_ansible_template_vars(lookupfile))
                 vars.update(lookup_template_vars)
-                self._templar.set_available_variables(vars)
+                self._templar.available_variables = vars
 
                 # do the templating
                 res = self._templar.template(template_data, preserve_trailing_newlines=True,
@@ -116,6 +116,6 @@ class LookupModule(LookupBase):
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
 
         # restore old variables
-        self._templar.set_available_variables(old_vars)
+        self._templar.available_variables = old_vars
 
         return ret

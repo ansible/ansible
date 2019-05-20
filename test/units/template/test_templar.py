@@ -217,11 +217,17 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
         # test with fail_on_undefined=False
         self.assertEqual(templar.template("{{bad_var}}", fail_on_undefined=False), "{{bad_var}}")
 
-        # test set_available_variables()
-        templar.set_available_variables(variables=dict(foo="bam"))
+        # test setting available_variables
+        templar.available_variables = dict(foo="bam")
         self.assertEqual(templar.template("{{foo}}"), "bam")
-        # variables must be a dict() for set_available_variables()
-        self.assertRaises(AssertionError, templar.set_available_variables, "foo=bam")
+        # variables must be a dict() for available_variables setter
+        # FIXME Use assertRaises() as a context manager (added in 2.7) once we do not run tests on Python 2.6 anymore.
+        try:
+            templar.available_variables = "foo=bam"
+        except AssertionError as e:
+            pass
+        except Exception:
+            self.fail(e)
 
     def test_templar_escape_backslashes(self):
         # Rule of thumb: If escape backslashes is True you should end up with
