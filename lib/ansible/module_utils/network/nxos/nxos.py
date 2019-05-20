@@ -54,7 +54,6 @@ try:
     HAS_ORDEREDDICT = True
 except ImportError:
     HAS_ORDEREDDICT = False
-    import pdb;pdb.set_trace()
 
 _DEVICE_CONNECTION = None
 
