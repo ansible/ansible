@@ -59,7 +59,6 @@ options:
       - Index set creation date.
     required: false
     type: str
-    default: datetime.datetime.utcnow().isoformat() + 'Z'
   index_prefix:
     description:
       - A unique prefix used in Elasticsearch indices belonging to this index set. The prefix must start
