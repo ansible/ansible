@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 ---
 module: meraki_content_filtering_facts
 short_description: View information about Meraki MX content filtering
-version_added: "2.8"
+version_added: '2.9'
 description:
 - Allows for displaying content filtering categories and policies.
 
