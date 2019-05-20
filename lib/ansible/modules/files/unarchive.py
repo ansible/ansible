@@ -21,7 +21,7 @@ module: unarchive
 version_added: '1.4'
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
 description:
-     - The C(unarchive) module unpacks an archive.
+     - The C(unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
      - Set C(remote_src=yes) to unpack an archive which already exists on the target.
      - If checksum validation is desired, use M(get_url) or M(uri) instead to fetch the file and set C(remote_src=yes).
@@ -99,6 +99,7 @@ todo:
 notes:
     - Requires C(gtar)/C(unzip) command on target host.
     - Can handle I(.zip) files using C(unzip) as well as I(.tar), I(.tar.gz), I(.tar.bz2) and I(.tar.xz) files using C(gtar).
+    - Does not handle I(.gz) files, I(.bz2) files or I(.xz) files that do not contain a I(.tar) archive.
     - Uses gtar's C(--diff) arg to calculate if changed or not. If this C(arg) is not
       supported, it will always unpack the archive.
     - Existing files/directories in the destination which are not in the archive
