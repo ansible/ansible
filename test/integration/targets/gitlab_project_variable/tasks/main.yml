@@ -7,14 +7,14 @@
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     purge: True
 
 - name: set two test variables
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     vars:
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY: 321cba
@@ -29,7 +29,7 @@
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     vars:
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY: 321cba
@@ -44,7 +44,7 @@
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     vars:
       some: value
     purge: False
@@ -59,7 +59,7 @@
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     vars:
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY: 321cba
@@ -75,7 +75,7 @@
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     vars:
       some: value
     purge: True
@@ -90,7 +90,7 @@
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     vars:
       some: value
     purge: False
@@ -105,7 +105,7 @@
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     state: absent
     vars:
       some: value
@@ -120,7 +120,7 @@
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
     api_token: "{{ gitlab_login_token }}"
-    name: "{{ gitlab_project_name }}"
+    project: "{{ gitlab_project_name }}"
     purge: True
   register: gitlab_project_variable_state
 

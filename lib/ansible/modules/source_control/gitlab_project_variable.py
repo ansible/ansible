@@ -43,7 +43,7 @@ options:
       - Gitlab access token with api permissions.
     required: true
     type: str
-  name:
+  project:
     description:
       - The path and name of the project
     required: true
@@ -68,7 +68,7 @@ EXAMPLES = '''
   gitlab_project_variable:
     api_url: https://gitlab.com
     api_token: secret_access_token
-    name: markuman/dotfiles
+    project: markuman/dotfiles
     purge: False
     vars:
       ACCESS_KEY_ID: abc123
@@ -78,7 +78,7 @@ EXAMPLES = '''
   gitlab_project_variable:
     api_url: https://gitlab.com
     api_token: secret_access_token
-    name: markuman/dotfiles
+    project: markuman/dotfiles
     state: absent
     vars:
       ACCESS_KEY_ID: abc123
@@ -196,7 +196,7 @@ def main():
         argument_spec=dict(
             api_url=dict(required=True, type='str'),
             api_token=dict(required=True, type='str'),
-            name=dict(required=True, type='str'),
+            project=dict(required=True, type='str'),
             purge=dict(required=False, default=False, type='bool'),
             vars=dict(required=False, default=dict(), type='dict'),
             state=dict(type='str', default="present", choices=["absent", "present"])
@@ -211,7 +211,7 @@ def main():
     api_token = module.params['api_token']
     purge = module.params['purge']
     var_list = module.params['vars']
-    project_name = module.params['name']
+    project_name = module.params['project']
     state = module.params['state']
 
     if not HAS_GITLAB_PACKAGE:
