@@ -559,8 +559,24 @@ def generic_urlparse(parts):
         generic_parts['fragment'] = parts.fragment
         generic_parts['username'] = parts.username
         generic_parts['password'] = parts.password
-        generic_parts['hostname'] = parts.hostname
-        generic_parts['port'] = parts.port
+        hostname = parts.hostname
+        if hostname[0] == '[' and  '[' in parts.netloc and ']' in parts.netloc:
+            # Py2.6 doesn't parse IPv6 addresses correctly
+            hostname = parts.netloc.split(']')[0][1:].lower()
+        generic_parts['hostname'] = hostname
+
+        try:
+            port = parts.port
+        except ValueError:
+            # Py2.6 doesn't parse IPv6 addresses correctly
+            netloc = parts.netloc.split('@')[-1].split(']')[-1]
+            if ':' in netloc:
+                port = netloc.split(':')[1]
+                if port:
+                    port = int(port)
+            else:
+                port = None
+        generic_parts['port'] = port
     else:
         # we have to use indexes, and then parse out
         # the other parts not supported by indexing
