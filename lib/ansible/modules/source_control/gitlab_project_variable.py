@@ -48,7 +48,7 @@ options:
       - The path and name of the project
     required: true
     type: str
-  purge_vars:
+  purge:
     description:
       - When set to true, all variables which are not presented in the task will be deleted.
     default: false
@@ -69,7 +69,7 @@ EXAMPLES = '''
     server_url: https://gitlab.com
     login_token: secret_access_token
     name: markuman/dotfiles
-    purge_vars: False
+    purge: False
     vars:
       - ACCESS_KEY_ID: abc123
       - SECRET_ACCESS_KEY: 321cba
@@ -128,7 +128,7 @@ class gitlab_project_variables(object):
         return self.project.variables.delete(key)
 
 
-def native_python_main(server_url, login_token, project_name, purge_vars, var_list, state):
+def native_python_main(server_url, login_token, project_name, purge, var_list, state):
 
     change = False
     this_gitlab = gitlab_project_variables(
@@ -150,7 +150,7 @@ def native_python_main(server_url, login_token, project_name, purge_vars, var_li
             this_gitlab.delete_variable(key)
             change = True
 
-    if len(existing_variables) > 0 and purge_vars:
+    if len(existing_variables) > 0 and purge:
         for item in existing_variables:
             this_gitlab.delete_variable(item)
             change = True
@@ -165,7 +165,7 @@ def main():
             server_url=dict(required=True, type='str'),
             login_token=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            purge_vars=dict(required=False, default=False, type='bool'),
+            purge=dict(required=False, default=False, type='bool'),
             vars=dict(required=False, default=list(), type='list'),
             state=dict(type='str', default="present", choices=["absent", "present"])
         )
@@ -177,13 +177,13 @@ def main():
 
     server_url = module.params['server_url']
     login_token = module.params['login_token']
-    purge_vars = module.params['purge_vars']
+    purge = module.params['purge']
     var_list = module.params['vars']
     project_name = module.params['name']
     state = module.params['state']
 
     change = native_python_main(
-        server_url, login_token, project_name, purge_vars, var_list, state)
+        server_url, login_token, project_name, purge, var_list, state)
 
     module.exit_json(changed=change, gitlab_project_variables=None)
 

@@ -8,7 +8,7 @@
     server_url: "{{ gitlab_host }}"
     login_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
-    purge_vars: True
+    purge: True
 
 - name: set two test variables
   gitlab_project_variable:
@@ -47,7 +47,7 @@
     name: "{{ gitlab_project_name }}"
     vars:
       - some: value
-    purge_vars: False
+    purge: False
   register: gitlab_project_variable_state
 
 - name: append one variable state must be changed
@@ -78,7 +78,7 @@
     name: "{{ gitlab_project_name }}"
     vars:
       - some: value
-    purge_vars: True
+    purge: True
   register: gitlab_project_variable_state
 
 - name: set one variables and purge all others state must be changed
@@ -93,7 +93,7 @@
     name: "{{ gitlab_project_name }}"
     vars:
       - some: value
-    purge_vars: False
+    purge: False
   register: gitlab_project_variable_state
 
 - name: only one variable is left state must not be changed
@@ -121,7 +121,7 @@
     server_url: "{{ gitlab_host }}"
     login_token: "{{ gitlab_login_token }}"
     name: "{{ gitlab_project_name }}"
-    purge_vars: True
+    purge: True
   register: gitlab_project_variable_state
 
 - name: check that no variables are presented state must be changed
