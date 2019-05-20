@@ -66,7 +66,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
         if variables is not None:
-            self._templar.set_available_variables(variables)
+            self._templar.available_variables = variables
         myvars = getattr(self._templar, '_available_variables', {})
 
         self.set_options(direct=kwargs)

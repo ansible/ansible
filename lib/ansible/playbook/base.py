@@ -342,7 +342,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
 
         # save the omit value for later checking
-        omit_value = templar._available_variables.get('omit')
+        omit_value = templar.available_variables.get('omit')
 
         for (name, attribute) in iteritems(self._valid_attrs):
 
