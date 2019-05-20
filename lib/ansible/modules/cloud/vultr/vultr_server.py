@@ -26,24 +26,30 @@ options:
       - Name of the server.
     required: true
     aliases: [ label ]
+    type: str
   hostname:
     description:
       - Hostname to assign to this server.
+    type: str
   os:
     description:
       - The operating system.
       - Required if the server does not yet exist and is not restoring from a snapshot.
+    type: str
   snapshot:
     version_added: "2.8"
     description:
       - Name of snapshot to restore server from.
+    type: str
   firewall_group:
     description:
       - The firewall group to assign this server to.
+    type: str
   plan:
     description:
       - Plan to use for the server.
       - Required if the server does not yet exist.
+    type: str
   force:
     description:
       - Force stop/start the server if required to apply changes
@@ -69,37 +75,43 @@ options:
   tag:
     description:
       - Tag for the server.
+    type: str
   user_data:
     description:
       - User data to be passed to the server.
+    type: str
   startup_script:
     description:
       - Name of the startup script to execute on boot.
       - Only considered while creating the server.
+    type: str
   ssh_keys:
     description:
       - List of SSH keys passed to the server on creation.
     aliases: [ ssh_key ]
+    type: list
   reserved_ip_v4:
     description:
       - IP address of the floating IP to use as the main IP of this server.
       - Only considered on creation.
+    type: str
   region:
     description:
       - Region the server is deployed into.
       - Required if the server does not yet exist.
+    type: str
   state:
     description:
       - State of the server.
     default: present
     choices: [ present, absent, restarted, reinstalled, started, stopped ]
+    type: str
 extends_documentation_fragment: vultr
 '''
 
 EXAMPLES = '''
 - name: create server
-  local_action:
-    module: vultr_server
+  vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
@@ -110,8 +122,7 @@ EXAMPLES = '''
     state: present
 
 - name: ensure a server is present and started
-  local_action:
-    module: vultr_server
+  vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
@@ -120,8 +131,7 @@ EXAMPLES = '''
     state: started
 
 - name: ensure a server is present and stopped
-  local_action:
-    module: vultr_server
+  vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
@@ -129,20 +139,17 @@ EXAMPLES = '''
     state: stopped
 
 - name: ensure an existing server is stopped
-  local_action:
-    module: vultr_server
+  vultr_server:
     name: "{{ vultr_server_name }}"
     state: stopped
 
 - name: ensure an existing server is started
-  local_action:
-    module: vultr_server
+  vultr_server:
     name: "{{ vultr_server_name }}"
     state: started
 
 - name: ensure a server is absent
-  local_action:
-    module: vultr_server
+  vultr_server:
     name: "{{ vultr_server_name }}"
     state: absent
 '''
@@ -865,22 +872,22 @@ def main():
     argument_spec = vultr_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True, aliases=['label']),
-        hostname=dict(),
-        os=dict(),
-        snapshot=dict(),
-        plan=dict(),
+        hostname=dict(type='str',),
+        os=dict(type='str',),
+        snapshot=dict(type='str',),
+        plan=dict(type='str',),
         force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
         private_network_enabled=dict(type='bool'),
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
-        tag=dict(),
-        reserved_ip_v4=dict(),
-        firewall_group=dict(),
-        startup_script=dict(),
-        user_data=dict(),
+        tag=dict(type='str',),
+        reserved_ip_v4=dict(type='str',),
+        firewall_group=dict(type='str',),
+        startup_script=dict(type='str',),
+        user_data=dict(type='str',),
         ssh_keys=dict(type='list', aliases=['ssh_key']),
-        region=dict(),
+        region=dict(type='str',),
         state=dict(choices=['present', 'absent', 'restarted', 'reinstalled', 'started', 'stopped'], default='present'),
     ))
 
