@@ -65,7 +65,7 @@ options:
 
 EXAMPLES = '''
 - name: Set or update some CI/CD variables
-  gitlab_project_variables:
+  gitlab_project_variable:
     server_url: https://gitlab.com
     login_token: secret_access_token
     name: markuman/dotfiles
@@ -75,7 +75,7 @@ EXAMPLES = '''
       - SECRET_ACCESS_KEY: 321cba
 
 - name: delete one variable
-  gitlab_project_variables:
+  gitlab_project_variable:
     server_url: https://gitlab.com
     login_token: secret_access_token
     name: markuman/dotfiles
