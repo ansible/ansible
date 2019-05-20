@@ -639,10 +639,12 @@ class AnsibleDockerClient(Client):
         images = response
         if tag:
             lookup = "%s:%s" % (name, tag)
+            lookup_digest = "%s@%s" % (name, tag)
             images = []
             for image in response:
                 tags = image.get('RepoTags')
-                if tags and lookup in tags:
+                digests = image.get('RepoDigests')
+                if tags and lookup in tags or digests and lookup_digest in digests:
                     images = [image]
                     break
         return images
