@@ -716,10 +716,7 @@ class NxosCmdRef:
         """Initialize cmd_ref from yaml data."""
         self._module = module
         self._check_imports()
-        if PY2:
-            self._ref = yaml.load(cmd_ref_str)
-        elif PY3:
-            self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
+        self._yaml_load(cmd_ref_str)
         ref = self._ref
 
         # Create a list of supported commands based on ref keys
@@ -730,16 +727,22 @@ class NxosCmdRef:
         self.get_platform_defaults()
         self.normalize_defaults()
 
+    def __getitem__(self, key=None):
+        if key is None:
+            return self._ref
+        return self._ref[key]
+
     def _check_imports(self):
         module = self._module
         msg = nxosCmdRef_import_check()
         if msg:
             module.fail_json(msg=msg)
 
-    def __getitem__(self, key=None):
-        if key is None:
-            return self._ref
-        return self._ref[key]
+    def _yaml_load(self, cmd_ref_str):
+        if PY2:
+            self._ref = yaml.load(cmd_ref_str)
+        elif PY3:
+            self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
 
     def feature_enable(self):
         """Add 'feature <foo>' to _proposed if ref includes a 'feature' key. """
@@ -1016,7 +1019,7 @@ class NxosCmdRef:
 
 def nxosCmdRef_import_check():
     """Return import error messages or empty string"""
-    msg=''
+    msg = ''
     if PY2:
         if not HAS_ORDEREDDICT:
             msg += "Mandatory python library 'ordereddict' is not present, try 'pip install ordereddict'\n"
@@ -1026,6 +1029,7 @@ def nxosCmdRef_import_check():
         if not HAS_YAML:
             msg += "Mandatory python library 'PyYAML' is not present, try 'pip install PyYAML'\n"
     return msg
+
 
 def is_json(cmd):
     return to_text(cmd).endswith('| json')
