@@ -94,7 +94,7 @@ error:
   type: str
   sample: "Failed to connect to Gitlab server: 401: 401 Unauthorized"
 
-gitlab_project_variable:
+project_variable:
   description: three lists of the variablenames which were added, updated or removed.
   returned: always
   type: dict
@@ -227,7 +227,7 @@ def main():
 
     change, return_value = native_python_main(this_gitlab, purge, var_list, state)
 
-    module.exit_json(changed=change, gitlab_project_variable=return_value)
+    module.exit_json(changed=change, project_variable=return_value)
 
 
 if __name__ == '__main__':
