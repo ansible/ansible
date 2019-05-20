@@ -10,9 +10,7 @@ Please note that this is not a complete list. If you believe any extra informati
 
 .. toctree::
    :maxdepth: 2
-  
-   porting_guide_2.0
-   porting_guide_2.3
-   porting_guide_2.4
-   porting_guide_2.5
-   porting_guide_2.6
+   :glob:
+   :reversed:
+
+   porting_guide_*
