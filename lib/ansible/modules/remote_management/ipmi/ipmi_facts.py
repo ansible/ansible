@@ -52,17 +52,17 @@ author: "Luca Lorenzetto (@remixtj) <lorenzetto.luca@gmail.com>"
 
 RETURN = '''
 bootdev:
-    description: The boot device name which will be used beyond next boot.
+    description: The boot device name which will be used for the next boot (and beyond if persistent).
     returned: success
     type: str
     sample: default
 bootdev_persistent:
-    description: If True, system firmware will use this device beyond next boot.
+    description: If True, system firmware will use the specified device beyond next boot.
     returned: success
     type: bool
     sample: false
 uefimode:
-    description: If True, system firmware will use UEFI boot explicitly beyond next boot.
+    description: If True, system firmware will use UEFI boot explicitly.
     returned: success
     type: bool
     sample: false
@@ -100,7 +100,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True),
             port=dict(default=623, type='int'),
-            user=dict(required=True, no_log=True),
+            user=dict(required=True),
             password=dict(required=True, no_log=True),
             timeout=dict(default=300, type='int'),
         ),
