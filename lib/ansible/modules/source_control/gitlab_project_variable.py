@@ -57,9 +57,9 @@ options:
   vars:
     description:
       - A list of key value pairs
-    default: []
+    default: {}
     required: false
-    type: list
+    type: dict
 '''
 
 
@@ -71,8 +71,8 @@ EXAMPLES = '''
     name: markuman/dotfiles
     purge: False
     vars:
-      - ACCESS_KEY_ID: abc123
-      - SECRET_ACCESS_KEY: 321cba
+      ACCESS_KEY_ID: abc123
+      SECRET_ACCESS_KEY: 321cba
 
 - name: delete one variable
   gitlab_project_variable:
@@ -81,7 +81,7 @@ EXAMPLES = '''
     name: markuman/dotfiles
     state: absent
     vars:
-      - ACCESS_KEY_ID: abc123
+      ACCESS_KEY_ID: abc123
 '''
 
 RETURN = '''
@@ -165,16 +165,15 @@ def native_python_main(this_gitlab, purge, var_list, state):
 
     existing_variables = this_gitlab.list_all_project_variables()
 
-    for idx in range(len(var_list)):
-        key = list(var_list[idx].keys())[0]
+    for key in var_list:
         if key in existing_variables and state == 'present':
             change = this_gitlab.update_variable(
-                key, var_list[idx][key]) or change
+                key, var_list[key]) or change
             pop_index = existing_variables.index(key)
             existing_variables.pop(pop_index)
             return_value['updated'].append(key)
         elif key not in existing_variables and state == 'present':
-            this_gitlab.create_variable(key, var_list[idx][key])
+            this_gitlab.create_variable(key, var_list[key])
             change = True
             return_value['added'].append(key)
         elif key in existing_variables and state == 'absent':
@@ -199,7 +198,7 @@ def main():
             api_token=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             purge=dict(required=False, default=False, type='bool'),
-            vars=dict(required=False, default=list(), type='list'),
+            vars=dict(required=False, default=dict(), type='dict'),
             state=dict(type='str', default="present", choices=["absent", "present"])
         )
     )
