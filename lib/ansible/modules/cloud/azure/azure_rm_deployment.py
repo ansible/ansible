@@ -21,67 +21,68 @@ short_description: Create or destroy Azure Resource Manager template deployments
 version_added: "2.1"
 
 description:
-     - "Create or destroy Azure Resource Manager template deployments via the Azure SDK for Python.
-       You can find some quick start templates in GitHub here https://github.com/azure/azure-quickstart-templates.
-       For more information on Azure Resource Manager templates see https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/."
+    - Create or destroy Azure Resource Manager template deployments via the Azure SDK for Python.
+    - You can find some quick start templates in GitHub here U(https://github.com/azure/azure-quickstart-templates).
+    - For more information on Azure Resource Manager templates see U(https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/).
 
 options:
   resource_group:
     description:
-      - The resource group name to use or create to host the deployed template
+        - The resource group name to use or create to host the deployed template.
     required: true
     aliases:
-      - resource_group_name
+        - resource_group_name
   name:
     description:
-      - The name of the deployment to be tracked in the resource group deployment history. Re-using a deployment name
-        will overwrite the previous value in the resource group's deployment history.
+        - The name of the deployment to be tracked in the resource group deployment history.
+        - Re-using a deployment name will overwrite the previous value in the resource group's deployment history.
     default: ansible-arm
     aliases:
-      - deployment_name
+        - deployment_name
   location:
     description:
-      - The geo-locations in which the resource group will be located.
+        - The geo-locations in which the resource group will be located.
     default: westus
   deployment_mode:
     description:
-      - In incremental mode, resources are deployed without deleting existing resources that are not included in the template.
-        In complete mode resources are deployed and existing resources in the resource group not included in the template are deleted.
+        - In incremental mode, resources are deployed without deleting existing resources that are not included in the template.
+        - In complete mode resources are deployed and existing resources in the resource group not included in the template are deleted.
     default: incremental
     choices:
         - complete
         - incremental
   template:
     description:
-      - A hash containing the templates inline. This parameter is mutually exclusive with 'template_link'.
-        Either one of them is required if "state" parameter is "present".
+        - A hash containing the templates inline. This parameter is mutually exclusive with I(template_link).
+        - Either one of them is required if I(state=present).
     type: dict
   template_link:
     description:
-      - Uri of file containing the template body. This parameter is mutually exclusive with 'template'. Either one
-        of them is required if "state" parameter is "present".
+        - Uri of file containing the template body. This parameter is mutually exclusive with I(template).
+        - Either one of them is required if I(state=present).
   parameters:
     description:
-      - A hash of all the required template variables for the deployment template. This parameter is mutually exclusive
-        with 'parameters_link'. Either one of them is required if "state" parameter is "present".
+        - A hash of all the required template variables for the deployment template. This parameter is mutually exclusive with I(parameters_link).
+        - Either one of them is required if I(state=present).
     type: dict
   parameters_link:
     description:
-      - Uri of file containing the parameters body. This parameter is mutually exclusive with 'parameters'. Either
-        one of them is required if "state" parameter is "present".
+        - Uri of file containing the parameters body. This parameter is mutually exclusive with I(parameters).
+        - Either one of them is required if I(state=present).
   wait_for_deployment_completion:
     description:
-      - Whether or not to block until the deployment has completed.
+        - Whether or not to block until the deployment has completed.
     type: bool
     default: 'yes'
   wait_for_deployment_polling_period:
     description:
-      - Time (in seconds) to wait between polls when waiting for deployment completion.
+        - Time (in seconds) to wait between polls when waiting for deployment completion.
     default: 10
   state:
     description:
-      - If state is C(present), template will be created. If state is C(present) and deployment exists, it will be
-        updated. If state is C(absent), stack will be removed.
+        - If I(state=present), template will be created.
+        - If I(state=present) and deployment exists, it will be updated.
+        - If I(state=absent), stack will be removed.
     default: present
     choices:
         - present
@@ -311,79 +312,93 @@ EXAMPLES = '''
 
 RETURN = '''
 deployment:
-    description: Deployment details
+    description: Deployment details.
     type: complex
     returned: always
     contains:
         group_name:
-            description: Name of the resource group
+            description:
+                - Name of the resource group.
             type: str
             returned: always
             sample: myResourceGroup
         id:
-            description: The Azure ID of the deployment
+            description:
+                - The Azure ID of the deployment.
             type: str
             returned: always
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Resources/deployments/myD
                      eployment"
         instances:
-            description: Provides the public IP addresses for each VM instance.
+            description:
+                - Provides the public IP addresses for each VM instance.
             type: list
             returned: always
             contains:
                 ips:
-                    description: List of Public IP addresses.
+                    description:
+                        - List of Public IP addresses.
                     type: list
                     returned: always
                     contains:
                         dns_settings:
-                            description: DNS Settings
+                            description:
+                                - DNS Settings.
                             type: complex
                             returned: always
                             contains:
                                 domain_name_label:
-                                    description: Domain Name Label
+                                    description:
+                                        - Domain Name Label.
                                     type: str
                                     returned: always
                                     sample: myvirtualmachine
                                 fqdn:
-                                    description: Fully Qualified Domain Name.
+                                    description:
+                                        - Fully Qualified Domain Name.
                                     type: str
                                     returned: always
                                     sample: myvirtualmachine.eastus2.cloudapp.azure.com
                         id:
-                            description: Public IP resource id.
+                            description:
+                                - Public IP resource id.
                             returned: always
                             type: str
                             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/p
                                      ublicIPAddresses/myPublicIP"
                         name:
-                            decription: Public IP resource name.
+                            description:
+                                -  Public IP resource name.
                             returned: always
                             type: str
                             sample: myPublicIP
                         public_ip:
-                            description: Public IP address value.
+                            description:
+                                - Public IP address value.
                             returned: always
                             type: str
                             sample: 104.209.244.123
                         public_ip_allocation_method:
-                            description: Public IP allocation method.
+                            description:
+                                - Public IP allocation method.
                             returned: always
                             type: str
                             sample: Dynamic
                 vm_name:
-                    description: Virtual machine name.
+                    description:
+                        - Virtual machine name.
                     returned: always
                     type: str
                     sample: myvirtualmachine
         name:
-          description: Name of the deployment
+          description:
+              - Name of the deployment.
           type: str
           returned: always
           sample: myDeployment
         outputs:
-          description: Dictionary of outputs received from the deployment.
+          description:
+              - Dictionary of outputs received from the deployment.
           type: complex
           returned: always
           sample: { "hostname": { "type": "String", "value": "myvirtualmachine.eastus2.cloudapp.azure.com" } }
