@@ -86,6 +86,7 @@ def test_maybe_add_ssl_handler(mocker):
     assert handler.hostname == '2a00:16d8:0:7::205'
     assert handler.port == 443
 
+
 def test_basic_auth_header():
     header = urls.basic_auth_header('user', 'passwd')
     assert header == b'Basic dXNlcjpwYXNzd2Q='
