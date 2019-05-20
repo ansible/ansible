@@ -126,9 +126,11 @@ except Exception:
 
 class gitlab_project_variables(object):
 
-    def __init__(self, api_token, project_name, api_url):
-        self.repo = gitlab.Gitlab(api_url, private_token=api_token)
-        self.project = self.get_project(project_name)
+    def __init__(self, module):
+        self.repo = gitlab.Gitlab(module.params['api_url'],
+                                  private_token=module.params['api_token'])
+        self.project = self.get_project(module.params['project'])
+        self._module = module
 
     def auth(self):
         self.repo.auth()
@@ -145,16 +147,22 @@ class gitlab_project_variables(object):
         return retval
 
     def create_variable(self, key, value):
+        if self._module.check_mode:
+            return
         return self.project.variables.create({"key": key, "value": value})
 
     def update_variable(self, key, value):
         var = self.project.variables.get(key)
         if var.value == value:
             return False
+        if self._module.check_mode:
+            return True
         var.save()
         return True
 
     def delete_variable(self, key):
+        if self._module.check_mode:
+            return
         return self.project.variables.delete(key)
 
 
@@ -192,40 +200,41 @@ def native_python_main(this_gitlab, purge, var_list, state):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            api_url=dict(required=True, type='str'),
-            api_token=dict(required=True, type='str'),
-            project=dict(required=True, type='str'),
-            purge=dict(required=False, default=False, type='bool'),
-            vars=dict(required=False, default=dict(), type='dict'),
-            state=dict(type='str', default="present", choices=["absent", "present"])
-        )
+    argument_spec = basic_auth_argument_spec()
+    argument_spec.pop('api_username')
+    argument_spec.pop('api_password')
+    argument_spec.pop('validate_certs')
+    argument_spec.update(
+        api_token=dict(required=True, no_log=True, type='str'),
+        project=dict(required=True, type='str'),
+        purge=dict(required=False, default=False, type='bool'),
+        vars=dict(required=False, default=dict(), type='dict'),
+        state=dict(type='str', default="present", choices=["absent", "present"])
     )
 
-    if not HAS_GITLAB_PACKAGE:
-        module.fail_json(
-            msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
-
-    api_url = module.params['api_url']
-    api_token = module.params['api_token']
-    purge = module.params['purge']
-    var_list = module.params['vars']
-    project_name = module.params['project']
-    state = module.params['state']
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=[
+            ['api_url', 'api_token']
+        ],
+        supports_check_mode=True
+    )
 
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     try:
-        this_gitlab = gitlab_project_variables(
-            api_token=api_token, project_name=project_name, api_url=api_url)
+        this_gitlab = gitlab_project_variables(module=module)
         this_gitlab.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s. \
             Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
+
+    purge = module.params['purge']
+    var_list = module.params['vars']
+    state = module.params['state']
 
     change, return_value = native_python_main(this_gitlab, purge, var_list, state)
 
