@@ -19,12 +19,12 @@ VULTR_USER_AGENT = 'Ansible Vultr'
 
 def vultr_argument_spec():
     return dict(
-        api_key=dict(default=os.environ.get('VULTR_API_KEY'), no_log=True),
+        api_key=dict(type='str', default=os.environ.get('VULTR_API_KEY'), no_log=True),
         api_timeout=dict(type='int', default=os.environ.get('VULTR_API_TIMEOUT')),
         api_retries=dict(type='int', default=os.environ.get('VULTR_API_RETRIES')),
-        api_account=dict(default=os.environ.get('VULTR_API_ACCOUNT') or 'default'),
-        api_endpoint=dict(default=os.environ.get('VULTR_API_ENDPOINT')),
-        validate_certs=dict(default=True, type='bool'),
+        api_account=dict(type='str', default=os.environ.get('VULTR_API_ACCOUNT') or 'default'),
+        api_endpoint=dict(type='str', default=os.environ.get('VULTR_API_ENDPOINT')),
+        validate_certs=dict(type='bool', default=True),
     )
 
 
