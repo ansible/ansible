@@ -24,41 +24,42 @@ options:
     description:
       - The script name.
     required: true
+    type: str
   script_type:
     description:
       - The script type, can not be changed once created.
     default: boot
     choices: [ boot, pxe ]
     aliases: [ type ]
+    type: str
   script:
     description:
       - The script source code.
-      - Required if (state=present).
+      - Required if I(state=present).
+    type: str
   state:
     description:
       - State of the script.
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: vultr
 '''
 
 EXAMPLES = r'''
 - name: ensure a pxe script exists, source from a file
-  local_action:
-    module: vultr_startup_script
+  vultr_startup_script:
     name: my_web_script
     script_type: pxe
     script: "{{ lookup('file', 'path/to/script') }}"
 
 - name: ensure a boot script exists
-  local_action:
-    module: vultr_startup_script
+  vultr_startup_script:
     name: vultr_startup_script
     script: "#!/bin/bash\necho Hello World > /root/hello"
 
 - name: ensure a script is absent
-  local_action:
-    module: vultr_startup_script
+  vultr_startup_script:
     name: my_web_script
     state: absent
 '''
@@ -232,10 +233,10 @@ class AnsibleVultrStartupScript(Vultr):
 def main():
     argument_spec = vultr_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
-        script=dict(),
-        script_type=dict(default='boot', choices=['boot', 'pxe'], aliases=['type']),
-        state=dict(choices=['present', 'absent'], default='present'),
+        name=dict(type='str', required=True),
+        script=dict(type='str',),
+        script_type=dict(type='str', default='boot', choices=['boot', 'pxe'], aliases=['type']),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(
