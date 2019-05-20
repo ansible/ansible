@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cosmosdbaccount_facts
 version_added: "2.8"
-short_description: Get Azure Cosmos DB Account facts.
+short_description: Get Azure Cosmos DB Account facts
 description:
     - Get facts of Azure Cosmos DB Account.
 
@@ -125,7 +125,7 @@ accounts:
                     sample: 100
         failover_policies:
             description:
-                - Read locations
+                - Read locations.
             returned: always
             type: complex
             contains:
@@ -149,7 +149,7 @@ accounts:
                     sample: testaccount-eastus
         read_locations:
             description:
-                - Read locations
+                - Read locations.
             returned: always
             type: complex
             contains:
@@ -185,7 +185,7 @@ accounts:
                     sample: Succeeded
         write_locations:
             description:
-                - Write locations
+                - Write locations.
             returned: always
             type: complex
             contains:
@@ -245,7 +245,7 @@ accounts:
             sample: true
         enable_cassandra:
             description:
-                - Enable Cassandra
+                - Enable Cassandra.
             returned: always
             type: bool
             sample: true
@@ -339,10 +339,10 @@ accounts:
                              q3dpJxJga76h9BZkK2BJJrDzSO6DDn6yKads017OZBZ1YZWyq1cW4iuvA=="
         tags:
             description:
-                - Tags
+                - Tags assigned to the resource. Dictionary of string:string pairs.
             returned: always
-            type: complex
-            sample: {}
+            type: dict
+            sample: { "tag1": "abc" }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
