@@ -89,7 +89,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a target tcp proxy that already exists
   gcp_compute_target_tcp_proxy:
@@ -135,7 +135,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a target tcp proxy that does not exist
   gcp_compute_target_tcp_proxy:

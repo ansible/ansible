@@ -92,7 +92,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a vpn tunnel that already exists
   gcp_compute_vpn_tunnel:
@@ -143,7 +143,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a vpn tunnel that does not exist
   gcp_compute_vpn_tunnel:
