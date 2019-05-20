@@ -59,13 +59,13 @@ azure_availabilityset:
     type: complex
     contains:
         location:
-            description: 
+            description:
                 - Location where the resource lives.
             type: str
             sample: eastus2
         name:
-            description: 
-                - Resource name. 
+            description:
+                - Resource name.
             type: str
             sample: myAvailabilitySet
         properties:
@@ -74,32 +74,32 @@ azure_availabilityset:
             type: dict
             contains:
                 platformFaultDomainCount:
-                    description: 
-                        - Fault Domain count. 
+                    description:
+                        - Fault Domain count.
                     type: int
                     sample: 3
                 platformUpdateDomainCount:
-                    description: 
+                    description:
                         - Update Domain count.
                     type: int
                     sample: 2
                 virtualMachines:
-                    description: 
+                    description:
                         - A list of references to all virtualmachines in the availability set.
                     type: list
                     sample: []
-        sku: "Aligned",
-            description: 
+        sku:
+            description:
                 - Location where the resource lives.
             type: str
             sample: Aligned
         type:
-            description: 
+            description:
                 - Resource type.
             type: str
             sample: "Microsoft.Compute/availabilitySets"
         tags:
-            description: 
+            description:
                 - Resource tags.
             type: dict
             sample: { env: sandbox }

@@ -134,7 +134,7 @@ state:
         tags:
             description:
                 - Resource tags.
-            type: str
+            type: dict 
             sample: {env: sandbox}
 
 changed:
