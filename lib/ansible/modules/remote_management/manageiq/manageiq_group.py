@@ -440,7 +440,8 @@ class ManageIQgroup(object):
         norm_current_filters = self.manageiq_filters_to_sorted_dict(current_filters)
 
         if norm_current_filters == norm_managed_filters:
-            new_filters_resource['managed'] = current_filters['managed']
+            if 'managed' in current_filters:
+                new_filters_resource['managed'] = current_filters['managed']
         else:
             if managed_filters_merge_mode == 'merge':
                 merged_dict = self.merge_dict_values(norm_current_filters, norm_managed_filters)
