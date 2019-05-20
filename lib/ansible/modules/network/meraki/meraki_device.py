@@ -202,6 +202,7 @@ response:
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -365,12 +366,24 @@ def main():
                 ignore_keys = ['lanIp', 'serial', 'mac', 'model', 'networkId', 'moveMapMarker', 'wan1Ip', 'wan2Ip']
                 if meraki.is_update_required(device_data, payload, optional_ignore=ignore_keys):
                     if meraki.module.check_mode is True:
+                        diff = recursive_diff(device_data, payload)
                         device_data.update(payload)
+                        meraki.result['diff'] = {'before': diff[0],
+                                                 'after': diff[1],
+                                                 }
                         meraki.result['data'] = device_data
+                        meraki.result['changed'] = True
                         meraki.exit_json(**meraki.result)
                     path = meraki.construct_path('update', net_id=net_id) + meraki.params['serial']
                     updated_device = []
-                    updated_device.append(meraki.request(path, method='PUT', payload=json.dumps(payload)))
+                    data = meraki.request(path, method='PUT', payload=json.dumps(payload))
+                    updated_device.append(data)
+                    diff = recursive_diff(device_data, data)
+                    diff = recursive_diff(device_data, payload)
+                    device_data.update(payload)
+                    meraki.result['diff'] = {'before': diff[0],
+                                             'after': diff[1],
+                                             }                    
                     meraki.result['data'] = updated_device
                     meraki.result['changed'] = True
                 else:
@@ -385,12 +398,14 @@ def main():
                     payload = {'serial': meraki.params['serial']}
                     if meraki.module.check_mode is True:
                         meraki.result['data'] = {}
+                        meraki.result['changed'] = True
                         meraki.exit_json(**meraki.result)
                     path = meraki.construct_path('bind_org', org_id=org_id)
                     created_device = []
                     created_device.append(meraki.request(path, method='POST', payload=json.dumps(payload)))
                     meraki.result['data'] = created_device
                     meraki.result['changed'] = True
+                    meraki.exit_json(**meraki.result)
             else:  # Claim into a network
                 query_path = meraki.construct_path('get_all', net_id=net_id)
                 device_list = meraki.request(query_path, method='GET')
@@ -399,12 +414,14 @@ def main():
                         payload = {'serial': meraki.params['serial']}
                         if meraki.module.check_mode is True:
                             meraki.result['data'] = {}
+                            meraki.result['changed'] = True
                             meraki.exit_json(**meraki.result)
                         path = meraki.construct_path('create', net_id=net_id)
                         created_device = []
                         created_device.append(meraki.request(path, method='POST', payload=json.dumps(payload)))
                         meraki.result['data'] = created_device
                         meraki.result['changed'] = True
+                        meraki.exit_json(**meraki.result)
     elif meraki.params['state'] == 'absent':
         device = []
         query_path = meraki.construct_path('get_all', net_id=net_id)
@@ -412,6 +429,7 @@ def main():
         if is_device_valid(meraki, meraki.params['serial'], device_list) is True:
             if meraki.module.check_mode is True:
                 meraki.result['data'] = {}
+                meraki.result['changed'] = True
                 meraki.exit_json(**meraki.result)
             path = meraki.construct_path('delete', net_id=net_id)
             path = path + meraki.params['serial'] + '/remove'

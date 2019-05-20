@@ -1,17 +1,18 @@
 ---
 - block:
-  - name: Claim a device into an organization
-    meraki_device:
-      auth_key: '{{auth_key}}'
-      org_name: '{{test_org_name}}'
-      serial: '{{serial}}'
-      state: present
-    delegate_to: localhost
-    register: claim_device_org
+  # Commented since a device can't be easily removed from an organization
+  # - name: Claim a device into an organization
+  #   meraki_device:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     serial: '{{serial}}'
+  #     state: present
+  #   delegate_to: localhost
+  #   register: claim_device_org
 
-  - assert:
-      that:
-        - claim_device_org.changed == true
+  # - assert:
+  #     that:
+  #       - claim_device_org.changed == true
 
   - name: Query status of all devices in an organization
     meraki_device:
@@ -40,7 +41,7 @@
 
   - assert:
       that:
-        - claim_device_check is not changed
+        - claim_device_check is changed
 
   - name: Claim a device into a network with check mode
     meraki_device:
@@ -58,7 +59,7 @@
 
   - assert:
       that:
-        - claim_device_check is not changed
+        - claim_device_check is changed
 
   - name: Claim a device into a network
     meraki_device:
@@ -203,7 +204,7 @@
 
   - assert:
       that:
-        - update_device_check is not changed
+        - update_device_check is changed
         - update_device_check.data.0.notes == "Test device notes"
         - '"1060 W. Addison St., Chicago, IL" in update_device_check.data.0.address'
 
@@ -276,7 +277,7 @@
 
   - assert:
       that:
-        - update_device_idempotent.changed == False
+        - update_device_idempotent is not changed
         - update_device_idempotent.data is defined
 
   always:
@@ -295,4 +296,4 @@
 
   - assert:
       that:
-        - delete_device.changed == true
+        - delete_device is changed
