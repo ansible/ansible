@@ -975,6 +975,8 @@ class TaskExecutor:
             variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
         )
 
+        final_templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=final_vars)
+
         # grab list of usable vars for this plugin
         option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
 
@@ -984,25 +986,25 @@ class TaskExecutor:
             if k in PRESERVE_ORIG:
                 options[k] = templar.template(variables[k])
             elif k in final_vars:
-                options[k] = templar.template(final_vars[k])
+                options[k] = final_templar.template(final_vars[k])
 
         # add extras if plugin supports them
         if getattr(self._connection, 'allow_extras', False):
             for k in final_vars:
                 if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
-                    options['_extras'][k] = templar.template(final_vars[k])
+                    options['_extras'][k] = final_templar.template(final_vars[k])
 
         task_keys = self._task.dump_attrs()
 
         # set options with 'templated vars' specific to this plugin and dependant ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
-        self._set_plugin_options('shell', final_vars, templar, task_keys)
+        self._set_plugin_options('shell', final_vars, final_templar, task_keys)
 
         if self._connection.become is not None:
             # FIXME: find alternate route to provide passwords,
             # keep out of play objects to avoid accidental disclosure
             task_keys['become_pass'] = self._play_context.become_pass
-            self._set_plugin_options('become', final_vars, templar, task_keys)
+            self._set_plugin_options('become', final_vars, final_templar, task_keys)
 
             # FOR BACKWARDS COMPAT:
             for option in ('become_user', 'become_flags', 'become_exe'):

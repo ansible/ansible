@@ -264,8 +264,10 @@ class PlayContext(Base):
                     break
             else:
                 delegated_vars['ansible_user'] = task.remote_user or self.remote_user
+            usable_delegated_vars = delegated_vars
         else:
             delegated_vars = dict()
+            usable_delegated_vars = variables
 
             # setup shell
             for exe_var in C.MAGIC_VARIABLE_MAPPING.get('executable'):
@@ -277,21 +279,10 @@ class PlayContext(Base):
             for variable_name in variable_names:
                 if attr in attrs_considered:
                     continue
-                # if delegation task ONLY use delegated host vars, avoid delegated FOR host vars
-                if task.delegate_to is not None:
-                    if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
-                        setattr(new_info, attr, delegated_vars[variable_name])
-                        attrs_considered.append(attr)
-                elif variable_name in variables:
-                    setattr(new_info, attr, variables[variable_name])
+                if variable_name in usable_delegated_vars:
+                    setattr(new_info, attr, usable_delegated_vars[variable_name])
                     attrs_considered.append(attr)
                 # no else, as no other vars should be considered
-
-        # become legacy updates -- from inventory file (inventory overrides
-        # commandline)
-        for become_pass_name in C.MAGIC_VARIABLE_MAPPING.get('become_pass'):
-            if become_pass_name in variables:
-                break
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
