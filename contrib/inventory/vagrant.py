@@ -7,7 +7,7 @@ Example Vagrant configuration using this script:
 
     config.vm.provision :ansible do |ansible|
       ansible.playbook = "./provision/your_playbook.yml"
-      ansible.inventory_file = "./provision/inventory/vagrant.py"
+      ansible.inventory_path = "./provision/inventory/vagrant.py"
       ansible.verbose = true
     end
 """
