@@ -349,7 +349,7 @@ class Constructable(object):
     def _compose(self, template, variables):
         ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
-        t.set_available_variables(variables)
+        t.available_variables = variables
         return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
@@ -369,7 +369,7 @@ class Constructable(object):
         # process each 'group entry'
         if groups and isinstance(groups, dict):
             variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
-            self.templar.set_available_variables(variables)
+            self.templar.available_variables = variables
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
                 group_name = self._sanitize_group_name(group_name)

@@ -60,7 +60,7 @@ class AnsibleJ2Vars(Mapping):
                         self._locals[key] = val
 
     def __contains__(self, k):
-        if k in self._templar._available_variables:
+        if k in self._templar.available_variables:
             return True
         if k in self._locals:
             return True
@@ -73,16 +73,16 @@ class AnsibleJ2Vars(Mapping):
 
     def __iter__(self):
         keys = set()
-        keys.update(self._templar._available_variables, self._locals, self._globals, *self._extras)
+        keys.update(self._templar.available_variables, self._locals, self._globals, *self._extras)
         return iter(keys)
 
     def __len__(self):
         keys = set()
-        keys.update(self._templar._available_variables, self._locals, self._globals, *self._extras)
+        keys.update(self._templar.available_variables, self._locals, self._globals, *self._extras)
         return len(keys)
 
     def __getitem__(self, varname):
-        if varname not in self._templar._available_variables:
+        if varname not in self._templar.available_variables:
             if varname in self._locals:
                 return self._locals[varname]
             for i in self._extras:
@@ -93,7 +93,7 @@ class AnsibleJ2Vars(Mapping):
             else:
                 raise KeyError("undefined variable: %s" % varname)
 
-        variable = self._templar._available_variables[varname]
+        variable = self._templar.available_variables[varname]
 
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure

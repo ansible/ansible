@@ -125,7 +125,7 @@ class Conditional:
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
         # make sure the templar is using the variables specified with this method
-        templar.set_available_variables(variables=all_vars)
+        templar.available_variables = all_vars
 
         try:
             # if the conditional is "unsafe", disable lookups
