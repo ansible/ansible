@@ -62,8 +62,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+clusters:
+  description: List of clusters
   returned: always
   type: complex
   contains:
@@ -406,12 +406,12 @@ def main():
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
 
-    items = fetch_list(module, collection(module))
-    if items.get('clusters'):
-        items = items.get('clusters')
+    clusters = fetch_list(module, collection(module))
+    if clusters.get('clusters'):
+        clusters = clusters.get('clusters')
     else:
-        items = []
-    return_value = {'items': items}
+        clusters = []
+    return_value = {'clusters': clusters}
     module.exit_json(**return_value)
 
 
