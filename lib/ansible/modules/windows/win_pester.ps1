@@ -30,6 +30,7 @@ Catch {
 
 # Make sure path is a real path
 Try {
+    $path = $path.TrimEnd("\")
     $path = (Get-item -LiteralPath $path).FullName
     Test-Path $path
 }
