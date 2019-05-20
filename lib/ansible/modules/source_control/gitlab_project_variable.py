@@ -136,22 +136,17 @@ class gitlab_project_variables(object):
         return self.repo.projects.get(project_name)
 
     def list_all_project_variables(self):
-        raw_variable_list = self.project.variables.list()
-        retval = []
-        for item in raw_variable_list:
-            retval.append(item.get_id())
-        return retval
+        return self.project.variables.list()
 
     def create_variable(self, key, value):
         if self._module.check_mode:
             return
         return self.project.variables.create({"key": key, "value": value})
 
-    def update_variable(self, key, value):
-        var = self.project.variables.get(key)
+    def update_variable(self, var, value):
         if var.value == value:
             return False
-        if self._module.check_mode and var.value == value:
+        if self._module.check_mode and var.value != value:
             return True
         var.value = value
         var.save()
@@ -166,17 +161,22 @@ class gitlab_project_variables(object):
 def native_python_main(this_gitlab, purge, var_list, state):
 
     change = False
-    return_value = dict(added=list(), updated=list(), removed=list())
+    return_value = dict(added=list(), updated=list(), removed=list(), present=list())
 
-    existing_variables = this_gitlab.list_all_project_variables()
+    gitlab_keys = this_gitlab.list_all_project_variables()
+    existing_variables = [x.get_id() for x in gitlab_keys]
 
     for key in var_list:
         if key in existing_variables and state == 'present':
-            change = this_gitlab.update_variable(
-                key, var_list[key]) or change
-            pop_index = existing_variables.index(key)
-            existing_variables.pop(pop_index)
-            return_value['updated'].append(key)
+            index = existing_variables.index(key)
+            single_change = this_gitlab.update_variable(
+                gitlab_keys[index], var_list[key])
+            change = single_change or change
+            existing_variables[index] = None
+            if single_change:
+                return_value['updated'].append(key)
+            else:
+                return_value['present'].append(key)
         elif key not in existing_variables and state == 'present':
             this_gitlab.create_variable(key, var_list[key])
             change = True
@@ -186,6 +186,7 @@ def native_python_main(this_gitlab, purge, var_list, state):
             change = True
             return_value['removed'].append(key)
 
+    existing_variables = list(filter(None, existing_variables))
     if len(existing_variables) > 0 and purge:
         for item in existing_variables:
             this_gitlab.delete_variable(item)
