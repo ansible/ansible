@@ -87,7 +87,7 @@ If (Test-Path -LiteralPath $path -PathType Leaf) {
         $module.result.output = "Run pester test(s) who are in the folder: $path"
     } else {
         try {
-            output = Invoke-Pester $files.FullName @Parameters
+            $module.result.output = Invoke-Pester $files.FullName @Parameters
         } catch {
             $module.FailJson($_.Exception)
         }
