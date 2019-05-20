@@ -238,66 +238,6 @@ RETURN = """
                         "reposity_cap_utilization": "0",
                         "rollback_source": false,
                         "status": "optimal" }]
-    proxy_facts:
-        description: proxy storage system list
-        returned: on successful inquiry from from web services proxy's rest api
-        type: complex
-        contains:
-            ssid:
-                description: storage system id
-                type: str
-                sample: "ec8ed9d2-eba3-4cac-88fb-0954f327f1d4"
-            name:
-                description: storage system name
-                type: str
-                sample: "EF570-NVMe"
-            wwn:
-                description: storage system unique identifier
-                type: str
-                sample: "AC1100051E1E1E1E1E1E1E1E1E1E1E1E"
-            model:
-                description: NetApp E-Series model number
-                type: str
-                sample: "5700"
-            controller:
-                description: controller list that contains identification, ip addresses, and certificate information for
-                             each controller
-                type: complex
-                sample: [{"certificateStatus": "selfSigned",
-                          "controllerId": "070000000000000000000001",
-                          "ipAddresses": ["172.17.0.5", "3.3.3.3"]}]
-            drive_types:
-                description: all available storage system drive types
-                type: list
-                sample: ["sas", "fibre"]
-            unconfigured_space:
-                description: unconfigured storage system space in bytes
-                type: str
-                sample: "982259020595200"
-            array_status:
-                description: storage system status
-                type: str
-                sample: "optimal"
-            password_status:
-                description: storage system password status
-                type: str
-                sample: "invalid"
-            certificate_status:
-                description: storage system ssl certificate status
-                type: str
-                sample: "untrusted"
-            firmware_version:
-                description: storage system install firmware version
-                type: str
-                sample: "08.50.42.99"
-            chassis_serial:
-                description: storage system chassis serial number
-                type: str
-                sample: "SX0810032"
-            asup_enabled:
-                description: storage system auto-support status
-                type: bool
-                sample: True
 """
 
 from re import match
@@ -332,33 +272,6 @@ class Facts(NetAppESeriesModule):
             i += 1
 
         return controllers_dict
-
-    def get_proxy_facts(self):
-        """Provide information regarding storage systems from the web services proxy. The information provided is useful
-        for identifying storage arrays, their type and current status"""
-
-        # Get storage array information from the web service proxy
-        storage_arrays = None
-        try:
-            rc, storage_arrays = self.request("storage-systems")
-        except Exception as error:
-            self.module.fail_json(msg="Failed to obtain facts from web services proxy. Error [%s]" % str(error))
-
-        facts = dict(facts_from_proxy=True)
-        facts["storage_systems"] = [{"ssid": array["id"],
-                                     "name": array["name"],
-                                     "wwn": array["wwn"],
-                                     "model": array["model"],
-                                     "controllers": array["controllers"],
-                                     "drive_types": array["driveTypes"],
-                                     "unconfigured_space": array["unconfiguredSpace"],
-                                     "array_status": array["status"],
-                                     "password_status": array["passwordStatus"],
-                                     "certificate_status": array["certificateStatus"],
-                                     "firmware_version": array["fwVersion"],
-                                     "chassis_serial": array["chassisSerialNumber"],
-                                     "asup_enabled": array["asupEnabled"]} for array in storage_arrays]
-        return facts
 
     def get_array_facts(self):
         """Extract particular facts from the storage array graph"""
@@ -598,16 +511,13 @@ class Facts(NetAppESeriesModule):
 
     def get_facts(self):
         """Get the embedded or web services proxy information."""
+        facts = self.get_array_facts()
+
         self.module.log("isEmbedded: %s" % self.is_embedded())
-        if self.is_embedded():
-            facts = self.get_array_facts()
-            self.module.log(pformat(facts))
-            self.module.exit_json(msg="Gathered facts for storage array. Array ID: [%s]." % self.ssid,
-                                  storage_array_facts=facts)
-        else:
-            facts = self.get_proxy_facts()
-            self.module.log.info(pformat(facts))
-            self.module.exit_json(msg="Gathered facts for web services proxy.", proxy_facts=facts)
+        self.module.log(pformat(facts))
+
+        self.module.exit_json(msg="Gathered facts for storage array. Array ID: [%s]." % self.ssid,
+                              storage_array_facts=facts)
 
 
 def strip_interface_speed(speed):
