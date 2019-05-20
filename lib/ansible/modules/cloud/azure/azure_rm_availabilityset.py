@@ -99,7 +99,7 @@ RETURN = '''
 state:
     description: Current state of the availability set.
     returned: always
-    type: dict
+    type: complex
     contains:
         id:
             description:
@@ -134,7 +134,7 @@ state:
         tags:
             description:
                 - Resource tags.
-            type: dict
+            type: str
             sample: {env: sandbox}
 
 changed:

@@ -56,18 +56,53 @@ RETURN = '''
 azure_availabilityset:
     description: List of availability sets dicts.
     returned: always
-    type: list
-    example: [{
-        "location": "eastus2",
-        "name": "myAvailabilitySet",
-        "properties": {
-            "platformFaultDomainCount": 3,
-            "platformUpdateDomainCount": 2,
-            "virtualMachines": []
-        },
-        "sku": "Aligned",
-        "type": "Microsoft.Compute/availabilitySets"
-    }]
+    type: complex
+    contains:
+        location:
+            description: 
+                - Location where the resource lives.
+            type: str
+            sample: eastus2
+        name:
+            description: 
+                - Resource name. 
+            type: str
+            sample: myAvailabilitySet
+        properties:
+            description:
+                - The properties of the resource.
+            type: dict
+            contains:
+                platformFaultDomainCount:
+                    description: 
+                        - Fault Domain count. 
+                    type: int
+                    sample: 3
+                platformUpdateDomainCount:
+                    description: 
+                        - Update Domain count.
+                    type: int
+                    sample: 2
+                virtualMachines:
+                    description: 
+                        - A list of references to all virtualmachines in the availability set.
+                    type: list
+                    sample: []
+        sku: "Aligned",
+            description: 
+                - Location where the resource lives.
+            type: str
+            sample: Aligned
+        type:
+            description: 
+                - Resource type.
+            type: str
+            sample: "Microsoft.Compute/availabilitySets"
+        tags:
+            description: 
+                - Resource tags.
+            type: dict
+            sample: { env: sandbox }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
