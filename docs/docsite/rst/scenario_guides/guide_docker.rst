@@ -30,12 +30,12 @@ Ansible 2.1.0 includes major updates to the Docker modules, marking the start of
 integrated set of tools for orchestrating containers. In addition to the above modules, we are also working on the
 following:
 
-Still using Dockerfile to build images? Check out `ansible-container <https://github.com/ansible/ansible-container>`_,
+Still using Dockerfile to build images? Check out `ansible-bender <https://github.com/ansible-community/ansible-bender>`_,
 and start building images from your Ansible playbooks.
 
-Use the *shipit* command in `ansible-container <https://github.com/ansible/ansible-container>`_
+Use `Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_
 to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully
-scalable app in the cloud in just a few moments.
+scalable app in the cloud with Kubernetes in just a few moments.
 
 There's more planned. See the latest ideas and thinking at the `Ansible proposal repo <https://github.com/ansible/proposals/tree/master/docker>`_.
 
