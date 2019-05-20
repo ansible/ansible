@@ -98,8 +98,7 @@ except Exception:
 class gitlab_project_variables(object):
 
     def __init__(self, login_token, project_name, server_url):
-        self.repo = gitlab.Gitlab(
-            '{server_url}'.format(server_url=server_url), private_token=login_token)
+        self.repo = gitlab.Gitlab(server_url, private_token=login_token)
         self.repo.auth()
         self.project = self.get_project(project_name)
 
