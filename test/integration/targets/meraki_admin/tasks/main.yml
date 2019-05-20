@@ -19,7 +19,7 @@
   - name: Create new admin check mode assertion
     assert:
       that:
-        - create_org_check is not changed
+        - create_org_check is changed
         - 'create_org_check.data.name == "Jane Doe"'
 
   - name: Create new administrator
@@ -51,7 +51,7 @@
 
   - assert:
       that:
-        - delete_one_check is not changed
+        - delete_one_check is changed
 
   - name: Delete recently created administrator
     meraki_admin:
@@ -100,7 +100,7 @@
 
   - assert:
       that:
-        - create_tags_check is not changed
+        - create_tags_check is changed
         - create_tags_check.data.name == "John Doe"
         - create_tags_check.data.tags | length == 2
 
@@ -193,7 +193,7 @@
 
   - assert:
       that:
-        - create_network_check is not changed
+        - create_network_check is changed
         - create_network_check.data.name == "Jim Doe"
         - create_network_check.data.networks | length == 2
 
@@ -236,7 +236,7 @@
 
   - assert:
       that:
-        - update_network_check is not changed
+        - update_network_check is changed
         - update_network_check.data.networks.0.access == "full"
         - update_network_check.data.networks | length == 1
 
@@ -280,7 +280,7 @@
       that:
         - update_network_idempotent_check is not changed
 
-  - name: Update administrator for idempotency check
+  - name: Update administrator for idempotency
     meraki_admin:
       auth_key: '{{auth_key}}'
       state: present

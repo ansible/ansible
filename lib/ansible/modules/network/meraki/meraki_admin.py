@@ -255,6 +255,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -341,6 +342,7 @@ def create_admin(meraki, org_id, name, email):
     if is_admin_existing is None:  # Create new admin
         if meraki.module.check_mode is True:
             meraki.result['data'] = payload
+            meraki.result['changed'] = True
             meraki.exit_json(**meraki.result)
         path = meraki.construct_path('create', function='admin', org_id=org_id)
         r = meraki.request(path,
@@ -357,7 +359,12 @@ def create_admin(meraki, org_id, name, email):
             payload['networks'] = []
         if meraki.is_update_required(is_admin_existing, payload) is True:
             if meraki.module.check_mode is True:
+                diff = recursive_diff(is_admin_existing, payload)
                 is_admin_existing.update(payload)
+                meraki.result['diff'] = {'before': diff[0],
+                                         'after': diff[1],
+                                         }
+                meraki.result['changed'] = True
                 meraki.result['data'] = payload
                 meraki.exit_json(**meraki.result)
             path = meraki.construct_path('update', function='admin', org_id=org_id) + is_admin_existing['id']
@@ -430,9 +437,6 @@ def main():
     except KeyError:
         pass
 
-    if meraki.params['auth_key'] is None:
-        module.fail_json(msg='Meraki Dashboard API key not set')
-
     payload = None
 
     # if the user is working with this module in only check mode we do not
@@ -477,6 +481,7 @@ def main():
     elif meraki.params['state'] == 'absent':
         if meraki.module.check_mode is True:
             meraki.result['data'] = {}
+            meraki.result['changed'] = True
             meraki.exit_json(**meraki.result)
         admin_id = get_admin_id(meraki,
                                 get_admins(meraki, org_id),
