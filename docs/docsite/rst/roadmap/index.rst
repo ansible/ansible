@@ -8,6 +8,7 @@ The Ansible team develops a roadmap for each major Ansible release. The latest r
 .. toctree::
    :maxdepth: 1
    :glob:
+   :reversed:
    :caption: Ansible Release Roadmaps
 
    ROADMAP*
