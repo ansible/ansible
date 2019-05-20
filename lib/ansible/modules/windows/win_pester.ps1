@@ -2,6 +2,7 @@
 
 # Copyright: (c) 2017, Erwan Quelin (@equelin) <erwan.quelin@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Adding an extra comment line to see if this fails CI
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
