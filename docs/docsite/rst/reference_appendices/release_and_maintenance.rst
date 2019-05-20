@@ -105,12 +105,7 @@ releases of Ansible, there can sometimes be exceptions for critical issues.
 Changelogs
 ~~~~~~~~~~~~~~~~~~
 
-<<<<<<< HEAD
-Since 2.5, we've logged changes to ``stable-<version>`` git branches at ``stable-<version>/changelogs/CHANGELOG-v<version>.rst``.
-For example, here's the changelog for 2.5_ on GitHub.
-=======
 We now generate changelogs based on fragments. Here is the generated changelog for 2.8_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
->>>>>>> f097dca... update release table for 2.8 (#56486)
 
 Older versions logged changes to ``stable-<version>/CHANGELOG.md``. For example,
 here's the CHANGELOG for 2.4_.
