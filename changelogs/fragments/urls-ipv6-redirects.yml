@@ -1,0 +1,4 @@
+bugfixes:
+- urls - Handle redirects properly for IPv6 address by not splitting on ``:``
+  and rely on already parsed hostname and port values
+  (https://github.com/ansible/ansible/issues/56258)
