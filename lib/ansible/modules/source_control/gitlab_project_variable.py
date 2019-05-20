@@ -35,6 +35,11 @@ options:
     default: present
     type: str
     choices: ["present", "absent"]
+  api_token:
+    description:
+      - Gitlab access token with api permissions.
+    required: true
+    type: str
   project:
     description:
       - The path and name of the project
