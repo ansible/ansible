@@ -172,10 +172,6 @@ class LdapAttrs(LdapGeneric):
         self.attrs = self.module.params['attributes']
         self.state = self.module.params['state']
 
-
-        # Establish connection
-        self.connection = self._connect_to_ldap()
-
     def _normalize_values(self, values):
         """ Normalize attribute's values. """
         norm_values = []
@@ -242,6 +238,7 @@ class LdapAttrs(LdapGeneric):
     def _is_value_absent(self, name, value):
         """ True if the target attribute doesn't have the given value. """
         return not self._is_value_present(name, value)
+
 
 def main():
     module = AnsibleModule(
