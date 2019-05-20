@@ -9,7 +9,7 @@
 $spec = @{
     options = @{
         path = @{ type = "str"; required = $true }
-        minimum_version = @{ type = "str"; required = $false }
+        version = @{ type = "str"; required = $false }
     }
     supports_check_mode = $true
 }
@@ -17,17 +17,17 @@ $spec = @{
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $path = $module.Params.path
-$minimum_version = $module.Params.minimum_version
+$version = $module.Params.version
 
 $module.result.changed = $false
 
 # CODE
 # Test if parameter $version is valid
 Try {
-    $minimum_version = [version]$minimum_version
+    $version = [version]$version
 }
 Catch {
-    $module.FailJson("Value '$minimum_version' for parameter 'minimum_version' is not a valid version format")
+    $module.FailJson("Value '$version' for parameter 'version' is not a valid version format")
 }
 
 # Import Pester module if available
@@ -46,8 +46,8 @@ $Pester_version = (Get-Module -Name $Pester).Version.ToString()
 $module.result.pester_version = $Pester_version
 
 # Test if the Pester module is available with a version greater or equal than the one specified in the $version parameter
-If ((-not (Get-Module -Name $Pester -ErrorAction SilentlyContinue | Where-Object {$_.Version -ge $minimum_version})) -and ($minimum_version)) {
-    $module.FailJson("$Pester version is not greater or equal to $minimum_version")
+If ((-not (Get-Module -Name $Pester -ErrorAction SilentlyContinue | Where-Object {$_.Version -ge $version})) -and ($version)) {
+    $module.FailJson("$Pester version is not greater or equal to $version")
 }
 
 # Testing if test file or directory exist
