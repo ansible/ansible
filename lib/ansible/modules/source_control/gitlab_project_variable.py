@@ -25,6 +25,8 @@ author:
 requirements:
   - python >= 2.7
   - python-gitlab python module
+extends_documentation_fragment:
+  - auth_basic
 options:
   state:
     description:
@@ -33,16 +35,6 @@ options:
     default: present
     type: str
     choices: ["present", "absent"]
-  api_url:
-    description:
-      - The URL of the Gitlab server, with protocol (i.e. http or https).
-    required: true
-    type: str
-  api_token:
-    description:
-      - Gitlab access token with api permissions.
-    required: true
-    type: str
   project:
     description:
       - The path and name of the project
@@ -201,9 +193,6 @@ def native_python_main(this_gitlab, purge, var_list, state):
 
 def main():
     argument_spec = basic_auth_argument_spec()
-    argument_spec.pop('api_username')
-    argument_spec.pop('api_password')
-    argument_spec.pop('validate_certs')
     argument_spec.update(
         api_token=dict(required=True, no_log=True, type='str'),
         project=dict(required=True, type='str'),
