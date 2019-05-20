@@ -560,7 +560,7 @@ def generic_urlparse(parts):
         generic_parts['username'] = parts.username
         generic_parts['password'] = parts.password
         hostname = parts.hostname
-        if hostname[0] == '[' and '[' in parts.netloc and ']' in parts.netloc:
+        if hostname and hostname[0] == '[' and '[' in parts.netloc and ']' in parts.netloc:
             # Py2.6 doesn't parse IPv6 addresses correctly
             hostname = parts.netloc.split(']')[0][1:].lower()
         generic_parts['hostname'] = hostname
