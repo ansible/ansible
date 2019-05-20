@@ -21,7 +21,6 @@ $version = $module.Params.version
 
 $module.result.changed = $false
 
-# CODE
 # Test if parameter $version is valid
 Try {
     $version = [version]$version
