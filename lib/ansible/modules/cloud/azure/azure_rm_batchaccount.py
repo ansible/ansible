@@ -36,7 +36,8 @@ options:
         description:
         - Existing storage account with which to associate the Batch Account.
         - It can be the storage account name which is in the same resource group.
-        - It can be the storage account ID. e.g., /subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{name}.
+        - "It can be the storage account ID. e.g., /subscriptions/{subscription_id}
+           /resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{name}."
         - It can be a dict which contains C(name) and C(resource_group) of the storage account.
     key_vault_reference:
         description:
