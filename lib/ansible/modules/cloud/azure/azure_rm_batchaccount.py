@@ -34,15 +34,17 @@ options:
         - Specifies the supported Azure location where the resource exists.
     auto_storage_account:
         description:
-        - The ID of the Batch Account auto storage account.
+        - Existing storage account with which to associate the Batch Account.
+        - It can be the storage account name which is in the same resource group.
+        - It can be the storage account ID. e.g., /subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{name}.
+        - It can be a dict which contains C(name) and C(resource_group) of the storage account.
     key_vault_reference:
         description:
         - A reference to the Azure key vault associated with the Batch account.
         suboptions:
             id:
                 description:
-                - The resource ID of the Azure key vault associated with the Batch
-                    account.
+                - The resource ID of the Azure key vault associated with the Batch account.
                 required: true
             url:
                 description:
@@ -58,8 +60,7 @@ options:
     state:
         description:
         - Assert the state of the Batch Account.
-        - Use 'present' to create or update a Batch Account and 'absent' to delete
-            it.
+        - Use 'present' to create or update a Batch Account and 'absent' to delete it.
         default: present
         choices:
         - present
