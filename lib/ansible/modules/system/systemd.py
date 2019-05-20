@@ -339,6 +339,11 @@ def main():
         mutually_exclusive=[['scope', 'user']],
     )
 
+    unit = module.params['name']
+    for globpattern in (r"*", r"?", r"["):
+        if globpattern in unit:
+            module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
+
     systemctl = module.get_bin_path('systemctl', True)
 
     if os.getenv('XDG_RUNTIME_DIR') is None:
@@ -364,7 +369,6 @@ def main():
     if module.params['force']:
         systemctl += " --force"
 
-    unit = module.params['name']
     rc = 0
     out = err = ''
     result = dict(
