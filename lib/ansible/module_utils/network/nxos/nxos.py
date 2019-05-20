@@ -31,7 +31,12 @@
 import collections
 import json
 import re
-import yaml
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
 try:
     from collections import OrderedDict
 except ImportError:
@@ -706,8 +711,13 @@ class NxosCmdRef:
         """Initialize cmd_ref from yaml data."""
         self._module = module
         if PY2:
+            if not HAS_YAML:
+                module.fail_json(msg="Mandatory python yaml library is not present, try 'pip install yaml'")
             self._ref = yaml.load(cmd_ref_str)
         else:
+            if not HAS_YAML:
+                module.fail_json(msg="Mandatory python yaml library is not present, try 'pip install PyYAML'")
+            self._ref = yaml.load(cmd_ref_str)
             self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
         ref = self._ref
 
