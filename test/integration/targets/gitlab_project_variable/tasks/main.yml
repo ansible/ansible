@@ -40,6 +40,21 @@
     that:
       - gitlab_project_variable_state is not changed
 
+- name: edit one variable
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID: changed
+    purge: False
+  register: gitlab_project_variable_state
+
+- name: edit one variable state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
 - name: append one variable
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
@@ -61,7 +76,7 @@
     api_token: "{{ gitlab_login_token }}"
     project: "{{ gitlab_project_name }}"
     vars:
-      ACCESS_KEY_ID: abc123
+      ACCESS_KEY_ID: changed
       SECRET_ACCESS_KEY: 321cba
       some: value
   register: gitlab_project_variable_state

@@ -151,8 +151,9 @@ class gitlab_project_variables(object):
         var = self.project.variables.get(key)
         if var.value == value:
             return False
-        if self._module.check_mode:
+        if self._module.check_mode and var.value == value:
             return True
+        var.value = value
         var.save()
         return True
 
