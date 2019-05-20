@@ -81,8 +81,7 @@ if ($check_mode) {
     } catch {
         $module.FailJson($_.Exception)
     }
+    $module.result.changed = $true
 }
-
-$module.result.changed = $true
 
 $module.ExitJson()
