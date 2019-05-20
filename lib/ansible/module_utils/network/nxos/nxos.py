@@ -37,11 +37,6 @@ try:
 except ImportError:
     HAS_YAML = False
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
@@ -50,6 +45,16 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems, string_types, PY2, PY3
 from ansible.module_utils.urls import fetch_url
+
+try:
+    if PY3:
+        from collections import OrderedDict
+    else:
+        from ordereddict import OrderedDict
+    HAS_ORDEREDDICT = True
+except ImportError:
+    HAS_ORDEREDDICT = False
+    import pdb;pdb.set_trace()
 
 _DEVICE_CONNECTION = None
 
@@ -710,22 +715,18 @@ class NxosCmdRef:
     def __init__(self, module, cmd_ref_str):
         """Initialize cmd_ref from yaml data."""
         self._module = module
+        self._check_imports()
         if PY2:
-            if not HAS_YAML:
-                module.fail_json(msg="Mandatory python yaml library is not present, try 'pip install yaml'")
             self._ref = yaml.load(cmd_ref_str)
-        else:
-            if not HAS_YAML:
-                module.fail_json(msg="Mandatory python yaml library is not present, try 'pip install PyYAML'")
-            self._ref = yaml.load(cmd_ref_str)
+        elif PY3:
             self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
         ref = self._ref
 
         # Process module state key
-        if self._module.params.get('state') is None:
+        if module.params.get('state') is None:
             ref['_state'] = 'present'
         else:
-            ref['_state'] = self._module.params.get('state')
+            ref['_state'] = module.params.get('state')
 
         # Create a list of supported commands based on ref keys
         ref['commands'] = [k for k in ref if not k.startswith('_')]
@@ -734,6 +735,17 @@ class NxosCmdRef:
         self.feature_enable()
         self.get_platform_defaults()
         self.normalize_defaults()
+
+    def _check_imports(self):
+        module = self._module
+        if PY2:
+            if not HAS_ORDEREDDICT:
+                module.fail_json(msg="Mandatory python library 'ordereddict' is not present, try 'pip install ordereddict'")
+            if not HAS_YAML:
+                module.fail_json(msg="Mandatory python yaml library is not present, try 'pip install yaml'")
+        elif PY3:
+            if not HAS_YAML:
+                module.fail_json(msg="Mandatory python yaml library is not present, try 'pip install PyYAML'")
 
     def __getitem__(self, key=None):
         if key is None:
