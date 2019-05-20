@@ -1314,7 +1314,7 @@ class Request:
 
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
-             url_username=None, url_password=None, http_agent=None,
+             url_username=None, url_password=None, http_agent='ansible-httpget',
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None):
