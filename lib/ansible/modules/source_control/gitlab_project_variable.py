@@ -203,8 +203,15 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=[
+            ['api_username', 'api_token'],
+            ['api_password', 'api_token'],
+        ],
         required_together=[
-            ['api_url', 'api_token']
+            ['api_username', 'api_password'],
+        ],
+        required_one_of=[
+            ['api_username', 'api_token']
         ],
         supports_check_mode=True
     )
