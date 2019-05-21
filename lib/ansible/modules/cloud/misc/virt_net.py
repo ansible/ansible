@@ -307,10 +307,14 @@ class LibvirtConnection(object):
                     return False
                 else:
                     if not self.module.check_mode:
+                        update_host = etree.fromstring(xml)
+                        for child in update_host.getchildren():
+                          update_host.remove(child)
+                        delete_xml = update_host.tostring()
                         res = 0
                         res += network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_DELETE,
                                               libvirt.VIR_NETWORK_SECTION_DNS_HOST,
-                                              -1, xml, libvirt.VIR_DOMAIN_AFFECT_LIVE | libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                                              -1, delete_xml, libvirt.VIR_DOMAIN_AFFECT_LIVE | libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                         res += network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
                                               libvirt.VIR_NETWORK_SECTION_DNS_HOST,
                                               -1, xml, libvirt.VIR_DOMAIN_AFFECT_LIVE | libvirt.VIR_DOMAIN_AFFECT_CONFIG)
