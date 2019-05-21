@@ -258,10 +258,6 @@ def main():
     if is_iterable(args, include_strings=False):
         args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
-    if chdir:
-        chdir = os.path.abspath(chdir)
-        os.chdir(chdir)
-
     if creates:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
@@ -285,6 +281,10 @@ def main():
                 changed=False,
                 rc=0
             )
+
+    if chdir:
+        chdir = os.path.abspath(chdir)
+        os.chdir(chdir)
 
     if warn:
         check_command(module, args)
