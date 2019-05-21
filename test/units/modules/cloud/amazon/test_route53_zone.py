@@ -16,6 +16,7 @@ def parameterized(params_list):
         return wrapper
     return decorator
 
+
 # Inline and replace with subdict.items() <= superdict.items(), when Python 2.6 compat can be dropped
 def is_subdict(subdict, superdict):
     return all(superdict[k] == v for k, v in subdict.items())
