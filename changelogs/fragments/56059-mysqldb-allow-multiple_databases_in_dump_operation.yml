@@ -1,0 +1,2 @@
+minor_changes:
+- mysql_db now supports multiple databases in dump operation (https://github.com/ansible/ansible/issues/56059)
