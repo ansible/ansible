@@ -22,14 +22,14 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
 module: checkpoint_network
 short_description: Manages network objects on Checkpoint over Web Services API
 description:
-  - Manages network objects on Checkpoint devices including creating, updating, removing network objects.
+  - Manages network objects on Checkpoint devices including creating, updating and removing objects.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -82,12 +82,6 @@ EXAMPLES = """
     subnet: "192.0.2.0"
     subnet_mask : "255.255.255.0"
     state: present
-
-
-- name: Delete network object
-  checkpoint_network:
-    name: "New Network 1"
-    state: absent
 """
 
 RETURN = """
@@ -119,7 +113,8 @@ def main():
                            mutually_exclusive=[['name', 'uid']])
     api_call_object = "network"
 
-    api_call(module, api_call_object)
+    result = api_call(module, api_call_object)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

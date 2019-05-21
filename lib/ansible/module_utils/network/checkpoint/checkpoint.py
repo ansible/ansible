@@ -71,6 +71,39 @@ checkpoint_argument_spec_for_commands = dict(
     version=dict(type='str')
 )
 
+checkpoint_argument_spec_for_TP_objects = dict(
+    name=dict(type='str'),
+    uid=dict(type='str'),
+    comments=dict(type='str'),
+    details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+    ignore_warnings=dict(type='bool'),
+    ignore_errors=dict(type='bool'),
+    new_name=dict(type='str'),
+    auto_publish_session=dict(type='bool'),
+    wait_for_task=dict(type='bool', default=True),
+    state=dict(type='str', required=True, choices=['present', 'absent']),
+    version=dict(type='str')
+)
+
+checkpoint_argument_spec_for_TP_facts = dict(
+    name=dict(type='str'),
+    uid=dict(type='str'),
+    details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+    limit=dict(type='int'),
+    offset=dict(type='int'),
+    order=dict(type='list'),
+    version=dict(type='str')
+)
+
+checkpoint_argument_spec_for_basic_objects = dict(
+    name=dict(type='str'),
+    uid=dict(type='str'),
+    auto_publish_session=dict(type='bool'),
+    wait_for_task=dict(type='bool', default=True),
+    state=dict(type='str', required=True, choices=['present', 'absent']),
+    version=dict(type='str')
+)
+
 
 # send the request to checkpoint
 def send_request(connection, version, url, payload=None):
@@ -169,11 +202,11 @@ def api_command(module, command):
                 for task_id in response['tasks']:
                     wait_for_task(module, version, connection, task_id)
 
-        result['checkpoint_' + command.replace("-", "_")] = response
+        result[command] = response
     else:
         module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
 
-    module.exit_json(**result)
+    return result
 
 
 # handle api call facts
@@ -188,10 +221,11 @@ def api_call_facts(module, api_call_object, api_call_object_plural_version):
         api_call_object = api_call_object_plural_version
 
     code, response = send_request(connection, version, 'show-' + api_call_object, payload)
-    if code == 200:
-        module.exit_json(ansible_facts={api_call_object: response})
-    else:
+    if code != 200:
         module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
+
+    result = {api_call_object: response}
+    return result
 
 
 # handle api call
@@ -245,4 +279,4 @@ def api_call(module, api_call_object):
             pass
 
     result['checkpoint_session_uid'] = connection.get_session_uid()
-    module.exit_json(**result)
+    return result

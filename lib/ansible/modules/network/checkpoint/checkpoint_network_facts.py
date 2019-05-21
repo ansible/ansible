@@ -22,7 +22,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -43,7 +43,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-api_result:
+ansible_facts:
   description: The checkpoint object facts.
   returned: always.
   type: dict
@@ -62,7 +62,8 @@ def main():
     api_call_object = "network"
     api_call_object_plural_version = "networks"
 
-    api_call_facts(module, api_call_object, api_call_object_plural_version)
+    result = api_call_facts(module, api_call_object, api_call_object_plural_version)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
