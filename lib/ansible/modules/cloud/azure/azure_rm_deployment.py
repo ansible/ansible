@@ -54,21 +54,21 @@ options:
   template:
     description:
         - A hash containing the templates inline. This parameter is mutually exclusive with I(template_link).
-        - Either one of them is required if I(state=present).
+        - Either I(template) or I(template_link) is required if I(state=present).
     type: dict
   template_link:
     description:
         - Uri of file containing the template body. This parameter is mutually exclusive with I(template).
-        - Either one of them is required if I(state=present).
+        - Either I(template) or I(template_link) is required if I(state=present).
   parameters:
     description:
         - A hash of all the required template variables for the deployment template. This parameter is mutually exclusive with I(parameters_link).
-        - Either one of them is required if I(state=present).
+        - Either I(parameters_links) or I(parameters) is required if I(state=present).
     type: dict
   parameters_link:
     description:
         - Uri of file containing the parameters body. This parameter is mutually exclusive with I(parameters).
-        - Either one of them is required if I(state=present).
+        - Either I(parameters_links) or I(parameters) is required if I(state=present).
   wait_for_deployment_completion:
     description:
         - Whether or not to block until the deployment has completed.
