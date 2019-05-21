@@ -2576,7 +2576,7 @@ class KeycloakAPI(object):
                                     realm=realm)
                         else:  # It is a REALM role
                             # Get all realm roles
-                            roles = self.get_realm_roles()
+                            roles = self.get_realm_roles(realm=realm)
                         # Search in all roles found which is the role to assigne
                         for role in roles:
                             # Id role is found
