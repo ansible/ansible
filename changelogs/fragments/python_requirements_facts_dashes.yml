@@ -1,0 +1,2 @@
+bugfixes:
+  - allow python_requirements_facts to report on dependencies containing dashes
