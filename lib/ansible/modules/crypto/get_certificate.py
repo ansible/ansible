@@ -107,12 +107,12 @@ EXAMPLES = '''
   delegate_to: localhost
   run_once: true
   register: cert
-  
+
 - name: How many days until cert expires
   debug:
     msg: "cert expires in: {{ expire_days }} days."
   vars:
-    expire_days: "{{ (( get_certificate_result.not_after | to_datetime('%Y%m%d%H%M%SZ')) - (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ')) ).days }}"
+    expire_days: "{{ (( cert.not_after | to_datetime('%Y%m%d%H%M%SZ')) - (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ')) ).days }}"
 '''
 
 import traceback
