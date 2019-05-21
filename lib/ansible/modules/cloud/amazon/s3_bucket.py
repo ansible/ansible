@@ -643,7 +643,8 @@ def main():
     )
 
     module = AnsibleAWSModule(
-        argument_spec=argument_spec, required_if=[['encryption', 'aws:kms', ['encryption_key_id']]]
+        argument_spec=argument_spec,
+        required_if=[['encryption', 'aws:kms', ['encryption_key_id']]]
     )
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
