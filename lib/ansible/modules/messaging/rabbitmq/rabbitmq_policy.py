@@ -103,11 +103,19 @@ class RabbitMqPolicy(object):
 
         self._version = self._rabbit_version()
 
-    def _exec(self, args, run_in_check_mode=False, split_lines=True):
-        if not self._module.check_mode or (self._module.check_mode and run_in_check_mode):
+    def _exec(self,
+              args,
+              run_in_check_mode=False,
+              split_lines=True,
+              add_vhost=True):
+        if (not self._module.check_mode
+                or (self._module.check_mode and run_in_check_mode)):
             cmd = [self._rabbitmqctl, '-q', '-n', self._node]
-            args.insert(1, '-p')
-            args.insert(2, self._vhost)
+
+            if add_vhost:
+                args.insert(1, '-p')
+                args.insert(2, self._vhost)
+
             rc, out, err = self._module.run_command(cmd + args, check_rc=True)
             if split_lines:
                 return out.splitlines()
@@ -116,7 +124,7 @@ class RabbitMqPolicy(object):
         return list()
 
     def _rabbit_version(self):
-        status = self._exec(['status'], True, False)
+        status = self._exec(['status'], True, False, False)
 
         version_match = re.search('{rabbit,".*","(?P<version>.*)"}', status)
         if version_match:
