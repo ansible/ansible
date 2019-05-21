@@ -210,6 +210,7 @@ def convert_friendly_names_to_arns(connection, module, policy_names):
 
 
 def remove_policies(connection, module, policies_to_remove, params):
+    changed = False
     for policy in policies_to_remove:
         try:
             if not module.check_mode:
@@ -220,7 +221,8 @@ def remove_policies(connection, module, policies_to_remove, params):
         except BotoCoreError as e:
             module.fail_json(msg="Unable to detach policy {0} from {1}: {2}".format(policy, params['RoleName'], to_native(e)),
                              exception=traceback.format_exc())
-        return True
+        changed = True
+    return changed
 
 
 def create_or_update_role(connection, module):
