@@ -108,7 +108,7 @@ EXAMPLES = '''
   run_once: true
   register: cert
   
-- name: how many days until cert expires
+- name: How many days until cert expires
   debug:
     msg: "cert expires in: {{ expire_days }} days."
   vars:
