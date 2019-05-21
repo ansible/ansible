@@ -197,12 +197,15 @@
   - debug:
       msg: '{{create_net_tags}}'
 
+  - set_fact:
+      tag_net_id: create_net_tags.data.id
+
   - name: Modify network
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: IntTestNetworkTags
+      net_id: tag_net_id
       type: switch
       timezone: America/Chicago
       tags: 
