@@ -37,6 +37,21 @@
     that:
      - not add_dsc.changed
 
+- name: Add a datastore cluster using folder
+  vmware_datastore_cluster:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    folder: "/F0/{{ dc1 }}/datastore/F0"
+    datastore_cluster_name: DSC2
+    state: present
+  register: add_dsc_folder_check
+
+- assert:
+    that:
+     - add_dsc_folder_check.changed
+
 - name: Delete a datastore cluster to datacenter (check-mode)
   vmware_datastore_cluster: &delete_datastore_cluster
     hostname: '{{ vcenter_hostname }}'
