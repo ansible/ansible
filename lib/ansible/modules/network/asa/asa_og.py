@@ -161,7 +161,7 @@ class Parser():
         return list_return
 
     def parse_description(self):
-        match = re.search(r'(description\s)(.*)', self.config, re.M)
+        match = re.search(r'description(:)?\s(.*)', self.config, re.M)
         if match:
             description = match.group(2)
 
