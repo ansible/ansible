@@ -36,7 +36,6 @@ options:
     storage_type:
         description:
             - Type of storage used by the lab. It can be either C(premium) or C(standard).
-        default: premium
         choices:
             - 'standard'
             - 'premium'
