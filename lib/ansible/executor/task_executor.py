@@ -521,6 +521,14 @@ class TaskExecutor:
 
         context_validation_error = None
         try:
+            # create temporary copy with delegation built in
+            final_vars = combine_vars(
+                variables,
+                variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            )
+
+            final_templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=final_vars)
+
             # apply the given task's information to the connection info,
             # which may override some fields already set by the play or
             # the options specified on the command line
@@ -528,7 +536,7 @@ class TaskExecutor:
 
             # fields set from the play/task may be based on variables, so we have to
             # do the same kind of post validation step on it here before we use it.
-            self._play_context.post_validate(templar=templar)
+            self._play_context.post_validate(templar=final_templar)
 
             # now that the play context is finalized, if the remote_addr is not set
             # default to using the host's address field as the remote address
@@ -593,18 +601,25 @@ class TaskExecutor:
                                     "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe)")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
+        # create copy with delegation built in
+        final_vars = combine_vars(
+            variables,
+            variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+        )
+
+        final_templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=final_vars)
 
         # get the connection and the handler for this execution
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
-            self._connection = self._get_connection(variables=variables, templar=templar)
+            self._connection = self._get_connection(variables=variables, final_vars=final_vars, final_templar=final_templar)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
 
-        self._set_connection_options(variables, templar)
+        self._set_connection_options(variables, templar, final_vars, final_templar)
 
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
@@ -666,7 +681,7 @@ class TaskExecutor:
 
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
-                    result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
+                    result = self._poll_async_result(result=result, final_templar=templar, task_vars=vars_copy)
                     # FIXME callback 'v2_runner_on_async_poll' here
 
                 # ensure no log is preserved
@@ -784,7 +799,7 @@ class TaskExecutor:
         display.debug("attempt loop complete, returning result")
         return result
 
-    def _poll_async_result(self, result, templar, task_vars=None):
+    def _poll_async_result(self, result, final_templar, task_vars=None):
         '''
         Polls for the specified JID to be complete
         '''
@@ -812,7 +827,7 @@ class TaskExecutor:
             connection=self._connection,
             play_context=self._play_context,
             loader=self._loader,
-            templar=templar,
+            templar=final_templar,
             shared_loader_obj=self._shared_loader_obj,
         )
 
@@ -865,25 +880,25 @@ class TaskExecutor:
                                "Use `ansible-doc -t become -l` to list available plugins." % name)
         return become
 
-    def _get_connection(self, variables, templar):
+    def _get_connection(self, variables, final_vars, final_templar):
         '''
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
         '''
 
         if self._task.delegate_to is not None:
-            # since we're delegating, we don't want to use interpreter values
-            # which would have been set for the original target host
-            for i in list(variables.keys()):
+            # since we're delegating, we don't want to use the interpreter values
+            # which would have been set for the original host
+            for i in list(final_vars.keys()):
                 if isinstance(i, string_types) and i.startswith('ansible_') and i.endswith('_interpreter'):
-                    del variables[i]
-            # now replace the interpreter values with those that may have come
-            # from the delegated-to host
-            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict())
-            if isinstance(delegated_vars, dict):
-                for i in delegated_vars:
-                    if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
-                        variables[i] = delegated_vars[i]
+                    del final_vars[i]
+             # now replace the interpreter values with those that may have come
+             # from the delegated-to host
+             delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict())
+             if isinstance(delegated_vars, dict):
+                 for i in delegated_vars:
+                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
+                         final_vars[i] = delegated_vars[i]
 
         # load connection
         conn_type = self._play_context.connection
@@ -928,16 +943,14 @@ class TaskExecutor:
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
 
-            options = self._get_persistent_connection_options(connection, variables, templar)
+            options = self._get_persistent_connection_options(connection, final_vars, final_templar)
             socket_path = start_connection(self._play_context, options, self._task._uuid)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
         return connection
 
-    def _get_persistent_connection_options(self, connection, variables, templar):
-        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
-
+    def _get_persistent_connection_options(self, connection, final_vars, final_templar):
         option_vars = C.config.get_plugin_vars('connection', connection._load_name)
         plugin = connection._sub_plugin
         if plugin.get('type'):
@@ -946,11 +959,11 @@ class TaskExecutor:
         options = {}
         for k in option_vars:
             if k in final_vars:
-                options[k] = templar.template(final_vars[k])
+                options[k] = final_templar.template(final_vars[k])
 
         return options
 
-    def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
+    def _set_plugin_options(self, plugin_type, final_vars, final_templar, task_keys):
         try:
             plugin = getattr(self._connection, '_%s' % plugin_type)
         except AttributeError:
@@ -959,23 +972,15 @@ class TaskExecutor:
         option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
         options = {}
         for k in option_vars:
-            if k in variables:
-                options[k] = templar.template(variables[k])
+            if k in final_vars:
+                options[k] = final_templar.template(final_vars[k])
         # TODO move to task method?
         plugin.set_options(task_keys=task_keys, var_options=options)
 
-    def _set_connection_options(self, variables, templar):
+    def _set_connection_options(self, variables, templar, final_vars, final_templar):
 
         # Keep the pre-delegate values for these keys
         PRESERVE_ORIG = ('inventory_hostname',)
-
-        # create copy with delegation built in
-        final_vars = combine_vars(
-            variables,
-            variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
-        )
-
-        final_templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=final_vars)
 
         # grab list of usable vars for this plugin
         option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
