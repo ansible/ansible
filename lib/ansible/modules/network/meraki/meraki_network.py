@@ -240,7 +240,7 @@ def main():
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id parameters are required')
     if meraki.params['state'] != 'query':
-        if not meraki.params['net_name'] or meraki.params['net_id']:
+        if not meraki.params['net_name'] and not meraki.params['net_id']:
             meraki.fail_json(msg='net_name or net_id is required for present or absent states')
     if meraki.params['net_name'] and meraki.params['net_id']:
         meraki.fail_json(msg='net_name and net_id are mutually exclusive')
