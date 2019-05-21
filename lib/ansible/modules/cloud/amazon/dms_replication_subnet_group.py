@@ -20,18 +20,18 @@ options:
             - State of the subnet group
         default: present
         choices: ['present', 'absent']
-        type: string
+        type: str
     identifier:
         description:
             - The name for the replication subnet group.
               This value is stored as a lowercase string.
               Must contain no more than 255 alphanumeric characters,
               periods, spaces, underscores, or hyphens. Must not be "default".
-        type: string
+        type: str
     description:
         description:
             - The description for the subnet group.
-        type: string
+        type: str
     subnetids:
         description:
             - A list containing the subnet ids for the replication subnet group,
