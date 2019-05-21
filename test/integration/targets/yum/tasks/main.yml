@@ -1,26 +1,12 @@
-# test code for the yum module
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Note: We install the yum package onto Fedora so that this will work on dnf systems
 # We want to test that for people who don't want to upgrade their systems.
 
+
 - block:
-  - include: 'yum.yml'
+  - import_tasks: yum.yml
   always:
     - name: remove installed packages
       yum:
@@ -29,49 +15,48 @@
           - sos
         state: absent
 
-    # On CentOS 6 'yum groupremove "Development Tools"' fails when groupremove_leaf_only
-    # isn't enabled, that's why a package belonging to "Development Tools" (autoconf)
-    # is removed instead of the whole group.
     - name: remove installed group
       yum:
-        name: "@Development tools"
+        name: "@Custom Group"
         state: absent
-      when:
-        - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int > 6) or ansible_distribution in ['Fedora']
-    - name: remove a package from a group
+
+    - name: On Fedora 28 the above won't remove the group which results in a failure in repo.yml below
       yum:
-        name: 'autoconf'
+        name: foo
         state: absent
       when:
-        - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int <= 6
+        - ansible_distribution in ['Fedora']
+
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
 
-# DNF1 doesn't handle downgrade operations properly (Fedora < 26)
+
 - block:
-    - include: 'repo.yml'
+    - import_tasks: repo.yml
+    - import_tasks: yum_group_remove.yml
+      when:
+        - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
   always:
     - yum_repository:
         name: "{{ item }}"
         state: absent
-      with_items: "{{ repos }}"
+      loop: "{{ repos }}"
+
     - command: yum clean metadata
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
 
-- include: 'yuminstallroot.yml'
+
+- import_tasks: yuminstallroot.yml
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
 
-# el6 has a broken yum group implementation, when you try to remove a group it goes through
-# deps and ends up with trying to remove yum itself and the whole process fails
-# so don't run the yum group remove tests there
-- include: 'yum_group_remove.yml'
+
+- import_tasks: proxy.yml
   when:
-    - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int > 6)
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
 
-- include: 'proxy.yml'
 
-- include: 'check_mode_consistency.yml'
+- import_tasks: check_mode_consistency.yml
   when:
     - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int == 7)
