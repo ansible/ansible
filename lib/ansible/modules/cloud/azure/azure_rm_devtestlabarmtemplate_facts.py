@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabarmtemplate_facts
 version_added: "2.8"
-short_description: Get Azure DevTest Lab ARM Template facts.
+short_description: Get Azure DevTest Lab ARM Template facts
 description:
     - Get facts of Azure DevTest Lab ARM Template.
 
@@ -42,7 +42,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,7 +57,8 @@ EXAMPLES = '''
 
 RETURN = '''
 arm_templates:
-    description: A list of dictionaries containing facts for DevTest Lab ARM Template.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab ARM Template.
     returned: always
     type: complex
     contains:
