@@ -37,7 +37,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Julien Stroheker (@julienstroheker)"
+    - Julien Stroheker (@julienstroheker)
 '''
 
 EXAMPLES = '''
