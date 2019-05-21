@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlab
 version_added: "2.8"
-short_description: Manage Azure DevTest Lab instance.
+short_description: Manage Azure DevTest Lab instance
 description:
     - Create, update and delete instance of Azure DevTest Lab.
 
@@ -35,18 +35,18 @@ options:
             - The location of the resource.
     storage_type:
         description:
-            - Type of storage used by the lab. It can be either C(premium) or C(standard). Default is C(premium).
+            - Type of storage used by the lab. It can be either C(premium) or C(standard).
         choices:
             - 'standard'
             - 'premium'
     premium_data_disks:
         description:
-            - "Allow creation of premium data disks."
+            - Allow creation of premium data disks.
         type: bool
     state:
       description:
-        - Assert the state of the DevTest Lab.
-        - Use C(present) to create or update an DevTest Lab and C(absent) to delete it.
+          - Assert the state of the DevTest Lab.
+          - Use C(present) to create or update an DevTest Lab and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -57,7 +57,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
