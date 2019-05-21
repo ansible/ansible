@@ -108,11 +108,14 @@ def basedir(source):
 
 def cleanup_tmp_dir(path):
     """Removes temporary directory"""
-    if os.path.isdir(path):
-        try:
-            shutil.rmtree(path)
-        except Exception as e:
-            # Importing here to avoid circular import
-            from ansible.utils.display import Display
-            display = Display()
-            display.display('Unable to remove temporary file {0}'.format(to_native(e)))
+    try:
+        if os.path.isdir(path):
+            try:
+                shutil.rmtree(path)
+            except Exception as e:
+                # Importing here to avoid circular import
+                from ansible.utils.display import Display
+                display = Display()
+                display.display('Unable to remove temporary file {0}'.format(to_native(e)))
+    except Exception:
+        pass
