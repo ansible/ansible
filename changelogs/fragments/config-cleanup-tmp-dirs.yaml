@@ -1,0 +1,2 @@
+bugfixes:
+  - remove all temporary directories created by ansible-config (https://github.com/ansible/ansible/issues/56488)
