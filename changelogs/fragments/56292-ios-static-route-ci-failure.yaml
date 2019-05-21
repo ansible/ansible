@@ -1,0 +1,2 @@
+bugfixes:
+- To fix the ios static route TC failure in CI  - https://github.com/ansible/ansible/pull/56292
