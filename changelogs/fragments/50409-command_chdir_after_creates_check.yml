@@ -1,2 +1,2 @@
 bugfixes:
-- "command and shell module with existant creates path no longer fails when chdir path is non-existent"
+- "command and shell module with existent creates path no longer fails when chdir path is non-existent"
