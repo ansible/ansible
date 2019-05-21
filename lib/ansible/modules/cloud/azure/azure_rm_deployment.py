@@ -63,12 +63,12 @@ options:
   parameters:
     description:
         - A hash of all the required template variables for the deployment template. This parameter is mutually exclusive with I(parameters_link).
-        - Either I(parameters_links) or I(parameters) is required if I(state=present).
+        - Either I(parameters_link) or I(parameters) is required if I(state=present).
     type: dict
   parameters_link:
     description:
         - Uri of file containing the parameters body. This parameter is mutually exclusive with I(parameters).
-        - Either I(parameters_links) or I(parameters) is required if I(state=present).
+        - Either I(parameters_link) or I(parameters) is required if I(state=present).
   wait_for_deployment_completion:
     description:
         - Whether or not to block until the deployment has completed.
