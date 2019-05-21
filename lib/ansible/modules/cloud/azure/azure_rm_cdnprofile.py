@@ -55,8 +55,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
-    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''

@@ -195,8 +195,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Sertac Ozercan (@sozercan)"
-    - "Yuwei Zhou (@yuwzho)"
+    - Sertac Ozercan (@sozercan)
+    - Yuwei Zhou (@yuwzho)
 
 '''
 

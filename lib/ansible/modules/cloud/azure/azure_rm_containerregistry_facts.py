@@ -42,7 +42,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

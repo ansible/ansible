@@ -140,7 +140,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

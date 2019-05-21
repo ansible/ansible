@@ -124,7 +124,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Julien Stroheker (@julienstroheker)"
+    - Julien Stroheker (@julienstroheker)
 
 '''
 
