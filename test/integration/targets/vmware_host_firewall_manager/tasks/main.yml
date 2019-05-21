@@ -126,10 +126,7 @@
             - host_result_check_mode.rule_set_state[item]['vvold']['desired_state'] == False
             - host_result_check_mode.rule_set_state[item]['vvold']['previous_state'] == False
       with_items:
-<<<<<<< HEAD
         - '{{ esxi1 }}'
-=======
-        - '{{ hostvars[esxi1].ansible_host }}'
 
     - name: Configure CIMHttpServer rule set on all hosts of {{ ccr1 }}
       vmware_host_firewall_manager:
@@ -171,8 +168,8 @@
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['previous_allowed_networks'] == []
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_networks'] == ["192.168.200.0/24"]
     with_items:
-        - '{{ hostvars[esxi1].ansible_host }}'
-        - '{{ hostvars[esxi2].ansible_host }}'
+        - '{{ esxi1 }}'
+        - '{{ esxi2 }}'
 
     - name: Configure the NFC firewall rule to only allow traffic from one IP on one ESXi host
       vmware_host_firewall_manager:
@@ -180,7 +177,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         validate_certs: no
-        esxi_hostname: "{{ hostvars[esxi1].ansible_host }}"
+        esxi_hostname: "{{ esxi1 }}"
         rules:
           - name: NFC
             enabled: True
@@ -193,16 +190,15 @@
     - name: ensure NFC is configured on that host
       assert:
         that:
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['current_state'] == True
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['desired_state'] == True
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['previous_state'] == True
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['current_allowed_all'] == False
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['previous_allowed_all'] == True
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['desired_allowed_all'] == False
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['current_allowed_ip'] == ["192.168.100.11"]
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['previous_allowed_ip'] == None
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['desired_allowed_ip'] == ["192.168.100.11"]
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['current_allowed_networks'] == []
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['previous_allowed_networks'] == []
-          - single_host_ip_specific.rule_set_state[{{ hostvars[esxi1].ansible_host }}]['NFC']['allowed_hosts']['desired_allowed_networks'] == []
->>>>>>> Adds IP-Specific properties to firewall config
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['current_state'] == True
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['desired_state'] == True
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['previous_state'] == True
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_all'] == False
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_all'] == True
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_all'] == False
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_ip'] == ["192.168.100.11"]
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_ip'] == None
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_ip'] == ["192.168.100.11"]
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_networks'] == []
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_networks'] == []
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_networks'] == []
