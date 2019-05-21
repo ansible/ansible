@@ -27,7 +27,7 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0)."
+      - "Package name, or package specifier with version, like C(name=1.0)."
       - "Be aware that packages are not always named the same and this module will not 'translate' them per distro."
     required: true
   state:
