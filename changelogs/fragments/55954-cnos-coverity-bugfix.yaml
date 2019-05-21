@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fixing bug came up after running cnos_vrf module against coverity.
