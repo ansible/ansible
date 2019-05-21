@@ -79,6 +79,7 @@ options:
     - if set to C(present), register VM in inventory.
     - if set to C(absent), unregister VM from inventory.
     default: present
+    choices: [ present, absent ]
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -230,7 +231,7 @@ class VMwareGuestRegisterOperation(PyVmomi):
                 result.update(changed=changed)
                 self.module.exit_json(**result)
 
-        else:
+        if self.state == "absent":
             vm_obj = self.get_vm()
             if vm_obj:
                 try:
@@ -253,7 +254,7 @@ def main():
                          path=dict(type="str"),
                          template=dict(type="bool", default=False),
                          resource_pool=dict(type="str"),
-                         state=dict(type="str", default="present", cohices=["present", "absent"]))
+                         state=dict(type="str", default="present", choices=["present", "absent"]))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
