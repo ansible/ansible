@@ -86,7 +86,7 @@ options:
             - Required when I(state=present).
     ip_range_filter:
         description:
-            - Cosmos DB Firewall support: This value specifies the set of IP addresses or IP address ranges.
+            - Cosmos DB Firewall support. This value specifies the set of IP addresses or IP address ranges.
             - In CIDR form to be included as the allowed list of client IPs for a given database account.
             - IP addresses/ranges must be comma separated and must not contain any spaces.
     is_virtual_network_filter_enabled:
