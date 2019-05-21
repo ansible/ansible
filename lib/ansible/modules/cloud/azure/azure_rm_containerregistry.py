@@ -57,7 +57,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yawei Wang (@yaweiw)"
+    - Yawei Wang (@yaweiw)
 
 '''
 
