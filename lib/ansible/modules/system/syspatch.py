@@ -55,6 +55,25 @@ EXAMPLES = '''
 '''
 
 RETURN = r'''
+rc:
+  description: The command return code (0 means success)
+  returned: always
+  type: int
+stdout:
+  description: syspatch standard output
+  returned: always
+  type: str
+  sample: "001_rip6cksum"
+stderr:
+  description: syspatch standard error
+  returned: always
+  type: str
+  sample: "syspatch: need root privileges"
+reboot_needed:
+  description: Whether or not a reboot is required after an update
+  returned: always
+  type: bool
+  sample: True
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -81,8 +100,10 @@ def run_module():
 def syspatch_run(module):
     cmd = ['/usr/sbin/syspatch']
     changed = False
+    reboot_needed = False
+    warnings = []
 
-    # Setup needed command flags
+    # Setup command flags
     if module.params['revert']:
         check_flag = ['-l']
 
@@ -94,6 +115,7 @@ def syspatch_run(module):
         check_flag = ['-c']
         run_flag = []
 
+    # Run check command
     rc, out, err = module.run_command(cmd + check_flag)
 
     if rc != 0:
@@ -115,13 +137,27 @@ def syspatch_run(module):
         # http://openbsd-archive.7691.n7.nabble.com/Warning-applying-latest-syspatch-td354250.html
         if rc != 0 and err != 'ln: /usr/X11R6/bin/X: No such file or directory\n':
             module.fail_json(msg="Command %s failed rc=%d, out=%s, err=%s" % (cmd, rc, out, err))
-        else:
-            changed = True
+        elif out.lower().find('create unique kernel'):
+            # Kernel update applied
+            reboot_needed = True
+        elif out.lower().find('syspatch updated itself'):
+            warnings.append['Syspatch was updated. Please run syspatch again.']
+
+        # If no stdout, then warn user
+        if len(out) > 0:
+            warnings.append['syspatch had suggested changes, but stdout was empty.']
+
+        changed = True
     else:
         changed = False
 
     return dict(
-        changed=changed
+        changed=changed,
+        reboot_needed=reboot_needed,
+        rc=rc,
+        stderr=err,
+        stdout=out,
+        warnings=warnings
     )
 
 
