@@ -1,0 +1,125 @@
+# Test code for the Meraki MX Uplink module
+# Copyright: (c) 2019, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+
+  - name: Create test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - Uplink'
+      type: appliance
+    delegate_to: localhost
+
+  - name: Set MX uplink settings with check mode
+    meraki_mx_uplink:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - Uplink'
+      wan1:
+        bandwidth_limits:
+          limit_down: 1000000
+          limit_up: 100
+      cellular:
+        bandwidth_limits:
+          limit_down: 0
+          limit_up: 0
+    delegate_to: localhost
+    register: set_bw_check
+    check_mode: yes
+
+  - debug:
+      var: set_bw_check
+
+  - assert:
+      that:
+        - set_bw_check is changed
+        - set_bw_check.data is defined
+        - set_bw_check.diff is defined
+
+  - name: Set MX uplink settings
+    meraki_mx_uplink:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - Uplink'
+      wan1:
+        bandwidth_limits:
+          limit_down: 1000000
+          limit_up: 1000
+      cellular:
+        bandwidth_limits:
+          limit_down: 0
+          limit_up: 0
+    delegate_to: localhost
+    register: set_bw
+
+  - debug:
+      var: set_bw
+
+  - assert:
+      that:
+        - set_bw is changed
+        - set_bw.data is defined
+
+  - name: Set MX uplink settings with idempotency
+    meraki_mx_uplink:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - Uplink'
+      wan1:
+        bandwidth_limits:
+          limit_down: 1000000
+          limit_up: 1000
+      cellular:
+        bandwidth_limits:
+          limit_down: 0
+          limit_up: 0
+    delegate_to: localhost
+    register: set_bw_idempotent
+
+  - debug:
+      var: set_bw_idempotent
+
+  - assert:
+      that:
+        - set_bw_idempotent is not changed
+        - set_bw_idempotent.data is defined
+
+  - name: Query MX uplink settings
+    meraki_mx_uplink:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - Uplink'
+    delegate_to: localhost
+    register: query_all
+
+  - debug:
+      var: query_all
+
+  - assert:
+      that:
+        - query_all.data is defined
+
+  always:
+  #############################################################################
+  # Tear down starts here
+  #############################################################################
+
+  - name: Delete test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - Uplink'
+    delegate_to: localhost
