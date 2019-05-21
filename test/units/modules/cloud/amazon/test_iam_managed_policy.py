@@ -1,10 +1,15 @@
 import json
 import functools
+import pytest
+import sys
 
 from ansible.modules.cloud.amazon import iam_managed_policy
 from units.compat import unittest
 from units.compat.mock import patch
 from units.modules.utils import AnsibleExitJson, ModuleTestCase, set_module_args
+
+if sys.version_info < (3, 6):
+    pytestmark = pytest.mark.skip('This test requires unittest.mock from Python 3.6+')
 
 
 def check_mode_flag(func):
@@ -13,10 +18,6 @@ def check_mode_flag(func):
         func(check_mode=True, *args, **kwargs)
         func(check_mode=False, *args, **kwargs)
     return wrapper
-
-
-def json_equivalent(a, b):
-    return json.loads(a) == json.loads(b)
 
 
 EXAMPLE_POLICY_OLD = '{"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Action": ["s3:Get*", "s3:List*"], "Resource": "*"}]}'
@@ -47,8 +48,12 @@ class TestIAMManagedPolicyModule(ModuleTestCase):
         if check_mode:
             boto3_conn_mock.return_value.create_policy.assert_not_called()
         else:
-            boto3_conn_mock.return_value.create_policy.assert_called_once()
-            self.assertTrue(json_equivalent(boto3_conn_mock.return_value.create_policy.call_args[1]['PolicyDocument'], EXAMPLE_POLICY_NEW))
+            boto3_conn_mock.return_value.create_policy.assert_called_once_with(
+                Description='This is a new description',
+                Path='/',
+                PolicyDocument=EXAMPLE_POLICY_NEW,
+                PolicyName='test-policy',
+            )
 
         self.assertTrue('policy' in exec_info.exception.args[0])
         self.assertEqual(exec_info.exception.args[0]['changed'], True)
@@ -103,8 +108,10 @@ class TestIAMManagedPolicyModule(ModuleTestCase):
         if check_mode:
             boto3_conn_mock.return_value.create_policy_version.assert_not_called()
         else:
-            boto3_conn_mock.return_value.create_policy_version.assert_called_once()
-            self.assertTrue(json_equivalent(boto3_conn_mock.return_value.create_policy_version.call_args[1]['PolicyDocument'], EXAMPLE_POLICY_NEW))
+            boto3_conn_mock.return_value.create_policy_version.assert_called_once_with(
+                PolicyArn='arn:policy',
+                PolicyDocument=EXAMPLE_POLICY_NEW,
+            )
             boto3_conn_mock.return_value.set_default_policy_version.assert_called_once()
 
         self.assertTrue('policy' in exec_info.exception.args[0])
@@ -167,8 +174,10 @@ class TestIAMManagedPolicyModule(ModuleTestCase):
         if check_mode:
             boto3_conn_mock.return_value.create_policy_version.assert_not_called()
         else:
-            boto3_conn_mock.return_value.create_policy_version.assert_called_once()
-            self.assertTrue(json_equivalent(boto3_conn_mock.return_value.create_policy_version.call_args[1]['PolicyDocument'], EXAMPLE_POLICY_NEW))
+            boto3_conn_mock.return_value.create_policy_version.assert_called_once_with(
+                PolicyArn='arn:policy',
+                PolicyDocument=EXAMPLE_POLICY_NEW,
+            )
             boto3_conn_mock.return_value.set_default_policy_version.assert_not_called()
             boto3_conn_mock.return_value.delete_policy_version.assert_called_once_with(
                 PolicyArn='arn:policy',
