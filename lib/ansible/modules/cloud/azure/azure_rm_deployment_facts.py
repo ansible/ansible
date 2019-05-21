@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_deployment_facts
 version_added: "2.8"
-short_description: Get Azure Deployment facts.
+short_description: Get Azure Deployment facts
 description:
     - Get facts of Azure Deployment.
 
@@ -34,7 +34,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -47,7 +47,8 @@ EXAMPLES = '''
 
 RETURN = '''
 deployments:
-    description: A list of dictionaries containing facts for deployments.
+    description:
+        - A list of dictionaries containing facts for deployments.
     returned: always
     type: complex
     contains:
