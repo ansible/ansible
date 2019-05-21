@@ -15,6 +15,8 @@
       when: setup_virtualmachines is defined
     - include_tasks: setup_switch.yml
       when: setup_switch is defined
+    - include_tasks: setup_dvswitch.yml
+      when: setup_dvswitch is defined
 
 
 - when: vcsim is defined
@@ -50,9 +52,6 @@
     - name: add the hosts in the inventory
       add_host:
         hostname: '{{ item | basename }}'
-        ansible_host: '{{ item | basename }}'
-        ansible_user: 'root'
-        ansible_password: 'pass'
         groups:
           - 'esxi-lab'
       with_items: '{{ vcsim_host_list.json }}'

@@ -33,7 +33,7 @@ import json
 import re
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, get_timestamp
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
@@ -154,13 +154,13 @@ class Cli:
             self._device_configs[cmd] = cfg
             return cfg
 
-    def run_commands(self, commands, check_rc=True, return_timestamps=False):
+    def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         connection = self._get_connection()
 
         try:
-            out, timestamps = connection.run_commands(commands, check_rc)
+            out = connection.run_commands(commands, check_rc)
             if check_rc == 'retry_json':
                 capabilities = self.get_capabilities()
                 network_api = capabilities.get('network_api')
@@ -170,11 +170,8 @@ class Cli:
                         if ('Invalid command at' in resp or 'Ambiguous command at' in resp) and 'json' in resp:
                             if commands[index]['output'] == 'json':
                                 commands[index]['output'] = 'text'
-                                out, timestamps = connection.run_commands(commands, check_rc)
-            if return_timestamps:
-                return out, timestamps
-            else:
-                return out
+                                out = connection.run_commands(commands, check_rc)
+            return out
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc))
 
@@ -344,7 +341,6 @@ class LocalNxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timestamps = list()
         timeout = self._module.params['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
@@ -352,7 +348,6 @@ class LocalNxapi:
             if self._nxapi_auth:
                 headers['Cookie'] = self._nxapi_auth
 
-            timestamp = get_timestamp()
             response, headers = fetch_url(
                 self._module, self._url, data=req, headers=headers,
                 timeout=timeout, method='POST', use_proxy=use_proxy
@@ -380,13 +375,12 @@ class LocalNxapi:
                             self._error(output=output, **item)
                     elif 'body' in item:
                         result.append(item['body'])
-                        timestamps.append(timestamp)
                     # else:
                         # error in command but since check_status is disabled
                         # silently drop it.
                         # result.append(item['msg'])
 
-            return result, timestamps
+            return result
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
@@ -400,18 +394,17 @@ class LocalNxapi:
         try:
             return self._device_configs[cmd]
         except KeyError:
-            out, out_timestamps = self.send_request(cmd)
+            out = self.send_request(cmd)
             cfg = str(out[0]).strip()
             self._device_configs[cmd] = cfg
             return cfg
 
-    def run_commands(self, commands, check_rc=True, return_timestamps=False):
+    def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         output = None
         queue = list()
         responses = list()
-        timestamps = list()
 
         def _send(commands, output):
             return self.send_request(commands, output, check_status=check_rc)
@@ -422,23 +415,16 @@ class LocalNxapi:
                 item['output'] = 'json'
 
             if all((output == 'json', item['output'] == 'text')) or all((output == 'text', item['output'] == 'json')):
-                out, out_timestamps = _send(queue, output)
-                responses.extend(out)
-                timestamps.extend(out_timestamps)
+                responses.extend(_send(queue, output))
                 queue = list()
 
             output = item['output'] or 'json'
             queue.append(item['command'])
 
         if queue:
-            out, out_timestamps = _send(queue, output)
-            responses.extend(out)
-            timestamps.extend(out_timestamps)
+            responses.extend(_send(queue, output))
 
-        if return_timestamps:
-            return responses, timestamps
-        else:
-            return responses
+        return responses
 
     def load_config(self, commands, return_error=False, opts=None, replace=None):
         """Sends the ordered set of commands to the device
@@ -450,8 +436,8 @@ class LocalNxapi:
             commands = 'config replace {0}'.format(replace)
 
         commands = to_list(commands)
-        msg, msg_timestamps = self.send_request(commands, output='config', check_status=True,
-                                                return_error=return_error, opts=opts)
+        msg = self.send_request(commands, output='config', check_status=True,
+                                return_error=return_error, opts=opts)
         if return_error:
             return msg
         else:
@@ -530,7 +516,7 @@ class HttpApi:
 
         return self._connection_obj
 
-    def run_commands(self, commands, check_rc=True, return_timestamps=False):
+    def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
         try:
@@ -548,11 +534,7 @@ class HttpApi:
             if response[0] == '{':
                 out[index] = json.loads(response)
 
-        if return_timestamps:
-            # workaround until timestamps are implemented
-            return out, list()
-        else:
-            return out
+        return out
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
@@ -706,6 +688,7 @@ def to_command(module, commands):
         output=dict(default=default_output),
         prompt=dict(type='list'),
         answer=dict(type='list'),
+        newline=dict(type='bool', default=True),
         sendonly=dict(type='bool', default=False),
         check_all=dict(type='bool', default=False),
     ), module)
@@ -726,9 +709,9 @@ def get_config(module, flags=None):
     return conn.get_config(flags=flags)
 
 
-def run_commands(module, commands, check_rc=True, return_timestamps=False):
+def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands), check_rc, return_timestamps)
+    return conn.run_commands(to_command(module, commands), check_rc)
 
 
 def load_config(module, config, return_error=False, opts=None, replace=None):

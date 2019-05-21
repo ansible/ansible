@@ -191,7 +191,7 @@ files:
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
   $modules/cloud/vmware/: &vmware
-    ignored: cigamit jcpowermac mtnbikenc tchernomax
+    ignored: cigamit jcpowermac mtnbikenc tchernomax ckotte
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
     labels: [ cloud, vmware ]
     maintainers: $team_vmware
@@ -693,7 +693,12 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
-  $module_utils/hwc_utils.py: *huawei
+  $module_utils/hwc_utils.py: &huawei_hwc
+    <<: *huawei
+    support: community
+    labels:
+      - networking
+      - huawei
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -1197,7 +1202,7 @@ files:
     keywords:
       - vmware inventory
       - vmware dynamic inventory plugin
-    ignored: cigamit jcpowermac mtnbikenc tchernomax
+    ignored: cigamit jcpowermac mtnbikenc tchernomax ckotte
   $plugins/inventory/vultr.py: *vultr
   $plugins/inventory/yaml.py:
     support: core
@@ -1424,7 +1429,7 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
-  test/units/module_utils/hwc: *huawei
+  test/units/module_utils/hwc: *huawei_hwc
   test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
@@ -1507,11 +1512,11 @@ macros:
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
-  team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
+  team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
   team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_tower: ghjm matburt wwitzel3 ryanpetrello rooftopcellist AlanCoding jladdjr kdelee
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
-  team_vmware: Akasurde dav1x warthog9 ckotte Tomorrow9
+  team_vmware: Akasurde dav1x warthog9 Tomorrow9 goneri
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone

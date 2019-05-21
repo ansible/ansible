@@ -16,9 +16,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_acs
 version_added: "2.4"
-short_description: Manage an Azure Container Service Instance (ACS).
+short_description: Manage an Azure Container Service(ACS) instance
 description:
-    - Create, update and delete an Azure Container Service Instance.
+    - Create, update and delete an Azure Container Service(ACS) instance.
 
 options:
     resource_group:
@@ -27,7 +27,7 @@ options:
         required: true
     name:
         description:
-            - Name of the Container Services instance.
+            - Name of the Azure Container Services(ACS) instance.
         required: true
     state:
         description:
@@ -41,7 +41,8 @@ options:
             - Valid azure location. Defaults to location of the resource group.
     orchestration_platform:
         description:
-            - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
+            - Specifies the Container Orchestration Platform to use. Currently can be either C(DCOS), C(Kubernetes) or C(Swarm).
+            - The I(service_principal) must be defined if set to C(Kubernetes).
         choices:
             - 'DCOS'
             - 'Kubernetes'
@@ -54,7 +55,7 @@ options:
         suboptions:
             count:
                 description:
-                  - Number of masters (VMs) in the container service cluster. Allowed values are 1, 3, and 5.
+                    - Number of masters (VMs) in the container service cluster. Allowed values are C(1), C(3), and C(5).
                 required: true
                 choices:
                   - 1
@@ -62,21 +63,21 @@ options:
                   - 5
             vm_size:
                 description:
-                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                    - The VM Size of each of the Agent Pool VM's (e.g. C(Standard_F1) / C(Standard_D2v2)).
                 required: true
                 version_added: 2.5
             dns_prefix:
                 description:
-                  - The DNS Prefix to use for the Container Service master nodes.
+                    - The DNS Prefix to use for the Container Service master nodes.
                 required: true
     linux_profile:
         description:
-            - The linux profile suboptions.
+            - The Linux profile suboptions.
         required: true
         suboptions:
             admin_username:
                 description:
-                  - The Admin Username for the Cluster.
+                    - The Admin Username for the Cluster.
                 required: true
             ssh_key:
                 description:
@@ -89,7 +90,7 @@ options:
         suboptions:
             name:
                 description:
-                  - Unique name of the agent pool profile in the context of the subscription and resource group.
+                    - Unique name of the agent pool profile in the context of the subscription and resource group.
                 required: true
             count:
                 description:
@@ -101,11 +102,12 @@ options:
                 required: true
             vm_size:
                 description:
-                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                    - The VM Size of each of the Agent Pool VM's (e.g. C(Standard_F1) / C(Standard_D2v2)).
                 required: true
     service_principal:
         description:
             - The service principal suboptions.
+            - Required when I(orchestration_platform=Kubernetes).
         suboptions:
             client_id:
                 description:
@@ -227,7 +229,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 state:
-    description: Current state of the azure container service
+    description: Current state of the Azure Container Service(ACS).
     returned: always
     type: dict
 '''

@@ -3,38 +3,35 @@
 # Copyright, (c) 2018, Fedor Vompe <f.vompe@comptek.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
+- when: vcsim is not defined
+  block:
+    - name: Get facts from a given ESXi
+      vmware_vm_facts:
+        validate_certs: false
+        hostname: '{{ esxi1 }}'
+        username: '{{ hostvars[esxi1].ansible_user }}'
+        password: '{{ hostvars[esxi1].ansible_password }}'
 
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
 
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- debug: var=vcsim_instance
-
-- name: Get facts about available vms
+- &vm_data
+  name: Get facts about available vms
   vmware_vm_facts:
     validate_certs: false
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   register: vm_facts_0001
 
-- name: Verify if VM facts exist
+- debug: var=vm_facts_0001
+
+- &vm_fact_check
+  name: Verify if VM facts exist
   assert:
     that:
       - "item.esxi_hostname is defined"
@@ -49,17 +46,37 @@
   vars:
     query: "[?guest_name=='DC0_H0_VM0']"
 
-
-- name: Get facts about available vms in check mode
-  vmware_vm_facts:
-    validate_certs: false
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-  register: vm_facts_0001
+- <<: *vm_data
+  name: Get facts about available vms in check mode
   check_mode: yes
 
-- name: Verify if VM facts exist in check mode
+- <<: *vm_fact_check
+  name: Verify if VM facts exist in check mode
+
+- name: Get folder name from VM
+  vmware_guest_find:
+    validate_certs: false
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "DC0_H0_VM0"
+  register: folder_path_info
+
+- set_fact:
+    folder_path: "{{ folder_path_info.folders[0] }}"
+  when: folder_path_info.folders is defined
+
+- name: Gather facts about VM using folder
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    folder: "{{ folder_path }}"
+  register: vm_facts
+  when: folder_path_info.folders is defined
+
+- name: Check if facts are returned for VM with folder specified
   assert:
     that:
       - "item.esxi_hostname is defined"
@@ -69,8 +86,7 @@
       - "item.power_state is defined"
       - "item.uuid is defined"
       - "item.vm_network is defined"
-      - "item.attributes is defined"
   with_items:
-    - "{{ vm_facts_0001.virtual_machines | json_query(query) }}"
+    - "{{ vm_facts.virtual_machines | json_query(query) }}"
   vars:
     query: "[?guest_name=='DC0_H0_VM0']"

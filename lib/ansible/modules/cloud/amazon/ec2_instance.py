@@ -818,6 +818,11 @@ def manage_tags(match, new_tags, purge_tags, ec2):
 
 def build_volume_spec(params):
     volumes = params.get('volumes') or []
+    for volume in volumes:
+        if 'ebs' in volume:
+            for int_value in ['volume_size', 'iops']:
+                if int_value in volume['ebs']:
+                    volume['ebs'][int_value] = int(volume['ebs'][int_value])
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
 
 
@@ -1680,7 +1685,11 @@ def main():
         for match in existing_matches:
             warn_if_public_ip_assignment_changed(match)
             warn_if_cpu_options_changed(match)
-            changed |= manage_tags(match, (module.params.get('tags') or {}), module.params.get('purge_tags', False), ec2)
+            tags = module.params.get('tags') or {}
+            name = module.params.get('name')
+            if name:
+                tags['Name'] = name
+            changed |= manage_tags(match, tags, module.params.get('purge_tags', False), ec2)
 
     if state in ('present', 'running', 'started'):
         ensure_present(existing_matches=existing_matches, changed=changed, ec2=ec2, state=state)

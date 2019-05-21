@@ -8,7 +8,7 @@ This section discusses the behavioral changes between Ansible 2.7 and Ansible 2.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog for 2.8 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.8.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.8 <https://github.com/ansible/ansible/blob/stable-2.8/changelogs/CHANGELOG-v2.8.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -35,7 +35,7 @@ Beginning in version 2.8, a task cannot notify ``import_tasks`` or a static ``in
 The goal of a static import is to act as a pre-processor, where the import is replaced by the tasks defined within the imported file. When
 using an import, a task can notify any of the named tasks within the imported file, but not the name of the import itself.
 
-To achieve the results of notifying a single name but running mulitple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
+To achieve the results of notifying a single name but running multiple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
 
 Jinja Undefined values
 ----------------------
@@ -153,7 +153,7 @@ Command Line
 Become Prompting
 ----------------
 
-Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges on unix systems or ``enable`` mode on network devices):
+Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges on Unix systems or ``enable`` mode on network devices):
 
 By default in Ansible 2.8::
 
@@ -190,7 +190,7 @@ Deprecated
   2. The ``FactCache.update()`` method has been converted to follow the dict API.  It now takes a
      dictionary as its sole argument and updates itself with the dictionary's items.  The previous
      API where ``update()`` took a key and a value will now issue a deprecation warning and will be
-     removed in 2.12.  If you need the old behaviour switch to ``FactCache.first_order_merge()``
+     removed in 2.12.  If you need the old behavior switch to ``FactCache.first_order_merge()``
      instead.
 
 * Supporting file-backed caching via self.cache is deprecated and will
@@ -212,9 +212,9 @@ Modules
 Major changes in popular modules are detailed here
 
 The exec wrapper that runs PowerShell modules has been changed to set ``$ErrorActionPreference = "Stop"`` globally.
-This may mean that custom modules can fail if they implicitly relied on this behaviour. To get the old behaviour back,
-add ``$ErrorActionPreference = "Continue"`` to the top of the module. This change was made to restore the old behaviour
-of the EAP that was accidentally removed in a previous release and ensure that modules are more resiliant to errors
+This may mean that custom modules can fail if they implicitly relied on this behavior. To get the old behavior back,
+add ``$ErrorActionPreference = "Continue"`` to the top of the module. This change was made to restore the old behavior
+of the EAP that was accidentally removed in a previous release and ensure that modules are more resilient to errors
 that may occur in execution.
 
 Modules removed
@@ -236,16 +236,16 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 * ``foreman`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
 * ``katello`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
-* ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
-* ``gce`` use :ref `gcp_compute_instance <gcp_compute_instance_module>` instead.
-* ``gcspanner`` use :ref `gcp_spanner_instance <gcp_spanner_instance_module>` and :ref `gcp_spanner_database <gcp_spanner_database_module>` instead.
-* ``gcdns_record`` use :ref `gcp_dns_resource_record_set <gcp_dns_resource_record_set_module>` instead.
-* ``gcdns_zone`` use :ref `gcp_dns_managed_zone <gcp_dns_managed_zone_module>` instead.
-* ``gcp_forwarding_rule`` use :ref `gcp_compute_global_forwarding_rule <gcp_compute_global_forwarding_rule_module>` or :ref `gcp_compute_forwarding_rule <gcp_compute_forwarding_rule_module>` instead.
-* ``gcp_healthcheck`` use :ref `gcp_compute_health_check <gcp_compute_health_check__module>`, :ref `gcp_compute_http_health_check <gcp_compute_http_health_check_module>`, or :ref `gcp_compute_https_health_check <gcp_compute_https_health_check_module>` instead.
-* ``gcp_backend_service`` use :ref `gcp_compute_backend_service <gcp_compute_backend_service_module>` instead.
-* ``gcp_target_proxy`` use :ref `gcp_compute_target_proxy <gcp_compute_target_proxy_module>` instead.
-* ``gcp_url_map`` use :ref `gcp_compute_url_map <gcp_compute_url_map_module>` instead.
+* ``digital_ocean`` use :ref:`digital_ocean_droplet <digital_ocean_droplet_module>` instead.
+* ``gce`` use :ref:`gcp_compute_instance <gcp_compute_instance_module>` instead.
+* ``gcspanner`` use :ref:`gcp_spanner_instance <gcp_spanner_instance_module>` and :ref:`gcp_spanner_database <gcp_spanner_database_module>` instead.
+* ``gcdns_record`` use :ref:`gcp_dns_resource_record_set <gcp_dns_resource_record_set_module>` instead.
+* ``gcdns_zone`` use :ref:`gcp_dns_managed_zone <gcp_dns_managed_zone_module>` instead.
+* ``gcp_forwarding_rule`` use :ref:`gcp_compute_global_forwarding_rule <gcp_compute_global_forwarding_rule_module>` or :ref:`gcp_compute_forwarding_rule <gcp_compute_forwarding_rule_module>` instead.
+* ``gcp_healthcheck`` use :ref:`gcp_compute_health_check <gcp_compute_health_check_module>`, :ref:`gcp_compute_http_health_check <gcp_compute_http_health_check_module>`, or :ref:`gcp_compute_https_health_check <gcp_compute_https_health_check_module>` instead.
+* ``gcp_backend_service`` use :ref:`gcp_compute_backend_service <gcp_compute_backend_service_module>` instead.
+* ``gcp_target_proxy`` use :ref:`gcp_compute_target_http_proxy <gcp_compute_target_http_proxy_module>` instead.
+* ``gcp_url_map`` use :ref:`gcp_compute_url_map <gcp_compute_url_map_module>` instead.
 * ``panos`` use the `Palo Alto Networks Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
 
@@ -260,16 +260,16 @@ Noteworthy module changes
 * The ``win_scheduled_task`` module deprecated support for specifying a trigger repetition as a list and this format
   will be removed in Ansible 2.12. Instead specify the repetition as a dictionary value.
 
-* The ``win_feature`` module has removed the deprecated ``restart_needed`` return value, use the standardised
+* The ``win_feature`` module has removed the deprecated ``restart_needed`` return value, use the standardized
   ``reboot_required`` value instead.
 
 * The ``win_package`` module has removed the deprecated ``restart_required`` and ``exit_code`` return value, use the
-  standardised ``reboot_required`` and ``rc`` value instead.
+  standardized ``reboot_required`` and ``rc`` value instead.
 
 * The ``win_get_url`` module has removed the deprecated ``win_get_url`` return dictionary, contained values are
   returned directly.
 
-* The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardised
+* The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardized
   ``validate_certs`` option instead.
 
 * The ``vmware_local_role_facts`` module now returns a list of dicts instead of a dict of dicts for role information.
@@ -417,5 +417,5 @@ Networking
   ``save`` and ``force`` parameters, use the ``save_when`` parameter to replicate their
   functionality.
 
-* The ``nxos_vrf_af`` module has removed the ``safi`` paramter. This parameter was deprecated
+* The ``nxos_vrf_af`` module has removed the ``safi`` parameter. This parameter was deprecated
   in Ansible 2.4 and has had no impact on the module since then.

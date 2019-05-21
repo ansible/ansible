@@ -11,6 +11,7 @@ __metaclass__ = type
 
 import datetime
 import glob
+import json
 import optparse
 import os
 import re
@@ -52,7 +53,7 @@ from ansible.utils._build_helpers import update_file_if_different
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TOO_OLD_TO_BE_NOTABLE = 2.0
+TOO_OLD_TO_BE_NOTABLE = 2.3
 
 # Get parent directory of the directory this script lives in
 MODULEDIR = os.path.abspath(os.path.join(
@@ -398,6 +399,10 @@ def jinja2_environment(template_dir, typ, plugin_type):
     if 'max' not in env.filters:
         # Jinja < 2.10
         env.filters['max'] = do_max
+
+    if 'tojson' not in env.filters:
+        # Jinja < 2.9
+        env.filters['tojson'] = json.dumps
 
     templates = {}
     if typ == 'rst':

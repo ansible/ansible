@@ -252,6 +252,11 @@ from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.netconf.netconf import get_capabilities, get_config, sanitize_xml
 
+try:
+    from lxml.etree import tostring
+except ImportError:
+    from xml.etree.ElementTree import tostring
+
 
 def main():
     """ main entry point for module execution
@@ -365,7 +370,7 @@ def main():
     try:
         if module.params['backup']:
             response = get_config(module, target, lock=execute_lock)
-            before = to_text(response, errors='surrogate_then_replace').strip()
+            before = to_text(tostring(response), errors='surrogate_then_replace').strip()
             result['__backup__'] = before.strip()
         if validate:
             conn.validate(target)
@@ -381,7 +386,7 @@ def main():
             if not module.check_mode:
                 conn.commit()
             result['changed'] = True
-        else:
+        elif config:
             if module.check_mode and not supports_commit:
                 module.warn("check mode not supported as Netconf server doesn't support candidate capability")
                 result['changed'] = True

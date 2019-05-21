@@ -37,8 +37,8 @@ options:
             - "ID of the Virtual Machine to manage. Either C(vm_id) or C(vm_name) is required if C(state) is I(attached) or I(detached)."
     state:
         description:
-            - "Should the Virtual Machine disk be present/absent/attached/detached."
-        choices: ['present', 'absent', 'attached', 'detached']
+            - "Should the Virtual Machine disk be present/absent/attached/detached/exported."
+        choices: ['present', 'absent', 'attached', 'detached', 'exported']
         default: 'present'
     download_image_path:
         description:

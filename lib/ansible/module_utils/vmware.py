@@ -302,6 +302,8 @@ def gather_vm_facts(content, vm):
         'snapshots': [],
         'current_snapshot': None,
         'vnc': {},
+        'moid': vm._moId,
+        'vimref': "vim.VirtualMachine:%s" % vm._moId,
     }
 
     # facts that may or may not exist
@@ -514,10 +516,11 @@ def connect_to_api(module, disconnect_atexit=True):
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
                              'python or use validate_certs=false.')
 
-    ssl_context = None
-    if not validate_certs and hasattr(ssl, 'SSLContext'):
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        ssl_context.verify_mode = ssl.CERT_NONE
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    if validate_certs:
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context.check_hostname = True
+        ssl_context.load_default_certs()
 
     service_instance = None
     try:
@@ -804,6 +807,9 @@ class PyVmomi(object):
         self.si = None
         self.current_vm_obj = None
         self.content = connect_to_api(self.module)
+        self.custom_field_mgr = []
+        if self.content.customFieldsManager:  # not an ESXi
+            self.custom_field_mgr = self.content.customFieldsManager.field
 
     def is_vcenter(self):
         """
@@ -879,10 +885,10 @@ class PyVmomi(object):
         """
         vm_obj = None
         user_desired_path = None
-
-        if self.params['uuid'] and not self.params['use_instance_uuid']:
+        use_instance_uuid = self.params.get('use_instance_uuid') or False
+        if self.params['uuid'] and not use_instance_uuid:
             vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
-        elif self.params['uuid'] and self.params['use_instance_uuid']:
+        elif self.params['uuid'] and use_instance_uuid:
             vm_obj = find_vm_by_id(self.content,
                                    vm_id=self.params['uuid'],
                                    vm_id_type="instance_uuid")
@@ -1273,11 +1279,14 @@ class PyVmomi(object):
         if not changed:
             self.module.fail_json(msg="No valid disk vmdk image found for path %s" % vmdk_path)
 
-        target_folder_path = datastore_name_sq + " " + vmdk_folder + '/'
+        target_folder_paths = [
+            datastore_name_sq + " " + vmdk_folder + '/',
+            datastore_name_sq + " " + vmdk_folder,
+        ]
 
         for file_result in search_res.info.result:
             for f in getattr(file_result, 'file'):
-                if f.path == vmdk_filename and file_result.folderPath == target_folder_path:
+                if f.path == vmdk_filename and file_result.folderPath in target_folder_paths:
                     return f
 
         self.module.fail_json(msg="No vmdk file found for path specified [%s]" % vmdk_path)
@@ -1377,6 +1386,13 @@ class PyVmomi(object):
                         self._deepmerge(result, tmp)
                     else:
                         result[prop] = self._jsonify(getattr(obj, prop))
+                        # To match gather_vm_facts output
+                        prop_name = prop
+                        if prop.lower() == '_moid':
+                            prop_name = 'moid'
+                        elif prop.lower() == '_vimref':
+                            prop_name = 'vimref'
+                        result[prop_name] = result[prop]
                 except (AttributeError, KeyError):
                     self.module.fail_json(msg="Property '{0}' not found.".format(prop))
         else:

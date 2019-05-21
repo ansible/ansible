@@ -77,7 +77,6 @@
 - name: Check the stat results of the file
   stat:
     path: "{{ remote_file }}"
-    get_md5: yes
   register: stat_results
 
 - debug:
@@ -93,12 +92,6 @@
       - "stat_results.stat.isreg == true"
       - "stat_results.stat.issock == false"
       - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
-
-- name: Verify that the legacy md5sum is correct
-  assert:
-    that:
-      - "stat_results.stat.md5 == ('foo.txt\n'|hash('md5'))"
-  when: ansible_fips|bool != True
 
 - name: Overwrite the file via same means
   copy:

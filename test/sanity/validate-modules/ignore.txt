@@ -308,9 +308,6 @@ lib/ansible/modules/cloud/vmware/vca_vapp.py E324
 lib/ansible/modules/cloud/vmware/vmware_guest.py E322
 lib/ansible/modules/cloud/vmware/vsphere_copy.py E322
 lib/ansible/modules/clustering/consul.py E322
-lib/ansible/modules/clustering/consul.py E324
-lib/ansible/modules/clustering/consul_kv.py E322
-lib/ansible/modules/clustering/consul_kv.py E324
 lib/ansible/modules/clustering/consul_session.py E322
 lib/ansible/modules/clustering/etcd3.py E326
 lib/ansible/modules/clustering/znode.py E326
@@ -354,6 +351,7 @@ lib/ansible/modules/files/lineinfile.py E323
 lib/ansible/modules/files/lineinfile.py E324
 lib/ansible/modules/files/lineinfile.py E326
 lib/ansible/modules/files/replace.py E323
+lib/ansible/modules/files/stat.py E322
 lib/ansible/modules/files/stat.py E336
 lib/ansible/modules/files/synchronize.py E322
 lib/ansible/modules/files/synchronize.py E323
@@ -737,8 +735,6 @@ lib/ansible/modules/remote_management/ucs/ucs_vsans.py E322
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py E322
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py E323
 lib/ansible/modules/source_control/github_deploy_key.py E336
-lib/ansible/modules/source_control/github_issue.py E324
-lib/ansible/modules/source_control/github_issue.py E326
 lib/ansible/modules/source_control/subversion.py E322
 lib/ansible/modules/storage/infinidat/infini_export.py E323
 lib/ansible/modules/storage/infinidat/infini_export.py E324

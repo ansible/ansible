@@ -2,55 +2,32 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
+- when: vcsim is not defined
+  block:
+    - &dvs_facts
+      name: Gather facts about DVS portgroup
+      vmware_dvs_portgroup_facts:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "{{ dc1 }}"
+      register: dvs_results
 
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
+    - debug:
+        var: dvs_results
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
+    - assert:
+        that:
+          - dvs_results.dvs_portgroup_facts is defined
 
-- debug: var=vcsim_instance
+    - <<: *dvs_facts
+      name: Gather facts about DVS portgroup in check mode
+      check_mode: yes
 
-- name: Gather facts about DVS portgroup
-  vmware_dvs_portgroup_facts:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: DC0
-  register: dvs_results
+    - debug:
+        var: dvs_results
 
-- debug: var=dvs_results
-
-- assert:
-    that:
-      - "dvs_results.dvs_portgroup_facts is defined"
-
-- name: Gather facts about DVS portgroup in check mode
-  vmware_dvs_portgroup_facts:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: DC0
-  register: dvs_results
-  check_mode: yes
-
-- debug: var=dvs_results
-
-- assert:
-    that:
-      - "dvs_results.dvs_portgroup_facts is defined"
+    - assert:
+        that:
+          - dvs_results.dvs_portgroup_facts is defined

@@ -5,12 +5,29 @@ Using Vault in playbooks
 
 .. contents:: Topics
 
-The "Vault" is a feature of Ansible that allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plaintext in playbooks or roles. These vault files can then be distributed or placed in source control.
+The "Vault" is a feature of Ansible that allows you to keep sensitive data such as passwords or keys protected at rest, rather than as plaintext in playbooks or roles. These vaults can then be distributed or placed in source control.
+
+There are 2 types of vaulted content and each has their own uses and limitations:
+
+:Vaulted files:
+    * The full file is encrypted in the vault, this can contain Ansible variables or any other type of content.
+    * It will always be decrypted when loaded or referenced, Ansible cannot know if it needs the content unless it decrypts it.
+    * It can be used for inventory, anything that loads variables (i.e vars_files, group_vars, host_vars, include_vars, etc)
+      and some actions that deal with files (i.e M(copy), M(assemble), M(script), etc).
+
+:Single encrypted variable:
+    * Only specific variables are encrypted inside a normal 'variable file'.
+    * Does not work for other content, only variables.
+    * Decrypted on demand, so you can have vaulted variables with different vault secrets and only provide those needed.
+    * You can mix vaulted and non vaulted variables in the same file, even inline in a play or role.
+
+.. warning::
+    * Vault ONLY protects data 'at rest', once decrypted play and plugin authors are responsible of avoiding any secrets discolsure,
+      see ``no_log`` for details on hiding output.
 
 To enable this feature, a command line tool, :ref:`ansible-vault` is used to edit files, and a command line flag :option:`--ask-vault-pass <ansible-vault-create --ask-vault-pass>`, :option:`--vault-password-file <ansible-vault-create --vault-password-file>` or :option:`--vault-id <ansible-playbook --vault-id>` is used. You can also modify your ``ansible.cfg`` file to specify the location of a password file or configure Ansible to always prompt for the password. These options require no command line flag usage.
 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
-
 
 Running a Playbook With Vault
 `````````````````````````````
