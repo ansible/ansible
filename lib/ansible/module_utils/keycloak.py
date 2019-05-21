@@ -402,7 +402,7 @@ class KeycloakAPI(object):
                 self.create_or_update_client_mappers(client_url, clientrep)
             if client_roles is not None:
                 self.create_or_update_client_roles(
-                    clientrep[camel('client_id')], 
+                    clientrep[camel('client_id')],
                     client_roles,
                     realm)
             return putResponse
@@ -439,7 +439,7 @@ class KeycloakAPI(object):
                 self.create_or_update_client_mappers(client_url, clientrep)
             if client_roles is not None:
                 self.create_or_update_client_roles(
-                    clientrep[camel('client_id')], 
+                    clientrep[camel('client_id')],
                     client_roles,
                     realm)
             return postResponse
@@ -767,7 +767,10 @@ class KeycloakAPI(object):
                         delRealmRoleRepresentation = {}
                         delRealmRoleRepresentation["id"] = roleid
                         delRealmRoleRepresentation["name"] = realmRole["name"]
-                        self.delete_client_scope_mappings_realm_roles(client_id=client_id,realmRolesRepresentation=delRealmRoleRepresentation,realm=realm)
+                        self.delete_client_scope_mappings_realm_roles(
+                            client_id=client_id,
+                            realmRolesRepresentation=delRealmRoleRepresentation,
+                            realm=realm)
             if len(realmRolesRepresentation) > 0:
                 # Assign Role
                 self.update_client_scope_mappings_realm_roles(
@@ -812,7 +815,7 @@ class KeycloakAPI(object):
         except Exception as e:
             self.module.fail_json(msg='Could not assign roles to client %s in realm %s: %s'
                                       % (client_id, realm, str(e)))
-    
+
     def get_groups(self, realm="master"):
         """ Fetch the name and ID of all groups on the Keycloak server.
 
@@ -1021,7 +1024,7 @@ class KeycloakAPI(object):
         """
         id_client = self.get_client_by_clientid(client_id=client_id, realm=realm)["id"]
         clientRolesUrl = URL_CLIENT_ROLES.format(url=self.baseurl,
-                                                 realm=realm, 
+                                                 realm=realm,
                                                  id=id_client)
         try:
             changed = False
@@ -1039,7 +1042,7 @@ class KeycloakAPI(object):
                         for newComposite in newComposites:
                             if "id" in newComposite and newComposite["id"] is not None:
                                 # Get the id of client for this role
-                                role_client = self.get_client_by_clientid(client_id=newComposite["id"],realm=realm)
+                                role_client = self.get_client_by_clientid(client_id=newComposite["id"], realm=realm)
                                 if role_client is None:
                                     self.module.fail_json(msg="Unable to create or update client roles, client %s does not exist" % (newComposite["id"]))
                                 else:
