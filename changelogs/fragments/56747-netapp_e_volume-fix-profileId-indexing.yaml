@@ -1,0 +1,2 @@
+bugfixes:
+  - netapp_e_volumes - fix workload profileId indexing when no previous workload tags exist on the storage array.
