@@ -357,7 +357,7 @@
 
 - name: install group
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: present
   register: yum_result
 
@@ -376,7 +376,7 @@
 
 - name: install the group again
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: present
   register: yum_result
 
@@ -396,7 +396,7 @@
 - name: install the group again but also with a package that is not yet installed
   yum:
     name:
-      - "@Development Tools"
+      - "@Custom Group"
       - sos
     state: present
   register: yum_result
@@ -416,7 +416,7 @@
 
 - name: try to install the group again, with --check to check 'changed'
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: present
   check_mode: yes
   register: yum_result
