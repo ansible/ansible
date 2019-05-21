@@ -1694,7 +1694,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.results['actions'].append("Generalize virtual machine {0}".format(self.name))
         self.log("Generalize virtual machine {0}".format(self.name))
         try:
-            response = self.compute_client.virtual_machines.generalize(self.resource_group, self.name)
+            response = self.compute_client.virtual_machtines.generalize(self.resource_group, self.name)
             if isinstance(response, LROPoller):
                 self.get_poller_result(response)
         except Exception as exc:
@@ -1774,9 +1774,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting virtual machine {0} - {1}".format(self.name, str(exc)))
 
-        if 'all' in self.remove_on_absent or 'all_autocreated' in self.remove_on_absent:
-            self.remove_autocreated_resources(vm.tags)
-
         # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
         if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
@@ -1794,6 +1791,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Deleting public IPs')
             for pip_dict in pip_names:
                 self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
+
+        if 'all' in self.remove_on_absent or 'all_autocreated' in self.remove_on_absent:
+            self.remove_autocreated_resources(vm.tags)
 
         return True
 
