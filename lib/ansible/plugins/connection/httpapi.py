@@ -171,7 +171,7 @@ from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
-from ansible.module_utils.urls import open_url
+from ansible.module_utils.urls import Request
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import httpapi_loader
 from ansible.plugins.connection import NetworkConnectionBase
@@ -188,6 +188,7 @@ class Connection(NetworkConnectionBase):
 
         self._url = None
         self._auth = None
+        self.request = None
 
         if self._network_os:
 
@@ -231,6 +232,7 @@ class Connection(NetworkConnectionBase):
             host = self.get_option('host')
             port = self.get_option('port') or (443 if protocol == 'https' else 80)
             self._url = '%s://%s:%s' % (protocol, host, port)
+            self.request = Request()
 
             self.queue_message('vvv', "ESTABLISH HTTP(S) CONNECTFOR USER: %s TO %s" %
                                (self._play_context.remote_user, self._url))
@@ -250,7 +252,7 @@ class Connection(NetworkConnectionBase):
 
         super(Connection, self).close()
 
-    def send(self, path, data, **kwargs):
+    def send(self, path, data, method="GET", **kwargs):
         '''
         Sends the command to the device over api
         '''
@@ -271,7 +273,7 @@ class Connection(NetworkConnectionBase):
         try:
             url = self._url + path
             self._log_messages("send url '%s' with data '%s' and kwargs '%s'" % (url, data, url_kwargs))
-            response = open_url(url, data=data, **url_kwargs)
+            response = self.request.open(method, url, data=data, **url_kwargs)
         except HTTPError as exc:
             is_handled = self.handle_httperror(exc)
             if is_handled is True:
