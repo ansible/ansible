@@ -122,38 +122,37 @@ rule_set_state:
     - dict with hostname as key and dict with firewall rule set facts as value
     returned: success
     type: dict
-    sample: {
-                "rule_set_state": {
-                    "localhost.localdomain": {
-                        "CIMHttpServer": {
-                            "current_state": True,
-                            "desired_state": True,
-                            "previous_state": True
-                        },
-                        "vvold": {
-                            "current_state": True,
-                            "desired_state": True,
-                            "previous_state": True
-                        },
-                        "remoteSerialPort": {
-                            "current_state": True,
-                            "desired_state": True,
-                            "previous_state": True,
-                            "allowed_hosts": {
-                                "current_allowed_all": False,
-                                "previous_allowed_all": True,
-                                "desired_allowed_all": False,
-                                "current_allowed_ip": ["192.168.100.11"],
-                                "previous_allowed_ip": [],
-                                "desired_allowed_ip": ["192.168.100.11]",
-                                "current_allowed_networks": ["192.168.200.0/24"],
-                                "previous_allowed_networks": [],
-                                "desired_allowed_networks": ["192.168.200.0/24"]
-                            }
-                        }
+    sample:
+        "rule_set_state": {
+            "localhost.localdomain": {
+                "CIMHttpServer": {
+                    "current_state": True,
+                    "desired_state": True,
+                    "previous_state": True
+                },
+                "vvold": {
+                    "current_state": True,
+                    "desired_state": True,
+                    "previous_state": True
+                },
+                "remoteSerialPort": {
+                    "current_state": True,
+                    "desired_state": True,
+                    "previous_state": True,
+                    "allowed_hosts": {
+                        "current_allowed_all": False,
+                        "previous_allowed_all": True,
+                        "desired_allowed_all": False,
+                        "current_allowed_ip": ["192.168.100.11"],
+                        "previous_allowed_ip": [],
+                        "desired_allowed_ip": ["192.168.100.11]",
+                        "current_allowed_networks": ["192.168.200.0/24"],
+                        "previous_allowed_networks": [],
+                        "desired_allowed_networks": ["192.168.200.0/24"],
                     }
                 }
             }
+        }
 '''
 
 try:
