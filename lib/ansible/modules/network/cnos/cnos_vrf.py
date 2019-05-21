@@ -228,9 +228,6 @@ def map_obj_to_commands(updates, module):
 def map_config_to_obj(module):
     objs = []
     output = run_commands(module, {'command': 'show vrf'})
-<<<<<<< HEAD
-    if output is None:
-=======
     if output is not None:
         vrfText = output[0].strip()
         vrfList = vrfText.split('VRF')
@@ -251,7 +248,6 @@ def map_config_to_obj(module):
                             obj['interfaces'].append(intName.strip().lower())
                 objs.append(obj)
     else:
->>>>>>> ac546457c8... Update cnos_vrf.py
         module.fail_json(msg='Could not fetch VRF details from device')
     vrfText = output[0].strip()
     vrfList = vrfText.split('VRF')
