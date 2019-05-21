@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: postgresql_pg_hba
-short_description: Add, remove or modifie a rule in a pg_hba file
+short_description: Add, remove or modify a rule in a pg_hba file
 description:
    - The fundamental function of the module is to create, or delete lines in pg_hba files.
    - The lines in the file should be in a typical pg_hba form and lines should be unique per key (type, databases, users, source).
@@ -100,12 +100,12 @@ notes:
    - The default authentication assumes that on the host, you are either logging in as or
      sudo'ing to an account with appropriate permissions to read and modify the file.
    - This module also returns the pg_hba info. You can use this module to only retrieve it by only specifying I(dest).
-     The info kan be found in the returned data under key pg_hba, being a list, containing a dict per rule.
+     The info can be found in the returned data under key pg_hba, being a list, containing a dict per rule.
    - This module will sort resulting C(pg_hba) files if a rule change is required.
      This could give unexpected results with manual created hba files, if it was improperly sorted.
      For example a rule was created for a net first and for a ip in that net range next.
      In that situation, the 'ip specific rule' will never hit, it is in the C(pg_hba) file obsolete.
-     After the C(pg_hba) file is rewritten by the M(pg_hba) module, the ip specific rule will be sorted above the range rule.
+     After the C(pg_hba) file is rewritten by the M(postgresql_pg_hba) module, the ip specific rule will be sorted above the range rule.
      And then it will hit, which will give unexpected results.
    - With the 'order' parameter you can control which field is used to sort first, next and last.
    - The module supports a check mode and a diff mode.
