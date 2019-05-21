@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - fix failure when using ``update_cache`` standalone (https://github.com/ansible/ansible/issues/56638)
