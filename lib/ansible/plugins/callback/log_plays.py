@@ -12,7 +12,6 @@ DOCUMENTATION = '''
     version_added: historical
     description:
       - This callback writes playbook output to a file per host in the `/var/log/ansible/hosts` directory
-      - "TODO: make this configurable"
     requirements:
      - Whitelist in configuration
      - A writeable /var/log/ansible/hosts directory by the user executing Ansible on the controller
