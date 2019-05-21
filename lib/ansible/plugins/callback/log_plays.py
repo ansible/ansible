@@ -30,6 +30,7 @@ import os
 import time
 import json
 
+from ansible.utils.path import makedirs_safe
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
@@ -65,7 +66,7 @@ class CallbackModule(CallbackBase):
         self.log_folder = self.get_option("log_folder")
 
         if not os.path.exists(self.log_folder):
-            os.makedirs(self.log_folder)
+            makedirs_safe(self.log_folder)
 
     def log(self, host, category, data):
         if isinstance(data, MutableMapping):
