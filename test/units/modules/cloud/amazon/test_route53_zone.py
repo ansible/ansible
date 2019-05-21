@@ -16,6 +16,10 @@ def parameterized(params_list):
         return wrapper
     return decorator
 
+# Inline and replace with subdict.items() <= superdict.items(), when Python 2.6 compat can be dropped
+def is_subdict(subdict, superdict):
+    return all(superdict[k] == v for k, v in subdict.items())
+
 
 @patch('ansible.module_utils.aws.core.HAS_BOTO3', new=True)
 @patch.object(route53_zone.AnsibleAWSModule, 'client')
@@ -105,7 +109,7 @@ class TestRoute53Module(ModuleTestCase):
             })
 
         self.assertEqual(exec_info.exception.args[0]['changed'], True)
-        self.assertTrue(response.items() <= exec_info.exception.args[0].items())
+        self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @parameterized([
         {
@@ -177,7 +181,7 @@ class TestRoute53Module(ModuleTestCase):
             })
 
         self.assertEqual(exec_info.exception.args[0]['changed'], True)
-        self.assertTrue(response.items() <= exec_info.exception.args[0].items())
+        self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @parameterized([
         {
@@ -240,7 +244,7 @@ class TestRoute53Module(ModuleTestCase):
             })
 
         self.assertEqual(exec_info.exception.args[0]['changed'], True)
-        self.assertTrue(response.items() <= exec_info.exception.args[0].items())
+        self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @patch.object(route53_zone, 'find_zones', return_value=[{
         'Id': '/hostedzone/Z22OU4IUOVYM30',
@@ -334,7 +338,7 @@ class TestRoute53Module(ModuleTestCase):
             })
 
         self.assertEqual(exec_info.exception.args[0]['changed'], True)
-        self.assertTrue(response.items() <= exec_info.exception.args[0].items())
+        self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @parameterized([
         {
@@ -418,7 +422,7 @@ class TestRoute53Module(ModuleTestCase):
             })
 
         self.assertEqual(exec_info.exception.args[0]['changed'], True)
-        self.assertTrue(response.items() <= exec_info.exception.args[0].items())
+        self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @patch.object(route53_zone, 'find_zones', return_value=[{
         'Id': '/hostedzone/ZONE_ID',
@@ -460,7 +464,7 @@ class TestRoute53Module(ModuleTestCase):
             'delegation_set_id': None,
             'zone_id': 'ZONE_ID',
         }
-        self.assertTrue(response.items() <= exec_info.exception.args[0].items())
+        self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @parameterized([
         {'check_mode': False},
