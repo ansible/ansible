@@ -708,7 +708,7 @@ def main():
         status, message, content, url = create_rule(module, base_url, headers)
     elif action == "update":
         status, message, content, url = update(module, base_url, headers, stream_id, title,
-                                                description, remove_matches_from_default_stream, matching_type, rules, index_set_id)
+                                               description, remove_matches_from_default_stream, matching_type, rules, index_set_id)
     elif action == "update_rule":
         status, message, content, url = update_rule(module, base_url, headers, stream_id, rule_id, field, type, value, inverted, description)
     elif action == "delete":
