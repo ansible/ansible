@@ -1494,6 +1494,17 @@ class YumModule(YumDnf):
         if error_msgs:
             self.module.fail_json(msg='. '.join(error_msgs))
 
+        # fedora will redirect yum to dnf, which has incompatibilities
+        # with how this module expects yum to operate. If yum-deprecated
+        # is available, use that instead to emulate the old behaviors.
+        if self.module.get_bin_path('yum-deprecated'):
+            yumbin = self.module.get_bin_path('yum-deprecated')
+        else:
+            yumbin = self.module.get_bin_path('yum')
+
+        # need debug level 2 to get 'Nothing to do' for groupinstall.
+        self.yum_basecmd = [yumbin, '-d', '2', '-y']
+
         if self.update_cache and not self.names and not self.list:
             rc, stdout, stderr = self.module.run_command(self.yum_basecmd + ['clean', 'expire-cache'])
             if rc == 0:
@@ -1510,17 +1521,6 @@ class YumModule(YumDnf):
                     rc=rc,
                     results=[stderr],
                 )
-
-        # fedora will redirect yum to dnf, which has incompatibilities
-        # with how this module expects yum to operate. If yum-deprecated
-        # is available, use that instead to emulate the old behaviors.
-        if self.module.get_bin_path('yum-deprecated'):
-            yumbin = self.module.get_bin_path('yum-deprecated')
-        else:
-            yumbin = self.module.get_bin_path('yum')
-
-        # need debug level 2 to get 'Nothing to do' for groupinstall.
-        self.yum_basecmd = [yumbin, '-d', '2', '-y']
 
         repoquerybin = self.module.get_bin_path('repoquery', required=False)
 
