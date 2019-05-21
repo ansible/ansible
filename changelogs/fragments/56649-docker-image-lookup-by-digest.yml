@@ -1,0 +1,4 @@
+bugfixes:
+  - docker_container - Add support for image lookups by digest. Fixes the detection of digest changes.
+  - docker_image - Add support for image lookups by digest. Fixes the detection of digest changes.
+  - docker_image_info - Add support for image lookups by digest. Fixes the detection of digest changes.
