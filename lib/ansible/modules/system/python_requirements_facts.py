@@ -123,7 +123,7 @@ def main():
             python_version=sys.version,
             python_system_path=sys.path,
         )
-    pkg_dep_re = re.compile(r'(^[a-zA-Z][a-zA-Z0-9_]+)(==|[><]=?)?([0-9.]+)?$')
+    pkg_dep_re = re.compile(r'(^[a-zA-Z][a-zA-Z0-9_-]+)(==|[><]=?)?([0-9.]+)?$')
 
     results = dict(
         not_found=[],
