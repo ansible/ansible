@@ -86,7 +86,7 @@ EXAMPLES = r'''
           enabled: False
   delegate_to: localhost
 
-  - name: Manage IP and network based firewall permissions for ESXi
+- name: Manage IP and network based firewall permissions for ESXi
   vmware_host_firewall_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -229,7 +229,7 @@ class VmwareFirewallManager(PyVmomi):
                 if 'ip_address' in rule_config[0].keys():
                     for ip_addr in rule_config[0]['ip_address']:
                         try:
-                            ip = ipaddress.ip_address(unicode(ip_addr, "utf-8"))
+                            ip = ipaddress.ip_address(ip_addr)
                             print("ip is %s" % ip)
                         except ValueError:
                             self.module.fail_json(msg="The provided IP address %s is not a valid IP"
@@ -239,7 +239,7 @@ class VmwareFirewallManager(PyVmomi):
                 if 'ip_network' in rule_config[0].keys():
                     for ip_net in rule_config[0]['ip_network']:
                         try:
-                            network_validation = ipaddress.ip_network(unicode(ip_net, "utf-8"))
+                            network_validation = ipaddress.ip_network(ip_net)
                             print("network_validation is %s" % network_validation)
                         except ValueError:
                             self.module.fail_json(msg="The provided network %s is not a valid network"

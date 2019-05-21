@@ -149,8 +149,8 @@
     - name: ensure everything is changed for all hosts of {{ ccr1 }}
       assert:
         that:
-            - all_hosts_ip_specific.changed
-            - all_hosts_ip_specific.rule_set_state is defined
+          - all_hosts_ip_specific.changed
+          - all_hosts_ip_specific.rule_set_state is defined
 
     - name: ensure CIMHttpServer is configured for all hosts in {{ ccr1 }}
       assert:
@@ -167,7 +167,7 @@
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_networks'] == ["192.168.200.0/24"]
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['previous_allowed_networks'] == []
           - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_networks'] == ["192.168.200.0/24"]
-    with_items:
+      with_items:
         - '{{ esxi1 }}'
         - '{{ esxi2 }}'
 
