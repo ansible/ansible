@@ -437,8 +437,8 @@ class GalaxyCLI(CLI):
                                     dep_role.remove()
                                     roles_left.append(dep_role)
                                 else:
-                                    display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
-                                                    (to_text(dep_role), role.name, dep_role.install_info['version']))
+                                    display.warning('- dependency %s (%s) from role %s differs from already installed version (%s), skipping' %
+                                                    (to_text(dep_role), dep_role.version, role.name, dep_role.install_info['version']))
                             else:
                                 if force_deps:
                                     roles_left.append(dep_role)
