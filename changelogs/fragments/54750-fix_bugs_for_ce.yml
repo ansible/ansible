@@ -1,0 +1,2 @@
+bugfixes:
+    - fix bugs for ce - more info see #54750(https://github.com/ansible/ansible/pull/54750)
