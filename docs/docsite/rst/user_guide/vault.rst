@@ -279,6 +279,17 @@ Result::
 
 See also :ref:`single_encrypted_variable`
 
+After you added the encrypted value to a var file (vars.yml), you can see the original value using the debug module.
+
+.. code-block:: console
+
+   ansible localhost -m debug -a var="new_user_password" -e "@vars.yml" --ask-vault-pass
+   Vault password:
+
+   localhost | SUCCESS => {
+       "new_user_password": "hunter2"
+   }
+
 
 .. _providing_vault_passwords:
 
