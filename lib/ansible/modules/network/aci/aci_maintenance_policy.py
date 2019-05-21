@@ -59,7 +59,7 @@ options:
 extends_documentation_fragment:
 - aci
 notes:
-- A scheduler is required for this module, which could have been created using the M(aci_scheduler) module or via the UI.
+- A scheduler is required for this module, which could have been created using the M(aci_fabric_scheduler) module or via the UI.
 author:
 - Steven Gerhart (@sgerhart)
 '''
