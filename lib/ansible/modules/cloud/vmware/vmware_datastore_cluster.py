@@ -34,7 +34,10 @@ options:
     datacenter_name:
       description:
       - The name of the datacenter.
-      required: True
+      - You must specify either a C(datacenter_name) or a C(folder).
+      - Mutually exclusive with C(folder) parameter.
+      required: False
+      aliases: [ datacenter ]
     datastore_cluster_name:
       description:
       - The name of the datastore cluster.
@@ -44,6 +47,22 @@ options:
       - If the datastore cluster should be present or absent.
       choices: [ present, absent ]
       default: present
+    folder:
+      description:
+      - Destination folder, absolute path to place datastore cluster in.
+      - The folder should include the datacenter.
+      - This parameter is case sensitive.
+      - You must specify either a C(folder) or a C(datacenter_name).
+      - 'Examples:'
+      - '   folder: /datacenter1/datastore'
+      - '   folder: datacenter1/datastore'
+      - '   folder: /datacenter1/datastore/folder1'
+      - '   folder: datacenter1/datastore/folder1'
+      - '   folder: /folder1/datacenter1/datastore'
+      - '   folder: folder1/datacenter1/datastore'
+      - '   folder: /folder1/datacenter1/datastore/folder2'
+      required: False
+      version_added: '2.9'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -58,6 +77,15 @@ EXAMPLES = '''
     state: present
   delegate_to: localhost
 
+- name: Create datastore cluster using folder
+  vmware_datastore_cluster:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    folder: '/{{ datacenter_name }}/datastore/ds_folder'
+    datastore_cluster_name: '{{ datastore_cluster_name }}'
+    state: present
+  delegate_to: localhost
 
 - name: Delete datastore cluster
   vmware_datastore_cluster:
@@ -86,17 +114,25 @@ from ansible.module_utils._text import to_native
 class VMwareDatastoreClusterManager(PyVmomi):
     def __init__(self, module):
         super(VMwareDatastoreClusterManager, self).__init__(module)
-        datacenter_name = self.params.get('datacenter_name')
-        self.datacenter_obj = self.find_datacenter_by_name(datacenter_name)
-        if not self.datacenter_obj:
-            self.module.fail_json(msg="Failed to find datacenter '%s' required"
-                                      " for managing datastore cluster." % datacenter_name)
+        folder = self.params['folder']
+        if folder:
+            self.folder_obj = self.content.searchIndex.FindByInventoryPath(folder)
+            if not self.folder_obj:
+                self.module.fail_json(msg="Failed to find the folder specified by %(folder)s" % self.params)
+        else:
+            datacenter_name = self.params.get('datacenter_name')
+            datacenter_obj = self.find_datacenter_by_name(datacenter_name)
+            if not datacenter_obj:
+                self.module.fail_json(msg="Failed to find datacenter '%s' required"
+                                          " for managing datastore cluster." % datacenter_name)
+            self.folder_obj = datacenter_obj.datastoreFolder
+
         self.datastore_cluster_name = self.params.get('datastore_cluster_name')
         self.datastore_cluster_obj = self.find_datastore_cluster_by_name(self.datastore_cluster_name)
 
     def ensure(self):
         """
-        Function to manage internal state of datastore cluster
+        Manage internal state of datastore cluster
 
         """
         results = dict(changed=False, result='')
@@ -122,7 +158,7 @@ class VMwareDatastoreClusterManager(PyVmomi):
                 # Create datastore cluster
                 if not self.module.check_mode:
                     try:
-                        self.datacenter_obj.datastoreFolder.CreateStoragePod(name=self.datastore_cluster_name)
+                        self.folder_obj.CreateStoragePod(name=self.datastore_cluster_name)
                     except Exception as generic_exc:
                         self.module.fail_json(msg="Failed to create datstore cluster"
                                                   " '%s' due to %s" % (self.datastore_cluster_name,
@@ -138,14 +174,21 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         dict(
-            datacenter_name=dict(type='str', required=True),
+            datacenter_name=dict(type='str', required=False, aliases=['datacenter']),
             datastore_cluster_name=dict(type='str', required=True),
             state=dict(default='present', choices=['present', 'absent'], type='str'),
+            folder=dict(type='str', required=False)
         )
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        mutually_exclusive=[
+            ['datacenter_name', 'folder'],
+        ],
+        required_one_of=[
+            ['datacenter_name', 'folder'],
+        ]
     )
 
     datastore_cluster_mgr = VMwareDatastoreClusterManager(module)
