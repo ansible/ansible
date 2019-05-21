@@ -1,0 +1,2 @@
+bugfixes:
+- To fix the nios member module params - https://github.com/ansible/ansible/pull/54419
