@@ -588,7 +588,11 @@ class AnsibleModule(object):
         and :ref:`developing_program_flow_modules` for more detailed explanation.
         '''
 
-        self._name = os.path.basename(__file__)  # initialize name until we can parse from options
+        try:
+            self._name = re.search(r'.*/ansible_(\w+?)_payload.zip/.*', __file__).group(1)  # initialize name until we can parse from options
+        except AttributeError:
+            self._name = __file__
+
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False

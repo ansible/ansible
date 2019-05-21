@@ -1,0 +1,2 @@
+bugfixes:
+  - fix fallback module name to not just reflect 'basic.py'
