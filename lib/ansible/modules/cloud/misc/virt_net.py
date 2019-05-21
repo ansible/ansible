@@ -300,8 +300,8 @@ class LibvirtConnection(object):
                 if res == 0:
                     return True
             else:
-                new_hostnames = map(lambda hostname: hostname.text, new_data.findall('hostname'))
-                old_hostnames = map(lambda hostname: hostname.text, host.findall('hostname'))
+                new_hostnames = list(map(lambda hostname: hostname.text, new_data.findall('hostname')))
+                old_hostnames = list(map(lambda hostname: hostname.text, host.findall('hostname')))
                 # change the host
                 if len(new_hostnames) == len(old_hostnames) and list(set(new_hostnames) - set(old_hostnames)) == []:
                     return False
