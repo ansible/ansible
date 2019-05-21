@@ -35,12 +35,17 @@ import urllib
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils._text import to_text
 
 URL_TOKEN = "{url}/realms/{realm}/protocol/openid-connect/token"
 URL_CLIENT = "{url}/admin/realms/{realm}/clients/{id}"
 URL_CLIENTS = "{url}/admin/realms/{realm}/clients"
 URL_CLIENT_ROLES = "{url}/admin/realms/{realm}/clients/{id}/roles"
 URL_CLIENT_SECRET = "{url}/admin/realms/{realm}/clients/{id}/client-secret"
+URL_CLIENT_SCOPE_MAPPINGS = "{url}/admin/realms/{realm}/clients/{id}/scope-mappings"
+URL_CLIENT_REALM_SCOPE_MAPPINGS = "{url}/admin/realms/{realm}/clients/{id}/scope-mappings/realm"
+URL_CLIENT_CLIENTS_ROLE_MAPPINGS = "{url}/admin/realms/{realm}/clients/{id}/scope-mappings/clients"
+URL_CLIENT_CLIENT_SCOPE_MAPPINGS = "{url}/admin/realms/{realm}/clients/{id}/scope-mappings/clients/{client_id}"
 
 URL_CLIENTTEMPLATE = "{url}/admin/realms/{realm}/client-templates/{id}"
 URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
@@ -111,6 +116,25 @@ def camel(words):
     return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
 
 
+def remove_arguments_with_value_none(argument):
+    """
+    This function remove all NoneType elements from dict object.
+    This is useful when argument_spec include optional keys which dos not need to be
+    POST or PUT to Keycloak API.
+    :param argument: Dict from which to remove NoneType elements
+    :return: nothing
+    """
+    if type(argument) is dict:
+        for key in argument.keys():
+            if argument[key] is None:
+                del argument[key]
+            elif type(argument[key]) is list:
+                for element in argument[key]:
+                    remove_arguments_with_value_none(element)
+            elif type(argument[key]) is dict:
+                remove_arguments_with_value_none(argument[key])
+
+
 def isDictEquals(dict1, dict2, exclude=None):
     """
     This function compare if tthe first parameter structure, is included in the second.
@@ -175,8 +199,10 @@ def isDictEquals(dict1, dict2, exclude=None):
                     if not isDictEquals(dict1[key], dict2[key], exclude):
                         return False
             return True
-        else:
+        elif type(dict1) is bool and type(dict2) is bool:
             return dict1 == dict2
+        else:
+            return to_text(dict1, 'utf-8') == to_text(dict2, 'utf-8')
     except KeyError:
         return False
 
@@ -358,14 +384,13 @@ class KeycloakAPI(object):
         :return: HTTPResponse object on success
         """
         client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=id)
-        roles_url = URL_REALM_ROLES.format(url=self.baseurl, realm=realm)
-        clients_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
-        client_roles_url = URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=id)
         try:
             client_roles = None
             if camel('client_roles') in clientrep:
                 client_roles = clientrep[camel('client_roles')]
                 del(clientrep[camel('client_roles')])
+            if camel('scope_mappings') in clientrep:
+                del(clientrep[camel('scope_mappings')])
             client_protocol_mappers = None
             if camel('protocol_mappers') in clientrep:
                 client_protocol_mappers = clientrep[camel('protocol_mappers')]
@@ -376,7 +401,10 @@ class KeycloakAPI(object):
                 clientrep[camel('protocol_mappers')] = client_protocol_mappers
                 self.create_or_update_client_mappers(client_url, clientrep)
             if client_roles is not None:
-                self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url)
+                self.create_or_update_client_roles(
+                    clientrep[camel('client_id')],
+                    client_roles,
+                    realm)
             return putResponse
 
         except Exception as e:
@@ -389,13 +417,14 @@ class KeycloakAPI(object):
         :param realm: realm for client to be created
         :return: HTTPResponse object on success
         """
-        roles_url = URL_REALM_ROLES.format(url=self.baseurl, realm=realm)
         clients_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
         try:
             client_roles = None
             if camel('client_roles') in clientrep:
                 client_roles = clientrep[camel('client_roles')]
                 del(clientrep[camel('client_roles')])
+            if camel('scope_mappings') in clientrep:
+                del(clientrep[camel('scope_mappings')])
             client_protocol_mappers = None
             if camel('protocol_mappers') in clientrep:
                 client_protocol_mappers = clientrep[camel('protocol_mappers')]
@@ -409,8 +438,10 @@ class KeycloakAPI(object):
                 clientrep[camel('protocol_mappers')] = client_protocol_mappers
                 self.create_or_update_client_mappers(client_url, clientrep)
             if client_roles is not None:
-                client_roles_url = URL_CLIENT_ROLES.format(url=self.baseurl, realm=realm, id=self.get_client_id(clientrep[camel('client_id')], realm))
-                self.create_or_update_client_roles(client_roles, roles_url, clients_url, client_roles_url)
+                self.create_or_update_client_roles(
+                    clientrep[camel('client_id')],
+                    client_roles,
+                    realm)
             return postResponse
         except Exception as e:
             self.module.fail_json(msg='Could not create client %s in realm %s: %s'
@@ -542,6 +573,248 @@ class KeycloakAPI(object):
         except Exception as e:
             self.module.fail_json(msg='Could not delete client template %s in realm %s: %s'
                                       % (id, realm, str(e)))
+
+    def get_client_scope_mappings_realm_roles(self, client_id, realm='master'):
+        """
+        Get realm roles for a Client.
+        :param client_id: Client ID
+        :param realm: Realm
+        :return: Representation of the realm roles.
+        """
+        try:
+            scope_mappings_url = URL_CLIENT_SCOPE_MAPPINGS.format(
+                url=self.baseurl,
+                realm=realm,
+                id=client_id)
+            scope_mappings = json.load(
+                open_url(
+                    scope_mappings_url,
+                    method='GET',
+                    headers=self.restheaders))
+            realmRoles = []
+            if "realmMappings" in scope_mappings:
+                for scopeMapping in scope_mappings["realmMappings"]:
+                    realmRoles.append(scopeMapping["name"])
+            return realmRoles
+        except Exception as e:
+            self.module.fail_json(msg='Could not get scope mappings realm_roles for client %s in realm %s: %s'
+                                      % (client_id, realm, str(e)))
+
+    def update_client_scope_mappings_realm_roles(self, client_id, realmRolesRepresentation, realm='master'):
+        """
+        Update realm roles for a Client.
+        :param client_id: Client ID
+        :param realm: Realm
+        :return: Representation of the realm roles.
+        """
+        try:
+            scope_mappings_url = URL_CLIENT_REALM_SCOPE_MAPPINGS.format(
+                url=self.baseurl,
+                realm=realm,
+                id=client_id)
+            return open_url(
+                scope_mappings_url,
+                method='POST',
+                headers=self.restheaders,
+                data=json.dumps(realmRolesRepresentation))
+        except Exception as e:
+            self.module.fail_json(msg='Could not update scope mappings realm_roles for client %s in realm %s: %s'
+                                      % (client_id, realm, str(e)))
+
+    def delete_client_scope_mappings_realm_roles(self, client_id, realmRolesRepresentation, realm='master'):
+        """
+        delete realm roles for a Client.
+        :param client_id: Client ID
+        :param realm: Realm
+        :return: Representation of the realm roles.
+        """
+        try:
+            scope_mappings_url = URL_CLIENT_REALM_SCOPE_MAPPINGS.format(
+                url=self.baseurl,
+                realm=realm,
+                id=client_id)
+            return open_url(
+                scope_mappings_url,
+                method='DELETE',
+                headers=self.restheaders,
+                data=json.dumps(realmRolesRepresentation))
+        except Exception as e:
+            self.module.fail_json(msg='Could not delete scope mappings realm_roles for client %s in realm %s: %s'
+                                      % (client_id, realm, str(e)))
+
+    def get_client_scope_mappings_client_roles(self, client_id, realm='master'):
+        """
+        Get client roles for a client.
+        :param client_id: Client ID
+        :param realm: Realm
+        :return: Representation of the client roles.
+        """
+        try:
+            clientRoles = []
+            scope_mappings_url = URL_CLIENT_SCOPE_MAPPINGS.format(
+                url=self.baseurl,
+                realm=realm,
+                id=client_id)
+            scope_mappings = json.load(
+                open_url(
+                    scope_mappings_url,
+                    method='GET',
+                    headers=self.restheaders))
+            if "clientMappings" in scope_mappings:
+                for clientMapping in scope_mappings["clientMappings"].keys():
+                    clientRole = {}
+                    clientRole["clientId"] = scope_mappings["clientMappings"][clientMapping]["client"]
+                    roles = []
+                    for role in scope_mappings["clientMappings"][clientMapping]["mappings"]:
+                        roles.append(role["name"])
+                    clientRole["roles"] = roles
+                    clientRoles.append(clientRole)
+            return clientRoles
+        except Exception as e:
+            self.module.fail_json(msg='Could not get scope mappings client_roles for client %s in realm %s: %s'
+                                      % (client_id, realm, str(e)))
+
+    def delete_client_scope_mappings_client_roles(self, client_id, clientscope_id, realm='master'):
+        """
+        Delete client roles for a client.
+        :param client_id: Client ID
+        :param clientscope_id: Client ID for client roles to delete.
+        :param realm: Realm
+        :return: HTTP Response.
+        """
+        try:
+            scope_mappings_url = URL_CLIENT_CLIENT_SCOPE_MAPPINGS.format(
+                url=self.baseurl,
+                realm=realm,
+                id=client_id,
+                client_id=clientscope_id)
+            return open_url(
+                scope_mappings_url,
+                method='DELETE',
+                headers=self.restheaders)
+        except Exception as e:
+            self.module.fail_json(msg='Could not delete scope mappings client_roles for client %s in realm %s: %s'
+                                      % (client_id, realm, str(e)))
+
+    def create_client_scope_mappings_client_roles(self, client_id, clientscope_id, rolesToAssing, realm='master'):
+        """
+        Delete client roles for a client.
+        :param client_id: Client ID
+        :param clientscope_id: Client ID for client roles to create.
+        :param rolesToAssing: Representation of the client roles to create.
+        :param realm: Realm
+        :return: HTTP Response.
+        """
+        try:
+            scope_mappings_url = URL_CLIENT_CLIENT_SCOPE_MAPPINGS.format(
+                url=self.baseurl,
+                realm=realm,
+                id=client_id,
+                client_id=clientscope_id)
+            return open_url(
+                scope_mappings_url,
+                method='POST',
+                headers=self.restheaders,
+                data=json.dumps(rolesToAssing))
+        except Exception as e:
+            self.module.fail_json(msg='Could not create scope mappings client_roles for client %s in realm %s: %s'
+                                      % (client_id, realm, str(e)))
+
+    def assing_scope_roles_to_client(self, client_id, clientScopeRealmRoles, clientScopeClientRoles, realm='master'):
+        """
+        Assign roles to a client.
+        :param client_id: client ID to whom assign roles.
+        :param clientScopeRealmRoles: Realm roles to assign to client.
+        :param clientScopeClientRoles: Client roles to assign to client.
+        :param realm: Realm
+        :return: True is client's role have changed, False otherwise.
+        """
+        try:
+            # Get the new created client realm roles
+            newClientScopeRealmRoles = self.get_client_scope_mappings_realm_roles(
+                client_id=client_id,
+                realm=realm)
+            # Get the new created client client roles
+            newClientScopeClientRoles = self.get_client_scope_mappings_client_roles(
+                client_id=client_id,
+                realm=realm)
+            changed = False
+            # Assign Realm Roles
+            realmRolesRepresentation = []
+            # Get all realm roles
+            allRealmRoles = self.get_realm_roles(realm=realm)
+            for realmRole in clientScopeRealmRoles:
+                # Look for existing role into client representation
+                if realmRole["name"] not in newClientScopeRealmRoles:
+                    roleid = None
+                    # Find the role id
+                    for role in allRealmRoles:
+                        if role["name"] == realmRole["name"]:
+                            roleid = role["id"]
+                            break
+                    if roleid is not None:
+                        realmRoleRepresentation = {}
+                        realmRoleRepresentation["id"] = roleid
+                        realmRoleRepresentation["name"] = realmRole["name"]
+                        realmRolesRepresentation.append(realmRoleRepresentation)
+                elif realmRole["state"] == 'absent':
+                    roleid = None
+                    for role in allRealmRoles:
+                        if role["name"] == realmRole["name"]:
+                            roleid = role["id"]
+                            break
+                    if roleid is not None:
+                        delRealmRoleRepresentation = {}
+                        delRealmRoleRepresentation["id"] = roleid
+                        delRealmRoleRepresentation["name"] = realmRole["name"]
+                        self.delete_client_scope_mappings_realm_roles(
+                            client_id=client_id,
+                            realmRolesRepresentation=delRealmRoleRepresentation,
+                            realm=realm)
+            if len(realmRolesRepresentation) > 0:
+                # Assign Role
+                self.update_client_scope_mappings_realm_roles(
+                    client_id=client_id,
+                    realmRolesRepresentation=realmRolesRepresentation,
+                    realm=realm)
+                changed = True
+            # Assign clients roles if they need changes
+            if not isDictEquals(clientScopeClientRoles, newClientScopeClientRoles):
+                for clientToAssingRole in clientScopeClientRoles:
+                    # Get the client roles
+                    clientscope_id = self.get_client_by_clientid(
+                        client_id=clientToAssingRole["id"],
+                        realm=realm)['id']
+                    clientRoles = self.get_client_roles(
+                        client_id=clientscope_id,
+                        realm=realm)
+                    if clientRoles != {}:
+                        rolesToAssing = []
+                        for roleToAssing in clientToAssingRole["roles"]:
+                            newRole = {}
+                            # Find his Id
+                            for clientRole in clientRoles:
+                                if clientRole["name"] == roleToAssing["name"]:
+                                    newRole["id"] = clientRole["id"]
+                                    newRole["name"] = roleToAssing["name"]
+                                    rolesToAssing.append(newRole)
+                        if len(rolesToAssing) > 0:
+                            # Delete exiting client Roles
+                            self.delete_client_scope_mappings_client_roles(
+                                client_id=client_id,
+                                clientscope_id=clientscope_id,
+                                realm=realm)
+                            # Assign Role
+                            self.create_client_scope_mappings_client_roles(
+                                client_id=client_id,
+                                clientscope_id=clientscope_id,
+                                rolesToAssing=rolesToAssing,
+                                realm=realm)
+                            changed = True
+            return changed
+        except Exception as e:
+            self.module.fail_json(msg='Could not assign roles to client %s in realm %s: %s'
+                                      % (client_id, realm, str(e)))
 
     def get_groups(self, realm="master"):
         """ Fetch the name and ID of all groups on the Keycloak server.
@@ -740,7 +1013,7 @@ class KeycloakAPI(object):
         except Exception as e:
             self.module.fail_json(msg="Unable to add client roles %s: %s" % (clientRepresentation["id"], str(e)))
 
-    def create_or_update_client_roles(self, newClientRoles, roleSvcBaseUrl, clientSvcBaseUrl, clientRolesUrl):
+    def create_or_update_client_roles(self, client_id, newClientRoles, realm='master'):
         """ Create or update client roles. Client roles can be added, updated or removed depending of the state.
 
         :param newClientRoles: Client roles to be added, updated or removed.
@@ -749,6 +1022,10 @@ class KeycloakAPI(object):
         :param clientRolesUrl: Url of the actual client roles
         :return: True if the client roles have changed, False otherwise
         """
+        id_client = self.get_client_by_clientid(client_id=client_id, realm=realm)["id"]
+        clientRolesUrl = URL_CLIENT_ROLES.format(url=self.baseurl,
+                                                 realm=realm,
+                                                 id=id_client)
         try:
             changed = False
             # Manage the roles
@@ -764,36 +1041,24 @@ class KeycloakAPI(object):
                         newComposites = newClientRole['composites']
                         for newComposite in newComposites:
                             if "id" in newComposite and newComposite["id"] is not None:
-                                keycloakClients = json.load(
-                                    open_url(clientSvcBaseUrl,
-                                             method='GET',
-                                             headers=self.restheaders))
-                                for keycloakClient in keycloakClients:
-                                    if keycloakClient['clientId'] == newComposite["id"]:
-                                        roles = json.load(
-                                            open_url(clientSvcBaseUrl + '/' + keycloakClient['id'] + '/roles',
-                                                     method='GET',
-                                                     headers=self.restheaders))
-                                        for role in roles:
-                                            if role["name"] == newComposite["name"]:
-                                                newComposite['id'] = role['id']
-                                                newComposite['clientRole'] = True
-                                                break
+                                # Get the id of client for this role
+                                role_client = self.get_client_by_clientid(client_id=newComposite["id"], realm=realm)
+                                if role_client is None:
+                                    self.module.fail_json(msg="Unable to create or update client roles, client %s does not exist" % (newComposite["id"]))
+                                else:
+                                    for role in self.get_client_roles(client_id=role_client["id"], realm=realm):
+                                        if role["name"] == newComposite["name"]:
+                                            newComposite['id'] = role['id']
+                                            newComposite['clientRole'] = True
+                                            break
                             else:
-                                realmRoles = json.load(
-                                    open_url(roleSvcBaseUrl,
-                                             method='GET',
-                                             headers=self.restheaders))
-                                for realmRole in realmRoles:
+                                for realmRole in self.get_realm_roles(realm=realm):
                                     if realmRole["name"] == newComposite["name"]:
                                         newComposite['id'] = realmRole['id']
                                         newComposite['clientRole'] = False
                                         break
                     clientRoleFound = False
-                    clientRoles = json.load(
-                        open_url(clientRolesUrl,
-                                 method='GET',
-                                 headers=self.restheaders))
+                    clientRoles = self.get_client_roles(client_id=id_client, realm=realm)
                     if len(clientRoles) > 0:
                         # Check if role to be created already exist for the client
                         for clientRole in clientRoles:
@@ -1346,6 +1611,7 @@ class KeycloakAPI(object):
         :param provider_type: Provider type of the component
         :param provider_id: Provider ID of the component
         :param parent_id: Parent ID of the component. Realm is used as parent for base component.
+        :param realm: Realm
         :return: Component's representation if found. An empty dict otherwise.
         """
         componentFound = {}
@@ -1439,13 +1705,14 @@ class KeycloakAPI(object):
                                  data=json.dumps(newSubComponent))
                         # Check if users and groups synchronization is needed
                         if component["providerType"] == "org.keycloak.storage.UserStorageProvider" and syncLdapMappers != "no":
-                            # Get subcomponents
-                            subComponents = self.get_component_by_name_provider_and_parent(
+                            # Get subcomponent
+                            subComponent = self.get_component_by_name_provider_and_parent(
                                 name=newSubComponent["name"],
                                 provider_type=newSubComponent["providerType"],
+                                provider_id=newSubComponent["providerId"],
                                 parent_id=component["id"],
                                 realm=realm)
-                            for subComponent in subComponents:
+                            if subComponent != {}:
                                 # Sync sub component
                                 sync_url = URL_USER_STORAGE_MAPPER_SYNC.format(
                                     url=self.baseurl,
@@ -2678,7 +2945,7 @@ class KeycloakAPI(object):
                     realm=realm)
                 changed = True
             # Assign clients roles if they need changes
-            if not isDictEquals(userClientRoles, newUserClientRoles):
+            if len(userClientRoles) > 0 and not isDictEquals(userClientRoles, newUserClientRoles):
                 for clientToAssingRole in userClientRoles:
                     # Get the client roles
                     client_id = self.get_client_by_clientid(
