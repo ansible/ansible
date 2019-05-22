@@ -96,6 +96,7 @@ commands:
 import re
 from copy import deepcopy
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.common.utils import remove_default_spec
@@ -211,7 +212,15 @@ def map_config_to_obj(module, warnings):
     for item in set(match):
         command = {'command': 'show interfaces {0} switchport | include Switchport'.format(item),
                    'output': 'text'}
-        command_result = run_commands(module, command)
+        try:
+            command_result = run_commands(module, command)
+        except AnsibleConnectionFailure as exc:
+            if str(exc) == "Interface does not exist":
+                warnings.append("Could not gather switchport information for {0}: {1}".format(item, str(exc)))
+                continue
+            else:
+                raise
+
         if command_result[0] == "% Interface does not exist":
             warnings.append("Could not gather switchport information for {0}: {1}".format(item, command_result[0]))
             continue
