@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_pkcs12 - fixes crash when private key has a passphrase and the module is run a second time."
