@@ -245,6 +245,10 @@ options:
         description: The ID of the subnet for the network interface.
       secondary_private_ip_address_count:
         description: The number of secondary private IPv4 addresses to assign to a network interface.
+  source_version:
+    description:
+    - Which version should be used when creating or updating launch template? By default, the first version will be made the default. This uses incase creating or updating launch template from specific version.
+    default: 1
   placement:
     description: The placement group settings for the instance.
     suboptions:
@@ -456,7 +460,7 @@ def create_or_update(module, template_options):
             resp = ec2.create_launch_template_version(
                 LaunchTemplateId=template['LaunchTemplateId'],
                 LaunchTemplateData=lt_data,
-                SourceVersion= module.params.get('source_version'),
+                SourceVersion=module.params.get('source_version'),
                 ClientToken=uuid4().hex,
                 aws_retry=True,
             )
