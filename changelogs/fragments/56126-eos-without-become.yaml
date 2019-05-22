@@ -1,0 +1,2 @@
+bugfixes:
+- eos: don't fail modules without become set, instead show message and continue
