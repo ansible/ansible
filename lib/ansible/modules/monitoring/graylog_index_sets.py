@@ -463,7 +463,7 @@ def main():
     action = module.params['action']
     title = module.params['title']
     id = module.params['id']
-    creation_date = datetime.datetime.utcnow().isoformat() + 'Z'
+    creation_date = module.params['creation_date'] or datetime.datetime.utcnow().isoformat() + 'Z'
 
     base_url = "https://%s/api/system/indices/index_sets" % (endpoint)
 
