@@ -38,8 +38,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao (@caohai)"
-    - "Yunge Zhu (@yungezz)"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
