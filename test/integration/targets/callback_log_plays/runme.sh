@@ -8,5 +8,5 @@ ansible-playbook ping_log.yml -v "$@"
 
 # now force it to fail
 chmod a-rx logit
-ansible-playbook ping_log.yml -v "$@"
+ansible-playbook ping_log.yml -v "$@" 2>&1| grep 'Failure using method (v2_runner_on_ok) in callback plugin'
 [ ! -f logit/localhost ]
