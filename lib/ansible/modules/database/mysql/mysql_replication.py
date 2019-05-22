@@ -103,6 +103,11 @@ options:
             - Whether the host uses GTID based replication or not.
         type: bool
         version_added: "2.0"
+    master_delay:
+        description:
+            - Time in seconds to lag behind the master's state
+        type: int
+        version_added: "2.9"
 extends_documentation_fragment:
 - mysql
 '''
@@ -210,6 +215,7 @@ def main():
             master_connect_retry=dict(type='int'),
             master_log_file=dict(type='str'),
             master_log_pos=dict(type='int'),
+            master_delay=dict(type='int'),
             relay_log_file=dict(type='str'),
             relay_log_pos=dict(type='int'),
             master_ssl=dict(type='bool', default=False),
@@ -233,6 +239,7 @@ def main():
     master_connect_retry = module.params["master_connect_retry"]
     master_log_file = module.params["master_log_file"]
     master_log_pos = module.params["master_log_pos"]
+    master_delay = module.params["master_delay"]
     relay_log_file = module.params["relay_log_file"]
     relay_log_pos = module.params["relay_log_pos"]
     master_ssl = module.params["master_ssl"]
@@ -307,6 +314,9 @@ def main():
         if master_log_pos is not None:
             chm.append("MASTER_LOG_POS=%(master_log_pos)s")
             chm_params['master_log_pos'] = master_log_pos
+        if master_delay is not None:
+            chm.append("MASTER_DELAY=%(master_delay)s")
+            chm_params['master_delay'] = master_delay
         if relay_log_file:
             chm.append("RELAY_LOG_FILE=%(relay_log_file)s")
             chm_params['relay_log_file'] = relay_log_file
