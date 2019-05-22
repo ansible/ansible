@@ -44,6 +44,11 @@ simple_config_file:
       logged_in_users: /VirtualBox/GuestInfo/OS/LoggedInUsersList
     compose:
       ansible_connection: ('indows' in vbox_Guest_OS)|ternary('winrm', 'ssh')
+
+# add hosts (all match with minishift vm) to the group container if any of the vms are in ansible_inventory'
+plugin: virtualbox
+groups:
+  container: "'minis' in (inventory_hostname)"
 '''
 
 import os
