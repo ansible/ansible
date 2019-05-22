@@ -17,14 +17,14 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvault_info
 version_added: "2.9"
-short_description: Get Azure Key Vault facts.
+short_description: Get Azure Key Vault facts
 description:
     - Get facts of Azure Key Vault.
 
 options:
     resource_group:
         description:
-            - The name of the resource Group to which the key vault belongs.
+            - The name of the resource group to which the key vault belongs.
     name:
         description:
             - The name of the key vault.
@@ -36,7 +36,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu (@yungezz)"
+    - Yunge Zhu (@yungezz)
 
 '''
 
@@ -46,11 +46,11 @@ EXAMPLES = '''
       resource_group: myResourceGroup
       name: myVault
 
-  - name: List Key Vault in specific resource group
+  - name: List Key Vaults in specific resource group
     azure_rm_keyvault_info:
       resource_group: myResourceGroup
 
-  - name: List Key Vault in current subscription
+  - name: List Key Vaults in current subscription
     azure_rm_keyvault_info:
 '''
 
