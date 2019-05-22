@@ -170,8 +170,8 @@ def find_datastore_by_name(content, datastore_name):
     return find_object_by_name(content, datastore_name, [vim.Datastore])
 
 
-def find_dvs_by_name(content, switch_name):
-    return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch])
+def find_dvs_by_name(content, switch_name, folder=None):
+    return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch], folder=folder)
 
 
 def find_hostsystem_by_name(content, hostname):
