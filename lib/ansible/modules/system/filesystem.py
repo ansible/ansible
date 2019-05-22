@@ -162,6 +162,8 @@ class Ext(Filesystem):
     GROW = 'resize2fs'
 
     def get_fs_size(self, dev):
+        fsck = self.module.get_bin_path('e2fsck', required=True)
+        self.module.run_command([fsck, '-fy', str(dev)], check_rc=True, environ_update=self.LANG_ENV)
         cmd = self.module.get_bin_path('tune2fs', required=True)
         # Get Block count and Block size
         _, size, _ = self.module.run_command([cmd, '-l', str(dev)], check_rc=True, environ_update=self.LANG_ENV)
@@ -191,6 +193,11 @@ class XFS(Filesystem):
     GROW = 'xfs_growfs'
 
     def get_fs_size(self, dev):
+        mount = self.module.get_bin_path('mount', required=True)
+        mnt = self.module.params['mountpoint']
+        if not os.path.exists(mnt):
+            os.mkdir(mnt, 0755)
+        self.module.run_command([mount, str(dev), mnt], check_rc=True)
         cmd = self.module.get_bin_path('xfs_growfs', required=True)
         _, size, _ = self.module.run_command([cmd, '-n', str(dev)], check_rc=True, environ_update=self.LANG_ENV)
         for line in size.splitlines():
@@ -350,7 +357,11 @@ def main():
             opts=dict(),
             force=dict(type='bool', default=False),
             resizefs=dict(type='bool', default=False),
+            mountpoint=dict(type='str', default=''),
         ),
+        required_if=[
+            ['fstype', 'xfs',[ 'mountpoint' ]]
+        ],
         supports_check_mode=True,
     )
 
