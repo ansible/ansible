@@ -186,10 +186,13 @@ class AzureRMBatchAccount(AzureRMModuleBaseExt):
                     '/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{name}')
             }
         if self.batch_account.get('key_vault') is not None:
-            self.batch_account['key_vault_reference'] = {
-                'id': self.normalize_resource_id(
+            id = self.normalize_resource_id(
                     self.batch_account.pop('key_vault'),
                     '/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{name}')
+            url = 'https://' + id.split('/').pop() + '.vault.azure.net/'
+            self.batch_account['key_vault_reference'] = {
+                'id': id,
+                'url': url
             }
         self.batch_account['pool_allocation_mode'] = _snake_to_camel(self.batch_account['pool_allocation_mode'], True)
 
