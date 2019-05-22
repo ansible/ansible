@@ -1,0 +1,2 @@
+minor_changes:
+- Add folder option in vmware_dvswitch to place distributed switch in a network specific folder (https://github.com/ansible/ansible/issues/54986).

@@ -66,7 +66,8 @@ No notable changes
 Noteworthy module changes
 -------------------------
 
-No notable changes
+* `vmware_dvswitch <vmware_dvswitch_module>` accepts `folder` parameter to place dvswitch in user defined folder.
+   This option makes `datacenter` as optional parameter.
 
 
 Plugins
