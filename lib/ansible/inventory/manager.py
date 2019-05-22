@@ -158,9 +158,6 @@ class InventoryManager(object):
     def hosts(self):
         return self._inventory.hosts
 
-    def get_vars(self, *args, **kwargs):
-        return self._inventory.get_vars(args, kwargs)
-
     def add_host(self, host, group=None, port=None):
         return self._inventory.add_host(host, group, port)
 
