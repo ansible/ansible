@@ -244,7 +244,7 @@ def main():
                                       meraki.params['config_template'],
                                       get_config_templates(meraki, org_id))
         if nets is None:
-            nets = meraki.get_nets(org_id=org_id)            
+            nets = meraki.get_nets(org_id=org_id)
         if is_network_bound(meraki, nets, net_id, template_id) is False:
             template_bind = bind(meraki,
                                  net_id,
