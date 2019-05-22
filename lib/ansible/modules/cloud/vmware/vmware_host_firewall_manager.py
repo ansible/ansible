@@ -122,37 +122,44 @@ rule_set_state:
     - dict with hostname as key and dict with firewall rule set facts as value
     returned: success
     type: dict
-    sample:
-        "rule_set_state": {
-            "localhost.localdomain": {
-                "CIMHttpServer": {
-                    "current_state": True,
-                    "desired_state": True,
-                    "previous_state": True
-                },
-                "vvold": {
-                    "current_state": True,
-                    "desired_state": True,
-                    "previous_state": True
-                },
-                "remoteSerialPort": {
-                    "current_state": True,
-                    "desired_state": True,
-                    "previous_state": True,
-                    "allowed_hosts": {
-                        "current_allowed_all": False,
-                        "previous_allowed_all": True,
-                        "desired_allowed_all": False,
-                        "current_allowed_ip": ["192.168.100.11"],
-                        "previous_allowed_ip": [],
-                        "desired_allowed_ip": ["192.168.100.11]",
-                        "current_allowed_networks": ["192.168.200.0/24"],
-                        "previous_allowed_networks": [],
-                        "desired_allowed_networks": ["192.168.200.0/24"],
+    sample: {
+                "rule_set_state": {
+                    "localhost.localdomain": {
+                        "CIMHttpServer": {
+                            "current_state": False,
+                            "desired_state": False,
+                            "previous_state": True,
+                            "allowed_hosts": {
+                                "current_allowed_all": True,
+                                "previous_allowed_all": True,
+                                "desired_allowed_all": True,
+                                "current_allowed_ip": [],
+                                "previous_allowed_ip": [],
+                                "desired_allowed_ip": [],
+                                "current_allowed_networks": [],
+                                "previous_allowed_networks": [],
+                                "desired_allowed_networks": [],
+                            }
+                        },
+                        "remoteSerialPort": {
+                            "current_state": True,
+                            "desired_state": True,
+                            "previous_state": True,
+                            "allowed_hosts": {
+                                "current_allowed_all": False,
+                                "previous_allowed_all": True,
+                                "desired_allowed_all": False,
+                                "current_allowed_ip": ["192.168.100.11"],
+                                "previous_allowed_ip": [],
+                                "desired_allowed_ip": ["192.168.100.11"],
+                                "current_allowed_networks": ["192.168.200.0/24"],
+                                "previous_allowed_networks": [],
+                                "desired_allowed_networks": ["192.168.200.0/24"],
+                            }
+                        }
                     }
                 }
             }
-        }
 '''
 
 try:
@@ -187,7 +194,7 @@ class VmwareFirewallManager(PyVmomi):
                     temp_rule_dict['enabled'] = rule_set_obj.enabled
                     allowed_host = rule_set_obj.allowedHosts
                     rule_allow_host = dict()
-                    rule_allow_host['ip_address'] = [ip for ip in allowed_host.ipAddress]
+                    rule_allow_host['ip_address'] = allowed_host.ipAddress
                     rule_allow_host['ip_network'] = [ip.network + "/" + str(ip.prefixLength) for ip in allowed_host.ipNetwork]
                     rule_allow_host['all_ip'] = allowed_host.allIp
                     temp_rule_dict['allowed_hosts'] = rule_allow_host
@@ -229,7 +236,6 @@ class VmwareFirewallManager(PyVmomi):
                     for ip_addr in rule_config[0]['ip_address']:
                         try:
                             ip = ipaddress.ip_address(ip_addr)
-                            print("ip is %s" % ip)
                         except ValueError:
                             self.module.fail_json(msg="The provided IP address %s is not a valid IP"
                                                       " for the rule %s" % (ip_addr, rule_name))
@@ -239,7 +245,6 @@ class VmwareFirewallManager(PyVmomi):
                     for ip_net in rule_config[0]['ip_network']:
                         try:
                             network_validation = ipaddress.ip_network(ip_net)
-                            print("network_validation is %s" % network_validation)
                         except ValueError:
                             self.module.fail_json(msg="The provided network %s is not a valid network"
                                                       " for the rule %s" % (ip_net, rule_name))
@@ -274,23 +279,10 @@ class VmwareFirewallManager(PyVmomi):
                 rule_allowed_networks = set(permitted_networking['allowed_hosts']['ip_network'])
                 playbook_allowed_networks = set(rule_config[0].get('ip_network', ''))
 
-                # compare allowed all IPs boolean to playbook
-                if rule_allows_all != playbook_allows_all:
-                    allowed_all_ips_different = True
-                else:
-                    allowed_all_ips_different = False
-
-                # compare IPs in list to desired IPs
-                if rule_allowed_ip != playbook_allowed_ip:
-                    ip_list_different = True
-                else:
-                    ip_list_different = False
-
-                # compare networks in list to desired networks
-                if rule_allowed_networks != playbook_allowed_networks:
-                    ip_network_different = True
-                else:
-                    ip_network_different = False
+                # compare what is configured on the firewall rule with what the playbook provides
+                allowed_all_ips_different = bool(rule_allows_all != playbook_allows_all)
+                ip_list_different = bool(rule_allowed_ip != playbook_allowed_ip)
+                ip_network_different = bool(rule_allowed_networks != playbook_allowed_networks)
 
                 # apply everything here in one function call
                 if allowed_all_ips_different is True or ip_list_different is True or ip_network_different is True:
@@ -311,7 +303,6 @@ class VmwareFirewallManager(PyVmomi):
                                     tmp_ip_network_spec.prefixLength = int(allowed_network.split("/")[1])
                                     firewall_spec.allowedHosts.ipNetwork.append(tmp_ip_network_spec)
 
-                            print("applying")
                             firewall_system.UpdateRuleset(id=rule_name, spec=firewall_spec)
                     except vim.fault.NotFound as not_found:
                         self.module.fail_json(msg="Failed to configure rule set %s as"
