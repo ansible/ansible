@@ -265,6 +265,9 @@ class DigitalOceanInventory(object):
         self.cache_filename = self.cache_path + "/ansible-digital_ocean.cache"
         self.cache_refreshed = False
 
+        if not os.path.exists(self.cache_path):
+            os.makedirs(os.path.abspath(self.cache_path), 0x1C0)
+
         if self.is_cache_valid():
             self.load_from_cache()
             if len(self.data) == 0:
