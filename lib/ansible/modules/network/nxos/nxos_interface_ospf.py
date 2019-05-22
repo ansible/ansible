@@ -53,6 +53,12 @@ options:
         Valid values are a string, formatted as an IP address
         (i.e. "0.0.0.0") or as an integer.
     required: true
+  bfd:
+    description:
+      - Enables bfd at interface level. This overrides the bfd variable set at the ospf router level. Valid values are 'true', 'false' (disable bfd on this interface), or 'default'.
+      - "Dependency: 'feature bfd'"
+    version_added: "2.9"
+    type: bool
   cost:
     description:
       - The cost associated with this cisco_interface_ospf instance.
@@ -112,12 +118,14 @@ EXAMPLES = '''
     interface: ethernet1/32
     ospf: 1
     area: 1
+    bfd: false
     cost: default
 
 - nxos_interface_ospf:
     interface: loopback0
     ospf: prod
     area: 0.0.0.0
+    bfd: true
     network: point-to-point
     state: present
 '''
@@ -148,6 +156,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'cost': 'ip ospf cost',
     'ospf': 'ip router ospf',
     'area': 'ip router ospf',
+    'bfd': 'ip ospf bfd',
     'hello_interval': 'ip ospf hello-interval',
     'dead_interval': 'ip ospf dead-interval',
     'passive_interface': 'ip ospf passive-interface',
@@ -196,6 +205,12 @@ def get_value(arg, config, module):
             value = False
         elif has_command:
             value = True
+        else:
+            value = None
+    elif arg == 'bfd':
+        m = re.search(r'\s*ip ospf bfd(?P<disable> disable)?', config)
+        if m:
+            value = False if m.group('disable') else True
         else:
             value = None
     elif arg in BOOL_PARAMS:
@@ -254,6 +269,8 @@ def get_default_commands(existing, proposed, existing_commands, key, module):
                 encryption_type,
                 existing['message_digest_password'])
             commands.append(command)
+    elif 'ip ospf bfd' in key:
+        commands.append('no {0}'.format(key))
     elif 'passive-interface' in key:
         commands.append('default ip ospf passive-interface')
     else:
@@ -310,6 +327,14 @@ def state_present(module, existing, proposed, candidate):
             module.fail_json(msg='loopback interface does not support passive_interface')
         if key == 'ip ospf network' and value == 'broadcast' and module.params.get('interface').upper().startswith('LO'):
             module.fail_json(msg='loopback interface does not support ospf network type broadcast')
+
+        if key == 'ip ospf bfd' and value is not True:
+            if value is False:
+                commands.append('ip ospf bfd disable')
+            elif 'default' in value and existing.get('bfd') is not None:
+                commands.append('no ip ospf bfd')
+            continue
+
         if value is True:
             commands.append(key)
         elif value is False:
@@ -339,7 +364,11 @@ def state_absent(module, existing, proposed, candidate):
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in existing_commands.items():
-        if 'ip ospf passive-interface' in key:
+        if 'ip ospf bfd' in key and value is not None:
+            # cli is present for both enabled or disabled; this removes either
+            commands.append('no ip ospf bfd')
+            continue
+        if 'ip ospf passive-interface' in key and value is not None:
             # cli is present for both enabled or disabled; 'no' will not remove
             commands.append('default ip ospf passive-interface')
             continue
@@ -388,6 +417,7 @@ def main():
         interface=dict(required=True, type='str'),
         ospf=dict(required=True, type='str'),
         area=dict(required=True, type='str'),
+        bfd=dict(required=False, type='str'),
         cost=dict(required=False, type='str'),
         hello_interval=dict(required=False, type='str'),
         dead_interval=dict(required=False, type='str'),
@@ -449,7 +479,7 @@ def main():
                 value = 'default'
             if existing.get(key) or (not existing.get(key) and value):
                 proposed[key] = value
-            elif 'passive_interface' in key and existing.get(key) is None and value is False:
+            elif re.search(r'bfd|passive_interface', key) and existing.get(key) is None and value is False:
                 proposed[key] = value
 
     proposed['area'] = normalize_area(proposed['area'], module)
