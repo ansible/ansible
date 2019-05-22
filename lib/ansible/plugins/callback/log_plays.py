@@ -17,6 +17,7 @@ DOCUMENTATION = '''
      - A writeable /var/log/ansible/hosts directory by the user executing Ansible on the controller
     options:
       log_folder:
+        version_added: '2.9'
         default: /var/log/ansible/hosts
         description: The folder where log files will be created.
         env:
