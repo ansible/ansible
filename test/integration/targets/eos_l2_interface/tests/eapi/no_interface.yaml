@@ -1,0 +1,24 @@
+---
+- debug:
+    msg: "START eos_l3_interface/eapi/no_interface.yaml on connection={{ ansible_connection }}"
+
+- name: Create fake interface
+  eos_interface:
+    name: Management0
+  become: yes
+
+- block:
+  - name: eos_l2_interface shouldn't fail
+    eos_l2_interface:
+      name: Ethernet1
+      state: absent
+    become: yes
+
+  always:
+  - name: Cleanup fake interface
+    cli_config:
+      config: no interface Management0
+    become: yes
+
+- debug:
+    msg: "END eos_l3_interface/eapi/no_interface.yaml on connection={{ ansible_connection }}"
