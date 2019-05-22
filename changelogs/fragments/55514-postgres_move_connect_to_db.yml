@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - postgresql - move connect_to_db and get_pg_version into module_utils/postgres.py (https://github.com/ansible/ansible/pull/55514)
