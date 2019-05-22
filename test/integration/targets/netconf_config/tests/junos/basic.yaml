@@ -52,4 +52,13 @@
     lines:
     - delete system syslog file test_netconf_config
 
+- name: save config
+  netconf_config:
+    backup: yes
+    register: result
+
+- assert:
+    that:
+      - "'backup_path' in result"
+
 - debug: msg="END netconf_config junos/basic.yaml on connection={{ ansible_connection }}"

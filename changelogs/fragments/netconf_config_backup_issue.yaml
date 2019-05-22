@@ -1,0 +1,2 @@
+bugfixes:
+- Fix netconf_config backup string issue (https://github.com/ansible/ansible/issues/56022)
