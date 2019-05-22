@@ -46,7 +46,7 @@ for aclass in class_list:
     oblist[name] = dict((x, aobj.__dict__['_attributes'][x]) for x in aobj.__dict__['_attributes'] if 'private' not in x or not x.private)
 
     # pick up docs if they exist
-    for a in oblist[name]:
+    for a in list(oblist[name]):
         if a in docs:
             oblist[name][a] = docs[a]
         else:
