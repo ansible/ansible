@@ -23,7 +23,11 @@
 - name: set two test variables state must be changed
   assert:
     that:
-      - gitlab_project_variable_state is changed
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 2
+      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 0
 
 - name: re-set two test variables
   gitlab_project_variable:
@@ -38,7 +42,11 @@
 - name: re-set two test variables state must not be changed
   assert:
     that:
-      - gitlab_project_variable_state is not changed
+      - not gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.present|length == 2
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 0
 
 - name: edit one variable
   gitlab_project_variable:
@@ -53,7 +61,12 @@
 - name: edit one variable state must be changed
   assert:
     that:
-      - gitlab_project_variable_state is changed
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 1
+      - gitlab_project_variable_state.project_variable.updated[0] == "ACCESS_KEY_ID"
 
 - name: append one variable
   gitlab_project_variable:
@@ -68,7 +81,12 @@
 - name: append one variable state must be changed
   assert:
     that:
-      - gitlab_project_variable_state is changed
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 1
+      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 0
+      - gitlab_project_variable_state.project_variable.added[0] == "some"
 
 - name: re-set all variables
   gitlab_project_variable:
@@ -84,7 +102,11 @@
 - name: re-set all variables state must not be changed
   assert:
     that:
-      - gitlab_project_variable_state is not changed
+      - not gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.present|length == 3
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 0
 
 - name: set one variables and purge all others
   gitlab_project_variable:
@@ -99,7 +121,11 @@
 - name: set one variables and purge all others state must be changed
   assert:
     that:
-      - gitlab_project_variable_state is changed
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.present|length == 1
+      - gitlab_project_variable_state.project_variable.removed|length == 2
+      - gitlab_project_variable_state.project_variable.updated|length == 0
 
 - name: only one variable is left
   gitlab_project_variable:
@@ -114,7 +140,12 @@
 - name: only one variable is left state must not be changed
   assert:
     that:
-      - gitlab_project_variable_state is not changed
+      - not gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.present|length == 1
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 0
+      - gitlab_project_variable_state.project_variable.present[0] == "some"
 
 - name: delete the last left variable
   gitlab_project_variable:
@@ -129,7 +160,12 @@
 - name: no variable is left state must be changed
   assert:
     that:
-      - gitlab_project_variable_state is changed
+      - gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 1
+      - gitlab_project_variable_state.project_variable.updated|length == 0
+      - gitlab_project_variable_state.project_variable.removed[0] == "some"
 
 - name: check that no variables are left
   gitlab_project_variable:
@@ -142,4 +178,8 @@
 - name: check that no variables are presented state must be changed
   assert:
     that:
-      - gitlab_project_variable_state is not changed
+      - not gitlab_project_variable_state.changed
+      - gitlab_project_variable_state.project_variable.added|length == 0
+      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.removed|length == 0
+      - gitlab_project_variable_state.project_variable.updated|length == 0
