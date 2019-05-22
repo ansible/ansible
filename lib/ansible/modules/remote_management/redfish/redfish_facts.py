@@ -26,23 +26,28 @@ options:
     description:
       - List of categories to execute on OOB controller
     default: ['Systems']
+    type: list
   command:
     required: false
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to OOB controller
