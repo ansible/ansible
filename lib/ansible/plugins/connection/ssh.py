@@ -1034,10 +1034,10 @@ class Connection(ConnectionBase):
 
             additional = to_native(b_stderr)
             if controlpersist_broken_pipe:
-                raise AnsibleControlPersistBrokenPipeError('SSH Error: data could not be sent because of ControlPersist broken pipe: %s' % additional)
+                raise AnsibleControlPersistBrokenPipeError('Data could not be sent because of ControlPersist broken pipe: %s' % additional)
 
             elif in_data and checkrc:
-                raise AnsibleConnectionFailure('SSH Error: data could not be sent to remote host "%s". Make sure this host can be reached over ssh: %s'
+                raise AnsibleConnectionFailure('Data could not be sent to remote host "%s". Make sure this host can be reached over ssh: %s'
                                                % (self.host, additional))
 
         return (p.returncode, b_stdout, b_stderr)
