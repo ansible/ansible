@@ -193,7 +193,7 @@ class GenericStrategy(object):
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
 
     def get_permanent_hostname(self):
-        return None
+        return 'UNKNOWN'
 
     def set_permanent_hostname(self, name):
         pass
@@ -417,20 +417,22 @@ class OpenRCStrategy(GenericStrategy):
     HOSTNAME_FILE = '/etc/conf.d/hostname'
 
     def get_permanent_hostname(self):
+        name = 'UNKNOWN'
         try:
             try:
                 f = open(self.HOSTNAME_FILE, 'r')
                 for line in f:
                     line = line.strip()
                     if line.startswith('hostname='):
-                        return line[10:].strip('"')
+                        name = line[10:].strip('"')
+                        break
             except Exception as e:
                 self.module.fail_json(msg="failed to read hostname: %s" %
                                           to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
-        return None
+        return name
 
     def set_permanent_hostname(self, name):
         try:
@@ -529,6 +531,7 @@ class FreeBSDStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
 
+        name = 'UNKNOWN'
         if not os.path.isfile(self.HOSTNAME_FILE):
             try:
                 open(self.HOSTNAME_FILE, "a").write("hostname=temporarystub\n")
@@ -541,14 +544,15 @@ class FreeBSDStrategy(GenericStrategy):
                 for line in f:
                     line = line.strip()
                     if line.startswith('hostname='):
-                        return line[10:].strip('"')
+                        name = line[10:].strip('"')
+                        break
             except Exception as e:
                 self.module.fail_json(msg="failed to read hostname: %s" %
                                           to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
 
-        return None
+        return name
 
     def set_permanent_hostname(self, name):
         try:
