@@ -37,7 +37,6 @@ import os
 from copy import deepcopy
 
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -419,7 +418,7 @@ class ACIModule(object):
                 self.filter_string += '&'
             else:
                 self.filter_string = '?'
-            self.filter_string += urlencode(accepted_params)
+            self.filter_string += '&'.join(['%s=%s' % (k, v) for (k, v) in accepted_params.items()])
 
     # TODO: This could be designed to accept multiple obj_classes and keys
     def build_filter(self, obj_class, params):
