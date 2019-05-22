@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabpolicy
 version_added: "2.8"
-short_description: Manage Azure Policy instance.
+short_description: Manage Azure Policy instance
 description:
     - Create, update and delete instance of Azure Policy.
 
@@ -43,7 +43,7 @@ options:
             - The description of the policy.
     fact_name:
         description:
-            - The fact name of the policy (e.g. C(lab_vm_count), C(lab_vm_size), MaxVmsAllowedPerLab, etc.
+            - The fact name of the policy (e.g. C(lab_vm_count), C(lab_vm_size)), MaxVmsAllowedPerLab, etc.
         choices:
             - 'user_owned_lab_vm_count'
             - 'user_owned_lab_premium_vm_count'
@@ -59,19 +59,19 @@ options:
         type: raw
     state:
       description:
-        - Assert the state of the Policy.
-        - Use C(present) to create or update an Policy and C(absent) to delete it.
+          - Assert the state of the Policy.
+          - Use C(present) to create or update an Policy and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
