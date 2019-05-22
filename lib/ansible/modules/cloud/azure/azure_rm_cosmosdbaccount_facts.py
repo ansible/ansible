@@ -125,7 +125,7 @@ accounts:
                     sample: 100
         failover_policies:
             description:
-                - Read locations.
+                - The list of new failover policies for the failover priority change.
             returned: always
             type: complex
             contains:
@@ -339,7 +339,7 @@ accounts:
                              q3dpJxJga76h9BZkK2BJJrDzSO6DDn6yKads017OZBZ1YZWyq1cW4iuvA=="
         tags:
             description:
-                - Tags assigned to the resource. Dictionary of string:string pairs.
+                - Tags assigned to the resource. Dictionary of "string": "string" pairs.
             returned: always
             type: dict
             sample: { "tag1": "abc" }
