@@ -159,9 +159,13 @@ cmd:
 
 import os
 import re
+import tempfile
+import random
+import string
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.crypto import  load_certificate
 
 
 def get_keystore_type(keystore_type):
@@ -182,6 +186,39 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias, 
         return True
     return False
 
+def export_cert(module, executable, keystore_path, keystore_pass, alias, keystore_type):
+    """ Uses keytool to export the certificate with the specified alias in PEM.
+          The certificate is returned as a PEM formatted string """
+    export_cmd = ("%s -noprompt -rfc -export -keystore '%s' -storepass '%s' "
+                "-alias '%s' %s") % (executable, keystore_path, keystore_pass, alias, get_keystore_type(keystore_type))
+    (_,stdout,_) = module.run_command(export_cmd)
+    return stdout
+
+def  convert_pem_string_to_x509_object(pem_string):
+  """ Takes a string containing a PEM formatted certificate and
+        returns an OpenSSL.crypto.x509 object """
+  try:
+    (_, tmp) = tempfile.mkstemp()
+    with open(tmp, 'w') as f:
+      f.write(pem_string)
+    cert = load_certificate(tmp)
+  finally:
+    os.remove(tmp)
+  return cert
+
+def convert_jks_to_pkcs12(module, executable, keystore_path, keystore_pass, alias, pkcs12_dest):
+  """ Creates a PKCS12 archive from an existing keystore """
+  convert_cmd = ("'%s' -importkeystore -srckeystore '%s' -srcstorepass '%s' "
+                "-srcalias '%s'  -deststoretype PKCS12 "
+                "-destalias '%s' -destkeystore '%s' -deststorepass '%s' -noprompt") % (executable, keystore_path, keystore_pass, alias, 
+                                                  alias, pkcs12_dest, keystore_pass)
+  module.run_command(convert_cmd)
+    
+def export_public_cert_from_pkcs12(module, pkcs_file,  alias, password, dest):
+  """ Runs Openssl to extract the public cert from a PKCS12 archive and write it to a file. """
+  export_cmd = ("openssl pkcs12 -in '%s' -nokeys -password pass:'%s' "
+                           " -name '%s' -out '%s'") %(pkcs_file, password, alias, dest )
+  module.run_command(export_cmd)
 
 def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias, keystore_type):
     ''' Import certificate from URL into keystore located at keystore_path '''
@@ -270,7 +307,7 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
         module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
 
 
-def delete_cert(module, executable, keystore_path, keystore_pass, alias, keystore_type):
+def delete_cert(module, executable, keystore_path, keystore_pass, alias, keystore_type, exit_after = True):
     ''' Delete certificate identified with alias from keystore on keystore_path '''
     del_cmd = ("%s -delete -keystore '%s' -storepass '%s' "
                "-alias '%s' %s") % (executable, keystore_path, keystore_pass, alias, get_keystore_type(keystore_type))
@@ -278,9 +315,10 @@ def delete_cert(module, executable, keystore_path, keystore_pass, alias, keystor
     # Delete SSL certificate from keystore
     (del_rc, del_out, del_err) = module.run_command(del_cmd, check_rc=True)
 
-    diff = {'before': '%s\n' % alias, 'after': None}
+    if exit_after:
+      diff = {'before': '%s\n' % alias, 'after': None}
 
-    module.exit_json(changed=True, msg=del_out,
+      module.exit_json(changed=True, msg=del_out,
                      rc=del_rc, cmd=del_cmd, stdout=del_out,
                      error=del_err, diff=diff)
 
@@ -354,10 +392,61 @@ def main():
     if not keystore_create:
         test_keystore(module, keystore_path)
 
-    cert_present = check_cert_present(module, executable, keystore_path,
+    cert_type = 'PKCS12' if pkcs12_path else 'X509'
+    digest = 'sha1'
+    alias_exists = check_cert_present(module, executable, keystore_path,
                                       keystore_pass, cert_alias, keystore_type)
 
-    if state == 'absent' and cert_present:
+    if not alias_exists:
+      cert_present = False
+    else:
+      # The alias exists in the keystore so we must now compare the SHA1 hash of the
+      # public certificate already in the keystore, and the certificate we  are wanting to add
+      if cert_type == 'PKCS12':
+          # To get the digest of the PKCS12 file we need to convert the JKS
+          # format to PKCS12. Then we can run OpenSSL to print out only the 
+          # public cert. We can then load the public cert and get the digest
+
+        # We need temporary places to store the transformations from JKS -> PKCS12 -> X509
+        # The keytool program wont create a keystore if a file already exists, so we can't use a tmpfile
+        # for the pkcs12 transformation
+        random_name = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(12))
+        tmp_pkcs12_store = os.path.join(tempfile.gettempdir(), random_name)
+        (_, tmp_pem_cert) = tempfile.mkstemp()
+        (_, tmp_pem_cert2) = tempfile.mkstemp()
+        try:
+          convert_jks_to_pkcs12(module, executable, keystore_path,
+                                            keystore_pass, cert_alias, tmp_pkcs12_store)
+
+          export_public_cert_from_pkcs12(module, tmp_pkcs12_store, cert_alias, keystore_pass, tmp_pem_cert)
+          keystore_cert_digest = load_certificate(tmp_pem_cert).digest(digest)
+
+          export_public_cert_from_pkcs12(module, pkcs12_path, cert_alias, keystore_pass, tmp_pem_cert2)
+          new_cert_digest = load_certificate(tmp_pem_cert2).digest(digest)
+        finally:
+          try:
+            os.remove(tmp_pkcs12_store)
+          except OSError:
+            pass
+          os.remove(tmp_pem_cert)
+          os.remove(tmp_pem_cert2)
+      else:
+        # Extracting the X509 digest is a bit easier. Keytool will print the PEM 
+        # certificate to stdout so we don't need to do any transformations.
+        keystore_cert_pem = export_cert(module, executable, keystore_path,
+                                                  keystore_pass, cert_alias, keystore_type)
+        keystore_cert_digest = convert_pem_string_to_x509_object(keystore_cert_pem).digest(digest)
+        new_cert_digest = load_certificate(path).digest(digest)
+
+    # Perform the comparison between digests. If they are the same then
+    # we know that the correct cert is present
+
+    if alias_exists and keystore_cert_digest == new_cert_digest: 
+      cert_present = True
+    else: 
+      cert_present = False
+
+    if state == 'absent' and alias_exists:
         if module.check_mode:
             module.exit_json(changed=True)
 
@@ -366,6 +455,11 @@ def main():
     elif state == 'present' and not cert_present:
         if module.check_mode:
             module.exit_json(changed=True)
+
+        # The certificate in the keystore does not match with the one we want to be present
+        # The existing certificate must first be deleted before we insert the correct one
+        if alias_exists:
+          delete_cert(module, executable, keystore_path, keystore_pass, cert_alias, keystore_type, False)
 
         if pkcs12_path:
             import_pkcs12_path(module, executable, pkcs12_path, keystore_path,
