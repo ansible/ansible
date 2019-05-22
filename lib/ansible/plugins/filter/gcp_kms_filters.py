@@ -15,7 +15,6 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.gcp_utils import GcpSession
-import requests
 
 
 class GcpMockModule(object):
@@ -24,12 +23,6 @@ class GcpMockModule(object):
 
     def fail_json(self, *args, **kwargs):
         raise AnsibleError(kwargs['msg'])
-
-    def raise_for_status(self, response):
-        try:
-            response.raise_for_status()
-        except getattr(requests.exceptions, 'RequestException'):
-            self.fail_json(msg="GCP returned error: %s" % response.json())
 
 
 class GcpKmsFilter():
