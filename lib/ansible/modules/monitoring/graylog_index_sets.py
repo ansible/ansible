@@ -436,7 +436,7 @@ def main():
             action=dict(type='str', required=False, default='list', choices=['create', 'update', 'delete', 'list', 'query_index_sets']),
             title=dict(type='str'),
             description=dict(type='str'),
-            creation_date=dict(type='str', required=False, default=datetime.datetime.utcnow().isoformat() + 'Z'),
+            creation_date=dict(type='str', required=False),
             id=dict(type='str'),
             index_prefix=dict(type='str'),
             index_analyzer=dict(type='str', default="standard"),
