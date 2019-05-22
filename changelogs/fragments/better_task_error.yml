@@ -1,0 +1,2 @@
+bugfixes:
+    - display underlying error when reporting an invalid ``tasks:`` block.
