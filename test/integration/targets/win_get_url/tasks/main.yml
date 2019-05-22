@@ -39,6 +39,10 @@
       state: started
       dependencies:
       - tcpip
+    register: service_setup
+    until: service_setup is successful
+    retries: 5
+    delay: 3
 
   - name: run URL tests
     import_tasks: tests_url.yml
