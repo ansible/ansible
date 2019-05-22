@@ -427,7 +427,9 @@ files:
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan robinro
   $modules/remote_management/foreman/: ehelms
-  $modules/remote_management/hpilo/: dagwieers haad
+  $modules/remote_management/hpilo/:
+    maintainers: haad
+    ignored: dagwieers
   $modules/remote_management/imc/:
     labels: [ cisco ]
     maintainers: $team_imc
@@ -1459,14 +1461,14 @@ macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
-  team_aci: brunocalogero dagwieers jmcgill298 mtorelli rsmeyers schunduri smnmtzgr
+  team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
   team_aireos: jmighion
   team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_asa: gdpak ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho yungezz zikalino
-  team_bsd: bcoca dagwieers jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
+  team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_crypto: felixfontein MarkusTeufelberger puiterwijk resmo Spredzy Shaps Xyon
@@ -1491,10 +1493,10 @@ macros:
   team_jboss: jairojunior wbrefvem Wolfant
   team_kubevirt: machacekondra mmazur pkliczewski
   team_linode: InTheCloudDan lwm displague rmcintosh
-  team_macos: akasurde dagwieers kyleabenson
+  team_macos: akasurde dagwieers kyleabenson martinm82
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
-  team_meraki: dagwieers kbreit
-  team_mysql: bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon
+  team_meraki: kbreit
+  team_mysql: Alexander198961 bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
   team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
@@ -1513,11 +1515,11 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
-  team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
+  team_solaris: bcoca dagwieers danowar2k fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_tower: ghjm matburt wwitzel3 ryanpetrello rooftopcellist AlanCoding jladdjr kdelee
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
   team_vmware: Akasurde dav1x warthog9 Tomorrow9 goneri
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
-  team_windows: dagwieers jborean93 jhawkesworth nitzmahone
+  team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
   team_windows_core: nitzmahone jborean93
