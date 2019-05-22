@@ -15,7 +15,7 @@ import sys
 
 from abc import ABCMeta, abstractmethod
 
-from ansible.cli.arguments import option_helpers as opt_help
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleOptionsError, AnsibleError
