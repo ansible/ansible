@@ -470,10 +470,14 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                 self.module.fail_json(msg="Failed to retrieve storage array workload tags. Array [%s]" % self.ssid)
 
             # Generate common indexed Ansible workload tag
-            tag_index = max([int(pair["value"].replace("ansible_workload_", ""))
-                             for tag in workload_tags for pair in tag["workloadAttributes"]
-                             if pair["key"] == "profileId" and "ansible_workload_" in pair["value"] and
-                             str(pair["value"]).replace("ansible_workload_", "").isdigit()]) + 1
+            current_tag_index_list = [int(pair["value"].replace("ansible_workload_", ""))
+                                      for tag in workload_tags for pair in tag["workloadAttributes"]
+                                      if pair["key"] == "profileId" and "ansible_workload_" in pair["value"] and
+                                      str(pair["value"]).replace("ansible_workload_", "").isdigit()]
+
+            tag_index = 1
+            if current_tag_index_list:
+                tag_index = max(current_tag_index_list) + 1
 
             ansible_profile_id = "ansible_workload_%d" % tag_index
             request_body = dict(name=self.workload_name,
