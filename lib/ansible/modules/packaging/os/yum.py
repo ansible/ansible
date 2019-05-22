@@ -762,7 +762,7 @@ class YumModule(YumDnf):
                 os.environ["https_proxy"] = old_proxy_env[1]
 
     def pkg_to_dict(self, pkgstr):
-        if pkgstr.strip():
+        if pkgstr.strip() and pkgstr.count('|') == 5:
             n, e, v, r, a, repo = pkgstr.split('|')
         else:
             return {'error_parsing': pkgstr}
