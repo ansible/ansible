@@ -58,7 +58,7 @@ RETURN = '''
 keyvaults:
     description: List of Azure Key Vaults.
     returned: always
-    type: complex
+    type: list
     contains:
         name:
             description:
@@ -151,24 +151,24 @@ keyvaults:
                             type: list
                             returned: always
                             sample:
-                                - Get
-                                - Create
+                                - get
+                                - create
                         secrets:
                             description:
                                 Permissions to secrets.
                             type: list
                             returned: always
                             sample:
-                                - List
-                                - Set
+                                - list
+                                - set
                         certificates:
                             description:
                                 Permissions to secrets.
                             type: list
                             returned: always
                             sample:
-                                - Get
-                                - Import
+                                - get
+                                - import
 '''
 
 
@@ -196,9 +196,9 @@ def keyvault_to_dict(vault):
             tenant_id=policy.tenant_id,
             object_id=policy.object_id,
             permissions=dict(
-                keys=[kp for kp in policy.permissions.keys] if policy.permissions.keys else None,
-                secrets=[sp for sp in policy.permissions.secrets] if policy.permissions.secrets else None,
-                certificates=[cp for cp in policy.permissions.certificates] if policy.permissions.certificates else None
+                keys=[kp.lower() for kp in policy.permissions.keys] if policy.permissions.keys else None,
+                secrets=[sp.lower() for sp in policy.permissions.secrets] if policy.permissions.secrets else None,
+                certificates=[cp.lower() for cp in policy.permissions.certificates] if policy.permissions.certificates else None
             ) if policy.permissions else None,
         ) for policy in vault.properties.access_policies] if vault.properties.access_policies else None,
         sku=dict(
