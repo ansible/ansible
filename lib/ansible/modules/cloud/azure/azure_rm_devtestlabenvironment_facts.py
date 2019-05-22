@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabenvironment_facts
 version_added: "2.8"
-short_description: Get Azure Environment facts.
+short_description: Get Azure Environment facts
 description:
     - Get facts of Azure Environment.
 
@@ -45,7 +45,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -60,7 +60,8 @@ EXAMPLES = '''
 
 RETURN = '''
 environments:
-    description: A list of dictionaries containing facts for Environment.
+    description:
+        - A list of dictionaries containing facts for Environment.
     returned: always
     type: complex
     contains:
