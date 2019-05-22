@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: ec2_launch_template
-version_added: "2.9"
+version_added: "2.8"
 short_description: Manage EC2 launch templates
 description:
   - Create, modify, and delete EC2 Launch Templates, which can be used to
