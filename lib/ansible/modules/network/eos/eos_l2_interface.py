@@ -298,9 +298,7 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module, warnings)
