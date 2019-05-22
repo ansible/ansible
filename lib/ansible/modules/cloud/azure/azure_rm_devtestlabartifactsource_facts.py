@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabartifactsource_facts
 version_added: "2.8"
-short_description: Get Azure DevTest Lab Artifact Source facts.
+short_description: Get Azure DevTest Lab Artifact Source facts
 description:
     - Get facts of Azure DevTest Lab Artifact Source.
 
@@ -41,7 +41,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -55,7 +55,8 @@ EXAMPLES = '''
 
 RETURN = '''
 artifactsources:
-    description: A list of dictionaries containing facts for DevTest Lab Artifact Source.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab Artifact Source.
     returned: always
     type: complex
     contains:
@@ -86,13 +87,13 @@ artifactsources:
             sample: myArtifactSource
         display_name:
             description:
-                - "The artifact source's display name."
+                - The artifact source's display name.
             returned: always
             type: str
             sample: Public Artifact Repo
         source_type:
             description:
-                - "The artifact source's type."
+                - The artifact source's type.
             returned: always
             type: str
             sample: github
