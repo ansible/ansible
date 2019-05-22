@@ -1,0 +1,2 @@
+minor_changes:
+- "log_plays - Add a new log_folder option to the log_plays callback plugin."

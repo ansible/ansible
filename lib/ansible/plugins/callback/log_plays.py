@@ -12,16 +12,25 @@ DOCUMENTATION = '''
     version_added: historical
     description:
       - This callback writes playbook output to a file per host in the `/var/log/ansible/hosts` directory
-      - "TODO: make this configurable"
     requirements:
      - Whitelist in configuration
      - A writeable /var/log/ansible/hosts directory by the user executing Ansible on the controller
+    options:
+      log_folder:
+        default: /var/log/ansible/hosts
+        description: The folder where log files will be created.
+        env:
+          - name: ANSIBLE_LOG_FOLDER
+        ini:
+          - section: callback_log_plays
+            key: log_folder
 '''
 
 import os
 import time
 import json
 
+from ansible.utils.path import makedirs_safe
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
@@ -51,8 +60,13 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
-        if not os.path.exists("/var/log/ansible/hosts"):
-            os.makedirs("/var/log/ansible/hosts")
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.log_folder = self.get_option("log_folder")
+
+        if not os.path.exists(self.log_folder):
+            makedirs_safe(self.log_folder)
 
     def log(self, host, category, data):
         if isinstance(data, MutableMapping):
@@ -66,7 +80,7 @@ class CallbackModule(CallbackBase):
                 if invocation is not None:
                     data = json.dumps(invocation) + " => %s " % data
 
-        path = os.path.join("/var/log/ansible/hosts", host)
+        path = os.path.join(self.log_folder, host)
         now = time.strftime(self.TIME_FORMAT, time.localtime())
 
         msg = to_bytes(self.MSG_FORMAT % dict(now=now, category=category, data=data))
