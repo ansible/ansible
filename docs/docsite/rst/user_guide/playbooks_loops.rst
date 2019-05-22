@@ -402,6 +402,45 @@ Variable                    Description
       loop_control:
         extended: yes
 
+Notification scope in the loop
+------------------------------
+.. versionadded:: 2.9
+
+By default, if each loop item triggers different notification target, all targets for all items get triggered even if
+only single item has changed. In the following task, only the first item is marked as changed but both handlers get
+triggered anyway::
+
+    - shell: "{{ item.cmd }}"
+      notify: "{{ item.notify }}"
+      changed_when: ansible_loop.first
+      loop:
+        - cmd: echo ONE
+          notify:
+            - Handler one
+        - cmd: echo TWO
+          notify:
+            - Handler two
+      loop_control:
+        extended: yes
+
+It's possible to change this behaviour by adding the ``notify_scope`` parameter with the value of ``per_loop_item``
+(default value of ``notify_scope`` is ``task``) into the ``loop_control``. The following task will trigger only the
+``Handler one``::
+
+    - shell: "{{ item.cmd }}"
+      notify: "{{ item.notify }}"
+      changed_when: ansible_loop.first
+      loop:
+        - cmd: echo ONE
+          notify:
+            - Handler one
+        - cmd: echo TWO
+          notify:
+            - Handler two
+      loop_control:
+        extended: yes
+        notify_scope: per_loop_item
+
 Accessing the name of your loop_var
 -----------------------------------
 .. versionadded:: 2.8

@@ -287,6 +287,7 @@ class TaskExecutor:
         task_vars = self._job_vars
 
         loop_var = 'item'
+        notify_scope = 'task'
         index_var = None
         label = None
         loop_pause = 0
@@ -296,6 +297,7 @@ class TaskExecutor:
         # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
         if self._task.loop_control:
             loop_var = templar.template(self._task.loop_control.loop_var)
+            notify_scope = templar.template(self._task.loop_control.notify_scope)
             index_var = templar.template(self._task.loop_control.index_var)
             loop_pause = templar.template(self._task.loop_control.pause)
             extended = templar.template(self._task.loop_control.extended)
@@ -321,6 +323,7 @@ class TaskExecutor:
         items_len = len(items)
         for item_index, item in enumerate(items):
             task_vars['ansible_loop_var'] = loop_var
+            task_vars['notify_scope'] = notify_scope
 
             task_vars[loop_var] = item
             if index_var:
@@ -750,10 +753,18 @@ class TaskExecutor:
                 if C.INJECT_FACTS_AS_VARS:
                     variables.update(clean_facts(af))
 
-        # save the notification target in the result, if it was specified, as
+        # Save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
-        # may be item-specific, ie. "notify: service {{item}}"
-        if self._task.notify is not None:
+        # may be item-specific, ie. "notify: service {{item}}".
+        # Save all notification targets from all loop items if any item has
+        # changed and loop_control.notify_scope='task' (default) or save only
+        # notification targets only from items which changed if loop_control.notify_scope='per_loop_item'
+        if (
+                self._task.notify is not None and (
+                    'notify_scope' not in variables or
+                    variables['notify_scope'] != 'per_loop_item' or (
+                        variables['notify_scope'] == 'per_loop_item' and
+                        result['changed']))):
             result['_ansible_notify'] = self._task.notify
 
         # add the delegated vars to the result, so we can reference them

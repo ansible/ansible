@@ -1,0 +1,13 @@
+---
+
+- name: Handler one
+  debug:
+    msg: Handler one
+  register:
+    handler_one
+
+- name: Handler two
+  debug:
+    msg: Handler two
+  register:
+    handler_two
