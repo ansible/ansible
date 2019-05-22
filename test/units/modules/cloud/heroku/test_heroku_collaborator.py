@@ -33,7 +33,8 @@ class TestHerokuCollaboratorModule(ModuleTestCase):
 
     @check_mode_flag
     @patch('ansible.module_utils.heroku.HerokuHelper.get_heroku_client')
-    def test_add_collaborator(self, client_mock, *args, check_mode):
+    def test_add_collaborator(self, client_mock, *args, **kwargs):
+        check_mode = kwargs['check_mode']
         heroku_app_mock = MagicMock()
         client_mock.return_value.apps.return_value = {
             'heroku-example-app': heroku_app_mock,
@@ -64,7 +65,8 @@ class TestHerokuCollaboratorModule(ModuleTestCase):
 
     @check_mode_flag
     @patch('ansible.module_utils.heroku.HerokuHelper.get_heroku_client')
-    def test_add_collaborator_apps_empty(self, client_mock, *args, check_mode):
+    def test_add_collaborator_apps_empty(self, client_mock, *args, **kwargs):
+        check_mode = kwargs['check_mode']
         heroku_app_mock = MagicMock()
         client_mock.return_value.apps.return_value = {
             'heroku-example-app': heroku_app_mock,
@@ -88,7 +90,8 @@ class TestHerokuCollaboratorModule(ModuleTestCase):
 
     @check_mode_flag
     @patch('ansible.module_utils.heroku.HerokuHelper.get_heroku_client')
-    def test_add_collaborator_multiple_apps(self, client_mock, *args, check_mode):
+    def test_add_collaborator_multiple_apps(self, client_mock, *args, **kwargs):
+        check_mode = kwargs['check_mode']
         collaborator_mock = MagicMock()
         collaborator_mock.user.email = 'max.mustermann@example.com'
 
@@ -127,7 +130,8 @@ class TestHerokuCollaboratorModule(ModuleTestCase):
 
     @check_mode_flag
     @patch('ansible.module_utils.heroku.HerokuHelper.get_heroku_client')
-    def test_add_collaborator_exist(self, client_mock, *args, check_mode):
+    def test_add_collaborator_exist(self, client_mock, *args, **kwargs):
+        check_mode = kwargs['check_mode']
         collaborator_mock = MagicMock()
         collaborator_mock.user.email = 'max.mustermann@example.com'
 
@@ -154,7 +158,8 @@ class TestHerokuCollaboratorModule(ModuleTestCase):
 
     @check_mode_flag
     @patch('ansible.module_utils.heroku.HerokuHelper.get_heroku_client')
-    def test_remove_collaborator(self, client_mock, *args, check_mode):
+    def test_remove_collaborator(self, client_mock, *args, **kwargs):
+        check_mode = kwargs['check_mode']
         collaborator_mock = MagicMock()
         collaborator_mock.user.email = 'max.mustermann@example.com'
 
@@ -185,7 +190,8 @@ class TestHerokuCollaboratorModule(ModuleTestCase):
 
     @check_mode_flag
     @patch('ansible.module_utils.heroku.HerokuHelper.get_heroku_client')
-    def test_remove_collaborator_apps_empty(self, client_mock, *args, check_mode):
+    def test_remove_collaborator_apps_empty(self, client_mock, *args, **kwargs):
+        check_mode = kwargs['check_mode']
         collaborator_mock = MagicMock()
         collaborator_mock.user.email = 'max.mustermann@example.com'
 
@@ -212,7 +218,8 @@ class TestHerokuCollaboratorModule(ModuleTestCase):
 
     @check_mode_flag
     @patch('ansible.module_utils.heroku.HerokuHelper.get_heroku_client')
-    def test_remove_collaborator_multiple_apps(self, client_mock, *args, check_mode):
+    def test_remove_collaborator_multiple_apps(self, client_mock, *args, **kwargs):
+        check_mode = kwargs['check_mode']
         example_collaborator_mock = MagicMock()
         example_collaborator_mock.user.email = 'max.mustermann@example.com'
 
