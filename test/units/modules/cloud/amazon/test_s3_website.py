@@ -64,7 +64,8 @@ class TestS3WebsiteModule(ModuleTestCase):
         },
     ])
     @patch.object(s3_website, 'get_aws_connection_info', return_value=('eu-central-1', None, {}))
-    def test_enable_website(self, *args, module_args, bucket_website, response):
+    def test_enable_website(self, *args, **kwargs):
+        module_args, bucket_website, response = map(kwargs.get, ('module_args', 'bucket_website', 'response'))
         client_connection_mock = MagicMock(get_bucket_website=MagicMock(side_effect=[None, bucket_website]))
 
         bucket_website_mock = MagicMock()
@@ -86,7 +87,8 @@ class TestS3WebsiteModule(ModuleTestCase):
 
             bucket_website_mock.put.assert_called_once_with(WebsiteConfiguration=bucket_website)
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
-            self.assertTrue(response.items() <= exec_info.exception.args[0].items())
+            # When Python 2.6 support can be dropped, simply assert response.items() <= exec_info.exception.args[0].items()
+            self.assertTrue(all(exec_info.exception.args[0][k] == v for k, v in response.items()))
 
     @patch.object(s3_website, 'get_aws_connection_info', return_value=('eu-central-1', None, {}))
     def test_enable_website_check_mode(self, *args):
@@ -128,7 +130,8 @@ class TestS3WebsiteModule(ModuleTestCase):
         },
     ])
     @patch.object(s3_website, 'get_aws_connection_info', return_value=('eu-central-1', None, {}))
-    def test_update_website(self, *args, bucket_website, module_args, call_params):
+    def test_update_website(self, *args, **kwargs):
+        module_args, bucket_website, call_params = map(kwargs.get, ('module_args', 'bucket_website', 'call_params'))
         client_connection_mock = MagicMock(get_bucket_website=MagicMock(return_value=bucket_website))
 
         bucket_website_mock = MagicMock()
