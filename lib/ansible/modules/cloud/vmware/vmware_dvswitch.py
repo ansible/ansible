@@ -37,13 +37,17 @@ options:
     datacenter_name:
         description:
             - The name of the datacenter that will contain the Distributed Switch.
-        required: True
+            - This parameter is optional, if C(folder) is provided.
+            - Mutually exclusive with C(folder) parameter.
+        required: False
         aliases: ['datacenter']
+        type: str
     switch_name:
         description:
         - The name of the distribute vSwitch to create or remove.
         required: True
         aliases: ['switch', 'dvswitch']
+        type: str
     switch_version:
         description:
             - The version of the Distributed Switch to create.
@@ -55,6 +59,7 @@ options:
         version_added: 2.5
         choices: ['5.0.0', '5.1.0', '5.5.0', '6.0.0', '6.5.0', '6.6.0']
         aliases: ['version']
+        type: str
     mtu:
         description:
             - The switch maximum transmission unit.
@@ -78,6 +83,7 @@ options:
             - The uplink quantity can be increased or decreased, but a decrease will only be successfull if the uplink isn't used by a portgroup.
             - Required parameter for C(state) both C(present) and C(absent), before Ansible 2.6 version.
             - Required only if C(state) is set to C(present), for Ansible 2.6 and onwards.
+        type: int
     uplink_prefix:
         description:
             - The prefix used for the naming of the uplinks.
@@ -85,6 +91,7 @@ options:
             - Uplinks are created as Uplink 1, Uplink 2, etc. pp. by default.
         default: 'Uplink '
         version_added: 2.8
+        type: str
     discovery_proto:
         description:
             - Link discovery protocol between Cisco and Link Layer discovery.
@@ -95,7 +102,8 @@ options:
             - 'C(disabled): Do not use a discovery protocol.'
         choices: ['cdp', 'lldp', 'disabled']
         default: 'cdp'
-        aliases: ['discovery_protocol']
+        aliases: [ 'discovery_protocol' ]
+        type: str
     discovery_operation:
         description:
             - Select the discovery operation.
@@ -103,6 +111,7 @@ options:
             - Required only if C(state) is set to C(present), for Ansible 2.6 and onwards.
         choices: ['both', 'advertise', 'listen']
         default: 'listen'
+        type: str
     contact:
         description:
             - Dictionary which configures administrtor contact name and description for the Distributed Switch.
@@ -140,6 +149,24 @@ options:
             - If set to C(absent) and the Distributed Switch exists then the Distributed Switch will be deleted.
         default: 'present'
         choices: ['present', 'absent']
+        type: str
+    folder:
+        description:
+            - Destination folder, absolute path to place dvswitch in.
+            - The folder should include the datacenter.
+            - This parameter is case sensitive.
+            - This parameter is optional, if C(datacenter) is provided.
+            - 'Examples:'
+            - '   folder: /datacenter1/network'
+            - '   folder: datacenter1/network'
+            - '   folder: /datacenter1/network/folder1'
+            - '   folder: datacenter1/network/folder1'
+            - '   folder: /folder1/datacenter1/network'
+            - '   folder: folder1/datacenter1/network'
+            - '   folder: /folder1/datacenter1/network/folder2'
+        required: False
+        type: str
+        version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -229,7 +256,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.vmware import (
-    PyVmomi, find_datacenter_by_name, TaskError, find_dvs_by_name, vmware_argument_spec, wait_for_task
+    PyVmomi, TaskError, find_dvs_by_name, vmware_argument_spec, wait_for_task
 )
 
 
@@ -238,14 +265,26 @@ class VMwareDvSwitch(PyVmomi):
     def __init__(self, module):
         super(VMwareDvSwitch, self).__init__(module)
         self.dvs = None
-        self.datacenter = None
+
         self.switch_name = self.module.params['switch_name']
         self.switch_version = self.module.params['switch_version']
         if self.content.about.version == '6.7.0':
             self.vcenter_switch_version = '6.6.0'
         else:
             self.vcenter_switch_version = self.content.about.version
-        self.datacenter_name = self.module.params['datacenter_name']
+        folder = self.params['folder']
+        if folder:
+            self.folder_obj = self.content.searchIndex.FindByInventoryPath(folder)
+            if not self.folder_obj:
+                self.module.fail_json(msg="Failed to find the folder specified by %(folder)s" % self.params)
+        else:
+            datacenter_name = self.params.get('datacenter_name')
+            datacenter_obj = self.find_datacenter_by_name(datacenter_name)
+            if not datacenter_obj:
+                self.module.fail_json(msg="Failed to find datacenter '%s' required"
+                                          " for managing distributed vSwitch." % datacenter_name)
+            self.folder_obj = datacenter_obj.networkFolder
+
         self.mtu = self.module.params['mtu']
         # MTU sanity check
         if not 1280 <= self.mtu <= 9000:
@@ -295,12 +334,7 @@ class VMwareDvSwitch(PyVmomi):
 
     def check_dvs(self):
         """Check if DVS is present"""
-        datacenter = find_datacenter_by_name(self.content, self.datacenter_name)
-        if datacenter is None:
-            self.module.fail_json(msg="Failed to find datacenter %s" % self.datacenter_name)
-        else:
-            self.datacenter = datacenter
-        self.dvs = find_dvs_by_name(self.content, self.switch_name)
+        self.dvs = find_dvs_by_name(self.content, self.switch_name, folder=self.folder_obj)
         if self.dvs is None:
             return 'absent'
         return 'present'
@@ -346,7 +380,7 @@ class VMwareDvSwitch(PyVmomi):
             result = "DVS would be created"
         else:
             # Create DVS
-            network_folder = self.datacenter.networkFolder
+            network_folder = self.folder_obj
             task = network_folder.CreateDVS_Task(spec)
             try:
                 wait_for_task(task)
@@ -654,7 +688,8 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         dict(
-            datacenter_name=dict(required=True, aliases=['datacenter']),
+            datacenter_name=dict(aliases=['datacenter']),
+            folder=dict(),
             switch_name=dict(required=True, aliases=['switch', 'dvswitch']),
             mtu=dict(type='int', default=1500),
             multicast_filtering_mode=dict(type='str', default='basic', choices=['basic', 'snooping']),
@@ -701,6 +736,12 @@ def main():
         required_if=[
             ('state', 'present',
              ['uplink_quantity']),
+        ],
+        required_one_of=[
+            ['folder', 'datacenter_name'],
+        ],
+        mutually_exclusive=[
+            ['folder', 'datacenter_name'],
         ],
         supports_check_mode=True,
     )
