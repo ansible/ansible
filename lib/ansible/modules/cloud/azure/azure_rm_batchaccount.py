@@ -39,18 +39,13 @@ options:
         - "It can be the storage account ID. e.g., /subscriptions/{subscription_id}
            /resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{name}."
         - It can be a dict which contains C(name) and C(resource_group) of the storage account.
-    key_vault_reference:
+    key_vault:
         description:
-        - A reference to the Azure key vault associated with the Batch account.
-        suboptions:
-            id:
-                description:
-                - The resource ID of the Azure key vault associated with the Batch account.
-                required: true
-            url:
-                description:
-                - The URL of the Azure key vault associated with the Batch account.
-                required: true
+        - Existing key vault with which to associate the Batch Account.
+        - It can be the key vault name which is in the same resource group.
+        - "It can be the key vault ID. e.g., /subscriptions/{subscription_id}
+           /resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{name}."
+        - It can be a dict which contains C(name) and C(resource_group) of the key vault.
     pool_allocation_mode:
         description:
         - The pool acclocation mode of the Batch Account.
@@ -141,24 +136,8 @@ class AzureRMBatchAccount(AzureRMModuleBaseExt):
             auto_storage_account=dict(
                 type='raw'
             ),
-            key_vault_reference=dict(
-                type='dict',
-                updatable=False,
-                disposition='/',
-                options=dict(
-                    id=dict(
-                        required=True,
-                        type='str',
-                        updatable=False,
-                        disposition='/'
-                    ),
-                    url=dict(
-                        required=True,
-                        type='str',
-                        updatable=False,
-                        disposition='/'
-                    )
-                )
+            key_vault=dict(
+                type='raw'
             ),
             pool_allocation_mode=dict(
                 default='batch_service',
@@ -205,6 +184,12 @@ class AzureRMBatchAccount(AzureRMModuleBaseExt):
                 'storage_account_id': self.normalize_resource_id(
                     self.batch_account.pop('auto_storage_account'),
                     '/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{name}')
+            }
+        if self.batch_account.get('key_vault') is not None:
+            self.batch_account['key_vault_reference'] = {
+                'id': self.normalize_resource_id(
+                    self.batch_account.pop('key_vault'),
+                    '/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{name}')
             }
         self.batch_account['pool_allocation_mode'] = _snake_to_camel(self.batch_account['pool_allocation_mode'], True)
 
