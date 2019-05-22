@@ -29,19 +29,17 @@ options:
         required: true
     managed_resource_id:
         description:
-            - Id of the resource where need to manage the lock.
-            - Get this via facts module.
-            - Cannot be set mutal with C(resource_group).
-            - Manage subscription if both C(managed_resource_id) and C(resource_group) not defined.
+            - Manages a lock for the specified resource ID.
+            - Mututally exclusive with C(resource_group)).
+            - If neither C(managed_resource_id) or C(resource_group) are specified, manage a lock for the current subscription.
             - "'/subscriptions/{subscriptionId}' for subscriptions."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources."
     resource_group:
         description:
-            - Resource group name where need to manage the lock.
-            - The lock is in the resource group level.
-            - Cannot be set mutal with C(managed_resource_id).
-            - Manage subscription if both C(managed_resource_id) and C(resource_group) not defined.
+            - Manage a lock for the named resource group.
+            - Mutually exclusive with C(managed_resource_id).
+            - If neither C(managed_resource_id) or C(resource_group) are specified, manage a lock for the current subscription.
     state:
         description:
             - Assert the state of the lock.
