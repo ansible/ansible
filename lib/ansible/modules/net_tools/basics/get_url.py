@@ -182,7 +182,7 @@ EXAMPLES = r'''
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
-    mode: '0440'
+    mode: 0440
 
 - name: Download file and force basic auth
   get_url:
