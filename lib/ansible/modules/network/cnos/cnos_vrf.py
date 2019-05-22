@@ -251,6 +251,7 @@ def map_config_to_obj(module):
         module.fail_json(msg='Could not fetch VRF details from device')
     return objs
 
+
 def map_params_to_obj(module):
     obj = []
     aggregate = module.params.get('aggregate')
