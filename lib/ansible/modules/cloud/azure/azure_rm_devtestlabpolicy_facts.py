@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabpolicy_facts
 version_added: "2.8"
-short_description: Get Azure DTL Policy facts.
+short_description: Get Azure DTL Policy facts
 description:
     - Get facts of Azure DTL Policy.
 
@@ -45,7 +45,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -60,7 +60,8 @@ EXAMPLES = '''
 
 RETURN = '''
 policies:
-    description: A list of dictionaries containing facts for Policy.
+    description:
+        - A list of dictionaries containing facts for Policy.
     returned: always
     type: complex
     contains:
