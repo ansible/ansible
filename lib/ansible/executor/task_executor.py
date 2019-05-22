@@ -524,7 +524,7 @@ class TaskExecutor:
             # create temporary copy with delegation built in
             final_vars = combine_vars(
                 variables,
-                variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+                variables.get('ansible_delegated_vars', {}).get(templar.template(self._task.delegate_to), {})
             )
 
             final_templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=final_vars)
@@ -604,7 +604,7 @@ class TaskExecutor:
         # create copy with delegation built in
         final_vars = combine_vars(
             variables,
-            variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            variables.get('ansible_delegated_vars', {}).get(templar.template(self._task.delegate_to), {})
         )
 
         final_templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=final_vars)
@@ -613,7 +613,7 @@ class TaskExecutor:
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
-            self._connection = self._get_connection(variables=variables, final_vars=final_vars, final_templar=final_templar)
+            self._connection = self._get_connection(variables=variables, templar=templar, final_vars=final_vars, final_templar=final_templar)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
@@ -880,7 +880,7 @@ class TaskExecutor:
                                "Use `ansible-doc -t become -l` to list available plugins." % name)
         return become
 
-    def _get_connection(self, variables, final_vars, final_templar):
+    def _get_connection(self, variables, templar, final_vars, final_templar):
         '''
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
@@ -894,7 +894,7 @@ class TaskExecutor:
                     del final_vars[i]
             # now replace the interpreter values with those that may have come
             # from the delegated-to host
-            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict())
+            delegated_vars = variables.get('ansible_delegated_vars', {}).get(templar.template(self._task.delegate_to), {})
             if isinstance(delegated_vars, dict):
                 for i in delegated_vars:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
