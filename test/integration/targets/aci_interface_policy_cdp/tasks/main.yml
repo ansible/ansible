@@ -1,0 +1,106 @@
+# Test code for the ACI modules
+# Copyright: (c) 2019, Tim Knipper (tknipper11) <tim.knipper@gmail.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+# CLEAN ENVIRONMENT
+- name: Remove CDP Test Policy
+  aci_interface_policy_cdp:
+    name: Ansible_CDP_Test_Policy
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(false) }}'
+    output_level: debug
+    state: absent
+  register: cdp_delete
+
+
+
+- name: Create CDP Test Policy
+  aci_interface_policy_cdp:
+    name: Ansible_CDP_Test_Policy
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(false) }}'
+#    output_level: debug
+    state: present
+  register: cdp_create
+- debug: 
+    var: cdp_create
+
+- assert: 
+    that: 
+      - cdp_create is changed
+
+
+- name: test for idempotency
+  aci_interface_policy_cdp:
+    name: Ansible_CDP_Test_Policy
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(false) }}'
+#    output_level: debug
+    state: present
+  register: cdp_idem
+
+- name: Assert that idempotency is not changed
+  assert:
+    that: 
+      - cdp_idem is not changed
+
+
+
+- name: Create CDP Disable Test Policy
+  aci_interface_policy_cdp:
+    name: Ansible_CDP_Test_Policy
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(false) }}'
+#    output_level: debug
+    state: present
+    admin_state: no
+  register: cdp_disable
+- debug: 
+    var: cdp_disable
+
+- name: Assert that CDP is Disabled
+  assert:
+    that:
+      - 'cdp_disable.current.0.cdpIfPol.attributes.adminSt == "disabled"'
+
+
+- name: Query CDP Policy
+  aci_interface_policy_cdp:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(false) }}'
+#    output_level: debug
+    state: query
+  register: cdp_query
+- debug: 
+    var: cdp_query
+
+- name: CDP Query Assertion
+  assert: 
+    that: 
+      - cdp_query is not changed
