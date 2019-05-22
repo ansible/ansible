@@ -456,6 +456,7 @@ def create_or_update(module, template_options):
             resp = ec2.create_launch_template_version(
                 LaunchTemplateId=template['LaunchTemplateId'],
                 LaunchTemplateData=lt_data,
+                SourceVersion= module.params.get('source_version'),
                 ClientToken=uuid4().hex,
                 aws_retry=True,
             )
@@ -614,6 +615,7 @@ def main():
         state=dict(choices=['present', 'absent'], default='present'),
         template_name=dict(aliases=['name']),
         template_id=dict(aliases=['id']),
+        source_version=dict(default='1'),
         default_version=dict(default='latest'),
     )
 
