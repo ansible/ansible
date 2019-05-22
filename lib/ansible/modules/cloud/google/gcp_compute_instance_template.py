@@ -1090,14 +1090,16 @@ def raise_if_errors(response, err_path, module):
 
 
 def encode_request(request, module):
-    if 'metadata' in request and request['metadata'] is not None:
-        request['metadata'] = metadata_encoder(request['metadata'])
+    if ('properties' in request and request['properties'] is not None and
+            'metadata' in request['properties'] and request['properties']['metadata'] is not None):
+        request['properties']['metadata'] = metadata_encoder(request['properties']['metadata'])
     return request
 
 
 def decode_response(response, module):
-    if 'metadata' in response and response['metadata'] is not None:
-        response['metadata'] = metadata_decoder(response['metadata'])
+    if ('properties' in response and response['properties'] is not None and
+            'metadata' in response['properties'] and response['properties']['metadata'] is not None):
+        response['properties']['metadata'] = metadata_decoder(response['properties']['metadata'])
     return response
 
 
