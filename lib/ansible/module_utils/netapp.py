@@ -238,7 +238,8 @@ class NetAppESeriesModule(object):
     """
     DEFAULT_TIMEOUT = 60
     DEFAULT_SECURE_PORT = "8443"
-    DEFAULT_REST_API_PATH = "devmgr/v2"
+    DEFAULT_REST_API_PATH = "devmgr/v2/"
+    DEFAULT_REST_API_ABOUT_PATH = "devmgr/utils/about"
     DEFAULT_HEADERS = {"Content-Type": "application/json", "Accept": "application/json",
                        "netapp-client-type": "Ansible-%s" % ansible_version}
     HTTP_AGENT = "Ansible / %s" % ansible_version
@@ -257,89 +258,18 @@ class NetAppESeriesModule(object):
 
         args = self.module.params
         self.web_services_version = web_services_version if web_services_version else "02.00.0000.0000"
-        self.url = args["api_url"]
         self.ssid = args["ssid"]
+        self.url = args["api_url"]
+        self.log_requests = log_requests
         self.creds = dict(url_username=args["api_username"],
                           url_password=args["api_password"],
                           validate_certs=args["validate_certs"])
-        self.log_requests = log_requests
+
+        if not self.url.endswith("/"):
+            self.url += "/"
 
         self.is_embedded_mode = None
         self.web_services_validate = None
-
-        self._tweak_url()
-
-    @property
-    def _about_url(self):
-        """Generates the about url based on the supplied web services rest api url.
-
-        :raise AnsibleFailJson: raised when supplied web services rest api is an invalid url.
-        :return: proxy or embedded about url.
-        """
-        about = list(urlparse(self.url))
-        about[2] = "devmgr/utils/about"
-        return urlunparse(about)
-
-    def _force_secure_url(self):
-        """Modifies supplied web services rest api to use secure https.
-
-        raise: AnsibleFailJson: raised when the url already utilizes the secure protocol
-        """
-        url_parts = list(urlparse(self.url))
-        if "https://" in self.url and ":8443" in self.url:
-            self.module.fail_json(msg="Secure HTTP protocol already used. URL path [%s]" % self.url)
-
-        url_parts[0] = "https"
-        url_parts[1] = "%s:8443" % url_parts[1].split(":")[0]
-
-        self.url = urlunparse(url_parts)
-        if not self.url.endswith("/"):
-            self.url += "/"
-
-        self.module.warn("forced use of the secure protocol: %s" % self.url)
-
-    def _tweak_url(self):
-        """Adjust the rest api url is necessary.
-
-        :raise AnsibleFailJson: raised when self.url fails to have a hostname or ipv4 address.
-        """
-        # ensure the protocol is either http or https
-        if self.url.split("://")[0] not in ["https", "http"]:
-
-            self.url = self.url.split("://")[1] if "://" in self.url else self.url
-
-            if ":8080" in self.url:
-                self.url = "http://%s" % self.url
-            else:
-                self.url = "https://%s" % self.url
-
-        # parse url and verify protocol, port and path are consistent with required web services rest api url.
-        url_parts = list(urlparse(self.url))
-        if url_parts[1] == "":
-            self.module.fail_json(msg="Failed to provide a valid hostname or IP address. URL [%s]." % self.url)
-
-        split_hostname = url_parts[1].split(":")
-        if url_parts[0] not in ["https", "http"] or (len(split_hostname) == 2 and split_hostname[1] != "8080"):
-            if len(split_hostname) == 2 and split_hostname[1] == "8080":
-                url_parts[0] = "http"
-                url_parts[1] = "%s:8080" % split_hostname[0]
-            else:
-                url_parts[0] = "https"
-                url_parts[1] = "%s:8443" % split_hostname[0]
-        elif len(split_hostname) == 1:
-            if url_parts[0] == "https":
-                url_parts[1] = "%s:8443" % split_hostname[0]
-            elif url_parts[0] == "http":
-                url_parts[1] = "%s:8080" % split_hostname[0]
-
-        if url_parts[2] == "" or url_parts[2] != self.DEFAULT_REST_API_PATH:
-            url_parts[2] = self.DEFAULT_REST_API_PATH
-
-        self.url = urlunparse(url_parts)
-        if not self.url.endswith("/"):
-            self.url += "/"
-
-        self.module.log("valid url: %s" % self.url)
 
     def _is_web_services_valid(self):
         """Verify proxy or embedded web services meets minimum version required for module.
@@ -347,32 +277,48 @@ class NetAppESeriesModule(object):
         The minimum required web services version is evaluated against version supplied through the web services rest
         api. AnsibleFailJson exception will be raised when the minimum is not met or exceeded.
 
+        This helper function will update the supplied api url if secure http is not used for embedded web services
+
         :raise AnsibleFailJson: raised when the contacted api service does not meet the minimum required version.
         """
         if not self.web_services_validate:
-            self.is_embedded()
-            try:
-                rc, data = request(self._about_url, timeout=self.DEFAULT_TIMEOUT,
-                                   headers=self.DEFAULT_HEADERS, **self.creds)
-                major, minor, other, revision = data["version"].split(".")
-                minimum_major, minimum_minor, other, minimum_revision = self.web_services_version.split(".")
 
-                if not (major > minimum_major or
-                        (major == minimum_major and minor > minimum_minor) or
-                        (major == minimum_major and minor == minimum_minor and revision >= minimum_revision)):
-                    self.module.fail_json(
-                        msg="Web services version does not meet minimum version required. Current version: [%s]."
-                            " Version required: [%s]." % (data["version"], self.web_services_version))
-            except Exception as error:
-                self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]."
-                                          " Error [%s]." % (self.ssid, to_native(error)))
+            url_parts = list(urlparse(self.url))
+            if not url_parts[0] or not url_parts[1]:
+                self.module.fail_json(msg="Failed to provide valid API URL. Example: https://192.168.1.100:8443/devmgr/v2. URL [%s]." % self.url)
+
+            if url_parts[0] not in ["http", "https"]:
+                self.module.fail_json(msg="Protocol must be http or https. URL [%s]." % self.url)
+
+            self.url = "%s://%s/" % (url_parts[0], url_parts[1])
+            about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
+            rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, ignore_errors=True, **self.creds)
+
+            if rc != 200:
+                self.module.warn("Failed to retrieve web services about information! Retrying with secure ports. Array Id [%s]." % self.ssid)
+                self.url = "https://%s:8443/" % url_parts[1].split(":")[0]
+                about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
+                try:
+                    rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, **self.creds)
+                except Exception as error:
+                    self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]. Error [%s]."
+                                              % (self.ssid, to_native(error)))
+
+            major, minor, other, revision = data["version"].split(".")
+            minimum_major, minimum_minor, other, minimum_revision = self.web_services_version.split(".")
+
+            if not (major > minimum_major or
+                    (major == minimum_major and minor > minimum_minor) or
+                    (major == minimum_major and minor == minimum_minor and revision >= minimum_revision)):
+                self.module.fail_json(msg="Web services version does not meet minimum version required. Current version: [%s]."
+                                          " Version required: [%s]." % (data["version"], self.web_services_version))
 
             self.module.log("Web services rest api version met the minimum required version.")
             self.web_services_validate = True
 
         return self.web_services_validate
 
-    def is_embedded(self, retry=True):
+    def is_embedded(self):
         """Determine whether web services server is the embedded web services.
 
         If web services about endpoint fails based on an URLError then the request will be attempted again using
@@ -382,21 +328,13 @@ class NetAppESeriesModule(object):
         :return bool: whether contacted web services is running from storage array (embedded) or from a proxy.
         """
         if self.is_embedded_mode is None:
+            about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
             try:
-                rc, data = request(self._about_url, timeout=self.DEFAULT_TIMEOUT,
-                                   headers=self.DEFAULT_HEADERS, **self.creds)
+                rc, data = request(about_url, timeout=self.DEFAULT_TIMEOUT, headers=self.DEFAULT_HEADERS, **self.creds)
                 self.is_embedded_mode = not data["runningAsProxy"]
-            except URLError as error:
-                if not retry:
-                    self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]."
-                                              " Error [%s]." % (self.ssid, to_native(error)))
-                self.module.warn("Failed to retrieve the webservices about information! Will retry using secure"
-                                 " http. Array Id [%s]." % self.ssid)
-                self._force_secure_url()
-                return self.is_embedded(retry=False)
             except Exception as error:
-                self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]."
-                                          " Error [%s]." % (self.ssid, to_native(error)))
+                self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]. Error [%s]."
+                                          % (self.ssid, to_native(error)))
 
         return self.is_embedded_mode
 
@@ -411,34 +349,21 @@ class NetAppESeriesModule(object):
         :param bool ignore_errors: forces the request to ignore any raised exceptions.
         """
         if self._is_web_services_valid():
-            url = list(urlparse(path.strip("/")))
-            if url[2] == "":
-                self.module.fail_json(msg="Web services rest api endpoint path must be specified. Path [%s]." % path)
-
-            # Update headers
             if headers is None:
                 headers = self.DEFAULT_HEADERS
 
-            # if either the protocol or hostname/port are missing then add them.
-            if url[0] == "" or url[1] == "":
-                url[0], url[1] = list(urlparse(self.url))[:2]
-
-            # add rest api path if the supplied path does not begin with it.
-            if not all([word in url[2].split("/")[:2] for word in self.DEFAULT_REST_API_PATH.split("/")]):
-                if not url[2].startswith("/"):
-                    url[2] = "/" + url[2]
-                url[2] = self.DEFAULT_REST_API_PATH + url[2]
-
-            # ensure data is json formatted
             if not isinstance(data, str) and headers["Content-Type"] == "application/json":
                 data = json.dumps(data)
 
-            if self.log_requests:
-                self.module.log(pformat(dict(url=urlunparse(url), data=data, method=method)))
+            if path.startswith("/"):
+                path = path[1:]
+            request_url = self.url + self.DEFAULT_REST_API_PATH + path
 
-            return request(url=urlunparse(url), data=data, method=method, headers=headers, use_proxy=True,
-                           force=False, last_mod_time=None, timeout=self.DEFAULT_TIMEOUT, http_agent=self.HTTP_AGENT,
-                           force_basic_auth=True, ignore_errors=ignore_errors, **self.creds)
+            if self.log_requests or True:
+                self.module.log(pformat(dict(url=request_url, data=data, method=method)))
+
+            return request(url=request_url, data=data, method=method, headers=headers, use_proxy=True, force=False, last_mod_time=None,
+                           timeout=self.DEFAULT_TIMEOUT, http_agent=self.HTTP_AGENT, force_basic_auth=True, ignore_errors=ignore_errors, **self.creds)
 
 
 def request(url, data=None, headers=None, method='GET', use_proxy=True,

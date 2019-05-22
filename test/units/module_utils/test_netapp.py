@@ -28,20 +28,6 @@ class NetappTest(ModuleTestCase):
             module_args.update(args)
         set_module_args(module_args)
 
-    def test_about_url_pass(self):
-        """Verify about_url property returns expected about url."""
-        test_set = [("http://localhost/devmgr/v2", "http://localhost:8080/devmgr/utils/about"),
-                    ("http://localhost:8443/devmgr/v2", "https://localhost:8443/devmgr/utils/about"),
-                    ("http://localhost:8443/devmgr/v2/", "https://localhost:8443/devmgr/utils/about"),
-                    ("http://localhost:443/something_else", "https://localhost:8443/devmgr/utils/about"),
-                    ("http://localhost:8443", "https://localhost:8443/devmgr/utils/about"),
-                    ("http://localhost", "http://localhost:8080/devmgr/utils/about")]
-
-        for url in test_set:
-            self._set_args({"api_url": url[0]})
-            base = StubNetAppESeriesModule()
-            self.assertTrue(base._about_url == url[1])
-
     def test_is_embedded_embedded_pass(self):
         """Verify is_embedded successfully returns True when an embedded web service's rest api is inquired."""
         self._set_args()
@@ -51,6 +37,18 @@ class NetappTest(ModuleTestCase):
         with mock.patch(self.REQ_FUNC, return_value=(200, {"runningAsProxy": True})):
             base = StubNetAppESeriesModule()
             self.assertFalse(base.is_embedded())
+
+    def test_is_embedded_fail(self):
+        """Verify exception is thrown when a web service's rest api fails to return about information."""
+        self._set_args()
+        with mock.patch(self.REQ_FUNC, return_value=Exception()):
+            with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to retrieve the webservices about information!"):
+                base = StubNetAppESeriesModule()
+                base.is_embedded()
+        with mock.patch(self.REQ_FUNC, side_effect=[URLError(""), Exception()]):
+            with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to retrieve the webservices about information!"):
+                base = StubNetAppESeriesModule()
+                base.is_embedded()
 
     def test_check_web_services_version_pass(self):
         """Verify that an acceptable rest api version passes."""
@@ -79,47 +77,23 @@ class NetappTest(ModuleTestCase):
                 with self.assertRaisesRegexp(AnsibleFailJson, r"version does not meet minimum version required."):
                     base._is_web_services_valid()
 
-    def test_is_embedded_fail(self):
-        """Verify exception is thrown when a web service's rest api fails to return about information."""
-        self._set_args()
-        with mock.patch(self.REQ_FUNC, return_value=Exception()):
-            with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to retrieve the webservices about information!"):
-                base = StubNetAppESeriesModule()
-                base.is_embedded()
-        with mock.patch(self.REQ_FUNC, side_effect=[URLError(""), Exception()]):
-            with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to retrieve the webservices about information!"):
-                base = StubNetAppESeriesModule()
-                base.is_embedded()
+    def test_check_is_web_services_valid_fail(self):
+        """Verify exception is thrown when api url is invalid."""
+        invalid_url_forms = ["localhost:8080/devmgr/v2",
+                             "http:///devmgr/v2"]
 
-    def test_tweak_url_pass(self):
-        """Verify a range of valid netapp eseries rest api urls pass."""
-        test_set = [("http://localhost/devmgr/v2", "http://localhost:8080/devmgr/v2/"),
-                    ("localhost", "https://localhost:8443/devmgr/v2/"),
-                    ("localhost:8443/devmgr/v2", "https://localhost:8443/devmgr/v2/"),
-                    ("https://localhost/devmgr/v2", "https://localhost:8443/devmgr/v2/"),
-                    ("http://localhost:8443", "https://localhost:8443/devmgr/v2/"),
-                    ("http://localhost:/devmgr/v2", "https://localhost:8443/devmgr/v2/"),
-                    ("http://localhost:8080", "http://localhost:8080/devmgr/v2/"),
-                    ("http://localhost", "http://localhost:8080/devmgr/v2/"),
-                    ("localhost/devmgr/v2", "https://localhost:8443/devmgr/v2/"),
-                    ("localhost/devmgr", "https://localhost:8443/devmgr/v2/"),
-                    ("localhost/devmgr/v3", "https://localhost:8443/devmgr/v2/"),
-                    ("localhost/something", "https://localhost:8443/devmgr/v2/"),
-                    ("ftp://localhost", "https://localhost:8443/devmgr/v2/"),
-                    ("ftp://localhost:8080", "http://localhost:8080/devmgr/v2/"),
-                    ("ftp://localhost/devmgr/v2/", "https://localhost:8443/devmgr/v2/")]
+        invalid_url_protocols = ["ssh://localhost:8080/devmgr/v2"]
 
-        for test in test_set:
-            self._set_args({"api_url": test[0]})
-            with mock.patch(self.REQ_FUNC, side_effect=[URLError(""), (200, {"runningAsProxy": False})]):
-                base = StubNetAppESeriesModule()
-                base._tweak_url()
-                self.assertTrue(base.url == test[1])
+        for url in invalid_url_forms:
+            self._set_args({"api_url": url})
+            with mock.patch(self.REQ_FUNC, return_value=(200, {"runningAsProxy": True})):
+                with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to provide valid API URL."):
+                    base = StubNetAppESeriesModule()
+                    base._is_web_services_valid()
 
-    def test_check_url_missing_hostname_fail(self):
-        """Verify exception is thrown when hostname or ip address is missing."""
-        self._set_args({"api_url": "http:///devmgr/v2"})
-        with mock.patch(self.REQ_FUNC, return_value=(200, {"runningAsProxy": True})):
-            with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to provide a valid hostname or IP address."):
-                base = StubNetAppESeriesModule()
-                base._tweak_url()
+        for url in invalid_url_protocols:
+            self._set_args({"api_url": url})
+            with mock.patch(self.REQ_FUNC, return_value=(200, {"runningAsProxy": True})):
+                with self.assertRaisesRegexp(AnsibleFailJson, r"Protocol must be http or https."):
+                    base = StubNetAppESeriesModule()
+                    base._is_web_services_valid()
