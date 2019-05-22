@@ -22,6 +22,7 @@
         SessionTimeout: 604800
         TokenEndpoint: "https://www.example.com/token"
         UserInfoEndpoint: "https://www.example.com/userinfo"
+        UseExistingClientSecret: false
 
   - name: delete existing ALB to avoid target group association issues
     elb_application_lb:
