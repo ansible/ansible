@@ -743,7 +743,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            use=dict(type='str', choices=['generic', 'debian', 'sles', 'redhat', 'alpine', 'systemd', 'openrc', 'openbsd', 'solaris', 'freebsd'])
+            use=dict(type='str', choices=STRATS.keys())
         ),
         supports_check_mode=True,
     )
