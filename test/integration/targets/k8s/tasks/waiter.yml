@@ -265,7 +265,7 @@
           - condition.reason == "DeploymentPaused"
           - condition.status == "Unknown"
       vars:
-        condition: '{{ pause_deploy.result.status.conditions | selectattr("type", "Progressing")).0 }}'
+        condition: '{{ pause_deploy.result.status.conditions | json_query("[?type==`Progressing`]") | first }}'
 
     - name: add a service based on the deployment
       k8s:
