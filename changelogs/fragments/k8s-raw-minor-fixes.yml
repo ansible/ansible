@@ -1,0 +1,3 @@
+bugfixes:
+  - k8s - ensure wait_condition works when Status is Unknown
+  - k8s - ensure k8s returns result of a resource update as it is at the end of the wait period
