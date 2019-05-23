@@ -127,6 +127,7 @@ options:
     description:
       - List of groups to add to the scope of the fw pol package
     required: false
+    version_added: 2.9
 
   scope_members:
     description:
