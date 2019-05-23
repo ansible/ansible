@@ -47,7 +47,7 @@ options:
         description:
             - A valid Azure VM size value. For example, C(Standard_D4).
             - The list of choices varies depending on the subscription and location. Check your subscription for available choices.
-            - Available values can be found here: U(https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general).
+            - Available values can be found on this website, link U(https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general).
             - Required when creating a VM.
     user_name:
         description:
@@ -66,7 +66,6 @@ options:
     disallow_public_ip_address:
         description:
             - Indicates whether the virtual machine is to be created without a public IP address.
-        type: bool 
     artifacts:
         description:
             - The artifacts to be installed on the virtual machine.
@@ -111,11 +110,9 @@ options:
     expiration_date:
         description:
             - The expiration date for VM.
-        type: datetime
     allow_claim:
         description:
             - Indicates whether another user can take ownership of the virtual machine.
-        type: bool
     storage_type:
         description:
             - Storage type to use for virtual machine.
