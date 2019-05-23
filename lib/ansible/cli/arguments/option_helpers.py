@@ -288,14 +288,10 @@ def add_module_options(parser):
                         type=unfrack_path(pathsep=True), action=PrependListAction)
 
 
-def add_output_one_line_options(parser):
-    parser.add_argument('-o', '--one-line', dest='one_line', action='store_true',
-                        help='condense output')
-
-
 def add_output_options(parser):
     """Add options for commands which can change their output"""
-    add_output_one_line_options(parser)
+    parser.add_argument('-o', '--one-line', dest='one_line', action='store_true',
+                        help='condense output')
     parser.add_argument('-t', '--tree', dest='tree', default=None,
                         help='log output to this directory')
 
