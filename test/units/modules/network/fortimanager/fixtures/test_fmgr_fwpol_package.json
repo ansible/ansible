@@ -1,279 +1,1860 @@
 {
-    "fmgr_fwpol_package_folder": [
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/pkg/adom/ansible"
+   "fmgr_fwpol_package_folder": [
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "datagram_sent": {
-                "type": "folder",
-                "name": "ansibleTestFolder1"
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestFolder4"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestFolder4"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestFolder4",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "folder",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "paramgram_used": {
-                "ssl-ssh-profile": null,
-                "name": "ansibleTestFolder1",
-                "adom": "ansible",
-                "fwpolicy6-implicit-log": "disable",
-                "object_type": "folder",
-                "fwpolicy-implicit-log": "disable",
-                "package-folder": null,
-                "inspection-mode": "flow",
-                "scope_members": null,
-                "mode": "set",
-                "parent_folder": null,
-                "scope_members_vdom": "root",
-                "central-nat": "disable",
-                "ngfw-mode": "profile-based"
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestFolder3"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestFolder3",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "folder",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "post_method": "set"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/pkg/adom/ansible"
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestFolder2"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestFolder2",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "folder",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "datagram_sent": {
-                "subobj": [
-                    {
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestFolder1",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "folder",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": null,
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "type": "folder",
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestFolder1",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "folder",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "set",
+            "scope_groups": null,
+            "parent_folder": null,
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "subobj": [
+               {
+                  "type": "folder",
+                  "name": "ansibleTestFolder2"
+               }
+            ],
+            "type": "folder",
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestFolder2",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "folder",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "set",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "subobj": [
+               {
+                  "subobj": [
+                     {
                         "type": "folder",
-                        "name": "ansibleTestFolder2"
-                    }
-                ],
-                "type": "folder",
-                "name": "ansibleTestFolder1"
+                        "name": "ansibleTestFolder3"
+                     }
+                  ],
+                  "type": "folder",
+                  "name": "ansibleTestFolder2"
+               }
+            ],
+            "type": "folder",
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestFolder3",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "folder",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "set",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "paramgram_used": {
-                "ssl-ssh-profile": null,
-                "name": "ansibleTestFolder2",
-                "adom": "ansible",
-                "fwpolicy6-implicit-log": "disable",
-                "object_type": "folder",
-                "fwpolicy-implicit-log": "disable",
-                "package-folder": null,
-                "inspection-mode": "flow",
-                "scope_members": null,
-                "mode": "set",
-                "parent_folder": "ansibleTestFolder1",
-                "scope_members_vdom": "root",
-                "central-nat": "disable",
-                "ngfw-mode": "profile-based"
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "subobj": [
+               {
+                  "subobj": [
+                     {
+                        "subobj": [
+                           {
+                              "type": "folder",
+                              "name": "ansibleTestFolder4"
+                           }
+                        ],
+                        "type": "folder",
+                        "name": "ansibleTestFolder3"
+                     }
+                  ],
+                  "type": "folder",
+                  "name": "ansibleTestFolder2"
+               }
+            ],
+            "type": "folder",
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestFolder4",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "folder",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "set",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      }
+   ],
+   "fmgr_fwpol_package_edit_targets": [
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "post_method": "set"
-        },
-        {
-            "paramgram_used": {
-                "ssl-ssh-profile": null,
-                "scope_members_vdom": "root",
-                "name": "ansibleTestFolder2",
-                "adom": "ansible",
-                "fwpolicy6-implicit-log": "disable",
-                "object_type": "folder",
-                "fwpolicy-implicit-log": "disable",
-                "central-nat": "disable",
-                "inspection-mode": "flow",
-                "scope_members": null,
-                "mode": "delete",
-                "parent_folder": "ansibleTestFolder1",
-                "package-folder": null,
-                "ngfw-mode": "profile-based"
+            "url": "/pm/pkg/adom/ansible/ansibleTestPackage1/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage1",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT1",
+            "mode": "add_targets",
+            "scope_groups": "testtest",
+            "parent_folder": null,
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "add"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "datagram_sent": {
-                "name": "ansibleTestFolder2"
+            "url": "/pm/pkg/adom/ansible/ansibleTestPackage1/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage1",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2",
+            "mode": "delete_targets",
+            "scope_groups": "TestGroup",
+            "parent_folder": null,
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2"
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestPackage2/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage2",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT1, FGT2, FGT3",
+            "mode": "add_targets",
+            "scope_groups": "testtest, TestGroup",
+            "parent_folder": "ansibleTestFolder1",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "add"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "post_method": "delete"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/pkg/adom/ansible/ansibleTestFolder1"
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestPackage2/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage2",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2",
+            "mode": "delete_targets",
+            "scope_groups": "TestGroup",
+            "parent_folder": "ansibleTestFolder1",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "datagram_sent": {
-                "name": "ansibleTestFolder1"
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestPackage3/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage3",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT1, FGT2, FGT3",
+            "mode": "add_targets",
+            "scope_groups": "testtest, TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "add"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "paramgram_used": {
-                "adom": "ansible",
-                "fwpolicy6-implicit-log": "disable",
-                "object_type": "folder",
-                "inspection-mode": "flow",
-                "parent_folder": null,
-                "ngfw-mode": "profile-based",
-                "ssl-ssh-profile": null,
-                "name": "ansibleTestFolder1",
-                "central-nat": "disable",
-                "fwpolicy-implicit-log": "disable",
-                "package-folder": null,
-                "scope_members": null,
-                "mode": "delete",
-                "scope_members_vdom": "root"
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestPackage3/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage3",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2",
+            "mode": "delete_targets",
+            "scope_groups": "TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "post_method": "delete"
-        }
-    ],
-    "fmgr_fwpol_package": [
-        {
-            "paramgram_used": {
-                "ssl-ssh-profile": null,
-                "name": "ansibleTestPackage1",
-                "adom": "ansible",
-                "fwpolicy6-implicit-log": "disable",
-                "object_type": "pkg",
-                "fwpolicy-implicit-log": "disable",
-                "package-folder": null,
-                "inspection-mode": "flow",
-                "scope_members": "FGT2, FGT3",
-                "mode": "set",
-                "parent_folder": null,
-                "scope_members_vdom": "root",
-                "central-nat": "disable",
-                "ngfw-mode": "profile-based"
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestPackage4/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage4",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT1, FGT2, FGT3",
+            "mode": "add_targets",
+            "scope_groups": "testtest, TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "add"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "datagram_sent": {
-                "type": "pkg",
-                "name": "ansibleTestPackage1",
-                "scope member": [
-                    {
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestPackage4/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage4",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2",
+            "mode": "delete_targets",
+            "scope_groups": "TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestFolder4/ansibleTestPackage5/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage5",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT1, FGT2, FGT3",
+            "mode": "add_targets",
+            "scope_groups": "testtest, TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestFolder4",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "add"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestFolder4/ansibleTestPackage5/scope member"
+         },
+         "datagram_sent": {
+            "data": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ]
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               },
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage5",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2",
+            "mode": "delete_targets",
+            "scope_groups": "TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestFolder4",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      }
+   ],
+   "fmgr_fwpol_package": [
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible/ansibleTestPackage1"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestPackage1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "name": "ansibleTestPackage1",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": null,
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestPackage2"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestPackage2"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage2",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestPackage3"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestPackage3"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage3",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestPackage4"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestPackage4"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage4",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestFolder4/ansibleTestPackage5"
+         },
+         "datagram_sent": {
+            "name": "ansibleTestPackage5"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage5",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "delete",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestFolder4",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "delete"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "type": "pkg",
+            "name": "ansibleTestPackage1",
+            "scope member": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "package settings": {
+               "inspection-mode": "flow",
+               "central-nat": "disable",
+               "fwpolicy-implicit-log": "disable",
+               "fwpolicy6-implicit-log": "disable",
+               "ngfw-mode": "profile-based"
+            }
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestPackage1",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2, FGT3",
+            "mode": "add",
+            "scope_groups": "TestGroup",
+            "parent_folder": null,
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "add"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "type": "pkg",
+            "name": "ansibleTestPackage1",
+            "scope member": [
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "package settings": {
+               "inspection-mode": "flow",
+               "central-nat": "disable",
+               "fwpolicy-implicit-log": "disable",
+               "fwpolicy6-implicit-log": "disable",
+               "ngfw-mode": "profile-based"
+            }
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage1",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "set",
+            "scope_groups": "TestGroup",
+            "parent_folder": null,
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
+            },
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "subobj": [
+               {
+                  "type": "pkg",
+                  "name": "ansibleTestPackage2",
+                  "scope member": [
+                     {
                         "name": "FGT2",
                         "vdom": "root"
-                    },
-                    {
+                     },
+                     {
                         "name": "FGT3",
                         "vdom": "root"
-                    }
-                ],
-                "package settings": {
-                    "inspection-mode": "flow",
-                    "central-nat": "disable",
-                    "fwpolicy-implicit-log": "disable",
-                    "fwpolicy6-implicit-log": "disable",
-                    "ngfw-mode": "profile-based"
-                }
+                     },
+                     {
+                        "name": "TestGroup"
+                     }
+                  ],
+                  "package settings": {
+                     "inspection-mode": "flow",
+                     "central-nat": "disable",
+                     "fwpolicy-implicit-log": "disable",
+                     "fwpolicy6-implicit-log": "disable",
+                     "ngfw-mode": "profile-based"
+                  }
+               }
+            ],
+            "type": "folder",
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestPackage2",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2, FGT3",
+            "mode": "set",
+            "scope_groups": "TestGroup",
+            "parent_folder": "ansibleTestFolder1",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/pkg/adom/ansible"
-            },
-            "post_method": "set"
-        },
-        {
-            "paramgram_used": {
-                "ssl-ssh-profile": null,
-                "name": "ansibleTestPackage2",
-                "adom": "ansible",
-                "fwpolicy6-implicit-log": "disable",
-                "object_type": "pkg",
-                "fwpolicy-implicit-log": "disable",
-                "package-folder": null,
-                "inspection-mode": "flow",
-                "scope_members": null,
-                "mode": "set",
-                "parent_folder": "ansibleTestFolder1",
-                "scope_members_vdom": "root",
-                "central-nat": "disable",
-                "ngfw-mode": "profile-based"
-            },
-            "datagram_sent": {
-                "subobj": [
-                    {
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "subobj": [
+               {
+                  "subobj": [
+                     {
                         "type": "pkg",
-                        "name": "ansibleTestPackage2",
-                        "scope member": [],
+                        "name": "ansibleTestPackage3",
+                        "scope member": [
+                           {
+                              "name": "FGT2",
+                              "vdom": "root"
+                           },
+                           {
+                              "name": "FGT3",
+                              "vdom": "root"
+                           },
+                           {
+                              "name": "TestGroup"
+                           }
+                        ],
                         "package settings": {
-                            "inspection-mode": "flow",
-                            "central-nat": "disable",
-                            "fwpolicy-implicit-log": "disable",
-                            "fwpolicy6-implicit-log": "disable",
-                            "ngfw-mode": "profile-based"
+                           "inspection-mode": "flow",
+                           "central-nat": "disable",
+                           "fwpolicy-implicit-log": "disable",
+                           "fwpolicy6-implicit-log": "disable",
+                           "ngfw-mode": "profile-based"
                         }
-                    }
-                ],
-                "type": "folder",
-                "name": "ansibleTestFolder1"
+                     }
+                  ],
+                  "type": "folder",
+                  "name": "ansibleTestFolder2"
+               }
+            ],
+            "type": "folder",
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestPackage3",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2, FGT3",
+            "mode": "set",
+            "scope_groups": "TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/pkg/adom/ansible"
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "subobj": [
+               {
+                  "subobj": [
+                     {
+                        "subobj": [
+                           {
+                              "type": "pkg",
+                              "name": "ansibleTestPackage4",
+                              "scope member": [
+                                 {
+                                    "name": "FGT2",
+                                    "vdom": "root"
+                                 },
+                                 {
+                                    "name": "FGT3",
+                                    "vdom": "root"
+                                 },
+                                 {
+                                    "name": "TestGroup"
+                                 }
+                              ],
+                              "package settings": {
+                                 "inspection-mode": "flow",
+                                 "central-nat": "disable",
+                                 "fwpolicy-implicit-log": "disable",
+                                 "fwpolicy6-implicit-log": "disable",
+                                 "ngfw-mode": "profile-based"
+                              }
+                           }
+                        ],
+                        "type": "folder",
+                        "name": "ansibleTestFolder3"
+                     }
+                  ],
+                  "type": "folder",
+                  "name": "ansibleTestFolder2"
+               }
+            ],
+            "type": "folder",
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestPackage4",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2, FGT3",
+            "mode": "set",
+            "scope_groups": "TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      },
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK",
+               "code": 0
             },
-            "post_method": "set"
-        },
-        {
-            "paramgram_used": {
-                "ssl-ssh-profile": null,
-                "name": "ansibleTestPackage1",
-                "adom": "ansible",
-                "fwpolicy6-implicit-log": "disable",
-                "object_type": "pkg",
-                "fwpolicy-implicit-log": "disable",
-                "package-folder": null,
-                "inspection-mode": "flow",
-                "scope_members": null,
-                "mode": "delete",
-                "parent_folder": null,
-                "scope_members_vdom": "root",
-                "central-nat": "disable",
-                "ngfw-mode": "profile-based"
-            },
-            "datagram_sent": {
-                "name": "ansibleTestPackage1"
-            },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/pkg/adom/ansible/ansibleTestPackage1"
-            },
-            "post_method": "delete"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/pkg/adom/ansible/ansibleTestFolder1/ansibleTestPackage2"
-            },
-            "datagram_sent": {
-                "name": "ansibleTestPackage2"
-            },
-            "paramgram_used": {
-                "ssl-ssh-profile": null,
-                "name": "ansibleTestPackage2",
-                "adom": "ansible",
-                "fwpolicy6-implicit-log": "disable",
-                "object_type": "pkg",
-                "fwpolicy-implicit-log": "disable",
-                "package-folder": null,
-                "inspection-mode": "flow",
-                "scope_members": null,
-                "mode": "delete",
-                "parent_folder": "ansibleTestFolder1",
-                "scope_members_vdom": "root",
-                "central-nat": "disable",
-                "ngfw-mode": "profile-based"
-            },
-            "post_method": "delete"
-        }
-    ]
+            "url": "/pm/pkg/adom/ansible"
+         },
+         "datagram_sent": {
+            "subobj": [
+               {
+                  "subobj": [
+                     {
+                        "subobj": [
+                           {
+                              "subobj": [
+                                 {
+                                    "type": "pkg",
+                                    "name": "ansibleTestPackage5",
+                                    "scope member": [
+                                       {
+                                          "name": "FGT2",
+                                          "vdom": "root"
+                                       },
+                                       {
+                                          "name": "FGT3",
+                                          "vdom": "root"
+                                       },
+                                       {
+                                          "name": "TestGroup"
+                                       }
+                                    ],
+                                    "package settings": {
+                                       "inspection-mode": "flow",
+                                       "central-nat": "disable",
+                                       "fwpolicy-implicit-log": "disable",
+                                       "fwpolicy6-implicit-log": "disable",
+                                       "ngfw-mode": "profile-based"
+                                    }
+                                 }
+                              ],
+                              "type": "folder",
+                              "name": "ansibleTestFolder4"
+                           }
+                        ],
+                        "type": "folder",
+                        "name": "ansibleTestFolder3"
+                     }
+                  ],
+                  "type": "folder",
+                  "name": "ansibleTestFolder2"
+               }
+            ],
+            "type": "folder",
+            "name": "ansibleTestFolder1"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [],
+            "name": "ansibleTestPackage5",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [
+               {
+                  "name": "FGT2",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               },
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "inspection-mode": "flow",
+            "scope_members": "FGT2, FGT3",
+            "mode": "set",
+            "scope_groups": "TestGroup",
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestFolder3/ansibleTestFolder4",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "set"
+      }
+   ],
+   "fmgr_fwpol_package_install": [
+      {
+         "url": "/securityconsole/install/package",
+         "raw_response": {
+            "task": 288
+         },
+         "datagram_sent": {
+            "pkg": "ansibleTestPackage1",
+            "adom": "ansible"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "TestGroup"
+               }
+            ],
+            "name": "ansibleTestPackage1",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "install",
+            "scope_groups": null,
+            "parent_folder": null,
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "exec"
+      },
+      {
+         "url": "/securityconsole/install/package",
+         "raw_response": {
+            "task": 289
+         },
+         "datagram_sent": {
+            "pkg": "ansibleTestFolder1/ansibleTestPackage2",
+            "adom": "ansible"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage2",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "install",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "exec"
+      },
+      {
+         "url": "/securityconsole/install/package",
+         "raw_response": {
+            "message": "session id(43584) username(ansible)",
+            "task": 290
+         },
+         "datagram_sent": {
+            "pkg": "ansibleTestFolder1/ansibleTestFolder2/ansibleTestPackage3",
+            "adom": "ansible"
+         },
+         "paramgram_used": {
+            "ssl-ssh-profile": null,
+            "existing_members_list": [
+               {
+                  "name": "testtest"
+               },
+               {
+                  "name": "FGT1",
+                  "vdom": "root"
+               },
+               {
+                  "name": "FGT3",
+                  "vdom": "root"
+               }
+            ],
+            "name": "ansibleTestPackage3",
+            "adom": "ansible",
+            "package_exists": true,
+            "central-nat": "disable",
+            "object_type": "pkg",
+            "fwpolicy-implicit-log": "disable",
+            "package-folder": null,
+            "append_members_list": [],
+            "inspection-mode": "flow",
+            "scope_members": null,
+            "mode": "install",
+            "scope_groups": null,
+            "parent_folder": "ansibleTestFolder1/ansibleTestFolder2",
+            "scope_members_vdom": "root",
+            "fwpolicy6-implicit-log": "disable",
+            "ngfw-mode": "profile-based"
+         },
+         "post_method": "exec"
+      }
+   ]
 }
