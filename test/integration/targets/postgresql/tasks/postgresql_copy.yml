@@ -32,6 +32,15 @@
       <<: *pg_parameters
       query: "INSERT INTO {{ test_table }} (id, name) VALUES (1, 'first')"
 
+  - name: postgresql_copy - ensure that test data files don't exist
+    <<: *task_parameters
+    file:
+      path: '{{ item }}'
+      state: absent
+    with_items:
+      - '{{ data_file_csv }}'
+      - '{{ data_file_txt }}'
+
   # ##############
   # Do main tests:
 
