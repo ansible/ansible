@@ -86,9 +86,9 @@ keyvaults:
     contains:
         kid:
             description: Key identifier.
-                returned: always
-                type: str
-                sample: "https://myVault.vault.azure.net/keys/key1/fd2682392a504455b79c90dd04a1bf46"
+            returned: always
+            type: str
+            sample: "https://myVault.vault.azure.net/keys/key1/fd2682392a504455b79c90dd04a1bf46"
         permitted_operations:
             description:
                 - Permitted operations on the key
