@@ -1770,7 +1770,10 @@ class PyVmomiHelper(PyVmomi):
             # TODO: really use the datastore for newly created disks
             if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
                 datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
-                datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
+                if self.params['esxi_hostname'] is not None:
+                    datastores = [x for x in datastores if self.params['esxi_hostname'] in [y.key.name for y in x.host]]
+                else:
+                    datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
                 if datastores is None or len(datastores) == 0:
                     self.module.fail_json(msg="Unable to find a datastore list when autoselecting")
 
