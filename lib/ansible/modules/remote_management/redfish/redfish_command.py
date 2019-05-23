@@ -238,8 +238,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri, timeout)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -263,7 +262,7 @@ def main():
         }
 
         # execute only if we find an Account service resource
-        result = rf_utils._find_accountservice_resource(rf_uri)
+        result = rf_utils._find_accountservice_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -272,7 +271,7 @@ def main():
 
     elif category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -286,7 +285,7 @@ def main():
                     module.params['boot_next'])
 
     elif category == "Chassis":
-        result = rf_utils._find_chassis_resource(rf_uri)
+        result = rf_utils._find_chassis_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -308,7 +307,7 @@ def main():
         }
 
         # execute only if we find a Manager service resource
-        result = rf_utils._find_managers_resource(rf_uri)
+        result = rf_utils._find_managers_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
