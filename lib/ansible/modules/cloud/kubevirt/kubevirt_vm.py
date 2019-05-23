@@ -251,7 +251,7 @@ VM_ARG_SPEC = {
     },
     'datavolumes': {'type': 'list'},
     'template': {'type': 'str'},
-    'template_parameters': {'type': 'dict', 'default': {}},
+    'template_parameters': {'type': 'dict'},
 }
 
 # Which params (can) modify 'spec:' contents of a VM:
@@ -414,7 +414,7 @@ class KubeVirtVM(KubeVirtRawModule):
         # Changes in VM's spec or any changes to VMIs warrant a full CRUD, the latter because
         # VMIs don't really have states to manage; they're either present or don't exist
         # Also check_mode always warrants a CRUD, as that'll produce a sane result
-        if vm_spec_change or ephemeral or k8s_state == 'absent' or self.check_mode:
+        if vm_spec_change or (ephemeral and vm_spec_change) or k8s_state == 'absent' or self.check_mode:
             definition = self.construct_definition(kind, our_state, ephemeral)
             result = self.execute_crud(kind, definition)
             changed = result['changed']
