@@ -4,26 +4,26 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - block:
-  - name: Create network without type
-    meraki_network:
-      auth_key: '{{ auth_key }}'
-      state: present
-      org_name: '{{test_org_name}}'
-      net_name: IntTestNetwork
-      timezone: America/Chicago
-    delegate_to: localhost
-    register: create_net_no_type
-    ignore_errors: yes
+  # - name: Create network without type
+  #   meraki_network:
+  #     auth_key: '{{ auth_key }}'
+  #     state: present
+  #     org_name: '{{test_org_name}}'
+  #     net_name: IntTestNetwork
+  #     timezone: America/Chicago
+  #   delegate_to: localhost
+  #   register: create_net_no_type
+  #   ignore_errors: yes
 
-  - name: Create network without organization
-    meraki_network:
-      auth_key: '{{ auth_key }}'
-      state: present
-      net_name: IntTestNetwork
-      timezone: America/Chicago
-    delegate_to: localhost
-    register: create_net_no_org
-    ignore_errors: yes
+  # - name: Create network without organization
+  #   meraki_network:
+  #     auth_key: '{{ auth_key }}'
+  #     state: present
+  #     net_name: IntTestNetwork
+  #     timezone: America/Chicago
+  #   delegate_to: localhost
+  #   register: create_net_no_org
+  #   ignore_errors: yes
 
   - name: Create network with type switch
     meraki_network:
@@ -194,12 +194,15 @@
     delegate_to: localhost
     register: create_net_tags
 
-  - name: Modify network
+  - set_fact:
+      tag_net_id: '{{create_net_tags.data.id}}'
+
+  - name: Modify network by net_id
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: IntTestNetworkTags
+      net_id: '{{tag_net_id}}'
       type: switch
       timezone: America/Chicago
       tags: 
@@ -231,11 +234,11 @@
   - name: Present assertions
     assert:
       that:
-        - create_net_no_type.status == 500
+        # - create_net_no_type.status == 500
         - create_net_combined.data.type == 'combined'
         - create_net_combined.data.disableMyMerakiCom == True
         - enable_meraki_com.data.disableMyMerakiCom == False
-        - '"org_name or org_id parameters are required" in create_net_no_org.msg'
+        # - '"org_name or org_id parameters are required" in create_net_no_org.msg'
         - '"IntTestNetworkAppliance" in create_net_appliance_no_tz.data.name'
         - create_net_appliance_no_tz.changed == True
         - '"IntTestNetworkSwitch" in create_net_switch.data.name'
