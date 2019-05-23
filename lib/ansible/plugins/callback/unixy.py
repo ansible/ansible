@@ -48,8 +48,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'unixy'
 
-    def _run_is_verbose(self, result):
-        return ((self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result)
 
     def _get_task_display_name(self, task):
         self.task_display_name = None
