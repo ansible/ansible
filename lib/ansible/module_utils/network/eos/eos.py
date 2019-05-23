@@ -449,10 +449,10 @@ class HttpApi:
         def run_queue(queue, output):
             try:
                 response = to_list(self._connection.send_request(queue, output=output))
-            except Exception as exc:
+            except ConnectionError as exc:
                 if check_rc:
                     raise
-                return to_text(exc)
+                return to_list(to_text(exc))
 
             if output == 'json':
                 response = [json.loads(item) for item in response]
