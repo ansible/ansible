@@ -200,7 +200,7 @@ def map_obj_to_commands(updates, module):
     return commands
 
 
-def map_config_to_obj(module):
+def map_config_to_obj(module, warnings):
     config = get_config(module, flags=['| section interface'])
     configobj = NetworkConfig(indent=3, contents=config)
 
@@ -213,11 +213,17 @@ def map_config_to_obj(module):
     for item in set(match):
         command = {'command': 'show interfaces {0} switchport | include Switchport'.format(item),
                    'output': 'text'}
-        switchport_cfg = run_commands(module, command)[0].split(':')[1].strip()
-        if switchport_cfg == 'Enabled':
-            state = 'present'
-        else:
-            state = 'absent'
+        command_result = run_commands(module, command, check_rc=False)
+        if "Interface does not exist" in command_result[0]:
+            warnings.append("Could not gather switchport information for {0}: {1}".format(item, command_result[0]))
+            continue
+        elif command_result[0] != "":
+            switchport_cfg = command_result[0].split(':')[1].strip()
+
+            if switchport_cfg == 'Enabled':
+                state = 'present'
+            else:
+                state = 'absent'
 
         obj = {
             'name': item.lower(),
@@ -294,12 +300,10 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
-    have = map_config_to_obj(module)
+    have = map_config_to_obj(module, warnings)
     commands = map_obj_to_commands((want, have), module)
     result['commands'] = commands
 
