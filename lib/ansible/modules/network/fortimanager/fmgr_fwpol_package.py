@@ -179,9 +179,13 @@ options:
       - List of groups to add to the scope of the fw pol package
     required: false
 <<<<<<< HEAD
+<<<<<<< HEAD
     version_added: 2.9
 =======
 >>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
+=======
+    version_added: 2.9
+>>>>>>> Quick fix to version_added for a parameter
 
   scope_members:
     description:
