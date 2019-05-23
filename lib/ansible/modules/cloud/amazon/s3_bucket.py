@@ -153,6 +153,9 @@ def create_or_update_bucket(s3_client, module, location):
         module.fail_json_aws(e, msg="Failed to check bucket presence")
 
     if not bucket_is_present:
+        if module.check_mode:
+            module.exit_json(changed=True, name=name)
+
         try:
             bucket_changed = create_bucket(s3_client, name, location)
             s3_client.get_waiter('bucket_exists').wait(Bucket=name)
@@ -179,6 +182,9 @@ def create_or_update_bucket(s3_client, module, location):
                 required_versioning = 'Suspended'
 
             if required_versioning:
+                if module.check_mode:
+                    module.exit_json(changed=True, name=name)
+
                 try:
                     put_bucket_versioning(s3_client, name, required_versioning)
                     changed = True
@@ -205,6 +211,9 @@ def create_or_update_bucket(s3_client, module, location):
         if requester_pays:
             payer = 'Requester' if requester_pays else 'BucketOwner'
             if requester_pays_status != payer:
+                if module.check_mode:
+                    module.exit_json(changed=True, name=name)
+
                 put_bucket_request_payment(s3_client, name, payer)
                 requester_pays_status = wait_payer_is_applied(module, s3_client, name, payer, should_fail=False)
                 if requester_pays_status is None:
@@ -230,6 +239,9 @@ def create_or_update_bucket(s3_client, module, location):
                 policy = json.loads(policy)
 
             if not policy and current_policy:
+                if module.check_mode:
+                    module.exit_json(changed=True, name=name)
+
                 try:
                     delete_bucket_policy(s3_client, name)
                 except (BotoCoreError, ClientError) as e:
@@ -237,6 +249,9 @@ def create_or_update_bucket(s3_client, module, location):
                 current_policy = wait_policy_is_applied(module, s3_client, name, policy)
                 changed = True
             elif compare_policies(current_policy, policy):
+                if module.check_mode:
+                    module.exit_json(changed=True, name=name)
+
                 try:
                     put_bucket_policy(s3_client, name, policy)
                 except (BotoCoreError, ClientError) as e:
@@ -264,6 +279,9 @@ def create_or_update_bucket(s3_client, module, location):
             # Tags are always returned as text
             tags = dict((to_text(k), to_text(v)) for k, v in tags.items())
             if current_tags_dict != tags:
+                if module.check_mode:
+                    module.exit_json(changed=True, name=name)
+
                 if tags:
                     try:
                         put_bucket_tagging(s3_client, name, tags)
@@ -475,6 +493,9 @@ def destroy_bucket(s3_client, module):
     if not bucket_is_present:
         module.exit_json(changed=False)
 
+    if module.check_mode:
+        module.exit_json(changed=True)
+
     if force:
         # if there are contents then we need to delete them (including versions) before we can delete the bucket
         try:
@@ -559,7 +580,7 @@ def main():
         )
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
