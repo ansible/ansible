@@ -48,7 +48,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'unixy'
 
-
     def _get_task_display_name(self, task):
         self.task_display_name = None
         display_name = task.get_name().strip().split(" : ")
