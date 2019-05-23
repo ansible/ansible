@@ -149,8 +149,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = IdracRedfishUtils(creds, root_uri, timeout)
+    rf_utils = IdracRedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -166,14 +165,14 @@ def main():
 
     if category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
         for command in command_list:
             if command == "CreateBiosConfigJob":
                 # execute only if we find a Managers resource
-                result = rf_utils._find_managers_resource(rf_uri)
+                result = rf_utils._find_managers_resource()
                 if result['ret'] is False:
                     module.fail_json(msg=to_native(result['msg']))
                 result = rf_utils.create_bios_config_job()
