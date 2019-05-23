@@ -41,7 +41,6 @@ from ansible.module_utils.network.fortianalyzer.common import FAZBaseException
 from ansible.module_utils.network.fortianalyzer.common import FAZCommon
 from ansible.module_utils.network.fortianalyzer.common import FAZMethods
 
-import pydevd
 
 class HttpApi(HttpApiBase):
     def __init__(self, connection):
@@ -105,7 +104,6 @@ class HttpApi(HttpApiBase):
 
     def inspect_faz(self):
         # CHECK FOR WORKSPACE MODE TO SEE IF WE HAVE TO ENABLE ADOM LOCKS
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
         status = self.get_system_status()
         if status[0] == -11:
             # THE CONNECTION GOT LOST SOMEHOW, REMOVE THE SID AND REPORT BAD LOGIN
