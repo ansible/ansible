@@ -3,9 +3,13 @@
 from __future__ import absolute_import, print_function
 
 import os
-import pipes
 import tempfile
 import time
+
+try:
+    from shlex import quote as cmd_quote
+except ImportError:
+    from pipes import quote as cmd_quote
 
 import lib.pytar
 
@@ -107,7 +111,7 @@ class ManageWindowsCI(object):
             options.append('-tt')
 
         if isinstance(command, list):
-            command = ' '.join(pipes.quote(c) for c in command)
+            command = ' '.join(cmd_quote(c) for c in command)
 
         run_command(self.core_ci.args,
                     ['ssh', '-q'] + self.ssh_args +
@@ -273,14 +277,14 @@ class ManagePosixCI(object):
             options = []
 
         if isinstance(command, list):
-            command = ' '.join(pipes.quote(c) for c in command)
+            command = ' '.join(cmd_quote(c) for c in command)
 
         run_command(self.core_ci.args,
                     ['ssh', '-tt', '-q'] + self.ssh_args +
                     options +
                     ['-p', str(self.core_ci.connection.port),
                      '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
-                    self.become + [pipes.quote(command)])
+                    self.become + [cmd_quote(command)])
 
     def scp(self, src, dst):
         """
