@@ -1364,8 +1364,8 @@ class RedfishUtils(object):
         key = "EthernetInterfaces"
         # Get these entries, but does not fail if not found
         properties = ['Description', 'FQDN', 'IPv4Addresses', 'IPv6Addresses',
-                      'NameServers', 'PermanentMACAddress', 'SpeedMbps', 'MTUSize',
-                      'AutoNeg', 'Status']
+                      'NameServers', 'MACAddress', 'PermanentMACAddress',
+                      'SpeedMbps', 'MTUSize', 'AutoNeg', 'Status']
 
         response = self.get_request(self.root_uri + resource_uri)
         if response['ret'] is False:
