@@ -229,7 +229,7 @@ def main():
         net_name=dict(type='str', aliases=['name', 'network']),
         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
         enable_vlans=dict(type='bool'),
-        disable_my_meraki=dict(type='bool'),
+        disable_my_meraki=dict(type='bool', removed_in_version=2.13),
         enable_my_meraki=dict(type='bool'),
         enable_remote_status_page=dict(type='bool'),
     )
@@ -295,7 +295,6 @@ def main():
             else:
                 payload['disableMyMerakiCom'] = True
         elif meraki.params['disable_my_meraki'] is not None:
-            meraki.module.deprecate("Please update your playbook to use enable_my_meraki.", version=2.13)
             payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
         if meraki.params['enable_remote_status_page'] is not None:
             if meraki.params['enable_remote_status_page'] is True:
