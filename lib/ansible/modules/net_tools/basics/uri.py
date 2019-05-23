@@ -314,7 +314,7 @@ RETURN = r'''
 # The return information includes all the HTTP headers in lower-case.
 elapsed:
   description: The number of seconds that elapsed while performing the download
-  returned: always
+  returned: on success
   type: int
   sample: 23
 msg:
@@ -324,7 +324,7 @@ msg:
   sample: OK (unknown bytes)
 redirected:
   description: Whether the request was redirected
-  returned: always
+  returned: on success
   type: bool
   sample: false
 status:

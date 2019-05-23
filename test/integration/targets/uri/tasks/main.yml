@@ -102,9 +102,12 @@
 - name: Assert that the file was not downloaded
   assert:
     that:
-      - "result.failed == true"
+      - result.failed == true
       - "'Failed to validate the SSL certificate' in result.msg or ( result.msg is match('hostname .* doesn.t match .*'))"
-      - "stat_result.stat.exists == false"
+      - stat_result.stat.exists == false
+      - result.status is defined
+      - result.status == -1
+      - result.url == 'https://' ~ badssl_host ~ '/'
 
 - name: Clean up any cruft from the results directory
   file:
