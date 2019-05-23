@@ -41,6 +41,10 @@ options:
             - Set to true to show deleted keys. Set to False to show not deleted keys.
         type: bool
         default: false
+    tags:	
+        description:	
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.	
+        type: list
 
 extends_documentation_fragment:
     - azure
@@ -125,9 +129,9 @@ keyvaults:
                     type: str
         managed:
             description:
-                - Resource Id of the vault.
-            type: str
-            sample: 
+                - True if the key's lifetime is managed by key vault.
+            type: bool
+            sample: True
         tags:
             description:
                 - Tags of the key.
@@ -256,7 +260,8 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
             version=dict(type='str', default='current'),
             name=dict(type='str'),
             vault_uri=dict(type='str', required=True),
-            show_deleted_key=dict(type='bool', default=False)
+            show_deleted_key=dict(type='bool', default=False),
+            tags=dict(type='str')
         )
 
         self.vault_uri = None
@@ -269,8 +274,8 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
         self._client = None
 
         super(AzureRMKeyVaultKeyInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                      supports_check_mode=False,
-                                                      supports_tags=False)
+                                                     supports_check_mode=False,
+                                                     supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
