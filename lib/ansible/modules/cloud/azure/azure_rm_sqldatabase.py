@@ -195,6 +195,7 @@ status:
 '''
 
 import time
+import pdb
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -434,6 +435,7 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
         self.log("Creating / Updating the SQL Database instance {0}".format(self.name))
 
         try:
+            pdb.set_trace()
             response = self.sql_client.databases.create_or_update(resource_group_name=self.resource_group,
                                                                   server_name=self.server_name,
                                                                   database_name=self.name,
