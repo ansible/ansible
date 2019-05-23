@@ -715,6 +715,7 @@ class FortiSIEMHandler(object):
         else:
             present.append("events")
 <<<<<<< HEAD
+<<<<<<< HEAD
             return_dict["device"]["event_results"] = \
                 self._tools.get_events_info_for_specific_ip(events)
 =======
@@ -723,6 +724,9 @@ class FortiSIEMHandler(object):
                 self.get_events_info_for_specific_ip(events)
 >>>>>>> Full FSM Commit
 =======
+=======
+            return_dict["device"]["event_results"] = \
+>>>>>>> Bug Fixes according to shippable... re-running
                 self._tools.get_events_info_for_specific_ip(events)
 >>>>>>> Full FSM Commit. Ready for shippable tests.
         if not monitors:
@@ -935,6 +939,7 @@ class FortiSIEMHandler(object):
         except BaseException as err:
             FSMBaseException(msg="Failed to get file contents at path: " + str(self.export_json_to_file_path) +
                                  "| Error: " + str(err))
+<<<<<<< HEAD
 
         return source
 
@@ -968,6 +973,8 @@ class FortiSIEMHandler(object):
         except BaseException as err:
             FSMBaseException(msg="Failed to get file contents at path: " + str(self.export_json_to_file_path) +
                                        "| Error: " + str(err))
+=======
+>>>>>>> Bug Fixes according to shippable... re-running
 
         return source
 
@@ -1375,9 +1382,9 @@ class FortiSIEMHandler(object):
         start_epoch = None
         end_epoch = None
         # BUILD THE TIMESTAMP
-        begin_timestamp = self._module.paramgram["report_absolute_begin_date"]\
+        begin_timestamp = self._module.paramgram["report_absolute_begin_date"] \
                           + " " + self._module.paramgram["report_absolute_begin_time"]
-        end_timestamp = self._module.paramgram["report_absolute_end_date"]\
+        end_timestamp = self._module.paramgram["report_absolute_end_date"] \
                         + " " + self._module.paramgram["report_absolute_end_time"]
         start_epoch = self._tools.convert_timestamp_to_epoch(begin_timestamp)
         end_epoch = self._tools.convert_timestamp_to_epoch(end_timestamp)
@@ -1751,7 +1758,10 @@ class FortiSIEMHandler(object):
 
         return facts
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 
 >>>>>>> Full FSM Commit
+=======
+>>>>>>> Bug Fixes according to shippable... re-running

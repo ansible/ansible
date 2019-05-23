@@ -37,10 +37,14 @@ DOCUMENTATION = '''
 ---
 module: fsm_maintenance
 <<<<<<< HEAD
+<<<<<<< HEAD
 version_added: "2.9"
 =======
 version_added: "2.8"
 >>>>>>> Full FSM Commit
+=======
+version_added: "2.9"
+>>>>>>> Bug Fixes according to shippable... re-running
 author: Luke Weighall (@lweighall)
 short_description: Creates and Deletes maintenance calendar objects.
 description:

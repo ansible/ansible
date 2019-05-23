@@ -37,10 +37,14 @@ DOCUMENTATION = '''
 ---
 module: fsm_organizations
 <<<<<<< HEAD
+<<<<<<< HEAD
 version_added: "2.9"
 =======
 version_added: "2.8"
 >>>>>>> Full FSM Commit
+=======
+version_added: "2.9"
+>>>>>>> Bug Fixes according to shippable... re-running
 author: Luke Weighall (@lweighall)
 short_description: Get a list of devices from the FortiSIEM CMDB
 description:
@@ -453,8 +457,11 @@ import pydevd
 >>>>>>> Full FSM Commit
 =======
 
+<<<<<<< HEAD
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 
+=======
+>>>>>>> Bug Fixes according to shippable... re-running
 def main():
     argument_spec = dict(
         host=dict(required=True, type="str"),
