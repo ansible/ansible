@@ -197,6 +197,7 @@
       columns: id, name
       options:
         delimiter: '|'
+    when: ansible_distribution != 'FreeBSD'
 
   - assert:
       that:
@@ -204,6 +205,7 @@
       - result.queries == ["COPY \"acme\" (id, name) TO PROGRAM '/bin/true' (delimiter '|')"]
       - result.src == '{{ test_table }}'
       - result.dst == '/bin/true'
+    when: ansible_distribution != 'FreeBSD'
 
   - name: postgresql_copy - test program option, copy from program
     <<: *task_parameters
@@ -222,6 +224,7 @@
       - result.queries == ["COPY \"acme\" (id, name) FROM PROGRAM 'echo 1,first' (delimiter ',')"]
       - result.dst == '{{ test_table }}'
       - result.src == 'echo 1,first'
+    when: ansible_distribution != 'FreeBSD'
 
   - name: postgresql_copy - check that there are three rows in test_table after the prev step
     <<: *task_parameters
