@@ -179,12 +179,14 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 
+
 class NotSupportedError(Exception):
     pass
 
 # ===========================================
 # PostgreSQL module specific support methods.
 #
+
 
 def set_owner(cursor, db, owner):
     query = "ALTER DATABASE %s OWNER TO %s" % (
