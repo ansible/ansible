@@ -9,11 +9,7 @@ https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintena
 
 ## Reporting a Vulnerability
 
-Please check out [our bug reporting docs](
+We encourage responsible disclosure practices for security
+vulnerabilities. Please read our [policies for reporting bugs](
 https://docs.ansible.com/ansible/devel/community/reporting_bugs_and_features.html#reporting-a-bug
-) if you want to report a security-related problem with Ansible.
-
-Should you be tempted to disclose a vulnerability, please consider
-following responsible disclosure practices and drop a line to
-security@ansible.com so that we'd have a chance to patch it before it
-goes public. Thanks in advance!
+) if you want to report a security issue that might affect Ansible.
