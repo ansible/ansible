@@ -53,6 +53,9 @@ options:
     type: bool
     default: 'no'
     version_added: "2.0"
+  mountpoint:
+    description:
+    - required when wanting to resize an xfs filesystem, which requires to be mounted first.
   opts:
     description:
     - List of options to be passed to mkfs command.
@@ -360,7 +363,7 @@ def main():
             mountpoint=dict(type='str', default=''),
         ),
         required_if=[
-            ['fstype', 'xfs',[ 'mountpoint' ]]
+            ['fstype', 'xfs', ['mountpoint']]
         ],
         supports_check_mode=True,
     )
