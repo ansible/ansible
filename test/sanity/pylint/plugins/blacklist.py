@@ -117,6 +117,9 @@ class AnsibleBlacklistChecker(BaseChecker):
         # see https://docs.python.org/2/library/tempfile.html#tempfile.mktemp
         'tempfile.mktemp': BlacklistEntry('tempfile.mkstemp'),
 
+        # see https://github.com/ansible/ansible/pull/56785
+        'pipes.quote': BlacklistEntry('pipes.quote'),
+
         'sys.exit': BlacklistEntry('exit_json or fail_json',
                                    ignore_paths=(
                                        '/lib/ansible/module_utils/basic.py',
