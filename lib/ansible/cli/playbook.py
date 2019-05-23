@@ -44,7 +44,6 @@ class PlaybookCLI(CLI):
         opt_help.add_vault_options(self.parser)
         opt_help.add_fork_options(self.parser)
         opt_help.add_module_options(self.parser)
-        opt_help.add_output_one_line_options(self.parser)
 
         # ansible playbook specific opts
         self.parser.add_argument('--list-tasks', dest='listtasks', action='store_true',
