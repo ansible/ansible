@@ -235,7 +235,6 @@ CATEGORY_COMMANDS_DEFAULT = {
 
 def main():
     result = {}
-    resource = {}
     category_list = []
     module = AnsibleModule(
         argument_spec=dict(
@@ -258,8 +257,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri, timeout)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
 
     # Build Category list
     if "all" in module.params['category']:
@@ -294,7 +292,7 @@ def main():
         # Organize by Categories / Commands
         if category == "Systems":
             # execute only if we find a Systems resource
-            resource = rf_utils._find_systems_resource(rf_uri)
+            resource = rf_utils._find_systems_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -322,7 +320,7 @@ def main():
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
-            resource = rf_utils._find_chassis_resource(rf_uri)
+            resource = rf_utils._find_chassis_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -340,7 +338,7 @@ def main():
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
-            resource = rf_utils._find_accountservice_resource(rf_uri)
+            resource = rf_utils._find_accountservice_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -350,7 +348,7 @@ def main():
 
         elif category == "Update":
             # execute only if we find UpdateService resources
-            resource = rf_utils._find_updateservice_resource(rf_uri)
+            resource = rf_utils._find_updateservice_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -362,7 +360,7 @@ def main():
 
         elif category == "Sessions":
             # excute only if we find SessionService resources
-            resource = rf_utils._find_sessionservice_resource(rf_uri)
+            resource = rf_utils._find_sessionservice_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -372,7 +370,7 @@ def main():
 
         elif category == "Manager":
             # execute only if we find a Manager service resource
-            resource = rf_utils._find_managers_resource(rf_uri)
+            resource = rf_utils._find_managers_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
