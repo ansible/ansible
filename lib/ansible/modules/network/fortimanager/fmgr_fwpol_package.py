@@ -33,23 +33,7 @@ notes:
     - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
     - Revision Comments April 2nd 2019
         - Couldn't append to installation target list, only send a complete list. We've added modes for adding and
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
           deleting targets for policy packages.
-=======
-          deleting just targets for policy packages.
->>>>>>> Added notes and documentation
-=======
-          deleting targets for policy packages.
->>>>>>> Odd error with shippable. Test was cancelled. Edited docs to re-run.
-=======
-          deleting just targets for policy packages.
->>>>>>> Added notes and documentation
-=======
-          deleting targets for policy packages.
->>>>>>> Odd error with shippable. Test was cancelled. Edited docs to re-run.
         - Install mode has been added. Scope_members is no longer taken into account when mode = install.
           Only the existing installation targets on the package will be used. Update installation targets before.
         - Nested folders and packages now work properly. Before they were not.
@@ -57,24 +41,8 @@ notes:
           what was supplied under scope_members and scope_groups. Use the add_targets or delete_targets mode first.
         - When using "add_targets" or "delete_targets" for changing installation targets, only scope_members or
           scope_groups is considered for changes to the package. To edit the package settings themselves, use "set".
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     - Revision Comments May 21st 2019
         - Added support to move packages.
-=======
->>>>>>> Added notes and documentation
-=======
-    - Revision Comments May 21st 2019
-        - Added support to move packages.
->>>>>>> Fixes to fmgr_fwpol_package
-=======
->>>>>>> Added notes and documentation
-=======
-    - Revision Comments May 21st 2019
-        - Added support to move packages.
->>>>>>> Fixes to fmgr_fwpol_package
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
@@ -101,23 +69,7 @@ options:
       - Delete Targets will only delete the specified scope members from installation targets.
       - Install will install the package to the assigned installation targets listed on existing package.
       - Update your installation targets BEFORE running install task.
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     choices: ['add', 'set', 'delete', 'move', 'copy', 'add_targets', 'delete_targets', 'install']
-=======
-    choices: ['add', 'set', 'delete', 'add_targets', 'delete_targets', 'install']
->>>>>>> Fixed issues:
-=======
-    choices: ['add', 'set', 'delete', 'move', 'copy', 'add_targets', 'delete_targets', 'install']
->>>>>>> Fixes to fmgr_fwpol_package
-=======
-    choices: ['add', 'set', 'delete', 'add_targets', 'delete_targets', 'install']
->>>>>>> Fixed issues:
-=======
-    choices: ['add', 'set', 'delete', 'move', 'copy', 'add_targets', 'delete_targets', 'install']
->>>>>>> Fixes to fmgr_fwpol_package
     default: add
 
   name:
@@ -130,26 +82,7 @@ options:
       - Are we managing packages or package folders?
     required: True
     choices: ['pkg','folder']
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Fixed issues:
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  package_folder:
-    description:
-      - Name of the folder you want to put the package into.
-      - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
-      - Do not include leading or trailing forwardslashes. We take care of that for you.
-    required: false
->>>>>>> Fixed issues:
-
-=======
->>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
-=======
->>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
   central_nat:
     description:
       - Central NAT setting.
@@ -190,48 +123,11 @@ options:
       - if policy-based ngfw-mode, refer to firewall ssl-ssh-profile.
     required: false
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-  append_scope_members:
-    description:
-      - if enabled, ansible will check for existing scope members and add those to the list before setting
-      - if disabled, ansible will simply replace the existing scope members with the list provided.
-    required: false
-    choices: ['enable', 'disable']
-    default: 'enable'
-
-<<<<<<< HEAD
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
->>>>>>> Fixed issues:
-=======
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
->>>>>>> Fixed issues:
   scope_groups:
     description:
       - List of groups to add to the scope of the fw pol package
     required: false
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     version_added: 2.9
-=======
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
-    version_added: 2.9
->>>>>>> Quick fix to version_added for a parameter
-=======
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
-    version_added: 2.9
->>>>>>> Quick fix to version_added for a parameter
 
   scope_members:
     description:
@@ -248,64 +144,16 @@ options:
     description:
       - The parent folder name you want to add this object under.
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
       - Do not include leading or trailing forwardslashes.
     required: false
-<<<<<<< HEAD
-<<<<<<< HEAD
 
   target_folder:
     description:
       - Only used when mode equals move.
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
       - Do not include leading or trailing forwardslashes.
-=======
-      - Do not include leading or trailing forwardslashes. We take care of that for you.
->>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
-=======
-      - Do not include leading or trailing forwardslashes.
->>>>>>> Shippable cancelled for unknown reason. Doc change to restart.
-=======
-      - Do not include leading or trailing forwardslashes. We take care of that for you.
->>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
-=======
-      - Do not include leading or trailing forwardslashes.
->>>>>>> Shippable cancelled for unknown reason. Doc change to restart.
     required: false
-<<<<<<< HEAD
-<<<<<<< HEAD
     version_added: 2.9
-=======
-=======
->>>>>>> Fixes to fmgr_fwpol_package
-
-  target_folder:
-    description:
-      - Only used when mode equals move.
-      - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
-<<<<<<< HEAD
-<<<<<<< HEAD
-      - Do not include leading or trailing forwardslashes.
-    required: false
-<<<<<<< HEAD
->>>>>>> Fixes to fmgr_fwpol_package
-=======
-    version_added: 2.9
->>>>>>> Version_added fields missing
-=======
-      - Do not include leading or trailing forwardslashes. We take care of that for you.
-=======
-      - Do not include leading or trailing forwardslashes.
->>>>>>> Shippable cancelled for unknown reason. Doc change to restart.
-    required: false
-<<<<<<< HEAD
->>>>>>> Fixes to fmgr_fwpol_package
-=======
-    version_added: 2.9
->>>>>>> Version_added fields missing
 
   target_name:
     description:
@@ -313,25 +161,7 @@ options:
       - Only used when you want to rename the package in its new location.
       - If None, then NAME will be used.
     required: false
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     version_added: 2.9
-=======
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
->>>>>>> Fixes to fmgr_fwpol_package
-=======
-    version_added: 2.9
->>>>>>> Version_added fields missing
-=======
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
->>>>>>> Fixes to fmgr_fwpol_package
-=======
-    version_added: 2.9
->>>>>>> Version_added fields missing
 '''
 
 
@@ -445,14 +275,6 @@ def fmgr_fwpol_package(fmgr, paramgram):
     """
     if paramgram["mode"] in ['set', 'add']:
         url = '/pm/pkg/adom/{adom}'.format(adom=paramgram["adom"])
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Fixed issues:
-=======
->>>>>>> Fixed issues:
         datagram = {
             "type": paramgram["object_type"],
             "name": paramgram["name"],
@@ -462,30 +284,6 @@ def fmgr_fwpol_package(fmgr, paramgram):
                 "fwpolicy6-implicit-log": paramgram["fwpolicy6-implicit-log"],
                 "inspection-mode": paramgram["inspection-mode"],
                 "ngfw-mode": paramgram["ngfw-mode"],
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-
-        # IF PARENT FOLDER IS NOT DEFINED
-        if paramgram["parent_folder"] is None:
-            datagram = {
-                "type": paramgram["object_type"],
-                "name": paramgram["name"],
-                "scope member": paramgram["assign_to_list"],
-                "package settings": {
-                    "central-nat": paramgram["central-nat"],
-                    "fwpolicy-implicit-log": paramgram["fwpolicy-implicit-log"],
-                    "fwpolicy6-implicit-log": paramgram["fwpolicy6-implicit-log"],
-                    "inspection-mode": paramgram["inspection-mode"],
-                    "ngfw-mode": paramgram["ngfw-mode"],
-                }
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
->>>>>>> Fixed issues:
-=======
->>>>>>> Fixed issues:
             }
         }
 
@@ -496,110 +294,11 @@ def fmgr_fwpol_package(fmgr, paramgram):
         if len(paramgram["append_members_list"]) > 0:
             datagram["scope member"] = paramgram["append_members_list"]
         elif len(paramgram["append_members_list"]) == 0:
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
             datagram["scope member"] = {}
 
         # IF PARENT FOLDER IS DEFINED
         if paramgram["parent_folder"] is not None:
-<<<<<<< HEAD
             datagram = fmgr_fwpol_package_create_parent_folder_objects(paramgram, datagram)
-
-    # IF MODE IS MOVE
-    if paramgram['mode'] in ["move", "copy"]:
-        if paramgram["mode"] == "move":
-            url = '/securityconsole/package/move'
-        elif paramgram["mode"] == "copy":
-            url = '/securityconsole/package/clone'
-        if paramgram["target_name"]:
-            name = paramgram["target_name"]
-        else:
-            name = paramgram["name"]
-        datagram = {
-            "adom": paramgram["adom"],
-            "dst_name": name,
-            "dst_parent": paramgram["target_folder"],
-            "pkg": paramgram["name"]
-        }
-        if paramgram["parent_folder"]:
-            datagram["pkg"] = str(paramgram["parent_folder"]) + "/" + str(paramgram["name"])
-        else:
-            datagram["pkg"] = str(paramgram["name"])
-
-        if paramgram["mode"] == "copy":
-            # SET THE SCOPE MEMBERS ACCORDING TO MODE AND WHAT WAS SUPPLIED
-            if len(paramgram["append_members_list"]) > 0:
-                datagram["scope member"] = paramgram["append_members_list"]
-            elif len(paramgram["append_members_list"]) == 0:
-                datagram["scope member"] = {}
-=======
-            datagram = {
-                "type": "folder",
-                "name": paramgram["parent_folder"],
-                "subobj": [{
-                    "name": paramgram["name"],
-                    "scope member": paramgram["assign_to_list"],
-                    "type": "pkg",
-                    "package settings": {
-                        "central-nat": paramgram["central-nat"],
-                        "fwpolicy-implicit-log": paramgram["fwpolicy-implicit-log"],
-                        "fwpolicy6-implicit-log": paramgram["fwpolicy6-implicit-log"],
-                        "inspection-mode": paramgram["inspection-mode"],
-                        "ngfw-mode": paramgram["ngfw-mode"],
-                    }
-                }]
-            }
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
-            datagram["scope member"] = None
-=======
-            datagram["scope member"] = {}
->>>>>>> Fixes to fmgr_fwpol_package
-=======
-            datagram["scope member"] = {}
->>>>>>> Fixes to fmgr_fwpol_package
-
-        # IF PARENT FOLDER IS DEFINED
-        if paramgram["parent_folder"] is not None:
-            datagram = fmgr_fwpol_package_create_parent_folder_objects(paramgram, datagram)
->>>>>>> Fixed issues:
-
-    # IF MODE IS MOVE
-    if paramgram['mode'] in ["move", "copy"]:
-        if paramgram["mode"] == "move":
-            url = '/securityconsole/package/move'
-        elif paramgram["mode"] == "copy":
-            url = '/securityconsole/package/clone'
-        if paramgram["target_name"]:
-            name = paramgram["target_name"]
-        else:
-            name = paramgram["name"]
-        datagram = {
-            "adom": paramgram["adom"],
-            "dst_name": name,
-            "dst_parent": paramgram["target_folder"],
-            "pkg": paramgram["name"]
-        }
-        if paramgram["parent_folder"]:
-            datagram["pkg"] = str(paramgram["parent_folder"]) + "/" + str(paramgram["name"])
-        else:
-            datagram["pkg"] = str(paramgram["name"])
-
-        if paramgram["mode"] == "copy":
-            # SET THE SCOPE MEMBERS ACCORDING TO MODE AND WHAT WAS SUPPLIED
-            if len(paramgram["append_members_list"]) > 0:
-                datagram["scope member"] = paramgram["append_members_list"]
-            elif len(paramgram["append_members_list"]) == 0:
-                datagram["scope member"] = {}
-=======
-            datagram["scope member"] = None
-
-        # IF PARENT FOLDER IS DEFINED
-        if paramgram["parent_folder"] is not None:
-            datagram = fmgr_fwpol_package_create_parent_folder_objects(paramgram, datagram)
->>>>>>> Fixed issues:
 
     # IF MODE IS MOVE
     if paramgram['mode'] in ["move", "copy"]:
@@ -651,98 +350,6 @@ def fmgr_fwpol_package(fmgr, paramgram):
         response = fmgr.process_request(url, datagram, FMGRMethods.EXEC)
     else:
         response = fmgr.process_request(url, datagram, paramgram["mode"])
-<<<<<<< HEAD
-<<<<<<< HEAD
-    return response
-
-
-def fmgr_fwpol_package_edit_targets(fmgr, paramgram):
-    """
-    This function will append scope targets to an existing policy package.
-
-    :param fmgr: The fmgr object instance from fmgr_utils.py
-    :type fmgr: class object
-    :param paramgram: The formatted dictionary of options to process
-    :type paramgram: dict
-
-    :return: The response from the FortiManager
-    :rtype: dict
-    """
-    # MERGE APPEND AND EXISTING MEMBERS LISTS BASED ON MODE
-    method = None
-    members_list = None
-    if paramgram["mode"] == "add_targets":
-        method = FMGRMethods.ADD
-        members_list = paramgram["append_members_list"]
-        for member in paramgram["existing_members_list"]:
-            if member not in members_list:
-                members_list.append(member)
-
-    elif paramgram["mode"] == "delete_targets":
-        method = FMGRMethods.DELETE
-        members_list = list()
-        for member in paramgram["append_members_list"]:
-            if member in paramgram["existing_members_list"]:
-                members_list.append(member)
-    datagram = {
-        "data": members_list
-    }
-
-    if paramgram["parent_folder"] is not None:
-        url = '/pm/pkg/adom/{adom}/{parent_folder}/{name}/scope member'.format(adom=paramgram["adom"],
-                                                                               name=paramgram["name"],
-                                                                               parent_folder=paramgram["parent_folder"])
-    elif paramgram["parent_folder"] is None:
-        url = '/pm/pkg/adom/{adom}/{name}/scope member'.format(adom=paramgram["adom"],
-                                                               name=paramgram["name"])
-    response = fmgr.process_request(url, datagram, method)
-=======
->>>>>>> Fixes to fmgr_fwpol_package
-    return response
-
-
-def fmgr_fwpol_package_edit_targets(fmgr, paramgram):
-    """
-    This function will append scope targets to an existing policy package.
-
-    :param fmgr: The fmgr object instance from fmgr_utils.py
-    :type fmgr: class object
-    :param paramgram: The formatted dictionary of options to process
-    :type paramgram: dict
-
-    :return: The response from the FortiManager
-    :rtype: dict
-    """
-    # MERGE APPEND AND EXISTING MEMBERS LISTS BASED ON MODE
-    method = None
-    members_list = None
-    if paramgram["mode"] == "add_targets":
-        method = FMGRMethods.ADD
-        members_list = paramgram["append_members_list"]
-        for member in paramgram["existing_members_list"]:
-            if member not in members_list:
-                members_list.append(member)
-
-    elif paramgram["mode"] == "delete_targets":
-        method = FMGRMethods.DELETE
-        members_list = list()
-        for member in paramgram["append_members_list"]:
-            if member in paramgram["existing_members_list"]:
-                members_list.append(member)
-    datagram = {
-        "data": members_list
-    }
-
-    if paramgram["parent_folder"] is not None:
-        url = '/pm/pkg/adom/{adom}/{parent_folder}/{name}/scope member'.format(adom=paramgram["adom"],
-                                                                               name=paramgram["name"],
-                                                                               parent_folder=paramgram["parent_folder"])
-    elif paramgram["parent_folder"] is None:
-        url = '/pm/pkg/adom/{adom}/{name}/scope member'.format(adom=paramgram["adom"],
-                                                               name=paramgram["name"])
-    response = fmgr.process_request(url, datagram, method)
-=======
->>>>>>> Fixes to fmgr_fwpol_package
     return response
 
 
@@ -852,20 +459,6 @@ def fmgr_fwpol_package_install(fmgr, paramgram):
     datagram = {
         "adom": paramgram["adom"],
         "pkg": paramgram["name"],
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        "scope": paramgram["assign_to_list"]
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
->>>>>>> Fixed issues:
-=======
-        "scope": paramgram["assign_to_list"]
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
->>>>>>> Fixed issues:
     }
     if paramgram["parent_folder"]:
         new_path = str(paramgram["parent_folder"]) + "/" + str(paramgram["name"])
@@ -993,40 +586,11 @@ def fmgr_fwpol_package_create_parent_folder_objects(paramgram, datagram):
 def main():
     argument_spec = dict(
         adom=dict(required=False, type="str", default="root"),
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         mode=dict(choices=["add", "set", "delete", "move", "copy", "add_targets", "delete_targets", "install"],
-=======
-        mode=dict(choices=["add", "set", "delete", "add_targets", "delete_targets", "install"],
->>>>>>> Fixed issues:
-=======
-        mode=dict(choices=["add", "set", "delete", "move", "copy", "add_targets", "delete_targets", "install"],
->>>>>>> Fixes to fmgr_fwpol_package
-=======
-        mode=dict(choices=["add", "set", "delete", "add_targets", "delete_targets", "install"],
->>>>>>> Fixed issues:
-=======
-        mode=dict(choices=["add", "set", "delete", "move", "copy", "add_targets", "delete_targets", "install"],
->>>>>>> Fixes to fmgr_fwpol_package
                   type="str", default="add"),
 
         name=dict(required=False, type="str"),
         object_type=dict(required=True, type="str", choices=['pkg', 'folder']),
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Fixed issues:
-        package_folder=dict(required=False, type="str"),
->>>>>>> Fixed issues:
-=======
->>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
-=======
->>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
         central_nat=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
         fwpolicy_implicit_log=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
         fwpolicy6_implicit_log=dict(required=False, type="str", default="disable", choices=['enable', 'disable']),
@@ -1058,41 +622,11 @@ def main():
         "scope_members": module.params["scope_members"],
         "scope_members_vdom": module.params["scope_members_vdom"],
         "parent_folder": module.params["parent_folder"],
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         "target_folder": module.params["target_folder"],
         "target_name": module.params["target_name"],
         "append_members_list": list(),
         "existing_members_list": list(),
         "package_exists": None,
-=======
-        "assign_to_list": list()
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
-=======
-        "target_folder": module.params["target_folder"],
-        "target_name": module.params["target_name"],
->>>>>>> Fixes to fmgr_fwpol_package
-=======
-        "target_folder": module.params["target_folder"],
-        "target_name": module.params["target_name"],
->>>>>>> Fixes to fmgr_fwpol_package
-        "append_members_list": list(),
-        "existing_members_list": list(),
-        "package_exists": None,
->>>>>>> Fixed issues:
-=======
-        "assign_to_list": list()
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
-        "append_members_list": list(),
-        "existing_members_list": list(),
-        "package_exists": None,
->>>>>>> Fixed issues:
     }
     module.paramgram = paramgram
     fmgr = None
@@ -1106,45 +640,8 @@ def main():
     # BEGIN MODULE-SPECIFIC LOGIC -- THINGS NEED TO HAPPEN DEPENDING ON THE ENDPOINT AND OPERATION
     results = DEFAULT_RESULT_OBJ
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     # QUERY FORTIMANAGER FOR EXISTING PACKAGE DETAILS AND UPDATE PARAMGRAM
     paramgram = fmgr_fwpol_package_get_details(fmgr, paramgram)
-=======
-=======
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-    # CHECK FOR SCOPE MEMBERS AND CREATE THAT MEMBERS LIST
-    members_list = list()
-    if paramgram["scope_members"] is not None and paramgram["mode"] in ['add', 'set']:
-        if isinstance(paramgram["scope_members"], list):
-            members = paramgram["scope_members"]
-        if isinstance(paramgram["scope_members"], str):
-            members = FMGRCommon.split_comma_strings_into_lists(paramgram["scope_members"])
-        for member in members:
-            scope_dict = {
-                "name": member,
-                "vdom": paramgram["scope_members_vdom"],
-            }
-            members_list.append(scope_dict)
-
-    # CHECK FOR SCOPE GROUPS AND ADD THAT TO THE MEMBERS LIST
-    if paramgram["scope_groups"] is not None and paramgram["mode"] in ['add', 'set']:
-        if isinstance(paramgram["scope_groups"], list):
-            members = paramgram["scope_groups"]
-        if isinstance(paramgram["scope_groups"], str):
-            members = FMGRCommon.split_comma_strings_into_lists(paramgram["scope_groups"])
-        for member in members:
-            scope_dict = {
-                "name": member
-            }
-            members_list.append(scope_dict)
-<<<<<<< HEAD
-=======
-    # QUERY FORTIMANAGER FOR EXISTING PACKAGE DETAILS AND UPDATE PARAMGRAM
-    paramgram = fmgr_fwpol_package_get_details(fmgr, paramgram)
->>>>>>> Fixed issues:
 
     try:
         if paramgram["object_type"] == "pkg" and paramgram["mode"] in ["add", "set", "delete", "move", "copy"]:
@@ -1154,46 +651,7 @@ def main():
     except Exception as err:
         raise FMGBaseException(err)
 
-<<<<<<< HEAD
-    paramgram["assign_to_list"] = members_list
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-=======
-=======
-    # QUERY FORTIMANAGER FOR EXISTING PACKAGE DETAILS AND UPDATE PARAMGRAM
-    paramgram = fmgr_fwpol_package_get_details(fmgr, paramgram)
->>>>>>> Fixed issues:
-
     try:
-        if paramgram["object_type"] == "pkg" and paramgram["mode"] in ["add", "set", "delete", "move", "copy"]:
-            results = fmgr_fwpol_package(fmgr, paramgram)
-            fmgr.govern_response(module=module, results=results,
-                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
-    except Exception as err:
-        raise FMGBaseException(err)
-
-<<<<<<< HEAD
-    paramgram["assign_to_list"] = members_list
->>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
-
-    try:
-        if paramgram["object_type"] == "pkg" and paramgram["mode"] in ["add", "set", "delete", "move", "copy"]:
-            results = fmgr_fwpol_package(fmgr, paramgram)
-=======
-    try:
-        if paramgram["object_type"] == "pkg" and paramgram["package_exists"] \
-                and len(paramgram["append_members_list"]) > 0 \
-                and paramgram["mode"] in ['add_targets', 'delete_targets']:
-            results = fmgr_fwpol_package_edit_targets(fmgr, paramgram)
->>>>>>> Fixed issues:
-            fmgr.govern_response(module=module, results=results,
-                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
-    except Exception as err:
-        raise FMGBaseException(err)
-
-    try:
-=======
-    try:
->>>>>>> Fixed issues:
         if paramgram["object_type"] == "pkg" and paramgram["package_exists"] \
                 and len(paramgram["append_members_list"]) > 0 \
                 and paramgram["mode"] in ['add_targets', 'delete_targets']:
