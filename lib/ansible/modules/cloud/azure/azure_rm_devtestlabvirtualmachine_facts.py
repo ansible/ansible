@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabvirtualmachine_facts
 version_added: "2.8"
-short_description: Get Azure DevTest Lab Virtual Machine facts.
+short_description: Get Azure DevTest Lab Virtual Machine facts
 description:
     - Get facts of Azure DevTest Lab Virtual Machine.
 
@@ -41,7 +41,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -55,7 +55,8 @@ EXAMPLES = '''
 
 RETURN = '''
 virtualmachines:
-    description: A list of dictionaries containing facts for DevTest Lab Virtual Machine.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab Virtual Machine.
     returned: always
     type: complex
     contains:
@@ -110,7 +111,7 @@ virtualmachines:
             contains:
                 offer:
                     description:
-                        - Offer.
+                        - The offer of the gallery image.
                     returned: when created from gallery image
                     type: str
                     sample: UbuntuServer
@@ -122,19 +123,19 @@ virtualmachines:
                     sample: Linux
                 sku:
                     description:
-                        - SKU.
+                        - The SKU of the gallery image.
                     returned: when created from gallery image
                     type: str
                     sample: 16.04-LTS
                 publisher:
                     description:
-                        - Publisher.
+                        - The publisher of the gallery image.
                     returned: when created from gallery image
                     type: str
                     sample: Canonical
                 version:
                     description:
-                        - Version.
+                        - The version of the allery image.
                     returned: when created from gallery image
                     type: str
                     sample: latest
@@ -158,7 +159,7 @@ virtualmachines:
             sample: dtl_admin
         storage_type:
             description:
-                - Storage type.
+                - Storage type to use for virtual machine.
             returned: always
             type: str
             sample: standard
@@ -194,10 +195,10 @@ virtualmachines:
             sample: Succeeded
         tags:
             description:
-                - Tags
+                - The tags of the resource.
             returned: always
             type: complex
-            sample: { 'foo': 'bar' }
+            sample: "{ 'foo': 'bar' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
