@@ -13,7 +13,7 @@
 # the tests continue to work
 - name: add exclusion for the SlimFTPd binary
   win_defender_exclusion:
-    path: '{{ remote_tmp_dir | win_dirname }}'
+    path: '{{ test_win_get_url_path | win_dirname }}'
     state: present
 
 - name: download SlimFTPd binary
@@ -67,5 +67,5 @@
 
   - name: remove exclusion for the SlimFTPd binary
     win_defender_exclusion:
-      path: '{{ remote_tmp_dir | win_dirname }}'
+      path: '{{ test_win_get_url_path | win_dirname }}'
       state: absent
