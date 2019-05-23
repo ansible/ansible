@@ -728,7 +728,8 @@ class YumModule(YumDnf):
         scheme = ["http", "https"]
         old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
         try:
-            if my.conf.proxy:
+            # "_none_" is a special value to disable proxy in yum.conf/*.repo
+            if my.conf.proxy and my.conf.proxy not in ("_none_",):
                 if my.conf.proxy_username:
                     namepass = namepass + my.conf.proxy_username
                     proxy_url = my.conf.proxy
