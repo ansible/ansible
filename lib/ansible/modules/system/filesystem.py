@@ -163,7 +163,7 @@ class Ext(Filesystem):
 
     def get_fs_size(self, dev):
         fsck = self.module.get_bin_path('e2fsck', required=True)
-        self.module.run_command([fsck, '-fy', str(dev)], check_rc=True, environ_update=self.LANG_ENV)
+        self.module.run_command([fsck, '-fy', str(dev)], check_rc=False, environ_update=self.LANG_ENV)
         cmd = self.module.get_bin_path('tune2fs', required=True)
         # Get Block count and Block size
         _, size, _ = self.module.run_command([cmd, '-l', str(dev)], check_rc=True, environ_update=self.LANG_ENV)
