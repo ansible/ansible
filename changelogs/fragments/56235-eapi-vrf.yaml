@@ -1,2 +1,2 @@
 bugfixes:
-- eos_eapi: fix idempotency issues when vrf was unspecified.
+- "eos_eapi: fix idempotency issues when vrf was unspecified."
