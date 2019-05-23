@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> Added XML Generators
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible
@@ -36,7 +40,10 @@ class FSMXMLGenerators(object):
     This class is responsible for generating XML to be used by FortiSIEM modules. Due to the sheer size of these
     methods they were separated to their own class.
     """
+<<<<<<< HEAD
 
+=======
+>>>>>>> Added XML Generators
     def __init__(self, module):
         self.report_xml_source = None
         self.report_query_id = None
@@ -108,7 +115,11 @@ class FSMXMLGenerators(object):
             # EXPECTS A LIST
             collector_data = self._module.paramgram["org_collectors"]
             if isinstance(collector_data, list):
+<<<<<<< HEAD
                 # collector_xml = "<collectors>"
+=======
+                #collector_xml = "<collectors>"
+>>>>>>> Added XML Generators
                 collectors = ET.Element("collectors")
                 organization.append(collectors)
                 for col in collector_data:
@@ -305,4 +316,8 @@ class FSMXMLGenerators(object):
             endDateOpen.text = "true"
 
         xmlstr = ET.tostring(MaintSchedules, 'utf-8')
+<<<<<<< HEAD
         return xmlstr
+=======
+        return xmlstr
+>>>>>>> Added XML Generators
