@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - added config toggle for YAML duplicate dict key warnings
