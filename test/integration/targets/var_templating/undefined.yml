@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: show defined/undefined var
+      debug: var=mytest
+      vars:
+        mytest: '{{ und }}'
+      register: var_undefined
+
+    - name: ensure either mytest is defined or debug finds it to be undefined
+      assert:
+        that:
+          - mytest is defined or 'VARIABLE IS NOT DEFINED!' in var_undefined['mytest']
