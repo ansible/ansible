@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2016 Guido Günther <agx@sigxcpu.org>, Daniel Lobato Garcia <dlobatog@redhat.com>
 # Copyright (c) 2018 Ansible Project
+# Copyright (c) 2019 Jeffrey van Pelt <thulium@element-networks.nl>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -219,16 +220,13 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         # gather vm's on nodes
         for node in self._get_nodes():
-            # FIXME: this can probably be cleaner
             # create groups
-            lxc_group = 'all_lxc'
-            lxc_group = self.to_safe('%s%s' % (self.get_option('group_prefix'), lxc_group.lower()))
+            group_prefix = self.get_option('group_prefix')
+            lxc_group = self.to_safe('%s%s' % (group_prefix, 'all_lxc'))
             self.inventory.add_group(lxc_group)
-            qemu_group = 'all_qemu'
-            qemu_group = self.to_safe('%s%s' % (self.get_option('group_prefix'), qemu_group.lower()))
+            qemu_group = self.to_safe('%s%s' % (group_prefix, 'all_qemu'))
             self.inventory.add_group(qemu_group)
-            nodes_group = 'nodes'
-            nodes_group = self.to_safe('%s%s' % (self.get_option('group_prefix'), nodes_group.lower()))
+            nodes_group = self.to_safe('%s%s' % (group_prefix, 'nodes'))
             self.inventory.add_group(nodes_group)
 
             if node.get('node'):
@@ -242,7 +240,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 self.inventory.set_variable(node['node'], 'ansible_host', ip)
 
                 # get lxc containers for this node
-                node_lxc_group = self.to_safe('%s%s' % (self.get_option('group_prefix'), ('%s_lxc' % node['node']).lower()))
+                node_lxc_group = self.to_safe('%s%s' % (group_prefix, ('%s_lxc' % node['node']).lower()))
                 self.inventory.add_group(node_lxc_group)
                 for lxc in self._get_lxc_per_node(node['node']):
                     self.inventory.add_host(lxc['name'])
@@ -254,7 +252,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                         self._get_vm_config(node['node'], lxc['vmid'], 'lxc', lxc['name'])
 
                 # get qemu vm's for this node
-                node_qemu_group = self.to_safe('%s%s' % (self.get_option('group_prefix'), ('%s_qemu' % node['node']).lower()))
+                node_qemu_group = self.to_safe('%s%s' % (group_prefix, ('%s_qemu' % node['node']).lower()))
                 self.inventory.add_group(node_qemu_group)
                 for qemu in self._get_qemu_per_node(node['node']):
                     self.inventory.add_host(qemu['name'])
@@ -269,7 +267,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         for pool in self._get_pools():
             if pool.get('poolid'):
                 pool_group = 'pool_' + pool['poolid']
-                pool_group = self.to_safe('%s%s' % (self.get_option('group_prefix'), pool_group.lower()))
+                pool_group = self.to_safe('%s%s' % (group_prefix, pool_group.lower()))
                 self.inventory.add_group(pool_group)
 
                 for member in self._get_members_per_pool(pool['poolid']):
