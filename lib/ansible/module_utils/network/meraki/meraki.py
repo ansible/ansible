@@ -282,6 +282,20 @@ class MerakiModule(object):
                 return template['id']
         self.fail_json(msg='No configuration template named {0} found'.format(name))
 
+    def convert_camel_to_snake(self, data):
+        """
+        Converts a dictionary or list to snake case from camel case
+        :type data: dict or list
+        :return: Converted data structure, if list or dict
+        """
+
+        if isinstance(data, dict):
+            return camel_dict_to_snake_dict(data, ignore_list=('tags', 'tag'))
+        elif isinstance(data, list):
+            return [camel_dict_to_snake_dict(item, ignore_list=('tags', 'tag')) for item in data]
+        else:
+            return data
+
     def construct_params_list(self, keys, aliases=None):
         qs = {}
         for key in keys:
@@ -363,7 +377,8 @@ class MerakiModule(object):
         else:
             if 'data' in self.result:
                 try:
-                    self.result['data'] = camel_dict_to_snake_dict(self.result['data'])
+                    # self.fail_json(msg="here", converted=self.convert_camel_to_snake(self.result['data']))
+                    self.result['data'] = self.convert_camel_to_snake(self.result['data'])
                 except (KeyError, AttributeError):
                     pass
         self.module.exit_json(**self.result)
