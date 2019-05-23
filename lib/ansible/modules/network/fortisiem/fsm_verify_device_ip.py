@@ -29,23 +29,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_verify_device_ip
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 version_added: "2.9"
-=======
-version_added: "2.8"
->>>>>>> Full FSM Commit
-=======
-version_added: "2.9"
->>>>>>> Bug Fixes according to shippable... re-running
-=======
-version_added: "2.8"
->>>>>>> Full FSM Commit
-=======
-version_added: "2.9"
->>>>>>> Bug Fixes according to shippable... re-running
 author: Luke Weighall (@lweighall)
 short_description: Checks for the existence of a device in the FortiSIEM System.
 description:
@@ -74,46 +58,14 @@ options:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     choices: ["enable", "disable"]
-=======
-    options: ["enable", "disable"]
->>>>>>> Full FSM Commit
-=======
-    choices: ["enable", "disable"]
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    options: ["enable", "disable"]
->>>>>>> Full FSM Commit
-=======
-    choices: ["enable", "disable"]
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     choices: ["enable", "disable"]
-=======
-    options: ["enable, "disable"]
->>>>>>> Full FSM Commit
-=======
-    choices: ["enable", "disable"]
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    options: ["enable, "disable"]
->>>>>>> Full FSM Commit
-=======
-    choices: ["enable", "disable"]
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_file_path:
     description:
@@ -153,23 +105,7 @@ options:
       - A line break-separated list of IP addresses or host names to check, stored in a file.
       - Defines file path
     required: false
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   append_results_to_file:
     description:
       - File path you want to keep appending test results to, specifically the IP, score, and verified status
@@ -177,14 +113,6 @@ options:
 '''
 
 EXAMPLES = '''
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
 - name: VERIFY A DEVICE
   fsm_verify_device_ip:
     host: "{{ inventory_hostname }}"
@@ -225,16 +153,6 @@ EXAMPLES = '''
     ip_list_file_path: "/root/verify_list.txt"
     export_json_to_file_path: "/root/deviceExists.json"
     append_results_to_file: "/root/verificationList.csv"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
 '''
 
@@ -242,23 +160,7 @@ RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   type: str
-=======
-  type: string
->>>>>>> Full FSM Commit
-=======
-  type: str
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-  type: string
->>>>>>> Full FSM Commit
-=======
-  type: str
->>>>>>> Full FSM Commit. Ready for shippable tests.
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -266,10 +168,6 @@ from ansible.module_utils.network.fortisiem.common import FSMEndpoints
 from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 from ansible.module_utils.network.fortisiem.fsm_xml_generators import FSMXMLGenerators
 
 
@@ -288,84 +186,12 @@ def fsm_verify_single_device(fsm, paramgram):
     # LOAD UP THE XML REQUIRED AND REPLACE TOKENS
     paramgram["input_xml"] = FSMXMLGenerators.RPT_ALL_DEVICES_EVENT_TYPE_COUNTS.replace('<IP_TO_VERIFY>',
                                                                                         str(paramgram["ip_to_verify"]))
-=======
-from ansible.module_utils.network.fortisiem.common import RPT_ALL_DEVICES_EVENT_TYPE_COUNTS
-=======
-from ansible.module_utils.network.fortisiem.fsm_xml_generators import FSMXMLGenerators
->>>>>>> Full FSM Commit. Ready for shippable tests.
-
-
-def fsm_verify_single_device(fsm, paramgram):
-    """
-    Function runs a list of queries, and formats the results, and then judges the device based on a number
-    of factors. The result is a score, basic status, and data-entities included.
-
-    Only works on a single IP at a time. Must be put into an external loop for a list.
-
-    :param fsm: the FSMHandlerObject class object created in this module
-    :param paramgram: the paramgram generated by the module.
-
-    :return: dict
-    """
-    # LOAD UP THE XML REQUIRED AND REPLACE TOKENS
-<<<<<<< HEAD
-    paramgram["input_xml"] = RPT_ALL_DEVICES_EVENT_TYPE_COUNTS.replace('<IP_TO_VERIFY>', str(paramgram["ip_to_verify"]))
->>>>>>> Full FSM Commit
-=======
-    paramgram["input_xml"] = FSMXMLGenerators.RPT_ALL_DEVICES_EVENT_TYPE_COUNTS.replace('<IP_TO_VERIFY>',
-                                                                                        str(paramgram["ip_to_verify"]))
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-from ansible.module_utils.network.fortisiem.common import RPT_ALL_DEVICES_EVENT_TYPE_COUNTS
-=======
-from ansible.module_utils.network.fortisiem.fsm_xml_generators import FSMXMLGenerators
->>>>>>> Full FSM Commit. Ready for shippable tests.
-
-
-def fsm_verify_single_device(fsm, paramgram):
-    """
-    Function runs a list of queries, and formats the results, and then judges the device based on a number
-    of factors. The result is a score, basic status, and data-entities included.
-
-    Only works on a single IP at a time. Must be put into an external loop for a list.
-
-    :param fsm: the FSMHandlerObject class object created in this module
-    :param paramgram: the paramgram generated by the module.
-
-    :return: dict
-    """
-    # LOAD UP THE XML REQUIRED AND REPLACE TOKENS
-<<<<<<< HEAD
-    paramgram["input_xml"] = RPT_ALL_DEVICES_EVENT_TYPE_COUNTS.replace('<IP_TO_VERIFY>', str(paramgram["ip_to_verify"]))
->>>>>>> Full FSM Commit
-=======
-    paramgram["input_xml"] = FSMXMLGenerators.RPT_ALL_DEVICES_EVENT_TYPE_COUNTS.replace('<IP_TO_VERIFY>',
-                                                                                        str(paramgram["ip_to_verify"]))
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
     # QUERY FOR EVENTS
     events = None
     try:
         events = fsm.handle_report_submission()
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     except BaseException:
-=======
-    except BaseException as err:
-        # raise FSMBaseException(err)
->>>>>>> Full FSM Commit
-=======
-    except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    except BaseException as err:
-        # raise FSMBaseException(err)
->>>>>>> Full FSM Commit
-=======
-    except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
         pass
 
     # QUERY FOR SINGLE CMDB STATUS
@@ -374,25 +200,7 @@ def fsm_verify_single_device(fsm, paramgram):
     cmdb = None
     try:
         cmdb = fsm.handle_simple_request()
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     except BaseException:
-=======
-    except BaseException as err:
-        # raise FSMBaseException(err)
->>>>>>> Full FSM Commit
-=======
-    except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    except BaseException as err:
-        # raise FSMBaseException(err)
->>>>>>> Full FSM Commit
-=======
-    except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
         pass
 
     # QUERY FOR MONITORS
@@ -400,30 +208,8 @@ def fsm_verify_single_device(fsm, paramgram):
     monitors = None
     try:
         monitors = fsm.handle_simple_request()
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         monitors = fsm._tools.get_monitors_info_for_specific_ip(monitors, paramgram["ip_to_verify"])
     except BaseException:
-=======
-        monitors = fsm.get_monitors_info_for_specific_ip(monitors, paramgram["ip_to_verify"])
-    except BaseException as err:
-        # raise FSMBaseException(err)
->>>>>>> Full FSM Commit
-=======
-        monitors = fsm._tools.get_monitors_info_for_specific_ip(monitors, paramgram["ip_to_verify"])
-    except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-        monitors = fsm.get_monitors_info_for_specific_ip(monitors, paramgram["ip_to_verify"])
-    except BaseException as err:
-        # raise FSMBaseException(err)
->>>>>>> Full FSM Commit
-=======
-        monitors = fsm._tools.get_monitors_info_for_specific_ip(monitors, paramgram["ip_to_verify"])
-    except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
         pass
 
     # CONCAT ALL THREE RESULTS INTO A SINGLE RESULTS DICT
@@ -476,45 +262,12 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     results_list = list()
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
-=======
-=======
->>>>>>> Full FSM Commit
-    try:
-        fsm = FortiSIEMHandler(module)
-    except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
-
-    #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
-<<<<<<< HEAD
->>>>>>> Full FSM Commit
-=======
-    results = DEFAULT_EXIT_MSG
-    results_list = list()
-    try:
-        fsm = FortiSIEMHandler(module)
-    except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
->>>>>>> Full FSM Commit
-=======
-    results = DEFAULT_EXIT_MSG
-    results_list = list()
-    try:
-        fsm = FortiSIEMHandler(module)
-    except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
     if paramgram["ip_to_verify"]:
         results = fsm_verify_single_device(fsm, paramgram)
@@ -522,20 +275,6 @@ def main():
     if paramgram["ip_list_file_path"] or paramgram["ip_list_to_verify"]:
         if paramgram["ip_list_to_verify"]:
             if isinstance(paramgram["ip_list_to_verify"], list):
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                results_list = list()
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-                results_list = list()
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
                 for ip in paramgram["ip_list_to_verify"]:
                     if ip != "" and ip is not None:
                         paramgram["ip_to_verify"] = str(ip)
@@ -544,23 +283,7 @@ def main():
 
         if paramgram["ip_list_file_path"]:
             results_list = list()
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
             ip_list = fsm.get_file_contents(paramgram["ip_list_file_path"])
-=======
-            ip_list = fsm.get_report_source_from_file_path(paramgram["ip_list_file_path"])
->>>>>>> Full FSM Commit
-=======
-            ip_list = fsm.get_file_contents(paramgram["ip_list_file_path"])
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-            ip_list = fsm.get_report_source_from_file_path(paramgram["ip_list_file_path"])
->>>>>>> Full FSM Commit
-=======
-            ip_list = fsm.get_file_contents(paramgram["ip_list_file_path"])
->>>>>>> Full FSM Commit. Ready for shippable tests.
             parsed_ip_list = ip_list.split("\n")
             for ip in parsed_ip_list:
                 if ip != "" and ip is not None:
@@ -575,33 +298,11 @@ def main():
         }
 
     # WRITE TO THE FILE IF SPECIFIED
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
     try:
         if paramgram["append_results_to_file"]:
             try:
                 if results["json_results"]["all_results"]:
                     for result in results["json_results"]["all_results"]:
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
                         fsm._tools.append_file_with_device_results(result, paramgram["append_results_to_file"])
             except BaseException:
                 try:
@@ -609,35 +310,8 @@ def main():
                                                                paramgram["append_results_to_file"])
                 except BaseException as err:
                     raise FSMBaseException(msg="An issue happened writing the results to a file. Error: " + str(err))
-<<<<<<< HEAD
-<<<<<<< HEAD
     except BaseException as err:
         raise FSMBaseException(msg="An issue happened writing the results to a file. Error: " + str(err))
-=======
-=======
->>>>>>> Full FSM Commit
-                        fsm.append_file_with_device_results(result, paramgram["append_results_to_file"])
-            except BaseException as err:
-                raise FSMBaseException(err)
-            try:
-                if not results["json_results"]["all_results"]:
-                    fsm.append_file_with_device_results(results["json_results"], paramgram["append_results_to_file"])
-            except BaseException as err:
-                raise FSMBaseException(err)
-    except BaseException as err:
-        raise FSMBaseException(err)
-<<<<<<< HEAD
->>>>>>> Full FSM Commit
-=======
-    except BaseException as err:
-        raise FSMBaseException(msg="An issue happened writing the results to a file. Error: " + str(err))
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
->>>>>>> Full FSM Commit
-=======
-    except BaseException as err:
-        raise FSMBaseException(msg="An issue happened writing the results to a file. Error: " + str(err))
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
     # EXIT USING GOVERN_RESPONSE()
     fsm.govern_response(module=module, results=results, changed=False,
@@ -645,25 +319,7 @@ def main():
                                                                   module.params,
                                                                   paramgram))
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     return module.exit_json(msg=results)
-=======
-
-    return module.exit_json(msg=DEFAULT_EXIT_MSG)
->>>>>>> Full FSM Commit
-=======
-    return module.exit_json(msg=results)
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-
-    return module.exit_json(msg=DEFAULT_EXIT_MSG)
->>>>>>> Full FSM Commit
-=======
-    return module.exit_json(msg=results)
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 if __name__ == "__main__":

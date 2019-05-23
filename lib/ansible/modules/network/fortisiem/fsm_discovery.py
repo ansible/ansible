@@ -17,21 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -43,23 +29,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_discovery
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 version_added: "2.9"
-=======
-version_added: "2.8"
->>>>>>> Full FSM Commit
-=======
-version_added: "2.9"
->>>>>>> Bug Fixes according to shippable... re-running
-=======
-version_added: "2.8"
->>>>>>> Full FSM Commit
-=======
-version_added: "2.9"
->>>>>>> Bug Fixes according to shippable... re-running
 author: Luke Weighall (@lweighall)
 short_description: Submits and Queries for Discovery Tasks.
 description:
@@ -70,111 +40,31 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   password:
     description:
       - The password associated with the username account.
     required: false
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   ignore_ssl_errors:
     description:
       - When Enabled this will instruct the HTTP Libraries to ignore any ssl validation errors.
     required: false
     default: "enable"
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     choices: ["enable", "disable"]
-=======
-    options: ["enable", "disable"]
->>>>>>> Full FSM Commit
-=======
-    choices: ["enable", "disable"]
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    options: ["enable", "disable"]
->>>>>>> Full FSM Commit
-=======
-    choices: ["enable", "disable"]
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_screen:
     description:
       - When enabled this will print the JSON results to screen.
     required: false
     default: "enable"
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     choices: ["enable", "disable"]
-=======
-    options: ["enable, "disable"]
->>>>>>> Full FSM Commit
-=======
-    choices: ["enable", "disable"]
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    options: ["enable, "disable"]
->>>>>>> Full FSM Commit
-=======
-    choices: ["enable", "disable"]
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
   export_json_to_file_path:
     description:
@@ -182,23 +72,7 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   export_xml_to_file_path:
     description:
       - When populated, an attempt to write XML to file is made.
@@ -220,37 +94,13 @@ options:
     description:
       - Discovery type to use in FortiSIEM.
     required: true
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     choices: ["RangeScan", "SmartScan", "L2Scan", "status"]
 
-=======
-    options: ["RangeScan", "SmartScan", "L2Scan", "status"]
-    
->>>>>>> Full FSM Commit
-=======
-    choices: ["RangeScan", "SmartScan", "L2Scan", "status"]
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    options: ["RangeScan", "SmartScan", "L2Scan", "status"]
-    
->>>>>>> Full FSM Commit
-=======
-    choices: ["RangeScan", "SmartScan", "L2Scan", "status"]
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   root_ip:
     description:
       - Specifies the IP of a device to use as the "root" scanning device. Usually a router or switch.
       - Ignored unless "SmartScan" is set for mode
     required: false
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
   include_range:
     description:
@@ -262,46 +112,6 @@ options:
       - Specifies the IP ranges to specify, in comma seperated format.
     required: false
 
-=======
-    
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-  include_range:
-    description:
-      - Specifies the IP ranges to specify, in comma seperated format.
-    required: false
-
-  exclude_range:
-    description:
-      - Specifies the IP ranges to specify, in comma seperated format.
-    required: false
-<<<<<<< HEAD
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-  include_range:
-    description:
-      - Specifies the IP ranges to specify, in comma seperated format.
-    required: false
-
-  exclude_range:
-    description:
-      - Specifies the IP ranges to specify, in comma seperated format.
-    required: false
-<<<<<<< HEAD
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   no_ping:
     description:
       - Tells FortiSIEM not to attempt to ping a device before attempting to discover it.
@@ -309,275 +119,83 @@ options:
     required: false
     default: false
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   only_ping:
     description:
       - Tells FortiSIEM to only discover devices with ICMP pings.
     required: false
     default: false
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   task_id:
     description:
       - Tells the module which task ID to query for when type = status.
     required: false
     type: int
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   delta:
     description:
       - Only discovers new devices.
     required: false
     default: false
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   vm_off:
     description:
       - Doesn't discover VMs.
     required: false
     default: false
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   vm_templates:
     description:
       - Discover VM templates.
     required: false
     default: false
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   discover_routes:
     description:
       - Discovers routes and follows those in smart scans.
     required: false
     default: true
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   winexe_based:
     description:
       - Discovers windows boxes with winExe.
     required: false
     default: false
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   unmanaged:
     description:
       - Sets newly discovered devices to unmanaged.
     required: false
     default: false
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   monitor_win_events:
     description:
       - Turns on or off Windows Event log mointor for newly discovered devices.
     required: false
     default: true
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   monitor_win_patches:
     description:
       - Turns on or off Windows Patching logging.
     required: false
     default: true
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   monitor_installed_sw:
     description:
       - Turns on or off Windows Installed Software monitoring.
     required: false
     default: true
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
->>>>>>> Full FSM Commit
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
   name_resolution_dns_first:
     description:
       - Specifies to use DNS for name resolution first, and then SNMP/NETBIOS/SSH.
@@ -585,10 +203,6 @@ options:
     required: false
     default: true
     type: bool
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 '''
 
@@ -680,227 +294,13 @@ EXAMPLES = '''
     export_xml_to_file_path: "/root/xml_test_out.xml"
     type: "L2Scan"
     include_range: "10.0.0.1-10.0.0.254"
-=======
-    
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-'''
-
-EXAMPLES = '''
-- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/range_scan.json"
-    export_xml_to_file_path: "/root/range_scan.xml"
-    type: "RangeScan"
-    include_range: "10.0.0.254"
-
-- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE AND WAIT FOR FINISH WITH MANY OPTIONS
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/range_scan2.json"
-    export_xml_to_file_path: "/root/range_scan2.xml"
-    type: "RangeScan"
-    include_range: "10.0.0.5-10.0.0.20"
-    wait_to_finish: True
-    only_ping: False
-    vm_off: True
-    unmanaged: True
-    delta: True
-    name_resolution_dns_first: False
-    winexe_based: True
-    vm_templates: True
-    discover_routes: True
-    monitor_win_events: False
-    monitor_win_patches: False
-    monitor_installed_sw: False
-
-- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE AND WAIT FOR FINISH WITH NO PING
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/json_test_out.json"
-    export_xml_to_file_path: "/root/xml_test_out.xml"
-    type: "RangeScan"
-    include_range: "10.0.0.5-10.0.0.50"
-    wait_to_finish: True
-    no_ping: True
-
-
-- name: SUBMIT RANGE SCAN FOR RANGE OF DEVICES
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/json_test_out.json"
-    export_xml_to_file_path: "/root/xml_test_out.xml"
-    type: "RangeScan"
-    include_range: "10.0.0.1-10.0.0.10"
-    exclude_range: "10.0.0.5-10.0.0.6"
-
-- name: SUBMIT SMART SCAN
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/json_test_out.json"
-    export_xml_to_file_path: "/root/xml_test_out.xml"
-    type: "SmartScan"
-    root_ip: "10.0.0.254"
-
-<<<<<<< HEAD
->>>>>>> Full FSM Commit
-=======
-- name: SUBMIT L2SCAN
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/json_test_out.json"
-    export_xml_to_file_path: "/root/xml_test_out.xml"
-    type: "L2Scan"
-    include_range: "10.0.0.1-10.0.0.254"
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    
-=======
-
->>>>>>> Full FSM Commit. Ready for shippable tests.
-'''
-
-EXAMPLES = '''
-- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/range_scan.json"
-    export_xml_to_file_path: "/root/range_scan.xml"
-    type: "RangeScan"
-    include_range: "10.0.0.254"
-
-- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE AND WAIT FOR FINISH WITH MANY OPTIONS
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/range_scan2.json"
-    export_xml_to_file_path: "/root/range_scan2.xml"
-    type: "RangeScan"
-    include_range: "10.0.0.5-10.0.0.20"
-    wait_to_finish: True
-    only_ping: False
-    vm_off: True
-    unmanaged: True
-    delta: True
-    name_resolution_dns_first: False
-    winexe_based: True
-    vm_templates: True
-    discover_routes: True
-    monitor_win_events: False
-    monitor_win_patches: False
-    monitor_installed_sw: False
-
-- name: SUBMIT RANGE SCAN FOR SINGLE DEVICE AND WAIT FOR FINISH WITH NO PING
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/json_test_out.json"
-    export_xml_to_file_path: "/root/xml_test_out.xml"
-    type: "RangeScan"
-    include_range: "10.0.0.5-10.0.0.50"
-    wait_to_finish: True
-    no_ping: True
-
-
-- name: SUBMIT RANGE SCAN FOR RANGE OF DEVICES
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/json_test_out.json"
-    export_xml_to_file_path: "/root/xml_test_out.xml"
-    type: "RangeScan"
-    include_range: "10.0.0.1-10.0.0.10"
-    exclude_range: "10.0.0.5-10.0.0.6"
-
-- name: SUBMIT SMART SCAN
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/json_test_out.json"
-    export_xml_to_file_path: "/root/xml_test_out.xml"
-    type: "SmartScan"
-    root_ip: "10.0.0.254"
-
-<<<<<<< HEAD
->>>>>>> Full FSM Commit
-=======
-- name: SUBMIT L2SCAN
-  fsm_discovery:
-    host: "{{ inventory_hostname }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    ignore_ssl_errors: "enable"
-    export_json_to_screen: "enable"
-    export_json_to_file_path: "/root/json_test_out.json"
-    export_xml_to_file_path: "/root/xml_test_out.xml"
-    type: "L2Scan"
-    include_range: "10.0.0.1-10.0.0.254"
->>>>>>> Full FSM Commit. Ready for shippable tests.
 '''
 
 RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   type: str
-=======
-  type: string
->>>>>>> Full FSM Commit
-=======
-  type: str
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-  type: string
->>>>>>> Full FSM Commit
-=======
-  type: str
->>>>>>> Full FSM Commit. Ready for shippable tests.
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
@@ -910,20 +310,6 @@ from ansible.module_utils.network.fortisiem.common import FSMBaseException
 from ansible.module_utils.network.fortisiem.common import DEFAULT_EXIT_MSG
 from ansible.module_utils.network.fortisiem.fortisiem import FortiSIEMHandler
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import pydevd
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-import pydevd
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
 def main():
     argument_spec = dict(
@@ -1003,63 +389,16 @@ def main():
 
     # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
     fsm = None
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     results = DEFAULT_EXIT_MSG
     try:
         fsm = FortiSIEMHandler(module)
     except BaseException as err:
         raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
-=======
-=======
->>>>>>> Full FSM Commit
-    try:
-        fsm = FortiSIEMHandler(module)
-    except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils.")
-<<<<<<< HEAD
->>>>>>> Full FSM Commit
-=======
-    results = DEFAULT_EXIT_MSG
-    try:
-        fsm = FortiSIEMHandler(module)
-    except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
->>>>>>> Full FSM Commit
-=======
-    results = DEFAULT_EXIT_MSG
-    try:
-        fsm = FortiSIEMHandler(module)
-    except BaseException as err:
-        raise FSMBaseException("Couldn't load FortiSIEM Handler from mod_utils. Error: " + str(err))
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
     # EXECUTE THE MODULE OPERATION
     # SEND THE DISCOVERY XML PAYLOAD
     if paramgram["type"] != "status":
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         paramgram["input_xml"] = fsm._xml.create_discover_payload()
-=======
-        paramgram["input_xml"] = fsm.create_discover_payload()
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
->>>>>>> Full FSM Commit
-=======
-        paramgram["input_xml"] = fsm._xml.create_discover_payload()
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-        paramgram["input_xml"] = fsm.create_discover_payload()
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
->>>>>>> Full FSM Commit
-=======
-        paramgram["input_xml"] = fsm._xml.create_discover_payload()
->>>>>>> Full FSM Commit. Ready for shippable tests.
         try:
             results = fsm.handle_simple_payload_request(paramgram["input_xml"])
         except BaseException as err:
@@ -1091,20 +430,6 @@ def main():
 
             # PROCESS WAIT TO FINISH!
             if paramgram["wait_to_finish"]:
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-                #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
->>>>>>> Full FSM Commit
-=======
->>>>>>> Full FSM Commit. Ready for shippable tests.
                 try:
                     task_status_result = results["json_results"]["fsm_response"].split(":")
 
@@ -1119,68 +444,18 @@ def main():
                         try:
                             if results["json_results"]["taskResults"]:
                                 task_status_result = [str(paramgram["task_id"]), "Done"]
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
                         except BaseException:
-=======
-                        except:
->>>>>>> Full FSM Commit
-=======
-                        except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-                        except:
->>>>>>> Full FSM Commit
-=======
-                        except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
                             try:
                                 task_status_result = results["json_results"]["fsm_response"].split(":")
                             except BaseException as err:
                                 raise FSMBaseException(err)
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
                 except BaseException:
-=======
-                except BaseException as err:
->>>>>>> Full FSM Commit
-=======
-                except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-                except BaseException as err:
->>>>>>> Full FSM Commit
-=======
-                except BaseException:
->>>>>>> Full FSM Commit. Ready for shippable tests.
                     try:
                         if results["json_results"]["taskResults"]:
                             pass
                     except BaseException as err:
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
                         raise FSMBaseException(msg="Something happened while looping "
                                                    "for the status. Error: " + str(err))
-=======
-                        raise FSMBaseException(msg="Something happened while looping for the status. Error: " + str(err))
->>>>>>> Full FSM Commit
-=======
-                        raise FSMBaseException(msg="Something happened while looping "
-                                                   "for the status. Error: " + str(err))
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-                        raise FSMBaseException(msg="Something happened while looping for the status. Error: " + str(err))
->>>>>>> Full FSM Commit
-=======
-                        raise FSMBaseException(msg="Something happened while looping "
-                                                   "for the status. Error: " + str(err))
->>>>>>> Full FSM Commit. Ready for shippable tests.
                     pass
 
     # EXIT USING GOVERN_RESPONSE()
@@ -1189,23 +464,7 @@ def main():
                                                                   module.params,
                                                                   paramgram))
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     return module.exit_json(msg=results)
-=======
-    return module.exit_json(DEFAULT_EXIT_MSG)
->>>>>>> Full FSM Commit
-=======
-    return module.exit_json(msg=results)
->>>>>>> Full FSM Commit. Ready for shippable tests.
-=======
-    return module.exit_json(DEFAULT_EXIT_MSG)
->>>>>>> Full FSM Commit
-=======
-    return module.exit_json(msg=results)
->>>>>>> Full FSM Commit. Ready for shippable tests.
 
 
 if __name__ == "__main__":
