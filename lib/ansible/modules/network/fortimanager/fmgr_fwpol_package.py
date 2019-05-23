@@ -153,6 +153,7 @@ options:
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
       - Do not include leading or trailing forwardslashes. We take care of that for you.
     required: false
+    version_added: 2.9
 
   target_name:
     description:
@@ -160,6 +161,7 @@ options:
       - Only used when you want to rename the package in its new location.
       - If None, then NAME will be used.
     required: false
+    version_added: 2.9
 '''
 
 
