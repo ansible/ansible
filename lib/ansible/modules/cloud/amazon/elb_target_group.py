@@ -389,9 +389,10 @@ def create_or_update_target_group(connection, module):
     new_target_group = False
     params = dict()
     params['Name'] = module.params.get("name")
-    params['Protocol'] = module.params.get("protocol").upper()
-    params['Port'] = module.params.get("port")
-    params['VpcId'] = module.params.get("vpc_id")
+    if module.params.get("target_type") != "lambda":
+        params['Protocol'] = module.params.get("protocol").upper()
+        params['Port'] = module.params.get("port")
+        params['VpcId'] = module.params.get("vpc_id")
     tags = module.params.get("tags")
     purge_tags = module.params.get("purge_tags")
     deregistration_delay_timeout = module.params.get("deregistration_delay_timeout")
@@ -506,66 +507,83 @@ def create_or_update_target_group(connection, module):
         # Do we need to modify targets?
         if module.params.get("modify_targets"):
             if module.params.get("targets"):
-                params['Targets'] = module.params.get("targets")
+                if module.params.get("target_type") != "lambda":
+                    params['Targets'] = module.params.get("targets")
 
-                # Correct type of target ports
-                for target in params['Targets']:
-                    target['Port'] = int(target.get('Port', module.params.get('port')))
-
-                # get list of current target instances. I can't see anything like a describe targets in the doco so
-                # describe_target_health seems to be the only way to get them
-
-                try:
-                    current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
-                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                    module.fail_json_aws(e, msg="Couldn't get target group health")
-
-                current_instance_ids = []
-
-                for instance in current_targets['TargetHealthDescriptions']:
-                    current_instance_ids.append(instance['Target']['Id'])
-
-                new_instance_ids = []
-                for instance in params['Targets']:
-                    new_instance_ids.append(instance['Id'])
-
-                add_instances = set(new_instance_ids) - set(current_instance_ids)
-
-                if add_instances:
-                    instances_to_add = []
+                    # Correct type of target ports
                     for target in params['Targets']:
-                        if target['Id'] in add_instances:
-                            instances_to_add.append({'Id': target['Id'], 'Port': target['Port']})
+                        target['Port'] = int(target.get('Port', module.params.get('port')))
 
-                    changed = True
+                    # get list of current target instances. I can't see anything like a describe targets in the doco so
+                    # describe_target_health seems to be the only way to get them
+
                     try:
-                        connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_add)
+                        current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                        module.fail_json_aws(e, msg="Couldn't register targets")
+                        module.fail_json_aws(e, msg="Couldn't get target group health")
 
-                    if module.params.get("wait"):
-                        status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_add, 'healthy')
-                        if not status_achieved:
-                            module.fail_json(msg='Error waiting for target registration to be healthy - please check the AWS console')
+                    current_instance_ids = []
 
-                remove_instances = set(current_instance_ids) - set(new_instance_ids)
+                    for instance in current_targets['TargetHealthDescriptions']:
+                        current_instance_ids.append(instance['Target']['Id'])
 
-                if remove_instances:
-                    instances_to_remove = []
-                    for target in current_targets['TargetHealthDescriptions']:
-                        if target['Target']['Id'] in remove_instances:
-                            instances_to_remove.append({'Id': target['Target']['Id'], 'Port': target['Target']['Port']})
+                    new_instance_ids = []
+                    for instance in params['Targets']:
+                        new_instance_ids.append(instance['Id'])
 
-                    changed = True
+                    add_instances = set(new_instance_ids) - set(current_instance_ids)
+
+                    if add_instances:
+                        instances_to_add = []
+                        for target in params['Targets']:
+                            if target['Id'] in add_instances:
+                                instances_to_add.append({'Id': target['Id'], 'Port': target['Port']})
+
+                        changed = True
+                        try:
+                            connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_add)
+                        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                            module.fail_json_aws(e, msg="Couldn't register targets")
+
+                        if module.params.get("wait"):
+                            status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_add, 'healthy')
+                            if not status_achieved:
+                                module.fail_json(msg='Error waiting for target registration to be healthy - please check the AWS console')
+
+                    remove_instances = set(current_instance_ids) - set(new_instance_ids)
+
+                    if remove_instances:
+                        instances_to_remove = []
+                        for target in current_targets['TargetHealthDescriptions']:
+                            if target['Target']['Id'] in remove_instances:
+                                instances_to_remove.append({'Id': target['Target']['Id'], 'Port': target['Target']['Port']})
+
+                        changed = True
+                        try:
+                            connection.deregister_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_remove)
+                        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                            module.fail_json_aws(e, msg="Couldn't remove targets")
+
+                        if module.params.get("wait"):
+                            status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
+                            if not status_achieved:
+                                module.fail_json(msg='Error waiting for target deregistration - please check the AWS console')
+
+                # register lambda target
+                else:
                     try:
-                        connection.deregister_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_remove)
+                        response = connection.register_targets(
+                            TargetGroupArn=tg['TargetGroupArn'],
+                            Targets=[
+                                {
+                                    'Id': module.params.get("targets")[0]
+                                }
+                            ]
+                        )
+                        changed = True
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                        module.fail_json_aws(e, msg="Couldn't remove targets")
-
-                    if module.params.get("wait"):
-                        status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
-                        if not status_achieved:
-                            module.fail_json(msg='Error waiting for target deregistration - please check the AWS console')
+                        module.fail_json_aws(
+                            e, msg="Couldn't register targets")
             else:
                 try:
                     current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
@@ -600,16 +618,32 @@ def create_or_update_target_group(connection, module):
         tg = get_target_group(connection, module)
 
         if module.params.get("targets"):
-            params['Targets'] = module.params.get("targets")
-            try:
-                connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=params['Targets'])
-            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                module.fail_json_aws(e, msg="Couldn't register targets")
+            if module.params.get("target_type") != "lambda":
+                params['Targets'] = module.params.get("targets")
+                try:
+                    connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=params['Targets'])
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, msg="Couldn't register targets")
 
-            if module.params.get("wait"):
-                status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], params['Targets'], 'healthy')
-                if not status_achieved:
-                    module.fail_json(msg='Error waiting for target registration to be healthy - please check the AWS console')
+                if module.params.get("wait"):
+                    status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], params['Targets'], 'healthy')
+                    if not status_achieved:
+                        module.fail_json(msg='Error waiting for target registration to be healthy - please check the AWS console')
+
+            else:
+                try:
+                    response = connection.register_targets(
+                        TargetGroupArn=tg['TargetGroupArn'],
+                        Targets=[
+                            {
+                                'Id': module.params.get("targets")[0]
+                            }
+                        ]
+                    )
+                    changed = True
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(
+                        e, msg="Couldn't register targets")
 
     # Now set target group attributes
     update_attributes = []
@@ -712,7 +746,7 @@ def main():
             state=dict(required=True, choices=['present', 'absent']),
             successful_response_codes=dict(),
             tags=dict(default={}, type='dict'),
-            target_type=dict(default='instance', choices=['instance', 'ip']),
+            target_type=dict(default='instance', choices=['instance', 'ip', 'lambda']),
             targets=dict(type='list'),
             unhealthy_threshold_count=dict(type='int'),
             vpc_id=dict(),
@@ -721,8 +755,8 @@ def main():
         )
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              required_if=[['state', 'present', ['protocol', 'port', 'vpc_id']]])
+    module = AnsibleAWSModule(argument_spec=argument_spec)
+#                              required_if=[['state', 'present', ['protocol', 'port', 'vpc_id']]])
 
     connection = module.client('elbv2')
 
