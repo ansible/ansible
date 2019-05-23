@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabschedule_facts
 version_added: "2.8"
-short_description: Get Azure Schedule facts.
+short_description: Get Azure Schedule facts
 description:
     - Get facts of Azure Schedule.
 
@@ -41,7 +41,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -55,7 +55,8 @@ EXAMPLES = '''
 
 RETURN = '''
 schedules:
-    description: A list of dictionaries containing facts for Schedule.
+    description:
+        - A list of dictionaries containing facts for Schedule.
     returned: always
     type: complex
     contains:
