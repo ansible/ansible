@@ -56,6 +56,7 @@ options:
   mountpoint:
     description:
     - required when wanting to resize an xfs filesystem, which requires to be mounted first.
+    version_added: "2.9"
   opts:
     description:
     - List of options to be passed to mkfs command.
