@@ -33,8 +33,8 @@
 
 - assert:
     that:
-      - snmp_v2_enable.data.v2CommunityString is defined
-      - snmp_v2_enable.data.v2cEnabled == true
+      - snmp_v2_enable.data.v2_community_string is defined
+      - snmp_v2_enable.data.v2c_enabled == true
 
 - name: Disable SNMPv2c
   meraki_snmp:
@@ -47,8 +47,8 @@
 
 - assert:
     that:
-      - snmp_v2_disable.data.v2CommunityString is not defined
-      - snmp_v2_disable.data.v2cEnabled == False
+      - snmp_v2_disable.data.v2_community_string is not defined
+      - snmp_v2_disable.data.v2c_enabled == False
 
 - name: Enable SNMPv2c with org_id
   meraki_snmp:
@@ -64,8 +64,8 @@
 
 - assert:
     that:
-      - snmp_v2_enable_id.data.v2CommunityString is defined
-      - snmp_v2_enable_id.data.v2cEnabled == true
+      - snmp_v2_enable_id.data.v2_community_string is defined
+      - snmp_v2_enable_id.data.v2c_enabled == true
 
 - name: Disable SNMPv2c with org_id
   meraki_snmp:
@@ -78,8 +78,8 @@
 
 - assert:
     that:
-      - snmp_v2_disable_id.data.v2CommunityString is not defined
-      - snmp_v2_disable_id.data.v2cEnabled == False
+      - snmp_v2_disable_id.data.v2_community_string is not defined
+      - snmp_v2_disable_id.data.v2c_enabled == False
 
 - name: Enable SNMPv3
   meraki_snmp:
@@ -96,7 +96,7 @@
 
 - assert:
     that:
-      - snmp_v3_enable.data.v3Enabled == True
+      - snmp_v3_enable.data.v3_enabled == True
       - snmp_v3_enable.changed == True
 
 - name: Check for idempotency
@@ -139,7 +139,7 @@
 
 - assert:
     that:
-      - peers.data.peerIps is defined
+      - peers.data.peer_ips is defined
 
 - name: Add invalid peer IPs
   meraki_snmp:

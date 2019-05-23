@@ -359,12 +359,13 @@ class MerakiModule(object):
             self.result['url'] = self.url
         self.result.update(**kwargs)
         if self.params['output_format'] == 'camelcase':
-            self.module.deprecate("Ansible's Meraki modules will stop supporting camel case output in Ansible 2.12. Please update your playbooks.")
+            self.module.deprecate("Update your playbooks to support snake_case format instead of camelCase format.", version=2.13)
         else:
-            try:
-                self.result['data'] = camel_dict_to_snake_dict(self.result['data'])
-            except KeyError:
-                pass
+            if 'data' in self.result:
+                try:
+                    self.result['data'] = camel_dict_to_snake_dict(self.result['data'])
+                except (KeyError, AttributeError):
+                    pass
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):

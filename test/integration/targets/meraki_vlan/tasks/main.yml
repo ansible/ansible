@@ -20,7 +20,7 @@
     register: invalid_domain
     ignore_errors: yes
     
-  - name: Disable HTTP
+  - name: Disable HTTPS
     meraki_vlan:
       auth_key: '{{ auth_key }}'
       use_https: false
@@ -111,6 +111,7 @@
       that:
         - create_vlan.data.id == 2
         - create_vlan.changed == True
+        - create_vlan.data.networkId is defined
 
   - name: Update VLAN with check mode
     meraki_vlan:
@@ -266,8 +267,8 @@
   - assert:
       that:
         - update_vlan_add_ip.changed == True
-        - update_vlan_add_ip.data.fixedIpAssignments | length == 2
-        - update_vlan_add_ip.data.reservedIpRanges | length == 2
+        - update_vlan_add_ip.data.fixed_ip_assignments | length == 2
+        - update_vlan_add_ip.data.reserved_ip_ranges | length == 2
 
   - name: Remove IP assignments and reserved IP ranges
     meraki_vlan:
