@@ -58,7 +58,7 @@ options:
   thread_id:
     version_added: 2.8
     description:
-      - Optional. Timestamp of message to thread this message to as a float. https://api.slack.com/docs/message-threading
+      - Optional. Timestamp-style identifier of message to thread this message to. https://api.slack.com/docs/message-threading
   username:
     description:
       - This is the sender of the message.
@@ -114,7 +114,7 @@ EXAMPLES = """
     token: thetoken/generatedby/slack
     msg: '{{ inventory_hostname }} completed'
     channel: '#ansible'
-    thread_id: 1539917263.000100
+    thread_id: '1539917263.000100'
     username: 'Ansible on {{ inventory_hostname }}'
     icon_url: http://www.example.com/some-image-file.png
     link_names: 0
@@ -270,7 +270,7 @@ def main():
             token=dict(type='str', required=True, no_log=True),
             msg=dict(type='str', required=False, default=None),
             channel=dict(type='str', default=None),
-            thread_id=dict(type='float', default=None),
+            thread_id=dict(type='str', default=None),
             username=dict(type='str', default='Ansible'),
             icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
             icon_emoji=dict(type='str', default=None),
