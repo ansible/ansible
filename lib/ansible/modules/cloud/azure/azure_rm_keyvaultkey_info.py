@@ -41,10 +41,6 @@ options:
             - Set to true to show deleted keys. Set to False to show not deleted keys.
         type: bool
         default: false
-    tags:
-        description:
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        type: list
 
 extends_documentation_fragment:
     - azure
@@ -92,7 +88,7 @@ keyvaults:
             description: Key identifier.
                 returned: always
                 type: str
-                sample: https://myVault.vault.azure.net/keys/key1/fd2682392a504455b79c90dd04a1bf46
+                sample: "https://myVault.vault.azure.net/keys/key1/fd2682392a504455b79c90dd04a1bf46"
         permitted_operations:
             description:
                 - Permitted operations on the key
@@ -147,23 +143,23 @@ keyvaults:
                         - Creation datetime.
                     returned: always
                     type: str
-                    sample: 2019-04-25T07:26:49+00:00
+                    sample: "2019-04-25T07:26:49+00:00"
                 not_before:
                     description:
                         - Not before datetime.
                     type: str
-                    sample: 2019-04-25T07:26:49+00:00
+                    sample: "2019-04-25T07:26:49+00:00"
                 expires:
                     description:
                         - Expiration datetime.
                     type: str
-                    sample: 2019-04-25T07:26:49+00:00
+                    sample: "2019-04-25T07:26:49+00:00"
                 updated:
                     description:
                         - Update datetime.
                     returned: always
                     type: str
-                    sample: 2019-04-25T07:26:49+00:00
+                    sample: "2019-04-25T07:26:49+00:00"
                 enabled:
                     description:
                         - Indicate whether the key is enabled.
