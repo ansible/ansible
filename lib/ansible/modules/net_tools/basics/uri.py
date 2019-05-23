@@ -241,7 +241,7 @@ msg:
   sample: OK (unknown bytes)
 redirected:
   description: Whether the request was redirected
-  returned: always
+  returned: on success
   type: bool
   sample: false
 status:
