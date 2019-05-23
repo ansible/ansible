@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabschedule
 version_added: "2.8"
-short_description: Manage Azure DevTest Lab Schedule instance.
+short_description: Manage Azure DevTest Lab Schedule instance
 description:
     - Create, update and delete instance of Azure DecTest Lab Schedule.
 
@@ -45,19 +45,19 @@ options:
             - The time zone ID.
     state:
       description:
-        - Assert the state of the Schedule.
-        - Use C(present) to create or update an Schedule and C(absent) to delete it.
+          - Assert the state of the Schedule.
+          - Use C(present) to create or update an Schedule and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
