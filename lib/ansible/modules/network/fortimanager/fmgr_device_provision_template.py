@@ -66,7 +66,7 @@ options:
 
   provision_targets:
     description:
-     - The friendly names of devices in FortiManager to assign the provisioning template to. Comma separated list.
+     - The friendly names of devices in FortiManager to assign the provisioning template to. CSV separated list.
     required: True
 
   snmp_status:
