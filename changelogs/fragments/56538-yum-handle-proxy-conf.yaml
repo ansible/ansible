@@ -1,0 +1,2 @@
+bugfixes:
+  - 'yum - handle special "_none_" value for proxy in yum.conf and .repo files (https://github.com/ansible/ansible/issues/56538)'
