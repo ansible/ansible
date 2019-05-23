@@ -226,7 +226,11 @@ options:
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
       - Do not include leading or trailing forwardslashes. We take care of that for you.
     required: false
+<<<<<<< HEAD
 >>>>>>> Fixes to fmgr_fwpol_package
+=======
+    version_added: 2.9
+>>>>>>> Version_added fields missing
 
   target_name:
     description:
@@ -235,11 +239,15 @@ options:
       - If None, then NAME will be used.
     required: false
 <<<<<<< HEAD
+<<<<<<< HEAD
     version_added: 2.9
 =======
 >>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
 =======
 >>>>>>> Fixes to fmgr_fwpol_package
+=======
+    version_added: 2.9
+>>>>>>> Version_added fields missing
 '''
 
 
