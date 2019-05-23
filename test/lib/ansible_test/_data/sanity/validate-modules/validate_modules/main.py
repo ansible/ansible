@@ -1169,6 +1169,7 @@ class ModuleValidator(Validator):
 
         # Use this to access type checkers later
         module = NoArgsAnsibleModule({})
+        module._string_conversion_action = 'error'
 
         provider_args = set()
         args_from_argspec = set()
