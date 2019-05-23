@@ -55,10 +55,11 @@ options:
     required: true
   bfd:
     description:
-      - Enables bfd at interface level. This overrides the bfd variable set at the ospf router level. Valid values are 'true', 'false' (disable bfd on this interface), or 'default'.
+      - Enables bfd at interface level. This overrides the bfd variable set at the ospf router level.
+      - Valid values are 'true', 'false' (disable bfd on this interface), or 'default'.
       - "Dependency: 'feature bfd'"
     version_added: "2.9"
-    type: bool
+    type: str
   cost:
     description:
       - The cost associated with this cisco_interface_ospf instance.
