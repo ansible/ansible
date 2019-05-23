@@ -211,8 +211,8 @@ def map_config_to_obj(module, warnings):
     for item in set(match):
         command = {'command': 'show interfaces {0} switchport | include Switchport'.format(item),
                    'output': 'text'}
-        command_result = run_commands(module, command)
-        if command_result[0] == "% Interface does not exist":
+        command_result = run_commands(module, command, check_rc=False)
+        if "Interface does not exist" in command_result[0]:
             warnings.append("Could not gather switchport information for {0}: {1}".format(item, command_result[0]))
             continue
         elif command_result[0] != "":
@@ -298,9 +298,7 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module, warnings)
