@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql_ping - fixed a typo in the module documentation (https://github.com/ansible/ansible/pull/56608)
