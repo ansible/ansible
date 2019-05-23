@@ -20,12 +20,13 @@ DELETE_HEADERS = {'accept': 'application/json', 'OData-Version': '4.0'}
 
 class RedfishUtils(object):
 
-    def __init__(self, creds, root_uri, timeout):
+    def __init__(self, creds, root_uri, timeout, module):
         self.root_uri = root_uri
         self.creds = creds
         self.timeout = timeout
+        self.module = module
+        self.service_root = '/redfish/v1/'
         self._init_session()
-        return
 
     # The following functions are to send GET/POST/PATCH/DELETE requests
     def get_request(self, uri):
@@ -154,8 +155,8 @@ class RedfishUtils(object):
     def _init_session(self):
         pass
 
-    def _find_accountservice_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_accountservice_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -173,8 +174,8 @@ class RedfishUtils(object):
             self.accounts_uri = accounts
         return {'ret': True}
 
-    def _find_sessionservice_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_sessionservice_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -192,8 +193,8 @@ class RedfishUtils(object):
             self.sessions_uri = sessions
         return {'ret': True}
 
-    def _find_systems_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_systems_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -210,8 +211,8 @@ class RedfishUtils(object):
                 'msg': "ComputerSystem's Members array is either empty or missing"}
         return {'ret': True}
 
-    def _find_updateservice_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_updateservice_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -228,9 +229,9 @@ class RedfishUtils(object):
             self.firmware_uri = firmware_inventory
             return {'ret': True}
 
-    def _find_chassis_resource(self, uri):
+    def _find_chassis_resource(self):
         chassis_service = []
-        response = self.get_request(self.root_uri + uri)
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -247,8 +248,8 @@ class RedfishUtils(object):
             self.chassis_uri_list = chassis_service
             return {'ret': True}
 
-    def _find_managers_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_managers_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
