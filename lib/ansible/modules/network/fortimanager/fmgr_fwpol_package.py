@@ -144,14 +144,14 @@ options:
     description:
       - The parent folder name you want to add this object under.
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
-      - Do not include leading or trailing forwardslashes. We take care of that for you.
+      - Do not include leading or trailing forwardslashes.
     required: false
 
   target_folder:
     description:
       - Only used when mode equals move.
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
-      - Do not include leading or trailing forwardslashes. We take care of that for you.
+      - Do not include leading or trailing forwardslashes.
     required: false
     version_added: 2.9
 
