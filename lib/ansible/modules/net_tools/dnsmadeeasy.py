@@ -95,7 +95,6 @@ options:
     description:
       - Description used by the monitor.
     required: true
-    default: ''
     version_added: 2.4
 
   maxEmails:
@@ -562,7 +561,7 @@ def main():
             record_value=dict(required=False),
             record_ttl=dict(required=False, default=1800, type='int'),
             monitor=dict(default='no', type='bool'),
-            systemDescription=dict(default=''),
+            systemDescription=dict(),
             maxEmails=dict(default=1, type='int'),
             protocol=dict(default='HTTP', choices=['TCP', 'UDP', 'HTTP', 'DNS', 'SMTP', 'HTTPS']),
             port=dict(default=80, type='int'),
@@ -625,35 +624,49 @@ def main():
         new_record["port"] = new_record["value"].split(" ")[2]
         new_record["value"] = new_record["value"].split(" ")[3]
 
+    # monitor creation
+    monitor_changed = False
+    new_monitor = dict()
+    # if monitor param is passed, we need to build object with necessary parameters
+    if module.params["monitor"] is not None:
+        # Build the monitor
+        for i in ['monitor', 'systemDescription', 'protocol', 'port', 'sensitivity', 'maxEmails',
+                  'contactList', 'httpFqdn', 'httpFile', 'httpQueryString',
+                  'failover', 'autoFailover', 'ip1', 'ip2', 'ip3', 'ip4', 'ip5']:
+            if module.params[i] is not None:
+                if i == 'protocol':
+                    # The API requires protocol to be a numeric in the range 1-6
+                    new_monitor['protocolId'] = protocols[module.params[i]]
+                elif i == 'sensitivity':
+                    # The API requires sensitivity to be a numeric of 8, 5, or 3
+                    new_monitor[i] = sensitivities[module.params[i]]
+                elif i == 'contactList':
+                    # The module accepts either the name or the id of the contact list
+                    contact_list_id = module.params[i]
+                    if not contact_list_id.isdigit() and contact_list_id != '':
+                        contact_list = DME.getContactListByName(contact_list_id)
+                        if not contact_list:
+                            module.fail_json(msg="Contact list %s does not exist" % contact_list_id)
+                        contact_list_id = contact_list.get('id', '')
+                    new_monitor['contactListId'] = contact_list_id
+                else:
+                    # The module option names match the API field names
+                    new_monitor[i] = module.params[i]
+
     # Fetch existing monitor if the A record indicates it should exist and build the new monitor
     current_monitor = dict()
-    new_monitor = dict()
-    if current_record and current_record['type'] == 'A':
-        current_monitor = DME.getMonitor(current_record['id'])
+    if current_record and current_record['type'] in ['A', 'CNAME']:
+        # mark monitor as changed if passed parameter does not match current value
+        if current_record['monitor'] != module.params['monitor']:
+            monitor_changed = True
 
-    # Build the new monitor
-    for i in ['monitor', 'systemDescription', 'protocol', 'port', 'sensitivity', 'maxEmails',
-              'contactList', 'httpFqdn', 'httpFile', 'httpQueryString',
-              'failover', 'autoFailover', 'ip1', 'ip2', 'ip3', 'ip4', 'ip5']:
-        if module.params[i] is not None:
-            if i == 'protocol':
-                # The API requires protocol to be a numeric in the range 1-6
-                new_monitor['protocolId'] = protocols[module.params[i]]
-            elif i == 'sensitivity':
-                # The API requires sensitivity to be a numeric of 8, 5, or 3
-                new_monitor[i] = sensitivities[module.params[i]]
-            elif i == 'contactList':
-                # The module accepts either the name or the id of the contact list
-                contact_list_id = module.params[i]
-                if not contact_list_id.isdigit() and contact_list_id != '':
-                    contact_list = DME.getContactListByName(contact_list_id)
-                    if not contact_list:
-                        module.fail_json(msg="Contact list {0} does not exist".format(contact_list_id))
-                    contact_list_id = contact_list.get('id', '')
-                new_monitor['contactListId'] = contact_list_id
-            else:
-                # The module option names match the API field names
-                new_monitor[i] = module.params[i]
+        if current_record['monitor']:
+            current_monitor = DME.getMonitor(current_record['id'])
+
+            # Compare new monitor against existing one
+            for i in new_monitor:
+                if str(current_monitor.get(i)) != str(new_monitor[i]):
+                    monitor_changed = True
 
     # Compare new record against existing one
     record_changed = False
@@ -690,7 +703,7 @@ def main():
             DME.updateRecord(current_record['id'], DME.prepareRecord(new_record))
             updated = True
         if monitor_changed:
-            DME.updateMonitor(current_monitor['recordId'], DME.prepareMonitor(new_monitor))
+            DME.updateMonitor(current_record['id'], DME.prepareMonitor(new_monitor))
             updated = True
         if updated:
             module.exit_json(changed=True, result=dict(record=new_record, monitor=new_monitor))

@@ -1,0 +1,4 @@
+bugfixes:
+  - correctly handle monitor (DNS failover) record property
+minor_changes:
+  - systemDescription parameter requirement now enforced as required by DNSMadeEasy API
