@@ -65,7 +65,7 @@ options:
     description:
       - Set to true to put vm on hold while creating
     default: False
-    version_added: '2.9'	
+    version_added: '2.9'
   instance_ids:
     description:
       - A list of instance ids used for states':' C(absent), C(running), C(rebooted), C(poweredoff)
