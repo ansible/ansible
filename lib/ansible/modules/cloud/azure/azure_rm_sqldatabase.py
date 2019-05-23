@@ -196,7 +196,7 @@ status:
 
 import time
 import pdb
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -358,6 +358,9 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
         if "location" not in self.parameters:
             self.parameters["location"] = resource_group.location
 
+        if "elastic_pool_id" in self.parameters:
+            self.format_elastic_pool_id()
+
         old_response = self.get_sqldatabase()
 
         if not old_response:
@@ -486,6 +489,14 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
             return response.as_dict()
 
         return False
+
+    def format_elastic_pool_id(self):
+        parrent_id = format_resource_id(val=self.server_name,
+                                        subscription_id=self.subscription_id,
+                                        namespace="Microsoft.Sql",
+                                        types="servers",
+                                        resource_group=self.resource_group)
+        self.parameters['elastic_pool_id'] = parrent_id + "/elasticPools/" + self.parameters['elastic_pool_id']
 
 def _snake_to_camel(snake, capitalize_first=False):
     if capitalize_first:
