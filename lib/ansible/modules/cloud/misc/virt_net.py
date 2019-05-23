@@ -309,7 +309,7 @@ class LibvirtConnection(object):
                     if not self.module.check_mode:
                         update_host = etree.fromstring(xml)
                         for child in update_host.getchildren():
-                          update_host.remove(child)
+                            update_host.remove(child)
                         delete_xml = update_host.tostring()
                         res = 0
                         res += network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_DELETE,
