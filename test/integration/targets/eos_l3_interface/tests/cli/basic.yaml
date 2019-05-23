@@ -8,10 +8,12 @@
     test_interface_2: ethernet2
     ipv4_addr_1: 192.0.2.5/24
     ipv4_addr_2: 198.51.100.15/24
-    ipv4_addr_3: 203.0.113.25/24
+    ipv4_addr_3: 203.0.113.25/28
+    ipv4_addr_4: 203.0.113.225/28
     ipv6_addr_1: 2001:DB8:123::/64
     ipv6_addr_2: 2001:DB8:ABC::/64
     ipv6_addr_3: 2001:DB8::/48
+    ipv6_addr_4: 2001:DB8:FFFF::/90
 
 - name: Delete interface ipv4 and ipv6 address(setup)
   eos_l3_interface: &clear
@@ -121,31 +123,6 @@
 - name: Configure ipv4 and ipv6 address using aggregate
   eos_l3_interface: &aggregate
     aggregate:
-    - { name: "{{ test_interface_1 }}", ipv4: 192.168.22.1/24, ipv6: "fc00:e2c9:2201:2::2/64" }
-    - { name: "{{ test_interface_2 }}", ipv4: 172.16.23.2/16, ipv6: "fc00:12c9:2201:3::3/32" }
-  become: yes
-  register: result
-
-- assert:
-    that:
-      - 'result.changed == true'
-      - '"interface {{ test_interface_1 }}" in result.commands'
-      - '"ip address 192.168.22.1/24" in result.commands'
-      - '"ipv6 address fc00:e2c9:2201:2::2/64" in result.commands'
-      - '"interface {{ test_interface_2 }}" in result.commands'
-      - '"ip address 172.16.23.2/16" in result.commands'
-      - '"ipv6 address fc00:12c9:2201:3::3/32" in result.commands'
-
-- name:  Configure ipv4 and ipv6 address using aggregate (idempotent)
-  eos_l3_interface: *aggregate
-  become: yes
-  register: result
-
-- assert: *unchanged
-
-- name:  Change ipv4 and ipv6 address using aggregate
-  eos_l3_interface:
-    aggregate:
     - { name: "{{ test_interface_1 }}", ipv4: "{{ ipv4_addr_3 }}", ipv6: "{{ ipv6_addr_3 }}" }
     - { name: "{{ test_interface_2 }}", ipv4: "{{ ipv4_addr_1 }}", ipv6: "{{ ipv6_addr_1 }}" }
   become: yes
@@ -160,6 +137,31 @@
       - '"interface {{ test_interface_2 }}" in result.commands'
       - '"ip address {{ ipv4_addr_1 }}" in result.commands'
       - '"ipv6 address {{ ipv6_addr_1 }}" in result.commands'
+
+- name:  Configure ipv4 and ipv6 address using aggregate (idempotent)
+  eos_l3_interface: *aggregate
+  become: yes
+  register: result
+
+- assert: *unchanged
+
+- name:  Change ipv4 and ipv6 address using aggregate
+  eos_l3_interface:
+    aggregate:
+    - { name: "{{ test_interface_1 }}", ipv4: "{{ ipv4_addr_2 }}", ipv6: "{{ ipv6_addr_2 }}" }
+    - { name: "{{ test_interface_2 }}", ipv4: "{{ ipv4_addr_4 }}", ipv6: "{{ ipv6_addr_4 }}" }
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ test_interface_1 }}" in result.commands'
+      - '"ip address {{ ipv4_addr_2 }}" in result.commands'
+      - '"ipv6 address {{ ipv6_addr_2 }}" in result.commands'
+      - '"interface {{ test_interface_2 }}" in result.commands'
+      - '"ip address {{ ipv4_addr_4 }}" in result.commands'
+      - '"ipv6 address {{ ipv6_addr_4 }}" in result.commands'
 
 
 - name:  Delete ipv4 and ipv6 address using aggregate
