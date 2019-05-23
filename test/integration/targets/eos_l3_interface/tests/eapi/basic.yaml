@@ -6,6 +6,12 @@
   set_fact:
     test_interface_1: ethernet1
     test_interface_2: ethernet2
+    ipv4_addr_1: 192.0.2.5/24
+    ipv4_addr_2: 198.51.100.15/24
+    ipv4_addr_3: 203.0.113.25/24
+    ipv6_addr_1: 2001:DB8:123::/64
+    ipv6_addr_2: 2001:DB8:ABC::/64
+    ipv6_addr_3: 2001:DB8::/48
 
 - name: Delete interface ipv4 and ipv6 address(setup)
   eos_l3_interface: &clear
@@ -17,7 +23,7 @@
 - name: Configure interface ipv4 address
   eos_l3_interface: &ipv4
     name: "{{ test_interface_1 }}"
-    ipv4: 192.168.20.1/24
+    ipv4: "{{ ipv4_addr_1 }}"
     state: present
   become: yes
   register: result
@@ -26,7 +32,7 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface_1 }}" in result.commands'
-      - '"ip address 192.168.20.1/24" in result.commands'
+      - '"ip address {{ ipv4_addr_1 }}" in result.commands'
 
 - name: Configure interface ipv4 address (idempotent)
   eos_l3_interface: *ipv4
@@ -40,7 +46,7 @@
 - name: Change interface ipv4 address
   eos_l3_interface:
     name: "{{ test_interface_1 }}"
-    ipv4: 192.168.21.1/24
+    ipv4: "{{ ipv4_addr_2 }}"
     state: present
   become: yes
   register: result
@@ -49,12 +55,12 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface_1 }}" in result.commands'
-      - '"ip address 192.168.21.1/24" in result.commands'
+      - '"ip address {{ ipv4_addr_2 }}" in result.commands'
 
 - name: Configure interface ipv6 address
   eos_l3_interface: &ipv6
     name: "{{ test_interface_1 }}"
-    ipv6: fc00:d2c9:2201:1::1/64
+    ipv6: "{{ ipv6_addr_1 }}"
     state: present
   become: yes
   register: result
@@ -63,7 +69,7 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface_1 }}" in result.commands'
-      - '"ipv6 address fc00:d2c9:2201:1::1/64" in result.commands'
+      - '"ipv6 address {{ ipv6_addr_1 }}" in result.commands'
 
 - name: Configure interface ipv6 address (idempotent)
   eos_l3_interface: *ipv6
@@ -75,7 +81,7 @@
 - name: Change interface ipv6 address
   eos_l3_interface:
     name: "{{ test_interface_1 }}"
-    ipv6: fc00:12f9:2201:1::1/64
+    ipv6: "{{ ipv6_addr_2 }}"
     state: present
   become: yes
   register: result
@@ -84,7 +90,7 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface_1 }}" in result.commands'
-      - '"ipv6 address fc00:12f9:2201:1::1/64" in result.commands'
+      - '"ipv6 address {{ ipv6_addr_2 }}" in result.commands'
 
 - name: Delete interface ipv4 and ipv6 address
   eos_l3_interface: *clear
@@ -140,8 +146,8 @@
 - name:  Change ipv4 and ipv6 address using aggregate
   eos_l3_interface:
     aggregate:
-    - { name: "{{ test_interface_1 }}", ipv4: 192.168.33.1/20, ipv6: "fc00:12d9:2201:4::4/32" }
-    - { name: "{{ test_interface_2 }}", ipv4: 172.20.2.2/24, ipv6: "fc00:12c9:2201:5::5/90" }
+    - { name: "{{ test_interface_1 }}", ipv4: "{{ ipv4_addr_3 }}", ipv6: "{{ ipv6_addr_3 }}" }
+    - { name: "{{ test_interface_2 }}", ipv4: "{{ ipv4_addr_1 }}", ipv6: "{{ ipv6_addr_1 }}" }
   become: yes
   register: result
 
@@ -149,11 +155,11 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface_1 }}" in result.commands'
-      - '"ip address 192.168.33.1/20" in result.commands'
-      - '"ipv6 address fc00:12d9:2201:4::4/32" in result.commands'
+      - '"ip address {{ ipv4_addr_3 }}" in result.commands'
+      - '"ipv6 address {{ ipv6_addr_3 }}" in result.commands'
       - '"interface {{ test_interface_2 }}" in result.commands'
-      - '"ip address 172.20.2.2/24" in result.commands'
-      - '"ipv6 address fc00:12c9:2201:5::5/90" in result.commands'
+      - '"ip address {{ ipv4_addr_1 }}" in result.commands'
+      - '"ipv6 address {{ ipv6_addr_1 }}" in result.commands'
 
 
 - name:  Delete ipv4 and ipv6 address using aggregate
