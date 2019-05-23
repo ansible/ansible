@@ -1398,3 +1398,12 @@ class PyVmomi(object):
         else:
             result = self._jsonify(obj)
         return result
+
+    def get_folder_path(self, cur):
+        full_path = '/' + cur.name
+        while hasattr(cur, 'parent') and cur.parent:
+            if cur.parent == self.content.rootFolder:
+                break
+            cur = cur.parent
+            full_path = '/' + cur.name + full_path
+        return full_path
