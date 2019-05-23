@@ -2,6 +2,25 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.17
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-05-23
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Backport of https://github.com/ansible/ansible/pull/54105, pamd - fix idempotence issue when removing rules
+- Fix unwanted ACLs when using copy module (https://github.com/ansible/ansible/issues/44412)
+- aci modules - Ensure we use native strings for signature
+- win_acl - Fix qualifier parser when using UNC paths - https://github.com/ansible/ansible/issues/55875
+- win_domain - Fix checking for a domain introduced in a recent patch
+
 v2.6.16
 =======
 

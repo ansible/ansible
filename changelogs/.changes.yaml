@@ -433,6 +433,16 @@ releases:
     - win_user_right-output.yaml
     - winrm-all-timeout-exceptions.yaml
     release_date: '2019-04-03'
+  2.6.17:
+    codename: Heartbreaker
+    fragments:
+    - 44412-copy-fix-unwanted-acls.yaml
+    - 55150-native-strings-for-signature-auth.yaml
+    - pamd-make-idempotence-fix.yaml
+    - v2.6.17_summary.yaml
+    - win_acl-network.yaml
+    - win_domain-setup.yaml
+    release_date: '2019-05-23'
   2.6.2:
     codename: Heartbreaker
     fragments:
