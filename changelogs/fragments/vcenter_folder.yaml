@@ -1,0 +1,3 @@
+minor_changes:
+  - vcenter_folder - returns a dict instead of a string, the previous output is now in the 'msg' key
+  - vcenter_folder - returns now the full path of the file in the new 'path' key
