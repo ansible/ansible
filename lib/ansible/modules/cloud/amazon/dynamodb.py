@@ -17,7 +17,7 @@ short_description: Reads, creates, updates or deletes single items in AWS Dynamo
 description:
     - Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
     - More infomation can be found here U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client).
-version_added: "2.8"
+version_added: "2.9"
 author: "David C. Martin (@blastik)"
 options:
     table:
