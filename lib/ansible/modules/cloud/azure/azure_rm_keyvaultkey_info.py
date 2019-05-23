@@ -288,7 +288,7 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
                 if self.version == 'all':
                     self.results['keys'] = self.get_key_versions()
                 else:
-                    self.results['keys'] = self.get_key()                
+                    self.results['keys'] = self.get_key()
         else:
             if self.show_deleted_key:
                 self.results['keys'] = self.list_deleted_keys()
