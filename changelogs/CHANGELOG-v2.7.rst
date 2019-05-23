@@ -5,6 +5,79 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.11
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-05-23
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Add missing parameters in get_config vyos (https://github.com/ansible/ansible/pull/50855).
+- Fix defaults option in the nxos_config module (https://github.com/ansible/ansible/pull/51076).
+- Fix netconf plugin dispatch response (https://github.com/ansible/ansible/issues/53236)
+- Fix nxos action plugin for nxos_install_os (https://github.com/ansible/ansible/pull/53768).
+- Fix privilege escalation support for the docker connection plugin when credentials need to be supplied (e.g. sudo with password).
+- Fix regular expression for timeout (https://github.com/ansible/ansible/pull/53994).
+- Fix unwanted ACLs when using copy module (https://github.com/ansible/ansible/issues/44412)
+- Fix vyos cli prompt inspection (https://github.com/ansible/ansible/pull/55589)
+- Match VLAN ID as whole line instead of searching for digits in line (https://github.com/ansible/ansible/pull/51019).
+- Meraki - Lookups using org_name or net_name no longer query Meraki twice, only once. Major performance improvements.
+- Move netconf import errors from import to use.
+- Removes superfluous commands nxos_vlan (https://github.com/ansible/ansible/pull/51796).
+- To fix the nios_zone module idempotency failure  - https://github.com/ansible/ansible/pull/55595
+- aci modules - Ensure we use native strings for signature
+- acme_certificate - writing result failed when no path was specified (i.e. destination in current working directory).
+- dnf - fix issue with dnf API calls to adapt to changes in upstream dnf version 4.2.2
+- docker_container - ``oom_killer`` and ``oom_score_adj`` options are available since docker-py 1.8.0, not 2.0.0 as assumed by the version check.
+- docker_container - fix idempotency of ``log_options`` when non-string values are used. Also warn user that this is the case.
+- docker_container - make again compatible with docker-py 1.7.0.
+- docker_container - use docker API's ``restart`` instead of ``stop``/``start`` to restart a container.
+- docker_service - fixed an issue where ``remove_orphans`` doesn't work reliably.
+- docker_swarm_service - Change the type of options ``gid`` and ``uid`` to ``str`` and ``mode`` to ``int`` on ``secrets`` and ``configs``.
+- fix eos_l2_interface insufficient commands (https://github.com/ansible/ansible/pull/50754).
+- fix eos_l2_interface invalid command (https://github.com/ansible/ansible/pull/50644).
+- gcp_compute - improve documentation on the usage of the dynamics gcp_compute inventory
+- httpapi/nxos_facts raise ConnectionError is missing `code` (https://github.com/ansible/ansible/pull/53406).
+- meraki_vlan - Module would make unnecessary API calls to Meraki when net_id is specified in task.
+- network.py:ActionModule:run does not honor _handle_src_option failures (https://github.com/ansible/ansible/pull/52745).
+- nxos_hsrp fix sh_preempt <unknown enum:> (https://github.com/ansible/ansible/pull/52858).
+- nxos_igmp_snooping group-timeout fails when igmp snooping disabled (https://github.com/ansible/ansible/pull/53079).
+- nxos_igmp_snooping more group-timeout fixes (https://github.com/ansible/ansible/pull/53553).
+- nxos_interface DI delay only when operation state check is requested (https://github.com/ansible/ansible/pull/54862).
+- nxos_interfaces_ospf fix passive-interface states & check_mode (https://github.com/ansible/ansible/pull/54260).
+- nxos_linkagg `group` type mismatch causes idempotency failure (https://github.com/ansible/ansible/pull/53653).
+- nxos_user fails to remove usernames with embedded rawstring (https://github.com/ansible/ansible/pull/53149).
+- pass correct loading context to persistent connections
+- psrp - Fix blank newlines appearing before ``stdout`` when using ``script`` or ``raw`` with the ``psrp`` connection plugin
+- psrp - Fix issues when fetching large files causing a memory leak - https://github.com/ansible/ansible/issues/55239
+- psrp - Fix issues with propagating errors back to Ansible with ``raw`` tasks
+- redfish_utils - expose timeout option for redfish implementations that exceed the 10 second default
+- redfish_utils - fix "406 Not Acceptable" issue with some OOB controllers (https://github.com/ansible/ansible/issues/55078)
+- redhat_subscription - For compatibility using the redhat_subscription module on hosts set to use a python 3 interpreter, use string values when updating yum plugin configuration files.
+- remove become plugins reference introduced in backport fix
+- sysctl: the module now also checks the output of STDERR to report if values are correctly set (https://github.com/ansible/ansible/pull/55695)
+- udm_dns_record - Fix issues when state is absent with undefined variable diff at the module return.
+- udm_dns_zone - Fix issues when state is absent with undefined variable diff at the module return.
+- udm_group - Fix issues when state is absent with undefined variable diff at the module return.
+- udm_share - Fix issues when state is absent with undefined variable diff at the module return.
+- udm_user - Fix issues when state is absent with undefined variable diff at the module return.
+- ufw - when ``default`` is specified, ``direction`` does not needs to be specified. This was accidentally introduced in Ansible 2.7.8.
+- user - properly parse the shadow file on AIX (https://github.com/ansible/ansible/issues/54461)
+- vsphere_guest - creating machines without vm_extra_config allowed
+- vsphere_guest - powering on/off absent virtual machine will fail
+- vultr_server - Fix idempotency for options ``ipv6_enabled`` and ``private_network_enabled``.
+- win_acl - Fix qualifier parser when using UNC paths - https://github.com/ansible/ansible/issues/55875
+- win_domain - Fix checking for a domain introduced in a recent patch
+- win_reboot - pass return value for ``test_command`` result when using the ``psrp`` connection plugin
+- win_region - Fix the check for ``format`` when running on the ``psrp`` connection plugin
+- yum allows comparison operators like '>=' for selecting package version
+
 v2.7.10
 =======
 

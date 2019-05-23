@@ -601,6 +601,49 @@ releases:
     - win_user_right-output.yaml
     - winrm-all-timeout-exceptions.yaml
     release_date: '2019-04-03'
+  2.7.11:
+    codename: In the Light
+    fragments:
+    - 26937-fix-remove-orphans.yml
+    - 44412-copy-fix-unwanted-acls.yaml
+    - 50183-improve-gcp-documentation.yaml
+    - 53385-docker-privilege-escalation.yml
+    - 54130-fix-missing-timeout-in-redfish_utils.yaml
+    - 54754-acme_certificate-cwd.yml
+    - 54799-ufw-default-direction.yml
+    - 54955-docker_container-log_options-strings.yml
+    - 55078-redfish_utils_fix_406_not_acceptable_issue_with_some_oob_controllers.yml
+    - 55083-univention-diff-UnboundLocalError.yaml
+    - 55150-native-strings-for-signature-auth.yaml
+    - 55384-netconf-import.yaml
+    - 55496-docker_container-docker-py-1.7.0.yml
+    - 55589_fix_vyos_prompt_issues.yaml
+    - 55595-nios-zone-idempotency-fix.yaml
+    - 55617-docker_swarm_service_use_correct_secrets_configs_types.yaml
+    - 55619-vultr_server_idempotency.yml
+    - 55894-docker_container-restart.yml
+    - 56012-docker_container-oom-version.yml
+    - dnf-4.2.2-module-remove.yaml
+    - meraki_orgnet_fix.yml
+    - meraki_vlan_api_calls.yml
+    - netconf_plugin_dispatch_fix.yaml
+    - no_become_plugins.yml
+    - nxos_bugfixes_2710.yaml
+    - nxos_interfaces_27_fix.yaml
+    - persistent_loading.yml
+    - psrp-fetch.yaml
+    - psrp-output.yaml
+    - redhat_subscription_use_strings_for_yum_plugin_configs.yaml
+    - sysctl-invalid-value.yml
+    - user-aix-shadow-file-parsing.yaml
+    - v2.7.11_summary.yaml
+    - vsphere_guest-corrected-state-operations.yml
+    - win_acl-network.yaml
+    - win_domain-setup.yaml
+    - win_reboot-psrp-command.yaml
+    - win_region-format.yaml
+    - yum-select-version.yml
+    release_date: '2019-05-23'
   2.7.2:
     codename: In the Light
     fragments:
