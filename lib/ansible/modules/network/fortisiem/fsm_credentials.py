@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_credentials
-version_added: "2.8"
+version_added: "2.9"
 author: Luke Weighall (@lweighall)
 short_description: Adds or Updates Credentials in FortiSIEM.
 description:

@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_report_query
-version_added: "2.8"
+version_added: "2.9"
 author: Luke Weighall (@lweighall)
 short_description: Allows the submission of reports and return of data
 description:

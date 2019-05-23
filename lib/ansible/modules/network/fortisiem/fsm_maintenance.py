@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_maintenance
-version_added: "2.8"
+version_added: "2.9"
 author: Luke Weighall (@lweighall)
 short_description: Creates and Deletes maintenance calendar objects.
 description:

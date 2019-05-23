@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_send_syslog
-version_added: "2.8"
+version_added: "2.9"
 author: Luke Weighall (@lweighall)
 short_description: Sends a text string to FortiSIEM as a Syslog
 description:

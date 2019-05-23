@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fsm_custom_query
-version_added: "2.8"
+version_added: "2.9"
 author: Luke Weighall (@lweighall)
 short_description: Get a list of devices from the FortiSIEM CMDB
 description:

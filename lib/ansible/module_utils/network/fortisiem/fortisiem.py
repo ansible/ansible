@@ -53,6 +53,7 @@ class FortiSIEMHandler(object):
     It also makes extensive use of self.<attribute> methodology to keep track of variables and trade them
     between the various methods that perform the work.
     """
+
     def __init__(self, module):
         self._module = module
         self._tools = FSMCommon
@@ -367,7 +368,7 @@ class FortiSIEMHandler(object):
             missing.append("events")
         else:
             present.append("events")
-            return_dict["device"]["event_results"] =\
+            return_dict["device"]["event_results"] = \
                 self._tools.get_events_info_for_specific_ip(events)
         if not monitors:
             missing.append("monitors")
@@ -480,7 +481,7 @@ class FortiSIEMHandler(object):
             self.report_xml_source = source
         except BaseException as err:
             FSMBaseException(msg="Failed to get file contents at path: " + str(self.export_json_to_file_path) +
-                                       "| Error: " + str(err))
+                                 "| Error: " + str(err))
 
         return source
 
@@ -671,9 +672,9 @@ class FortiSIEMHandler(object):
         start_epoch = None
         end_epoch = None
         # BUILD THE TIMESTAMP
-        begin_timestamp = self._module.paramgram["report_absolute_begin_date"]\
+        begin_timestamp = self._module.paramgram["report_absolute_begin_date"] \
                           + " " + self._module.paramgram["report_absolute_begin_time"]
-        end_timestamp = self._module.paramgram["report_absolute_end_date"]\
+        end_timestamp = self._module.paramgram["report_absolute_end_date"] \
                         + " " + self._module.paramgram["report_absolute_end_time"]
         start_epoch = self._tools.convert_timestamp_to_epoch(begin_timestamp)
         end_epoch = self._tools.convert_timestamp_to_epoch(end_timestamp)
@@ -976,5 +977,3 @@ class FortiSIEMHandler(object):
             facts.update(kwargs)
 
         return facts
-
-

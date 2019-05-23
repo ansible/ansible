@@ -33,6 +33,7 @@ import ssl
 import json
 import xml.dom.minidom
 import re
+import xmltodict
 
 
 # BEGIN STATIC DATA / MESSAGES
@@ -59,17 +60,18 @@ BASE_HEADERS = {
 
 
 class SyslogFacility:
-  """Syslog facilities"""
-  KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
-  LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
+    """Syslog facilities"""
+    KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
+    LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
 
-  LOCAL0, LOCAL1, LOCAL2, LOCAL3, \
-  LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
+    LOCAL0, LOCAL1, LOCAL2, LOCAL3, \
+    LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
+
 
 class SyslogLevel:
-  """Syslog levels"""
-  EMERG, ALERT, CRIT, ERR, \
-  WARNING, NOTICE, INFO, DEBUG = range(8)
+    """Syslog levels"""
+    EMERG, ALERT, CRIT, ERR, \
+    WARNING, NOTICE, INFO, DEBUG = range(8)
 
 
 # FSM URL ENDPOINTS
@@ -99,6 +101,7 @@ class FSMEndpoints:
     GET_NETWORKS = "/phoenix/rest/config/network"
     GET_GROUPS = "/phoenix/rest/config/group"
     GET_BIZSERVICES = "/phoenix/rest/cmdb/bizServices"
+
 
 # FSM RETURN CODES
 FSM_RC = {
@@ -253,7 +256,7 @@ FSMCredentialAccessMethods = [
 
 DEFAULT_RESULT_OBJ = (-100000, {"msg": "Nothing Happened. Check that handle_response is being called!"})
 FAIL_SOCKET_MSG = {"msg": "Socket Path Empty! The persistent connection manager is messed up. "
-                   "Try again in a few moments."}
+                          "Try again in a few moments."}
 DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response() that resulted in an exit. "
                            "This shouldn't happen. Please report to @ftntcorecse on Github."}
 
@@ -267,17 +270,19 @@ class FSMBaseException(Exception):
             msg = "An exception occurred within the fortisiem.py httpapi connection plugin."
         super(FSMBaseException, self).__init__(msg, *args)
 
+
 # END ERROR CLASSES
 
 
-try:
-    import xmltodict
-    HAS_XML2DICT = True
-except ImportError as err:
-    HAS_XML2DICT = False
-    raise FSMBaseException(
-        "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
-        "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
+# try:
+#     import xmltodict
+#
+#     HAS_XML2DICT = True
+# except ImportError as err:
+#     HAS_XML2DICT = False
+#     raise FSMBaseException(
+#         "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
+#         "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
 
 
 # BEGIN CLASSES
@@ -751,18 +756,18 @@ class FSMCommon(object):
         for item in xml_list:
             doc = xml.dom.minidom.parseString(item.encode('ascii', 'xmlcharrefreplace'))
             for node in doc.getElementsByTagName("events"):
-                    for node1 in node.getElementsByTagName("event"):
-                        mapping = {}
-                        for node2 in node1.getElementsByTagName("attributes"):
-                            for node3 in node2.getElementsByTagName("attribute"):
-                                itemName = node3.getAttribute("name")
-                                for node4 in node3.childNodes:
-                                    if node4.nodeType == node.TEXT_NODE:
-                                        message = node4.data
-                                        if '\n' in message:
-                                            message = message.replace('\n', '')
-                                        mapping[itemName] = message
-                        param.append(mapping)
+                for node1 in node.getElementsByTagName("event"):
+                    mapping = {}
+                    for node2 in node1.getElementsByTagName("attributes"):
+                        for node3 in node2.getElementsByTagName("attribute"):
+                            itemName = node3.getAttribute("name")
+                            for node4 in node3.childNodes:
+                                if node4.nodeType == node.TEXT_NODE:
+                                    message = node4.data
+                                    if '\n' in message:
+                                        message = message.replace('\n', '')
+                                    mapping[itemName] = message
+                    param.append(mapping)
         return param
 
     @staticmethod
@@ -833,7 +838,7 @@ class SendSyslog(object):
                  facility=SyslogFacility.USER,
                  level=SyslogLevel.INFO,
                  protocol="",
-                 ssl_context=None,):
+                 ssl_context=None, ):
         self.host = host
         self.port = port
         self.facility = facility
@@ -878,7 +883,7 @@ class SendSyslog(object):
         :return: dict
         """
         data = "<%d> %s" % (self.level + self.facility * 8,
-                           str(header + " host:" + socket.gethostname() + " | " + message))
+                            str(header + " host:" + socket.gethostname() + " | " + message))
 
         if self.protocol in ["udp", "udp-tls1.2"]:
             try:
