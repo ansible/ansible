@@ -470,4 +470,3 @@ class FortiAnalyzerHandler(object):
     def remove_adom_from_lock_list(self, adom):
         if adom in self._locked_adom_list:
             self._locked_adom_list.remove(adom)
-

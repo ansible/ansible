@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: faz_query
-version_added: "2.8"
+version_added: "2.9"
 notes:
     - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
 author: Luke Weighall (@lweighall)
@@ -48,8 +48,6 @@ options:
       - The data object we wish to query (device, package, rule, etc). Will expand choices as improves.
     required: true
     choices:
-    - device
-    - cluster_nodes
     - task
     - custom
 
@@ -65,29 +63,9 @@ options:
         - DICTIONARY JSON FORMAT ONLY -- Custom dictionary/datagram to send to the endpoint.
     required: false
 
-  device_ip:
-    description:
-      - The IP of the device you want to query.
-    required: false
-
-  device_unique_name:
-    description:
-      - The desired "friendly" name of the device you want to query.
-    required: false
-
-  device_serial:
-    description:
-      - The serial number of the device you want to query.
-    required: false
-
   task_id:
     description:
       - The ID of the task you wish to query status on. If left blank and object = 'task' a list of tasks are returned.
-    required: false
-
-  nodes:
-    description:
-      - A LIST of firewalls in the cluster you want to verify i.e. ["firewall_A","firewall_B"].
     required: false
 '''
 

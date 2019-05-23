@@ -311,7 +311,7 @@ class HttpApi(HttpApiBase):
         except KeyError:
             self.uses_adoms = False
         except BaseException:
-           raise FAZBaseException(msg="Couldn't determine adom-status in the plugin")
+            raise FAZBaseException(msg="Couldn't determine adom-status in the plugin")
 
     def run_unlock(self):
         """
@@ -391,7 +391,7 @@ class HttpApi(HttpApiBase):
             try:
                 if resp_obj[1]["status"]["message"] == "OK":
                     self._lock_info = None
-            except:
+            except BaseException:
                 self._lock_info = resp_obj[1]
         return resp_obj
 
@@ -409,7 +409,7 @@ class HttpApi(HttpApiBase):
                 self._module.fail_json(msg=("An error occurred trying to get the ADOM Info. Error: " + str(resp_obj)))
             elif code == 0:
                 num_of_adoms = len(resp_obj[1])
-                append_list = ['root',]
+                append_list = ['root', ]
                 for adom in resp_obj[1]:
                     if adom["tab_status"] != "":
                         append_list.append(str(adom["name"]))
@@ -428,7 +428,7 @@ class HttpApi(HttpApiBase):
                 try:
                     if adom_lock_info[1]["status"]["message"] == "OK":
                         continue
-                except:
+                except BaseException:
                     pass
                 try:
                     if adom_lock_info[1][0]["lock_user"]:
