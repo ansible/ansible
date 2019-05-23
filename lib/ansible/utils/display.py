@@ -185,7 +185,7 @@ class Display(with_metaclass(Singleton, object)):
                     lvl = color_to_log_level[color]
                 except KeyError:
                     # this should not happen, but JIC
-                    pass
+                    AnsibleError('Invalid color supplied to display: %s' % color)
             # actually log
             logger.log(lvl, msg2)
 
