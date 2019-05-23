@@ -203,6 +203,7 @@ options:
       - The parent folder name you want to add this object under.
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
 <<<<<<< HEAD
+<<<<<<< HEAD
       - Do not include leading or trailing forwardslashes.
     required: false
 <<<<<<< HEAD
@@ -215,6 +216,9 @@ options:
 =======
       - Do not include leading or trailing forwardslashes. We take care of that for you.
 >>>>>>> Removed un-used parameter package_folder. Replaced by parent_folder.
+=======
+      - Do not include leading or trailing forwardslashes.
+>>>>>>> Shippable cancelled for unknown reason. Doc change to restart.
     required: false
 <<<<<<< HEAD
     version_added: 2.9
@@ -224,7 +228,7 @@ options:
     description:
       - Only used when mode equals move.
       - Nested folders are supported with forwardslashes. i.e. ansibleTestFolder1/ansibleTestFolder2/etc...
-      - Do not include leading or trailing forwardslashes. We take care of that for you.
+      - Do not include leading or trailing forwardslashes.
     required: false
 <<<<<<< HEAD
 >>>>>>> Fixes to fmgr_fwpol_package
