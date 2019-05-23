@@ -496,6 +496,7 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
                                         resource_group=self.resource_group)
         self.parameters['elastic_pool_id'] = parrent_id + "/elasticPools/" + self.parameters['elastic_pool_id']
 
+
 def _snake_to_camel(snake, capitalize_first=False):
     if capitalize_first:
         return ''.join(x.capitalize() or '_' for x in snake.split('_'))
