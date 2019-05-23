@@ -32,6 +32,7 @@ module: fsm_verify_device_ip
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version_added: "2.9"
 =======
 version_added: "2.8"
@@ -42,6 +43,9 @@ version_added: "2.9"
 =======
 version_added: "2.8"
 >>>>>>> Full FSM Commit
+=======
+version_added: "2.9"
+>>>>>>> Bug Fixes according to shippable... re-running
 author: Luke Weighall (@lweighall)
 short_description: Checks for the existence of a device in the FortiSIEM System.
 description:

@@ -32,6 +32,7 @@ module: fsm_report_query
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version_added: "2.9"
 =======
 version_added: "2.8"
@@ -42,6 +43,9 @@ version_added: "2.9"
 =======
 version_added: "2.8"
 >>>>>>> Full FSM Commit
+=======
+version_added: "2.9"
+>>>>>>> Bug Fixes according to shippable... re-running
 author: Luke Weighall (@lweighall)
 short_description: Allows the submission of reports and return of data
 description:

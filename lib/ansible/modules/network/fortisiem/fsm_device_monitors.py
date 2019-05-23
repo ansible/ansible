@@ -46,6 +46,7 @@ module: fsm_device_monitors
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version_added: "2.9"
 =======
 version_added: "2.8"
@@ -56,6 +57,9 @@ version_added: "2.9"
 =======
 version_added: "2.8"
 >>>>>>> Full FSM Commit
+=======
+version_added: "2.9"
+>>>>>>> Bug Fixes according to shippable... re-running
 author: Luke Weighall (@lweighall)
 short_description: Get a list of monitors for specified devices.
 description:

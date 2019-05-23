@@ -151,18 +151,25 @@ class SyslogLevel:
 
 >>>>>>> Full FSM Commit. Ready for shippable tests.
 class SyslogFacility:
-  """Syslog facilities"""
-  KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
-  LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
+    """Syslog facilities"""
+    KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
+    LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
 
-  LOCAL0, LOCAL1, LOCAL2, LOCAL3, \
-  LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
+    LOCAL0, LOCAL1, LOCAL2, LOCAL3, \
+    LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
+
 
 class SyslogLevel:
+<<<<<<< HEAD
   """Syslog levels"""
   EMERG, ALERT, CRIT, ERR, \
   WARNING, NOTICE, INFO, DEBUG = range(8)
 >>>>>>> Full FSM Commit
+=======
+    """Syslog levels"""
+    EMERG, ALERT, CRIT, ERR, \
+    WARNING, NOTICE, INFO, DEBUG = range(8)
+>>>>>>> Bug Fixes according to shippable... re-running
 
 
 # FSM URL ENDPOINTS
@@ -214,6 +221,7 @@ class FSMEndpoints:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Full FSM Commit
@@ -222,6 +230,9 @@ class FSMEndpoints:
 >>>>>>> Bug Fixes according to shippable... re-running
 =======
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Bug Fixes according to shippable... re-running
 # FSM RETURN CODES
 FSM_RC = {
     "fsm_return_codes": {
@@ -378,6 +389,7 @@ FAIL_SOCKET_MSG = {"msg": "Socket Path Empty! The persistent connection manager 
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                           "Try again in a few moments."}
 DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response() that resulted in an exit. "
                            "This shouldn't happen. Please report to @ftntcorecse on Github."}
@@ -394,6 +406,9 @@ DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response()
 <<<<<<< HEAD
 =======
                    "Try again in a few moments."}
+=======
+                          "Try again in a few moments."}
+>>>>>>> Bug Fixes according to shippable... re-running
 DEFAULT_EXIT_MSG = {"msg": "Module ended without a call to fsm.govern_response() that resulted in an exit. "
                            "This shouldn't happen. Please report to @ftntcorecse on Github."}
 
@@ -442,6 +457,7 @@ class FSMBaseException(Exception):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> Bug Fixes according to shippable... re-running
 
@@ -485,17 +501,21 @@ class FSMCommon(object):
 =======
 =======
 >>>>>>> Full FSM Commit
+=======
+
+>>>>>>> Bug Fixes according to shippable... re-running
 # END ERROR CLASSES
 
 
-try:
-    import xmltodict
-    HAS_XML2DICT = True
-except ImportError as err:
-    HAS_XML2DICT = False
-    raise FSMBaseException(
-        "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
-        "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
+# try:
+#     import xmltodict
+#
+#     HAS_XML2DICT = True
+# except ImportError as err:
+#     HAS_XML2DICT = False
+#     raise FSMBaseException(
+#         "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
+#         "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
 
 
 # BEGIN CLASSES
@@ -1025,6 +1045,9 @@ class FSMCommon(object):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Bug Fixes according to shippable... re-running
 =======
 >>>>>>> Bug Fixes according to shippable... re-running
                 for node1 in node.getElementsByTagName("event"):
@@ -1039,6 +1062,7 @@ class FSMCommon(object):
                                         message = message.replace('\n', '')
                                     mapping[itemName] = message
                     param.append(mapping)
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 =======
@@ -1061,6 +1085,8 @@ class FSMCommon(object):
 >>>>>>> Bug Fixes according to shippable... re-running
 =======
 >>>>>>> Full FSM Commit. Ready for shippable tests.
+=======
+>>>>>>> Bug Fixes according to shippable... re-running
         return param
 
     @staticmethod
@@ -1176,7 +1202,7 @@ class SendSyslog(object):
                  level=SyslogLevel.INFO,
 >>>>>>> Full FSM Commit. Ready for shippable tests.
                  protocol="",
-                 ssl_context=None,):
+                 ssl_context=None, ):
         self.host = host
         self.port = port
         self.facility = facility
@@ -1269,8 +1295,12 @@ class SendSyslog(object):
         :return: dict
         """
         data = "<%d> %s" % (self.level + self.facility * 8,
+<<<<<<< HEAD
                            str(header + " host:" + socket.gethostname() + " | " + message))
 =======
+>>>>>>> Bug Fixes according to shippable... re-running
+=======
+                            str(header + " host:" + socket.gethostname() + " | " + message))
 >>>>>>> Bug Fixes according to shippable... re-running
 
 <<<<<<< HEAD
