@@ -339,7 +339,7 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
                 elif key == "max_size_bytes":
                     self.parameters["max_size_bytes"] = kwargs[key]
                 elif key == "elastic_pool_name":
-                    self.parameters["elastic_pool_name"] = kwargs[key]
+                    self.parameters["elastic_pool_id"] = kwargs[key]
                 elif key == "read_scale":
                     self.parameters["read_scale"] = 'Enabled' if kwargs[key] else 'Disabled'
                 elif key == "sample_name":
@@ -486,7 +486,6 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
             return response.as_dict()
 
         return False
-
 
 def _snake_to_camel(snake, capitalize_first=False):
     if capitalize_first:
