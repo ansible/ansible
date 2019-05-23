@@ -33,7 +33,8 @@ import ssl
 import json
 import xml.dom.minidom
 import re
-import xmltodict
+from ansible.module_utils.network.fortisiem.fsm_xml_generators import XML2Dict
+from ansible.module_utils.network.fortisiem.fsm_xml_generators import Dict2XML
 
 
 # BEGIN STATIC DATA / MESSAGES
@@ -62,16 +63,16 @@ BASE_HEADERS = {
 class SyslogFacility:
     """Syslog facilities"""
     KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
-    LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
+        LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
 
     LOCAL0, LOCAL1, LOCAL2, LOCAL3, \
-    LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
+        LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
 
 
 class SyslogLevel:
     """Syslog levels"""
     EMERG, ALERT, CRIT, ERR, \
-    WARNING, NOTICE, INFO, DEBUG = range(8)
+        WARNING, NOTICE, INFO, DEBUG = range(8)
 
 
 # FSM URL ENDPOINTS
@@ -467,26 +468,26 @@ class FSMCommon(object):
             fh = open(file_path, 'r')
             fh_contents = fh.read()
             fh.close()
-        except:
+        except BaseException:
             pass
         # BASED ON THAT TEST, EITHER APPEND, OR OPEN A NEW FILE AND WRITE THE CSV HEADER
         if fh_contents:
             f = open(file_path, "a+")
-            append_string = str(results["json_results"]["Access IP"]) + \
-                            "," + str(results["json_results"]["score"]) + \
-                            "," + str(results["json_results"]["verified_status"]) + \
-                            "," + str(results["json_results"]["Name"]) + \
-                            "," + str(results["json_results"]["Distinct Event Types"]) + \
-                            "," + str(results["json_results"]["Num of Events"])
+            append_string = str(results["json_results"]["Access IP"]) + "," + \
+                str(results["json_results"]["score"]) + "," + \
+                str(results["json_results"]["verified_status"]) + "," + \
+                str(results["json_results"]["Name"]) + "," + \
+                str(results["json_results"]["Distinct Event Types"]) + "," + \
+                str(results["json_results"]["Num of Events"])
             try:
                 missing_list = results["json_results"]["missing_items"]
                 append_string = append_string + "," + "-".join(missing_list)
-            except:
+            except BaseException:
                 pass
             try:
                 present_list = results["json_results"]["present_items"]
                 append_string = append_string + "," + "-".join(present_list)
-            except:
+            except BaseException:
                 pass
             append_string = append_string + "\n"
             f.write(append_string)
@@ -495,20 +496,20 @@ class FSMCommon(object):
             f = open(file_path, "w")
             f.write("ip, score, verified_status, Name, DistinctEventTypes, NumOfEvents, missing, present\n")
             append_string = str(results["json_results"]["Access IP"]) + \
-                            "," + str(results["json_results"]["score"]) + \
-                            "," + str(results["json_results"]["verified_status"]) + \
-                            "," + str(results["json_results"]["Name"]) + \
-                            "," + str(results["json_results"]["Distinct Event Types"]) + \
-                            "," + str(results["json_results"]["Num of Events"])
+                "," + str(results["json_results"]["score"]) + \
+                "," + str(results["json_results"]["verified_status"]) + \
+                "," + str(results["json_results"]["Name"]) + \
+                "," + str(results["json_results"]["Distinct Event Types"]) + \
+                "," + str(results["json_results"]["Num of Events"])
             try:
                 missing_list = results["json_results"]["missing_items"]
                 append_string = append_string + "," + "-".join(missing_list)
-            except:
+            except BaseException:
                 pass
             try:
                 present_list = results["json_results"]["present_items"]
                 append_string = append_string + "," + "-".join(present_list)
-            except:
+            except BaseException:
                 pass
             append_string = append_string + "\n"
             f.write(append_string)
@@ -529,9 +530,9 @@ class FSMCommon(object):
                 try:
                     current_count = int(item["COUNT(*)"])
                     event_count += current_count
-                except:
+                except BaseException:
                     pass
-        except:
+        except BaseException:
             pass
 
         return event_count
@@ -554,7 +555,7 @@ class FSMCommon(object):
                     "count": item["COUNT(*)"]
                 }
                 return_events.append(event_dict)
-        except:
+        except BaseException:
             pass
 
         return return_events
@@ -577,14 +578,14 @@ class FSMCommon(object):
                 num_of_event_pulling_devices += 1
                 for monitor in event_device["monitors"]["monitor"]:
                     num_of_event_pulling_monitors += 1
-        except:
+        except BaseException:
             pass
         try:
             for perf_mon_device in results["json_results"]["monitoredDevices"]["eventPullingDevices"]["device"]:
                 num_of_perf_mon_devices += 1
                 for monitor in event_device["monitors"]["monitor"]:
                     num_of_perf_mon_monitors += 1
-        except:
+        except BaseException:
             pass
 
         return_dict["json_results"]["summary"] = {
@@ -613,7 +614,7 @@ class FSMCommon(object):
                 if str(item["accessIp"]) == ip_to_verify:
                     return_monitors.append({"access_ip": str(item["accessIp"]),
                                             "monitors": item["monitors"]["monitor"]})
-        except:
+        except BaseException:
             pass
 
         try:
@@ -622,7 +623,7 @@ class FSMCommon(object):
                 if str(item["accessIp"]) == ip_to_verify:
                     return_monitors.append({"access_ip": str(item["accessIp"]),
                                             "monitors": item["monitors"]["monitor"]})
-        except:
+        except BaseException:
             pass
 
         return return_monitors
@@ -666,7 +667,7 @@ class FSMCommon(object):
         for item in input_list:
             if loop_count == 1:
                 out_string = out_string + item.replace('</events>\n', '').replace('</queryResult>\n', '')
-                out_string = re.sub(u'(?imu)^\s*\n', u'', out_string)
+                out_string = re.sub(r'(?imu)^\s*\n', u'', out_string)
             if loop_count > 1 and loop_count <= list_len:
                 stripped_item = item.replace('</events>\n', '').replace('</queryResult>\n', '')
                 stripped_item = stripped_item.replace('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n', '')
@@ -686,7 +687,7 @@ class FSMCommon(object):
         :param xml_in: xml to convert
         :return: dict
         """
-        xml_out = xmltodict.parse(str(xml_in), process_namespaces=True)
+        xml_out = XML2Dict.parse(str(xml_in), process_namespaces=True)
         json_out = json.dumps(xml_out)
         dict_out = json.loads(json_out)
         return dict_out
@@ -699,7 +700,7 @@ class FSMCommon(object):
         :param dict_in: dict to convert
         :return: xml
         """
-        xml_out = xmltodict.unparse(dict_in, pretty=True)
+        xml_out = Dict2XML.parse(dict_in, pretty=True)
         return xml_out
 
     @staticmethod
@@ -818,7 +819,7 @@ class FSMCommon(object):
         parsed_mins = parsed_time2[1]
         try:
             parsed_secs = parsed_time2[2]
-        except:
+        except BaseException:
             parsed_secs = "00"
             pass
 

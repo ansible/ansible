@@ -306,3 +306,167 @@ class FSMXMLGenerators(object):
 
         xmlstr = ET.tostring(MaintSchedules, 'utf-8')
         return xmlstr
+
+
+class XML2Dict(object):
+    def __init__(self, coding='UTF-8'):
+        self._coding = coding
+
+    def _parse_node(self, node):
+        tree = {}
+
+        for child in node.getchildren():
+            ctag = child.tag
+            cattr = child.attrib
+            ctext = child.text.strip().encode(self._coding) if child.text is not None else ''
+            ctree = self._parse_node(child)
+
+            if not ctree:
+                cdict = self._make_dict(ctag, ctext, cattr)
+            else:
+                cdict = self._make_dict(ctag, ctree, cattr)
+
+            if ctag not in tree:
+                tree.update(cdict)
+                continue
+
+            atag = '@' + ctag
+            atree = tree[ctag]
+            if not isinstance(atree, list):
+                if not isinstance(atree, dict):
+                    atree = {}
+                if atag in tree:
+                    atree['#' + ctag] = tree[atag]
+                    del tree[atag]
+                tree[ctag] = [atree]
+            if cattr:
+                ctree['#' + ctag] = cattr
+            tree[ctag].append(ctree)
+        return tree
+
+    def _make_dict(self, tag, value, attr=None):
+        """
+
+        :param tag:
+        :param value:
+        :param attr:
+        :return:
+        Generate a new dict with tag and value
+
+        If attr is not None then convert tag name to @tag
+        and convert tuple list to dict
+        """
+        ret = {tag: value}
+
+        # Save attributes as @tag value
+        if attr:
+            atag = '@' + tag
+
+            aattr = {}
+            for k, v in attr.items():
+                aattr[k] = v
+
+            ret[atag] = aattr
+
+            del atag
+            del aattr
+
+        return ret
+
+    def parse(self, xml):
+        """
+        Parse xml string to python dict
+        """
+        EL = ET.fromstring(xml)
+
+        return self._make_dict(EL.tag, self._parse_node(EL), EL.attrib)
+
+
+class Dict2XML(object):
+    def __init__(self, coding='UTF-8'):
+        self._root = None
+        self._coding = coding
+
+    def _parse_dict(self, edict, etree=None):
+        tree = None
+
+        for tag, value in edict.items():
+            if etree is not None and isinstance(value, list):
+
+                elist = [self._parse_dict({tag: item}) for item in value]
+                for et in elist:
+                    etree.append(et)
+                del elist
+                continue
+            elif etree is None and '@' == tag[:1]:
+
+                etree = tree
+            tree = self._make_xml(tag, value, etree)
+
+        return tree
+
+    def _make_xml(self, tag, value, parent):
+        """
+        Generate a new xml from the dict key and value
+
+        The parent param is ET object
+        """
+        if '@' == tag[:1] and isinstance(value, dict):
+            tag = tag[1:]
+
+            if parent is None:
+                if self._root is None:
+                    el = ET.Element(tag, value)
+                    self._root = el
+                else:
+                    el = self._root
+                    self._root = None
+
+            else:
+                el = parent if tag == parent.tag else parent.find(tag)
+                if el is None:
+                    # Element first add
+                    el = ET.SubElement(parent, tag, value)
+                else:
+                    # Save attributes
+                    el.attrib.update(value)
+
+            return el
+
+        stag = '#' + tag
+        if stag in value:
+            if isinstance(value[stag], dict):
+                el = ET.Element(tag, value[stag])
+            else:
+                el = ET.Element(tag)
+
+            del value[stag]
+
+        else:
+            if parent is None:
+                if self._root is None:
+                    el = ET.Element(tag)
+                    self._root = el
+                else:
+                    el = self._root
+                    self._root = None
+
+            else:
+                el = parent.find(tag)
+                if el is None:
+                    # Element first add
+                    el = ET.SubElement(parent, tag)
+
+        if isinstance(value, dict):
+            self._parse_dict(value, el)
+        else:
+            el.text = value
+
+        return el
+
+    def parse(self, dict):
+        """Parse dict to xml string
+
+        @attention: every dict must have a root key!
+        """
+        return ET.tostring(self._parse_dict(dict))

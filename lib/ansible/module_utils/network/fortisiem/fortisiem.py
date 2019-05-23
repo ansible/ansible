@@ -536,7 +536,7 @@ class FortiSIEMHandler(object):
         first_results = self.get_query_results(self.next_http_auth, url)
         out_xml.append(first_results.decode("utf-8"))
         try:
-            p = re.compile('totalCount="\d+"')
+            p = re.compile(r'totalCount="\d+"')
             mlist = p.findall(out_xml[0])
             mm = mlist[0].replace('"', '')
             row_count = mm.split("=")[-1]
@@ -549,8 +549,8 @@ class FortiSIEMHandler(object):
             pages = int(row_count) / 1000
             if pages > 0:
                 for i in range(pages):
-                    self._module.paramgram["uri"] = FSMEndpoints.GET_REPORT_RESULTS + str(query_id) \
-                                                    + "/" + str((i + 1) * 1000) + '/1000'
+                    self._module.paramgram["uri"] = FSMEndpoints.GET_REPORT_RESULTS + str(query_id) + \
+                        "/" + str((i + 1) * 1000) + '/1000'
                     url = self.create_endpoint_url()
                     out_xml_append = self.get_query_results(self.next_http_auth, url)
                     if out_xml_append != '':
@@ -672,10 +672,10 @@ class FortiSIEMHandler(object):
         start_epoch = None
         end_epoch = None
         # BUILD THE TIMESTAMP
-        begin_timestamp = self._module.paramgram["report_absolute_begin_date"] \
-                          + " " + self._module.paramgram["report_absolute_begin_time"]
-        end_timestamp = self._module.paramgram["report_absolute_end_date"] \
-                        + " " + self._module.paramgram["report_absolute_end_time"]
+        begin_timestamp = self._module.paramgram["report_absolute_begin_date"] + " " + \
+            self._module.paramgram["report_absolute_begin_time"]
+        end_timestamp = self._module.paramgram["report_absolute_end_date"] + " " + \
+            self._module.paramgram["report_absolute_end_time"]
         start_epoch = self._tools.convert_timestamp_to_epoch(begin_timestamp)
         end_epoch = self._tools.convert_timestamp_to_epoch(end_timestamp)
 
