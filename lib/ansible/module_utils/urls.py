@@ -915,7 +915,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     return False
         return True
 
-    def _make_context(self, cafile, cadata):
+    def make_context(self, cafile, cadata):
         cafile = self.ca_path or cafile
         if self.ca_path:
             cadata = None
@@ -942,7 +942,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         context = None
         try:
-            context = self._make_context(tmp_ca_cert_path, cadata)
+            context = self.make_context(tmp_ca_cert_path, cadata)
         except NotImplementedError:
             # We'll make do with no context below
             pass
@@ -1236,7 +1236,7 @@ class Request:
         if ssl_handler and HAS_SSLCONTEXT and validate_certs:
             tmp_ca_path, cadata, paths_checked = ssl_handler.get_ca_certs()
             try:
-                context = ssl_handler._make_context(tmp_ca_path, cadata)
+                context = ssl_handler.make_context(tmp_ca_path, cadata)
             except NotImplementedError:
                 pass
 
