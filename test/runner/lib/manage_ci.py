@@ -6,11 +6,6 @@ import os
 import tempfile
 import time
 
-try:
-    from shlex import quote as cmd_quote
-except ImportError:
-    from pipes import quote as cmd_quote
-
 import lib.pytar
 
 from lib.util import (
@@ -18,6 +13,7 @@ from lib.util import (
     ApplicationError,
     run_command,
     intercept_command,
+    cmd_quote,
 )
 
 from lib.core_ci import (

@@ -18,11 +18,6 @@ import random
 import string
 import shutil
 
-try:
-    from shlex import quote as cmd_quote
-except ImportError:
-    from pipes import quote as cmd_quote
-
 import lib.pytar
 import lib.thread
 
@@ -65,6 +60,7 @@ from lib.util import (
     get_remote_completion,
     named_temporary_file,
     COVERAGE_OUTPUT_PATH,
+    cmd_quote,
 )
 
 from lib.docker_util import (
