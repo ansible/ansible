@@ -88,7 +88,7 @@ options:
         description:
           - Tags that will be added to ecs tasks on start and run
         required: false
-        version_added: 2.8
+        version_added: 2.9
 extends_documentation_fragment:
     - aws
     - ec2
