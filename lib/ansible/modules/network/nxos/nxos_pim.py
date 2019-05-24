@@ -92,7 +92,6 @@ def get_existing(module, args):
     config = str(get_config(module))
 
     for arg in args:
-        command = PARAM_TO_COMMAND_KEYMAP[arg]
         if 'ssm_range' in arg:
             # <value> may be 'n.n.n.n/s', 'none', or 'default'
             m = re.search(r'ssm range (?P<value>(?:[\s\d.\/]+|none|default))?$', config, re.M)
@@ -102,7 +101,7 @@ def get_existing(module, args):
                 existing[arg] = value.split()
 
         elif 'bfd' in arg:
-            existing[arg] = arg in config
+            existing[arg] = 'ip pim bfd' in config
 
     return existing
 
@@ -161,7 +160,8 @@ def main():
     # SSM syntax check
     if 'ssm_range' in args:
         for item in params['ssm_range']:
-            if re.search('none|default', item): break
+            if re.search('none|default', item):
+                break
             if len(item.split('.')) != 4:
                 module.fail_json(msg="Valid ssm_range values are multicast addresses "
                                      "or the keyword 'none' or the keyword 'default'.")
@@ -180,8 +180,9 @@ def main():
                 ex = sorted(set([str(i) for i in existing.get(key, [])]))
                 if v != ex:
                     proposed[key] = ' '.join(str(s) for s in v)
+
         elif value != existing.get(key):
-              proposed[key] = value
+            proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
     get_commands(module, existing, proposed, candidate)

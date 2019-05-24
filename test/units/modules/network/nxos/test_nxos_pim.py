@@ -84,6 +84,11 @@ class TestNxosPimModule(TestNxosModule):
         set_module_args(dict(ssm_range='default'))
         self.execute_module(changed=True, commands=['no ip pim ssm range none'])
 
+        # SSM 'default' idempotence
+        self.get_config.return_value = None
+        set_module_args(dict(ssm_range='default'))
+        self.execute_module(changed=False)
+
     def test_nxos_pim_6(self):
         # Idempotence
         self.get_config.return_value = load_fixture('nxos_pim', 'config.cfg')
