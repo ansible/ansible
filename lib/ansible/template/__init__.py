@@ -27,7 +27,6 @@ import pwd
 import re
 import time
 
-from functools import wraps
 from numbers import Number
 
 try:
@@ -809,7 +808,7 @@ class Templar:
                     errmsg += "Make sure your variable name does not contain invalid characters like '-': %s" % to_native(te)
                     raise AnsibleUndefinedVariable(errmsg)
                 else:
-                    display.debug("failing because of a type error, template data is: %s" % to_native(data))
+                    display.debug("failing because of a type error, template data is: %s" % to_text(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
 
             if USE_JINJA2_NATIVE and not isinstance(res, string_types):

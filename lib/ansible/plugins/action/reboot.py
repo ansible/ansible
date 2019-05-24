@@ -143,9 +143,9 @@ class ActionModule(ActionBase):
         err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
         try:
             incorrect_type = any(not is_string(x) for x in search_paths)
-        except TypeError as te:
-            raise AnsibleError(err_msg.format(search_paths))
-        if not isinstance(search_paths, list) or incorrect_type:
+            if not isinstance(search_paths, list) or incorrect_type:
+                raise TypeError
+        except TypeError:
             raise AnsibleError(err_msg.format(search_paths))
 
         display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
@@ -293,7 +293,7 @@ class ActionModule(ActionBase):
             reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
         except AnsibleConnectionFailure as e:
             # If the connection is closed too quickly due to the system being shutdown, carry on
-            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_native(e)))
+            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
             reboot_result['rc'] = 0
 
         result['start'] = datetime.utcnow()
