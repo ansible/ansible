@@ -1,0 +1,2 @@
+minor_changes:
+  - 'route53_facts - add support for check mode'
