@@ -172,6 +172,7 @@ def create(module, client, matching_zones):
         'comment': comment,
         'name': zone_in,
         'delegation_set_id': delegation_set_id,
+        'zone_id': None,
     }
 
     if private_zone:
@@ -287,7 +288,10 @@ def create_or_update_public(module, client, matching_zones, record):
                 module.fail_json_aws(e, msg="Could not create hosted zone")
         changed = True
 
-    if not module.check_mode:
+    if module.check_mode:
+        if zone_details:
+            record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
+    else:
         record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
         record['name'] = zone_details['Name']
         record['delegation_set_id'] = zone_delegation_set_details.get('Id', '').replace('/delegationset/', '')
