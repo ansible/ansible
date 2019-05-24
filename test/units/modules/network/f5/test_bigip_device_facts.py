@@ -127,6 +127,6 @@ class TestManager(unittest.TestCase):
 
         results = mm.exec_module()
 
-        assert results['changed'] is True
+        assert results['queried'] is True
         assert 'virtual_addresses' in results
         assert len(results['virtual_addresses']) > 0
