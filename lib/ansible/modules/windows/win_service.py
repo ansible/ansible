@@ -125,7 +125,7 @@ options:
         description:
           - Action to take on first failure of the service.
           - Only restart and reboot are supported value.
-          - Defaults to Take no action.
+          - Defaults to no_action.
         type: str
       first_failure_timeout:
         description:
@@ -135,7 +135,7 @@ options:
         description:
           - Action to take on second failure of the service.
           - Only restart and reboot are supported value.
-          - Defaults to Take no action.
+          - Defaults to no_action.
         type: str
       second_failure_timeout:
         description:
@@ -145,7 +145,7 @@ options:
         description:
           - Action to take on subsequent failure of the service.
           - Only restart and reboot are supported value.
-          - Defaults to Take no action.
+          - Defaults to no_action.
         type: str
       subsequent_failure_timeout:
         description:
