@@ -27,8 +27,9 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name=1.0)."
-      - "Be aware that packages are not always named the same and this module will not 'translate' them per distro."
+      - Package name, or package specifier with version.
+      - Syntax varies with package manager. For example C(name-1.0) or C(name=1.0).
+      - Package names also vary with package manager; this module will not "translate" them per distro. For example C(libyaml-dev), C(libyaml-devel).
     required: true
   state:
     description:
