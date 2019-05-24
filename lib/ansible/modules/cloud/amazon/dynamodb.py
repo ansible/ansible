@@ -238,7 +238,7 @@ response_metadata:
 '''
 
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 
 try:
     import botocore
@@ -372,12 +372,11 @@ def main():
             response, changed = delete(connection, table, primary_key,
                                        condition_expression, expression_attribute_values, module)
 
+    except is_boto3_error_code('ResourceNotFoundException'):
+        module.fail_json_aws(e, msg="Table {0} doesnt exist".format(table))
+    except is_boto3_error_code('ConditionalCheckFailedException'):
+        module.fail_json_aws(e, msg="No item matching your conditional expression")
     except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == 'ResourceNotFoundException':
-            module.fail_json_aws(e, msg="Table {0} doesnt exist".format(table))
-        if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            module.fail_json_aws(
-                e, msg="No item matching your conditional expression")
         if e.response['Error']['Message'] == 'The provided key element does not match the schema':
             module.fail_json_aws(
                 e, msg="Check the primary key, it doesnt match your table config")
