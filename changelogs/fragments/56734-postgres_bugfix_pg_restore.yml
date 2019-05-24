@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_db - fix for postgresql_db fails if stderr contains output (https://github.com/ansible/ansible/issues/56703)
