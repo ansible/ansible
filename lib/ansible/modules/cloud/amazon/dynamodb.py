@@ -28,7 +28,7 @@ options:
         type: str
     action:
         description:
-            - Action to perform with the DyamoDB item.
+            - Action to perform with the DynamoDB item.
             - If get, returns a set of attributes for the item with the given
               filter expression. If the total number of scanned items exceeds
               the maximum data set size limit of 1 MB, the scan stops and
@@ -82,6 +82,7 @@ options:
         description:
             - An expression that defines one or more attributes to be updated,
               the action to be performed on them, and new value(s) for them.
+            - C(update_expression) and C(condition_expression) are required together.
         required: false
         default: null
         type: str
@@ -89,6 +90,7 @@ options:
         description:
             - A condition that must be satisfied in order for a conditional
               update to succeed.
+            - C(update_expression) and C(condition_expression) are required together.
         required: false
         default: null
         type: str
@@ -275,11 +277,11 @@ def get(connection, table, filter_expression, expression_attribute_names,
 
 
 def put(connection, table, item):
-
-    response = connection.put_item(
-        TableName=table,
-        Item=item,
-    )
+    if not module.check_mode:
+        response = connection.put_item(
+            TableName=table,
+            Item=item,
+        )
 
     changed = True
     return response, changed
@@ -289,18 +291,19 @@ def update(connection, table, primary_key, update_expression,
            condition_expression, expression_attribute_names,
            expression_attribute_values):
 
-    if condition_expression:
-        response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                                          ConditionExpression=condition_expression, ExpressionAttributeValues=expression_attribute_values)
-    elif expression_attribute_names:
-        response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                                          ExpressionAttributeValues=expression_attribute_values, ExpressionAttributeNames=expression_attribute_names)
-    elif update_expression and expression_attribute_values:
-        response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                                          ExpressionAttributeValues=expression_attribute_values)
-    else:
-        response = connection.update_item(
-            TableName=table, Key=primary_key, UpdateExpression=update_expression)
+    if not module.check_mode:
+        if condition_expression:
+            response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                                              ConditionExpression=condition_expression, ExpressionAttributeValues=expression_attribute_values)
+        elif expression_attribute_names:
+            response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                                              ExpressionAttributeValues=expression_attribute_values, ExpressionAttributeNames=expression_attribute_names)
+        elif update_expression and expression_attribute_values:
+            response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
+                                              ExpressionAttributeValues=expression_attribute_values)
+        else:
+            response = connection.update_item(
+                TableName=table, Key=primary_key, UpdateExpression=update_expression)
 
     changed = True
     return response, changed
@@ -309,7 +312,8 @@ def update(connection, table, primary_key, update_expression,
 def delete(connection, table, primary_key, condition_expression,
            expression_attribute_values):
 
-    response = connection.delete_item(TableName=table, Key=primary_key, ConditionExpression=condition_expression,
+    if not module.check_mode:
+        response = connection.delete_item(TableName=table, Key=primary_key, ConditionExpression=condition_expression,
                                       ExpressionAttributeValues=expression_attribute_values)
 
     changed = True
@@ -320,17 +324,19 @@ def main():
     argument_spec = dict(
         table=dict(required=True),
         action=dict(required=True, choices=["get", "put", "update", "delete"]),
-        primary_key=dict(required=False, type='dict'),
-        filter_expression=dict(required=False, type='str'),
-        item=dict(required=False, type='dict'),
-        condition_expression=dict(required=False, type='str'),
-        expression_attribute_names=dict(required=False, type='dict'),
-        expression_attribute_values=dict(required=False, type='dict'),
-        update_expression=dict(required=False, type='str')
+        primary_key=dict(type='dict'),
+        filter_expression=dict(type='str'),
+        item=dict(type='dict'),
+        condition_expression=dict(type='str'),
+        expression_attribute_names=dict(type='dict'),
+        expression_attribute_values=dict(type='dict'),
+        update_expression=dict(type='str')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=False)
+                              supports_check_mode=True)
+
+    required_together = [['update_expression', 'expression_attribute_values']]
 
     connection = module.client('dynamodb')
 
