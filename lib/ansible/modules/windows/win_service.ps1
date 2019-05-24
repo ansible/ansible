@@ -87,8 +87,12 @@ Function DecValue ($v) {
 Function RecoveryActionMapping ($a) {
 
     $res = switch($a) {
+        'no_action' { 0 }
         'restart' { 1 }
         'reboot' { 2 }
+        0 { 'no_action' }
+        1 { 'restart' }
+        2 { 'reboot' }
         default { 0 }
     }
 
@@ -104,11 +108,11 @@ Function RecoveryActionsToHuman ($s) {
 
     $recovery_actions = @{
                             'reset_fail_count_after' = $res[0];
-                            'on_first_failure' = $res[5];
+                            'on_first_failure' = RecoveryActionMapping($res[5]);
                             'first_failure_timeout' = $res[6];
-                            'on_second_failure' = $res[7];
+                            'on_second_failure' = RecoveryActionMapping($res[7]);
                             'second_failure_timeout' = $res[8];
-                            'on_subsequent_failure' = $res[9];
+                            'on_subsequent_failure' = RecoveryActionMapping($res[9]);
                             'subsequent_failure_timeout' = $res[10];
                         }
 
