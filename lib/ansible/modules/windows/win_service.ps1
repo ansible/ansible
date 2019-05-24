@@ -97,12 +97,12 @@ Function RecoveryActionMapping ($a) {
 
 Function RecoveryActionsToHuman ($s) {
     $res = (("{0:x8}" -f $s) -split '(........)' | Where-Object { $_ }).split(" ")
-    
+
     for ($i=0; $i -lt $res.Length; $i++) {
         $res[$i]=DecValue($res[$i])
     }
 
-    $recovery_actions = @{ 
+    $recovery_actions = @{
                             'reset_fail_count_after' = $res[0];
                             'on_first_failure' = $res[5];
                             'first_failure_timeout' = $res[6];
