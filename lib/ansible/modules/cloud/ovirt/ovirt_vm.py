@@ -228,6 +228,13 @@ options:
             - "I(True) enable menu to select boot device, I(False) to disable it. By default is chosen by oVirt/RHV engine."
         type: bool
         version_added: "2.5"
+    bios_type:
+        description:
+            - Advanced System option to change BIOS Type.
+            - Default value is set by oVirt/RHV engine
+            - "Possible values: i440fx_sea_bios, q35_ovmf, q35_sea_bios, q35_secure_boot. These correspond to Default, 
+               Q35 Chipset with UEFI BIOS, Q35 Chipset with Legacy BIOS, and Q35 Chipset with SecureBoot"
+        version_added: "2.9"
     usb_support:
         description:
             - "I(True) enable USB support, I(False) to disable it. By default is chosen by oVirt/RHV engine."
@@ -1322,8 +1329,8 @@ class VmsModule(BaseModule):
             stateless=self.param('stateless') or self.param('use_latest_template_version'),
             delete_protected=self.param('delete_protected'),
             bios=(
-                otypes.Bios(boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')))
-            ) if self.param('boot_menu') is not None else None,
+                otypes.Bios(boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')),type=otypes.BiosType(self.param('bios_type')))
+            ) if self.param('boot_menu') is not None or self.param('bios_type') is not None else None,
             console=(
                 otypes.Console(enabled=self.param('serial_console'))
             ) if self.param('serial_console') is not None else None,
@@ -1518,6 +1525,7 @@ class VmsModule(BaseModule):
             equal(self.param('name'), str(entity.name)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
+            equal(self.param('bios_type'), str(entity.bios.type)) and
             equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
             equal(self.param('smartcard_enabled'), getattr(vm_display, 'smartcard_enabled', False)) and
             equal(self.param('io_threads'), entity.io.threads) and
@@ -2260,7 +2268,8 @@ def main():
         lun_mappings=dict(default=[], type='list'),
         domain_mappings=dict(default=[], type='list'),
         reassign_bad_macs=dict(default=None, type='bool'),
-        boot_menu=dict(type='bool'),
+        boot_menu=dict(type='bool', default=False),
+        bios_type=dict(type='str', default='i440fx_sea_bios', choices=['i440fx_sea_bios', 'q35_ovmf', 'q35_sea_bios', 'q35_secure_boot']),
         serial_console=dict(type='bool'),
         usb_support=dict(type='bool'),
         sso=dict(type='bool'),

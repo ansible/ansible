@@ -1,0 +1,2 @@
+minor_changes:
+  - bios_type - added bios_type parameter to the ovirt_vm module to allow setting the BIOS type under advanced system settings.
