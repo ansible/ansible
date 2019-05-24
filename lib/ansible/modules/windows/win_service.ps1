@@ -148,6 +148,14 @@ Function Get-ServiceInfo($name) {
         $description = ""
     }
 
+    $recovery = Get-RecoveryActions($svc.Name)
+
+    if ('' -ne $recovery) {
+        $recovery = RecoveryActionsToHuman($recovery)
+    } else {
+        $recovery = @{}
+    }
+
     $result.exists = $true
     $result.name = $svc.Name
     $result.display_name = $svc.DisplayName
@@ -160,7 +168,7 @@ Function Get-ServiceInfo($name) {
     $result.dependencies = $existing_dependencies
     $result.depended_by = $existing_depended_by
     $result.can_pause_and_continue = $svc.CanPauseAndContinue
-    $result.recovery = RecoveryActionsToHuman("2c010000000000000000000003000000140000000100000060ea00000100000060ea00000100000060ea0000")
+    $result.recovery = $recovery
 }
 
 Function Get-WmiErrorMessage($return_value) {
