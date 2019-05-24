@@ -24,10 +24,10 @@
           ansible_test: integration
         <<: *aws_connection_info
       register: result
-    - name: assert changed is True
+    - name: assert status
       assert:
         that:
-          - result.changed == True
+          - result.changed
 
     - name: inserting db record
       dynamodb:
@@ -36,10 +36,23 @@
         item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
         <<: *aws_connection_info
       register: result
-    - name: assert object exists
+    - name: assert status
       assert:
         that:
-          - result.changed == True
+          - result.changed
+
+    - name: Check mode - inserting db record
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: put
+        item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+    - name: assert status
+      assert:
+        that:
+          - result.changed
 
     - name: updating db record with the status protected word
       dynamodb:
@@ -51,10 +64,26 @@
         expression_attribute_names: {"#s": "status"}
         <<: *aws_connection_info
       register: result
-    - name: assert object exists
+    - name: assert status
       assert:
         that:
-          - result.changed == True
+          - result.changed
+
+    - name: Check mode - updating db record with the status protected word
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: update
+        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+        update_expression: 'SET #s = :status'
+        expression_attribute_values: {":status": {"S": "red"}}
+        expression_attribute_names: {"#s": "status"}
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+    - name: assert status
+      assert:
+        that:
+          - result.changed
 
     - name: Gets a single item
       dynamodb:
@@ -77,10 +106,24 @@
         update_expression: 'REMOVE person'
         <<: *aws_connection_info
       register: result
-    - name: assert object exists
+    - name: assert status
       assert:
         that:
-          - result.changed == True
+          - result.changed
+
+    - name: Check mode - updating to delete attribute 'person' in previously added db record
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: update
+        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+        update_expression: 'REMOVE person'
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+    - name: assert status
+      assert:
+        that:
+          - result.changed
 
     - name: deletes a single db record
       dynamodb:
@@ -91,10 +134,25 @@
         expression_attribute_values: {":quantity": {"N": "1000"}}
         <<: *aws_connection_info
       register: result
-    - name: assert object exists
+    - name: assert status
       assert:
         that:
-          - result.changed == True
+          - result.changed
+
+    - name: Check mode - deletes a single db record
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: delete
+        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+        condition_expression: quantity = :quantity
+        expression_attribute_values: {":quantity": {"N": "1000"}}
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+    - name: assert status
+      assert:
+        that:
+          - result.changed
 
   always:
     ###### TEARDOWN STARTS HERE ######
