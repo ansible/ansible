@@ -952,11 +952,11 @@
 - name: check that that the recovery settings again no changes
   assert:
     that:
-    - win_service_recovery_settings is not changed
-    - win_service_recovery_settings.recovery.reset_fail_count_after == 300
-    - win_service_recovery_settings.recovery.on_first_failure == 'restart'
-    - win_service_recovery_settings.recovery.first_failure_timeout == 60000
-    - win_service_recovery_settings.recovery.on_second_failure == 'restart'
-    - win_service_recovery_settings.recovery.second_failure_timeout == 60000
-    - win_service_recovery_settings.recovery.on_subsequent_failure == 'restart'
-    - win_service_recovery_settings.recovery.subsequent_failure_timeout == 60000
+    - win_service_recovery_settings_again is not changed
+    - win_service_recovery_settings_again.recovery.reset_fail_count_after == 300
+    - win_service_recovery_settings_again.recovery.on_first_failure == 'restart'
+    - win_service_recovery_settings_again.recovery.first_failure_timeout == 60000
+    - win_service_recovery_settings_again.recovery.on_second_failure == 'restart'
+    - win_service_recovery_settings_again.recovery.second_failure_timeout == 60000
+    - win_service_recovery_settings_again.recovery.on_subsequent_failure == 'restart'
+    - win_service_recovery_settings_again.recovery.subsequent_failure_timeout == 60000
