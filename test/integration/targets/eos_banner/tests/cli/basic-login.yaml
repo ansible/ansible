@@ -60,7 +60,3 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
-
-# FIXME add in tests for everything defined in docs
-# FIXME Test state:absent + test:
-# FIXME Without powers ensure "privileged mode required"
