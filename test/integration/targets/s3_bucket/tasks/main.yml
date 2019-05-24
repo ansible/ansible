@@ -224,6 +224,10 @@
           - output.tags == {}
 
     # ============================================================
+    - name: Pause to help with s3 bucket eventual consistency
+      pause:
+        seconds: 5
+
     - name: Delete complex s3 bucket
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"
