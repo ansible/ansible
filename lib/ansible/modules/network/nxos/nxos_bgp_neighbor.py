@@ -53,6 +53,12 @@ options:
   description:
     description:
       - Description of the neighbor.
+  bfd:
+    description:
+      - Enables/Disables BFD for a given neighbor.
+      - "Dependency: 'feature bfd'"
+    version_added: "2.9"
+    type: bool
   connected_check:
     description:
       - Configure whether or not to check for directly connected peer.
@@ -154,6 +160,7 @@ EXAMPLES = '''
     neighbor: 192.0.2.3
     local_as: 20
     remote_as: 30
+    bfd: true
     description: "just a description"
     update_source: Ethernet1/3
     state: present
@@ -178,6 +185,7 @@ from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
+    'bfd',
     'capability_negotiation',
     'shutdown',
     'connected_check',
@@ -188,6 +196,7 @@ BOOL_PARAMS = [
 ]
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
+    'bfd': 'bfd',
     'capability_negotiation': 'dont-capability-negotiate',
     'connected_check': 'disable-connected-check',
     'description': 'description',
@@ -389,6 +398,7 @@ def main():
         vrf=dict(required=False, type='str', default='default'),
         neighbor=dict(required=True, type='str'),
         description=dict(required=False, type='str'),
+        bfd=dict(required=False, type='bool'),
         capability_negotiation=dict(required=False, type='bool'),
         connected_check=dict(required=False, type='bool'),
         dynamic_capability=dict(required=False, type='bool'),

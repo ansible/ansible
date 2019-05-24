@@ -46,6 +46,26 @@ class TestNxosBgpNeighborModule(TestNxosModule):
         self.get_config.return_value = load_fixture('nxos_bgp', 'config.cfg')
         self.load_config.return_value = []
 
+    def test_bfd_1(self):
+        # None (False) -> True
+        set_module_args(dict(asn=65535, neighbor='1.1.1.1', bfd=True))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 1.1.1.1', 'bfd'])
+
+    def test_bfd_2(self):
+        # True -> True (idempotence)
+        set_module_args(dict(asn=65535, neighbor='1.1.1.2', bfd=True))
+        self.execute_module(changed=False)
+
+    def test_bfd_3(self):
+        # True -> False
+        set_module_args(dict(asn=65535, neighbor='1.1.1.2', bfd=False))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 1.1.1.2', 'no bfd'])
+
+    def test_bfd_4(self):
+        # None (False) -> False (idempotence)
+        set_module_args(dict(asn=65535, neighbor='1.1.1.1', bfd=False))
+        self.execute_module(changed=False)
+
     def test_nxos_bgp_neighbor(self):
         set_module_args(dict(asn=65535, neighbor='192.0.2.3', description='some words'))
         self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 192.0.2.3', 'description some words'])
