@@ -1341,40 +1341,47 @@ class ModuleValidator(Validator):
             doc_choices = []
             try:
                 for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
-                    try:
-                        with CaptureStd():
-                            doc_choices.append(_type_checker(choice))
-                    except (Exception, SystemExit):
-                        msg = "Argument '%s' in documentation" % arg
-                        if context:
-                            msg += " found in %s" % " -> ".join(context)
-                        msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
-                        self.reporter.error(
-                            path=self.object_path,
-                            code='doc-choices-incompatible-type',
-                            msg=msg
-                        )
-                        raise StopIteration()
+                    if choice is None:
+                        doc_choices.append(choice)
+                    else:
+                        try:
+                            with CaptureStd():
+                                doc_choices.append(_type_checker(choice))
+                        except (Exception, SystemExit):
+                            msg = "Argument '%s' in documentation" % arg
+                            if context:
+                                msg += " found in %s" % " -> ".join(context)
+                            msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
+
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='doc-choices-incompatible-type',
+                                msg=msg
+                            )
+                            raise StopIteration()
             except StopIteration:
                 continue
 
             arg_choices = []
             try:
                 for choice in data.get('choices', []):
-                    try:
-                        with CaptureStd():
-                            arg_choices.append(_type_checker(choice))
-                    except (Exception, SystemExit):
-                        msg = "Argument '%s' in argument_spec" % arg
-                        if context:
-                            msg += " found in %s" % " -> ".join(context)
-                        msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
-                        self.reporter.error(
-                            path=self.object_path,
-                            code='incompatible-choices',
-                            msg=msg
-                        )
-                        raise StopIteration()
+                    if choice is None:
+                        arg_choices.append(choice)
+                    else:
+                        try:
+                            with CaptureStd():
+                                arg_choices.append(_type_checker(choice))
+                        except (Exception, SystemExit):
+                            msg = "Argument '%s' in argument_spec" % arg
+                            if context:
+                                msg += " found in %s" % " -> ".join(context)
+                            msg += " defines choices as (%r) but this is incompatible with argument type %r" % (choice, _type)
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='incompatible-choices',
+                                msg=msg
+                            )
+                            raise StopIteration()
             except StopIteration:
                 continue
 

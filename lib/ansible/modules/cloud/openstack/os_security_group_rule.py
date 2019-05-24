@@ -30,7 +30,7 @@ options:
    protocol:
       description:
         - IP protocols TCP UDP ICMP 112 (VRRP) 132 (SCTP)
-      choices: ['tcp', 'udp', 'icmp', '112', '132', None]
+      choices: ['tcp', 'udp', 'icmp', '112', '132', null]
    port_range_min:
       description:
         - Starting port
