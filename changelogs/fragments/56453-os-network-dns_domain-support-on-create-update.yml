@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - os_network - added dns_domain support when creating/updating a network
