@@ -238,7 +238,7 @@ response_metadata:
 '''
 
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
-from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 try:
     import botocore
@@ -275,7 +275,7 @@ def get(connection, table, filter_expression, expression_attribute_names,
     return response, changed
 
 
-def put(connection, table, item, module):
+def put(connection, table, item, response, module):
     if not module.check_mode:
         response = connection.put_item(
             TableName=table,
@@ -288,7 +288,7 @@ def put(connection, table, item, module):
 
 def update(connection, table, primary_key, update_expression,
            condition_expression, expression_attribute_names,
-           expression_attribute_values, module):
+           expression_attribute_values, response, module):
 
     if not module.check_mode:
         if condition_expression:
@@ -309,7 +309,7 @@ def update(connection, table, primary_key, update_expression,
 
 
 def delete(connection, table, primary_key, condition_expression,
-           expression_attribute_values, module):
+           expression_attribute_values, response, module):
 
     if not module.check_mode:
         response = connection.delete_item(TableName=table, Key=primary_key, ConditionExpression=condition_expression,
@@ -361,22 +361,23 @@ def main():
                 expression_attribute_names, expression_attribute_values)
 
         elif action == 'put':
-            response, changed = put(connection, table, item, module)
+            response, changed = put(connection, table, item, response, module)
 
         elif action == 'update':
             response, changed = update(connection, table, primary_key, update_expression,
                                        condition_expression, expression_attribute_names,
-                                       expression_attribute_values, module)
+                                       expression_attribute_values, response, module)
 
         elif action == 'delete':
             response, changed = delete(connection, table, primary_key,
-                                       condition_expression, expression_attribute_values, module)
+                                       condition_expression, expression_attribute_values, response, module)
 
-    except is_boto3_error_code('ResourceNotFoundException'):
-        module.fail_json_aws(e, msg="Table {0} doesnt exist".format(table))
-    except is_boto3_error_code('ConditionalCheckFailedException'):
-        module.fail_json_aws(e, msg="No item matching your conditional expression")
     except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            module.fail_json_aws(e, msg="Table {0} doesnt exist".format(table))
+        if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+            module.fail_json_aws(
+                e, msg="No item matching your conditional expression")
         if e.response['Error']['Message'] == 'The provided key element does not match the schema':
             module.fail_json_aws(
                 e, msg="Check the primary key, it doesnt match your table config")
