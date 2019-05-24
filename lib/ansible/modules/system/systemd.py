@@ -83,6 +83,7 @@ notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
       and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
     - Before 2.4 you always required 'name'.
+    - Globs are not supported in name, i.e ``postgres*.service``.
 requirements:
     - A system managed by systemd.
 '''
