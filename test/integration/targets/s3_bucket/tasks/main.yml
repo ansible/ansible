@@ -252,7 +252,7 @@
     # ============================================================
     - name: Pause to help with s3 bucket eventual consistency
       pause:
-        seconds: 10
+        seconds: 15
 
     - name: Delete s3_bucket with dot in name
       s3_bucket:
