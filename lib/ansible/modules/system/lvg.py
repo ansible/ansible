@@ -143,7 +143,7 @@ def main():
         argument_spec=dict(
             vg=dict(type='str', required=True),
             pvs=dict(type='list'),
-            pesize=dict(type='str', default=4),
+            pesize=dict(type='str', default='4'),
             pv_options=dict(type='str', default=''),
             vg_options=dict(type='str', default=''),
             state=dict(type='str', default='present', choices=['absent', 'present']),
