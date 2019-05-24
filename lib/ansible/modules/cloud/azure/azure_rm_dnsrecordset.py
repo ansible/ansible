@@ -201,7 +201,7 @@ state:
                 - The DNS record set state.
             return: always
             type: str
-            sample: Succeeded 
+            sample: Succeeded
         target_resource:
             description:
                 - The target resource of the error message.
