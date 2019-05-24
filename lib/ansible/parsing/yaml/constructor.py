@@ -71,8 +71,8 @@ class AnsibleConstructor(SafeConstructor):
                                        "found unacceptable key (%s)" % exc, key_node.start_mark)
 
             if key in mapping:
-                msg = u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).'
-                      u' Using last defined value only.'.format(key, *mapping.ansible_pos))
+                msg = (u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).'
+                       u' Using last defined value only.'.format(key, *mapping.ansible_pos))
                 if C.DUPLICATE_DICT_YAML_KEY == 'warn':
                     display.warning(msg)
                 elif C.DUPLICATE_DICT_YAML_KEY == 'error':
