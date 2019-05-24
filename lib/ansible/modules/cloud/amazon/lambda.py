@@ -419,9 +419,9 @@ def main():
                 if dead_letter_arn != "":
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
-        # Check for unsupported mutation
+        # Check for updated runtime
         if current_config['Runtime'] != runtime:
-            module.fail_json(msg='Cannot change runtime. Please recreate the function')
+            func_kwargs.update({'Runtime': runtime})
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
