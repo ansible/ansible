@@ -720,7 +720,7 @@ class ClcLoadBalancer:
                 msg='Unable to fetch the load balancer pools for for load balancer id: {0}. {1}'.format(
                     lb_id, str(e.response_text)))
         for pool in pool_list:
-            if int(pool.get('port')) == int(port):
+            if int(pool.get('port')) == port:
                 result = pool.get('id')
         return result
 
@@ -862,7 +862,7 @@ class ClcLoadBalancer:
             description=dict(default=None),
             location=dict(required=True),
             alias=dict(required=True),
-            port=dict(choices=[80, 443]),
+            port=dict(type='int', choices=[80, 443]),
             method=dict(choices=['leastConnection', 'roundRobin']),
             persistence=dict(choices=['standard', 'sticky']),
             nodes=dict(type='list', default=[]),
