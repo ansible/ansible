@@ -137,7 +137,7 @@ def main():
         filters['role'] = r['id']
 
         if domain:
-            d = cloud.get_domain(domain)
+            d = cloud.get_domain(name_or_id=domain)
             if d is None:
                 module.fail_json(msg="Domain %s is not valid" % domain)
             filters['domain'] = d['id']
@@ -151,7 +151,11 @@ def main():
                 module.fail_json(msg="User %s is not valid" % user)
             filters['user'] = u['id']
         if group:
-            g = cloud.get_group(group)
+            if domain:
+                g = cloud.get_group(group, domain_id=filters['domain'])
+            else:
+                g = cloud.get_group(group)
+
             if g is None:
                 module.fail_json(msg="Group %s is not valid" % group)
             filters['group'] = g['id']
