@@ -41,7 +41,7 @@
           - not output.requester_pays
 
     # ============================================================
-    - name: Delete s3_bucket
+    - name: Delete test s3_bucket
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible"
         state: absent
@@ -108,7 +108,7 @@
           - not output.changed
 
     # ============================================================
-    - name: Update bucket policy
+    - name: Update bucket policy on complex bucket
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"
         state: present
@@ -224,7 +224,7 @@
           - output.tags == {}
 
     # ============================================================
-    - name: Delete s3_bucket
+    - name: Delete complex s3 bucket
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"
         state: absent
@@ -268,7 +268,7 @@
     # ============================================================
     - name: Try to delete a missing bucket (should not fail)
       s3_bucket:
-        name: "{{ resource_prefix }}.testbucket.ansible.missing"
+        name: "{{ resource_prefix }}-testbucket-ansible-missing"
         state: absent
         <<: *aws_connection_info
       register: output
@@ -279,7 +279,7 @@
     # ============================================================
     - name: Create bucket with AES256 encryption enabled
       s3_bucket:
-        name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        name: "{{ resource_prefix }}-testbucket-encrypt-ansible"
         state: present
         encryption: "AES256"
         <<: *aws_connection_info
@@ -288,13 +288,13 @@
     - assert:
         that:
           - output.changed
-          - output.name == '{{ resource_prefix }}.testbucket.encrypt.ansible'
+          - output.name == '{{ resource_prefix }}-testbucket-encrypt-ansible'
           - output.encryption
           - output.encryption.SSEAlgorithm == 'AES256'
 
     - name: Update bucket with same encryption config
       s3_bucket:
-        name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        name: "{{ resource_prefix }}-testbucket-encrypt-ansible"
         state: present
         encryption: "AES256"
         <<: *aws_connection_info
@@ -308,7 +308,7 @@
 
     - name: Disable encryption from bucket
       s3_bucket:
-        name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        name: "{{ resource_prefix }}-testbucket-encrypt-ansible"
         state: present
         encryption: "none"
         <<: *aws_connection_info
@@ -320,9 +320,13 @@
           - not output.encryption
 
     # ============================================================
-    - name: Delete s3_bucket
+    - name: Pause to help with s3 bucket eventual consistency
+      pause:
+        seconds: 10
+
+    - name: Delete encryption test s3 bucket
       s3_bucket:
-        name: "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        name: "{{ resource_prefix }}-testbucket-encrypt-ansible"
         state: absent
         <<: *aws_connection_info
       register: output
@@ -342,4 +346,4 @@
         - "{{ resource_prefix }}-testbucket-ansible"
         - "{{ resource_prefix }}-testbucket-ansible-complex"
         - "{{ resource_prefix }}.testbucket.ansible"
-        - "{{ resource_prefix }}.testbucket.encrypt.ansible"
+        - "{{ resource_prefix }}-testbucket-encrypt-ansible"
