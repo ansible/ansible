@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabvirtualnetwork_facts
 version_added: "2.8"
-short_description: Get Azure DevTest Lab Virtual Network facts.
+short_description: Get Azure DevTest Lab Virtual Network facts
 description:
     - Get facts of Azure DevTest Lab Virtual Network.
 
@@ -38,7 +38,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -58,7 +58,8 @@ EXAMPLES = '''
 
 RETURN = '''
 virtualnetworks:
-    description: A list of dictionaries containing facts for DevTest Lab Virtual Network.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab Virtual Network.
     returned: always
     type: complex
     contains:
