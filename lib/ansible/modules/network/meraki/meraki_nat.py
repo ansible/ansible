@@ -417,6 +417,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 key_map = {'name': 'name',
@@ -602,13 +603,22 @@ def main():
             # meraki.fail_json(msg="Compare", original=current, payload=one_to_one_payload)
             if meraki.is_update_required(current, one_to_one_payload):
                 if meraki.module.check_mode is True:
+                    diff = recursive_diff(current, one_to_one_payload)
                     current.update(one_to_one_payload)
+                    if 'diff' not in meraki.result:
+                        meraki.result['diff'] = dict()
+                        meraki.result['diff']['before'] = {'one_to_one': diff[0]}
+                        meraki.result['diff']['after'] = {'one_to_one': diff[1]}
                     meraki.result['data'] = {'one_to_one': current}
                     meraki.result['changed'] = True
                 else:
                     r = meraki.request(path, method='PUT', payload=json.dumps(one_to_one_payload))
                     if meraki.status == 200:
-                        meraki.result['data'] = {'one_to_one': r}
+                        diff = recursive_diff(current, one_to_one_payload)
+                        if 'diff' not in meraki.result:
+                            meraki.result['diff'] = dict()
+                        meraki.result['diff']['before'] = {'one_to_one': diff[0]}
+                        meraki.result['diff']['after'] = {'one_to_one': diff[1]}                        meraki.result['data'] = {'one_to_one': r}
                         meraki.result['changed'] = True
             else:
                 meraki.result['data']['one_to_one'] = current
@@ -617,13 +627,22 @@ def main():
             current = meraki.request(path, method='GET')
             if meraki.is_update_required(current, one_to_many_payload):
                 if meraki.module.check_mode is True:
+                    diff = recursive_diff(current, one_to_many_payload)
                     current.update(one_to_many_payload)
-                    meraki.result['data']['one_to_many'] = current
+                    if 'diff' not in meraki.result:
+                        meraki.result['diff'] = dict()
+                        meraki.result['diff']['before'] = {'one_to_many': diff[0]}
+                        meraki.result['diff']['after'] = {'one_to_many': diff[1]}                    meraki.result['data']['one_to_many'] = current
                     meraki.result['changed'] = True
                 else:
                     r = meraki.request(path, method='PUT', payload=json.dumps(one_to_many_payload))
                     if meraki.status == 200:
-                        meraki.result['data']['one_to_many'] = r
+                        diff = recursive_diff(current, one_to_many_payload)
+                        if 'diff' not in meraki.result:
+                            meraki.result['diff'] = dict()
+                        meraki.result['diff']['before'] = {'one_to_many': diff[0]}
+                        meraki.result['diff']['after'] = {'one_to_many': diff[1]}
+                        meraki.result['data'].update({'one_to_many': r})
                         meraki.result['changed'] = True
             else:
                 meraki.result['data']['one_to_many'] =  current
@@ -632,13 +651,21 @@ def main():
             current = meraki.request(path, method='GET')
             if meraki.is_update_required(current, port_forwarding_payload):
                 if meraki.module.check_mode is True:
+                    diff = recursive_diff(current, port_forwarding_payload)
                     current.update(port_forwarding_payload)
-                    meraki.result['data']['port_forwarding'] = current
+                    if 'diff' not in meraki.result:
+                        meraki.result['diff'] = dict()
+                        meraki.result['diff']['before'] = {'port_forwarding': diff[0]}
+                        meraki.result['diff']['after'] = {'port_forwarding': diff[1]}                    meraki.result['data']['port_forwarding'] = current
                     meraki.result['changed'] = True
                 else:
                     r = meraki.request(path, method='PUT', payload=json.dumps(port_forwarding_payload))
                     if meraki.status == 200:
-                        meraki.result['data']['port_forwarding'] = r
+                        if 'diff' not in meraki.result:
+                            meraki.result['diff'] = dict()
+                        diff = recursive_diff(current, port_forwarding_payload)
+                        meraki.result['diff']['before'] = {'port_forwarding': diff[0]}
+                        meraki.result['diff']['after'] = {'port_forwarding': diff[1]}                        meraki.result['data'].update({'port_forwarding': r})
                         meraki.result['changed'] = True
             else:
                 meraki.result['data']['port_forwarding'] = current
