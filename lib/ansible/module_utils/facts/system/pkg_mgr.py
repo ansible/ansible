@@ -85,9 +85,9 @@ class PkgMgrFactCollector(BaseFactCollector):
             # (as far as we know at the time of this writing) it is 'dnf'.
             # If anyone wants to force a non-official package manager then they
             # can define a provider to either the package or yum action plugins.
-            if int(collected_facts['ansible_distribution_major_version']) < 8:
-                pkg_mgr_name = 'yum'
-            elif (collected_facts['ansible_distribution']) == 'Amazon':
+            if collected_facts['ansible_distribution'] == 'Amazon':
+               pkg_mgr_name = 'yum'
+            elif int(collected_facts['ansible_distribution_major_version']) < 8:
                 pkg_mgr_name = 'yum'
             else:
                 pkg_mgr_name = 'dnf'
