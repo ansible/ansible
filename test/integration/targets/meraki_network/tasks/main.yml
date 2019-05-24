@@ -300,8 +300,8 @@
     assert:
       that:
         - create_net_combined.data.type == 'combined'
-        - create_net_combined.data.disableMyMerakiCom == True
-        - enable_meraki_com.data.disableMyMerakiCom == False
+        - create_net_combined.data.disable_my_meraki_com == True
+        - enable_meraki_com.data.disable_my_meraki_com == False
         - '"org_name or org_id parameters are required" in create_net_no_org.msg'
         - '"IntTestNetworkAppliance" in create_net_appliance_no_tz.data.name'
         - create_net_appliance_no_tz.changed == True

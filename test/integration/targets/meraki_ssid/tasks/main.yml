@@ -229,9 +229,9 @@
 
   - assert:
       that:
-        - psk.data.authMode == 'psk'
-        - psk.data.encryptionMode == 'wpa'
-        - psk.data.wpaEncryptionMode == 'WPA2 only'
+        - psk.data.auth_mode == 'psk'
+        - psk.data.encryption_mode == 'wpa'
+        - psk.data.wpa_encryption_mode == 'WPA2 only'
 
   - name: Set PSK with idempotency
     meraki_ssid:
@@ -269,7 +269,7 @@
 
   - assert:
       that:
-        - splash_click.data.splashPage == 'Click-through splash page'
+        - splash_click.data.splash_page == 'Click-through splash page'
 
   - name: Configure RADIUS servers
     meraki_ssid:
@@ -291,7 +291,7 @@
 
   - assert:
       that:
-        - set_radius_server.data.radiusServers.0.host == '192.0.1.200'
+        - set_radius_server.data.radius_servers.0.host == '192.0.1.200'
 
   - name: Configure RADIUS servers with idempotency
     meraki_ssid:
