@@ -1329,7 +1329,7 @@ class VmsModule(BaseModule):
             stateless=self.param('stateless') or self.param('use_latest_template_version'),
             delete_protected=self.param('delete_protected'),
             bios=(
-                otypes.Bios(boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')),type=otypes.BiosType(self.param('bios_type')))
+                otypes.Bios(boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')), type=otypes.BiosType(self.param('bios_type')))
             ) if self.param('boot_menu') is not None or self.param('bios_type') is not None else None,
             console=(
                 otypes.Console(enabled=self.param('serial_console'))
