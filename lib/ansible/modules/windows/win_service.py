@@ -116,7 +116,7 @@ options:
   recovery:
     description:
       - A dictionary representing the recovery actions you want to set.
-    options:
+    suboptions:
       reset_fail_count_after:
         description:
           - Reset failure counter after this number of seconds.
@@ -348,6 +348,7 @@ depended_by:
 recovery:
     description: A dict of the recovery settings.
     returned: success, changed
+    type: dict
     sample:
       {
         "first_failure_timeout": "60000",
