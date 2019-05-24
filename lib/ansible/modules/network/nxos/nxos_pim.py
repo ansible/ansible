@@ -167,7 +167,7 @@ def main():
                                      "or the keyword 'none' or the keyword 'default'.")
 
     existing = get_existing(module, args)
-    proposed_args = dict((k, v) for k, v in module.params.items() if k in args)
+    proposed_args = dict((k, v) for k, v in params.items() if k in args)
 
     proposed = {}
     for key, value in proposed_args.items():
