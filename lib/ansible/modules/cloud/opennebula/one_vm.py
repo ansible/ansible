@@ -992,13 +992,13 @@ def create_count_of_vms(module, client, template_id, count, attributes_dict, lab
         count -= 1
 
     if vm_start_on_hold:
-       if wait:
-           for vm in new_vms_list:
-               wait_for_hold(module, vm, wait_timeout)
+        if wait:
+            for vm in new_vms_list:
+                wait_for_hold(module, vm, wait_timeout)
     else:
-       if wait:
-           for vm in new_vms_list:
-               wait_for_running(module, vm, wait_timeout)
+        if wait:
+            for vm in new_vms_list:
+                wait_for_running(module, vm, wait_timeout)
 
     return True, new_vms_list, []
 
@@ -1082,8 +1082,10 @@ def wait_for_running(module, vm, wait_timeout):
 def wait_for_done(module, vm, wait_timeout):
     return wait_for_state(module, vm, wait_timeout, lambda state, lcm_state: (state in [VM_STATES.index('DONE')]))
 
+
 def wait_for_hold(module, vm, wait_timeout):
     return wait_for_state(module, vm, wait_timeout, lambda state, lcm_state: (state in [VM_STATES.index('HOLD')]))
+
 
 def wait_for_poweroff(module, vm, wait_timeout):
     return wait_for_state(module, vm, wait_timeout, lambda state, lcm_state: (state in [VM_STATES.index('POWEROFF')]))
