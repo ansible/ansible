@@ -114,9 +114,9 @@ options:
     type: str
     version_added: '2.3'
   recovery:
-    descrption:
+    description:
       - A dictionary representing the recovery actions you want to set.
-    suboptions:
+    options:
       reset_fail_count_after:
         description:
           - Reset failure counter after this number of seconds.
@@ -345,4 +345,17 @@ depended_by:
     returned: success and service exists
     type: list
     sample: false
+recovery:
+    description: A dict of the recovery settings.
+    returned: success, changed
+    sample:
+      {
+        "first_failure_timeout": "60000",
+        "on_first_failure": "1",
+        "on_second_failure": "1",
+        "on_subsequent_failure": "1",
+        "reset_fail_count_after": "300",
+        "second_failure_timeout": "60000",
+        "subsequent_failure_timeout": "60000"
+      }
 '''
