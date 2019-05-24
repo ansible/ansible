@@ -86,10 +86,10 @@ RETURN = '''
 ...
 '''
 
-import pipes
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 class XfconfPreference(object):
@@ -107,12 +107,12 @@ class XfconfPreference(object):
 
         # Execute the call
         cmd = "{0} --channel {1} --property {2}".format(self.module.get_bin_path('xfconf-query', True),
-                                                        pipes.quote(self.channel),
-                                                        pipes.quote(self.property))
+                                                        shlex_quote(self.channel),
+                                                        shlex_quote(self.property))
         try:
             if call_type == 'set':
-                cmd += " --type {0} --create --set {1}".format(pipes.quote(self.value_type),
-                                                               pipes.quote(self.value))
+                cmd += " --type {0} --create --set {1}".format(shlex_quote(self.value_type),
+                                                               shlex_quote(self.value))
             elif call_type == 'unset':
                 cmd += " --reset"
 
