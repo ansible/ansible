@@ -143,7 +143,7 @@ options:
       - Determines how yum resolves host names.
       - C(4) or C(IPv4) - resolve to IPv4 addresses only.
       - C(6) or C(IPv6) - resolve to IPv6 addresses only.
-    choices: [4, 6, IPv4, IPv6, whatever]
+    choices: ['4', '6', IPv4, IPv6, whatever]
     default: whatever
   keepalive:
     description:
