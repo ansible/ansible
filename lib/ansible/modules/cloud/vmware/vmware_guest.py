@@ -291,6 +291,7 @@ options:
     - ' - C(mac) (string): Customize MAC address.'
     - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
           This value is required if multiple distributed portgroups exists with the same name. version_added 2.7'
+    - ' - C(connected) (bool): Connects or disconnects the virtual network adapter. version_added: 2.9'
     - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on. version_added: 2.5'
     - 'Optional parameters per entry (used for OS customization):'
     - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)). C(dhcp) is default.'
@@ -724,9 +725,10 @@ class PyVmomiDeviceHelper(object):
         nic.device.deviceInfo.label = device_label
         nic.device.deviceInfo.summary = device_infos['name']
         nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+        nic.device.connectable.connected = bool(device_infos.get('connected', True))
         nic.device.connectable.startConnected = bool(device_infos.get('start_connected', True))
         nic.device.connectable.allowGuestControl = bool(device_infos.get('allow_guest_control', True))
-        nic.device.connectable.connected = True
+
         if 'mac' in device_infos and self.is_valid_mac_addr(device_infos['mac']):
             nic.device.addressType = 'manual'
             nic.device.macAddress = device_infos['mac']
@@ -1306,6 +1308,10 @@ class PyVmomiHelper(PyVmomi):
                 if ('wake_on_lan' in network_devices[key] and
                         nic.device.wakeOnLanEnabled != network_devices[key].get('wake_on_lan')):
                     nic.device.wakeOnLanEnabled = network_devices[key].get('wake_on_lan')
+                    nic_change_detected = True
+                if ('connected' in network_devices[key] and
+                        nic.device.connectable.connected != network_devices[key].get('connected')):
+                    nic.device.connectable.connected = network_devices[key].get('connected')
                     nic_change_detected = True
                 if ('start_connected' in network_devices[key] and
                         nic.device.connectable.startConnected != network_devices[key].get('start_connected')):
@@ -2163,7 +2169,7 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'connected', 'start_connected'):
                     network_changes = True
                     break
 
@@ -2433,7 +2439,7 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'connected', 'start_connected'):
                     network_changes = True
                     break
         if len(self.params['customization']) > 1 or network_changes or self.params.get('customization_spec'):
