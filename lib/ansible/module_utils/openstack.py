@@ -114,15 +114,20 @@ def openstack_cloud_from_module(module, min_version='0.12.0'):
         # Due to the name shadowing we should import other way
         import importlib
         sdk = importlib.import_module('openstack')
+        sdk_version = importlib.import_module('openstack.version')
     except ImportError:
         module.fail_json(msg='openstacksdk is required for this module')
 
     if min_version:
-        if StrictVersion(sdk.version.__version__) < StrictVersion(min_version):
-            module.fail_json(
-                msg="To utilize this module, the installed version of"
-                    "the openstacksdk library MUST be >={min_version}".format(
-                        min_version=min_version))
+        min_version = max(StrictVersion('0.12.0'), StrictVersion(min_version))
+    else:
+        min_version = StrictVersion('0.12.0')
+
+    if StrictVersion(sdk_version.__version__) < min_version:
+        module.fail_json(
+            msg="To utilize this module, the installed version of "
+                "the openstacksdk library MUST be >={min_version}.".format(
+                    min_version=min_version))
 
     cloud_config = module.params.pop('cloud', None)
     try:
