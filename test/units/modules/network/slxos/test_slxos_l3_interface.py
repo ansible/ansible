@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
-
 from units.compat.mock import patch
 from units.modules.utils import set_module_args
 from ansible.modules.network.slxos import slxos_l3_interface
@@ -94,9 +92,4 @@ class TestSlxosL3InterfaceModule(TestSlxosModule):
         ))
         result = self.execute_module(failed=True)
         self.assertEqual(result['failed'], True)
-        self.assertTrue(re.match(
-            r'Unsupported parameters for \((basic.py|basic.pyc)\) module: '
-            'shawshank Supported parameters include: aggregate, ipv4, ipv6, '
-            'name, state',
-            result['msg']
-        ))
+        self.assertTrue(result['msg'].startswith('Unsupported parameters for'))
