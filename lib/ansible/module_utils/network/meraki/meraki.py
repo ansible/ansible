@@ -140,42 +140,6 @@ class MerakiModule(object):
                 keys.append(k)
         return keys
 
-    # def filter_items(self, d):
-    #     ''' Filter out keys when returning items() '''
-    #     l = []
-    #     # Ensure we return sorted tuples
-    #     for k, v in sorted(d.items()):
-    #         if k not in self.ignored_keys and v is not None:
-    #             l.append((k, v))
-    #     return l
-
-    # Option 1 - Bidirectional check
-    # def is_update_required(self, original, proposed, optional_ignore=None):
-    #     ''' Compare two data-structures '''
-    #     if optional_ignore:
-    #         self.ignored_keys = self.ignored_keys + optional_ignore
-
-    #     if type(original) != type(proposed):
-    #         # print("Datatypes don't match: {0} vs {1}".format(type(original), type(proposed)))
-    #         return True
-    #     if isinstance(original, list) or isinstance(original, tuple):
-    #         if len(original) != len(proposed):
-    #             # print("Lengths don't match: {0} vs {1}".format(len(original), len(proposed)))
-    #             return True
-    #         for a, b in zip(original, proposed):
-    #             if self.is_update_required(a, b):
-    #                 return True
-    #     elif isinstance(original, dict):
-    #         # Turn dictionaries into list of tuples, and re-evaluate
-    #         if self.is_update_required(self.filter_items(original), self.filter_items(proposed)):
-    #             return True
-    #     else:  # Works for sets, integers, strings, ...
-    #         if original != proposed:
-    #             # print("Values don't match: {0} vs {1}".format(original, proposed))
-    #             return True
-    #     return False
-
-    # Option 2 - Unidirectional (proposed -> original ) check
     def is_update_required(self, original, proposed, optional_ignore=None):
         ''' Compare two data-structures '''
         self.ignored_keys.append('net_id')
