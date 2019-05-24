@@ -110,9 +110,9 @@ options:
             - The Azure managed disk's zone.
             - Allowed values are C(1), C(2), C(3) and C(' ').
         choices:
-            - 1
-            - 2
-            - 3
+            - '1'
+            - '2'
+            - '3'
             - ''
         version_added: "2.8"
 
