@@ -130,7 +130,7 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {% if config.get('ini', False) %}
 :Ini:
 {% for ini_map in config['ini']|sort(attribute='section') %}
-   - :Section: {{ini_map['section']}}
+   - :Section: [{{ini_map['section']}}]
      :Key: {{ini_map['key']}}
 {% if ini_map.get('deprecated') %}
 	 :Deprecated in: {{ini_map['deprecated']['version']}}
