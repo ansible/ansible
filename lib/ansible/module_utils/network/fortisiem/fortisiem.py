@@ -43,7 +43,6 @@ import json
 import xml.dom.minidom
 import re
 
-import pydevd
 # BEGIN HANDLER CLASSES
 
 
@@ -218,7 +217,6 @@ class FortiSIEMHandler(object):
             pass
         if output_xml:
             try:
-                #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
                 output_json = self._tools.xml2dict(output_xml)
                 formatted_output_dict = self.format_results(output_json, output_xml)
             except BaseException as err:
@@ -568,7 +566,15 @@ class FortiSIEMHandler(object):
             formatted_output_dict["json_results_raw"] = raw_output_json
             formatted_output_dict["xml_results_raw"] = combined_xml_string
             formatted_output_dict["row_count"] = row_count
-            formatted_output_dict["report_rc"] = formatted_output_dict["json_results_raw"]["queryResult"]["@errorCode"]
+            try:
+                formatted_output_dict["report_rc"] = \
+                    formatted_output_dict["json_results_raw"]["@queryResult"]["errorCode"]
+            except KeyError:
+                try:
+                    formatted_output_dict["report_rc"] = \
+                        formatted_output_dict["json_results_raw"]["queryResult"]["@errorCode"]
+                except BaseException:
+                    formatted_output_dict["report_rc"] = "Unknown"
             formatted_output_dict["query_id"] = query_id
             formatted_output_dict["xml_query"] = self.report_xml_source
         elif row_count == 0:
@@ -766,7 +772,6 @@ class FortiSIEMHandler(object):
         :type ansible_facts: dict
         """
 
-        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
         if module is None and results is None:
             raise FSMBaseException("govern_response() was called without a module and/or results tuple! Fix!")
         # Get the Return code from results

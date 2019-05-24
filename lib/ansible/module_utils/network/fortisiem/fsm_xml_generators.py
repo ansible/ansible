@@ -27,7 +27,6 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from ansible.module_utils.network.fortisiem.common import FSMEndpoints
 from xml.etree import ElementTree as ET
 
 
@@ -35,7 +34,6 @@ class FSMXMLGenerators(object):
     """
     This class is responsible for generating XML to be used by FortiSIEM modules. Due to the sheer size of these
     methods they were separated to their own class.
-
     """
 
     def __init__(self, module):
@@ -84,7 +82,7 @@ class FSMXMLGenerators(object):
         fullName.text = self._module.paramgram["org_display_name"]
         description = ET.SubElement(organization, "description")
         description.text = self._module.paramgram["org_description"]
-        if self._module.paramgram["uri"] == FSMEndpoints.ADD_ORGS:
+        if self._module.paramgram["uri"] == "/phoenix/rest/organization/add":
             adminUser = ET.SubElement(organization, "adminUser")
             adminUser.text = self._module.paramgram["org_admin_username"]
             adminPwd = ET.SubElement(organization, "adminPwd")
@@ -96,7 +94,7 @@ class FSMXMLGenerators(object):
         excludeRange = ET.SubElement(organization, "excludeRange")
         excludeRange.text = self._module.paramgram["org_exclude_ip_range"]
 
-        if self._module.paramgram["uri"] == FSMEndpoints.ADD_ORGS:
+        if self._module.paramgram["uri"] == "/phoenix/rest/organization/add":
             custResource = ET.Element("custResource")
             organization.append(custResource)
             eps = ET.SubElement(custResource, "eps")
