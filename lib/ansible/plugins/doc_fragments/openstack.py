@@ -88,7 +88,7 @@ options:
     version_added: "2.3"
 requirements:
   - python >= 2.7
-  - openstacksdk
+  - openstacksdk >= 0.12.0
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
     may be used instead of providing explicit values.
