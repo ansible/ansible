@@ -145,7 +145,7 @@ notes:
   - You can copy a file from the host to the container
     with the Ansible M(copy) and M(template) module and the `lxd` connection plugin.
     See the example below.
-  - You can copy a file in the creatd container to the localhost
+  - You can copy a file in the created container to the localhost
     with `command=lxc file pull container_name/dir/filename filename`.
     See the first example below.
 '''
