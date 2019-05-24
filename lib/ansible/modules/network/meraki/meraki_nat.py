@@ -600,15 +600,14 @@ def main():
         if one_to_one_payload is not None:
             path = meraki.construct_path('1:1', net_id=net_id)
             current = meraki.request(path, method='GET')
-            # meraki.fail_json(msg="Compare", original=current, payload=one_to_one_payload)
             if meraki.is_update_required(current, one_to_one_payload):
                 if meraki.module.check_mode is True:
                     diff = recursive_diff(current, one_to_one_payload)
                     current.update(one_to_one_payload)
                     if 'diff' not in meraki.result:
-                        meraki.result['diff'] = dict()
-                        meraki.result['diff']['before'] = {'one_to_one': diff[0]}
-                        meraki.result['diff']['after'] = {'one_to_one': diff[1]}
+                        meraki.result['diff'] = {'before': {}, 'after': {}}
+                    meraki.result['diff']['before'].update({'one_to_one': diff[0]})
+                    meraki.result['diff']['after'].update({'one_to_one': diff[1]})
                     meraki.result['data'] = {'one_to_one': current}
                     meraki.result['changed'] = True
                 else:
@@ -616,9 +615,10 @@ def main():
                     if meraki.status == 200:
                         diff = recursive_diff(current, one_to_one_payload)
                         if 'diff' not in meraki.result:
-                            meraki.result['diff'] = dict()
-                        meraki.result['diff']['before'] = {'one_to_one': diff[0]}
-                        meraki.result['diff']['after'] = {'one_to_one': diff[1]}                        meraki.result['data'] = {'one_to_one': r}
+                            meraki.result['diff'] = {'before': {}, 'after': {}}
+                        meraki.result['diff']['before'].update({'one_to_one': diff[0]})
+                        meraki.result['diff']['after'].update({'one_to_one': diff[1]})
+                        meraki.result['data'] = {'one_to_one': r}
                         meraki.result['changed'] = True
             else:
                 meraki.result['data']['one_to_one'] = current
@@ -630,22 +630,23 @@ def main():
                     diff = recursive_diff(current, one_to_many_payload)
                     current.update(one_to_many_payload)
                     if 'diff' not in meraki.result:
-                        meraki.result['diff'] = dict()
-                        meraki.result['diff']['before'] = {'one_to_many': diff[0]}
-                        meraki.result['diff']['after'] = {'one_to_many': diff[1]}                    meraki.result['data']['one_to_many'] = current
+                        meraki.result['diff'] = {'before': {}, 'after': {}}
+                    meraki.result['diff']['before'].update({'one_to_many': diff[0]})
+                    meraki.result['diff']['after'].update({'one_to_many': diff[1]})
+                    meraki.result['data']['one_to_many'] = current
                     meraki.result['changed'] = True
                 else:
                     r = meraki.request(path, method='PUT', payload=json.dumps(one_to_many_payload))
                     if meraki.status == 200:
                         diff = recursive_diff(current, one_to_many_payload)
                         if 'diff' not in meraki.result:
-                            meraki.result['diff'] = dict()
-                        meraki.result['diff']['before'] = {'one_to_many': diff[0]}
-                        meraki.result['diff']['after'] = {'one_to_many': diff[1]}
+                            meraki.result['diff'] = {'before': {}, 'after': {}}
+                        meraki.result['diff']['before'].update({'one_to_many': diff[0]})
+                        meraki.result['diff']['after'].update({'one_to_many': diff[1]})
                         meraki.result['data'].update({'one_to_many': r})
                         meraki.result['changed'] = True
             else:
-                meraki.result['data']['one_to_many'] =  current
+                meraki.result['data']['one_to_many'] = current
         if port_forwarding_payload is not None:
             path = meraki.construct_path('port_forwarding', net_id=net_id)
             current = meraki.request(path, method='GET')
@@ -654,18 +655,20 @@ def main():
                     diff = recursive_diff(current, port_forwarding_payload)
                     current.update(port_forwarding_payload)
                     if 'diff' not in meraki.result:
-                        meraki.result['diff'] = dict()
-                        meraki.result['diff']['before'] = {'port_forwarding': diff[0]}
-                        meraki.result['diff']['after'] = {'port_forwarding': diff[1]}                    meraki.result['data']['port_forwarding'] = current
+                        meraki.result['diff'] = {'before': {}, 'after': {}}
+                    meraki.result['diff']['before'].update({'port_forwarding': diff[0]})
+                    meraki.result['diff']['after'].update({'port_forwarding': diff[1]})
+                    meraki.result['data']['port_forwarding'] = current
                     meraki.result['changed'] = True
                 else:
                     r = meraki.request(path, method='PUT', payload=json.dumps(port_forwarding_payload))
                     if meraki.status == 200:
                         if 'diff' not in meraki.result:
-                            meraki.result['diff'] = dict()
+                            meraki.result['diff'] = {'before': {}, 'after': {}}
                         diff = recursive_diff(current, port_forwarding_payload)
-                        meraki.result['diff']['before'] = {'port_forwarding': diff[0]}
-                        meraki.result['diff']['after'] = {'port_forwarding': diff[1]}                        meraki.result['data'].update({'port_forwarding': r})
+                        meraki.result['diff']['before'].update({'port_forwarding': diff[0]})
+                        meraki.result['diff']['after'].update({'port_forwarding': diff[1]})
+                        meraki.result['data'].update({'port_forwarding': r})
                         meraki.result['changed'] = True
             else:
                 meraki.result['data']['port_forwarding'] = current

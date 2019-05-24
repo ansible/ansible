@@ -267,9 +267,10 @@
         - create_multiple is changed
         - create_multiple.data.one_to_many is defined
         - create_multiple.data.port_forwarding is defined
-        - create_multiple.diff.one_to_many is defined
-        - create_multiple.diff.port_forwading is defined
-
+        - create_multiple.diff.before.one_to_many is defined
+        - create_multiple.diff.before.port_forwarding is defined
+        - create_multiple.diff.after.one_to_many is defined
+        - create_multiple.diff.after.port_forwarding is defined
 
   - name: Query all NAT rules
     meraki_nat:
