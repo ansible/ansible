@@ -228,6 +228,7 @@ options:
             - "I(True) enable menu to select boot device, I(False) to disable it. By default is chosen by oVirt/RHV engine."
         type: bool
         version_added: "2.5"
+        default: no
     bios_type:
         description:
             - Advanced System option to change BIOS Type.
@@ -235,6 +236,8 @@ options:
             - "Possible values: i440fx_sea_bios, q35_ovmf, q35_sea_bios, q35_secure_boot. These correspond to Default, 
                Q35 Chipset with UEFI BIOS, Q35 Chipset with Legacy BIOS, and Q35 Chipset with SecureBoot"
         version_added: "2.9"
+        choices: [ i440fx_sea_bios, q35_ovmf, q35_sea_bios, q35_secure_boot ]
+        default: i440fx_sea_bios
     usb_support:
         description:
             - "I(True) enable USB support, I(False) to disable it. By default is chosen by oVirt/RHV engine."
