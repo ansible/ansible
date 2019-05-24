@@ -1,0 +1,2 @@
+bugfixes:
+    - several minor fixes to ansible logging, allow deterministic log name, better level matching, leaner setup.

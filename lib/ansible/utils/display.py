@@ -34,7 +34,7 @@ from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
@@ -58,18 +58,27 @@ class FilterBlackList(logging.Filter):
 
 
 logger = None
-# TODO: make this a logging callback instead
+# TODO: make this a callback event instead
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-        mypid = str(os.getpid())
-        user = getpass.getuser()
-        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        logging.basicConfig(filename=path, level=logging.INFO, format='%(asctime)s p=%(user)s u=%(process)d | %(message)s')
+        logger = logging.LoggerAdapter(logging.getLogger('ansible'), {'user': getpass.getuser()})
         for handler in logging.root.handlers:
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
+
+# map color to log levels
+color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
+                      C.COLOR_WARN: logging.WARNING,
+                      C.COLOR_OK: logging.INFO,
+                      C.COLOR_SKIP: logging.WARNING,
+                      C.COLOR_UNREACHABLE: logging.ERROR,
+                      C.COLOR_DEBUG: logging.DEBUG,
+                      C.COLOR_CHANGED: logging.INFO,
+                      C.COLOR_DEPRECATE: logging.WARNING,
+                      C.COLOR_VERBOSE: logging.INFO}
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
@@ -161,19 +170,24 @@ class Display(with_metaclass(Singleton, object)):
                     raise
 
         if logger and not screen_only:
-            msg2 = nocolor.lstrip(u'\n')
+            # We first convert to a byte string so that we get rid of
+            # color and characters that are invalid in the user's locale
+            msg2 = to_bytes(nocolor.lstrip(u'\n'))
 
-            msg2 = to_bytes(msg2)
             if sys.version_info >= (3,):
                 # Convert back to text string on python3
-                # We first convert to a byte string so that we get rid of
-                # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
-            if color == C.COLOR_ERROR:
-                logger.error(msg2)
-            else:
-                logger.info(msg2)
+            lvl = logging.INFO
+            if color:
+                # set logger level based on color (not great)
+                try:
+                    lvl = color_to_log_level[color]
+                except KeyError:
+                    # this should not happen, but JIC
+                    raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
+            # actually log
+            logger.log(lvl, msg2)
 
     def v(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=0)
