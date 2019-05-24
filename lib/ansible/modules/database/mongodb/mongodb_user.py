@@ -62,6 +62,12 @@ options:
         description:
             - Whether to use an SSL connection when connecting to the database
         type: bool
+    ssl_ca_certs:
+        version_added: "2.9"
+        description:
+            - >
+              Specifies the Certificate Authority (CA) .pem file which contains root certificate chain
+              for verification of the certificate presented by the server
     ssl_cert_reqs:
         version_added: "2.2"
         description:
@@ -345,6 +351,7 @@ def main():
             roles=dict(default=None, type='list'),
             state=dict(default='present', choices=['absent', 'present']),
             update_password=dict(default="always", choices=["always", "on_create"]),
+            ssl_ca_certs=dict(default=None),
             ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
         ),
         supports_check_mode=True
@@ -379,6 +386,7 @@ def main():
 
         if ssl:
             connection_params["ssl"] = ssl
+            connection_params["ssl_ca_certs"] = module.params['ssl_ca_certs']
             connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
 
         client = MongoClient(**connection_params)

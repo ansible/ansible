@@ -64,6 +64,10 @@ options:
     - Whether to use an SSL connection when connecting to the database
     type: bool
     default: no
+  ssl_ca_certs:
+    version_added: "2.9"
+    description:
+    - Specifies the Certificate Authority (CA) .pem file which contains root certificate chain for verification of the certificate presented by the server
   ssl_cert_reqs:
     description:
     - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
@@ -303,6 +307,7 @@ def main():
             arbiter_at_index=dict(type='int'),
             validate=dict(type='bool', default=True),
             ssl=dict(type='bool', default=False),
+            ssl_ca_certs=dict(default=None),
             ssl_cert_reqs=dict(type='str', default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
             protocol_version=dict(type='int', default=1, choices=[0, 1]),
             chaining_allowed=dict(type='bool', default=True),
@@ -348,6 +353,7 @@ def main():
 
     if ssl:
         connection_params["ssl"] = ssl
+        connection_params["ssl_ca_certs"] = module.params['ssl_ca_certs']
         connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
 
     try:

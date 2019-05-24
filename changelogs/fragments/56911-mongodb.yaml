@@ -1,0 +1,2 @@
+minor_changes:
+  - mongodb_user, mongodb_replicaset - Introduce ``ssl_ca_certs`` to specify the certificate authority .pem file for verification of the certificate presented by the server
