@@ -1253,16 +1253,17 @@ DOCSITE_ROOT_URL:
   ini:
   - {key: docsite_root_url, section: defaults}
   version_added: "2.8"
-DUPLICATE_DICT_KEY_WARNINGS:
-  name: Toggle warnings for duplicate dict keys in YAML
-  default: True
+DUPLICATE_YAML_DICT_KEY:
+  name: Controls ansible behaviour when finding duplicate keys in YAML.
+  default: warn
   description:
     - By default Ansible will issue a warning when a duplicate dict key is encountered in YAML.
     - These warnings can be silenced by adjusting this setting to False.
-  env: [{name: ANSIBLE_DUPLICATE_DICT_KEY_WARNINGS}]
+  env: [{name: ANSIBLE_DUPLICATE_YAML_DICT_KEY}]
   ini:
-  - {key: duplicate_dict_key_warnings, section: defaults}
-  type: boolean
+  - {key: duplicate_dict_key, section: defaults}
+  type: string
+  choices: ['warn', 'error', 'ignore']
   version_added: "2.9"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
