@@ -159,7 +159,6 @@ EXAMPLES = r'''
 '''
 
 import os
-import pipes
 import subprocess
 import traceback
 
@@ -175,16 +174,17 @@ import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
     pass
 
-
 # ===========================================
 # PostgreSQL module specific support methods.
 #
+
 
 def set_owner(cursor, db, owner):
     query = "ALTER DATABASE %s OWNER TO %s" % (
@@ -348,9 +348,9 @@ def db_dump(module, target, target_opts="",
         # in a portable way.
         fifo = os.path.join(module.tmpdir, 'pg_fifo')
         os.mkfifo(fifo)
-        cmd = '{1} <{3} > {2} & {0} >{3}'.format(cmd, comp_prog_path, pipes.quote(target), fifo)
+        cmd = '{1} <{3} > {2} & {0} >{3}'.format(cmd, comp_prog_path, shlex_quote(target), fifo)
     else:
-        cmd = '{0} > {1}'.format(cmd, pipes.quote(target))
+        cmd = '{0} > {1}'.format(cmd, shlex_quote(target))
 
     return do_with_password(module, cmd, password)
 
@@ -402,7 +402,7 @@ def db_restore(module, target, target_opts="",
         else:
             return p2.returncode, '', stderr2, 'cmd: ****'
     else:
-        cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
+        cmd = '{0} < {1}'.format(cmd, shlex_quote(target))
 
     return do_with_password(module, cmd, password)
 
@@ -419,9 +419,9 @@ def login_flags(db, host, port, user, db_prefix=True):
     flags = []
     if db:
         if db_prefix:
-            flags.append(' --dbname={0}'.format(pipes.quote(db)))
+            flags.append(' --dbname={0}'.format(shlex_quote(db)))
         else:
-            flags.append(' {0}'.format(pipes.quote(db)))
+            flags.append(' {0}'.format(shlex_quote(db)))
     if host:
         flags.append(' --host={0}'.format(host))
     if port:
