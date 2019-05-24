@@ -73,9 +73,9 @@ class AnsibleConstructor(SafeConstructor):
             if key in mapping:
                 msg = (u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).'
                        u' Using last defined value only.'.format(key, *mapping.ansible_pos))
-                if C.DUPLICATE_DICT_YAML_KEY == 'warn':
+                if C.DUPLICATE_YAML_DICT_KEY == 'warn':
                     display.warning(msg)
-                elif C.DUPLICATE_DICT_YAML_KEY == 'error':
+                elif C.DUPLICATE_YAML_DICT_KEY == 'error':
                     raise ConstructorError(to_native(msg))
                 else:
                     # when 'ignore'
