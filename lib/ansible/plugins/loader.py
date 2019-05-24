@@ -10,7 +10,6 @@ __metaclass__ = type
 import glob
 import os
 import os.path
-import pkgutil
 import sys
 import warnings
 
@@ -56,7 +55,7 @@ def add_all_plugin_dirs(path):
                 if os.path.isdir(plugin_path):
                     obj.add_directory(to_text(plugin_path))
     else:
-        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_native(path))
+        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_text(path))
 
 
 def get_shell_plugin(shell_type=None, executable=None):
@@ -522,7 +521,7 @@ class PluginLoader:
             if isinstance(ex, AnsibleError):
                 raise
             # log and continue, likely an innocuous type/package loading failure in collections import
-            display.debug('has_plugin error: {0}'.format(to_native(ex)))
+            display.debug('has_plugin error: {0}'.format(to_text(ex)))
 
     __contains__ = has_plugin
 
