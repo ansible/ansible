@@ -924,19 +924,19 @@
       subsequent_failure_timeout: 60000
   register: win_service_recovery_settings
 
-- name: check that that enabling the service for delayed startup succeeded
+- name: check that that the recovery settings succeeded
   assert:
     that:
     - win_service_recovery_settings is changed
-    - win_service_recovery_settings.recovery.reset_fail_count_after == '300'
+    - win_service_recovery_settings.recovery.reset_fail_count_after == 300
     - win_service_recovery_settings.recovery.on_first_failure == 'restart'
-    - win_service_recovery_settings.recovery.first_failure_timeout == '60000'
+    - win_service_recovery_settings.recovery.first_failure_timeout == 60000
     - win_service_recovery_settings.recovery.on_second_failure == 'restart'
-    - win_service_recovery_settings.recovery.second_failure_timeout == '60000'
+    - win_service_recovery_settings.recovery.second_failure_timeout == 60000
     - win_service_recovery_settings.recovery.on_subsequent_failure == 'restart'
-    - win_service_recovery_settings.recovery.subsequent_failure_timeout == '60000'
+    - win_service_recovery_settings.recovery.subsequent_failure_timeout == 60000
 
-- name: enable the service for delayed startup from non automatic again
+- name: set recovery settings for the service again
   win_service:
     name: "{{test_win_service_name}}"
     recovery:
@@ -949,14 +949,14 @@
       subsequent_failure_timeout: 60000
   register: win_service_recovery_settings_again
 
-- name: check that enabling the service for delayed startup again no changes
+- name: check that that the recovery settings again no changes
   assert:
     that:
     - win_service_recovery_settings is not changed
-    - win_service_recovery_settings.recovery.reset_fail_count_after == '300'
+    - win_service_recovery_settings.recovery.reset_fail_count_after == 300
     - win_service_recovery_settings.recovery.on_first_failure == 'restart'
-    - win_service_recovery_settings.recovery.first_failure_timeout == '60000'
+    - win_service_recovery_settings.recovery.first_failure_timeout == 60000
     - win_service_recovery_settings.recovery.on_second_failure == 'restart'
-    - win_service_recovery_settings.recovery.second_failure_timeout == '60000'
+    - win_service_recovery_settings.recovery.second_failure_timeout == 60000
     - win_service_recovery_settings.recovery.on_subsequent_failure == 'restart'
-    - win_service_recovery_settings.recovery.subsequent_failure_timeout == '60000'
+    - win_service_recovery_settings.recovery.subsequent_failure_timeout == 60000
