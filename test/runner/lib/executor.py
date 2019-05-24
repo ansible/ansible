@@ -11,7 +11,6 @@ import tempfile
 import time
 import textwrap
 import functools
-import pipes
 import sys
 import hashlib
 import difflib
@@ -55,6 +54,7 @@ from lib.util import (
     generate_pip_command,
     find_python,
     get_docker_completion,
+    cmd_quote,
 )
 
 from lib.docker_util import (
@@ -210,7 +210,7 @@ def install_command_requirements(args, python_version=None):
         return  # no changes means no conflicts
 
     raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
-                           '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+                           '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
