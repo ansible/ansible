@@ -113,51 +113,45 @@ options:
     - A newly created service will default to C(LocalSystem).
     type: str
     version_added: '2.3'
-  reset_period:
-    description:
-      - The reset period for the service recovery actions in seconds.
-      - This needs to be defined for the recovery actions to be set/updated.
-    type: int
-    default: null
-    version_added: '2.9'
-  first_failure_action:
-    description:
-      - The first failure action to take (can be 0, 1, 2, 3)
-      - https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_sc_action
-    type: int
-    default: 0
-    version_added: '2.9'
-  first_failure_timer:
-    description:
-      - The first timer to wait for your first action to take effect in miliseconds.
-    type: int
-    default: 60000
-    version_added: '2.9'
-  second_failure_action:
-    description:
-      - The second failure action to take (can be 0, 1, 2, 3)
-      - https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_sc_action
-    type: int
-    default: 0
-    version_added: '2.9'
-  second_failure_timer:
-    description:
-      - The second timer to wait for your second action to take effect in miliseconds.
-    type: int
-    default: 60000
-    version_added: '2.9'
-  subseq_failure_action:
-    description:
-      - The subsequent failures action to take (can be 0, 1, 2, 3)
-      - https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_sc_action
-    type: int
-    default: 0
-    version_added: '2.9'
-  subseq_failure_timer:
-    description:
-      - The subesquent timer to wait for your subsequent action to take effect in miliseconds.
-    type: int
-    default: 60000
+  recovery:
+    descrption:
+      - A dictionary representing the recovery actions you want to set.
+    suboptions:
+      reset_fail_count_after:
+        description:
+          - Reset failure counter after this number of seconds.
+        type: int
+      on_first_failure:
+        description:
+          - Action to take on first failure of the service.
+          - Only restart and reboot are supported value.
+          - Defaults to Take no action.
+        type: str
+      first_failure_timeout:
+        description:
+          - Time to wait to execute first failure action in ms.
+        type: int
+      on_second_failure:
+        description:
+          - Action to take on second failure of the service.
+          - Only restart and reboot are supported value.
+          - Defaults to Take no action.
+        type: str
+      second_failure_timeout:
+        description:
+          - Time to wait to execute second failure action in ms.
+        type: int
+      on_subsequent_failure:
+        description:
+          - Action to take on subsequent failure of the service.
+          - Only restart and reboot are supported value.
+          - Defaults to Take no action.
+        type: str
+      subsequent_failure_timeout:
+        description:
+          - Time to wait to execute subsequent failure action in ms.
+        type: int
+    type: dict
     version_added: '2.9'
 
 seealso:
@@ -280,13 +274,14 @@ EXAMPLES = r'''
 - name: Set recovery actions
   win_service:
     name: service name
-    reset_period: 300
-    first_failure_action: 1
-    first_failure_timer: 60000
-    second_failure_action: 1
-    second_failure_timer: 60000
-    subseq_failure_action: 1
-    subseq_failure_timer: 60000
+    recovery:
+      reset_fail_count_after: 300
+      on_first_failure: restart
+      first_failure_timeout: 60000
+      on_second_failure: restart
+      second_failure_timeout: 60000
+      on_subsequent_failure: reboot
+      subsequent_failure_timeout: 60000
 '''
 
 RETURN = r'''
