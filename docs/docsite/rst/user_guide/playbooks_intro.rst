@@ -512,7 +512,7 @@ For example, if you run ``ansible-lint`` on the :ref:`verify-apache.yml playbook
 
 .. code-block:: bash
 
-    $ ansible-lint veryify-apache.yml
+    $ ansible-lint verify-apache.yml
     [403] Package installs should not use latest
     verify-apache.yml:8
     Task/Handler: ensure apache is at the latest version
