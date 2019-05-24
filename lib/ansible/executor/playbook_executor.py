@@ -24,13 +24,12 @@ import os
 from ansible import constants as C
 from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible.template import Templar
-from ansible.plugins.loader import connection_loader, shell_loader
 from ansible.utils.helpers import pct_to_int
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.utils.display import Display
@@ -306,7 +305,7 @@ class PlaybookExecutor:
                 for x in replay_hosts:
                     fd.write("%s\n" % x)
         except Exception as e:
-            display.warning("Could not create retry file '%s'.\n\t%s" % (retry_path, to_native(e)))
+            display.warning("Could not create retry file '%s'.\n\t%s" % (retry_path, to_text(e)))
             return False
 
         return True
