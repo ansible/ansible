@@ -389,7 +389,7 @@ class DataLoader:
             try:
                 self.cleanup_tmp_file(f)
             except Exception as e:
-                display.warning("Unable to cleanup temp files: %s" % to_native(e))
+                display.warning("Unable to cleanup temp files: %s" % to_text(e))
 
     def find_vars_files(self, path, name, extensions=None, allow_dir=True):
         """

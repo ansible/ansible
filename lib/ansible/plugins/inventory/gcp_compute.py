@@ -120,15 +120,10 @@ compose:
 import json
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_native
-from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException, HAS_GOOGLE_LIBRARIES
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
-
-try:
-    import google.auth
-    import requests
-except ImportError:
-    raise AnsibleError('The gcp dynamic inventory plugin requires the requests and google-auth libraries')
 
 
 # Mocking a module to reuse module_utils
@@ -161,7 +156,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 self.inventory.set_variable(hostname, self.get_option('vars_prefix') + key, item[key])
             except (ValueError, TypeError) as e:
-                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_native(e)))
+                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_text(e)))
         self.inventory.add_child('all', hostname)
 
     def verify_file(self, path):
@@ -421,6 +416,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return interface[u'networkIP']
 
     def parse(self, inventory, loader, path, cache=True):
+
+        if not HAS_GOOGLE_LIBRARIES:
+            raise AnsibleParserError('gce inventory plugin cannot start: %s' % missing_required_lib('google-auth'))
+
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = {}

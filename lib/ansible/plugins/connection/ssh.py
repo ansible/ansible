@@ -1126,9 +1126,9 @@ class Connection(ConnectionBase):
             else:
                 # If not in smart mode, the data will be printed by the raise below
                 if len(methods) > 1:
-                    display.warning(msg='%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
-                    display.debug(msg='%s' % to_native(stdout))
-                    display.debug(msg='%s' % to_native(stderr))
+                    display.warning('%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
+                    display.debug('%s' % to_text(stdout))
+                    display.debug('%s' % to_text(stderr))
 
         if returncode == 255:
             raise AnsibleConnectionFailure("Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
