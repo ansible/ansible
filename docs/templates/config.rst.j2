@@ -130,7 +130,7 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {% if config.get('ini', False) %}
 :Ini:
 {% for ini_map in config['ini']|sort(attribute='section') %}
-   - :Section: [{{ini_map['section']}}]
+   * :Section: [{{ini_map['section']}}]
      :Key: {{ini_map['key']}}
 {% if ini_map.get('deprecated') %}
 	 :Deprecated in: {{ini_map['deprecated']['version']}}
@@ -142,7 +142,7 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {% if config.get('env', False) %}
 :Environment:
 {% for env_var_map in config['env']|sort(attribute='name') %}
-    - :envvar:`{{env_var_map['name']}}`
+    * :envvar:`{{env_var_map['name']}}`
 {% if env_var_map.get('deprecated') %}
 	  :Deprecated in: {{env_var_map['deprecated']['version']}}
 	  :Deprecated detail: {{env_var_map['deprecated']['why']}}
@@ -153,7 +153,7 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {% if config.get('vars', False) %}
 :Variables:
 {% for a_var in config['vars']|sort(attribute='name') %}
-    - :name: `{{a_var['name']}}`
+    * :name: `{{a_var['name']}}`
 {% if a_var.get('deprecated') %}
 	  :Deprecated in: {{a_var['deprecated']['version']}}
 	  :Deprecated detail: {{a_Var['deprecated']['why']}}
