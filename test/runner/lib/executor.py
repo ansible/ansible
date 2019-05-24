@@ -10,7 +10,6 @@ import re
 import time
 import textwrap
 import functools
-import pipes
 import sys
 import hashlib
 import difflib
@@ -61,6 +60,7 @@ from lib.util import (
     get_remote_completion,
     named_temporary_file,
     COVERAGE_OUTPUT_PATH,
+    cmd_quote,
 )
 
 from lib.docker_util import (
@@ -219,7 +219,7 @@ def install_command_requirements(args, python_version=None):
 
         if changes:
             raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
-                                   '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+                                   '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
     # ask pip to check for conflicts between installed packages
     try:
