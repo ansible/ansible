@@ -233,7 +233,7 @@ options:
         description:
             - Advanced System option to change BIOS Type.
             - Default value is set by oVirt/RHV engine
-            - "Possible values: i440fx_sea_bios, q35_ovmf, q35_sea_bios, q35_secure_boot. These correspond to Default, 
+            - "Possible values: i440fx_sea_bios, q35_ovmf, q35_sea_bios, q35_secure_boot. These correspond to Default,
                Q35 Chipset with UEFI BIOS, Q35 Chipset with Legacy BIOS, and Q35 Chipset with SecureBoot"
         version_added: "2.9"
         choices: [ i440fx_sea_bios, q35_ovmf, q35_sea_bios, q35_secure_boot ]
