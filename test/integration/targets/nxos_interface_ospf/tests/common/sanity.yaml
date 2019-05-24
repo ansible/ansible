@@ -10,20 +10,15 @@
     feature: "{{ item }}"
     provider: "{{ connection }}"
     state: disabled
+  loop: ['ospf', 'bfd']
   ignore_errors: yes
-  loop:
-    - ospf
-    - bfd
 
 - name: Setup - Enable features
   nxos_feature:
     feature: "{{ item }}"
     provider: "{{ connection }}"
     state: enabled
-  loop:
-    - ospf
-    - bfd
-  ignore_errors: yes
+  loop: ['ospf', 'bfd']
 
 - name: "Put interface into default state"
   nxos_config: &intdefault
@@ -300,10 +295,8 @@
       feature: "{{ item }}"
       provider: "{{ connection }}"
       state: disabled
+    loop: ['ospf', 'bfd']
     ignore_errors: yes
-    loop:
-      - ospf
-      - bfd
 
   - name: "Interface cleanup"
     nxos_config: *intdefault
