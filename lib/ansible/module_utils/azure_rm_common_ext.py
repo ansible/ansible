@@ -144,7 +144,11 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                 result['compare'] = 'changed [' + path + '] old dict is null'
                 return False
             for k in new.keys():
-                if not self.default_compare(modifiers, new.get(k), old.get(k, None), path + '/' + k, result):
+                new_item = new.get(k)
+                old_item = old.get(k, None)
+                if new_item is None:
+                    new[k] = old_item
+                elif not self.default_compare(modifiers, new_item, old_item, path + '/' + k, result):
                     return False
             return True
         elif isinstance(new, list):

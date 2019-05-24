@@ -19,7 +19,7 @@ module: azure_rm_azurefirewall
 version_added: '2.9'
 short_description: Manage Azure Firewall instance.
 description:
-  - 'Create, update and delete instance of Azure Firewall.'
+  - Create, update and delete instance of Azure Firewall.
 options:
   resource_group:
     description:
