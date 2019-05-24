@@ -27,7 +27,7 @@ EXAMPLES = r'''
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.inventory import BaseInventoryPlugin
 
@@ -56,7 +56,7 @@ class InventoryModule(BaseInventoryPlugin):
                     try:
                         (host, port) = parse_address(h, allow_ranges=False)
                     except AnsibleError as e:
-                        self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_native(e))
+                        self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_text(e))
                         host = h
                         port = None
 

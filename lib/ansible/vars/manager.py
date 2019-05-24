@@ -35,7 +35,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
@@ -104,7 +104,7 @@ class VariableManager:
         except AnsibleError as e:
             # bad cache plugin is not fatal error
             # fallback to a dict as in memory cache
-            display.warning(to_native(e))
+            display.warning(to_text(e))
             self._fact_cache = {}
 
     def __getstate__(self):
