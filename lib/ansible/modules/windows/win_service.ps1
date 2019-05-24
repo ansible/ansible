@@ -71,6 +71,19 @@ Function ReversedHexValue ($v) {
   $res
 }
 
+Function DecValue ($v) {
+
+  $res = ($v -split '(..)' | Where-Object { $_ }).split(" ")
+
+  [array]::Reverse($res)
+
+  $res = [system.string]::Join('', $res)
+
+  $res = [convert]::toint32($res, 16)
+
+  $res
+}
+
 Function RecoveryActionMapping ($a) {
 
     $res = switch($a) {
@@ -80,6 +93,26 @@ Function RecoveryActionMapping ($a) {
     }
 
     $res
+}
+
+Function RecoveryActionsToHuman ($s) {
+    $res = (("{0:x8}" -f $s) -split '(........)' | Where-Object { $_ }).split(" ")
+    
+    for ($i=0; $i -lt $res.Length; $i++) {
+        $res[$i]=DecValue($res[$i])
+    }
+
+    $recovery_actions = @{ 
+                            'reset_fail_count_after' = $res[0];
+                            'on_first_failure' = $res[5];
+                            'first_failure_timeout' = $res[6];
+                            'on_second_failure' = $res[7];
+                            'second_failure_timeout' = $res[8];
+                            'on_subsequent_failure' = $res[9];
+                            'subsequent_failure_timeout' = $res[10];
+                        }
+
+    $recovery_actions
 }
 
 Function Get-ServiceInfo($name) {
@@ -93,8 +126,6 @@ Function Get-ServiceInfo($name) {
     if ($delayed -and $actual_start_mode -eq 'auto') {
         $actual_start_mode = 'delayed'
     }
-
-    $recovery_actions = Get-RecoveryActions($svc.Name)
 
     $existing_dependencies = @()
     $existing_depended_by = @()
@@ -125,7 +156,7 @@ Function Get-ServiceInfo($name) {
     $result.dependencies = $existing_dependencies
     $result.depended_by = $existing_depended_by
     $result.can_pause_and_continue = $svc.CanPauseAndContinue
-    $result.recovery_actions = $recovery_actions
+    $result.recovery = RecoveryActionsToHuman("2c010000000000000000000003000000140000000100000060ea00000100000060ea00000100000060ea0000")
 }
 
 Function Get-WmiErrorMessage($return_value) {
@@ -469,12 +500,15 @@ Function Set-ServiceRecovery($name, $actions) {
                         + $on_first_failure + $first_failure_timeout `
                         + $on_second_failure + $second_failure_timeout `
                         + $on_subsequent_failure + $subsequent_failure_timeout)
-    
-    if ($result.recovery_actions -ne $processed_actions) {
-            $actions_string=$actions.on_first_failure + '/' + $actions.first_failure_timeout `
-                        + '/' + $actions.on_second_failure + '/' + $actions.second_failure_timeout `
-                        + '/' + $actions.on_subsequent_failure + '/' + $actions.subsequent_failure_timeout
-            $reset=$actions.reset_fail_count_after
+
+    $recovery_actions = Get-RecoveryActions($svc.Name)
+
+    $actions_string=$actions.on_first_failure + '/' + $actions.first_failure_timeout `
+                + '/' + $actions.on_second_failure + '/' + $actions.second_failure_timeout `
+                + '/' + $actions.on_subsequent_failure + '/' + $actions.subsequent_failure_timeout
+    $reset=$actions.reset_fail_count_after
+
+    if ($recovery_actions -ne $processed_actions) {
 
             $cmd_output=sc.exe \\$env:computername failure $name reset= $reset actions= $actions_string
 
