@@ -86,7 +86,7 @@ class PkgMgrFactCollector(BaseFactCollector):
             # If anyone wants to force a non-official package manager then they
             # can define a provider to either the package or yum action plugins.
             if collected_facts['ansible_distribution'] == 'Amazon':
-               pkg_mgr_name = 'yum'
+                pkg_mgr_name = 'yum'
             elif int(collected_facts['ansible_distribution_major_version']) < 8:
                 pkg_mgr_name = 'yum'
             else:
