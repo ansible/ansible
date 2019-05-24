@@ -1091,7 +1091,7 @@ class ModuleValidator(Validator):
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
         try:
-            version_added = StrictVersion(str(doc.get('version_added', '2.9') or '2.9'))
+            version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
             if self._is_new_module() or version_added != 'historical':

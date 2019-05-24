@@ -34,6 +34,7 @@ options:
     description:
     - Which version should be used when creating or updating launch template? By default, the first version will be made the default.
     default: 1
+    version_added: "2.9"
   template_id:
     description:
     - The ID for the launch template, can be used for all cases except creating a new Launch Template.
