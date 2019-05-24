@@ -40,20 +40,6 @@ from ansible.module_utils.six import iteritems
 from distutils.version import LooseVersion
 
 
-class LibraryError(Exception):
-    pass
-
-
-def ensure_libs(sslrootcert=None):
-    if not HAS_PSYCOPG2:
-        raise LibraryError('psycopg2 is not installed. we need psycopg2.')
-    if sslrootcert and psycopg2.__version__ < '2.4.3':
-        raise LibraryError('psycopg2 must be at least 2.4.3 in order to use the ca_cert parameter')
-
-    # no problems
-    return None
-
-
 def postgres_common_argument_spec():
     """
     Return a dictionary with connection options.
