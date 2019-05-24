@@ -1,0 +1,2 @@
+bugfixes:
+- "eos_config: check for session support when asked to 'diff_against: session'"
