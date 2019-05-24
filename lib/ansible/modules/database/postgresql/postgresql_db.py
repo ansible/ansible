@@ -163,18 +163,16 @@ import pipes
 import subprocess
 import traceback
 
-PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
     HAS_PSYCOPG2 = False
 else:
     HAS_PSYCOPG2 = True
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
@@ -493,8 +491,8 @@ def main():
 
     raw_connection = state in ("dump", "restore")
 
-    if not HAS_PSYCOPG2 and not raw_connection:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
+    if not raw_connection:
+        pgutils.ensure_required_libs(module)
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -522,7 +520,6 @@ def main():
 
     if not raw_connection:
         try:
-            pgutils.ensure_libs(sslrootcert=module.params.get('ca_cert'))
             db_connection = psycopg2.connect(database=maintenance_db, **kw)
 
             # Enable autocommit so we can create databases
