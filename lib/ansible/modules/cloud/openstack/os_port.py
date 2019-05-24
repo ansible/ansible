@@ -84,7 +84,6 @@ options:
      description:
        - The type of the port that should be created
      choices: [normal, direct, direct-physical, macvtap, baremetal, virtio-forwarder]
-     default: normal
      version_added: "2.8"
    port_security_enabled:
      description:
@@ -327,7 +326,7 @@ def main():
         device_owner=dict(default=None),
         device_id=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
-        vnic_type=dict(default='normal',
+        vnic_type=dict(default=None,
                        choices=['normal', 'direct', 'direct-physical',
                                 'macvtap', 'baremetal', 'virtio-forwarder']),
         port_security_enabled=dict(default=None, type='bool')
@@ -355,11 +354,10 @@ def main():
                 for v in module.params['security_groups']
             ]
 
-        if module.params['vnic_type']:
-            # Neutron API accept 'binding:vnic_type' as an argument
-            # for the port type.
-            module.params['binding:vnic_type'] = module.params['vnic_type']
-            module.params.pop('vnic_type', None)
+        # Neutron API accept 'binding:vnic_type' as an argument
+        # for the port type.
+        module.params['binding:vnic_type'] = module.params['vnic_type']
+        module.params.pop('vnic_type', None)
 
         port = None
         network_id = None
