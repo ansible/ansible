@@ -73,7 +73,7 @@ from the SSH implementation; consult the :ref:`windows_winrm` documentation for
 more information.
 
 Ansible 2.8 has added experimental support for using the SSH connection plugin,
-which supports authentication with SSH keys, to connect to Windows servers. See `this question <windows_faq_ssh>`
+which supports authentication with SSH keys, to connect to Windows servers. See :ref:`this question <windows_faq_ssh>`
 for more information.
 
 .. _windows_faq_winrm:
@@ -161,7 +161,7 @@ modules will not work. A way to bypass this issue to use
 This is useful if during a playbook, an external service needs to be contacted
 and there is no equivalent Windows module available.
 
-.. _winrm_faq_ssh:
+.. _windows_faq_ssh:
 
 Can I connect to Windows hosts over SSH?
 ````````````````````````````````````````
