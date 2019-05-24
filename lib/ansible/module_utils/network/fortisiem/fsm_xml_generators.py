@@ -35,6 +35,7 @@ class FSMXMLGenerators(object):
     """
     This class is responsible for generating XML to be used by FortiSIEM modules. Due to the sheer size of these
     methods they were separated to their own class.
+
     """
 
     def __init__(self, module):

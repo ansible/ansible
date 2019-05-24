@@ -274,18 +274,6 @@ class FSMBaseException(Exception):
 
 # END ERROR CLASSES
 
-
-# try:
-#     import xmltodict
-#
-#     HAS_XML2DICT = True
-# except ImportError as err:
-#     HAS_XML2DICT = False
-#     raise FSMBaseException(
-#         "You don't really want to use XML for responses, do you? We use with JSON in these parts. "
-#         "XML2DICT Package is not installed. Please use 'pip install xmltodict. ")
-
-
 # BEGIN CLASSES
 class FSMCommon(object):
     """
@@ -687,7 +675,8 @@ class FSMCommon(object):
         :param xml_in: xml to convert
         :return: dict
         """
-        xml_out = XML2Dict.parse(str(xml_in), process_namespaces=True)
+        xml_parser = XML2Dict()
+        xml_out = XML2Dict.parse(xml_parser, xml_in)
         json_out = json.dumps(xml_out)
         dict_out = json.loads(json_out)
         return dict_out
@@ -700,7 +689,9 @@ class FSMCommon(object):
         :param dict_in: dict to convert
         :return: xml
         """
-        xml_out = Dict2XML.parse(dict_in, pretty=True)
+       # xml_out = Dict2XML.parse(dict_in, pretty=True)
+        dict_parser = Dict2XML()
+        xml_out = Dict2XML.parse(dict_parser, dict_in)
         return xml_out
 
     @staticmethod

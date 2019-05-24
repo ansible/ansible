@@ -43,7 +43,7 @@ import json
 import xml.dom.minidom
 import re
 
-
+import pydevd
 # BEGIN HANDLER CLASSES
 
 
@@ -218,6 +218,7 @@ class FortiSIEMHandler(object):
             pass
         if output_xml:
             try:
+                #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
                 output_json = self._tools.xml2dict(output_xml)
                 formatted_output_dict = self.format_results(output_json, output_xml)
             except BaseException as err:
@@ -764,6 +765,8 @@ class FortiSIEMHandler(object):
         :param ansible_facts: A prepared dictionary of ansible facts from the execution.
         :type ansible_facts: dict
         """
+
+        #pydevd.settrace('10.0.0.151', port=54654, stdoutToServer=True, stderrToServer=True)
         if module is None and results is None:
             raise FSMBaseException("govern_response() was called without a module and/or results tuple! Fix!")
         # Get the Return code from results
