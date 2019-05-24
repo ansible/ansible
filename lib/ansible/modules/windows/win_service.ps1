@@ -23,22 +23,7 @@ $path = Get-AnsibleParam -obj $params -name 'path'
 $start_mode = Get-AnsibleParam -obj $params -name 'start_mode' -type 'str' -validateset 'auto','manual','disabled','delayed'
 $state = Get-AnsibleParam -obj $params -name 'state' -type 'str' -validateset 'started','stopped','restarted','absent','paused'
 $username = Get-AnsibleParam -obj $params -name 'username' -type 'str'
-
-$rec_actions_params = @{
-    reset_period = Get-AnsibleParam -obj $params -name 'reset_period' -type 'int' -default $null;
-    first_failure = @{
-        action = Get-AnsibleParam -obj $params -name 'first_failure_action' -type 'int' -default 0;
-        timer = Get-AnsibleParam -obj $params -name 'first_failure_timer' -type 'int' -default 60000
-    };
-    second_failure = @{
-        action = Get-AnsibleParam -obj $params -name 'second_failure_action' -type 'int' -default 0;
-        timer = Get-AnsibleParam -obj $params -name 'second_failure_timer' -type 'int' -default 60000
-    };
-    subseq_failure = @{
-        action = Get-AnsibleParam -obj $params -name 'subseq_failure_action' -type 'int' -default 0;
-        timer = Get-AnsibleParam -obj $params -name 'subseq_failure_timer' -type 'int' -default 60000
-    };
-}
+$recovery_params = Get-AnsibleParam -obj $params -name 'recovery' -type 'dict' -default $null
 
 $result = @{
     changed = $false
@@ -84,6 +69,17 @@ Function ReversedHexValue ($v) {
   $res = [system.string]::Join('', $res)
 
   $res
+}
+
+Function RecoveryActionMapping ($a) {
+
+    $res = switch($a) {
+        'restart' { 1 }
+        'reboot' { 2 }
+        default { 0 }
+    }
+
+    $res
 }
 
 Function Get-ServiceInfo($name) {
@@ -452,46 +448,39 @@ Function Set-ServiceRecovery($name, $actions) {
     #     timer: 60000 (ms)
     # 2c,01,00,00,00,00,00,00,00,00,00,00,03,00,00,00,14,00,00,00,01,00,00,00,60,ea,00,00,01,00,00,00,60,ea,00,00,01,00,00,00,60,ea,00,00
 
-    $reg_key_name = 'FailureActions'
-
     # Default untouched actions
     $lp_reboot_msg = '00000000'
     $lp_command = '00000000'
     $ca_actions = '03000000'
     $lpsaActions = '14000000'
 
-    $reset_period = ReversedHexValue $actions.reset_period
+    $reset_fail_count_after = ReversedHexValue $actions.reset_fail_count_after
 
-    $first_failure_action = ReversedHexValue $actions.first_failure.action
-    $first_failure_timer = ReversedHexValue $actions.first_failure.timer
+    $on_first_failure = ReversedHexValue (RecoveryActionMapping($actions.on_first_failure))
+    $first_failure_timeout = ReversedHexValue $actions.first_failure_timeout
 
-    $second_failure_action = ReversedHexValue $actions.second_failure.action
-    $second_failure_timer = ReversedHexValue $actions.second_failure.timer
+    $on_second_failure = ReversedHexValue (RecoveryActionMapping($actions.on_second_failure))
+    $second_failure_timeout = ReversedHexValue $actions.second_failure_timeout
 
-    $subseq_failure_action = ReversedHexValue $actions.subseq_failure.action
-    $subseq_failure_timer = ReversedHexValue $actions.subseq_failure.timer
+    $on_subsequent_failure = ReversedHexValue (RecoveryActionMapping($actions.on_subsequent_failure))
+    $subsequent_failure_timeout = ReversedHexValue $actions.subsequent_failure_timeout
 
-    $processed_actions = ($reset_period + $lp_reboot_msg + $lp_command + $ca_actions + $lpsaActions `
-                        + $first_failure_action + $first_failure_timer `
-                        + $second_failure_action + $second_failure_timer `
-                        + $subseq_failure_action + $subseq_failure_timer)
-
+    $processed_actions = ($reset_fail_count_after + $lp_reboot_msg + $lp_command + $ca_actions + $lpsaActions `
+                        + $on_first_failure + $first_failure_timeout `
+                        + $on_second_failure + $second_failure_timeout `
+                        + $on_subsequent_failure + $subsequent_failure_timeout)
+    
     if ($result.recovery_actions -ne $processed_actions) {
+            $actions_string=$actions.on_first_failure + '/' + $actions.first_failure_timeout `
+                        + '/' + $actions.on_second_failure + '/' + $actions.second_failure_timeout `
+                        + '/' + $actions.on_subsequent_failure + '/' + $actions.subsequent_failure_timeout
+            $reset=$actions.reset_fail_count_after
 
-        $split_processed_actions = (("{0:x8}" -f $processed_actions) -split '(..)' | Where-Object { $_ })
+            $cmd_output=sc.exe \\$env:computername failure $name reset= $reset actions= $actions_string
 
-        try {
-            $recovery_actions_key = "HKLM:\System\CurrentControlSet\Services\$name"
-            # Because the key is non-existing by default and Set-ItemProperty cannot create a REG_BINARY key
-            if ($result.recovery_actions -eq '') {
-                New-ItemProperty -LiteralPath $recovery_actions_key -Name $reg_key_name -PropertyType Binary -Value ([byte[]]($split_processed_actions | ForEach-Object { "0x$_" })) -WhatIf:$check_mode
-            } else
-            {
-                Set-ItemProperty -LiteralPath $recovery_actions_key -Name $reg_key_name -Value ([byte[]]($split_processed_actions | ForEach-Object { "0x$_" })) -WhatIf:$check_mode
+            if ($LASTEXITCODE -ne 0) {
+                Fail-Json $result ("Service recovery set failed." + $cmd_output)
             }
-        } catch {
-            Fail-Json $result $_.Exception.Message
-        }
 
         $result.changed = $true
     }
@@ -536,8 +525,8 @@ Function Set-ServiceConfiguration($svc) {
         Set-ServiceState -svc $svc -wmi_svc $wmi_svc -state $state
     }
 
-    if ($null -ne $rec_actions_params.reset_period) {
-        Set-ServiceRecovery -name $svc.Name -actions $rec_actions_params
+    if ($null -ne $recovery_params) {
+        Set-ServiceRecovery -name $svc.Name -actions $recovery_params
     }
 }
 
