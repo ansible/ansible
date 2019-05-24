@@ -34,7 +34,7 @@ from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
@@ -185,7 +185,7 @@ class Display(with_metaclass(Singleton, object)):
                     lvl = color_to_log_level[color]
                 except KeyError:
                     # this should not happen, but JIC
-                    AnsibleError('Invalid color supplied to display: %s' % color)
+                    raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
             # actually log
             logger.log(lvl, msg2)
 
