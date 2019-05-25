@@ -506,21 +506,22 @@ def create_or_update_target_group(connection, module):
 
         # Do we need to modify targets?
         if module.params.get("modify_targets"):
+            # get list of current target instances. I can't see anything like a describe targets in the doco so
+            # describe_target_health seems to be the only way to get them
+            try:
+                current_targets = connection.describe_target_health(
+                    TargetGroupArn=tg['TargetGroupArn'])
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Couldn't get target group health")
+
             if module.params.get("targets"):
+
                 if module.params.get("target_type") != "lambda":
                     params['Targets'] = module.params.get("targets")
 
                     # Correct type of target ports
                     for target in params['Targets']:
                         target['Port'] = int(target.get('Port', module.params.get('port')))
-
-                    # get list of current target instances. I can't see anything like a describe targets in the doco so
-                    # describe_target_health seems to be the only way to get them
-
-                    try:
-                        current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
-                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                        module.fail_json_aws(e, msg="Couldn't get target group health")
 
                     current_instance_ids = []
 
@@ -572,41 +573,61 @@ def create_or_update_target_group(connection, module):
                 # register lambda target
                 else:
                     try:
-                        response = connection.register_targets(
-                            TargetGroupArn=tg['TargetGroupArn'],
-                            Targets=[
-                                {
-                                    'Id': module.params.get("targets")[0]
-                                }
-                            ]
-                        )
-                        changed = True
+                        changed = False
+                        target = module.params.get("targets")[0]
+                        if len(current_targets["TargetHealthDescriptions"]) == 0:
+                            changed = True
+                        else:
+                            for item in current_targets["TargetHealthDescriptions"]:
+                                if target["Id"] != item["Target"]["Id"]:
+                                    changed = True
+                                    break  # only one target is possible with lambda
+
+                        if changed:
+                            if target.get("Id"):
+                                response = connection.register_targets(
+                                    TargetGroupArn=tg['TargetGroupArn'],
+                                    Targets=[
+                                        {
+                                            "Id": target['Id']
+                                        }
+                                    ]
+                                )
+                            
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                        module.fail_json_aws(
-                            e, msg="Couldn't register targets")
+                            module.fail_json_aws(
+                                e, msg="Couldn't register targets")
             else:
-                try:
-                    current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
-                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                    module.fail_json_aws(e, msg="Couldn't get target health")
+                if module.params.get("target_type") != "lambda":
 
-                current_instances = current_targets['TargetHealthDescriptions']
+                    current_instances = current_targets['TargetHealthDescriptions']
 
-                if current_instances:
-                    instances_to_remove = []
-                    for target in current_targets['TargetHealthDescriptions']:
-                        instances_to_remove.append({'Id': target['Target']['Id'], 'Port': target['Target']['Port']})
+                    if current_instances:
+                        instances_to_remove = []
+                        for target in current_targets['TargetHealthDescriptions']:
+                            instances_to_remove.append({'Id': target['Target']['Id'], 'Port': target['Target']['Port']})
 
-                    changed = True
-                    try:
-                        connection.deregister_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_remove)
-                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                        module.fail_json_aws(e, msg="Couldn't remove targets")
+                        changed = True
+                        try:
+                            connection.deregister_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_remove)
+                        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                            module.fail_json_aws(e, msg="Couldn't remove targets")
 
-                    if module.params.get("wait"):
-                        status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
-                        if not status_achieved:
-                            module.fail_json(msg='Error waiting for target deregistration - please check the AWS console')
+                        if module.params.get("wait"):
+                            status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
+                            if not status_achieved:
+                                module.fail_json(msg='Error waiting for target deregistration - please check the AWS console')
+
+                # remove lambda targets
+                else:
+                    changed = False
+                    for item in current_targets["TargetHealthDescriptions"]:
+                        changed = True
+                        target_to_remove = item["Target"]["Id"]
+                        break  # only one target is possible with lambda
+                    if changed:
+                        connection.deregister_targets(
+                            TargetGroupArn=tg['TargetGroupArn'], Targets=[{"Id": target_to_remove}])
     else:
         try:
             connection.create_target_group(**params)
@@ -632,11 +653,12 @@ def create_or_update_target_group(connection, module):
 
             else:
                 try:
+                    target = module.params.get("targets")[0]
                     response = connection.register_targets(
                         TargetGroupArn=tg['TargetGroupArn'],
                         Targets=[
                             {
-                                'Id': module.params.get("targets")[0]
+                                "Id": target["Id"]
                             }
                         ]
                     )
@@ -755,8 +777,12 @@ def main():
         )
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec)
-#                              required_if=[['state', 'present', ['protocol', 'port', 'vpc_id']]])
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                            required_if=[
+                                  ['target_type', 'instance', ['protocol', 'port', 'vpc_id']],
+                                  ['target_type', 'ip', ['protocol', 'port', 'vpc_id']],
+                                ]
+                            )
 
     connection = module.client('elbv2')
 
