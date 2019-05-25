@@ -1,6 +1,6 @@
 ---
 - name: remove NTP (if set)
-  ios_ntp:
+  ios_ntp: &remove
     server: 10.75.32.5
     source_int: Loopback0
     acl: NTP_ACL
