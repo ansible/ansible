@@ -1,5 +1,6 @@
 ---
 - name: tear down old users if they exist (Setup)
+  become: true
   ios_user:
     aggregate:
       - name: ansibletest1
@@ -12,6 +13,7 @@
     provider: "{{ cli }}"
 
 - name: Create user (SetUp)
+  become: true
   ios_user:
     name: ansibletest1
     privilege: 15
@@ -26,6 +28,7 @@
       - 'result.commands == ["username ansibletest1 view network-operator", "username ansibletest1 privilege 15"]'
 
 - name: Collection of users (SetUp)
+  become: true
   ios_user:
     aggregate:
       - name: ansibletest2
@@ -41,6 +44,7 @@
       - 'result.commands == ["username ansibletest2 view network-admin", "username ansibletest3 view network-admin"]'
 
 - name: Add user again (Idempotent)
+  become: true
   ios_user:
     name: ansibletest1
     privilege: 15
@@ -55,6 +59,7 @@
       - 'result.commands | length == 0'
 
 - name: Add collection of users again (Idempotent)
+  become: true
   ios_user:
     aggregate:
       - name: ansibletest2
@@ -70,10 +75,12 @@
       - 'result.commands | length == 0'
 
 - name: Create user with password_type (password)
+  become: true
   ios_user:
     name: ansibleuser4
     password_type: password
     configured_password: testpass
+    provider: "{{ cli }}"
     state: present
   register: result
 
@@ -83,10 +90,12 @@
       - "'username ansibleuser4 password' in result.commands[0]"
 
 - name: Create user with password_type (secret)
+  become: true
   ios_user:
     name: ansibleuser5
     password_type: secret
     configured_password: testpass
+    provider: "{{ cli }}"
     state: present
   register: result
 
@@ -96,11 +105,13 @@
       - "'username ansibleuser5 secret' in result.commands[0]"
 
 - name: Create user with hashed_password
+  become: true
   ios_user:
     name: ansibleuser6
     hashed_password:
       type: 5
       value: $3$8JcDilcYgFZi.yz4ApaqkHG2.8/
+    provider: "{{ cli }}"
     state: present
   register: result
 
@@ -110,6 +121,7 @@
       - "'username ansibleuser6 secret' in result.commands[0]"
 
 - name: tearDown
+  become: true
   ios_user:
     aggregate:
       - name: ansibletest1
