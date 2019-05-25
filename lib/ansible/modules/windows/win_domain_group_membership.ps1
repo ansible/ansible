@@ -69,12 +69,20 @@ foreach ($member in $members) {
         }
     }
 
-    if ($state -in @("present", "pure") -and !$user_in_group) {
-        Add-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
+    if ($state -in @("present", "pure") -and !$user_in_group) {        
+        try {
+            Add-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
+        } catch {
+            Fail-Json $result "Failed to add a group $($group_member): $($_.Exception.Message)"
+        }
         $result.added.Add($group_member.SamAccountName)
         $result.changed = $true
     } elseif ($state -eq "absent" -and $user_in_group) {
-        Remove-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args -Confirm:$False
+        try {
+            Remove-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args -Confirm:$False
+        } catch {
+            Fail-Json $result "Failed to remove a group $($group_member): $($_.Exception.Message)"
+        }    
         $result.removed.Add($group_member.SamAccountName)
         $result.changed = $true
     }
@@ -94,7 +102,11 @@ if ($state -eq "pure") {
         }
 
         if ($user_to_remove) {
-            Remove-ADGroupMember -Identity $name -Members $current_member -WhatIf:$check_mode @extra_args -Confirm:$False
+            try {
+                Remove-ADGroupMember -Identity $name -Members $current_member -WhatIf:$check_mode @extra_args -Confirm:$False
+            } catch {
+                Fail-Json $result "Failed to remove a group $($group_member): $($_.Exception.Message)"
+            }
             $result.removed.Add($current_member.SamAccountName)
             $result.changed = $true
         }
