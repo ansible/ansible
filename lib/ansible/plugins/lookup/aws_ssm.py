@@ -99,7 +99,7 @@ EXAMPLES = '''
 - name: Iterate over a parameter hierarchy
   debug: msg='key contains {{item.Name}} with value {{item.Value}} '
   loop: '{{ query("aws_ssm", "/TEST/test-list", region="ap-southeast-2", bypath=true) }}'
-  
+
 # Example using STS temporary credentials
 
 ---
@@ -112,12 +112,12 @@ EXAMPLES = '''
     register: assumed_role
 
   - name: Lookup using STS credentials
-    debug: msg=" {{ lookup('aws_ssm', 'my-parameter', region='<region_name>', aws_access_key=access_key, aws_secret_key=secret_key, aws_security_token=session_token )}} "
+    debug: msg=" {{ lookup('aws_ssm', 'my-parameter', region='<region_name>', aws_access_key=access_key,
+                aws_secret_key=secret_key, aws_security_token=session_token )}} "
     vars:
         access_key: "{{ assumed_role.sts_creds.access_key }}"
         secret_key: "{{ assumed_role.sts_creds.secret_key }}"
         session_token: "{{ assumed_role.sts_creds.session_token }}"
-        
 '''
 
 from ansible.module_utils._text import to_native
