@@ -45,7 +45,7 @@ def meraki_argument_spec():
                 output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
                 timeout=dict(type='int', default=30),
                 org_name=dict(type='str', aliases=['organization']),
-                org_id=dict(type='str'),
+                org_id=dict(type='int'),
                 )
 
 
