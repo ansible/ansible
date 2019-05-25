@@ -92,6 +92,16 @@ EXAMPLES = '''
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
+- name: Add multiple repository into sources list, update cache after last
+# NOTE: ansible_loop exists since version 2.8
+  apt_repository:
+    repo: "{{ item }}"
+    update_cache: "{{ ansible_loop.last | bool }}"
+    state: present
+  loop:
+    - deb http://archive.canonical.com/ubuntu hardy partner
+    - deb-src http://archive.canonical.com/ubuntu hardy partner
+
 - name: Remove specified repository from sources list
   apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
