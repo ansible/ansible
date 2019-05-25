@@ -4,10 +4,6 @@
 # (c) 2019, Tommy Davison <tntdavison@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import os
-from ansible.module_utils.basic import AnsibleModule
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -20,7 +16,7 @@ module: ibm_manager
 
 short_description: Module that controls the state of an IBM Deployment Manager
 
-version_added: "3.0"
+version_added: "2.9"
 
 description:
     - Module that controls the state of IBM Node Deployment Manager.
@@ -73,7 +69,10 @@ message:
     description: Succesfully sent Deployment Manager into state
 
 '''
-
+import os
+from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+__metaclass__ = type
 
 def deployment_manager(module):
     """Function that controls deployment manager state.
@@ -83,11 +82,10 @@ def deployment_manager(module):
     """
 
     manager = "{0}/profiles/{1}/bin/{2}Manager.sh".format(module.params['path'],
-                                                           module.params['profile'],
-                                                           module.params['state'])
-    run_manager =  module.run_command(manager)
+    (module.params['profile'],module.params['state']))
 
-    if  run_manager[0] !=  0:
+    run_manager = module.run_command(manager)
+    if run_manager[0] != 0:
         module.fail_json(
             msg="Failed to send Deployment Manager into state {0}. \
             See stdout/stderr for details.".format(module.params['state']),
@@ -130,7 +128,6 @@ def check_service(module):
                 )
             deployment_manager(module)
 
-
     if module.params['state'] == 'stop':
         if not os.path.exists(dmgr_pid):
             if module.check_mode:
@@ -153,7 +150,7 @@ def check_service(module):
 
 def main():
     """
-	Main Module logic.
+    Main Module logic.
     Imports sub functions to determine state status.
     """
 
@@ -163,15 +160,15 @@ def main():
             profile=dict(type='str', required=True),
             path=dict(type='str', required=True)
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     state = module.params['state']
     profile = module.params['profile']
     path = module.params['path']
 
-    #check_service function calls in deployment_manager function
-    #Function also takes care of the dry run checks
+# check_service function calls in deployment_manager function
+# Function also takes care of the dry run checks
     check_service(module)
 
 
