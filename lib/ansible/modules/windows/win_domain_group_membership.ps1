@@ -69,7 +69,7 @@ foreach ($member in $members) {
         }
     }
 
-    if ($state -in @("present", "pure") -and !$user_in_group) {       
+    if ($state -in @("present", "pure") -and !$user_in_group) {
         try {
             Add-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
         } catch {
