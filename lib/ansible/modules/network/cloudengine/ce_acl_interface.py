@@ -122,7 +122,7 @@ updates:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, exec_command
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -169,11 +169,18 @@ class AclInterface(object):
                         msg='Error: The len of acl_name is out of [1 - 32].')
 
         if self.interface:
-            regular = "| ignore-case section include ^interface %s$" % self.interface
-            result = self.cli_get_config(regular)
-            if not result:
-                self.module.fail_json(
-                    msg='Error: The interface %s is not in the device.' % self.interface)
+            cmd = "display current-configuration | ignore-case section include ^interface %s$" % self.interface
+            rc, out, err = exec_command(self.module, cmd)
+            if rc != 0:
+                self.module.fail_json(msg=err)
+            result = str(out).strip()
+            if result:
+                tmp = result.split('\n')
+                if "display" in tmp[0]:
+                    tmp.pop(0)
+                if not tmp:
+                    self.module.fail_json(
+                        msg='Error: The interface %s is not in the device.' % self.interface)
 
     def get_proposed(self):
         """ Get proposed config """
@@ -192,28 +199,36 @@ class AclInterface(object):
     def get_existing(self):
         """ Get existing config """
 
-        regular = "| ignore-case section include ^interface %s$ | include traffic-filter" % self.interface
-        result = self.cli_get_config(regular)
-
+        cmd = "display current-configuration | ignore-case section include ^interface %s$ | include traffic-filter" % self.interface
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        result = str(out).strip()
         end = []
         if result:
             tmp = result.split('\n')
+            if "display" in tmp[0]:
+                tmp.pop(0)
             for item in tmp:
-                end.append(item)
+                end.append(item.strip())
             self.cur_cfg["acl interface"] = end
             self.existing["acl interface"] = end
 
     def get_end_state(self):
         """ Get config end state """
 
-        regular = "| ignore-case section include ^interface %s$ | include traffic-filter" % self.interface
-        result = self.cli_get_config(regular)
+        cmd = "display current-configuration | ignore-case section include ^interface %s$ | include traffic-filter" % self.interface
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        result = str(out).strip()
         end = []
         if result:
             tmp = result.split('\n')
+            if "display" in tmp[0]:
+                tmp.pop(0)
             for item in tmp:
-                item = item[1:-1]
-                end.append(item)
+                end.append(item.strip())
             self.end_state["acl interface"] = end
 
     def cli_load_config(self, commands):
@@ -221,15 +236,6 @@ class AclInterface(object):
 
         if not self.module.check_mode:
             load_config(self.module, commands)
-
-    def cli_get_config(self, regular):
-        """ Cli method to get config """
-
-        flags = list()
-        flags.append(regular)
-        tmp_cfg = get_config(self.module, flags)
-
-        return tmp_cfg
 
     def work(self):
         """ Work function """
