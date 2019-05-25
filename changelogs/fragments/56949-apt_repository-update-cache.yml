@@ -1,0 +1,2 @@
+bugfixes:
+  - apt_repository - Fixed FetchFailedException traceback and make updating cache more reliable.
