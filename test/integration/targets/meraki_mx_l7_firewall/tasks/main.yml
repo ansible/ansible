@@ -4,37 +4,37 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - block:
-  # - name: Test an API key is provided
-  #   fail:
-  #     msg: Please define an API key
-  #   when: auth_key is not defined
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
     
-  # - name: Use an invalid domain
-  #   meraki_organization:
-  #     auth_key: '{{ auth_key }}'
-  #     host: marrrraki.com
-  #     state: present
-  #     org_name: IntTestOrg
-  #     output_level: debug
-  #   delegate_to: localhost
-  #   register: invalid_domain
-  #   ignore_errors: yes
+  - name: Use an invalid domain
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      host: marrrraki.com
+      state: present
+      org_name: IntTestOrg
+      output_level: debug
+    delegate_to: localhost
+    register: invalid_domain
+    ignore_errors: yes
     
-  # - name: Disable HTTP
-  #   meraki_organization:
-  #     auth_key: '{{ auth_key }}'
-  #     use_https: false
-  #     state: query
-  #     output_level: debug
-  #   delegate_to: localhost
-  #   register: http
-  #   ignore_errors: yes
+  - name: Disable HTTP
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      use_https: false
+      state: query
+      output_level: debug
+    delegate_to: localhost
+    register: http
+    ignore_errors: yes
 
-  # - name: Connection assertions
-  #   assert:
-  #     that:
-  #       - '"Failed to connect to" in invalid_domain.msg'
-  #       - '"http" in http.url'
+  - name: Connection assertions
+    assert:
+      that:
+        - '"Failed to connect to" in invalid_domain.msg'
+        - '"http" in http.url'
 
   - name: Create network
     meraki_network:
@@ -131,7 +131,6 @@
     register: create_ip_range_idempotent_check
     check_mode: yes
 
-
   - assert:
       that:
         - create_ip_range_idempotent_check is not changed
@@ -161,7 +160,7 @@
       rules:
         - type: application
           application:
-            name: facebOOk
+            name: facebook
     delegate_to: localhost
     register: application_rule
 
@@ -210,9 +209,12 @@
       rules:
         - type: application_category
           application:
-            id: meraki:layer7/category/24
+            name: Advertising
     delegate_to: localhost
     register: application_category_rule
+
+  - debug:
+      var: application_category_rule
 
   - assert:
       that:
@@ -227,7 +229,7 @@
       rules:
         - type: application_category
           application:
-            id: meraki:layer7/application/205
+            id: meraki:layer7/category/27
     delegate_to: localhost
     register: application_category_rule_id
 
@@ -330,3 +332,11 @@
       that:
         - multiple_rules.data.rules | length == 3
         - multiple_rules is changed
+  always:
+  - name: Create network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: absent
+    delegate_to: localhost

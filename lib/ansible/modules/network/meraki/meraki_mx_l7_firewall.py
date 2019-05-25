@@ -190,7 +190,7 @@ data:
                     returned: success
                     type: string
                     sample: 80
-        applicationCategories:
+        application_categories:
             description: List of application categories and applications.
             type: list
             returned: success, when querying applications
@@ -225,6 +225,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -354,7 +355,7 @@ def main():
                 meraki.fail_json(msg="host argument is required when type is host.")
             elif rule['type'] == 'port' and rule['port'] is None:
                 meraki.fail_json(msg="port argument is required when type is port.")
-            elif rule['whitelisted_countries'] == 'port' and rule['countries'] is None:
+            elif rule['type'] == 'whitelisted_countries' and rule['countries'] is None:
                 meraki.fail_json(msg="countries argument is required when type is whitelisted_countries.")
 
     meraki.params['follow_redirects'] = 'all'
@@ -401,11 +402,19 @@ def main():
             payload = dict()
         if meraki.is_update_required(rules, payload):
             if meraki.module.check_mode is True:
+                diff = recursive_diff(rules, payload)
+                meraki.result['diff'] = {'before': diff[0],
+                                         'after': diff[1],
+                                         }
                 meraki.result['data'] = payload
                 meraki.result['changed'] = False
                 meraki.exit_json(**meraki.result)
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
+                diff = recursive_diff(rules, payload)
+                meraki.result['diff'] = {'before': diff[0],
+                                         'after': diff[1],
+                                         }
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
         else:
