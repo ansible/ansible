@@ -4,6 +4,7 @@ junit-xml
 paramiko
 pyyaml
 pexpect # for _user test
+scp # for Cisco ios
 selectors2 # for ncclient
 ncclient # for Junos
 jxmlease # for Junos
