@@ -61,12 +61,16 @@ options:
       default for an ascending sequence is 1. The default for a descending
       sequence is the minimum value of the data type.
     type: int
+    aliases:
+      - min
   maxvalue:
     description:
     - Maxvalue determines the maximum value for the sequence. The default for
       an ascending sequence is the maximum
       value of the data type. The default for a descending sequence is -1.
     type: int
+    aliases:
+      - max
   start:
     description:
     - Start allows the sequence to begin anywhere. The default starting value
@@ -94,7 +98,8 @@ options:
     description:
     - Automatically drop objects that depend on the sequence, and in turn all
       objects that depend on those objects.
-    - Only used when I(state=absent).
+    - Ignored if I(state=present).
+    - Only used with I(state=absent).
     type: bool
   rename_to:
     description:
@@ -487,8 +492,8 @@ def main():
         state=dict(type='str', default="present", choices=["absent", "present"]),
         data_type=dict(type='str', choices=['bigint', 'integer', 'smallint']),
         increment=dict(type='int'),
-        minvalue=dict(type='int'),
-        maxvalue=dict(type='int'),
+        minvalue=dict(type='int', aliases=['min']),
+        maxvalue=dict(type='int', aliases=['max']),
         start=dict(type='int'),
         cache=dict(type='int'),
         cycle=dict(type='bool'),
