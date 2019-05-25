@@ -1,2 +1,0 @@
-minor_changes:
-  - "Update java_cert module to change `state: present` to check certificates by hash, not just alias name (https://github.com/ansible/ansible/issues/43249)"

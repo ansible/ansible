@@ -1,3 +1,13 @@
 ---
 test_pkcs12_path: testpkcs.p12
 test_keystore_path: keystore.jks
+test_keystore2_path: "{{ output_dir }}/keystore2.jks"
+test_keystore2_password: changeit
+test_cert_path: "{{ output_dir }}/cert.pem"
+test_key_path: "{{ output_dir }}/key.pem"
+test_cert2_path: "{{ output_dir }}/cert2.pem"
+test_key2_path: "{{ output_dir }}/key2.pem"
+test_pkcs_path: "{{ output_dir }}/cert.p12"
+test_pkcs2_path: "{{ output_dir }}/cert2.p12"
+test_ssl: setupSSLServer.py
+test_ssl_port: 21500

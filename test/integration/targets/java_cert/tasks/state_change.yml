@@ -1,0 +1,167 @@
+---
+- name: Generate the self signed cert used as a place holder to create the java keystore
+  command: openssl req -x509 -newkey rsa:4096 -keyout {{ test_key_path }} -out {{ test_cert_path }} -days 365 -nodes -subj '/CN=localhost'
+  args:
+    creates: "{{ test_key_path }}"
+
+- name: Create the test keystore
+  java_keystore:
+    name: placeholder
+    dest: "{{ test_keystore2_path }}"
+    password: "{{ test_keystore2_password }}"
+    private_key: "{{ lookup('file', '{{ test_key_path }}') }}"
+    certificate: "{{ lookup('file', '{{ test_cert_path }}') }}"
+
+- name: Generate the self signed cert we will use for testing
+  command: openssl req -x509 -newkey rsa:4096 -keyout '{{ test_key2_path }}' -out '{{ test_cert2_path }}' -days 365 -nodes -subj '/CN=localhost'
+  args:
+    creates: "{{ test_key2_path }}"
+
+- name: |
+    Import the newly created certificate. This is our main test.
+    If the java_cert has been updated properly, then this task will report changed each time
+    since the module will be comparing the hash of the certificate instead of validating that the alias
+    simply exists
+  java_cert:
+    cert_alias: test_cert
+    cert_path: "{{ test_cert2_path }}"
+    keystore_path: "{{ test_keystore2_path }}"
+    keystore_pass: "{{ test_keystore2_password }}"
+    state: present
+  register: result_x509_changed
+
+- name: Verify the x509 status has changed
+  assert:
+    that:
+      - result_x509_changed is changed
+
+- name: |
+    We also want to make sure that the status doesnt change if we import the same cert
+  java_cert:
+    cert_alias: test_cert
+    cert_path: "{{ test_cert2_path }}"
+    keystore_path: "{{ test_keystore2_path }}"
+    keystore_pass: "{{ test_keystore2_password }}"
+    state: present
+  register: result_x509_succeeded
+
+- name: Verify the x509 status is ok
+  assert:
+    that:
+      - result_x509_succeeded is succeeded
+
+- name: Create the pkcs12 archive from the test x509 cert
+  command: >
+    openssl pkcs12
+    -in {{ test_cert_path }}
+    -inkey {{ test_key_path }}
+    -export
+    -name test_pkcs12_cert
+    -out {{ test_pkcs_path }}
+    -passout pass:"{{ test_keystore2_password }}"
+
+- name: Create the pkcs12 archive from the certificate we will be trying to add to the keystore
+  command: >
+    openssl pkcs12
+    -in {{ test_cert2_path }}
+    -inkey {{ test_key2_path }}
+    -export
+    -name test_pkcs12_cert
+    -out {{ test_pkcs2_path }}
+    -passout pass:"{{ test_keystore2_password }}"
+
+- name: >
+    Ensure the original pkcs12 cert is in the keystore
+  java_cert:
+    cert_alias: test_pkcs12_cert
+    pkcs12_alias: test_pkcs12_cert
+    pkcs12_path: "{{ test_pkcs_path }}"
+    pkcs12_password: "{{ test_keystore2_password }}"
+    keystore_path: "{{ test_keystore2_path }}"
+    keystore_pass: "{{ test_keystore2_password }}"
+    state: present
+
+- name: |
+    Perform the same test, but we will now be testing the pkcs12 functionality
+    If we add a different pkcs12 cert with the same alias, we should have a chnaged result, NOT the same
+  java_cert:
+    cert_alias: test_pkcs12_cert
+    pkcs12_alias: test_pkcs12_cert
+    pkcs12_path: "{{ test_pkcs2_path }}"
+    pkcs12_password: "{{ test_keystore2_password }}"
+    keystore_path: "{{ test_keystore2_path }}"
+    keystore_pass: "{{ test_keystore2_password }}"
+    state: present
+  register: result_pkcs12_changed
+
+- name: Verify the pkcs12 status has changed
+  assert:
+    that:
+      - result_pkcs12_changed is changed
+
+- name: |
+    We are requesting the same cert now, so the status should show OK
+  java_cert:
+    cert_alias: test_pkcs12_cert
+    pkcs12_alias: test_pkcs12_cert
+    pkcs12_path: "{{ test_pkcs2_path }}"
+    pkcs12_password: "{{ test_keystore2_password }}"
+    keystore_path: "{{ test_keystore2_path }}"
+    keystore_pass: "{{ test_keystore2_password }}"
+  register: result_pkcs12_succeeded
+
+- name: Verify the pkcs12 status is ok
+  assert:
+    that:
+      - result_pkcs12_succeeded is succeeded
+
+- name: Copy the ssl server script
+  copy: src="setupSSLServer.py" dest="{{output_dir}}"
+
+- name: Create an SSL server that we will use for testing URL imports
+  command: python {{ output_dir }}/setupSSLServer.py {{ output_dir }} {{ test_ssl_port }}
+  async: 5
+  poll: 0
+
+- name: |
+    Download the original cert.pem from our temporary server. The current cert should contain
+     cert2.pem. Importing this cert should return a status of changed
+  java_cert:
+    cert_alias: test_cert
+    cert_url: google.com
+    cert_port: 443
+    keystore_path: "{{ test_keystore2_path }}"
+    keystore_pass: "{{ test_keystore2_password }}"
+    state: present
+  register: result_url_changed
+
+- name: Verify that the url status is changed
+  assert:
+    that:
+      - result_url_changed is changed
+
+- name: Ensure we can remove the x509 cert
+  java_cert:
+    cert_alias: test_cert
+    keystore_path: "{{ test_keystore2_path }}"
+    keystore_pass: "{{ test_keystore2_password }}"
+    state: absent
+  register: result_x509_absent
+
+- name: Verify the x509 cert is absent
+  assert:
+    that:
+      - result_x509_absent is changed
+
+- name: Ensure we can remove the pkcs12 archive
+  java_cert:
+    cert_alias: test_pkcs12_cert
+    keystore_path: "{{ test_keystore2_path }}"
+    keystore_pass: "{{ test_keystore2_password }}"
+    state: absent
+  register: result_pkcs12_absent
+
+- name: Verify the pkcs12 archive is absent
+  assert:
+    that:
+      - result_pkcs12_absent is changed
