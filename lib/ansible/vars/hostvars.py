@@ -19,6 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2.runtime import Undefined
+
+from ansible import constants as C
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.template import Templar, AnsibleUndefined
 
@@ -48,33 +51,44 @@ __all__ = ['HostVars', 'HostVarsVars']
 class HostVars(Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, inventory, variable_manager, loader):
-        self._inventory = inventory
-        self._loader = loader
+    def __init__(self, variable_manager):
+        self._lookup = dict()
+        self._inventory = variable_manager._inventory
+        self._loader = variable_manager._loader
         self._variable_manager = variable_manager
-        variable_manager._hostvars = self
 
-    def set_variable_manager(self, variable_manager):
-        self._variable_manager = variable_manager
+        # cause we want xross refed objects!
         variable_manager._hostvars = self
-
-    def set_inventory(self, inventory):
-        self._inventory = inventory
 
     def _find_host(self, host_name):
-        # does not use inventory.hosts so it can create localhost on demand
-        return self._inventory.get_host(host_name)
 
-    def raw_get(self, host_name):
+        if host_name not in self._lookup:
+            host = self._inventory.hosts.get(host_name, None)
+            if host is None and host_name in C.LOCALHOST:
+                # it can create localhost on demand
+                host = self._inventory.get_host(host_name)
+
+            self._lookup[host_name] = host
+
+        return self._lookup[host_name]
+
+    def _raw_get(self, host_name):
         '''
         Similar to __getitem__, however the returned data is not run through
         the templating engine to expand variables in the hostvars.
         '''
+        data = None
         host = self._find_host(host_name)
-        if host is None:
-            return AnsibleUndefined(name="hostvars['%s']" % host_name)
 
-        return self._variable_manager.get_vars(host=host, include_hostvars=False)
+        if host is None:
+            data = AnsibleUndefined(name="hostvars['%s']" % host_name)
+        else:
+            data = self._variable_manager.get_vars(host=host, include_hostvars=False)
+
+        return data
+
+    def __setitem__(self, host_name, host_obj):
+        self._lookup[host_name] = host_obj
 
     def __setstate__(self, state):
         self.__dict__.update(state)
@@ -91,17 +105,25 @@ class HostVars(Mapping):
 
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)
-        if isinstance(data, AnsibleUndefined):
-            return data
-        return HostVarsVars(data, loader=self._loader)
+        if data is None or isinstance(data, AnsibleUndefined):
+            data = Undefined(name="hostvars['%s']" % host_name)
+        else:
+            data = HostVarsVars(data, loader=self._loader)
+        return data
 
     def set_host_variable(self, host, varname, value):
+        if self._find_host(host.name) is None:
+            self._lookup[host.name] = host
         self._variable_manager.set_host_variable(host, varname, value)
 
     def set_nonpersistent_facts(self, host, facts):
+        if self._find_host(host.name) is None:
+            self._lookup[host.name] = host
         self._variable_manager.set_nonpersistent_facts(host, facts)
 
     def set_host_facts(self, host, facts):
+        if self._find_host(host.name) is None:
+            self._lookup[host.name] = host
         self._variable_manager.set_host_facts(host, facts)
 
     def __contains__(self, host_name):
@@ -131,13 +153,15 @@ class HostVars(Mapping):
 class HostVarsVars(Mapping):
 
     def __init__(self, variables, loader):
+        self._templated = {}
         self._vars = variables
         self._loader = loader
+        self._templar = Templar(variables=self._vars, loader=self._loader)
 
     def __getitem__(self, var):
-        templar = Templar(variables=self._vars, loader=self._loader)
-        foo = templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
-        return foo
+        if var not in self._templated:
+            self._templated[var] = self._templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
+        return self._templated[var]
 
     def __contains__(self, var):
         return (var in self._vars)
