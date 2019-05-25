@@ -114,6 +114,42 @@
       - result.rowcount == 1
 
 ####################
+# Test: drop sequence in checkmode
+- name: postgresql_sequence - drop a sequence called foobar
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: foobar
+    state: absent
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'foobar'
+      - result.queries == ["DROP SEQUENCE \"foobar\""]
+
+# Real SQL check
+- name: postgresql_sequence - check that the seqeunce "foobar" still exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'foobar'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 1
+
+####################
 # Test: drop sequence
 - name: postgresql_sequence - drop a sequence called foobar
   become_user: "{{ pg_user }}"
@@ -190,6 +226,43 @@
       - result.rowcount == 1
 
 ####################
+# Test: rename a sequence in checkmode
+- name: postgresql_sequence - rename an existing sequence named foobar_desc to foobar_with_options
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: foobar_desc
+    rename_to: foobar_with_options
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'foobar_desc'
+      - result.newname == 'foobar_with_options'
+      - result.queries == ["ALTER SEQUENCE \"foobar_desc\" RENAME TO \"foobar_with_options\""]
+
+# Real SQL check
+- name: postgresql_sequence - check that the seqeunce "foobar_desc" still exists and is not renamed
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'foobar_desc'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 1
+
+####################
 # Test: rename a sequence
 - name: postgresql_sequence - rename an existing sequence named foobar_desc to foobar_with_options
   become_user: "{{ pg_user }}"
@@ -218,6 +291,44 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
     query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'foobar_with_options'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 1
+
+####################
+# Test: change schema of a sequence in checkmode
+- name: postgresql_sequence - change schema of an existing sequence from public to foobar_schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: foobar_with_options
+    newschema: foobar_schema
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'foobar_with_options'
+      - result.schema == 'public'
+      - result.newschema == 'foobar_schema'
+      - result.queries == ["ALTER SEQUENCE \"foobar_with_options\" SET SCHEMA \"foobar_schema\""]
+
+# Real SQL check
+- name: postgresql_sequence - check that the seqeunce "foobar_with_options" still exists in the old schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT sequence_name,sequence_schema FROM information_schema.sequences WHERE sequence_name = 'foobar_with_options' AND sequence_schema = 'public'"
   register: result
 
 - name: postgresql_sequence - check with assert the output
@@ -262,6 +373,50 @@
     that:
       - result.rowcount == 1
 
+####################
+# Test: change owner of a sequence in checkmode
+- name: postgresql_sequence - change owner of an existing sequence from "{{ pg_user }}" to "{{ db_user1 }}"
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: foobar_with_options
+    schema: foobar_schema
+    owner: "{{ db_user1 }}"
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'foobar_with_options'
+      - result.owner == "{{ pg_user }}"
+      - result.queries == ["ALTER SEQUENCE \"foobar_schema\".\"foobar_with_options\" OWNER TO \"{{ db_user1 }}\""]
+
+# Real SQL check
+- name: postgresql_sequence - check that the seqeunce "foobar_with_options" has still the old owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT c.relname,a.rolname,n.nspname
+            FROM pg_class as c
+            JOIN pg_authid as a on (c.relowner = a.oid)
+            JOIN pg_namespace as n on (c.relnamespace = n.oid)
+            WHERE c.relkind = 'S' and
+            c.relname = 'foobar_with_options' and
+            n.nspname = 'foobar_schema' and
+            a.rolname = '{{ pg_user }}'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 1
 
 ####################
 # Test: change owner of a sequence
@@ -331,6 +486,45 @@
     columns:
     - f1 INT NOT NULL DEFAULT nextval('seq1')
 
+####################
+# Test: drop seqeunce with cascade in checkmode
+- name: postgresql_sequence - drop with cascade a sequence called seq1
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: seq1
+    state: absent
+    cascade: yes
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'seq1'
+      - result.queries == ["DROP SEQUENCE \"seq1\" CASCADE"]
+
+# Real SQL check
+- name: postgresql_sequence - check that the seqeunce "seq1" still exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'seq1'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 1
+
+####################
+# Test: drop seqeunce with cascade
 - name: postgresql_sequence - drop with cascade a sequence called seq1
   become_user: "{{ pg_user }}"
   become: yes
