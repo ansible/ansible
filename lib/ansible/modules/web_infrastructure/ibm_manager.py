@@ -64,14 +64,10 @@ EXAMPLES = '''
 '''
 
 
-RETURN = '''
-result:
-    description: Descibes changed state or failed state
-    type: str
-message:
-    description: Succesfully sent Deployment Manager into state
-
+RETURN = r'''
+#
 '''
+
 import os
 from ansible.module_utils.basic import AnsibleModule
 
