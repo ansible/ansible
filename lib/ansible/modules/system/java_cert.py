@@ -171,7 +171,7 @@ from ansible.module_utils.crypto import load_certificate
 try:
     from urlparse import urlparse
     from urllib import getproxies
-except ModuleNotFoundError:
+except ImportError:
     from urllib.parse import urlparse
     from urllib.request import getproxies
 
