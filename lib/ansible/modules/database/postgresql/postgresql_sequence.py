@@ -128,64 +128,13 @@ options:
     aliases:
     - database
     - login_db
-  port:
-    description:
-    - Database port to connect.
-    default: 5432
-    type: int
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    default: postgres
-    type: str
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-    type: str
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s).
-    - If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    aliases: [ ssl_rootcert ]
 notes:
 - If you do not pass db parameter, sequence will be created in the database
   named postgres.
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
 requirements: [ psycopg2 ]
 author:
 - Tobias Birkefeld (@tcraxs)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
