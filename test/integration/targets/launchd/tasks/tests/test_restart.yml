@@ -3,14 +3,19 @@
 # -----------------------------------------------------------
 
 - name: "[{{ item }}] Given a started service..."
-  include_tasks: actions/start_service.yml
-  vars:
-    action_prefix: test_1
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: started
+  become: yes
+  register: "test_1_launchd_start_result"
+
 
 - name: "[{{ item }}] When restarting the service..."
-  include_tasks: actions/restart_service.yml
-  vars:
-    action_prefix: test_1
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: restarted
+  become: yes
+  register: "test_1_launchd_restart_result"
 
 - name: "[{{ item }}] Validate that service was restarted"
   assert:

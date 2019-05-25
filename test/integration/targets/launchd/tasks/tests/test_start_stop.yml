@@ -3,9 +3,12 @@
 # -----------------------------------------------------------
 
 - name: "[{{ item }}] Given a started service..."
-  include_tasks: actions/start_service.yml
-  vars:
-    action_prefix: test_1
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: started
+  become: yes
+  register: "test_1_launchd_start_result"
+
 
 - name: "[{{ item }}] Validate that service was started"
   assert:
@@ -21,9 +24,11 @@
 # -----------------------------------------------------------
 
 - name: "[{{ item }}] Given a stopped service..."
-  include_tasks: actions/stop_service.yml
-  vars:
-    action_prefix: test_2
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: stopped
+  become: yes
+  register: "test_2_launchd_stop_result"
 
 - name: "[{{ item }}] Validate that service was stopped after it was started"
   assert:
@@ -38,9 +43,11 @@
 # -----------------------------------------------------------
 
 - name: "[{{ item }}] Given a stopped service..."
-  include_tasks: actions/stop_service.yml
-  vars:
-    action_prefix: test_3
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: stopped
+  become: yes
+  register: "test_3_launchd_stop_result"
 
 - name: "[{{ item }}] Validate that service can be stopped after being already stopped"
   assert:
@@ -55,9 +62,11 @@
 # -----------------------------------------------------------
 
 - name: "[{{ item }}] Given a started service..."
-  include_tasks: actions/start_service.yml
-  vars:
-     action_prefix: test_4
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: started
+  become: yes
+  register: "test_4_launchd_start_result"
 
 - name: "[{{ item }}] Validate that service was started..."
   assert:
@@ -71,9 +80,11 @@
       - test_4_launchd_start_result.status.status_code == '0'
 
 - name: "[{{ item }}] And when service is started again..."
-  include_tasks: actions/start_service.yml
-  vars:
-     action_prefix: test_5
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: started
+  become: yes
+  register: "test_5_launchd_start_result"
 
 - name: "[{{ item }}] Validate that service is still in the same state as before"
   assert:

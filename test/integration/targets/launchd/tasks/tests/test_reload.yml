@@ -3,9 +3,12 @@
 # -----------------------------------------------------------
 
 - name: "[{{ item }}] Given a started service..."
-  include_tasks: actions/start_service.yml
-  vars:
-    - action_prefix: test_1
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: started
+  become: yes
+  register: "test_1_launchd_start_result"
+
 
 - name: "[{{ item }}] The started service should run on port 21212"
   wait_for:
@@ -20,9 +23,11 @@
   become: yes
 
 - name: "[{{ item }}] When reloading the service..."
-  include_tasks: actions/reload_service.yml
-  vars:
-    - action_prefix: test_1
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: reloaded
+  become: yes
+  register: "test_1_launchd_reload_result"
 
 - name: "[{{ item }}] Validate that service was reloaded"
   assert:
@@ -35,7 +40,12 @@
       - test_1_launchd_reload_result.status.current_pid == '-'
 
 - name: "[{{ item }}] Start the service with the new configuration..."
-  include_tasks: actions/start_service.yml
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: started
+  become: yes
+  register: "test_1_launchd_start_result"
+
 
 - name: "[{{ item }}] The started service should run on port 21212"
   wait_for:

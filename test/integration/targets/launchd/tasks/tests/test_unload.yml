@@ -3,14 +3,18 @@
 # -----------------------------------------------------------
 
 - name: "[{{ item }}] Given a started service..."
-  include_tasks: actions/start_service.yml
-  vars:
-    action_prefix: test_1
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: started
+  become: yes
+  register: "test_1_launchd_start_result"
 
 - name: "[{{ item }}] When unloading the service..."
-  include_tasks: actions/unload_service.yml
-  vars:
-    action_prefix: test_1
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: unloaded
+  become: yes
+  register: "test_1_launchd_unloaded_result"
 
 - name: "[{{ item }}] Validate that service was unloaded"
   assert:
@@ -25,16 +29,18 @@
 # -----------------------------------------------------------
 
 - name: "[{{ item }}] Given an unloaded service on an unloaded service..."
-  include_tasks: actions/unload_service.yml
-  vars:
-    action_prefix: test_1
+  launchd:
+    name: "{{ launchd_service_name }}"
+    state: unloaded
+  become: yes
+  register: "test_2_launchd_unloaded_result"
 
 - name: "[{{ item }}] Validate that service did not change and is still unloaded"
   assert:
     that:
-      - test_1_launchd_unloaded_result is success
-      - not test_1_launchd_unloaded_result.changed
-      - test_1_launchd_unloaded_result.status.previous_pid == '-'
-      - test_1_launchd_unloaded_result.status.previous_state == 'unloaded'
-      - test_1_launchd_unloaded_result.status.current_state == 'unloaded'
-      - test_1_launchd_unloaded_result.status.current_pid == '-'
+      - test_2_launchd_unloaded_result is success
+      - not test_2_launchd_unloaded_result.changed
+      - test_2_launchd_unloaded_result.status.previous_pid == '-'
+      - test_2_launchd_unloaded_result.status.previous_state == 'unloaded'
+      - test_2_launchd_unloaded_result.status.current_state == 'unloaded'
+      - test_2_launchd_unloaded_result.status.current_pid == '-'
