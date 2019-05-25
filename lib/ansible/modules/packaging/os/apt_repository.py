@@ -28,38 +28,43 @@ options:
         description:
             - A source string for the repository.
         required: true
+        type: str
     state:
         description:
             - A source string state.
         choices: [ absent, present ]
-        default: "present"
+        default: present
+        type: str
     mode:
         description:
             - The octal mode for newly created files in sources.list.d
         default: '0644'
+        type: raw
         version_added: "1.6"
     update_cache:
         description:
-            - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
+            - Run the equivalent of C(apt-get update) when a change occurs. Cache updates are run after making changes.
         type: bool
-        default: "yes"
+        default: yes
     validate_certs:
         description:
             - If C(no), SSL certificates for the target repo will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
+        default: yes
         type: bool
-        default: 'yes'
         version_added: '1.8'
     filename:
         description:
             - Sets the name of the source list file in sources.list.d.
               Defaults to a file name based on the repository source url.
               The .list extension will be automatically added.
+        type: str
         version_added: '2.1'
     codename:
         description:
             - Override the distribution codename to use for PPA repositories.
               Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
+        type: str
         version_added: '2.3'
 author:
 - Alexander Saltanov (@sashka)
@@ -70,36 +75,51 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Add specified repository into sources list.
-- apt_repository:
+---
+- name: Add specified repository into sources list
+  apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: present
 
-# Add specified repository into sources list using specified filename.
-- apt_repository:
+- name: Add specified repository into sources list using specified filename
+  apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
 
-# Add source repository into sources list.
-- apt_repository:
+- name: Add source repository into sources list.
+  apt_repository:
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
-# Remove specified repository from sources list.
-- apt_repository:
+- name: Remove specified repository from sources list
+  apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: absent
 
-# Add nginx stable repository from PPA and install its signing key.
 # On Ubuntu target:
-- apt_repository:
+- name: Add nginx stable repository from PPA and install its signing key
+  apt_repository:
     repo: ppa:nginx/stable
 
 # On Debian target
-- apt_repository:
-    repo: 'ppa:nginx/stable'
+- name: Add nginx stable repository from PPA and install its signing key
+  apt_repository:
+    repo: ppa:nginx/stable
     codename: trusty
+'''
+
+RETURN = '''
+---
+repo:
+  description: The source repo
+  returned: if only one repo given
+  type: str
+state:
+  description: State of the source repos
+  returned: success
+  type: str
+  sample: present
 '''
 
 import glob
@@ -508,7 +528,7 @@ def main():
             module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
 
     if not repo:
-        module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
+        module.fail_json(msg="Please set argument 'repo' to a non-empty value")
 
     if isinstance(distro, aptsources_distro.Distribution):
         sourceslist = UbuntuSourcesList(module, add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
