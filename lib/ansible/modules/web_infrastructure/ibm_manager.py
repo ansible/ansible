@@ -83,7 +83,7 @@ def deployment_manager(module):
     service are not done in this module, but rather done in main function.
     """
 
-    manager = "{0}/profiles/{1}/bin/{2}Manager.sh".format(module.params['path'],module.params['profile'], module.params['state'])
+    manager = "{0}/profiles/{1}/bin/{2}Manager.sh".format(module.params['path'], module.params['profile'], module.params['state'])
 
     run_manager = module.run_command(manager)
     if run_manager[0] != 0:
