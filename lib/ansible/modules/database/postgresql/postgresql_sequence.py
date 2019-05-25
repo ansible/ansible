@@ -623,7 +623,7 @@ def main():
     # Drop non-existing sequence
     elif not sequence_obj.exists and state == 'absent':
         # Nothing to do
-        module.fail_json(msg="Tries to drop nonexistent sequence '%s'" % sequence)
+        module.warn(warning="Tries to drop nonexistent sequence '%s'" % sequence)
 
     # Drop existing sequence
     elif sequence_obj.exists and state == 'absent':
