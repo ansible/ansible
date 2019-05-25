@@ -583,9 +583,27 @@ class OpenSUSEHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class OpenSUSELeapHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Opensuse-leap'
+    strategy_class = SystemdStrategy
+
+
 class ArchHostname(Hostname):
     platform = 'Linux'
     distribution = 'Arch'
+    strategy_class = SystemdStrategy
+
+
+class CoreOS(Hostname):
+    platform = 'Linux'
+    distribution = 'Coreos'
+    strategy_class = SystemdStrategy
+
+
+class ClearLinux(Hostname):
+    platform = 'Linux'
+    distribution = 'Clear-linux-os'
     strategy_class = SystemdStrategy
 
 
