@@ -69,7 +69,7 @@ foreach ($member in $members) {
         }
     }
 
-    if ($state -in @("present", "pure") -and !$user_in_group) {        
+    if ($state -in @("present", "pure") -and !$user_in_group) {       
         try {
             Add-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
         } catch {
@@ -82,7 +82,7 @@ foreach ($member in $members) {
             Remove-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args -Confirm:$False
         } catch {
             Fail-Json $result "Failed to remove a group $($group_member): $($_.Exception.Message)"
-        }    
+        }
         $result.removed.Add($group_member.SamAccountName)
         $result.changed = $true
     }
