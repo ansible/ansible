@@ -4,6 +4,9 @@
 # (c) 2019, Tommy Davison <tntdavison@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -70,9 +73,8 @@ message:
 
 '''
 import os
-from __future__ import absolute_import, division, print_function
 from ansible.module_utils.basic import AnsibleModule
-__metaclass__ = type
+
 
 def deployment_manager(module):
     """Function that controls deployment manager state.
@@ -82,7 +84,7 @@ def deployment_manager(module):
     """
 
     manager = "{0}/profiles/{1}/bin/{2}Manager.sh".format(module.params['path'],
-    (module.params['profile'],module.params['state']))
+    module.params['profile'], module.params['state'])
 
     run_manager = module.run_command(manager)
     if run_manager[0] != 0:
