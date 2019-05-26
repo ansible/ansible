@@ -267,7 +267,7 @@
 - name: assert that the absent check lists expected files and folders
   assert:
     that:
-      - folder_absent_result.path_content is defined
+      - folder_absent_result.diff.before.path_content is defined
 
 - name: Change ownership of a directory with recurse=no(default)
   file: path={{output_dir}}/foobar owner=1234
