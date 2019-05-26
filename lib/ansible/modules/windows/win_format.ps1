@@ -108,7 +108,8 @@ function Format-AnsibleVolume {
         $Full,
         $UseLargeFRS,
         $Compress,
-        $SetIntegrityStreams
+        $SetIntegrityStreams,
+        $AllocationUnitSize
     )
     $parameters = @{
         Path = $Path
@@ -128,6 +129,9 @@ function Format-AnsibleVolume {
     }
     if ($null -ne $FileSystem) {
         $parameters.Add("FileSystem", $FileSystem)
+    }
+    if ($null -ne $AllocationUnitSize) {
+        $parameters.Add("AllocationUnitSize", $AllocationUnitSize)
     }
 
     Format-Volume @parameters -Confirm:$false | Out-Null
@@ -161,7 +165,7 @@ foreach ($access_path in $ansible_partition.AccessPaths) {
 
 if ($force_format) {
     if (-not $module.CheckMode) {
-        Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+        Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume -AllocationUnitSize $allocation_unit_size
     }
     $module.Result.changed = $true
 }
@@ -174,7 +178,7 @@ else {
         if ($ansible_volume_size -eq 0 -or
             $ansible_volume.FileSystemLabel -ne $new_label) {
             if (-not $module.CheckMode) {
-                Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+                Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume -AllocationUnitSize $allocation_unit_size
             }
             $module.Result.changed = $true
         }
