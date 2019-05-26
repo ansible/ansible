@@ -34,7 +34,6 @@ options:
         description:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
         type: bool
-        default: False
     save_config:
         description:
             - Flag indicating whether to save the configuration.
