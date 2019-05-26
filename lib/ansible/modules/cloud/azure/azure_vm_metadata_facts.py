@@ -19,8 +19,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -39,8 +39,9 @@ description:
 '''
 
 EXAMPLES = '''
-# Gather Azure VM metadata facts
-- azure_vm_metadata_facts:
+
+- name: Gather metadata facts on Azure VM host
+  azure_vm_metadata_facts:
 
 - debug:
     msg:
@@ -215,7 +216,8 @@ socket.setdefaulttimeout(5)
 class AzureVmMetadata(object):
     # Metadata URL comes from:
     # https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
-    azure_vm_metadata_uri = 'http://169.254.169.254/metadata/instance?api-version=2019-02-01'
+    # 2018-10-01 is currentl available in all regions.
+    azure_vm_metadata_uri = 'http://169.254.169.254/metadata/instance?api-version=2018-10-01'
 
     def __init__(self, module, azure_vm_metadata_uri=None):
         self.module = module
