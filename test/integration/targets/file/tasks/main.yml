@@ -243,7 +243,9 @@
   when: selinux_installed.stdout != ""
   ignore_errors: true
 
-- name: remote directory foobar
+- name: Check what would be removed
+
+- name: remove directory foobar
   file: path={{output_dir}}/foobar state=absent
 
 - name: remove file foo.txt
@@ -257,6 +259,16 @@
 
 - name: copy directory structure over
   copy: src=foobar dest={{output_dir}}
+
+- name: check what would be removed if folder state was absent
+  file: path={{output_dir}} state=absent
+  check_mode: yes
+  register: folder_absent_result
+
+- name: assert that the absent check lists expected files and folders
+  assert:
+    that:
+      - folder_absent_result.path_content is defined
 
 - name: Change ownership of a directory with recurse=no(default)
   file: path={{output_dir}}/foobar owner=1234
