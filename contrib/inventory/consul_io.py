@@ -237,9 +237,9 @@ class ConsulInventory(object):
         index, groups_list = self.consul_api.kv.get(self.config.kv_groups, recurse=True, dc=datacenter)
         index, metadata_list = self.consul_api.kv.get(self.config.kv_metadata, recurse=True, dc=datacenter)
         index, nodes = self.consul_api.catalog.nodes(dc=datacenter)
-        self.inmemory_kv += groups_list
-        self.inmemory_kv += metadata_list
-        self.inmemory_nodes += nodes
+        self.inmemory_kv += groups_list if groups_list else []
+        self.inmemory_kv += metadata_list if metadata_list else []
+        self.inmemory_nodes += nodes if nodes else []
 
     def load_all_data_consul(self):
         ''' cycle through each of the datacenters in the consul catalog and process
@@ -529,8 +529,6 @@ class ConsulConfig(dict):
 
         if hasattr(self, 'token'):
             token = self.token
-            if not token:
-                token = 'anonymous'
         return consul.Consul(host=host, port=port, token=token, scheme=scheme)
 
 
