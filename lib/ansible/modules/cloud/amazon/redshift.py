@@ -173,6 +173,18 @@ options:
       - Whether the cluster should have enhanced VPC routing enabled.
     default: false
     type: bool
+  tags:
+    description:
+      - A dictionary of resource tags.
+    type: dict
+    aliases: ['resource_tags']
+    version_added: 2.9
+  purge_tags:
+    description:
+      - Purge existing tags that are not found in the cluster
+    type: bool
+    default: 'yes'
+    version_added: 2.9
 requirements: [ 'boto3' ]
 extends_documentation_fragment:
   - aws
@@ -256,6 +268,11 @@ cluster:
             description: status of the enhanced vpc routing feature.
             returned: success
             type: bool
+            type: boolean
+        tags:
+            description: aws tags for cluster.
+            returned: success
+            type: dict
 '''
 
 try:
@@ -265,6 +282,34 @@ except ImportError:
 
 from ansible.module_utils.ec2 import AWSRetry, snake_dict_to_camel_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
+from ansible.module_utils.aws.iam import get_aws_account_id
+
+
+def _ensure_tags(redshift, identifier, existing_tags, module):
+    """Compares and update resource tags"""
+
+    account_id = get_aws_account_id(module)
+    region = module.params.get('region')
+    resource_arn = "arn:aws:redshift:{0}:{1}:cluster:{2}" .format(region, account_id, identifier)
+    tags = module.params.get('tags')
+    purge_tags = module.params.get('purge_tags')
+
+    tags_to_add, tags_to_remove = compare_aws_tags(boto3_tag_list_to_ansible_dict(existing_tags), tags, purge_tags)
+
+    if tags_to_add:
+        try:
+            redshift.create_tags(ResourceName=resource_arn, Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to add tags to cluster")
+
+    if tags_to_remove:
+        try:
+            redshift.delete_tags(ResourceName=resource_arn, TagKeys=tags_to_remove)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to delete tags on cluster")
+
+    changed = bool(tags_to_add or tags_to_remove)
+    return changed
 
 
 def _collect_facts(resource):
@@ -294,12 +339,14 @@ def _collect_facts(resource):
     facts['url'] = None
     facts['port'] = None
     facts['availability_zone'] = None
+    facts['tags'] = {}
 
     if resource['ClusterStatus'] != "creating":
         facts['create_time'] = resource['ClusterCreateTime']
         facts['url'] = resource['Endpoint']['Address']
         facts['port'] = resource['Endpoint']['Port']
         facts['availability_zone'] = resource['AvailabilityZone']
+        facts['tags'] = boto3_tag_list_to_ansible_dict(resource['Tags'])
 
     return facts
 
@@ -360,6 +407,7 @@ def create_cluster(module, redshift):
     d_b_name = module.params.get('db_name')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    tags = module.params.get('tags')
 
     changed = True
     # Package up the optional parameters
@@ -370,14 +418,17 @@ def create_cluster(module, redshift):
               'cluster_parameter_group_name',
               'automated_snapshot_retention_period', 'port',
               'cluster_version', 'allow_version_upgrade',
-              'number_of_nodes', 'publicly_accessible',
-              'encrypted', 'elastic_ip', 'enhanced_vpc_routing'):
+              'number_of_nodes', 'publicly_accessible', 'encrypted',
+              'elastic_ip', 'enhanced_vpc_routing'):
         # https://github.com/boto/boto3/issues/400
         if module.params.get(p) is not None:
             params[p] = module.params.get(p)
 
     if d_b_name:
         params['d_b_name'] = d_b_name
+    if tags:
+        tags = ansible_dict_to_boto3_tag_list(tags)
+        params['tags'] = tags
 
     try:
         _describe_cluster(redshift, identifier)
@@ -484,6 +535,9 @@ def modify_cluster(module, redshift):
     identifier = module.params.get('identifier')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    tags = module.params.get('tags')
+    purge_tags = module.params.get('purge_tags')
+    region = region = module.params.get('region')
 
     # Package up the optional parameters
     params = {}
@@ -513,11 +567,11 @@ def modify_cluster(module, redshift):
             waiter.wait(
                 ClusterIdentifier=identifier,
                 WaiterConfig=dict(MaxAttempts=attempts)
-            )
+                )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e,
                                  msg="Timeout waiting for cluster enhanced vpc routing modification"
-                                 )
+                                )
 
     # change the rest
     try:
@@ -545,6 +599,9 @@ def modify_cluster(module, redshift):
         resource = _describe_cluster(redshift, identifier)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
+
+    if _ensure_tags(redshift, identifier, resource['Tags'], module):
+        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
 
     return(True, _collect_facts(resource))
 
@@ -582,7 +639,9 @@ def main():
         enhanced_vpc_routing=dict(type='bool', default=False),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(type='int', default=300),
-    )
+        tags=dict(type='dict', aliases=['resource_tags']),
+        purge_tags=dict(type='bool', default=True)
+    ))
 
     required_if = [
         ('command', 'delete', ['skip_final_cluster_snapshot']),

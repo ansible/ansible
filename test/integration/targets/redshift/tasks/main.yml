@@ -24,7 +24,6 @@
       register: result
       ignore_errors: true
 
-
     - name: assert failure with no parameters
       assert:
         that:
@@ -76,7 +75,7 @@
 
     # ============================================================
 
-    - name: test create with missing username
+    - name: test create with missing password
       redshift:
         command: create
         identifier: "{{ redshift_cluster_name }}"
@@ -85,7 +84,7 @@
       register: result
       ignore_errors: true
 
-    - name: assert create failure with missing username
+    - name: assert create failure with missing password
       assert:
         that:
           - 'result.failed'
@@ -119,6 +118,9 @@
         node_type: "{{ node_type }}"
         wait: yes
         wait_timeout: 1000
+        tags:
+          foo: bar
+          tizio: caio
         <<: *aws_connection_info
       register: result
     - debug:
@@ -129,6 +131,8 @@
         that:
           - 'result.changed'
           - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
+          - 'result.cluster.tags.foo == "bar"'
+          - 'result.cluster.tags.tizio == "caio"'
 
     # ============================================================
 
@@ -139,6 +143,9 @@
         username: "{{ redshift_master_username }}"
         password: "{{ reshift_master_password }}"
         node_type: "{{ node_type }}"
+        tags:
+          foo: bar
+          tizio: caio
         <<: *aws_connection_info
       register: result
 
@@ -147,6 +154,10 @@
         that:
           - 'not result.changed'
           - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
+          - 'result.cluster.tags.foo == "bar"'
+          - 'result.cluster.tags.tizio == "caio"'
+          - 'result.cluster.tags | count() == 2'
+
     # ============================================================
 
     - name: test modify cluster
@@ -157,6 +168,8 @@
         enhanced_vpc_routing: True
         wait: yes
         wait_timeout: 1000
+        tags:
+          foo: bar
         <<: *aws_connection_info
       register: result
 
@@ -166,7 +179,8 @@
           - 'result.changed'
           - 'result.cluster.identifier == "{{ redshift_cluster_name }}-modified"'
           - 'result.cluster.enhanced_vpc_routing == True'
-
+          - 'result.cluster.tags | count() == 1'
+          - 'result.cluster.tags.foo == "bar"'
 
     # ============================================================
     - name: test delete with no cluster identifier
@@ -231,6 +245,32 @@
         <<: *aws_connection_info
       register: result
 
+    - name: assert create
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
+          - 'result.cluster.db_name == "integration_test"'
+
+  #  ============================================================
+
+    - name: test tag update on existing cluster
+      redshift:
+        command: create
+        identifier: "{{ redshift_cluster_name }}"
+        username: "{{ redshift_master_username }}"
+        password: "{{ reshift_master_password }}"
+        node_type: "{{ node_type }}"
+        cluster_type: multi-node
+        number_of_nodes: 3
+        wait: yes
+        db_name: "integration_test"
+        tags:
+          foo: bar
+        wait_timeout: 1800
+        <<: *aws_connection_info
+      register: result
+
 
     - name: assert create
       assert:
@@ -238,6 +278,8 @@
           - 'result.changed'
           - 'result.cluster.identifier == "{{ redshift_cluster_name }}"'
           - 'result.cluster.db_name == "integration_test"'
+          - 'result.cluster.tags.foo == "bar"'
+
 
   #  ============================================================
 
