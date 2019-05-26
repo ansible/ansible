@@ -229,7 +229,6 @@ def main():
             else:
                 exit_message = "Check mode enabled"
 
-
     elif state == 'absent':
         if replication_subnet_exists(subnet_group):
             replication_subnet_group_delete(dmsclient)
