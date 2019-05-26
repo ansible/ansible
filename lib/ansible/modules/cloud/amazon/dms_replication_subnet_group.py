@@ -192,7 +192,6 @@ def main():
         description=dict(type=str, required=True),
         subnetids=dict(type='list',  elements='str', required=True),
     )
-    #global module
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True
