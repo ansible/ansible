@@ -1,0 +1,2 @@
+bugfixes:
+  - "consul_io.py: fix appends of None objects to some list variables (see https://github.com/ansible/ansible/pull/56969 and https://github.com/ansible/ansible/issues/56732)"
