@@ -128,7 +128,7 @@ def create_module_params(module):
     return instance_parameters
 
 
-def compare_params(param_described):
+def compare_params(module, param_described):
     """
     Compares the dict obtained from the describe function and
     what we are reading from the values in the template We can
@@ -190,7 +190,7 @@ def main():
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         identifier=dict(type='str', required=True),
         description=dict(type='str', required=True),
-        subnetids=dict(type='list',  elements='str', required=True),
+        subnetids=dict(type='list', elements='str', required=True),
     )
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
@@ -210,7 +210,7 @@ def main():
                                          module.params.get('identifier'))
     if state == 'present':
         if replication_subnet_exists(subnet_group):
-            if compare_params(subnet_group["ReplicationSubnetGroups"][0]):
+            if compare_params(module, subnet_group["ReplicationSubnetGroups"][0]):
                 if not module.check_mode:
                     exit_message = modify_replication_subnet_group(module, dmsclient)
                 else:
