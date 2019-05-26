@@ -346,6 +346,20 @@ def get_ip_version(cidr):
     raise ValueError('"{0}" is not a valid CIDR'.format(cidr))
 
 
+def normalize_ipam_config_key(key):
+    """Normalizes IPAM config keys returned by Docker API to match Ansible keys
+
+    :param key: Docker API key
+    :type key: str
+    :return Ansible module key
+    :rtype str
+    """
+    special_cases = {
+        'AuxiliaryAddresses': 'aux_addresses'
+    }
+    return special_cases.get(key, key.lower())
+
+
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -447,7 +461,7 @@ class DockerNetworkManager(object):
                             continue
                         camelkey = None
                         for net_key in net_config:
-                            if key == net_key.lower():
+                            if key == normalize_ipam_config_key(net_key):
                                 camelkey = net_key
                                 break
                         if not camelkey or net_config.get(camelkey) != value:
