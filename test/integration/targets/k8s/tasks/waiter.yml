@@ -1,5 +1,5 @@
 - name: ensure that there are actually some nodes
-  k8s_facts:
+  k8s_info:
     kind: Node
   register: nodes
 
@@ -113,7 +113,7 @@
       register: ds
 
     - name: get updated pods
-      k8s_facts:
+      k8s_info:
         api_version: v1
         kind: Pod
         namespace: "{{ wait_namespace }}"
@@ -228,7 +228,7 @@
       register: update_deploy
 
     - name: get updated pods
-      k8s_facts:
+      k8s_info:
         api_version: v1
         kind: Pod
         namespace: "{{ wait_namespace }}"

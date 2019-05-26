@@ -12,10 +12,11 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = '''
-module: python_requirements_facts
+module: python_requirements_info
 short_description: Show python path and assert dependency versions
 description:
     - Get info about available Python requirements on the target host, including listing required libraries and gathering versions.
+    - This module was called C(python_requirements_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.7"
 options:
   dependencies:
@@ -31,9 +32,9 @@ author:
 
 EXAMPLES = '''
 - name: show python lib/site paths
-  python_requirements_facts:
+  python_requirements_info:
 - name: check for modern boto3 and botocore versions
-  python_requirements_facts:
+  python_requirements_info:
     dependencies:
     - boto3>1.6
     - botocore<2
@@ -116,6 +117,8 @@ def main():
         ),
         supports_check_mode=True,
     )
+    if module._name == 'python_requirements_facts':
+        module.deprecate("The 'python_requirements_facts' module has been renamed to 'python_requirements_info'", version='2.13')
     if not HAS_DISTUTILS:
         module.fail_json(
             msg='Could not import "distutils" and "pkg_resources" libraries to introspect python environment.',

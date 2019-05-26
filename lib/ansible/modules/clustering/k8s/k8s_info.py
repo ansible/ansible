@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: k8s_facts
+module: k8s_info
 
 short_description: Describe Kubernetes (K8s) objects
 
@@ -28,6 +28,7 @@ description:
   - Access to the full range of K8s APIs.
   - Authenticate using either a config file, certificates, password or token.
   - Supports check mode.
+  - This module was called C(k8s_facts) before Ansible 2.9. The usage did not change.
 
 options:
   api_version:
@@ -67,7 +68,7 @@ requirements:
 
 EXAMPLES = '''
 - name: Get an existing Service object
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Service
     name: web
@@ -75,26 +76,26 @@ EXAMPLES = '''
   register: web_service
 
 - name: Get a list of all service objects
-  k8s_facts:
+  k8s_info:
     api_version: v1
     kind: Service
     namespace: testing
   register: service_list
 
 - name: Get a list of all pods from any namespace
-  k8s_facts:
+  k8s_info:
     kind: Pod
   register: pod_list
 
 - name: Search for all Pods labelled app=web
-  k8s_facts:
+  k8s_info:
     kind: Pod
     label_selectors:
       - app = web
       - tier in (dev, test)
 
 - name: Search for all running pods
-  k8s_facts:
+  k8s_info:
     kind: Pod
     field_selectors:
       - status.phase=Running
@@ -134,12 +135,14 @@ from ansible.module_utils.k8s.common import KubernetesAnsibleModule, AUTH_ARG_SP
 import copy
 
 
-class KubernetesFactsModule(KubernetesAnsibleModule):
+class KubernetesInfoModule(KubernetesAnsibleModule):
 
     def __init__(self, *args, **kwargs):
         KubernetesAnsibleModule.__init__(self, *args,
                                          supports_check_mode=True,
                                          **kwargs)
+        if self._name == 'k8s_facts':
+            self.deprecate("The 'k8s_facts' module has been renamed to 'k8s_info'", version='2.13')
 
     def execute_module(self):
         self.client = self.get_api_client()
@@ -169,7 +172,7 @@ class KubernetesFactsModule(KubernetesAnsibleModule):
 
 
 def main():
-    KubernetesFactsModule().execute_module()
+    KubernetesInfoModule().execute_module()
 
 
 if __name__ == '__main__':
