@@ -54,7 +54,7 @@ options:
         required: true
       image:
         description:
-          - Image name: default is telemetry-agent.
+          - Image name, the default is telemetry-agent.
         default: telemetry-agent
       version:
         description:
