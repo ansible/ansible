@@ -314,8 +314,8 @@ class NetStreamAging(object):
         tcp_tmp["ip"] = "absent"
         tcp_tmp["vxlan"] = "absent"
         flags = list()
-        exp = " | ignore-case include netstream timeout"
-        exp = "| ignore-case include evpn-overlay enable"
+        exp = " | ignore-case include netstream time"
+        # exp = "| ignore-case include evpn-overlay enable"
         flags.append(exp)
         config = get_config(self.module, flags)
         if config:

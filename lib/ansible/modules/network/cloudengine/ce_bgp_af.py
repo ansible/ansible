@@ -2678,10 +2678,17 @@ class BgpAf(object):
         ingress_lsp_policy_name = module.params['ingress_lsp_policy_name']
         if ingress_lsp_policy_name:
             conf_str += "<ingressLspPolicyName>%s</ingressLspPolicyName>" % ingress_lsp_policy_name
+            cmd = "ingress-lsp trigger route-policy %s" % ingress_lsp_policy_name
+            cmds.append(cmd)
 
         originator_prior = module.params['originator_prior']
         if originator_prior != 'no_use':
             conf_str += "<originatorPrior>%s</originatorPrior>" % originator_prior
+            if originator_prior == "true":
+                cmd = "bestroute routerid-prior-clusterlist"
+            else:
+                cmd = "undo bestroute routerid-prior-clusterlist"
+            cmds.append(cmd)
 
         lowest_priority = module.params['lowest_priority']
         if lowest_priority != 'no_use':
@@ -2697,6 +2704,11 @@ class BgpAf(object):
         if relay_delay_enable != 'no_use':
             conf_str += "<relayDelayEnable>%s</relayDelayEnable>" % relay_delay_enable
 
+            if relay_delay_enable == "true":
+                cmd = "nexthop recursive-lookup restrain enable"
+            else:
+                cmd = "nexthop recursive-lookup restrain disable"
+            cmds.append(cmd)
         conf_str += CE_MERGE_BGP_ADDRESS_FAMILY_TAIL
         recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
@@ -2766,7 +2778,7 @@ class BgpAf(object):
             import_process_id = "0"
 
         conf_str = CE_MERGE_BGP_IMPORT_ROUTE_HEADER % (
-            vrf_name, af_type, import_protocol, import_process_id) + CE_MERGE_BGP_ADDRESS_FAMILY_TAIL
+            vrf_name, af_type, import_protocol, import_process_id) + CE_MERGE_BGP_IMPORT_ROUTE_TAIL
 
         recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 

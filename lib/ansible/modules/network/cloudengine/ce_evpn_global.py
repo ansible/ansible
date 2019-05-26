@@ -102,7 +102,7 @@ changed:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import load_config, exec_command
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -149,6 +149,22 @@ class EvpnGlobal(object):
         if command.lower() not in ["quit", "return"]:
             self.updates_cmd.append(cmd)   # show updates result
 
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
+
     def get_evpn_global_info(self):
         """ get current EVPN global configration"""
 
@@ -156,7 +172,7 @@ class EvpnGlobal(object):
         flags = list()
         exp = " | include evpn-overlay enable"
         flags.append(exp)
-        config = get_config(self.module, flags)
+        config = self.get_config(flags)
         if config:
             self.global_info['evpnOverLay'] = 'enable'
 

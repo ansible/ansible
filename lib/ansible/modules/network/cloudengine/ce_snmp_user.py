@@ -151,8 +151,8 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, get_config
-
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 # get snmp v3 USM user
 CE_GET_SNMP_V3_USM_USER_HEADER = """
@@ -283,6 +283,16 @@ CE_DELETE_SNMP_V3_LOCAL_USER = """
       </snmp>
     </config>
 """
+# display info
+GET_SNMP_LOCAL_ENGINE = """
+    <filter type="subtree">
+      <snmp xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+        <engine>
+          <engineID></engineID>
+        </engine>
+      </snmp>
+    </filter>
+"""
 
 
 class SnmpUser(object):
@@ -313,7 +323,6 @@ class SnmpUser(object):
 
         module = kwargs["module"]
         result = dict()
-        result["usm_user_info"] = []
         need_cfg = False
         state = module.params['state']
         usm_user_name = module.params['usm_user_name']
@@ -381,6 +390,8 @@ class SnmpUser(object):
                         msg='Error: The length of priv_key %s is out of [1 - 255].' % priv_key)
                 conf_str += "<privKey></privKey>"
 
+            result["usm_user_info"] = []
+
             conf_str += CE_GET_SNMP_V3_USM_USER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -394,10 +405,11 @@ class SnmpUser(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                usm_user_info = root.findall("data/snmp/usmUsers/usmUser")
+                usm_user_info = root.findall("snmp/usmUsers/usmUser")
                 if usm_user_info:
                     for tmp in usm_user_info:
                         tmp_dict = dict()
+                        tmp_dict["remoteEngineID"] = None
                         for site in tmp:
                             if site.tag in ["userName", "remoteEngineID", "engineID", "groupName", "authProtocol",
                                             "authKey", "privProtocol", "privKey", "aclNumber"]:
@@ -405,83 +417,51 @@ class SnmpUser(object):
 
                         result["usm_user_info"].append(tmp_dict)
 
-                if result["usm_user_info"]:
-                    for tmp in result["usm_user_info"]:
-                        if "userName" in tmp.keys():
-                            if state == "present":
-                                if tmp["userName"] != usm_user_name:
-                                    need_cfg = True
-                            else:
-                                if tmp["userName"] == usm_user_name:
-                                    need_cfg = True
-                        if "remoteEngineID" in tmp.keys():
-                            if remote_engine_id:
-                                enable = "true"
-                            else:
-                                enable = "false"
+                cur_cfg = dict()
+                if usm_user_name:
+                    cur_cfg["userName"] = usm_user_name
+                if user_group:
+                    cur_cfg["groupName"] = user_group
+                if auth_protocol:
+                    cur_cfg["authProtocol"] = auth_protocol
+                if auth_key:
+                    cur_cfg["authKey"] = auth_key
+                if priv_protocol:
+                    cur_cfg["privProtocol"] = priv_protocol
+                if priv_key:
+                    cur_cfg["privKey"] = priv_key
+                if acl_number:
+                    cur_cfg["aclNumber"] = acl_number
 
-                            if state == "present":
-                                if tmp["remoteEngineID"] != enable:
-                                    need_cfg = True
-                            else:
-                                if tmp["remoteEngineID"] == enable:
-                                    need_cfg = True
-                        if remote_engine_id:
-                            if "engineID" in tmp.keys():
-                                if state == "present":
-                                    if tmp["engineID"] != remote_engine_id:
-                                        need_cfg = True
-                                else:
-                                    if tmp["engineID"] == remote_engine_id:
-                                        need_cfg = True
-                        if user_group:
-                            if "groupName" in tmp.keys():
-                                if state == "present":
-                                    if tmp["groupName"] != user_group:
-                                        need_cfg = True
-                                else:
-                                    if tmp["groupName"] == user_group:
-                                        need_cfg = True
-                        if auth_protocol:
-                            if "authProtocol" in tmp.keys():
-                                if state == "present":
-                                    if tmp["authProtocol"] != auth_protocol:
-                                        need_cfg = True
-                                else:
-                                    if tmp["authProtocol"] == auth_protocol:
-                                        need_cfg = True
-                        if auth_key:
-                            if "authKey" in tmp.keys():
-                                if state == "present":
-                                    if tmp["authKey"] != auth_key:
-                                        need_cfg = True
-                                else:
-                                    if tmp["authKey"] == auth_key:
-                                        need_cfg = True
-                        if priv_protocol:
-                            if "privProtocol" in tmp.keys():
-                                if state == "present":
-                                    if tmp["privProtocol"] != priv_protocol:
-                                        need_cfg = True
-                                else:
-                                    if tmp["privProtocol"] == priv_protocol:
-                                        need_cfg = True
-                        if priv_key:
-                            if "privKey" in tmp.keys():
-                                if state == "present":
-                                    if tmp["privKey"] != priv_key:
-                                        need_cfg = True
-                                else:
-                                    if tmp["privKey"] == priv_key:
-                                        need_cfg = True
-                        if acl_number:
-                            if "aclNumber" in tmp.keys():
-                                if state == "present":
-                                    if tmp["aclNumber"] != acl_number:
-                                        need_cfg = True
-                                else:
-                                    if tmp["aclNumber"] == acl_number:
-                                        need_cfg = True
+                if remote_engine_id:
+                    cur_cfg["engineID"] = remote_engine_id
+                    cur_cfg["remoteEngineID"] = "true"
+                else:
+                    cur_cfg["engineID"] = self.local_engine_id
+                    cur_cfg["remoteEngineID"] = "false"
+
+                if result["usm_user_info"]:
+                    num = 0
+                    for tmp in result["usm_user_info"]:
+                        if cur_cfg == tmp:
+                            num += 1
+
+                    if num == 0:
+                        if state == "present":
+                            need_cfg = True
+                        else:
+                            need_cfg = False
+                    else:
+                        if state == "present":
+                            need_cfg = False
+                        else:
+                            need_cfg = True
+
+                else:
+                    if state == "present":
+                        need_cfg = True
+                    else:
+                        need_cfg = False
 
         result["need_cfg"] = need_cfg
         return result
@@ -491,7 +471,7 @@ class SnmpUser(object):
 
         module = kwargs["module"]
         result = dict()
-        result["local_user_info"] = []
+
         need_cfg = False
         state = module.params['state']
         local_user_name = module.params['aaa_local_user']
@@ -524,6 +504,8 @@ class SnmpUser(object):
                 module.fail_json(
                     msg='Error: The length of priv_key %s is out of [1 - 255].' % priv_key)
 
+            result["local_user_info"] = []
+
             conf_str = CE_GET_SNMP_V3_LOCAL_USER
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -538,7 +520,7 @@ class SnmpUser(object):
 
                 root = ElementTree.fromstring(xml_str)
                 local_user_info = root.findall(
-                    "data/snmp/localUsers/localUser")
+                    "snmp/localUsers/localUser")
                 if local_user_info:
                     for tmp in local_user_info:
                         tmp_dict = dict()
@@ -649,8 +631,8 @@ class SnmpUser(object):
 
             if auth_protocol != "noAuth":
                 cmd += " cipher %s" % "******"
-
-        cmds.append(cmd)
+        if auth_protocol or auth_key:
+            cmds.append(cmd)
 
         if remote_engine_id:
             cmd = "snmp-agent remote-engineid %s usm-user v3 %s" % (
@@ -669,8 +651,8 @@ class SnmpUser(object):
 
             if auth_protocol != "noAuth" and priv_protocol != "noPriv":
                 cmd += " cipher  %s" % "******"
-
-        cmds.append(cmd)
+        if priv_key or priv_protocol:
+            cmds.append(cmd)
 
         conf_str += CE_MERGE_SNMP_V3_USM_USER_TAIL
         recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
@@ -716,7 +698,6 @@ class SnmpUser(object):
         if acl_number:
             conf_str += "<aclNumber>%s</aclNumber>" % acl_number
             cmd += " acl %s" % acl_number
-
         cmds.append(cmd)
 
         if remote_engine_id:
@@ -737,7 +718,8 @@ class SnmpUser(object):
             if auth_protocol != "noAuth":
                 cmd += " cipher %s" % "******"
 
-        cmds.append(cmd)
+        if auth_key or auth_protocol:
+            cmds.append(cmd)
 
         if remote_engine_id:
             cmd = "snmp-agent remote-engineid %s usm-user v3 %s" % (
@@ -757,9 +739,11 @@ class SnmpUser(object):
             if auth_protocol != "noAuth" and priv_protocol != "noPriv":
                 cmd += " cipher  %s" % "******"
 
-        cmds.append(cmd)
+        if priv_protocol or priv_key:
+            cmds.append(cmd)
 
         conf_str += CE_CREATE_SNMP_V3_USM_USER_TAIL
+
         recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
         if "<ok/>" not in recv_xml:
@@ -890,14 +874,17 @@ class SnmpUser(object):
 
         module = kwargs["module"]
 
-        regular = "| include snmp | include local-engineid"
-        flags = list()
-        flags.append(regular)
-        tmp_cfg = get_config(module, flags)
+        conf_str = GET_SNMP_LOCAL_ENGINE
+        recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
+        if "</data>" in recv_xml:
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
+                replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
+                replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
-        if tmp_cfg:
-            tmp_data = tmp_cfg.split(r"snmp-agent local-engineid ")
-            self.local_engine_id = tmp_data[1]
+            root = ElementTree.fromstring(xml_str)
+            local_engine_info = root.findall("snmp/engine/engineID")
+            if local_engine_info:
+                self.local_engine_id = local_engine_info[0].text
 
 
 def main():
@@ -968,12 +955,11 @@ def main():
     if aaa_local_user:
         proposed["aaa_local_user"] = aaa_local_user
 
+    snmp_user_obj.get_snmp_local_engine(module=module)
     snmp_v3_usm_user_rst = snmp_user_obj.check_snmp_v3_usm_user_args(
         module=module)
     snmp_v3_local_user_rst = snmp_user_obj.check_snmp_v3_local_user_args(
         module=module)
-
-    snmp_user_obj.get_snmp_local_engine(module=module)
 
     # state exist snmp v3 user config
     exist_tmp = dict()

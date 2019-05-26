@@ -115,93 +115,7 @@ end_state:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, execute_nc_action, ce_argument_spec, run_commands
-
-
-CE_NC_GET_CHECKPOINT = """
-<filter type="subtree">
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <checkPointInfos>
-      <checkPointInfo>
-        <commitId></commitId>
-        <userLabel></userLabel>
-        <userName></userName>
-        </checkPointInfo>
-      </checkPointInfos>
-  </cfg>
-</filter>
-"""
-
-CE_NC_ACTION_ROLLBACK_COMMIT_ID = """
-<action>
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <rollbackByCommitId>
-      <commitId>%s</commitId>
-    </rollbackByCommitId>
-  </cfg>
-</action>
-"""
-
-CE_NC_ACTION_ROLLBACK_LABEL = """
-<action>
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <rollbackByUserLabel>
-      <userLabel>%s</userLabel>
-    </rollbackByUserLabel>
-  </cfg>
-</action>
-"""
-
-CE_NC_ACTION_ROLLBACK_LAST = """
-<action>
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <rollbackByLastNum>
-      <checkPointNum>%s</checkPointNum>
-    </rollbackByLastNum>
-  </cfg>
-</action>
-"""
-
-CE_NC_ACTION_ROLLBACK_FILE = """
-<action>
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <rollbackByFile>
-      <fileName>%s</fileName>
-    </rollbackByFile>
-  </cfg>
-</action>
-"""
-
-CE_NC_ACTION_SET_COMMIT_ID_LABEL = """
-<action>
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <setUserLabelByCommitId>
-      <commitId>%s</commitId>
-      <userLabel>%s</userLabel>
-    </setUserLabelByCommitId>
-  </cfg>
-</action>
-"""
-
-CE_NC_ACTION_CLEAR_COMMIT_ID_LABEL = """
-<action>
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <resetUserLabelByCommitId>
-      <commitId>%s</commitId>
-    </resetUserLabelByCommitId>
-  </cfg>
-</action>
-"""
-
-CE_NC_ACTION_CLEAR_OLDEST_COMMIT_ID = """
-<action>
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <delCheckPointByOldestNum>
-      <checkPointNum>%s</checkPointNum>
-    </delCheckPointByOldestNum>
-  </cfg>
-</action>
-"""
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, exec_command, run_commands
 
 
 class RollBack(object):
@@ -213,7 +127,7 @@ class RollBack(object):
         self.spec = argument_spec
         self.module = None
         self.init_module()
-
+        self.commands = list()
         # module input info
         self.commit_id = self.module.params['commit_id']
         self.label = self.module.params['label']
@@ -245,24 +159,58 @@ class RollBack(object):
         if "<ok/>" not in xml_str:
             self.module.fail_json(msg='Error: %s failed.' % xml_name)
 
+    def cli_add_command(self, command, undo=False):
+        """add command to self.update_cmd and self.commands"""
+        self.commands.append("return")
+
+        if self.action == "commit":
+            self.commands.append("sys")
+
+        self.commands.append(command)
+        self.updates_cmd.append(command)
+
+    def cli_load_config(self, commands):
+        """load config by cli"""
+
+        if not self.module.check_mode:
+            run_commands(self.module, commands)
+
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
+
     def get_rollback_dict(self):
         """ get rollback attributes dict."""
 
         rollback_info = dict()
-        conf_str = CE_NC_GET_CHECKPOINT
-        xml_str = get_nc_config(self.module, conf_str)
         rollback_info["RollBackInfos"] = list()
-        if "<data/>" in xml_str:
-            return rollback_info
-        else:
-            re_find = re.findall(r'.*<commitId>(.*)</commitId>.*\s*'
-                                 r'<userName>(.*)</userName>.*\s*'
-                                 r'<userLabel>(.*)</userLabel>.*', xml_str)
 
-            for mem in re_find:
-                rollback_info["RollBackInfos"].append(
-                    dict(commitId=mem[0], userLabel=mem[2]))
+        flags = list()
+        exp = "commit list"
+        flags.append(exp)
+        cfg_info = self.get_config(flags)
+        if not cfg_info:
             return rollback_info
+
+        cfg_line = cfg_info.split("\n")
+        for cfg in cfg_line:
+            if re.findall(r'^\d', cfg):
+                pre_rollback_info = cfg.split()
+                rollback_info["RollBackInfos"].append(dict(commitId=pre_rollback_info[1], userLabel=pre_rollback_info[2]))
+
+        return rollback_info
 
     def get_filename_type(self, filename):
         """Gets the type of filename, such as cfg, zip, dat..."""
@@ -285,107 +233,66 @@ class RollBack(object):
             return None
         return iftype.lower()
 
-    def rollback_commit_id(self):
-        """rollback comit_id"""
+    def set_config(self):
 
-        cfg_xml = ""
-        self.updates_cmd.append(
-            "rollback configuration to commit-id %s" % self.commit_id)
-        cfg_xml = CE_NC_ACTION_ROLLBACK_COMMIT_ID % self.commit_id
-        recv_xml = execute_nc_action(self.module, cfg_xml)
-        self.check_response(recv_xml, "ROLLBACK_COMMITID")
-        self.changed = True
+        if self.action == "rollback":
+            if self.commit_id:
+                cmd = "rollback configuration to commit-id %s" % self.commit_id
+                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
+                self.cli_add_command(cmd)
+            if self.label:
+                cmd = "rollback configuration to label %s" % self.label
+                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
+                self.cli_add_command(cmd)
+            if self.filename:
+                cmd = "rollback configuration to file %s" % self.filename
+                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
+                self.cli_add_command(cmd)
+            if self.last:
+                cmd = "rollback configuration last %s" % self.last
+                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
+                self.cli_add_command(cmd)
+        elif self.action == "set":
+            if self.commit_id and self.label:
+                cmd = "set configuration commit %s label %s" % (self.commit_id, self.label)
+                self.cli_add_command(cmd)
+        elif self.action == "clear":
+            if self.commit_id:
+                cmd = "clear configuration commit %s label" % self.commit_id
+                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
+                self.cli_add_command(cmd)
+            if self.oldest:
+                cmd = "clear configuration commit oldest %s" % self.oldest
+                cmd = {"command": cmd, "prompt": r"[Y/N]", "answer": "Y"}
+                self.cli_add_command(cmd)
+        elif self.action == "commit":
+            if self.label:
+                cmd = "commit label %s" % self.label
+                self.cli_add_command(cmd)
 
-    def rollback_label(self):
-        """rollback label"""
-
-        cfg_xml = ""
-        self.updates_cmd.append(
-            "rollback configuration to label %s" % self.label)
-        cfg_xml = CE_NC_ACTION_ROLLBACK_LABEL % self.label
-        recv_xml = execute_nc_action(self.module, cfg_xml)
-        self.check_response(recv_xml, "ROLLBACK_LABEL")
-        self.changed = True
-
-    def rollback_filename(self):
-        """rollback filename"""
-
-        cfg_xml = ""
-        self.updates_cmd.append(
-            "rollback configuration to file %s" % self.filename)
-        cfg_xml = CE_NC_ACTION_ROLLBACK_FILE % self.filename
-        recv_xml = execute_nc_action(self.module, cfg_xml)
-        self.check_response(recv_xml, "ROLLBACK_FILENAME")
-        self.changed = True
-
-    def rollback_last(self):
-        """rollback last"""
-
-        cfg_xml = ""
-        self.updates_cmd.append(
-            "rollback configuration to last %s" % self.last)
-        cfg_xml = CE_NC_ACTION_ROLLBACK_LAST % self.last
-        recv_xml = execute_nc_action(self.module, cfg_xml)
-        self.check_response(recv_xml, "ROLLBACK_LAST")
-        self.changed = True
-
-    def set_commitid_label(self):
-        """set commitid label"""
-
-        cfg_xml = ""
-        self.updates_cmd.append(
-            "set configuration commit %s label %s" % (self.commit_id, self.label))
-        cfg_xml = CE_NC_ACTION_SET_COMMIT_ID_LABEL % (
-            self.commit_id, self.label)
-        recv_xml = execute_nc_action(self.module, cfg_xml)
-        self.check_response(recv_xml, "SET_COMIMIT_LABEL")
-        self.changed = True
-
-    def clear_commitid_label(self):
-        """clear commitid label"""
-
-        cfg_xml = ""
-        self.updates_cmd.append(
-            "clear configuration commit %s label" % self.commit_id)
-        cfg_xml = CE_NC_ACTION_CLEAR_COMMIT_ID_LABEL % self.commit_id
-        recv_xml = execute_nc_action(self.module, cfg_xml)
-        self.check_response(recv_xml, "CLEAR_COMMIT_LABEL")
-        self.changed = True
-
-    def clear_oldest(self):
-        """clear oldest"""
-
-        cfg_xml = ""
-        self.updates_cmd.append(
-            "clear configuration commit oldest %s" % self.oldest)
-        cfg_xml = CE_NC_ACTION_CLEAR_OLDEST_COMMIT_ID % self.oldest
-        recv_xml = execute_nc_action(self.module, cfg_xml)
-        self.check_response(recv_xml, "CLEAR_COMMIT_OLDEST")
-        self.changed = True
-
-    def commit_label(self):
-        """commit label"""
-
-        commands = list()
-        cmd1 = {'output': None, 'command': 'system-view'}
-        commands.append(cmd1)
-
-        cmd2 = {'output': None, 'command': ''}
-        cmd2['command'] = "commit label %s" % self.label
-        commands.append(cmd2)
-        self.updates_cmd.append(
-            "commit label %s" % self.label)
-        run_commands(self.module, commands)
-        self.changed = True
+        elif self.action == "display":
+            self.rollback_info = self.get_rollback_dict()
+        if self.commands:
+            self.cli_load_config(self.commands)
+            self.changed = True
 
     def check_params(self):
         """Check all input params"""
 
         # commit_id check
+        rollback_info = self.rollback_info["RollBackInfos"]
         if self.commit_id:
             if not self.commit_id.isdigit():
                 self.module.fail_json(
                     msg='Error: The parameter of commit_id is invalid.')
+
+            info_bool = False
+            for info in rollback_info:
+                if info.get("commitId") == self.commit_id:
+                    info_bool = True
+            if not info_bool:
+                self.module.fail_json(
+                    msg='Error: The parameter of commit_id is not exist.')
 
         # label check
         if self.label:
@@ -399,6 +306,23 @@ class RollBack(object):
             if len(self.label.replace(' ', '')) < 1 or len(self.label) > 256:
                 self.module.fail_json(
                     msg='Error: Label of configuration checkpoints is a string of 1 to 256 characters.')
+            if self.action == "rollback":
+                info_bool = False
+                for info in rollback_info:
+                    if info.get("userLabel") == self.label:
+                        info_bool = True
+                if not info_bool:
+                    self.module.fail_json(
+                        msg='Error: The parameter of userLabel is not exist.')
+
+            if self.action in ["commit", "set"]:
+                info_bool = False
+                for info in rollback_info:
+                    if info.get("userLabel") == self.label:
+                        info_bool = True
+                if info_bool:
+                    self.module.fail_json(
+                        msg='Error: The parameter of userLabel is existing.')
 
         # filename check
         if self.filename:
@@ -439,10 +363,10 @@ class RollBack(object):
 
     def get_existing(self):
         """get existing info"""
-
         if not self.rollback_info:
             return
-        self.existing["RollBackInfos"] = self.rollback_info["RollBackInfos"]
+        if self.action == "display":
+            self.existing["RollBackInfos"] = self.rollback_info["RollBackInfos"]
 
     def get_end_state(self):
         """get end state info"""
@@ -452,34 +376,15 @@ class RollBack(object):
     def work(self):
         """worker"""
 
+        self.rollback_info = self.get_rollback_dict()
         self.check_params()
         self.get_proposed()
-        # action mode
-        if self.action == "rollback":
-            if self.commit_id:
-                self.rollback_commit_id()
-            if self.label:
-                self.rollback_label()
-            if self.filename:
-                self.rollback_filename()
-            if self.last:
-                self.rollback_last()
-        elif self.action == "set":
-            if self.commit_id and self.label:
-                self.set_commitid_label()
-        elif self.action == "clear":
-            if self.commit_id:
-                self.clear_commitid_label()
-            if self.oldest:
-                self.clear_oldest()
-        elif self.action == "commit":
-            if self.label:
-                self.commit_label()
-        elif self.action == "display":
-            self.rollback_info = self.get_rollback_dict()
+
+        self.set_config()
 
         self.get_existing()
         self.get_end_state()
+
         self.results['changed'] = self.changed
         self.results['proposed'] = self.proposed
         self.results['existing'] = self.existing

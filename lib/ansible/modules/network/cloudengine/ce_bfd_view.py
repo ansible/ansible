@@ -194,18 +194,9 @@ from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_co
 CE_NC_GET_BFD = """
     <filter type="subtree">
       <bfd xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-      %s
-      </bfd>
-    </filter>
-"""
-
-CE_NC_GET_BFD_GLB = """
         <bfdSchGlobal>
           <bfdEnable></bfdEnable>
         </bfdSchGlobal>
-"""
-
-CE_NC_GET_BFD_SESSION = """
         <bfdCfgSessions>
           <bfdCfgSession>
             <sessName>%s</sessName>
@@ -221,6 +212,8 @@ CE_NC_GET_BFD_SESSION = """
             <description></description>
           </bfdCfgSession>
         </bfdCfgSessions>
+      </bfd>
+    </filter>
 """
 
 
@@ -272,7 +265,7 @@ class BfdView(object):
         bfd_dict = dict()
         bfd_dict["global"] = dict()
         bfd_dict["session"] = dict()
-        conf_str = CE_NC_GET_BFD % (CE_NC_GET_BFD_GLB + (CE_NC_GET_BFD_SESSION % self.session_name))
+        conf_str = CE_NC_GET_BFD % self.session_name
 
         xml_str = get_nc_config(self.module, conf_str)
         if "<data/>" in xml_str:
@@ -284,13 +277,13 @@ class BfdView(object):
         root = ElementTree.fromstring(xml_str)
 
         # get bfd global info
-        glb = root.find("data/bfd/bfdSchGlobal")
+        glb = root.find("bfd/bfdSchGlobal")
         if glb:
             for attr in glb:
                 bfd_dict["global"][attr.tag] = attr.text
 
         # get bfd session info
-        sess = root.find("data/bfd/bfdCfgSessions/bfdCfgSession")
+        sess = root.find("bfd/bfdCfgSessions/bfdCfgSession")
         if sess:
             for attr in sess:
                 bfd_dict["session"][attr.tag] = attr.text

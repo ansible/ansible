@@ -482,7 +482,7 @@ class Vrrp(object):
             virtual_ip_info["vrrpVirtualIpInfos"] = list()
             root = ElementTree.fromstring(xml_str)
             vrrp_virtual_ip_infos = root.findall(
-                "data/vrrp/vrrpGroups/vrrpGroup/virtualIps/virtualIp")
+                "vrrp/vrrpGroups/vrrpGroup/virtualIps/virtualIp")
             if vrrp_virtual_ip_infos:
                 for vrrp_virtual_ip_info in vrrp_virtual_ip_infos:
                     virtual_ip_dict = dict()
@@ -508,7 +508,7 @@ class Vrrp(object):
 
             root = ElementTree.fromstring(xml_str)
             global_info = root.findall(
-                "data/vrrp/vrrpGlobalCfg")
+                "vrrp/vrrpGlobalCfg")
 
             if global_info:
                 for tmp in global_info:
@@ -532,7 +532,7 @@ class Vrrp(object):
 
             root = ElementTree.fromstring(xml_str)
             global_info = root.findall(
-                "data/vrrp/vrrpGroups/vrrpGroup")
+                "vrrp/vrrpGroups/vrrpGroup")
 
             if global_info:
                 for tmp in global_info:
@@ -693,12 +693,11 @@ class Vrrp(object):
 
     def is_vrrp_group_info_change(self):
         """whether vrrp group attribute info change"""
-
         if self.vrrp_type:
             if self.vrrp_group_info["vrrpType"] != self.vrrp_type:
                 return True
         if self.admin_ignore_if_down:
-            if self.vrrp_group_info["adminIgnoreIfDown"] != self.admin_ignore_if_down:
+            if self.vrrp_group_info["adminIgnoreIfDown"] != str(self.admin_ignore_if_down).lower():
                 return True
         if self.admin_vrid:
             if self.vrrp_group_info["adminVrrpId"] != self.admin_vrid:
@@ -745,7 +744,7 @@ class Vrrp(object):
             if self.vrrp_group_info["vrrpType"] != self.vrrp_type:
                 return False
         if self.admin_ignore_if_down:
-            if self.vrrp_group_info["adminIgnoreIfDown"] != self.admin_ignore_if_down:
+            if self.vrrp_group_info["adminIgnoreIfDown"] != str(self.admin_ignore_if_down).lower():
                 return False
         if self.admin_vrid:
             if self.vrrp_group_info["adminVrrpId"] != self.admin_vrid:
@@ -1174,7 +1173,7 @@ class Vrrp(object):
             self.existing["vrrp_type"] = self.vrrp_group_info["vrrpType"]
             if self.vrrp_type == "admin":
                 self.existing["admin_ignore_if_down"] = self.vrrp_group_info[
-                    "authenticationMode"]
+                    "adminIgnoreIfDown"]
             if self.admin_vrid and self.admin_interface:
                 self.existing["admin_vrid"] = self.vrrp_group_info[
                     "adminVrrpId"]
@@ -1237,7 +1236,7 @@ class Vrrp(object):
             self.end_state["vrrp_type"] = self.vrrp_group_info["vrrpType"]
             if self.vrrp_type == "admin":
                 self.end_state["admin_ignore_if_down"] = self.vrrp_group_info[
-                    "authenticationMode"]
+                    "adminIgnoreIfDown"]
             if self.admin_vrid and self.admin_interface:
                 self.existing["admin_vrid"] = self.vrrp_group_info[
                     "adminVrrpId"]

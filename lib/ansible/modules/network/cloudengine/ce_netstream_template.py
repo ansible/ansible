@@ -179,17 +179,18 @@ class NetstreamTemplate(object):
         if not self.module.check_mode:
             load_config(self.module, commands)
 
-    def cli_get_netstream_config(self):
+    def cli_get_netstream_config(self, cmd):
         """ Cli get netstream configuration """
 
-        if self.type == "ip":
-            cmd = "netstream record %s ip" % self.record_name
-        else:
-            cmd = "netstream record %s vxlan inner-ip" % self.record_name
         flags = list()
         regular = "| section include %s" % cmd
         flags.append(regular)
-        self.netstream_cfg = get_config(self.module, flags)
+        config = get_config(self.module, flags)
+        config_list = config.split('\n')
+        if len(config_list) == 1:
+            self.netstream_cfg = False
+        else:
+            self.netstream_cfg = config
 
     def check_args(self):
         """ Check module args """
@@ -212,7 +213,6 @@ class NetstreamTemplate(object):
         """ Get module proposed """
 
         self.proposed["state"] = self.state
-
         if self.type:
             self.proposed["type"] = self.type
         if self.record_name:
@@ -229,7 +229,11 @@ class NetstreamTemplate(object):
     def get_existing(self):
         """ Get existing configuration """
 
-        self.cli_get_netstream_config()
+        if self.type == "ip":
+            cmd = "netstream record %s ip" % self.record_name
+        else:
+            cmd = "netstream record %s vxlan inner-ip" % self.record_name
+        self.cli_get_netstream_config(cmd)
 
         if self.netstream_cfg:
             self.existing["type"] = self.type
@@ -262,7 +266,11 @@ class NetstreamTemplate(object):
     def get_end_state(self):
         """ Get end state """
 
-        self.cli_get_netstream_config()
+        if self.type == "ip":
+            cmd = "netstream record %s i" % self.record_name
+        else:
+            cmd = "netstream record %s vxlan inner-i" % self.record_name
+        self.cli_get_netstream_config(cmd)
 
         if self.netstream_cfg:
             self.end_state["type"] = self.type

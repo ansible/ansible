@@ -201,12 +201,17 @@ changed:
     type: bool
     sample: true
 '''
-
+import time
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
 CE_NC_GET_SFLOW = """
 <filter type="subtree">
@@ -411,6 +416,11 @@ class Sflow(object):
         self.counter_interval = self.module.params['counter_interval']
         self.state = self.module.params['state']
 
+        self.hostname = self.module.params['provider']['host']
+        self.username = self.module.params['provider']['username']
+        self.password = self.module.params['provider']['password']
+        self.port = self.module.params['provider']['port']
+
         # state
         self.config = ""  # current config
         self.sflow_dict = dict()
@@ -421,6 +431,12 @@ class Sflow(object):
         self.proposed = dict()
         self.existing = dict()
         self.end_state = dict()
+
+        if self.rate_limit or self.forward_enp_slot:
+            self.ssh = paramiko.SSHClient()
+            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.ssh.connect(hostname=self.hostname, username=self.username, password=self.password, port=self.port)
+            self.ssh_shell = self.ssh.invoke_shell()
 
     def __init_module__(self):
         """init module"""
@@ -447,7 +463,52 @@ class Sflow(object):
         """load config by cli"""
 
         if not self.module.check_mode:
-            load_config(self.module, commands)
+            if commands:
+                cmds = ["return", "sys"]
+                cmds.extend(commands)
+                cmds.append("commit")
+                cmds_str = "\n".join(cmds)
+                self.ssh_shell.sendall(b"\n%s\n" % cmds_str)
+                while True:
+                    data = self.ssh_shell.recv(256)
+                    if re.findall(r"commit$", data.strip()):
+                        break
+                    if "Error" in data:
+                        self.ssh.close()
+                        self.module.fail_json(msg="Error: rate_limit_slot or forward_enp_slot in invalid.")
+
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+        cfg = ''
+        cmds = ["return", "sys"]
+        cmds.append(cmd)
+        cmds_str = "\n".join(cmds)
+        self.ssh_shell.sendall(b"\n%s\n" % cmds_str)
+        std = ""
+
+        while True:
+            data = self.ssh_shell.recv(256)
+            std_list = re.findall(r"^\[\S*\](.*)", std)
+            if std_list:
+                std = std_list[0]
+            if re.findall(r"\[\S*\]", data):
+                if re.findall(r"\[\S*\]", std):
+                    std += data.strip()
+                    break
+            std += data.strip()
+
+        std_out = std.replace('\r', '').replace('\n', '')
+        refind = re.findall(r'\[.*\](.*)\[.*\]', std_out)
+        if refind:
+            cfg = str(refind[0]).strip()
+
+        return cfg
 
     def get_current_config(self):
         """get current configuration"""
@@ -455,20 +516,17 @@ class Sflow(object):
         flags = list()
         exp = ""
         if self.rate_limit:
-            exp += "assign sflow management-plane export rate-limit %s" % self.rate_limit
-            if self.rate_limit_slot:
-                exp += " slot %s" % self.rate_limit_slot
-            exp += "$"
+            exp += "assign sflow management-plane export rate-limit "
 
         if self.forward_enp_slot:
             if exp:
                 exp += "|"
-            exp += "assign forward enp sflow enable slot %s$" % self.forward_enp_slot
+            exp += "assign forward enp sflow enable slot"
 
         if exp:
-            exp = " | ignore-case include " + exp
+            exp = " | include " + exp
             flags.append(exp)
-            return get_config(self.module, flags)
+            return self.get_config(flags)
         else:
             return ""
 
@@ -506,7 +564,7 @@ class Sflow(object):
         root = ElementTree.fromstring(xml_str)
 
         # get source info
-        srcs = root.findall("data/sflow/sources/source")
+        srcs = root.findall("sflow/sources/source")
         if srcs:
             for src in srcs:
                 attrs = dict()
@@ -516,14 +574,14 @@ class Sflow(object):
                 sflow_dict["source"].append(attrs)
 
         # get agent info
-        agent = root.find("data/sflow/agents/agent")
+        agent = root.find("sflow/agents/agent")
         if agent:
             for attr in agent:
                 if attr.tag in ["family", "ipv4Addr", "ipv6Addr"]:
                     sflow_dict["agent"][attr.tag] = attr.text
 
         # get collector info
-        collectors = root.findall("data/sflow/collectors/collector")
+        collectors = root.findall("sflow/collectors/collector")
         if collectors:
             for collector in collectors:
                 attrs = dict()
@@ -534,21 +592,21 @@ class Sflow(object):
                 sflow_dict["collector"].append(attrs)
 
         # get sampling info
-        sample = root.find("data/sflow/samplings/sampling")
+        sample = root.find("sflow/samplings/sampling")
         if sample:
             for attr in sample:
                 if attr.tag in ["ifName", "collectorID", "direction", "length", "rate"]:
                     sflow_dict["sampling"][attr.tag] = attr.text
 
         # get counter info
-        counter = root.find("data/sflow/counters/counter")
+        counter = root.find("sflow/counters/counter")
         if counter:
             for attr in counter:
                 if attr.tag in ["ifName", "collectorID", "interval"]:
                     sflow_dict["counter"][attr.tag] = attr.text
 
         # get export info
-        export = root.find("data/sflow/exports/export")
+        export = root.find("sflow/exports/export")
         if export:
             for attr in export:
                 if attr.tag == "ExportRoute":
@@ -649,7 +707,6 @@ class Sflow(object):
             if collector.get("collectorID") == self.collector_id:
                 exist_dict = collector
                 break
-
         change = False
         if self.state == "present":
             if not exist_dict:
@@ -662,16 +719,11 @@ class Sflow(object):
                 change = True
             elif self.collector_ip_vpn and self.collector_ip_vpn != exist_dict.get("vrfName"):
                 change = True
-            elif not self.collector_ip_vpn and exist_dict.get("vrfName") != "_public_":
-                change = True
             elif self.collector_udp_port and self.collector_udp_port != exist_dict.get("port"):
-                change = True
-            elif not self.collector_udp_port and exist_dict.get("port") != "6343":
                 change = True
             elif self.collector_datagram_size and self.collector_datagram_size != exist_dict.get("datagramSize"):
                 change = True
-            elif not self.collector_datagram_size and exist_dict.get("datagramSize") != "1400":
-                change = True
+
             elif self.collector_meth and self.collector_meth != exist_dict.get("meth"):
                 change = True
             elif not self.collector_meth and exist_dict.get("meth") and exist_dict.get("meth") != "meth":
@@ -974,6 +1026,10 @@ class Sflow(object):
             if not check_ip_addr(self.agent_ip):
                 self.module.fail_json(msg="Error: agent_ip is invalid.")
 
+        if not HAS_PARAMIKO:
+            self.module.fail_json(
+                msg="'Error: No paramiko package, please install it.'")
+
         # check source_ip
         if self.source_ip:
             self.source_ip = self.source_ip.upper()
@@ -1240,6 +1296,9 @@ class Sflow(object):
             self.results['updates'] = self.updates_cmd
         else:
             self.results['updates'] = list()
+
+        if self.rate_limit or self.forward_enp_slot:
+            self.ssh.close()
 
         self.module.exit_json(**self.results)
 
