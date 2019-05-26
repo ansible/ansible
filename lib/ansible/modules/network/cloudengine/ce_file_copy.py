@@ -152,42 +152,6 @@ CE_NC_GET_SCP_ENABLE = """
 """
 
 
-def get_cli_exception(exc=None):
-    """Get cli exception message"""
-
-    msg = list()
-    if not exc:
-        exc = sys.exc_info[1]
-    if exc:
-        errs = str(exc).split("\r\n")
-        for err in errs:
-            if not err:
-                continue
-            if "matched error in response:" in err:
-                continue
-            if " at '^' position" in err:
-                err = err.replace(" at '^' position", "")
-            if err.replace(" ", "") == "^":
-                continue
-            if len(err) > 2 and err[0] in ["<", "["] and err[-1] in [">", "]"]:
-                continue
-            if err[-1] == ".":
-                err = err[:-1]
-            if err.replace(" ", "") == "":
-                continue
-            msg.append(err)
-    else:
-        msg = ["Error: Fail to get cli exception message."]
-
-    while msg[-1][-1] == ' ':
-        msg[-1] = msg[-1][:-1]
-
-    if msg[-1][-1] != ".":
-        msg[-1] += "."
-
-    return ", ".join(msg).capitalize()
-
-
 class FileCopy(object):
     """File copy function class"""
 
