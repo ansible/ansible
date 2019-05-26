@@ -434,6 +434,10 @@ options:
       - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
          C(docker run --network) and will I(not) add the default network if C(networks) is
          specified. If C(networks) is not specified, the default network will be attached."
+      - "Note that docker CLI also sets C(network_mode) to the name of the first network
+         added if C(--network) is specified. For more compatibility with docker CLI, you
+         explicitly have to set C(network_mode) to the name of the first network you're
+         adding."
       - Current value is C(no). A new default of C(yes) will be set in Ansible 2.12.
     type: bool
     version_added: "2.8"
