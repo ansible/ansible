@@ -2,7 +2,7 @@
 - name: remove NTP (if set)
   ios_ntp:
     server: 10.75.32.5
-    source_int: Loopback0
+    source_int: "{{ test_interface }}"
     acl: NTP_ACL
     logging: true
     key_id: 10
@@ -16,7 +16,7 @@
   - name: configure NTP
     ios_ntp: &config
       server: 10.75.32.5
-      source_int: Loopback0
+      source_int: "{{ test_interface }}"
       state: present
 
   - assert: &true
