@@ -243,8 +243,6 @@
   when: selinux_installed.stdout != ""
   ignore_errors: true
 
-- name: Check what would be removed
-
 - name: remove directory foobar
   file: path={{output_dir}}/foobar state=absent
 
