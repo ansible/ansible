@@ -59,6 +59,7 @@ If ($state -eq "present") {
 } Else {
   $desired_state = [ordered]@{
     name = $name
+    sam_account_name = $sam_account_name
     state = $state
   }
 }
@@ -68,7 +69,7 @@ Function Get-InitialState($desired_state) {
   # Test computer exists
   $computer = Try {
     Get-ADComputer `
-      -Identity $desired_state.name `
+      -Identity $desired_state.sam_account_name `
       -Properties DistinguishedName,DNSHostName,Enabled,Name,SamAccountName,Description,ObjectClass `
       @extra_args
   } Catch { $null }
@@ -87,6 +88,7 @@ Function Get-InitialState($desired_state) {
   } Else {
     $initial_state = [ordered]@{
       name = $desired_state.name
+      sam_account_name = $desired_state.sam_account_name
       state = "absent"
     }
   }
@@ -112,7 +114,7 @@ Function Set-ConstructedState($initial_state, $desired_state) {
   If ($initial_state.distinguished_name -cne $desired_state.distinguished_name) {
     # Move computer to OU
     Try {
-      Get-ADComputer -Identity $desired_state.name @extra_args |
+      Get-ADComputer -Identity $desired_state.sam_account_name @extra_args |
           Move-ADObject `
             -TargetPath $desired_state.ou `
             -Confirm:$False `
@@ -147,7 +149,7 @@ Function Add-ConstructedState($desired_state) {
 # ------------------------------------------------------------------------------
 Function Remove-ConstructedState($initial_state) {
   Try {
-    Get-ADComputer -Identity $initial_state.name @extra_args |
+    Get-ADComputer -Identity $initial_state.sam_account_name @extra_args |
       Remove-ADObject `
         -Recursive `
         -Confirm:$False `
