@@ -22,14 +22,14 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
-module: checkpoint_service_tcp_facts
-short_description: Get service_tcp objects facts on Checkpoint over Web Services API
+module: cp_network_facts
+short_description: Get network objects facts on Checkpoint over Web Services API
 description:
-  - Get service_tcp objects facts on Checkpoint devices.
+  - Get network objects facts on Checkpoint devices.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
@@ -37,13 +37,13 @@ extends_documentation_fragment: checkpoint_facts
 """
 
 EXAMPLES = """
-- name: Get service_tcp object facts
-  checkpoint_service_tcp_facts:
-    name: "New_TCP_Service_1"
+- name: Get network object facts
+  cp_network_facts:
+    name: "New Network 1"
 """
 
 RETURN = """
-api_result:
+ansible_facts:
   description: The checkpoint object facts.
   returned: always.
   type: dict
@@ -59,10 +59,11 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    api_call_object = "service-tcp"
-    api_call_object_plural_version = "services-tcp"
+    api_call_object = "network"
+    api_call_object_plural_version = "networks"
 
-    api_call_facts(module, api_call_object, api_call_object_plural_version)
+    result = api_call_facts(module, api_call_object, api_call_object_plural_version)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

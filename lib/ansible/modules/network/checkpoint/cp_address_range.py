@@ -22,40 +22,62 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
-module: checkpoint_group
-short_description: Manages group objects on Checkpoint over Web Services API
+module: cp_address_range
+short_description: Manages address_range objects on Checkpoint over Web Services API
 description:
-  - Manages group objects on Checkpoint devices including creating, updating, removing group objects.
+  - Manages address_range objects on Checkpoint devices including creating, updating and removing objects.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
-  members:
+  ip_address_first:
     description:
-      - Collection of Network objects identified by the name or UID.
-    type: list
+      - First IP address in the range. If both IPv4 and IPv6 address ranges are required, use the ipv4-address-first and
+        the ipv6-address-first fields instead.
+    type: str
+  ipv4_address_first:
+    description:
+      - First IPv4 address in the range.
+    type: str
+  ipv6_address_first:
+    description:
+      - First IPv6 address in the range.
+    type: str
+  ip_address_last:
+    description:
+      - Last IP address in the range. If both IPv4 and IPv6 address ranges are required, use the ipv4-address-first and
+        the ipv6-address-first fields instead.
+    type: str
+  ipv4_address_last:
+    description:
+      - Last IPv4 address in the range.
+    type: str
+  ipv6_address_last:
+    description:
+      - Last IPv6 address in the range.
+    type: str
+  nat_settings:
+    description:
+      - NAT settings.
+    type: dict
 extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
-- name: Add group object
-  checkpoint_group:
-    name: "New Group 1"
+- name: Add address-range object
+  cp_address_range:
+    name: "New address_range 1"
+    ip-address-first: "192.0.2.1"
+    ip-address-last: "192.0.2.10"
     state: present
-
-
-- name: Delete group object
-  checkpoint_group:
-    name: "New Group 1"
-    state: absent
 """
 
 RETURN = """
-api_result:
+cp_address_range:
   description: The checkpoint object created or updated.
   returned: always, except when deleting the object.
   type: dict
@@ -67,15 +89,22 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
-        members=dict(type='list')
+        ip_address_first=dict(type='str'),
+        ipv4_address_first=dict(type='str'),
+        ipv6_address_first=dict(type='str'),
+        ip_address_last=dict(type='str'),
+        ipv4_address_last=dict(type='str'),
+        ipv6_address_last=dict(type='str'),
+        nat_settings=dict(type='dict')
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
                            mutually_exclusive=[['name', 'uid']])
-    api_call_object = "group"
+    api_call_object = "address-range"
 
-    api_call(module, api_call_object)
+    result = api_call(module, api_call_object)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

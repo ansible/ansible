@@ -22,12 +22,12 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
 ---
-module: checkpoint_publish
+module: cp_publish
 short_description: publish session on Checkpoint devices over Web Services API
 description:
   - Publish session on Checkpoint devices.
@@ -44,11 +44,11 @@ extends_documentation_fragment: checkpoint_commands
 
 EXAMPLES = """
 - name: publish
-  checkpoint_publish:
+  cp_publish:
 """
 
 RETURN = """
-checkpoint_publish:
+cp_publish:
   description: The checkpoint publish output.
   returned: always.
   type: str
@@ -70,7 +70,8 @@ def main():
 
     command = "publish"
 
-    api_command(module, command)
+    result = api_command(module, command)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

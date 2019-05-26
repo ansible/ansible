@@ -22,12 +22,12 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
 ---
-module: checkpoint_install_policy
+module: cp_install_policy
 short_description: Install policy on Checkpoint devices over Web Services API
 description:
   - Install policy on Checkpoint devices.
@@ -83,13 +83,13 @@ extends_documentation_fragment: checkpoint_commands
 
 EXAMPLES = """
 - name: Install policy
-  checkpoint_install_policy:
+  cp_install_policy:
     policy_package: "standard"
     targets: "the_target"
 """
 
 RETURN = """
-checkpoint_install_policy:
+cp_install_policy:
   description: The checkpoint install policy output.
   returned: always.
   type: str
@@ -119,7 +119,8 @@ def main():
 
     command = "install-policy"
 
-    api_command(module, command)
+    result = api_command(module, command)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

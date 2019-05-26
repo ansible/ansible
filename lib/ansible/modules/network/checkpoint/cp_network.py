@@ -22,68 +22,70 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
-module: checkpoint_address_range
-short_description: Manages address_range objects on Checkpoint over Web Services API
+module: cp_network
+short_description: Manages network objects on Checkpoint over Web Services API
 description:
-  - Manages address_range objects on Checkpoint devices including creating, updating, removing address_range objects.
+  - Manages network objects on Checkpoint devices including creating, updating and removing objects.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
-  ip_address_first:
+  subnet:
     description:
-      - First IP address in the range. If both IPv4 and IPv6 address ranges are required, use the ipv4-address-first and
-        the ipv6-address-first fields instead.
+      - IPv4 or IPv6 network address. If both addresses are required use subnet4 and subnet6 fields explicitly.
     type: str
-  ipv4_address_first:
+  subnet4:
     description:
-      - First IPv4 address in the range.
+      - IPv4 network address.
     type: str
-  ipv6_address_first:
+  subnet6:
     description:
-      - First IPv6 address in the range.
+      - IPv6 network address.
     type: str
-  ip_address_last:
+  mask_length:
     description:
-      - Last IP address in the range. If both IPv4 and IPv6 address ranges are required, use the ipv4-address-first and
-        the ipv6-address-first fields instead.
-    type: str
-  ipv4_address_last:
+      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields
+        explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
+    type: int
+  mask_length4:
     description:
-      - Last IPv4 address in the range.
-    type: str
-  ipv6_address_last:
+      - IPv4 network mask length.
+    type: int
+  mask_length6:
     description:
-      - Last IPv6 address in the range.
+      - IPv6 network mask length.
+    type: int
+  subnet_mask:
+    description:
+      - IPv4 network mask.
     type: str
   nat_settings:
     description:
       - NAT settings.
     type: dict
+  broadcast:
+    description:
+      - Allow broadcast address inclusion.
+    type: str
+    choices: ['disallow', 'allow']
 extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
-- name: Add address_range object
-  checkpoint_address_range:
-    name: "New address_range 1"
-    ip-address-first: "192.0.2.1"
-    ip-address-last: "192.0.2.10"
+- name: Add network object
+  cp_network:
+    name: "New Network 1"
+    subnet: "192.0.2.0"
+    subnet_mask : "255.255.255.0"
     state: present
-
-
-- name: Delete address_range object
-  checkpoint_address_range:
-    name: "New Address Range 1"
-    state: absent
 """
 
 RETURN = """
-api_result:
+cp_network:
   description: The checkpoint object created or updated.
   returned: always, except when deleting the object.
   type: dict
@@ -95,21 +97,24 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
-        ip_address_first=dict(type='str'),
-        ipv4_address_first=dict(type='str'),
-        ipv6_address_first=dict(type='str'),
-        ip_address_last=dict(type='str'),
-        ipv4_address_last=dict(type='str'),
-        ipv6_address_last=dict(type='str'),
-        nat_settings=dict(type='dict')
+        subnet=dict(type='str'),
+        subnet4=dict(type='str'),
+        subnet6=dict(type='str'),
+        mask_length=dict(type='int'),
+        mask_length4=dict(type='int'),
+        mask_length6=dict(type='int'),
+        subnet_mask=dict(type='str'),
+        nat_settings=dict(type='dict'),
+        broadcast=dict(type='str', choices=['disallow', 'allow'])
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
                            mutually_exclusive=[['name', 'uid']])
-    api_call_object = "address-range"
+    api_call_object = "network"
 
-    api_call(module, api_call_object)
+    result = api_call(module, api_call_object)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

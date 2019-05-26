@@ -22,18 +22,22 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
-module: checkpoint_service_tcp
-short_description: Manages service_tcp objects on Checkpoint over Web Services API
+module: cp_service_udp
+short_description: Manages service-udp objects on Checkpoint over Web Services API
 description:
-  - Manages service_tcp objects on Checkpoint devices including creating, updating, removing service_tcp objects.
+  - Manages service_udp objects on Checkpoint devices including creating, updating and removing objects.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
+  accept_replies:
+    description:
+      - N/A.
+    type: bool
   aggressive_aging:
     description:
       - Sets short (aggressive) timeouts for idle connections.
@@ -92,20 +96,14 @@ extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
-- name: Add service_tcp object
-  checkpoint_service_tcp:
-    name: "New_TCP_Service_1"
+- name: Add service-udp object
+  cp_service_udp:
+    name: "New_UDP_Service_1"
     state: present
-
-
-- name: Delete service_tcp object
-  checkpoint_service_tcp:
-    name: "New_TCP_Service_1"
-    state: absent
 """
 
 RETURN = """
-api_result:
+cp_service_udp:
   description: The checkpoint object created or updated.
   returned: always, except when deleting the object.
   type: dict
@@ -117,6 +115,7 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
+        accept_replies=dict(type='bool'),
         aggressive_aging=dict(type='dict'),
         keep_connections_open_after_policy_installation=dict(type='bool'),
         match_by_protocol_signature=dict(type='bool'),
@@ -133,9 +132,10 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
                            mutually_exclusive=[['name', 'uid']])
-    api_call_object = "service-tcp"
+    api_call_object = "service-udp"
 
-    api_call(module, api_call_object)
+    result = api_call(module, api_call_object)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

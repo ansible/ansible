@@ -26,66 +26,30 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: checkpoint_network
-short_description: Manages network objects on Checkpoint over Web Services API
+module: cp_group
+short_description: Manages group objects on Checkpoint over Web Services API
 description:
-  - Manages network objects on Checkpoint devices including creating, updating and removing objects.
+  - Manages group objects on Checkpoint devices including creating, updating and removing objects.
     All operations are performed over Web Services API.
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
-  subnet:
+  members:
     description:
-      - IPv4 or IPv6 network address. If both addresses are required use subnet4 and subnet6 fields explicitly.
-    type: str
-  subnet4:
-    description:
-      - IPv4 network address.
-    type: str
-  subnet6:
-    description:
-      - IPv6 network address.
-    type: str
-  mask_length:
-    description:
-      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields
-        explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
-    type: int
-  mask_length4:
-    description:
-      - IPv4 network mask length.
-    type: int
-  mask_length6:
-    description:
-      - IPv6 network mask length.
-    type: int
-  subnet_mask:
-    description:
-      - IPv4 network mask.
-    type: str
-  nat_settings:
-    description:
-      - NAT settings.
-    type: dict
-  broadcast:
-    description:
-      - Allow broadcast address inclusion.
-    type: str
-    choices: ['disallow', 'allow']
+      - Collection of Network objects identified by the name or UID.
+    type: list
 extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
-- name: Add network object
-  checkpoint_network:
-    name: "New Network 1"
-    subnet: "192.0.2.0"
-    subnet_mask : "255.255.255.0"
+- name: Add group object
+  cp_group:
+    name: "New Group 1"
     state: present
 """
 
 RETURN = """
-api_result:
+cp_group:
   description: The checkpoint object created or updated.
   returned: always, except when deleting the object.
   type: dict
@@ -97,21 +61,13 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
-        subnet=dict(type='str'),
-        subnet4=dict(type='str'),
-        subnet6=dict(type='str'),
-        mask_length=dict(type='int'),
-        mask_length4=dict(type='int'),
-        mask_length6=dict(type='int'),
-        subnet_mask=dict(type='str'),
-        nat_settings=dict(type='dict'),
-        broadcast=dict(type='str', choices=['disallow', 'allow'])
+        members=dict(type='list')
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
                            mutually_exclusive=[['name', 'uid']])
-    api_call_object = "network"
+    api_call_object = "group"
 
     result = api_call(module, api_call_object)
     module.exit_json(**result)

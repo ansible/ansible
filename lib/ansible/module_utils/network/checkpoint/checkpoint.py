@@ -266,6 +266,7 @@ def api_call(module, api_call_object):
             result['changed'] = True
             result[api_call_object] = response
     else:
+        # state == absent
         if equals_code == 200:
             code, response = send_request(connection, version, 'delete-' + api_call_object, payload)
             if code != 200:
