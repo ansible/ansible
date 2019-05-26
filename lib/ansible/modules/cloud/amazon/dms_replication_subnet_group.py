@@ -199,7 +199,7 @@ def main():
     global module
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        supports_check_mode=False
+        supports_check_mode=True
     )
     exit_message = None
     changed = False
@@ -215,17 +215,24 @@ def main():
     if state == 'present':
         if replication_subnet_exists(subnet_group):
             if compare_params(subnet_group["ReplicationSubnetGroups"][0]):
+                if not module.check_mode:
+                    exit_message = modify_replication_subnet_group(dmsclient)
+                else:
+                    exit_message = dmsclient
                 changed = True
-                exit_message = modify_replication_subnet_group(dmsclient)
             else:
                 exit_message = "No changes to Subnet group"
         else:
-            exit_message = create_replication_subnet_group(dmsclient)
-            changed = True
+            if not module.check_mode:
+                exit_message = create_replication_subnet_group(dmsclient)
+                changed = True
+            else:
+                exit_message = "Check mode enabled"
+
     elif state == 'absent':
         if replication_subnet_exists(subnet_group):
-            changed = True
             replication_subnet_group_delete(dmsclient)
+            changed = True
             exit_message = "Replication subnet group Deleted"
 
         else:
