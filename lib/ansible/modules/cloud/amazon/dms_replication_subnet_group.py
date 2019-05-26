@@ -187,9 +187,9 @@ def modify_replication_subnet_group(module, connection):
 
 def main():
     argument_spec = dict(
-        state=dict(type=str, choices=['present', 'absent'], default='present'),
-        identifier=dict(type=str, required=True),
-        description=dict(type=str, required=True),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        identifier=dict(type='str', required=True),
+        description=dict(type='str', required=True),
         subnetids=dict(type='list',  elements='str', required=True),
     )
     module = AnsibleAWSModule(
