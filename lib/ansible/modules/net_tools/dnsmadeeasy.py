@@ -94,7 +94,6 @@ options:
   systemDescription:
     description:
       - Description used by the monitor.
-    required: true
     version_added: 2.4
 
   maxEmails:
