@@ -18,6 +18,7 @@
       server: 10.75.32.5
       source_int: "{{ test_interface }}"
       state: present
+    register: result
 
   - assert: &true
       that:
@@ -25,6 +26,7 @@
 
   - name: idempotence check
     ios_ntp: *config
+    register: result
 
   - assert: &false
       that:
@@ -35,11 +37,13 @@
       acl: NTP_ACL
       logging: true
       state: present
+    register: result
 
   - assert: *true
 
   - name: idempotence check
     ios_ntp: *config1
+    register: result
 
   - assert: *false
 
@@ -49,11 +53,13 @@
       auth_key: 15435A030726242723273C21181319000A
       auth: true
       state: present
+    register: result
 
   - assert: *true
 
   - name: idempotence check
     ios_ntp: *config2
+    register: result
 
   - assert: *false
 
@@ -62,11 +68,13 @@
       acl: NTP_ACL
       logging: true
       state: absent
+    register: result
 
   - assert: *true
 
   - name: idempotence check
     ios_ntp: *config3
+    register: result
 
   - assert: *false
 
