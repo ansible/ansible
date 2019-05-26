@@ -4,24 +4,12 @@
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import json
-import re
-import socket
-import time
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six.moves.urllib.parse import quote
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -209,6 +197,16 @@ ansible_facts:
             sample:      "XXXXXXXXXXXX"
 
 '''
+
+import json
+import re
+import socket
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import quote
 
 socket.setdefaulttimeout(5)
 
