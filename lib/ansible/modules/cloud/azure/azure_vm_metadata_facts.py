@@ -1,7 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+import json
+import re
+import socket
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import quote
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -15,7 +26,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_vm_metadata_facts
-short_description: Gathers facts (instance metadata) about remote hosts within Azure
+short_description: <
+  Gathers facts (instance metadata) about remote hosts within Azure
 version_added: "2.9"
 author:
     - Devon Hubner (@DevoKun)
@@ -38,7 +50,9 @@ EXAMPLES = '''
 
 RETURN = '''
 ansible_facts:
-    description: Dictionary of new facts representing discovered properties of the Azure VM.
+    description: <
+      Dictionary of new facts representing discovered
+      properties of the Azure VM.
     returned:    changed
     type:        complex
     contains:
@@ -169,12 +183,12 @@ ansible_facts:
             sample:      ""
 
         azure_vm_network_interface_ipv4_ipaddress_privateipaddress:
-            description: Azure VM network_interface_ipv4_ipaddress_privateipaddress
+            description: Azure VM network IPv4 private address
             type:        str
             sample:      "x.x.x.x"
 
         azure_vm_network_interface_ipv4_ipaddress_publicipaddress:
-            description: Azure VM network_interface_ipv4_ipaddress_publicipaddress
+            description: Azure VM network IPv4 public address
             type:        str
             sample:      ""
 
@@ -195,24 +209,12 @@ ansible_facts:
 
 '''
 
-import json
-import re
-import socket
-import time
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six.moves.urllib.parse import quote
-
 socket.setdefaulttimeout(5)
 
 
 class AzureVmMetadata(object):
-    #
     # Metadata URL comes from:
     # https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
-    #
     azure_vm_metadata_uri = 'http://169.254.169.254/metadata/instance?api-version=2019-02-01'
 
     def __init__(self, module, azure_vm_metadata_uri=None):
@@ -221,25 +223,19 @@ class AzureVmMetadata(object):
         self._data = {}
         self._prefix = 'ansible_azure_vm%s'
 
-    #
     # Query the metadata URL and return the results as text.
-    #
     def _fetch(self, url):
         encoded_url = quote(url, safe='%/:=&?~#+!$,;\'@()*[]')
         response, info = fetch_url(self.module, encoded_url, method="GET", force=True, headers={'Metadata': 'true'})
         if info['status'] not in (200, 404):
             time.sleep(3)
-            #
             # Request failed.
             # Retry the request then fail...
-            #
             self.module.warn('Retrying query to metadata service. First attempt failed: {0}'.format(info['msg']))
             response, info = fetch_url(self.module, encoded_url, method="GET", force=True, headers={'Metadata': 'true'})
             if info['status'] not in (200, 404):
-                #
                 # Second request failed.
                 # Failure.
-                #
                 self.module.warn('Second query to metadata service failed: {0}'.format(info['msg']))
                 self.module.fail_json(msg='Failed to retrieve metadata from Azure: {0}'.format(info['msg']), response=info)
         if response:
@@ -248,27 +244,19 @@ class AzureVmMetadata(object):
             data = None
         return to_text(data)
 
-
     def _keyfix(self, fields):
-
         for key, val in fields.items():
-            #
             # Change ':'' and '-' to '_' to ensure valid template variable names
-            #
             newkey = re.sub(':|-', '_', key).lower()
 
             fields[newkey] = fields.pop(key)
-            #
             # if list, roll through the list and parse what is inside
-            #
             if isinstance(val, list):
                 templist = []
                 for l in val:
                     templist.append(self._keyfix(l))
                 fields[newkey] = templist
-            #
             # if dictionary, recurse through
-            #
             elif isinstance(val, dict):
                 fields[newkey] = self._keyfix(val)
             else:
@@ -276,12 +264,9 @@ class AzureVmMetadata(object):
 
         return fields
 
-
-    #
     # Designed to create template-friendly variable names.
     # While keyfix just returns a dictionary, this function
     # seperates every key+value in to a variable.
-    #
     def _json_to_facts(self, fields, prefix_key=""):
 
         if (not prefix_key):
@@ -289,57 +274,41 @@ class AzureVmMetadata(object):
 
         for key, val in fields.items():
 
-            #
             # Change ':'' and '-' to '_' to ensure valid template variable names
-            #
             newkey = prefix_key + re.sub(':|-', '_', key).lower()
-            #
             # if list, roll through the list and parse what is inside
-            #
             if isinstance(val, list):
                 for l in val:
                     self._json_to_facts(l, str(newkey) + "_")
-            #
             # if dictionary, recurse through
-            #
             elif isinstance(val, dict):
                 self._json_to_facts(val, str(newkey) + "_")
             else:
                 self._data[newkey] = val
 
-
-    #
     # Take Metadata results and parse JSON
-    #
     def fetch(self, uri):
 
         raw_results = self._fetch(uri)
 
         if not raw_results:
             return
-        #
         # There should not be any newlines.
         # Handle the newlines if they exist.
-        #
         raw_result = raw_results.split('\n')
 
         for result in raw_result:
 
             try:
-                #
                 # Results should be a JSON string.
                 # Load the JSON in to a dictionary.
-                #
                 self._data[self._prefix % ""] = json.loads(result)
                 for (key, val) in self._data.items():
                     newkey = re.sub(':|-', '_', key).lower()
 
-                    #
                     # Change the key name to the ansible-friendly version
-                    #
                     self._data[newkey] = self._data.pop(key)
-                    #
-                    # 
+
                     if isinstance(val, dict):
                         self._data[newkey] = self._keyfix(val)
                 self._json_to_facts(self._data[self._prefix % ""])
@@ -347,11 +316,8 @@ class AzureVmMetadata(object):
             except Exception as e:
                 self.module.warn("Exception: " + str(e))
 
-
     def run(self):
-
         self.fetch(self.uri_meta)
-
         return self._data
 
 
