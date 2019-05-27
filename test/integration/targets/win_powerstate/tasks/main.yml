@@ -53,7 +53,7 @@
   register: winrm_port_closed
   ignore_errors: true
 
-- name: assert win_powerstatehibernate_result (Windows Server) for suspend state
+- name: assert shutdown state
   assert:
     that:
     - winrm_port_closed.failed
