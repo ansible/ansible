@@ -22,7 +22,7 @@ from ansible.module_utils.common.text.converters import (
 DEFAULT_ENCODING = 'utf-8'
 
 
-class Test_json_encode_fallback:
+class TestJsonEncodeFallback:
 
     """Namespace for testing _json_encode_fallback."""
 
