@@ -1281,7 +1281,7 @@ class PyVmomiHelper(PyVmomi):
 
         return network_devices
 
-    def configure_network(self, vm_obj, relospec=None):
+    def configure_network(self, vm_obj, is_clone=False):
         # Ignore empty networks, this permits to keep networks when deploying a template/cloning a VM
         if len(self.params['networks']) == 0:
             return
@@ -1409,13 +1409,9 @@ class PyVmomiHelper(PyVmomi):
                     nic_change_detected = True
 
             if nic_change_detected:
-                # Change to fix the issue found while configuring opaque network
-                # VMs cloned from a template with opaque network will get disconnected
-                # Replacing deprecated config parameter with relocation Spec
-                if isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
-                    self.relospec.deviceChange.append(nic)
-
-                if self.vcenter_version >= StrictVersion("6.0"):
+                # Use relospec for device changes when cloning instead of
+                # configspec, which was deprecated with vSphere API 6.0
+                if is_clone and self.vcenter_version >= StrictVersion("6.0"):
                     self.relospec.deviceChange.append(nic)
                 else:
                     self.configspec.deviceChange.append(nic)
@@ -2153,9 +2149,8 @@ class PyVmomiHelper(PyVmomi):
         else:
             (datastore, datastore_name) = self.select_datastore(vm_obj)
 
-        relospec = None
         if self.params['template']:
-            relospec = vim.vm.RelocateSpec()
+            is_clone = True
 
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
@@ -2167,7 +2162,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_hardware_params(vm_obj=vm_obj)
         self.configure_resource_alloc_info(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
-        self.configure_network(vm_obj=vm_obj, relospec=relospec)
+        self.configure_network(vm_obj=vm_obj, is_clone=is_clone)
         self.configure_cdrom(vm_obj=vm_obj)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)
