@@ -36,9 +36,6 @@ options:
     description:
     - Database name to connect to.
     type: str
-    aliases:
-    - database
-    - db
 
 author:
 - Andrew Klychkov (@Andersson007)
@@ -362,7 +359,7 @@ class MySQL_Info(object):
 def main():
     argument_spec = mysql_common_argument_spec()
     argument_spec.update(
-        login_db=dict(type='str', aliases=['db', 'database']),
+        login_db=dict(type='str'),
         filter=dict(type='list'),
     )
 
