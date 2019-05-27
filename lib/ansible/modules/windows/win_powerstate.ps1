@@ -23,10 +23,6 @@ $result = @{
     }
 }
 
-if ($PSVersionTable.PSVersion -lt [Version]"3.0") {
-    Fail-Json $result "win_powerstate requires Windows Management Framework 3 or higher."
-}
-
 function Set-PowerState {
 
     [CmdletBinding(SupportsShouldProcess = $true)]
