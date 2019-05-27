@@ -8,7 +8,7 @@
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name '_ansible_check_mode' -type 'bool' -default $false
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $powerstate = Get-AnsibleParam -obj $params -name "powerstate" -type "str" -default "suspend" -validateset "shutdown", "suspend", "hibernate"
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
@@ -29,7 +29,7 @@ function Set-PowerState {
     param (
 
         [parameter(Mandatory = $True)]
-        [ValidateSet(“suspend”, ”hibernate”)]$PowerState,
+        [ValidateSet("suspend", "hibernate")]$PowerState,
 
         [parameter(Mandatory = $False)]
         [switch]$Force,
@@ -38,7 +38,7 @@ function Set-PowerState {
         [switch]$DisableWake
     )
 
-    if ((Get-WmiObject -Class Win32_OperatingSystem).Caption -match '\sServer\s') {
+    if ((Get-CimInstance -Class Win32_OperatingSystem).Caption -match "\sServer\s") {
 
         Exit-Json -obj $result -message "Can not change to state $PowerState on Windows Servers"
     }
@@ -74,7 +74,7 @@ function Set-PowerState {
     }
 }
 
-if (($powerstate -eq 'suspend') -or ($powerstate -eq 'hibernate')) {
+if (($powerstate -eq "suspend") -or ($powerstate -eq "hibernate")) {
 
     try {
 
@@ -86,7 +86,7 @@ if (($powerstate -eq 'suspend') -or ($powerstate -eq 'hibernate')) {
     }
 }
 
-elseif ($powerstate -eq 'shutdown') {
+elseif ($powerstate -eq "shutdown") {
     try {
 
         Stop-Computer -Force:$force -WhatIf:$check_mode
