@@ -1,8 +1,8 @@
 ---
 - name: Confirm port 5986 is open on the host
-  win_wait_for:
-    port: 5986
-    state: started
+  wait_for_connection:
+    delay: 10
+    timeout: 10
 
 - name: Get Ansible Facts
   setup:
