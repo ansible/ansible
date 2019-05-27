@@ -90,52 +90,52 @@ EXAMPLES = r'''
 RETURN = r'''
 version:
   description: Database server version.
-  returned: always
+  returned: if not excluded by filter
   type: dict
   sample: { "version": { "major": 5, "minor": 5, "release": 60 } }
   contains:
     major:
       description: Major server version.
-      returned: always
+      returned: if not excluded by filter
       type: int
       sample: 5
     minor:
       description: Minor server version.
-      returned: always
+      returned: if not excluded by filter
       type: int
       sample: 5
     release:
       description: Release server version.
-      returned: always
+      returned: if not excluded by filter
       type: int
       sample: 60
 databases:
   description: Information about databases.
-  returned: always
+  returned: if not excluded by filter
   type: dict
   sample:
   - { "mysql": { "size": 656594 }, "information_schema": { "size": 73728 } }
   contains:
     size:
       description: Database size in bytes.
-      returned: always
+      returned: if not excluded by filter
       type: dict
       sample: { 'size': 656594 }
 settings:
   description: Global settings (variables) information.
-  returned: always
+  returned: if not excluded by filter
   type: dict
   sample:
   - { "innodb_open_files": 300, innodb_page_size": 16384 }
 roles:
   description: Roles information.
-  returned: always
+  returned: if not excluded by filter
   type: dict
   sample:
   - { "localhost": { "root": { "Alter_priv": "Y", "Alter_routine_priv": "Y" } } }
 engines:
   description: Information about the server's storage engines.
-  returned: always
+  returned: if not excluded by filter
   type: dict
   sample:
   - { "CSV": { "Comment": "CSV storage engine", "Savepoints": "NO", "Support": "YES", "Transactions": "NO", "XA": "NO" } }
