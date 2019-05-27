@@ -318,8 +318,11 @@ class MySQL_Info(object):
         if res:
             for line in res:
                 host = line['Host']
+                if not self.info['roles'].get(host):
+                    self.info['roles'][host] = {}
+
                 user = line['User']
-                self.info['roles'][host] = {user: {}}
+                self.info['roles'][host][user] = {}
 
                 for vname, val in iteritems(line):
                     if vname not in ('Host', 'User'):
