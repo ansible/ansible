@@ -166,6 +166,7 @@ class SourcesList(object):
     def __init__(self, module):
         self.module = module
         self.files = {}  # group sources by file
+        self.repofile = None
         # Repositories that we're adding -- used to implement mode param
         self.new_repos = set()
         self.default_file = self._apt_cfg_file('Dir::Etc::sourcelist')
@@ -187,9 +188,10 @@ class SourcesList(object):
 
     def _expand_path(self, filename):
         if '/' in filename:
-            return filename
+            self.repofile = filename
         else:
-            return os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+            self.repofile = os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+        return self.repofile
 
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
@@ -544,7 +546,7 @@ def main():
             if update_cache:
                 cache = apt.Cache()
                 if module.params['state'] == 'present':
-                    cache.update(sources_list='/etc/apt/sources.list.d/' + module.params['filename'] + '.list')
+                    cache.update(sources_list=sourceslist.repofile)
         except OSError as err:
             module.fail_json(msg=to_native(err))
 
