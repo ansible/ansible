@@ -24,10 +24,11 @@ hosts:
 
 DOCUMENTATION = '''
 ---
-module: zabbix_host_facts
-short_description: Gather facts about Zabbix host
+module: zabbix_host_info
+short_description: Gather information about Zabbix host
 description:
    - This module allows you to search for Zabbix host entries.
+   - This module was called C(zabbix_host_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.7"
 author:
     - "Michael Miko (@RedWhiteMiko)"
@@ -68,7 +69,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Get host info
   local_action:
-    module: zabbix_host_facts
+    module: zabbix_host_info
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
@@ -80,7 +81,7 @@ EXAMPLES = '''
 
 - name: Reduce host inventory information to provided keys
   local_action:
-    module: zabbix_host_facts
+    module: zabbix_host_info
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
@@ -185,6 +186,8 @@ def main():
         ),
         supports_check_mode=True
     )
+    if module._name == 'zabbix_host_facts':
+        module.deprecate("The 'zabbix_host_facts' module has been renamed to 'zabbix_host_info'", version='2.13')
 
     if not HAS_ZABBIX_API:
         module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
