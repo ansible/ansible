@@ -511,9 +511,9 @@ class SnmpCommunity(object):
                             group_name_list.append(tmp["groupName"])
                     if group_name not in group_name_list:
                         if state == "present":
-                                need_cfg = True
+                            need_cfg = True
                         else:
-                                need_cfg = False
+                            need_cfg = False
                     else:
                         need_cfg_bool = True
                         for tmp in result["group_info"]:
