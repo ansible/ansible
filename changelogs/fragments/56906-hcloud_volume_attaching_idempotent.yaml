@@ -1,0 +1,2 @@
+bugfixes:
+  - hcloud_volume - Fix idempotency when attaching a server to a volume.
