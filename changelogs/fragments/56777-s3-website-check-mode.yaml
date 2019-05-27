@@ -1,0 +1,2 @@
+minor_changes:
+  - s3_website - add support for check mode and cover module with unit tests.
