@@ -1,0 +1,59 @@
+---
+- name: Confirm port 5986 is open on the host
+  win_wait_for:
+    port: 5986
+    state: started
+
+- name: Get Ansible Facts
+  setup:
+
+- name: Try to Suspend host
+  win_powerstate:
+  register: win_powerstatesuspend_result
+
+- name: assert win_powerstatesuspend_result (Windows Client) for suspend state
+  assert:
+    that:
+    - win_powerstatesuspend_result is changed
+  when: not hostvars[inventory_hostname].ansible_distribution is search (' Server ')
+
+- name: assert win_powerstatesuspend_result (Windows Server) for suspend state
+  assert:
+    that:
+    - not win_powerstatesuspend_result is changed
+  when: hostvars[inventory_hostname].ansible_distribution is search (' Server ')
+
+- name: Try to Hibernate host
+  win_powerstate:
+    powerstate: hibernate
+  register: win_powerstatehibernate_result
+
+- name: assert win_powerstatehibernate_result (Windows Client) for suspend state
+  assert:
+    that:
+    - win_powerstatehibernate_result is changed
+  when: not hostvars[inventory_hostname].ansible_distribution is search (' Server ')
+
+- name: assert win_powerstatehibernate_result (Windows Server) for suspend state
+  assert:
+    that:
+    - not win_powerstatehibernate_result is changed
+  when: hostvars[inventory_hostname].ansible_distribution is search (' Server ')
+
+- name: Force Shutdown to host
+  win_powerstate:
+    powerstate: shutdown
+    force: true
+  register: win_powerstateshutdown_result
+
+- name: Confirm port 5986 is closed on the host
+  wait_for_connection:
+    delay: 10
+    timeout: 10
+  register: winrm_port_closed
+  ignore_errors: true
+
+- name: assert win_powerstatehibernate_result (Windows Server) for suspend state
+  assert:
+    that:
+    - winrm_port_closed.failed
