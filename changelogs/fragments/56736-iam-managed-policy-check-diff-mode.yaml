@@ -1,0 +1,2 @@
+minor_changes:
+  - iam_managed_policy - add support for check & diff modes and cover module with unit tests.
