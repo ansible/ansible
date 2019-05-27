@@ -39,12 +39,6 @@ options:
     aliases:
     - database
     - db
-  config_file:
-    description:
-    - Specify a config (credentials) file from which user and password are to be read.
-    - 'Use [client] section in the file to define the credentials.'
-    type: path
-    default: '~/.my.cnf'
 
 author:
 - Andrew Klychkov (@Andersson007)
