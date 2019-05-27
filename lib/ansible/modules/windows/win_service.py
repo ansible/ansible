@@ -352,9 +352,9 @@ recovery:
     sample:
       {
         "first_failure_timeout": "60000",
-        "on_first_failure": "1",
-        "on_second_failure": "1",
-        "on_subsequent_failure": "1",
+        "on_first_failure": "restart",
+        "on_second_failure": "restart",
+        "on_subsequent_failure": "restart",
         "reset_fail_count_after": "300",
         "second_failure_timeout": "60000",
         "subsequent_failure_timeout": "60000"
