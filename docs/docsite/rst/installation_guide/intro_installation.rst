@@ -119,7 +119,7 @@ To enable the Ansible Engine repository for RHEL 8, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-8-server-ansible-2.8-rpms
+    $ sudo subscription-manager repos --enable ansible-2.8-for-rhel-8-x86_64-rpms
 
 To enable the Ansible Engine repository for RHEL 7, run the following command:
 
