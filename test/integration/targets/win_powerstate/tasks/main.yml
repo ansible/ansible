@@ -1,7 +1,6 @@
 ---
-- name: Confirm port 5986 is open on the host
+- name: Confirm winrm is open on the host
   wait_for_connection:
-    delay: 10
     timeout: 10
 
 - name: Get Ansible Facts
@@ -40,20 +39,19 @@
     - not win_powerstatehibernate_result is changed
   when: hostvars[inventory_hostname].ansible_distribution is search (' Server ')
 
-- name: Force Shutdown to host
+- name: Force Shutdown to host (Check Mode)
   win_powerstate:
     powerstate: shutdown
     force: true
   register: win_powerstateshutdown_result
+  check_mode: true
 
-- name: Confirm port 5986 is closed on the host
+- name: Confirm winrm is open on the host
   wait_for_connection:
-    delay: 10
     timeout: 10
-  register: winrm_port_closed
-  ignore_errors: true
+  register: winrm_port_open
 
 - name: assert shutdown state
   assert:
     that:
-    - winrm_port_closed.failed
+    - not winrm_port_open.failed
