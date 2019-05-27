@@ -163,14 +163,23 @@ from ansible.module_utils._text import to_native
 
 
 class PgOwnership(object):
+
+    """Class for changing ownership of PostgreSQL objects.
+
+    Arguments:
+        module (AnsibleModule): Object of Ansible module class.
+        cursor (psycopg2.connect.cursor): Cursor object for interraction with the database.
+        role (str): Role name to set as a new owner of objects.
+
+    Important:
+        If you want to add handling of a new type of database objects:
+        1. Add a specific method for this like self.__set_db_owner(), etc.
+        2. Add a condition with a check of ownership for new type objects to self.__is_owner()
+        3. Add a condition with invocation of the specific method to self.set_owner()
+        4. Add the information to the module documentation
+        That's all.
     """
-    If you want to add handling of a new type of database objects:
-    1. Add a specific method for this like self.__set_db_owner(), etc.
-    2. Add a condition with a check of ownership for new type objects to self.__is_owner()
-    3. Add a condition with invocation of the specific method to self.set_owner()
-    4. Add the information to the module documentation
-    That's all.
-    """
+
     def __init__(self, module, cursor, role):
         self.module = module
         self.cursor = cursor
@@ -182,6 +191,13 @@ class PgOwnership(object):
         self.obj_type = ''
 
     def check_role_exists(self, role, fail_on_role=True):
+        """Check the role exists or not.
+
+        Arguments:
+            role (str): Role name.
+            fail_on_role (bool): If True, fail when the role does not exist.
+                Otherwise just warn and continue.
+        """
         if not self.__role_exists(role):
             if fail_on_role:
                 self.module.fail_json(msg="Role '%s' does not exist" % role)
@@ -194,6 +210,18 @@ class PgOwnership(object):
             return True
 
     def reassign(self, old_owners, fail_on_role):
+        """Implements REASSIGN OWNED BY command.
+
+        If success, set self.changed as True.
+
+        Arguments:
+            old_owners (list): The ownership of all the objects within
+                the current database, and of all shared objects (databases, tablespaces),
+                owned by these roles will be reassigned to self.role.
+            fail_on_role (bool): If True, fail when a role from old_owners does not exist.
+                Otherwise just warn and continue.
+        """
+
         roles = []
         for r in old_owners:
             if self.check_role_exists(r, fail_on_role):
@@ -213,6 +241,13 @@ class PgOwnership(object):
         self.changed = self.__exec_sql(query, ddl=True)
 
     def set_owner(self, obj_type, obj_name):
+        """Change owner of a database object.
+
+        Arguments:
+            obj_type (str): Type of object (like database, table, view, etc.).
+            obj_name (str): Object name.
+        """
+
         self.obj_name = obj_name
         self.obj_type = obj_type
 
@@ -246,6 +281,8 @@ class PgOwnership(object):
             self.__set_mat_view_owner()
 
     def __is_owner(self):
+        """Return True if self.role is the current object owner."""
+
         if self.obj_type == 'table':
             query = ("SELECT 1 FROM pg_tables WHERE tablename = '%s' "
                      "AND tableowner = '%s'" % (self.obj_name, self.role))
@@ -292,49 +329,69 @@ class PgOwnership(object):
         return self.__exec_sql(query, add_to_executed=False)
 
     def __set_db_owner(self):
+        """Set the database owner."""
         query = "ALTER DATABASE %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'database'),
                                                    pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_func_owner(self):
+        """Set the function owner."""
         query = "ALTER FUNCTION %s OWNER TO %s" % (self.obj_name,
                                                    pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_seq_owner(self):
+        """Set the sequence owner."""
         query = "ALTER SEQUENCE %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'table'),
                                                    pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_schema_owner(self):
+        """Set the schema owner."""
         query = "ALTER SCHEMA %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'schema'),
                                                  pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_table_owner(self):
+        """Set the table owner."""
         query = "ALTER TABLE %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'table'),
                                                 pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_tablespace_owner(self):
+        """Set the tablespace owner."""
         query = "ALTER TABLESPACE %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'database'),
                                                      pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_view_owner(self):
+        """Set the view owner."""
         query = "ALTER VIEW %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'table'),
                                                pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_mat_view_owner(self):
+        """Set the materialized view owner."""
         query = "ALTER MATERIALIZED VIEW %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'table'),
                                                             pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __role_exists(self, role):
+        """Return True if role exists, otherwise return Fasle."""
         return self.__exec_sql("SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
 
     def __exec_sql(self, query, ddl=False, add_to_executed=True):
+        """Execute SQL.
+
+        Return a query result if possible or True/False if ddl=True arg was passed.
+        It's necessary for statements that don't return any result (like DDL queries).
+
+        Arguments:
+            query (str): SQL query to execute.
+            ddl (bool): Must return True or False instead of rows
+                (typical for DDL queries) (default False).
+            add_to_executed (bool): Append the query to self.executed_queries attr.
+        """
         try:
             self.cursor.execute(query)
 
