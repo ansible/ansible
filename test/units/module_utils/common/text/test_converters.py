@@ -92,9 +92,10 @@ class TestContainerToBytes:
             (['str'], [b'str']),
             (('str'), (b'str')),
             ({'str': 'str'}, {b'str': b'str'}),
+            ({u'str': u'str'}, {b'str': b'str'}),
         ]
     )
-    @pytest.mark.parametrize('encoding', ['utf-8', 'ascii'])
+    @pytest.mark.parametrize('encoding', ['utf-8', 'latin1'])
     @pytest.mark.parametrize('errors', ['strict', 'ignore'])
     def test_to_bytes_different_types(self, test_input, expected, encoding, errors):
         """Test for passing objects to container_to_bytes()."""
@@ -143,7 +144,7 @@ class TestContainerToText:
             ({b'str': b'str'}, {'str': 'str'}),
         ]
     )
-    @pytest.mark.parametrize('encoding', ['utf-8', 'ascii'])
+    @pytest.mark.parametrize('encoding', ['utf-8', 'latin1'])
     @pytest.mark.parametrize('errors', ['strict', 'ignore'])
     def test_to_text_different_types(self, test_input, expected, encoding, errors):
         """Test for passing objects to container_to_text()."""
