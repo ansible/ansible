@@ -298,9 +298,6 @@ class Sequence(object):
         self.owner = ''
         self.sequence_schema = schema
         self.data_type = ''
-        self.numeric_precision = ''
-        self.numeric_precision_radix = ''
-        self.numeric_scale = ''
         self.start_value = ''
         self.minimum_value = ''
         self.maximum_value = ''
@@ -316,9 +313,24 @@ class Sequence(object):
 
     def get_info(self):
         """Getter to refresh and get sequence info"""
-        query = ("SELECT * FROM information_schema.sequences "
-                 "WHERE sequence_name = '%s' "
-                 "AND sequence_schema = '%s'" % (self.name, self.sequence_schema))
+        query = ("SELECT "
+                 "s.sequence_schema AS schemaname, "
+                 "s.sequence_name AS sequencename, "
+                 "pg_get_userbyid(c.relowner) AS sequenceowner, "
+                 "s.data_type::regtype AS data_type, "
+                 "s.start_value AS start_value, "
+                 "s.minimum_value AS min_value, "
+                 "s.maximum_value AS max_value, "
+                 "s.increment AS increment_by, "
+                 "s.cycle_option AS cycle "
+                 "FROM information_schema.sequences s "
+                 "JOIN pg_class c ON c.relname = s.sequence_name "
+                 "LEFT JOIN pg_namespace n ON n.oid = c.relnamespace "
+                 "WHERE NOT pg_is_other_temp_schema(n.oid) "
+                 "AND c.relkind = 'S'::\"char\" "
+                 "AND sequence_name = '%s' "
+                 "AND sequence_schema = '%s'" % (self.name,
+                                                 self.sequence_schema))
 
         res = self.__exec_sql(query, add_to_executed=False)
 
@@ -326,37 +338,17 @@ class Sequence(object):
             self.exists = False
             return False
 
-        if res[0][0]:
+        if res:
             self.exists = True
-            self.sequence_schema = res[0][1]
-            self.name = res[0][2]
-            self.data_type = res[0][3]
-            self.numeric_precision = res[0][4]
-            self.numeric_precision_radix = res[0][5]
-            self.numeric_scale = res[0][6]
-            self.start_value = res[0][7]
-            self.minimum_value = res[0][8]
-            self.maximum_value = res[0][9]
-            self.increment = res[0][10]
-            self.cycle_option = res[0][11]
-
-        # get owner info
-        query = ("SELECT c.relname,a.rolname,n.nspname "
-                 "FROM pg_class as c "
-                 "JOIN pg_authid as a on (c.relowner = a.oid) "
-                 "JOIN pg_namespace as n on (c.relnamespace = n.oid) "
-                 "WHERE c.relkind = 'S' and "
-                 "c.relname = '%s' and "
-                 "n.nspname = '%s'" % (self.name, self.sequence_schema))
-
-        res = self.__exec_sql(query, add_to_executed=False)
-
-        if not res:
-            self.exists = False
-            return False
-
-        if res[0][0]:
-            self.owner = res[0][1]
+            self.sequence_schema = res[0]['schemaname']
+            self.name = res[0]['sequencename']
+            self.owner = res[0]['sequenceowner']
+            self.data_type = res[0]['data_type']
+            self.start_value = res[0]['start_value']
+            self.minimum_value = res[0]['min_value']
+            self.maximum_value = res[0]['max_value']
+            self.increment = res[0]['increment_by']
+            self.cycle_option = res[0]['cycle']
 
     def create(self, data_type=None, increment=None, minimum_value=None,
                maximum_value=None, start=None, cache=None, cycle_option=False,
