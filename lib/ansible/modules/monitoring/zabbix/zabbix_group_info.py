@@ -23,10 +23,11 @@ host_groups:
 
 DOCUMENTATION = '''
 ---
-module: zabbix_group_facts
-short_description: Gather facts about Zabbix hostgroup
+module: zabbix_group_info
+short_description: Gather information about Zabbix hostgroup
 description:
    - This module allows you to search for Zabbix hostgroup entries.
+   - This module was called C(zabbix_group_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.6"
 author:
     - "Michael Miko (@RedWhiteMiko)"
@@ -46,7 +47,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 - name: Get hostgroup info
   local_action:
-    module: zabbix_group_facts
+    module: zabbix_group_info
     server_url: http://monitor.example.com
     login_user: username
     login_password: password
@@ -102,6 +103,8 @@ def main():
         ),
         supports_check_mode=True
     )
+    if module._name == 'zabbix_group_facts':
+        module.deprecate("The 'zabbix_group_facts' module has been renamed to 'zabbix_group_info'", version='2.13')
 
     if not HAS_ZABBIX_API:
         module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
