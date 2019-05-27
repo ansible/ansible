@@ -135,7 +135,7 @@ virtualmachines:
                     sample: Canonical
                 version:
                     description:
-                        - The version of the allery image.
+                        - The version of the gallery image.
                     returned: when created from gallery image
                     type: str
                     sample: latest
