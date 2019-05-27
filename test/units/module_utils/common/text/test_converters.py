@@ -209,7 +209,7 @@ class Test_container_to_text:
             ('str'.encode(DEFAULT_ENCODING), 'str'),
             (['str'.encode(DEFAULT_ENCODING)], ['str']),
             (('str'.encode(DEFAULT_ENCODING)), ('str')),
-            ({'str'.encode(DEFAULT_ENCODING): 'str'.encode(DEFAULT_ENCODING)}, {'str': 'str'}),
+            ({b'str'.encode(DEFAULT_ENCODING): b'str'.encode(DEFAULT_ENCODING)}, {u'str': u'str'}),
         ]
     )
     def test_to_text_default_encoding_err(self, test_input, expected):
