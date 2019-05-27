@@ -1,0 +1,2 @@
+minor_changes:
+- vmware_guest now accepts Python 2 and Python 3 compatible string translate method (https://github.com/ansible/ansible/issues/54118).
