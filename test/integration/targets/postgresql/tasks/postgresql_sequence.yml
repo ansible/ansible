@@ -185,6 +185,41 @@
       - result.rowcount == 0
 
 ####################
+# Test: drop nonexistent sequence
+- name: postgresql_sequence - drop a sequence called foobar which does not exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: foobar
+    state: absent
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == False
+      - result.sequence == 'foobar'
+      - result.queries == []
+
+# Real SQL check
+- name: postgresql_sequence - check that the seqeunce "foobar" not exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'foobar'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 0
+
+####################
 # Test: create sequence with options
 - name: postgresql_sequence - create an descending sequence called foobar_desc, starting at 101 and which cycle between 1 to 1000
   become_user: "{{ pg_user }}"
