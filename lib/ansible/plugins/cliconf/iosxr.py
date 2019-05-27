@@ -116,6 +116,11 @@ class Cliconf(CliconfBase):
             results.append(self.send_command(**line))
             requests.append(cmd)
 
+        # Before any commit happend, we can get a real configuration
+        # diff from the device and make it available by the iosxr_config module.
+        # This information can be usefull either in check mode or normal mode.
+        resp['show_commit_config_diff'] = self.get('show commit changes diff')
+
         if commit:
             self.commit(comment=comment, label=label, replace=replace)
         else:
