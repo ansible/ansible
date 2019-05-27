@@ -38,6 +38,7 @@ class TestJsonEncodeFallback:
         """
         Test for passing datetime.datetime objects to _json_encode_fallback().
         """
+
         assert _json_encode_fallback(test_input) == expected
 
     @pytest.mark.parametrize(
@@ -51,6 +52,7 @@ class TestJsonEncodeFallback:
         """
         Test for passing a set object to _json_encode_fallback().
         """
+
         assert _json_encode_fallback(test_input) == expected
 
     @pytest.mark.parametrize(
@@ -72,6 +74,7 @@ class TestJsonEncodeFallback:
 
         It must fail with TypeError.
         """
+
         with pytest.raises(TypeError):
             _json_encode_fallback(test_input)
 
@@ -196,4 +199,5 @@ class TestJsonify:
         """
         Test for passing common set object to _json_encode_fallback().
         """
+
         assert jsonify(test_input) == expected
