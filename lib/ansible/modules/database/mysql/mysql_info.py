@@ -318,7 +318,7 @@ class MySQL_Info(object):
         if res:
             for line in res:
                 host = line['Host']
-                if not self.info['roles'].get(host):
+                if host not in self.info['roles']:
                     self.info['roles'][host] = {}
 
                 user = line['User']
