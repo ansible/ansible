@@ -35,6 +35,7 @@ options:
   login_db:
     description:
     - Database name to connect to.
+    - It makes sense if I(login_user) is allowed to connect to a specific database only.
     type: str
 
 author:
