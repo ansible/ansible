@@ -1,4 +1,4 @@
-    - python_requirements_facts:
+    - python_requirements_info:
         dependencies:
           - openshift==0.6.0
           - kubernetes==6.0.0
