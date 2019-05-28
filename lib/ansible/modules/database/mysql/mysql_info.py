@@ -25,7 +25,7 @@ options:
   filter:
     description:
     - Limit the collected information by comma separated string or YAML list.
-    - Allowable values are C(version), C(databases), C(settings), C(roles),
+    - Allowable values are C(version), C(databases), C(settings), C(users),
       C(slave_status), C(slave_hosts), C(master_status), C(engines).
     - By default, collects all subsets.
     - You can use '!' before value (for example, C(!settings)) to exclude it from the information.
@@ -48,8 +48,8 @@ EXAMPLES = r'''
 # Display info from mysql-hosts group (using creds from ~/.my.cnf to connect):
 # ansible mysql-hosts -m mysql_info
 
-# Display only databases and roles info:
-# ansible mysql-hosts -m mysql_info -a 'filter=databases,roles'
+# Display only databases and users info:
+# ansible mysql-hosts -m mysql_info -a 'filter=databases,users'
 
 # Display only slave status:
 # ansible standby -m mysql_info -a 'filter=slave_status'
@@ -67,11 +67,11 @@ EXAMPLES = r'''
     login_password: mysuperpass
     filter: version
 
-- name: Collect all info except settings and roles by root
+- name: Collect all info except settings and users by root
   mysql_info:
     login_user: root
     login_password: rootpass
-    filter: "!settings,!roles"
+    filter: "!settings,!users"
 
 - name: Collect info about databases and version using ~/.my.cnf as a credential file
   become: yes
@@ -128,8 +128,8 @@ settings:
   type: dict
   sample:
   - { "innodb_open_files": 300, innodb_page_size": 16384 }
-roles:
-  description: Roles information.
+users:
+  description: Users information.
   returned: if not excluded by filter
   type: dict
   sample:
@@ -163,7 +163,12 @@ slave_hosts:
 from decimal import Decimal
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mysql import mysql_connect, mysql_common_argument_spec, mysql_driver, mysql_driver_fail_msg
+from ansible.module_utils.mysql import (
+    mysql_connect,
+    mysql_common_argument_spec,
+    mysql_driver,
+    mysql_driver_fail_msg,
+)
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -173,14 +178,23 @@ from ansible.module_utils._text import to_native
 #
 
 class MySQL_Info(object):
-    '''
-    If you need to add a new subset:
-    1. add a new key with the same name to self.info attr in self.__init__()
-    2. add a new private method to get the information
-    3. add invocation of the new method to self.__collect()
-    4. add info about the new subset to the DOCUMENTATION block
-    5. add info about the new subset with an example to RETURN block
-    '''
+
+    """Class for collection MySQL instance information.
+
+    Arguments:
+        module (AnsibleModule): Object of AnsibleModule class.
+        cursor (pymysql/mysql-python): Cursor class for interraction with
+            the database.
+
+    Note:
+        If you need to add a new subset:
+        1. add a new key with the same name to self.info attr in self.__init__()
+        2. add a new private method to get the information
+        3. add invocation of the new method to self.__collect()
+        4. add info about the new subset to the DOCUMENTATION block
+        5. add info about the new subset with an example to RETURN block
+    """
+
     def __init__(self, module, cursor):
         self.module = module
         self.cursor = cursor
@@ -189,13 +203,19 @@ class MySQL_Info(object):
             'databases': {},
             'settings': {},
             'engines': {},
-            'roles': {},
+            'users': {},
             'master_status': {},
             'slave_hosts': {},
             'slave_status': {},
         }
 
     def get_info(self, filter_):
+        """Get MySQL instance information based on filter_.
+
+        Arguments:
+            filter_ (list): List of collected subsets (e.g., databases, users, etc.),
+                when it is empty, return all available information.
+        """
         self.__collect()
 
         inc_list = []
@@ -231,6 +251,7 @@ class MySQL_Info(object):
             return self.info
 
     def __collect(self):
+        """Collect all possible subsets."""
         self.__get_databases()
         self.__get_global_variables()
         self.__get_engines()
@@ -240,6 +261,7 @@ class MySQL_Info(object):
         self.__get_slaves()
 
     def __get_engines(self):
+        """Get storage engines info."""
         res = self.__exec_sql('SHOW ENGINES')
 
         if res:
@@ -252,6 +274,7 @@ class MySQL_Info(object):
                         self.info['engines'][engine][vname] = val
 
     def __convert(self, val):
+        """Convert unserializable data."""
         try:
             if isinstance(val, Decimal):
                 val = float(val)
@@ -267,6 +290,7 @@ class MySQL_Info(object):
         return val
 
     def __get_global_variables(self):
+        """Get global variables (instance settings)."""
         res = self.__exec_sql('SHOW GLOBAL VARIABLES')
 
         if res:
@@ -283,6 +307,7 @@ class MySQL_Info(object):
             )
 
     def __get_master_status(self):
+        """Get master status if the instance is a master."""
         res = self.__exec_sql('SHOW MASTER STATUS')
         if res:
             for line in res:
@@ -290,45 +315,57 @@ class MySQL_Info(object):
                     self.info['master_status'][vname] = self.__convert(val)
 
     def __get_slave_status(self):
+        """Get slave status if the instance is a slave."""
         res = self.__exec_sql('SHOW SLAVE STATUS')
         if res:
             for line in res:
                 host = line['Master_Host']
+                if host not in self.info['slave_status']:
+                    self.info['slave_status'][host] = {}
+
                 port = line['Master_Port']
+                if port not in self.info['slave_status'][host]:
+                    self.info['slave_status'][host][port] = {}
+
                 user = line['Master_User']
-                self.info['slave_status'][host] = {port: {user: {}}}
+                if user not in self.info['slave_status'][host][port]:
+                    self.info['slave_status'][host][port][user] = {}
 
                 for vname, val in iteritems(line):
                     if vname not in ('Master_Host', 'Master_Port', 'Master_User'):
                         self.info['slave_status'][host][port][user][vname] = self.__convert(val)
 
     def __get_slaves(self):
+        """Get slave hosts info if the instance is a master."""
         res = self.__exec_sql('SHOW SLAVE HOSTS')
         if res:
             for line in res:
                 srv_id = line['Server_id']
-                self.info['slave_hosts'][srv_id] = {}
+                if srv_id not in self.info['slave_hosts']:
+                    self.info['slave_hosts'][srv_id] = {}
 
                 for vname, val in iteritems(line):
                     if vname != 'Server_id':
                         self.info['slave_hosts'][srv_id][vname] = self.__convert(val)
 
     def __get_users(self):
+        """Get user info."""
         res = self.__exec_sql('SELECT * FROM mysql.user')
         if res:
             for line in res:
                 host = line['Host']
-                if host not in self.info['roles']:
-                    self.info['roles'][host] = {}
+                if host not in self.info['users']:
+                    self.info['users'][host] = {}
 
                 user = line['User']
-                self.info['roles'][host][user] = {}
+                self.info['users'][host][user] = {}
 
                 for vname, val in iteritems(line):
                     if vname not in ('Host', 'User'):
-                        self.info['roles'][host][user][vname] = self.__convert(val)
+                        self.info['users'][host][user][vname] = self.__convert(val)
 
     def __get_databases(self):
+        """Get info about databases."""
         query = ('SELECT table_schema AS "name", '
                  'SUM(data_length + index_length) AS "size" '
                  'FROM information_schema.TABLES GROUP BY table_schema')
@@ -342,6 +379,13 @@ class MySQL_Info(object):
                 self.info['databases'][db['name']]['size'] = int(db['size'])
 
     def __exec_sql(self, query, ddl=False):
+        """Execute SQL.
+
+        Arguments:
+            ddl (bool): If True, return True or False.
+                Used for queries that don't return any rows
+                (mainly for DDL queries) (default False).
+        """
         try:
             self.cursor.execute(query)
 
