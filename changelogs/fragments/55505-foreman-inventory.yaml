@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix foreman inventory plugin when inventory caching is disabled
