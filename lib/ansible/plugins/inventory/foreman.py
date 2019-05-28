@@ -162,9 +162,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     # get next page
                     params['page'] += 1
 
-            # Set the cache if it is enabled or if the cache was refreshed
-            if self.use_cache or self.get_option('cache'):
-                self._cache[self.cache_key][url] = results
+            self._cache[self.cache_key][url] = results
 
         return self._cache[self.cache_key][url]
 
