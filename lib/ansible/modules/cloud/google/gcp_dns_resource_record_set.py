@@ -53,26 +53,14 @@ options:
     default: present
   name:
     description:
-    - For example, U(www.example.com.)
+    - For example, U(www.example.com).
     required: true
   type:
     description:
     - One of valid DNS resource types.
+    - 'Some valid choices include: "A", "AAAA", "CAA", "CNAME", "MX", "NAPTR", "NS",
+      "PTR", "SOA", "SPF", "SRV", "TLSA", "TXT"'
     required: true
-    choices:
-    - A
-    - AAAA
-    - CAA
-    - CNAME
-    - MX
-    - NAPTR
-    - NS
-    - PTR
-    - SOA
-    - SPF
-    - SRV
-    - TLSA
-    - TXT
   ttl:
     description:
     - Number of seconds that this ResourceRecordSet can be cached by resolvers.
@@ -123,7 +111,7 @@ EXAMPLES = '''
 RETURN = '''
 name:
   description:
-  - For example, U(www.example.com.)
+  - For example, U(www.example.com).
   returned: success
   type: str
 type:
@@ -170,7 +158,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
-            type=dict(required=True, type='str', choices=['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NAPTR', 'NS', 'PTR', 'SOA', 'SPF', 'SRV', 'TLSA', 'TXT']),
+            type=dict(required=True, type='str'),
             ttl=dict(type='int'),
             target=dict(type='list', elements='str'),
             managed_zone=dict(required=True, type='dict'),
