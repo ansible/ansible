@@ -125,6 +125,19 @@
         that:
           - remove_user.changed == true
 
+- name: Test remove user that is not present
+  block:
+    - name: Remove user
+      rabbitmq_user:
+        user: notpresent
+        state: absent
+      register: remove_user_not_present
+
+    - name: Check that user removing succeeds with a change
+      assert:
+        that:
+          - remove_user_not_present.changed == true
+
 - name: Test remove user idempotence
   block:
     - name: Remove user
