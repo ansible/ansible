@@ -35,14 +35,14 @@ options:
         Python's C(re) module.
 deprecated:
   removed_in: '2.11'
-  alternative: bigip_device_facts
+  alternative: bigip_device_info
   why: >
     The bigip_gtm_facts module is an outlier as all facts are being collected
-    in the bigip_device_facts module. Additionally, the M(bigip_device_facts)
+    in the bigip_device_info module. Additionally, the M(bigip_device_info)
     module is easier to maintain and use.
 extends_documentation_fragment: f5
 notes:
-  - This module is deprecated. Use the C(bigip_device_facts) module instead.
+  - This module is deprecated. Use the C(bigip_device_info) module instead.
 author:
   - Tim Rupp (@caphrim007)
 '''
