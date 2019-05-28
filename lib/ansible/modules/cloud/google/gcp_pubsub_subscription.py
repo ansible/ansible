@@ -76,7 +76,7 @@ options:
       push_endpoint:
         description:
         - A URL locating the endpoint to which messages should be pushed.
-        - For example, a Webhook endpoint might use "U(https://example.com/push".)
+        - For example, a Webhook endpoint might use "U(https://example.com/push").
         required: true
       attributes:
         description:
@@ -134,6 +134,26 @@ options:
     required: false
     type: bool
     version_added: 2.8
+  expiration_policy:
+    description:
+    - A policy that specifies the conditions for this subscription's expiration.
+    - A subscription is considered active as long as any connected subscriber is successfully
+      consuming messages from the subscription or is issuing operations on the subscription.
+      If expirationPolicy is not set, a default policy with ttl of 31 days will be
+      used. The minimum allowed value for expirationPolicy.ttl is 1 day.
+    required: false
+    version_added: 2.9
+    suboptions:
+      ttl:
+        description:
+        - Specifies the "time-to-live" duration for an associated resource. The resource
+          expires if it is not active for a period of ttl. The definition of "activity"
+          depends on the type of the associated resource. The minimum and maximum
+          allowed values for ttl depend on the type of the associated resource, as
+          well. If ttl is not set, the associated resource never expires.
+        - A duration in seconds with up to nine fractional digits, terminated by 's'.
+        - Example - "3.5s".
+        required: false
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions)'
@@ -188,7 +208,7 @@ pushConfig:
     pushEndpoint:
       description:
       - A URL locating the endpoint to which messages should be pushed.
-      - For example, a Webhook endpoint might use "U(https://example.com/push".)
+      - For example, a Webhook endpoint might use "U(https://example.com/push").
       returned: success
       type: str
     attributes:
@@ -246,6 +266,27 @@ retainAckedMessages:
     they fall out of the messageRetentionDuration window.
   returned: success
   type: bool
+expirationPolicy:
+  description:
+  - A policy that specifies the conditions for this subscription's expiration.
+  - A subscription is considered active as long as any connected subscriber is successfully
+    consuming messages from the subscription or is issuing operations on the subscription.
+    If expirationPolicy is not set, a default policy with ttl of 31 days will be used.
+    The minimum allowed value for expirationPolicy.ttl is 1 day.
+  returned: success
+  type: complex
+  contains:
+    ttl:
+      description:
+      - Specifies the "time-to-live" duration for an associated resource. The resource
+        expires if it is not active for a period of ttl. The definition of "activity"
+        depends on the type of the associated resource. The minimum and maximum allowed
+        values for ttl depend on the type of the associated resource, as well. If
+        ttl is not set, the associated resource never expires.
+      - A duration in seconds with up to nine fractional digits, terminated by 's'.
+      - Example - "3.5s".
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -273,6 +314,7 @@ def main():
             ack_deadline_seconds=dict(type='int'),
             message_retention_duration=dict(default='604800s', type='str'),
             retain_acked_messages=dict(type='bool'),
+            expiration_policy=dict(type='dict', options=dict(ttl=dict(type='str'))),
         )
     )
 
@@ -331,6 +373,8 @@ def updateMask(request, response):
         update_mask.append('messageRetentionDuration')
     if request.get('retainAckedMessages') != response.get('retainAckedMessages'):
         update_mask.append('retainAckedMessages')
+    if request.get('expirationPolicy') != response.get('expirationPolicy'):
+        update_mask.append('expirationPolicy')
     return ','.join(update_mask)
 
 
@@ -348,6 +392,7 @@ def resource_to_request(module):
         u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds'),
         u'messageRetentionDuration': module.params.get('message_retention_duration'),
         u'retainAckedMessages': module.params.get('retain_acked_messages'),
+        u'expirationPolicy': SubscriptionExpirationpolicy(module.params.get('expiration_policy', {}), module).to_request(),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -424,6 +469,7 @@ def response_to_hash(module, response):
         u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds'),
         u'messageRetentionDuration': response.get(u'messageRetentionDuration'),
         u'retainAckedMessages': response.get(u'retainAckedMessages'),
+        u'expirationPolicy': SubscriptionExpirationpolicy(response.get(u'expirationPolicy', {}), module).from_response(),
     }
 
 
@@ -457,6 +503,21 @@ class SubscriptionPushconfig(object):
 
     def from_response(self):
         return remove_nones_from_dict({u'pushEndpoint': self.request.get(u'pushEndpoint'), u'attributes': self.request.get(u'attributes')})
+
+
+class SubscriptionExpirationpolicy(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'ttl': self.request.get('ttl')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'ttl': self.request.get(u'ttl')})
 
 
 if __name__ == '__main__':

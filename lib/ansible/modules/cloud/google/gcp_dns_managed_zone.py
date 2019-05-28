@@ -57,6 +57,58 @@ options:
     description:
     - The DNS name of this managed zone, for instance "example.com.".
     required: true
+  dnssec_config:
+    description:
+    - DNSSEC configuration.
+    required: false
+    version_added: 2.9
+    suboptions:
+      kind:
+        description:
+        - Identifies what kind of resource this is.
+        required: false
+        default: dns#managedZoneDnsSecConfig
+      non_existence:
+        description:
+        - Specifies the mechanism used to provide authenticated denial-of-existence
+          responses. Output only while state is not OFF. .
+        - 'Some valid choices include: "nsec", "nsec3"'
+        required: false
+      state:
+        description:
+        - Specifies whether DNSSEC is enabled, and what mode it is in.
+        - 'Some valid choices include: "off", "on", "transfer"'
+        required: false
+      default_key_specs:
+        description:
+        - Specifies parameters that will be used for generating initial DnsKeys for
+          this ManagedZone. Output only while state is not OFF .
+        required: false
+        suboptions:
+          algorithm:
+            description:
+            - String mnemonic specifying the DNSSEC algorithm of this key.
+            - 'Some valid choices include: "ecdsap256sha256", "ecdsap384sha384", "rsasha1",
+              "rsasha256", "rsasha512"'
+            required: false
+          key_length:
+            description:
+            - Length of the keys in bits.
+            required: false
+          key_type:
+            description:
+            - Specifies whether this is a key signing key (KSK) or a zone signing
+              key (ZSK). Key signing keys have the Secure Entry Point flag set and,
+              when active, will only be used to sign resource record sets of type
+              DNSKEY. Zone signing keys do not have the Secure Entry Point flag set
+              and will be used to sign all other types of resource record sets. .
+            - 'Some valid choices include: "keySigning", "zoneSigning"'
+            required: false
+          kind:
+            description:
+            - Identifies what kind of resource this is.
+            required: false
+            default: dns#dnsKeySpec
   name:
     description:
     - User assigned name for this resource.
@@ -78,12 +130,10 @@ options:
     - 'The zone''s visibility: public zones are exposed to the Internet, while private
       zones are visible only to Virtual Private Cloud resources.'
     - 'Must be one of: `public`, `private`.'
+    - 'Some valid choices include: "private", "public"'
     required: false
     default: public
     version_added: 2.8
-    choices:
-    - private
-    - public
   private_visibility_config:
     description:
     - For privately visible zones, the set of Virtual Private Cloud resources that
@@ -132,6 +182,59 @@ dnsName:
   - The DNS name of this managed zone, for instance "example.com.".
   returned: success
   type: str
+dnssecConfig:
+  description:
+  - DNSSEC configuration.
+  returned: success
+  type: complex
+  contains:
+    kind:
+      description:
+      - Identifies what kind of resource this is.
+      returned: success
+      type: str
+    nonExistence:
+      description:
+      - Specifies the mechanism used to provide authenticated denial-of-existence
+        responses. Output only while state is not OFF. .
+      returned: success
+      type: str
+    state:
+      description:
+      - Specifies whether DNSSEC is enabled, and what mode it is in.
+      returned: success
+      type: str
+    defaultKeySpecs:
+      description:
+      - Specifies parameters that will be used for generating initial DnsKeys for
+        this ManagedZone. Output only while state is not OFF .
+      returned: success
+      type: complex
+      contains:
+        algorithm:
+          description:
+          - String mnemonic specifying the DNSSEC algorithm of this key.
+          returned: success
+          type: str
+        keyLength:
+          description:
+          - Length of the keys in bits.
+          returned: success
+          type: int
+        keyType:
+          description:
+          - Specifies whether this is a key signing key (KSK) or a zone signing key
+            (ZSK). Key signing keys have the Secure Entry Point flag set and, when
+            active, will only be used to sign resource record sets of type DNSKEY.
+            Zone signing keys do not have the Secure Entry Point flag set and will
+            be used to sign all other types of resource record sets. .
+          returned: success
+          type: str
+        kind:
+          description:
+          - Identifies what kind of resource this is.
+          returned: success
+          type: str
 id:
   description:
   - Unique identifier for the resource; defined by the server.
@@ -216,10 +319,25 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(required=True, type='str'),
             dns_name=dict(required=True, type='str'),
+            dnssec_config=dict(
+                type='dict',
+                options=dict(
+                    kind=dict(default='dns#managedZoneDnsSecConfig', type='str'),
+                    non_existence=dict(type='str'),
+                    state=dict(type='str'),
+                    default_key_specs=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            algorithm=dict(type='str'), key_length=dict(type='int'), key_type=dict(type='str'), kind=dict(default='dns#dnsKeySpec', type='str')
+                        ),
+                    ),
+                ),
+            ),
             name=dict(required=True, type='str'),
             name_server_set=dict(type='str'),
             labels=dict(type='dict'),
-            visibility=dict(default='public', type='str', choices=['private', 'public']),
+            visibility=dict(default='public', type='str'),
             private_visibility_config=dict(type='dict', options=dict(networks=dict(type='list', elements='dict', options=dict(network_url=dict(type='str'))))),
         )
     )
@@ -296,6 +414,7 @@ def resource_to_request(module):
         u'kind': 'dns#managedZone',
         u'description': module.params.get('description'),
         u'dnsName': module.params.get('dns_name'),
+        u'dnssecConfig': ManagedZoneDnssecconfig(module.params.get('dnssec_config', {}), module).to_request(),
         u'name': module.params.get('name'),
         u'nameServerSet': module.params.get('name_server_set'),
         u'labels': module.params.get('labels'),
@@ -368,6 +487,7 @@ def response_to_hash(module, response):
     return {
         u'description': response.get(u'description'),
         u'dnsName': response.get(u'dnsName'),
+        u'dnssecConfig': ManagedZoneDnssecconfig(response.get(u'dnssecConfig', {}), module).from_response(),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
         u'nameServers': response.get(u'nameServers'),
@@ -377,6 +497,66 @@ def response_to_hash(module, response):
         u'visibility': response.get(u'visibility'),
         u'privateVisibilityConfig': ManagedZonePrivatevisibilityconfig(response.get(u'privateVisibilityConfig', {}), module).from_response(),
     }
+
+
+class ManagedZoneDnssecconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {
+                u'kind': self.request.get('kind'),
+                u'nonExistence': self.request.get('non_existence'),
+                u'state': self.request.get('state'),
+                u'defaultKeySpecs': ManagedZoneDefaultkeyspecsArray(self.request.get('default_key_specs', []), self.module).to_request(),
+            }
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {
+                u'kind': self.request.get(u'kind'),
+                u'nonExistence': self.request.get(u'nonExistence'),
+                u'state': self.request.get(u'state'),
+                u'defaultKeySpecs': ManagedZoneDefaultkeyspecsArray(self.request.get(u'defaultKeySpecs', []), self.module).from_response(),
+            }
+        )
+
+
+class ManagedZoneDefaultkeyspecsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict(
+            {u'algorithm': item.get('algorithm'), u'keyLength': item.get('key_length'), u'keyType': item.get('key_type'), u'kind': item.get('kind')}
+        )
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict(
+            {u'algorithm': item.get(u'algorithm'), u'keyLength': item.get(u'keyLength'), u'keyType': item.get(u'keyType'), u'kind': item.get(u'kind')}
+        )
 
 
 class ManagedZonePrivatevisibilityconfig(object):

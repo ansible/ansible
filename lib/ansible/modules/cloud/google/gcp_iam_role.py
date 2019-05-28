@@ -67,14 +67,9 @@ options:
   stage:
     description:
     - The current launch stage of the role.
+    - 'Some valid choices include: "ALPHA", "BETA", "GA", "DEPRECATED", "DISABLED",
+      "EAP"'
     required: false
-    choices:
-    - ALPHA
-    - BETA
-    - GA
-    - DEPRECATED
-    - DISABLED
-    - EAP
 extends_documentation_fragment: gcp
 '''
 
@@ -149,7 +144,7 @@ def main():
             title=dict(type='str'),
             description=dict(type='str'),
             included_permissions=dict(type='list', elements='str'),
-            stage=dict(type='str', choices=['ALPHA', 'BETA', 'GA', 'DEPRECATED', 'DISABLED', 'EAP']),
+            stage=dict(type='str'),
         )
     )
 
