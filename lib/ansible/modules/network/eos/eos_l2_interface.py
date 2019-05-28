@@ -217,13 +217,12 @@ def map_config_to_obj(module, warnings):
         if "Interface does not exist" in command_result[0]:
             warnings.append("Could not gather switchport information for {0}: {1}".format(item, command_result[0]))
             continue
-        elif command_result[0] != "":
-            switchport_cfg = command_result[0].split(':')[1].strip()
 
-            if switchport_cfg == 'Enabled':
-                state = 'present'
-            else:
-                state = 'absent'
+        switchport_cfg = command_result[0].split(':')[1].strip()
+        if switchport_cfg == 'Enabled':
+            state = 'present'
+        else:
+            state = 'absent'
 
         obj = {
             'name': item.lower(),
