@@ -118,11 +118,8 @@ options:
       in the pool while that instance remains healthy."
     - "- CLIENT_IP_PROTO: Connections from the same client IP with the same IP protocol
       will go to the same instance in the pool while that instance remains healthy."
+    - 'Some valid choices include: "NONE", "CLIENT_IP", "CLIENT_IP_PROTO"'
     required: false
-    choices:
-    - NONE
-    - CLIENT_IP
-    - CLIENT_IP_PROTO
   region:
     description:
     - The region where the target pool resides.
@@ -256,7 +253,7 @@ def main():
             health_check=dict(type='dict'),
             instances=dict(type='list', elements='dict'),
             name=dict(required=True, type='str'),
-            session_affinity=dict(type='str', choices=['NONE', 'CLIENT_IP', 'CLIENT_IP_PROTO']),
+            session_affinity=dict(type='str'),
             region=dict(required=True, type='str'),
         )
     )

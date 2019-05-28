@@ -83,11 +83,9 @@ options:
         description:
         - User-specified flag to indicate which mode to use for advertisement.
         - 'Valid values of this enum field are: DEFAULT, CUSTOM .'
+        - 'Some valid choices include: "DEFAULT", "CUSTOM"'
         required: false
         default: DEFAULT
-        choices:
-        - DEFAULT
-        - CUSTOM
       advertised_groups:
         description:
         - User-specified list of prefix groups to advertise in custom mode.
@@ -264,7 +262,7 @@ def main():
                 type='dict',
                 options=dict(
                     asn=dict(required=True, type='int'),
-                    advertise_mode=dict(default='DEFAULT', type='str', choices=['DEFAULT', 'CUSTOM']),
+                    advertise_mode=dict(default='DEFAULT', type='str'),
                     advertised_groups=dict(type='list', elements='str'),
                     advertised_ip_ranges=dict(type='list', elements='dict', options=dict(range=dict(type='str'), description=dict(type='str'))),
                 ),
