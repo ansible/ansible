@@ -1,0 +1,2 @@
+bugfixes:
+  - ufw - correctly check status when logging is off (https://github.com/ansible/ansible/issues/56674)
