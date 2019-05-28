@@ -252,21 +252,9 @@ def get_with_backoff(connection, **kwargs):
     return paginator.paginate(**kwargs).build_full_result()
 
 
-def get(connection, table, filter_expression, expression_attribute_names,
-        expression_attribute_values):
+def get(connection, module, response, **params):
 
-    if expression_attribute_names:
-        kwargs = {"TableName": table,
-                  "FilterExpression": filter_expression,
-                  "ExpressionAttributeValues": expression_attribute_values,
-                  "ExpressionAttributeNames": expression_attribute_names}
-
-    else:
-        kwargs = {"TableName": table,
-                  "FilterExpression": filter_expression,
-                  "ExpressionAttributeValues": expression_attribute_values}
-
-    response = get_with_backoff(connection, **kwargs)
+    response = get_with_backoff(connection, **params)
 
     changed = False
 
@@ -275,45 +263,27 @@ def get(connection, table, filter_expression, expression_attribute_names,
     return response, changed
 
 
-def put(connection, table, item, response, module):
+def put(connection, module, response, **params):
     if not module.check_mode:
-        response = connection.put_item(
-            TableName=table,
-            Item=item,
-        )
+        response = connection.put_item(**params)
 
     changed = True
     return response, changed
 
 
-def update(connection, table, primary_key, update_expression,
-           condition_expression, expression_attribute_names,
-           expression_attribute_values, response, module):
+def update(connection, module, response, **params):
 
     if not module.check_mode:
-        if condition_expression:
-            response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                                              ConditionExpression=condition_expression, ExpressionAttributeValues=expression_attribute_values)
-        elif expression_attribute_names:
-            response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                                              ExpressionAttributeValues=expression_attribute_values, ExpressionAttributeNames=expression_attribute_names)
-        elif update_expression and expression_attribute_values:
-            response = connection.update_item(TableName=table, Key=primary_key, UpdateExpression=update_expression,
-                                              ExpressionAttributeValues=expression_attribute_values)
-        else:
-            response = connection.update_item(
-                TableName=table, Key=primary_key, UpdateExpression=update_expression)
+        response = connection.update_item(**params)
 
     changed = True
     return response, changed
 
 
-def delete(connection, table, primary_key, condition_expression,
-           expression_attribute_values, response, module):
+def delete(connection, module, response, **params):
 
     if not module.check_mode:
-        response = connection.delete_item(TableName=table, Key=primary_key, ConditionExpression=condition_expression,
-                                          ExpressionAttributeValues=expression_attribute_values)
+        response = connection.delete_item(**params)
 
     changed = True
     return response, changed
@@ -340,41 +310,46 @@ def main():
     connection = module.client('dynamodb')
 
     try:
-        table = module.params.get('table')
+        params = {}
+
         action = module.params.get('action')
-        primary_key = module.params.get('primary_key')
-        filter_expression = module.params.get('filter_expression')
-        condition_expression = module.params.get('condition_expression')
-        item = module.params.get('item')
-        update_expression = module.params.get('update_expression')
-        expression_attribute_names = module.params.get(
-            'expression_attribute_names')
-        expression_attribute_values = module.params.get(
-            'expression_attribute_values')
+
+        if module.params.get('table') is not None:
+            params['TableName'] = module.params.get('table')
+        if module.params.get('primary_key') is not None:
+            params['Key'] = module.params.get('primary_key')
+        if module.params.get('filter_expression') is not None:
+            params['FilterExpression'] = module.params.get('filter_expression')
+        if module.params.get('condition_expression') is not None:
+            params['ConditionExpression'] = module.params.get('condition_expression')
+        if module.params.get('item') is not None:
+            params['Item'] = module.params.get('item')
+        if module.params.get('update_expression') is not None:
+            params['UpdateExpression'] = module.params.get('update_expression')
+        if module.params.get('expression_attribute_names') is not None:
+            params['ExpressionAttributeNames'] = module.params.get('expression_attribute_names')
+        if module.params.get('expression_attribute_values') is not None:
+            params['ExpressionAttributeValues'] = module.params.get('expression_attribute_values')
 
         changed = False
         response = {}
 
         if action == 'get':
-            response, changed = get(
-                connection, table, filter_expression,
-                expression_attribute_names, expression_attribute_values)
+            response, changed = get(connection, module, response, **params)
 
         elif action == 'put':
-            response, changed = put(connection, table, item, response, module)
+            response, changed = put(connection, module, response, **params)
 
         elif action == 'update':
-            response, changed = update(connection, table, primary_key, update_expression,
-                                       condition_expression, expression_attribute_names,
-                                       expression_attribute_values, response, module)
+            response, changed = update(connection, module, response, **params)
 
         elif action == 'delete':
-            response, changed = delete(connection, table, primary_key,
-                                       condition_expression, expression_attribute_values, response, module)
+            response, changed = delete(connection, module, response, **params)
 
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
-            module.fail_json_aws(e, msg="Table {0} doesnt exist".format(table))
+            module.fail_json_aws(e, msg="Table {0} doesnt exist".format(
+                module.params.get('table')))
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
             module.fail_json_aws(
                 e, msg="No item matching your conditional expression")
@@ -383,6 +358,7 @@ def main():
                 e, msg="Check the primary key, it doesnt match your table config")
         else:
             raise
+
     except botocore.exceptions.BotoCoreError as e:
         raise
 
