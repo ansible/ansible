@@ -105,7 +105,7 @@
           - result.failed
           - '"Table willfail doesnt exist" in result.msg'
 
-    - name: test missing required_if parameters when updating
+    - name: test missing update_expression parameter when updating
       dynamodb:
         table: "{{ dynamo_db_table }}"
         action: update
@@ -118,14 +118,16 @@
       assert:
         that:
           - result.failed
-          - '"parameters are required together: primary_key, update_expression" in result.msg'
+          - '"action is update but all of the following are missing: update_expression" in result.msg'
 
     - name: test invalid primary key when updating
       dynamodb:
         table: "{{ dynamo_db_table }}"
         action: update
         primary_key: {"willfail": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+        update_expression: 'SET #s = :status'
         expression_attribute_values: {":status": {"S": "red"}}
+        expression_attribute_names: {"#s": "status"}
         <<: *aws_connection_info
       ignore_errors: yes
       register: result
@@ -190,7 +192,7 @@
     - name: assert data is correct
       assert:
         that:
-          - '[] in result.returned_items'
+          - '''[] in result.returned_items'''
 
     - name: updating to delete attribute 'person' in previously added db record
       dynamodb:

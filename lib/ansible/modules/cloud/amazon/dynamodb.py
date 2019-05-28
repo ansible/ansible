@@ -303,10 +303,10 @@ def main():
     )
 
     required_if = [
-        [ "action", "get", ['filter_expression', 'expression_attribute_values'] ],
-        [ "action", "put", ['item'] ],
-        [ "action", "update", ['primary_key', 'update_expression'] ],
-        [ "action", "delete", ['condition_expression', 'expression_attribute_values'] ]
+        ["action", "get", ['filter_expression', 'expression_attribute_values']],
+        ["action", "put", ['item']],
+        ["action", "update", ['primary_key', 'update_expression']],
+        ["action", "delete", ['condition_expression', 'expression_attribute_values']]
     ]
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
