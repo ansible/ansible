@@ -1,2 +1,2 @@
 bugfixes:
-  - "setup.ps1 - Change $env:COMPUTERNAME to [System.Net.Dns]::GetHostName(), to support non NETBIOS compliant hostnames  (https://github.com/ansible/ansible/issues/54550)"
+  - "setup.ps1 - Support non NETBIOS compliant hostnames (https://github.com/ansible/ansible/issues/54550)"
