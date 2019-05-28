@@ -48,7 +48,6 @@ lib/ansible/modules/windows/win_dns_client.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_dns_client.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_domain.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_domain.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_domain.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_domain_controller.ps1 PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_domain_controller.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_domain_controller.ps1 PSCustomUseLiteralPath
