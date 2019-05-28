@@ -9,8 +9,6 @@ Set-StrictMode -Version 2
 
 $ErrorActionPreference = "Stop"
 
-$log_path = $null
-
 Function Write-DebugLog {
     Param(
     [string]$msg
@@ -199,7 +197,7 @@ $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
 
-$log_path = Get-AnsibleParam $params "log_path"
+$log_path = Get-AnsibleParam $params "log_path" -default $null
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
 
 If ($state -eq "domain") {
@@ -212,9 +210,6 @@ Else { # workgroup
         Fail-Json @{} "workgroup_name is required when state is 'workgroup'"
     }
 }
-
-
-$global:log_path = $log_path
 
 Try {
 
