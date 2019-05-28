@@ -626,8 +626,8 @@ def main():
     # monitor creation
     monitor_changed = False
     new_monitor = dict()
-    # if monitor param is passed, we need to build object with necessary parameters
-    if module.params["monitor"] is not None:
+    # if record_type param matches A or CNAME, we need to build monitor with necessary parameters
+    if module.params['record_type'] in ['A', 'CNAME']:
         # Build the monitor
         for i in ['monitor', 'systemDescription', 'protocol', 'port', 'sensitivity', 'maxEmails',
                   'contactList', 'httpFqdn', 'httpFile', 'httpQueryString',
@@ -675,7 +675,6 @@ def main():
                 record_changed = True
         new_record['id'] = str(current_record['id'])
 
-    monitor_changed = False
     if current_monitor:
         for i in new_monitor:
             if str(current_monitor.get(i)) != str(new_monitor[i]):
@@ -693,8 +692,8 @@ def main():
         # create record and monitor as the record does not exist
         if not current_record:
             record = DME.createRecord(DME.prepareRecord(new_record))
-            monitor = DME.updateMonitor(record['id'], DME.prepareMonitor(new_monitor))
-            module.exit_json(changed=True, result=dict(record=record, monitor=monitor))
+            DME.updateMonitor(record['id'], DME.prepareMonitor(new_monitor))
+            module.exit_json(changed=True, result=dict(record=record, monitor=new_monitor))
 
         # update the record
         updated = False
