@@ -65,7 +65,7 @@ try {
 
   # Remove directory
   If ($state -eq 'absent' -and $directory) {
-    Remove-Item $directory_path
+    Remove-Item $directory_path -Recurse -Force
     $result.changed = $true
   }
 
