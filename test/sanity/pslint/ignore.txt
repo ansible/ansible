@@ -98,6 +98,7 @@ lib/ansible/modules/windows/win_pagefile.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_pagefile.ps1 PSAvoidUsingPositionalParameters
 lib/ansible/modules/windows/win_pagefile.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_pagefile.ps1 PSCustomUseLiteralPath
+lib/ansible/modules/windows/win_pagefile.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_pagefile.ps1 PSUseSupportsShouldProcess
 lib/ansible/modules/windows/win_pester.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_product_facts.ps1 PSAvoidTrailingWhitespace
