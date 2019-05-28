@@ -82,13 +82,14 @@ options:
      - may be set as C(VDIRECT_HTTPS) or C(VDIRECT_USE_SSL) environment variable.
     type: bool
     default: 'yes'
-  vdirect_validate_certs:
+  validate_certs:
     description:
      - If C(no), SSL certificates will not be validated,
      - may be set as C(VDIRECT_VALIDATE_CERTS) or C(VDIRECT_VERIFY) environment variable.
      - This should only set to C(no) used on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
+    aliases: [ vdirect_validate_certs ]
   devices:
     description:
      - List of Radware Alteon device names for commit operations.
@@ -172,9 +173,9 @@ meta_args = dict(
     vdirect_timeout=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_TIMEOUT']),
         default=60, type='int'),
-    vdirect_validate_certs=dict(
+    validate_certs=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_VERIFY', 'VDIRECT_VALIDATE_CERTS']),
-        default=True, type='bool'),
+        default=True, type='bool', aliases=['vdirect_validate_certs']),
     vdirect_https_port=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_HTTPS_PORT']),
         default=2189, type='int'),
@@ -219,7 +220,7 @@ class VdirectCommit(object):
                                              http_port=params['vdirect_http_port'],
                                              timeout=params['vdirect_timeout'],
                                              https=params['vdirect_use_ssl'],
-                                             verify=params['vdirect_validate_certs'])
+                                             verify=params['validate_certs'])
         self.devices = params['devices']
         self.apply = params['apply']
         self.save = params['save']

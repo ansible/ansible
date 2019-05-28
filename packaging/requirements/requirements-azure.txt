@@ -4,14 +4,14 @@ azure-cli-core==2.0.35
 azure-cli-nspkg==3.0.2
 azure-common==1.1.11
 azure-mgmt-authorization==0.51.1
-azure-mgmt-batch==4.1.0
+azure-mgmt-batch==5.0.1
 azure-mgmt-cdn==3.0.0
 azure-mgmt-compute==4.4.0
-azure-mgmt-containerinstance==0.4.0
+azure-mgmt-containerinstance==1.4.0
 azure-mgmt-containerregistry==2.0.0
 azure-mgmt-containerservice==4.4.0
 azure-mgmt-dns==2.1.0
-azure-mgmt-keyvault==0.40.0
+azure-mgmt-keyvault==1.1.0
 azure-mgmt-marketplaceordering==0.1.0
 azure-mgmt-monitor==0.5.2
 azure-mgmt-network==2.3.0
@@ -19,10 +19,11 @@ azure-mgmt-nspkg==2.0.0
 azure-mgmt-redis==5.0.0
 azure-mgmt-resource==2.1.0
 azure-mgmt-rdbms==1.4.1
+azure-mgmt-servicebus==0.5.3
 azure-mgmt-sql==0.10.0
 azure-mgmt-storage==3.1.0
 azure-mgmt-trafficmanager==0.50.0
-azure-mgmt-web==0.32.0
+azure-mgmt-web==0.41.0
 azure-nspkg==2.0.0
 azure-storage==0.35.1
 msrest==0.6.1
@@ -32,3 +33,4 @@ azure-graphrbac==0.40.0
 azure-mgmt-cosmosdb==0.5.2
 azure-mgmt-hdinsight==0.1.0
 azure-mgmt-devtestlabs==3.0.0
+azure-mgmt-loganalytics==0.2.0

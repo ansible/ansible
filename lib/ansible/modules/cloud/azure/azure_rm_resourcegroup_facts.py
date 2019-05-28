@@ -32,6 +32,11 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    list_resources:
+        description:
+            - List all resources under the resource group.
+            - Note this will cost network overhead for each resource group. Suggest use this when C(name) set.
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure
@@ -45,7 +50,7 @@ author:
 EXAMPLES = '''
     - name: Get facts for one resource group
       azure_rm_resourcegroup_facts:
-        name: Testing
+        name: myResourceGroup
 
     - name: Get facts for all resource groups
       azure_rm_resourcegroup_facts:
@@ -55,24 +60,65 @@ EXAMPLES = '''
         tags:
           - testing
           - foo:bar
+
+    - name: Get facts for one resource group including resources it contains
+      azure_rm_resourcegroup_facts:
+          name: myResourceGroup
+          list_resources: yes
 '''
 RETURN = '''
 azure_resourcegroups:
     description: List of resource group dicts.
     returned: always
     type: list
-    example: [{
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing",
-        "location": "westus",
-        "name": "Testing",
-        "properties": {
-            "provisioningState": "Succeeded"
-        },
-        "tags": {
-            "delete": "never",
-            "testing": "testing"
-        }
-    }]
+    contains:
+        id:
+            description:
+                - Resource id.
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup"
+        name:
+            description:
+                - Resource group name.
+            type: str
+            sample: foo
+        tags:
+            description:
+                - Tags assigned to resource group.
+            type: dict
+            sample: { "tag": "value" }
+        resources:
+            description:
+                - List of resources under the resource group.
+                - Only shows when C(list_resources) set to C(True).
+            type: list
+            contains:
+                id:
+                    description:
+                        - Resource id.
+                    type: str
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMa
+                             chines/myVirtualMachine"
+                name:
+                    description:
+                        - Resource name.
+                    type: str
+                    sample: myVirtualMachine
+                location:
+                    description:
+                        - Resource region.
+                    type: str
+                    sample: eastus
+                type:
+                    description:
+                        - Resource type.
+                    type: str
+                    sample: "Microsoft.Compute/virtualMachines"
+                tags:
+                    description:
+                        - Tags to assign to the managed disk.
+                    type: dict
+                    sample: { "tag": "value" }
 '''
 
 try:
@@ -93,16 +139,19 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             name=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            list_resources=dict(type='bool')
         )
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_resourcegroups=[])
+            ansible_facts=dict(azure_resourcegroups=[]),
+            resourcegroups=[]
         )
 
         self.name = None
         self.tags = None
+        self.list_resources = None
 
         super(AzureRMResourceGroupFacts, self).__init__(self.module_arg_spec,
                                                         supports_tags=False,
@@ -117,6 +166,12 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
             self.results['ansible_facts']['azure_resourcegroups'] = self.get_item()
         else:
             self.results['ansible_facts']['azure_resourcegroups'] = self.list_items()
+
+        if self.list_resources:
+            for item in self.results['ansible_facts']['azure_resourcegroups']:
+                item['resources'] = self.list_by_rg(item['name'])
+
+        self.results['resourcegroups'] = self.results['ansible_facts']['azure_resourcegroups']
 
         return self.results
 
@@ -146,6 +201,19 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
         for item in response:
             if self.has_tags(item.tags, self.tags):
                 results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+        return results
+
+    def list_by_rg(self, name):
+        self.log('List resources under resource group')
+        results = []
+        try:
+            response = self.rm_client.resources.list_by_resource_group(name)
+            while True:
+                results.append(response.next().as_dict())
+        except StopIteration:
+            pass
+        except CloudError as exc:
+            self.fail('Error when listing resources under resource group {0}: {1}'.format(name, exc.message or str(exc)))
         return results
 
 

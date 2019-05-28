@@ -60,6 +60,7 @@ options:
     - Whether the trigger is disabled or not. If true, the trigger will never result
       in a build.
     required: false
+    type: bool
   substitutions:
     description:
     - Substitutions data for Build resource.
@@ -67,6 +68,7 @@ options:
   filename:
     description:
     - Path, from the source root, to a file whose contents is used for the template.
+      Either a filename or build template must be provided.
     required: false
   ignored_files:
     description:
@@ -114,19 +116,23 @@ options:
         required: false
       branch_name:
         description:
-        - Name of the branch to build.
+        - Name of the branch to build. Exactly one a of branch name, tag, or commit
+          SHA must be provided.
         required: false
       tag_name:
         description:
-        - Name of the tag to build.
+        - Name of the tag to build. Exactly one of a branch name, tag, or commit SHA
+          must be provided.
         required: false
       commit_sha:
         description:
-        - Explicit commit SHA to build.
+        - Explicit commit SHA to build. Exactly one of a branch name, tag, or commit
+          SHA must be provided.
         required: false
   build:
     description:
-    - Contents of the build template.
+    - Contents of the build template. Either a filename or build template must be
+      provided.
     required: false
     suboptions:
       tags:
@@ -171,6 +177,82 @@ options:
               define an entrypoint, the first element in args is used as the entrypoint,
               and the remainder will be used as arguments.
             required: false
+          env:
+            description:
+            - A list of environment variable definitions to be used when running a
+              step.
+            - The elements are of the form "KEY=VALUE" for the environment variable
+              "KEY" being given the value "VALUE".
+            required: false
+          id:
+            description:
+            - Unique identifier for this build step, used in `wait_for` to reference
+              this build step as a dependency.
+            required: false
+          entrypoint:
+            description:
+            - Entrypoint to be used instead of the build step image's default entrypoint.
+            - If unset, the image's default entrypoint is used .
+            required: false
+          dir:
+            description:
+            - Working directory to use when running this step's container.
+            - If this value is a relative path, it is relative to the build's working
+              directory. If this value is absolute, it may be outside the build's
+              working directory, in which case the contents of the path may not be
+              persisted across build step executions, unless a `volume` for that path
+              is specified.
+            - If the build specifies a `RepoSource` with `dir` and a step with a `dir`,
+              which specifies an absolute path, the `RepoSource` `dir` is ignored
+              for the step's execution.
+            required: false
+          secret_env:
+            description:
+            - A list of environment variables which are encrypted using a Cloud Key
+              Management Service crypto key. These values must be specified in the
+              build's `Secret`.
+            required: false
+          timeout:
+            description:
+            - Time limit for executing this build step. If not defined, the step has
+              no time limit and will be allowed to continue to run until either it
+              completes or the build itself times out.
+            required: false
+          timing:
+            description:
+            - Output only. Stores timing information for executing this build step.
+            required: false
+          volumes:
+            description:
+            - List of volumes to mount into the build step.
+            - Each volume is created as an empty volume prior to execution of the
+              build step. Upon completion of the build, volumes and their contents
+              are discarded.
+            - Using a named volume in only one step is not valid as it is indicative
+              of a build request with an incorrect configuration.
+            required: false
+            suboptions:
+              name:
+                description:
+                - Name of the volume to mount.
+                - Volume names must be unique per build step and must be valid names
+                  for Docker volumes. Each named volume must be used by at least two
+                  build steps.
+                required: false
+              path:
+                description:
+                - Path at which to mount the volume.
+                - Paths must be absolute and cannot conflict with other volume paths
+                  on the same build step or with certain reserved volume paths.
+                required: false
+          wait_for:
+            description:
+            - The ID(s) of the step(s) that this build step depends on.
+            - This build step will not start until all the build steps in `wait_for`
+              have completed successfully. If `wait_for` is empty, this build step
+              will start when all previous build steps in the `Build.Steps` list have
+              completed successfully.
+            required: false
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/cloud-build/docs/api/reference/rest/)'
@@ -184,23 +266,23 @@ notes:
 EXAMPLES = '''
 - name: create a repository
   gcp_sourcerepo_repository:
-      name: projects/{{ gcp_project }}/repos/{{ resource_name }}
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: projects/{{ gcp_project }}/repos/{{ resource_name }}
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
 
 - name: create a trigger
   gcp_cloudbuild_trigger:
-      trigger_template:
-        branch_name: master
-        project_id: "test_project"
-        repo_name: "test_object"
-      filename: cloudbuild.yaml
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    trigger_template:
+      branch_name: master
+      project_id: test_project
+      repo_name: test_object
+    filename: cloudbuild.yaml
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -219,7 +301,7 @@ disabled:
   - Whether the trigger is disabled or not. If true, the trigger will never result
     in a build.
   returned: success
-  type: str
+  type: bool
 createTime:
   description:
   - Time when the trigger was created.
@@ -233,6 +315,7 @@ substitutions:
 filename:
   description:
   - Path, from the source root, to a file whose contents is used for the template.
+    Either a filename or build template must be provided.
   returned: success
   type: str
 ignoredFiles:
@@ -285,22 +368,25 @@ triggerTemplate:
       type: str
     branchName:
       description:
-      - Name of the branch to build.
+      - Name of the branch to build. Exactly one a of branch name, tag, or commit
+        SHA must be provided.
       returned: success
       type: str
     tagName:
       description:
-      - Name of the tag to build.
+      - Name of the tag to build. Exactly one of a branch name, tag, or commit SHA
+        must be provided.
       returned: success
       type: str
     commitSha:
       description:
-      - Explicit commit SHA to build.
+      - Explicit commit SHA to build. Exactly one of a branch name, tag, or commit
+        SHA must be provided.
       returned: success
       type: str
 build:
   description:
-  - Contents of the build template.
+  - Contents of the build template. Either a filename or build template must be provided.
   returned: success
   type: complex
   contains:
@@ -350,6 +436,90 @@ build:
             the remainder will be used as arguments.
           returned: success
           type: list
+        env:
+          description:
+          - A list of environment variable definitions to be used when running a step.
+          - The elements are of the form "KEY=VALUE" for the environment variable
+            "KEY" being given the value "VALUE".
+          returned: success
+          type: list
+        id:
+          description:
+          - Unique identifier for this build step, used in `wait_for` to reference
+            this build step as a dependency.
+          returned: success
+          type: str
+        entrypoint:
+          description:
+          - Entrypoint to be used instead of the build step image's default entrypoint.
+          - If unset, the image's default entrypoint is used .
+          returned: success
+          type: str
+        dir:
+          description:
+          - Working directory to use when running this step's container.
+          - If this value is a relative path, it is relative to the build's working
+            directory. If this value is absolute, it may be outside the build's working
+            directory, in which case the contents of the path may not be persisted
+            across build step executions, unless a `volume` for that path is specified.
+          - If the build specifies a `RepoSource` with `dir` and a step with a `dir`,
+            which specifies an absolute path, the `RepoSource` `dir` is ignored for
+            the step's execution.
+          returned: success
+          type: str
+        secretEnv:
+          description:
+          - A list of environment variables which are encrypted using a Cloud Key
+            Management Service crypto key. These values must be specified in the build's
+            `Secret`.
+          returned: success
+          type: list
+        timeout:
+          description:
+          - Time limit for executing this build step. If not defined, the step has
+            no time limit and will be allowed to continue to run until either it completes
+            or the build itself times out.
+          returned: success
+          type: str
+        timing:
+          description:
+          - Output only. Stores timing information for executing this build step.
+          returned: success
+          type: str
+        volumes:
+          description:
+          - List of volumes to mount into the build step.
+          - Each volume is created as an empty volume prior to execution of the build
+            step. Upon completion of the build, volumes and their contents are discarded.
+          - Using a named volume in only one step is not valid as it is indicative
+            of a build request with an incorrect configuration.
+          returned: success
+          type: complex
+          contains:
+            name:
+              description:
+              - Name of the volume to mount.
+              - Volume names must be unique per build step and must be valid names
+                for Docker volumes. Each named volume must be used by at least two
+                build steps.
+              returned: success
+              type: str
+            path:
+              description:
+              - Path at which to mount the volume.
+              - Paths must be absolute and cannot conflict with other volume paths
+                on the same build step or with certain reserved volume paths.
+              returned: success
+              type: str
+        waitFor:
+          description:
+          - The ID(s) of the step(s) that this build step depends on.
+          - This build step will not start until all the build steps in `wait_for`
+            have completed successfully. If `wait_for` is empty, this build step will
+            start when all previous build steps in the `Build.Steps` list have completed
+            successfully.
+          returned: success
+          type: list
 '''
 
 ################################################################################
@@ -372,7 +542,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             id=dict(type='str'),
             description=dict(type='str'),
-            disabled=dict(type='str'),
+            disabled=dict(type='bool'),
             substitutions=dict(type='dict'),
             filename=dict(type='str'),
             ignored_files=dict(type='list', elements='str'),
@@ -393,7 +563,23 @@ def main():
                 options=dict(
                     tags=dict(type='list', elements='str'),
                     images=dict(type='list', elements='str'),
-                    steps=dict(type='list', elements='dict', options=dict(name=dict(type='str'), args=dict(type='list', elements='str'))),
+                    steps=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            name=dict(type='str'),
+                            args=dict(type='list', elements='str'),
+                            env=dict(type='list', elements='str'),
+                            id=dict(type='str'),
+                            entrypoint=dict(type='str'),
+                            dir=dict(type='str'),
+                            secret_env=dict(type='list', elements='str'),
+                            timeout=dict(type='str'),
+                            timing=dict(type='str'),
+                            volumes=dict(type='list', elements='dict', options=dict(name=dict(type='str'), path=dict(type='str'))),
+                            wait_for=dict(type='list', elements='str'),
+                        ),
+                    ),
                 ),
             ),
         ),
@@ -618,10 +804,65 @@ class TriggerStepsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({u'name': item.get('name'), u'args': item.get('args')})
+        return remove_nones_from_dict(
+            {
+                u'name': item.get('name'),
+                u'args': item.get('args'),
+                u'env': item.get('env'),
+                u'id': item.get('id'),
+                u'entrypoint': item.get('entrypoint'),
+                u'dir': item.get('dir'),
+                u'secretEnv': item.get('secret_env'),
+                u'timeout': item.get('timeout'),
+                u'timing': item.get('timing'),
+                u'volumes': TriggerVolumesArray(item.get('volumes', []), self.module).to_request(),
+                u'waitFor': item.get('wait_for'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({u'name': item.get(u'name'), u'args': item.get(u'args')})
+        return remove_nones_from_dict(
+            {
+                u'name': item.get(u'name'),
+                u'args': item.get(u'args'),
+                u'env': item.get(u'env'),
+                u'id': item.get(u'id'),
+                u'entrypoint': item.get(u'entrypoint'),
+                u'dir': item.get(u'dir'),
+                u'secretEnv': item.get(u'secretEnv'),
+                u'timeout': item.get(u'timeout'),
+                u'timing': item.get(u'timing'),
+                u'volumes': TriggerVolumesArray(item.get(u'volumes', []), self.module).from_response(),
+                u'waitFor': item.get(u'waitFor'),
+            }
+        )
+
+
+class TriggerVolumesArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'name': item.get('name'), u'path': item.get('path')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'name': item.get(u'name'), u'path': item.get(u'path')})
 
 
 if __name__ == '__main__':

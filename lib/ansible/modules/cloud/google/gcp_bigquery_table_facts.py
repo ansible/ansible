@@ -48,17 +48,18 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a table facts
+- name: " a table facts"
   gcp_bigquery_table_facts:
-      dataset: example_dataset
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    dataset: example_dataset
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -522,7 +523,7 @@ def main():
         items = items.get('tables')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

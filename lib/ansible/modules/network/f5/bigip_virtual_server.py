@@ -26,12 +26,13 @@ options:
         if it exists. C(present) creates the virtual server and enable it.
         If C(enabled), enable the virtual server if it exists. If C(disabled),
         create the virtual server if needed, and set state to C(disabled).
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
+    default: present
   type:
     description:
       - Specifies the network service provided by this virtual server.
@@ -73,6 +74,7 @@ options:
         profile and adding Request Adapt or Response Adapt profiles to the virtual server.
       - When C(message-routing), specifies a virtual server that uses a SIP application protocol
         and functions in accordance with a SIP session profile and SIP router profile.
+    type: str
     choices:
       - standard
       - forwarding-l2
@@ -89,6 +91,7 @@ options:
   name:
     description:
       - Virtual server name.
+    type: str
     required: True
     aliases:
       - vs
@@ -99,6 +102,7 @@ options:
       - When C(type) is C(internal), this parameter is ignored. For all other types,
         it is required.
       - Destination can also be specified as a name for an existing Virtual Address.
+    type: str
     aliases:
       - address
       - ip
@@ -113,6 +117,7 @@ options:
       - Specify the IP address in Classless Inter-Domain Routing (CIDR) format; address/prefix,
         where the prefix length is in bits. For example, for IPv4, 10.0.0.1/32 or 10.0.0.0/24,
         and for IPv6, ffe1::0020/64 or 2001:ed8:77b5:2:10:10:100:42/64.
+    type: str
     version_added: 2.5
   port:
     description:
@@ -136,6 +141,7 @@ options:
       - The string C(isakmp) may be substituted for for port C(500).
       - The string C(mqtt) may be substituted for for port C(1883).
       - The string C(mqtt-tls) may be substituted for for port C(8883).
+    type: str
   profiles:
     description:
       - List of profiles (HTTP, ClientSSL, ServerSSL, etc) to apply to both sides
@@ -166,14 +172,17 @@ options:
           - If this is not specified, then it is assumed that the profile item is
             only a name of a profile.
           - This must be specified if a context is specified.
+        type: str
       context:
         description:
           - The side of the connection on which the profile should be applied.
+        type: str
         choices:
           - all
           - server-side
           - client-side
         default: all
+    type: list
     aliases:
       - all_profiles
   irules:
@@ -186,22 +195,25 @@ options:
       - When C(type) is C(stateless), this parameter will be ignored.
       - When C(type) is C(reject), this parameter will be ignored.
       - When C(type) is C(internal), this parameter will be ignored.
+    type: list
     aliases:
       - all_rules
   enabled_vlans:
-    version_added: "2.2"
     description:
       - List of VLANs to be enabled. When a VLAN named C(all) is used, all
         VLANs will be allowed. VLANs can be specified with or without the
         leading partition. If the partition is not specified in the VLAN,
         then the C(partition) option of this module will be used.
       - This parameter is mutually exclusive with the C(disabled_vlans) parameter.
+    type: list
+    version_added: 2.2
   disabled_vlans:
-    version_added: 2.5
     description:
       - List of VLANs to be disabled. If the partition is not specified in the VLAN,
         then the C(partition) option of this module will be used.
       - This parameter is mutually exclusive with the C(enabled_vlans) parameters.
+    type: list
+    version_added: 2.5
   pool:
     description:
       - Default pool for the virtual server.
@@ -211,12 +223,14 @@ options:
         is required.
       - If C(type) is C(stateless), the C(pool) that is used must not have any members
         which define a C(rate_limit).
+    type: str
   policies:
     description:
       - Specifies the policies for the virtual server.
       - When C(type) is C(dhcp), this parameter will be ignored.
       - When C(type) is C(reject), this parameter will be ignored.
       - When C(type) is C(internal), this parameter will be ignored.
+    type: list
     aliases:
       - all_policies
   snat:
@@ -229,15 +243,18 @@ options:
         with the specific pool.
       - To remove SNAT, specify the word C(none).
       - To specify automap, use the word C(automap).
+    type: str
   default_persistence_profile:
     description:
       - Default Profile which manages the session persistence.
       - If you want to remove the existing default persistence profile, specify an
         empty value; C(""). See the documentation for an example.
       - When C(type) is C(dhcp), this parameter will be ignored.
+    type: str
   description:
     description:
       - Virtual server description.
+    type: str
   fallback_persistence_profile:
     description:
       - Specifies the persistence profile you want the system to use if it
@@ -245,10 +262,12 @@ options:
       - If you want to remove the existing fallback persistence profile, specify an
         empty value; C(""). See the documentation for an example.
       - When C(type) is C(dhcp), this parameter will be ignored.
+    type: str
     version_added: 2.3
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   metadata:
@@ -259,6 +278,7 @@ options:
       - Values for all of the keys will be stored as strings; this includes values
         that are numbers.
       - Data will be persisted, not ephemeral.
+    type: raw
     version_added: 2.5
   insert_metadata:
     description:
@@ -293,6 +313,7 @@ options:
     description:
       - Specifies whether the system preserves the source port of the connection.
       - When creating a new virtual server, if this parameter is not specified, the default is C(preserve).
+    type: str
     choices:
       - preserve
       - preserve-strict
@@ -317,6 +338,7 @@ options:
         inferred from C(destination).
       - When C(destination) is provided as Virtual Address name, and C(mask) is not specified,
         the mask will be C(None) allowing device set it with its internal defaults.
+   type: str
    version_added: 2.8
   ip_protocol:
     description:
@@ -329,6 +351,7 @@ options:
       - For a list of valid IP protocol numbers, refer to this page
         https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
       - When C(type) is C(dhcp), this module will force the C(ip_protocol) parameter to be C(17) (UDP).
+    type: str
     choices:
       - ah
       - any
@@ -355,6 +378,7 @@ options:
       - Applies the specify AFM policy to the virtual in an enforcing way.
       - When creating a new virtual, if this parameter is not specified, the enforced
         policy is disabled.
+    type: str
     version_added: 2.6
   firewall_staged_policy:
     description:
@@ -363,6 +387,7 @@ options:
         actually applying the rules to traffic.
       - When creating a new virtual, if this parameter is not specified, the staged
         policy is disabled.
+    type: str
     version_added: 2.6
   security_log_profiles:
     description:
@@ -370,6 +395,7 @@ options:
       - To make use of this feature, the AFM module must be licensed and provisioned.
       - The C(Log all requests) and C(Log illegal requests) are mutually exclusive and
         therefore, this module will raise an error if the two are specified together.
+    type: list
     version_added: 2.6
   security_nat_policy:
     description:
@@ -386,6 +412,7 @@ options:
           - The virtual server NAT policy is the most specific, and overrides a
             route domain and device policy, if specified.
           - To remove the policy, specify an empty string value.
+        type: str
       use_device_policy:
         description:
           - Specify that the virtual server uses the device NAT policy, as specified
@@ -400,11 +427,13 @@ options:
           - When specified, the route domain policy overrides the device policy, and
             is overridden by a virtual server policy.
         type: bool
+    type: dict
   ip_intelligence_policy:
     description:
       - Specifies the IP intelligence policy applied to the virtual server.
       - This parameter requires that a valid BIG-IP security module such as ASM or AFM
         be provisioned.
+    type: str
     version_added: 2.8
   rate_limit:
     description:
@@ -432,6 +461,7 @@ options:
       - Indicates whether the rate limit is applied per virtual object, per source address, per destination address,
         or some combination thereof.
       - The default value is 'object', which does not use the source or destination address as part of the key.
+    type: str
     choices:
       - object
       - object-source
@@ -447,7 +477,6 @@ options:
       - Specifies a pool or list of pools that the virtual server uses to replicate either client-side
         or server-side traffic.
       - Typically this option is used for intrusion detection.
-    version_added: 2.8
     suboptions:
       pool_name:
         description:
@@ -455,13 +484,17 @@ options:
           - Only pools created on Common partition or on the same partition as the virtual server can be used.
           - Referencing pool on common partition needs to be done in the full path format,
             for example, C(/Common/pool_name).
+        type: str
         required: True
       context:
         description:
           - The context option for a clone pool to replicate either client-side or server-side traffic.
+        type: str
         choices:
          - clientside
          - serverside
+    type: list
+    version_added: 2.8
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -852,11 +885,8 @@ try:
     from library.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_MODIFIED
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import mark_managed_by
     from library.module_utils.network.f5.common import only_has_managed_metadata
@@ -874,11 +904,8 @@ except ImportError:
     from ansible.module_utils.network.f5.common import MANAGED_BY_ANNOTATION_MODIFIED
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import mark_managed_by
     from ansible.module_utils.network.f5.common import only_has_managed_metadata
@@ -3250,7 +3277,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = ApiParameters(client=self.client)
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.changes = UsableChanges()
@@ -3595,13 +3622,11 @@ def main():
     client = F5RestClient(**module.params)
 
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
-        cleanup_tokens(client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

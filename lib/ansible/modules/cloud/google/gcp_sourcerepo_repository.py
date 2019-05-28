@@ -62,11 +62,11 @@ notes:
 EXAMPLES = '''
 - name: create a repository
   gcp_sourcerepo_repository:
-      name: projects/test_project/repos/test_object
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: projects/test_project/repos/test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -142,7 +142,8 @@ def create(module, link):
 
 
 def update(module, link):
-    module.fail_json(msg="Repository cannot be edited")
+    delete(module, self_link(module))
+    create(module, collection(module))
 
 
 def delete(module, link):

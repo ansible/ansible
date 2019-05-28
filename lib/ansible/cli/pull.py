@@ -17,7 +17,7 @@ import time
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
-from ansible.cli.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six.moves import shlex_quote
@@ -83,41 +83,43 @@ class PullCLI(CLI):
         opt_help.add_module_options(self.parser)
         opt_help.add_runas_prompt_options(self.parser)
 
+        self.parser.add_argument('args', help='Playbook(s)', metavar='playbook.yml', nargs='*')
+
         # options unique to pull
-        self.parser.add_option('--purge', default=False, action='store_true', help='purge checkout after playbook run')
-        self.parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
-                               help='only run the playbook if the repository has been updated')
-        self.parser.add_option('-s', '--sleep', dest='sleep', default=None,
-                               help='sleep for random interval (between 0 and n number of seconds) before starting. '
-                                    'This is a useful way to disperse git requests')
-        self.parser.add_option('-f', '--force', dest='force', default=False, action='store_true',
-                               help='run the playbook even if the repository could not be updated')
-        self.parser.add_option('-d', '--directory', dest='dest', default=None, help='directory to checkout repository to')
-        self.parser.add_option('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
-        self.parser.add_option('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
-        self.parser.add_option('-C', '--checkout', dest='checkout',
-                               help='branch/tag/commit to checkout. Defaults to behavior of repository module.')
-        self.parser.add_option('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
-                               help='adds the hostkey for the repo url if not already added')
-        self.parser.add_option('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
-                               help='Repository module name, which ansible will use to check out the repo. Choices are %s. Default is %s.'
-                                    % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
-        self.parser.add_option('--verify-commit', dest='verify', default=False, action='store_true',
-                               help='verify GPG signature of checked out commit, if it fails abort running the playbook. '
-                                    'This needs the corresponding VCS module to support such an operation')
-        self.parser.add_option('--clean', dest='clean', default=False, action='store_true',
-                               help='modified files in the working repository will be discarded')
-        self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
-                               help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
+        self.parser.add_argument('--purge', default=False, action='store_true', help='purge checkout after playbook run')
+        self.parser.add_argument('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
+                                 help='only run the playbook if the repository has been updated')
+        self.parser.add_argument('-s', '--sleep', dest='sleep', default=None,
+                                 help='sleep for random interval (between 0 and n number of seconds) before starting. '
+                                      'This is a useful way to disperse git requests')
+        self.parser.add_argument('-f', '--force', dest='force', default=False, action='store_true',
+                                 help='run the playbook even if the repository could not be updated')
+        self.parser.add_argument('-d', '--directory', dest='dest', default=None, help='directory to checkout repository to')
+        self.parser.add_argument('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
+        self.parser.add_argument('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
+        self.parser.add_argument('-C', '--checkout', dest='checkout',
+                                 help='branch/tag/commit to checkout. Defaults to behavior of repository module.')
+        self.parser.add_argument('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
+                                 help='adds the hostkey for the repo url if not already added')
+        self.parser.add_argument('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
+                                 help='Repository module name, which ansible will use to check out the repo. Choices are %s. Default is %s.'
+                                      % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
+        self.parser.add_argument('--verify-commit', dest='verify', default=False, action='store_true',
+                                 help='verify GPG signature of checked out commit, if it fails abort running the playbook. '
+                                      'This needs the corresponding VCS module to support such an operation')
+        self.parser.add_argument('--clean', dest='clean', default=False, action='store_true',
+                                 help='modified files in the working repository will be discarded')
+        self.parser.add_argument('--track-subs', dest='tracksubs', default=False, action='store_true',
+                                 help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
         # add a subset of the check_opts flag group manually, as the full set's
         # shortcodes conflict with above --checkout/-C
-        self.parser.add_option("--check", default=False, dest='check', action='store_true',
-                               help="don't make any changes; instead, try to predict some of the changes that may occur")
-        self.parser.add_option("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
-                               help="when changing (small) files and templates, show the differences in those files; works great with --check")
+        self.parser.add_argument("--check", default=False, dest='check', action='store_true',
+                                 help="don't make any changes; instead, try to predict some of the changes that may occur")
+        self.parser.add_argument("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
+                                 help="when changing (small) files and templates, show the differences in those files; works great with --check")
 
-    def post_process_args(self, options, args):
-        options, args = super(PullCLI, self).post_process_args(options, args)
+    def post_process_args(self, options):
+        options = super(PullCLI, self).post_process_args(options)
 
         if not options.dest:
             hostname = socket.getfqdn()
@@ -142,9 +144,9 @@ class PullCLI(CLI):
             raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
 
         display.verbosity = options.verbosity
-        self.validate_conflicts(options, vault_opts=True)
+        self.validate_conflicts(options)
 
-        return options, args
+        return options
 
     def run(self):
         ''' use Runner lib to do SSH things '''
@@ -170,6 +172,8 @@ class PullCLI(CLI):
         inv_opts = self._get_inv_cli()
         if not inv_opts:
             inv_opts = " -i localhost, "
+            # avoid interpreter discovery since we already know which interpreter to use on localhost
+            inv_opts += '-e %s ' % shlex_quote('ansible_python_interpreter=%s' % sys.executable)
 
         # SCM specific options
         if context.CLIARGS['module_name'] == 'git':

@@ -138,14 +138,16 @@ id:
     description: The ID of the traffic manager profile
     returned: when traffic manager profile exists
     type: str
-    example: "/subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tmtest"
+    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tmtest"
 endpoints:
   description: List of endpoint IDs attached to the profile
   returned: when traffic manager endpoints exists
   type: list
   sample: [
-        "/subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/externalEndpoints/e2",
-        "/subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/externalEndpoints/e1"
+        "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/exter
+         nalEndpoints/e2",
+        "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/exter
+         nalEndpoints/e1"
     ]
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name

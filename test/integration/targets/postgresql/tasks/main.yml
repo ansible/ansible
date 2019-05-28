@@ -101,14 +101,15 @@
 #        that: "result.stdout_lines[-1] == '(0 rows)'"
 
 #
-# Test encoding, collate, ctype, template options
+# Test conn_limit, encoding, collate, ctype, template options
 #
-- name: Create a DB with encoding, collate, ctype, and template options
+- name: Create a DB with conn_limit, encoding, collate, ctype, and template options
   become_user: "{{ pg_user }}"
   become: True
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
+    conn_limit: '100'
     encoding: 'LATIN1'
     lc_collate: 'pt_BR{{ locale_latin_suffix }}'
     lc_ctype: 'es_ES{{ locale_latin_suffix }}'
@@ -118,7 +119,7 @@
 - name: Check that the DB has all of our options
   become_user: "{{ pg_user }}"
   become: True
-  shell: echo "select datname, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  shell: echo "select datname, datconnlimit, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
 - assert:
@@ -129,6 +130,7 @@
       - "'es_ES' in result.stdout_lines[-2]"
       - "'UTF8' not in result.stdout_lines[-2]"
       - "'en_US' not in result.stdout_lines[-2]"
+      - "'100' in result.stdout_lines[-2]"
 
 - name: Check that running db cration with options a second time does nothing
   become_user: "{{ pg_user }}"
@@ -136,6 +138,7 @@
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
+    conn_limit: '100'
     encoding: 'LATIN1'
     lc_collate: 'pt_BR{{ locale_latin_suffix }}'
     lc_ctype: 'es_ES{{ locale_latin_suffix }}'
@@ -165,6 +168,35 @@
 - assert:
     that:
       - 'result.failed == True'
+
+- name: Check that changing the conn_limit actually works
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_db:
+    name: '{{ db_name }}'
+    state: 'present'
+    conn_limit: '200'
+    encoding: 'LATIN1'
+    lc_collate: 'pt_BR{{ locale_latin_suffix }}'
+    lc_ctype: 'es_ES{{ locale_latin_suffix }}'
+    template: 'template0'
+    login_user: "{{ pg_user }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == True'
+
+- name: Check that conn_limit has actually been set / updated to 200
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "SELECT datconnlimit AS conn_limit FROM pg_database WHERE datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "'200' == '{{ result.stdout_lines[-2] | trim }}'"
 
 - name: Cleanup test DB
   become_user: "{{ pg_user }}"
@@ -762,6 +794,17 @@
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
 
+# Test ssl.
+# Restricted using Debian family because of there are errors on other distributions
+# that not related with PostgreSQL or psycopg2 SSL support.
+# The tests' key point is to be sure that ssl options work in general
+- include: ssl.yml
+  when: ansible_os_family == 'Debian' and postgres_version_resp.stdout is version('9.4', '>=')
+
+# Test postgresql_set
+- include: postgresql_set.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
 # Verify different session_role scenarios
 - include: session_role.yml
 
@@ -777,8 +820,54 @@
 # Test postgresql_tablespace module
 - include: postgresql_tablespace.yml
 
+# Test postgresql_db module, specific options:
+- include: postgresql_db.yml
+
 # Test postgresql_privs
 - include: postgresql_privs.yml
+
+# Test postgresql_info module
+- include: postgresql_info.yml
+
+# Test default_privs with target_role
+- include: test_target_role.yml
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Test postgresql_ext.
+# pg_extension system view is available from PG 9.1.
+# The tests are restricted by Fedora because there will be errors related with
+# attempts to change the environment during postgis installation or
+# missing postgis package in repositories.
+# Anyway, these tests completely depend on Postgres version,
+# not specific distributions.
+- include: postgresql_ext.yml
+  when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
+
+# Test postgresql_slot module.
+# Physical replication slots are available from PostgreSQL 9.4
+- include: postgresql_slot.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Test postgresql_schema module
+- include: postgresql_schema.yml
+
+# Test postgresql_membership module
+- include: postgresql_membership.yml
+
+# Test postgresql_table module
+- include: postgresql_table.yml
+
+# Test postgresql_lang module.
+# To implement tests, it needs to install some additional packages
+# that may cause problems on different distributions,
+# so I restricted the tests using CentOS because the results
+# depend only on Postgres version
+# (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
+- include: postgresql_lang.yml
+  when: ansible_distribution == 'CentOS'
+
+# Test postgresql_owner module
+- include: postgresql_owner.yml
 
 # dump/restore tests per format
 # ============================================================
@@ -794,6 +883,10 @@
 # dump/restore tests per other logins
 # ============================================================
 - include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
+
+# postgres_pg_hba module checks
+# ============================================================
+- include: postgresql_pg_hba.yml
 
 #
 # Cleanup

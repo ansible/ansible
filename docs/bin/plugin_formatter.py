@@ -11,6 +11,7 @@ __metaclass__ = type
 
 import datetime
 import glob
+import json
 import optparse
 import os
 import re
@@ -35,12 +36,12 @@ import jinja2
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from jinja2.runtime import Undefined
-from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import iteritems, string_types
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
@@ -52,7 +53,7 @@ from ansible.utils._build_helpers import update_file_if_different
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TOO_OLD_TO_BE_NOTABLE = 2.0
+TOO_OLD_TO_BE_NOTABLE = 2.3
 
 # Get parent directory of the directory this script lives in
 MODULEDIR = os.path.abspath(os.path.join(
@@ -275,8 +276,11 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
                 module = module.replace("_", "", 1)
                 aliases = module_info[source].get('aliases', set())
                 aliases.add(module)
+                aliases_deprecated = module_info[source].get('aliases_deprecated', set())
+                aliases_deprecated.add(module)
                 # In case we just created this via get()'s fallback
                 module_info[source]['aliases'] = aliases
+                module_info[source]['aliases_deprecated'] = aliases_deprecated
                 continue
             else:
                 # Handle deprecations
@@ -321,6 +325,10 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         if module_categories:
             primary_category = module_categories[0]
 
+        if not doc:
+            display.error("*** ERROR: DOCUMENTATION section missing for %s. ***" % module_path)
+            continue
+
         if 'options' in doc and doc['options'] is None:
             display.error("*** ERROR: DOCUMENTATION.options must be a dictionary/hash when used. ***")
             pos = getattr(doc, "ansible_pos", None)
@@ -336,6 +344,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
                                'source': os.path.relpath(module_path, module_dir),
                                'deprecated': deprecated,
                                'aliases': module_info[module].get('aliases', set()),
+                               'aliases_deprecated': module_info[module].get('aliases_deprecated', set()),
                                'metadata': metadata,
                                'doc': doc,
                                'examples': examples,
@@ -391,6 +400,10 @@ def jinja2_environment(template_dir, typ, plugin_type):
         # Jinja < 2.10
         env.filters['max'] = do_max
 
+    if 'tojson' not in env.filters:
+        # Jinja < 2.9
+        env.filters['tojson'] = json.dumps
+
     templates = {}
     if typ == 'rst':
         env.filters['rst_ify'] = rst_ify
@@ -400,6 +413,7 @@ def jinja2_environment(template_dir, typ, plugin_type):
         env.filters['documented_type'] = documented_type
         env.tests['list'] = test_list
         templates['plugin'] = env.get_template('plugin.rst.j2')
+        templates['plugin_deprecation_stub'] = env.get_template('plugin_deprecation_stub.rst.j2')
 
         if plugin_type == 'module':
             name = 'modules'
@@ -565,6 +579,26 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
             text = re.sub(' +\n', '\n', text)
 
         write_data(text, output_dir, outputname, module)
+
+        # Create deprecation stub pages for deprecated aliases
+        if module_map[module]['aliases']:
+            for alias in module_map[module]['aliases']:
+                if alias in module_map[module]['aliases_deprecated']:
+                    doc['alias'] = alias
+
+                    display.v('about to template %s (deprecation alias %s)' % (module, alias))
+                    display.vvvvv(pp.pformat(doc))
+                    try:
+                        text = templates['plugin_deprecation_stub'].render(doc)
+                    except Exception as e:
+                        display.warning(msg="Could not parse %s (deprecation alias %s) due to %s" % (module, alias, e))
+                        continue
+
+                    if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
+                        # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
+                        text = re.sub(' +\n', '\n', text)
+
+                    write_data(text, output_dir, outputname, alias)
 
 
 def process_categories(plugin_info, categories, templates, output_dir, output_name, plugin_type):

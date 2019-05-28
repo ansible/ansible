@@ -166,8 +166,7 @@ def main():
 
     if anp is not None and anp_ref in anps:
         anp_idx = anps.index(anp_ref)
-        # FIXME: Changes based on index are DANGEROUS
-        anp_path = '/sites/{0}/anps/{1}'.format(site_template, anp_idx)
+        anp_path = '/sites/{0}/anps/{1}'.format(site_template, anp)
         mso.existing = schema_obj['sites'][site_idx]['anps'][anp_idx]
 
     if state == 'query':

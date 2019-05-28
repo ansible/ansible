@@ -29,6 +29,21 @@ Assert-Equals -actual $actual.stdout -expected "arg1`r`narg2`r`narg 3`r`n"
 Assert-Equals -actual $actual.stderr -expected ""
 Assert-Equals -actual $actual.executable -expected $exe
 
+$test_name = "exe in special char dir"
+$tmp_dir = Join-Path -Path $env:TEMP -ChildPath "ansible .ÅÑŚÌβŁÈ [$!@^&test(;)]"
+try {
+    New-Item -Path $tmp_dir -ItemType Directory > $null
+    $exe_special = Join-Path $tmp_dir -ChildPath "PrintArgv.exe"
+    Copy-Item -LiteralPath $exe -Destination $exe_special
+    $actual = Run-Command -command "`"$exe_special`" arg1 arg2 `"arg 3`""
+} finally {
+    Remove-Item -LiteralPath $tmp_dir -Force -Recurse
+}
+Assert-Equals -actual $actual.rc -expected 0
+Assert-Equals -actual $actual.stdout -expected "arg1`r`narg2`r`narg 3`r`n"
+Assert-Equals -actual $actual.stderr -expected ""
+Assert-Equals -actual $actual.executable -expected $exe_special
+
 $test_name = "invalid exe path"
 try {
     $actual = Run-Command -command "C:\fakepath\$exe_filename arg1"
@@ -86,7 +101,7 @@ $test_name = "test default environment variable"
 Set-Item -Path env:TESTENV -Value "test"
 $actual = Run-Command -command "cmd.exe /c set"
 $env_present = $actual.stdout -split "`r`n" | Where-Object { $_ -eq "TESTENV=test" }
-if ($env_present -eq $null) {
+if ($null -eq $env_present) {
     Fail-Json -obj $result -message "Test $test_name failed`nenvironment variable TESTENV not found in stdout`n$($actual.stdout)"
 }
 
@@ -94,10 +109,10 @@ $test_name = "test custom environment variable1"
 $actual = Run-Command -command "cmd.exe /c set" -environment @{ TESTENV2 = "testing" }
 $env_not_present = $actual.stdout -split "`r`n" | Where-Object { $_ -eq "TESTENV=test" }
 $env_present = $actual.stdout -split "`r`n" | Where-Object { $_ -eq "TESTENV2=testing" }
-if ($env_not_present -ne $null) {
+if ($null -ne $env_not_present) {
     Fail-Json -obj $result -message "Test $test_name failed`nenvironment variabel TESTENV found in stdout when it should be`n$($actual.stdout)"
 }
-if ($env_present -eq $null) {
+if ($null -eq $env_present) {
     Fail-json -obj $result -message "Test $test_name failed`nenvironment variable TESTENV2 not found in stdout`n$($actual.stdout)"
 }
 

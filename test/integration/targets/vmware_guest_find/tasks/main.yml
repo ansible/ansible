@@ -2,52 +2,21 @@
 # Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: wait for flask server
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
-
-- name: wait for vcsim server
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim   
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-- debug: var=vmlist
-
-# vcsim embeds the datacenter into the path and
-# the VM name, so it can be chopped out for later
-# use or verification
-- name: show the datacenter(s)
-  debug:
-    msg: "{{ (item|basename).split('_')[0] }}"
-  with_items: "{{ vmlist['json'] }}"
-
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
 - name: find folders for each vm
   vmware_guest_find:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
-  with_items: "{{ vmlist['json'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ item.name }}"
+    datacenter: "{{ dc1 }}"
+  with_items: "{{ virtual_machines }}"
   register: folders
 
 - debug: var=item
@@ -62,28 +31,31 @@
         - "{{ item['folders']|length == 1 }}"
   with_items: "{{ folders.results }}"
 
-# Testcase 2: Find VMS using UUID
-- name: get details about VMS from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_vm_info
-  register: vms_detail_list
+- name: get fact of the first VM
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
+  register: guest_facts_0001
+
+- debug: var=guest_facts_0001
 
 - name: find folders for each vm using UUID
   vmware_guest_find:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    uuid: "{{ vms_detail_list['json'][item|basename]['UUID'] }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
-  with_items: "{{ vmlist['json'] }}"
-  register: folders_uuid
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    uuid: "{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
+  register: folder_uuid
 
-- debug: var=item
-  with_items: "{{ folders_uuid.results }}"
+- debug: var=folder_uuid
 
 - assert:
     that:
-        - "{{ 'folders' in item }}"
-        - "{{ item['folders']|length == 1 }}"
-  with_items: "{{ folders_uuid.results }}"
+        - "{{ 'folders' in folder_uuid }}"
+        - "{{ folder_uuid['folders']|length == 1 }}"

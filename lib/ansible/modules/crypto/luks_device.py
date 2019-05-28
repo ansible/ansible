@@ -70,6 +70,9 @@ options:
               Needs I(keyfile) option for authorization. LUKS container
               supports up to 8 keys. Parameter value is the path
               to the keyfile with the passphrase."
+            - "NOTE that adding additional keys is I(not idempotent).
+              A new keyslot will be used even if another keyslot already
+              exists for this keyfile."
             - "BEWARE that working with keyfiles in plaintext is dangerous.
               Make sure that they are protected."
         type: path
@@ -78,24 +81,25 @@ options:
             - "Removes given key from the container on I(device). Does not
               remove the keyfile from filesystem.
               Parameter value is the path to the keyfile with the passphrase."
-            - "BEWARE that it is possible to remove even the last key from the
-              container. Data in there will be irreversibly lost
-              without a warning."
+            - "NOTE that removing keys is I(not idempotent). Trying to remove
+              a key which no longer exists results in an error."
+            - "NOTE that to remove the last key from a LUKS container, the
+              I(force_remove_last_key) option must be set to C(yes)."
             - "BEWARE that working with keyfiles in plaintext is dangerous.
               Make sure that they are protected."
         type: path
+    force_remove_last_key:
+        description:
+            - "If set to C(yes), allows removing the last key from a container."
+            - "BEWARE that when the last key has been removed from a container,
+              the container can no longer be opened!"
+        type: bool
+        default: no
 
 requirements:
     - "cryptsetup"
     - "wipefs"
     - "lsblk"
-
-notes:
-    - "This module does not support check mode. The reason being that
-      while it is possible to chain several operations together
-      (e.g. 'create' and 'open'), the latter usually depends on changes
-      to the system done by the previous one. (LUKS cannot be opened,
-      when it does not exist.)"
 
 author:
     "Jan Pokorny (@japokorn)"
@@ -161,7 +165,9 @@ name:
     sample: "luks-c1da9a58-2fde-4256-9d9f-6ab008b4dd1b"
 '''
 
+import os
 import re
+import stat
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -238,7 +244,7 @@ class CryptHandler(Handler):
         return device
 
     def is_luks(self, device):
-        ''' check if the LUKS device does exist
+        ''' check if the LUKS container does exist
         '''
         result = self._run_command([self._cryptsetup_bin, 'isLuks', device])
         return result[RETURN_CODE] == 0
@@ -284,10 +290,40 @@ class CryptHandler(Handler):
             raise ValueError('Error while adding new LUKS key to %s: %s'
                              % (device, result[STDERR]))
 
-    def run_luks_remove_key(self, device, keyfile):
+    def run_luks_remove_key(self, device, keyfile, force_remove_last_key=False):
         ''' Remove key from given device
             Raises ValueError when command fails
         '''
+        if not force_remove_last_key:
+            result = self._run_command([self._cryptsetup_bin, 'luksDump', device])
+            if result[RETURN_CODE] != 0:
+                raise ValueError('Error while dumping LUKS header from %s'
+                                 % (device, ))
+            keyslot_count = 0
+            keyslot_area = False
+            keyslot_re = re.compile(r'^Key Slot [0-9]+: ENABLED')
+            for line in result[STDOUT].splitlines():
+                if line.startswith('Keyslots:'):
+                    keyslot_area = True
+                elif line.startswith('  '):
+                    # LUKS2 header dumps use human-readable indented output.
+                    # Thus we have to look out for 'Keyslots:' and count the
+                    # number of indented keyslot numbers.
+                    if keyslot_area and line[2] in '0123456789':
+                        keyslot_count += 1
+                elif line.startswith('\t'):
+                    pass
+                elif keyslot_re.match(line):
+                    # LUKS1 header dumps have one line per keyslot with ENABLED
+                    # or DISABLED in them. We count such lines with ENABLED.
+                    keyslot_count += 1
+                else:
+                    keyslot_area = False
+            if keyslot_count < 2:
+                self._module.fail_json(msg="LUKS device %s has less than two active keyslots. "
+                                           "To be able to remove a key, please set "
+                                           "`force_remove_last_key` to `yes`." % device)
+
         result = self._run_command([self._cryptsetup_bin, 'luksRemoveKey', device,
                                     '-q', '--key-file', keyfile])
         if result[RETURN_CODE] != 0:
@@ -412,7 +448,8 @@ def run_module():
         name=dict(type='str'),
         keyfile=dict(type='path'),
         new_keyfile=dict(type='path'),
-        remove_keyfile=dict(type='path')
+        remove_keyfile=dict(type='path'),
+        force_remove_last_key=dict(type='bool', default=False),
     )
 
     # seed the result dict in the object
@@ -422,7 +459,16 @@ def run_module():
     )
 
     module = AnsibleModule(argument_spec=module_args,
-                           supports_check_mode=False)
+                           supports_check_mode=True)
+
+    if module.params['device'] is not None:
+        try:
+            statinfo = os.stat(module.params['device'])
+            mode = statinfo.st_mode
+            if not stat.S_ISBLK(mode) and not stat.S_ISCHR(mode):
+                raise Exception('{0} is not a device'.format(module.params['device']))
+        except Exception as e:
+            module.fail_json(msg=str(e))
 
     crypt = CryptHandler(module)
     conditions = ConditionsHandler(module, crypt)
@@ -432,12 +478,15 @@ def run_module():
 
     # luks create
     if conditions.luks_create():
-        try:
-            crypt.run_luks_create(module.params['device'],
-                                  module.params['keyfile'])
-        except ValueError as e:
-            module.fail_json(msg="luks_device error: %s" % e)
+        if not module.check_mode:
+            try:
+                crypt.run_luks_create(module.params['device'],
+                                      module.params['keyfile'])
+            except ValueError as e:
+                module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
+        if module.check_mode:
+            module.exit_json(**result)
 
     # luks open
 
@@ -452,14 +501,17 @@ def run_module():
                 name = crypt.generate_luks_name(module.params['device'])
             except ValueError as e:
                 module.fail_json(msg="luks_device error: %s" % e)
-        try:
-            crypt.run_luks_open(module.params['device'],
-                                module.params['keyfile'],
-                                name)
-        except ValueError as e:
-            module.fail_json(msg="luks_device error: %s" % e)
+        if not module.check_mode:
+            try:
+                crypt.run_luks_open(module.params['device'],
+                                    module.params['keyfile'],
+                                    name)
+            except ValueError as e:
+                module.fail_json(msg="luks_device error: %s" % e)
         result['name'] = name
         result['changed'] = True
+        if module.check_mode:
+            module.exit_json(**result)
 
     # luks close
     if conditions.luks_close():
@@ -471,38 +523,51 @@ def run_module():
                 module.fail_json(msg="luks_device error: %s" % e)
         else:
             name = module.params['name']
-        try:
-            crypt.run_luks_close(name)
-        except ValueError as e:
-            module.fail_json(msg="luks_device error: %s" % e)
+        if not module.check_mode:
+            try:
+                crypt.run_luks_close(name)
+            except ValueError as e:
+                module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
+        if module.check_mode:
+            module.exit_json(**result)
 
     # luks add key
     if conditions.luks_add_key():
-        try:
-            crypt.run_luks_add_key(module.params['device'],
-                                   module.params['keyfile'],
-                                   module.params['new_keyfile'])
-        except ValueError as e:
-            module.fail_json(msg="luks_device error: %s" % e)
+        if not module.check_mode:
+            try:
+                crypt.run_luks_add_key(module.params['device'],
+                                       module.params['keyfile'],
+                                       module.params['new_keyfile'])
+            except ValueError as e:
+                module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
+        if module.check_mode:
+            module.exit_json(**result)
 
     # luks remove key
     if conditions.luks_remove_key():
-        try:
-            crypt.run_luks_remove_key(module.params['device'],
-                                      module.params['remove_keyfile'])
-        except ValueError as e:
-            module.fail_json(msg="luks_device error: %s" % e)
+        if not module.check_mode:
+            try:
+                crypt.run_luks_remove_key(module.params['device'],
+                                          module.params['remove_keyfile'],
+                                          force_remove_last_key=module.params['force_remove_last_key'])
+            except ValueError as e:
+                module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
+        if module.check_mode:
+            module.exit_json(**result)
 
     # luks remove
     if conditions.luks_remove():
-        try:
-            crypt.run_luks_remove(module.params['device'])
-        except ValueError as e:
-            module.fail_json(msg="luks_device error: %s" % e)
+        if not module.check_mode:
+            try:
+                crypt.run_luks_remove(module.params['device'])
+            except ValueError as e:
+                module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
+        if module.check_mode:
+            module.exit_json(**result)
 
     # Success - return result
     module.exit_json(**result)

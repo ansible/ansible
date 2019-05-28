@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Kevin Breit (@kbreit) <kevin.breit@kevinbreit.net>
+# Copyright: (c) 2018, 2019 Kevin Breit (@kbreit) <kevin.breit@kevinbreit.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -28,12 +28,12 @@ options:
     state:
         description:
         - Create or modify an organization.
-        choices: [absent, present, query]
+        choices: [ absent, present, query ]
         default: present
     net_name:
         description:
         - Name of a network.
-        aliases: [name, network]
+        aliases: [ name, network ]
     net_id:
         description:
         - ID number of a network.
@@ -47,15 +47,27 @@ options:
         description:
         - Type of network device network manages.
         - Required when creating a network.
-        choices: [appliance, combined, switch, wireless]
-        aliases: [net_type]
+        - As of Ansible 2.8, C(combined) type is no longer accepted.
+        - As of Ansible 2.8, changes to this parameter are no longer idempotent.
+        choices: [ appliance, switch, wireless ]
+        aliases: [ net_type ]
+        type: list
     tags:
+        type: list
         description:
-        - Comma delimited list of tags to assign to network.
+        - List of tags to assign to network.
+        - C(tags) name conflicts with the tags parameter in Ansible. Indentation problems may cause unexpected behaviors.
+        - Ansible 2.8 converts this to a list from a comma separated list.
     timezone:
         description:
         - Timezone associated to network.
         - See U(https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a list of valid timezones.
+    enable_vlans:
+        description:
+        - Boolean value specifying whether VLANs should be supported on a network.
+        - Requires C(net_name) or C(net_id) to be specified.
+        type: bool
+        version_added: '2.9'
     disable_my_meraki:
         description: >
             - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
@@ -91,6 +103,25 @@ EXAMPLES = r'''
     type: switch
     timezone: America/Chicago
     tags: production, chicago
+  delegate_to: localhost
+- name: Create combined network named MyNet in the YourOrg organization
+  meraki_network:
+    auth_key: abc12345
+    state: present
+    org_name: YourOrg
+    net_name: MyNet
+    type:
+      - switch
+      - appliance
+    timezone: America/Chicago
+    tags: production, chicago
+- name: Enable VLANs on a network
+  meraki_network:
+    auth_key: abc12345
+    state: query
+    org_name: YourOrg
+    net_name: MyNet
+    enable_vlans: yes
   delegate_to: localhost
 '''
 
@@ -152,16 +183,18 @@ def is_net_valid(meraki, net_name, data):
 
 
 def construct_tags(tags):
-    ''' Assumes tags are a comma separated list '''
-    if tags is not None:
-        tags = tags.replace(' ', '')
-        tags = tags.split(',')
-        tag_list = str()
-        for t in tags:
-            tag_list = tag_list + " " + t
-        tag_list = tag_list + " "
-        return tag_list
-    return None
+    formatted_tags = ' '.join(tags)
+    return ' {0} '.format(formatted_tags)  # Meraki needs space padding
+
+
+def list_to_string(data):
+    new_string = str()
+    for i, item in enumerate(data):
+        if i == len(new_string) - 1:
+            new_string += i
+        else:
+            new_string = "{0}{1} ".format(new_string, item)
+    return new_string.strip()
 
 
 def main():
@@ -172,12 +205,13 @@ def main():
     argument_spec = meraki_argument_spec()
     argument_spec.update(
         net_id=dict(type='str'),
-        type=dict(type='str', choices=['wireless', 'switch', 'appliance', 'combined'], aliases=['net_type']),
-        tags=dict(type='str'),
+        type=dict(type='list', choices=['wireless', 'switch', 'appliance'], aliases=['net_type']),
+        tags=dict(type='list'),
         timezone=dict(type='str'),
         net_name=dict(type='str', aliases=['name', 'network']),
         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
         disable_my_meraki=dict(type='bool'),
+        enable_vlans=dict(type='bool'),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -195,9 +229,13 @@ def main():
     create_urls = {'network': '/organizations/{org_id}/networks'}
     update_urls = {'network': '/networks/{net_id}'}
     delete_urls = {'network': '/networks/{net_id}'}
+    enable_vlans_urls = {'network': '/networks/{net_id}/vlansEnabledState'}
+    get_vlan_status_urls = {'network': '/networks/{net_id}/vlansEnabledState'}
     meraki.url_catalog['create'] = create_urls
     meraki.url_catalog['update'] = update_urls
     meraki.url_catalog['delete'] = delete_urls
+    meraki.url_catalog['enable_vlans'] = enable_vlans_urls
+    meraki.url_catalog['status_vlans'] = get_vlan_status_urls
 
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id parameters are required')
@@ -206,6 +244,9 @@ def main():
             meraki.fail_json(msg='net_name or net_id is required for present or absent states')
     if meraki.params['net_name'] and meraki.params['net_id']:
         meraki.fail_json(msg='net_name and net_id are mutually exclusive')
+    if not meraki.params['net_name'] and not meraki.params['net_id']:
+        if meraki.params['enable_vlans']:
+            meraki.fail_json(msg="The parameter 'enable_vlans' requires 'net_name' or 'net_id' to be specified")
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -219,9 +260,7 @@ def main():
         if meraki.params['net_name']:
             payload['name'] = meraki.params['net_name']
         if meraki.params['type']:
-            payload['type'] = meraki.params['type']
-            if meraki.params['type'] == 'combined':
-                payload['type'] = 'switch wireless appliance'
+            payload['type'] = list_to_string(meraki.params['type'])
         if meraki.params['tags']:
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
@@ -277,6 +316,35 @@ def main():
                 if meraki.status == 200:
                     meraki.result['data'] = r
                     meraki.result['changed'] = True
+            else:  # Update existing network
+                net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
+                if meraki.params['enable_vlans'] is not None:
+                    status_path = meraki.construct_path('status_vlans', net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets))
+                    status = meraki.request(status_path, method='GET')
+                    payload = {'enabled': meraki.params['enable_vlans']}
+                    if meraki.is_update_required(status, payload):
+                        path = meraki.construct_path('enable_vlans',
+                                                     net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets))
+                        r = meraki.request(path,
+                                           method='PUT',
+                                           payload=json.dumps(payload))
+                        if meraki.status == 200:
+                            meraki.result['data'] = r
+                            meraki.result['changed'] = True
+                    else:
+                        meraki.result['data'] = status
+                elif meraki.is_update_required(net, payload):
+                    path = meraki.construct_path('update',
+                                                 net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+                                                 )
+                    r = meraki.request(path,
+                                       method='PUT',
+                                       payload=json.dumps(payload))
+                    if meraki.status == 200:
+                        meraki.result['data'] = r
+                        meraki.result['changed'] = True
+                else:
+                    meraki.result['data'] = net
     elif meraki.params['state'] == 'absent':
         if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
             net_id = meraki.get_net_id(net_name=meraki.params['net_name'],

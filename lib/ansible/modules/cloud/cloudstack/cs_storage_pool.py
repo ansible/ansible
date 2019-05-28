@@ -3,21 +3,7 @@
 #
 # (c) 2017, Netservers Ltd. <support@netservers.co.uk>
 # (c) 2017, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -30,33 +16,39 @@ module: cs_storage_pool
 short_description: Manages Primary Storage Pools on Apache CloudStack based clouds.
 description:
     - Create, update, put into maintenance, disable, enable and remove storage pools.
-version_added: "2.4"
+version_added: '2.4'
 author:
-    - "Netservers Ltd. (@netservers)"
-    - "René Moser (@resmo)"
+    - Netservers Ltd. (@netservers)
+    - René Moser (@resmo)
 options:
   name:
     description:
       - Name of the storage pool.
+    type: str
     required: true
   zone:
     description:
       - Name of the zone in which the host should be deployed.
       - If not set, default zone is used.
+    type: str
   storage_url:
     description:
       - URL of the storage pool.
-      - Required if C(state=present).
+      - Required if I(state=present).
+    type: str
   pod:
     description:
       - Name of the pod.
+    type: str
   cluster:
     description:
       - Name of the cluster.
+    type: str
   scope:
     description:
       - The scope of the storage pool.
       - Defaults to cluster when C(cluster) is provided, otherwise zone.
+    type: str
     choices: [ cluster, zone ]
   managed:
     description:
@@ -66,27 +58,35 @@ options:
   hypervisor:
     description:
       - Required when creating a zone scoped pool.
-    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
+      - Possible values are C(KVM), C(VMware), C(BareMetal), C(XenServer), C(LXC), C(HyperV), C(UCS), C(OVM), C(Simulator).
+    type: str
   storage_tags:
     description:
       - Tags associated with this storage pool.
+    type: list
+    aliases: [ storage_tag ]
   provider:
     description:
       - Name of the storage provider e.g. SolidFire, SolidFireShared, DefaultPrimary, CloudByte.
+    type: str
     default: DefaultPrimary
   capacity_bytes:
     description:
       - Bytes CloudStack can provision from this storage pool.
+    type: int
   capacity_iops:
     description:
       - Bytes CloudStack can provision from this storage pool.
+    type: int
   allocation_state:
     description:
       - Allocation state of the storage pool.
+    type: str
     choices: [ enabled, disabled, maintenance ]
   state:
     description:
       - State of the storage pool.
+    type: str
     default: present
     choices: [ present, absent ]
 extends_documentation_fragment: cloudstack
@@ -94,18 +94,17 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: ensure a zone scoped storage_pool is present
-  local_action:
-    module: cs_storage_pool
+  cs_storage_pool:
     zone: zone01
     storage_url: rbd://admin:SECRET@ceph-mons.domain/poolname
     provider: DefaultPrimary
     name: Ceph RBD
     scope: zone
     hypervisor: KVM
+  delegate_to: localhost
 
 - name: ensure a cluster scoped storage_pool is disabled
-  local_action:
-    module: cs_storage_pool
+  cs_storage_pool:
     name: Ceph RBD
     zone: zone01
     cluster: cluster01
@@ -114,10 +113,10 @@ EXAMPLES = '''
     provider: DefaultPrimary
     scope: cluster
     allocation_state: disabled
+  delegate_to: localhost
 
 - name: ensure a cluster scoped storage_pool is in maintenance
-  local_action:
-    module: cs_storage_pool
+  cs_storage_pool:
     name: Ceph RBD
     zone: zone01
     cluster: cluster01
@@ -126,12 +125,13 @@ EXAMPLES = '''
     provider: DefaultPrimary
     scope: cluster
     allocation_state: maintenance
+  delegate_to: localhost
 
 - name: ensure a storage_pool is absent
-  local_action:
-    module: cs_storage_pool
+  cs_storage_pool:
     name: Ceph RBD
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -234,7 +234,6 @@ from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
     cs_argument_spec,
     cs_required_together,
-    CS_HYPERVISORS,
 )
 
 
@@ -468,7 +467,7 @@ def main():
         pod=dict(),
         cluster=dict(),
         scope=dict(choices=['zone', 'cluster']),
-        hypervisor=dict(choices=CS_HYPERVISORS),
+        hypervisor=dict(),
         provider=dict(default='DefaultPrimary'),
         capacity_bytes=dict(type='int'),
         capacity_iops=dict(type='int'),

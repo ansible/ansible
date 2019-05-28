@@ -30,10 +30,16 @@ def main():
     }
 
     skip = set([
+        'test/integration/targets/collections/collection_root_user/ansible_collections/testns/testcoll/plugins/modules/win_csbasic_only.ps1',
+        'test/integration/targets/collections/collection_root_user/ansible_collections/testns/testcoll/plugins/modules/win_selfcontained.ps1',
+        'test/integration/targets/collections/collection_root_user/ansible_collections/testns/testcoll/plugins/modules/win_uses_coll_csmu.ps1',
+        'test/integration/targets/collections/collection_root_user/ansible_collections/testns/testcoll/plugins/modules/win_uses_coll_psmu.ps1',
         'test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1',
         'test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1',
         'test/utils/shippable/timing.py',
         'test/integration/targets/old_style_modules_posix/library/helloworld.sh',
+        # The following are Python 3.6+.  Only run by release engineers
+        'hacking/build-ansible',
     ])
 
     # see https://unicode.org/faq/utf_bom.html#bom1

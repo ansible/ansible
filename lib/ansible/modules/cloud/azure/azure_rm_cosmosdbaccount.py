@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cosmosdbaccount
 version_added: "2.8"
-short_description: Manage Azure Database Account instance.
+short_description: Manage Azure Database Account instance
 description:
     - Create, update and delete instance of Azure Database Account.
 
@@ -33,7 +33,7 @@ options:
     location:
         description:
             - The location of the resource group to which the resource belongs.
-            - Required when C(state) is I(present).
+            - Required when I(state=present).
     kind:
         description:
             - Indicates the type of database account. This can only be set at database account creation.
@@ -48,7 +48,7 @@ options:
             default_consistency_level:
                 description:
                     - The default consistency level and configuration settings of the Cosmos DB account.
-                    - Required when C(state) is I(present).
+                    - Required when I(state=present).
                 choices:
                     - 'eventual'
                     - 'session'
@@ -57,18 +57,18 @@ options:
                     - 'consistent_prefix'
             max_staleness_prefix:
                 description:
-                    - "When used with the Bounded Staleness consistency level, this value represents the number of stale requests tolerated. Accepted range
-                       for this value is 1 - 2,147,483,647. Required when I(default_consistency_policy) is set to C(bounded_staleness)."
+                    - When used with the Bounded Staleness consistency level, this value represents the number of stale requests tolerated.
+                    - Accepted range for this value is 1 - 2,147,483,647. Required when I(default_consistency_policy=bounded_staleness).
                 type: int
             max_interval_in_seconds:
                 description:
-                    - "When used with the Bounded Staleness consistency level, this value represents the time amount of staleness (in seconds) tolerated.
-                       Accepted range for this value is 5 - 86400. Required when I(default_consistency_policy) is set to C(bounded_staleness)."
+                    - When used with the Bounded Staleness consistency level, this value represents the time amount of staleness (in seconds) tolerated.
+                    - Accepted range for this value is 5 - 86400. Required when I(default_consistency_policy=bounded_staleness).
                 type: int
     geo_rep_locations:
         description:
             - An array that contains the georeplication locations enabled for the Cosmos DB account.
-            - Required when C(state) is I(present).
+            - Required when I(state=present).
         type: list
         suboptions:
             name:
@@ -76,25 +76,27 @@ options:
                     - The name of the region.
             failover_priority:
                 description:
-                    - "The failover priority of the region. A failover priority of 0 indicates a write region. The maximum value for a failover priority =
-                       (total number of regions - 1). Failover priority values must be unique for each of the regions in which the database account exists."
+                    - The failover priority of the region. A failover priority of 0 indicates a write region.
+                    - The maximum value for a failover priority = (total number of regions - 1).
+                    - Failover priority values must be unique for each of the regions in which the database account exists.
                 type: int
     database_account_offer_type:
         description:
             - Database account offer type, for example I(Standard)
-            - Required when C(state) is I(present).
+            - Required when I(state=present).
     ip_range_filter:
         description:
-            - "Cosmos DB Firewall Support: This value specifies the set of IP addresses or IP address ranges in CIDR form to be included as the allowed list
-               of client IPs for a given database account. IP addresses/ranges must be comma separated and must not contain any spaces."
+            - Cosmos DB Firewall support. This value specifies the set of IP addresses or IP address ranges.
+            - In CIDR form to be included as the allowed list of client IPs for a given database account.
+            - IP addresses/ranges must be comma separated and must not contain any spaces.
     is_virtual_network_filter_enabled:
         description:
             - Flag to indicate whether to enable/disable Virtual Network ACL rules.
         type: bool
     enable_automatic_failover:
         description:
-            - "Enables automatic failover of the write region in the rare event that the region is unavailable due to an outage. Automatic failover will
-               result in a new write region for the account and is chosen based on the failover priorities configured for the account."
+            - Enables automatic failover of the write region in the rare event that the region is unavailable due to an outage.
+            - Automatic failover will result in a new write region for the account and is chosen based on the failover priorities configured for the account.
         type: bool
     enable_cassandra:
         description:
@@ -140,7 +142,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -148,7 +150,7 @@ EXAMPLES = '''
   - name: Create Cosmos DB Account - min
     azure_rm_cosmosdbaccount:
       resource_group: myResourceGroup
-      name: ddb1
+      name: myDatabaseAccount
       location: westus
       geo_rep_locations:
         - name: southcentralus
@@ -158,7 +160,7 @@ EXAMPLES = '''
   - name: Create Cosmos DB Account - max
     azure_rm_cosmosdbaccount:
       resource_group: myResourceGroup
-      name: ddb1
+      name: myDatabaseAccount
       location: westus
       kind: mongo_db
       geo_rep_locations:
@@ -168,7 +170,8 @@ EXAMPLES = '''
       ip_range_filter: 10.10.10.10
       enable_multiple_write_locations: yes
       virtual_network_rules:
-        - subnet: /subscriptions/subId/resourceGroups/rg/providers/Microsoft.Network/virtualNetworks/vnet1/subnets/subnet1
+        - subnet: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVi
+                   rtualNetwork/subnets/mySubnet"
       consistency_policy:
         default_consistency_level: bounded_staleness
         max_staleness_prefix: 10
@@ -181,7 +184,8 @@ id:
         - The unique resource identifier of the database account.
     returned: always
     type: str
-    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/myData
+             baseAccount"
 '''
 
 import time
@@ -322,7 +326,14 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 self.parameters[key] = kwargs[key]
 
-        dict_camelize(self.parameters, ['kind'], True)
+        kind = self.parameters.get('kind')
+        if kind == 'global_document_db':
+            self.parameters['kind'] = 'GlobalDocumentDB'
+        elif kind == 'mongo_db':
+            self.parameters['kind'] = 'MongoDB'
+        elif kind == 'parse':
+            self.parameters['kind'] = 'Parse'
+
         dict_camelize(self.parameters, ['consistency_policy', 'default_consistency_level'], True)
         dict_rename(self.parameters, ['geo_rep_locations', 'name'], 'location_name')
         dict_rename(self.parameters, ['geo_rep_locations'], 'locations')

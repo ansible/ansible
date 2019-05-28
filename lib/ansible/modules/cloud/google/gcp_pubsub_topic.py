@@ -65,11 +65,11 @@ notes:
 EXAMPLES = '''
 - name: create a topic
   gcp_pubsub_topic:
-      name: test-topic1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test-topic1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -142,7 +142,8 @@ def create(module, link):
 
 
 def update(module, link):
-    module.fail_json(msg="Topic cannot be edited")
+    delete(module, self_link(module))
+    create(module, self_link(module))
 
 
 def delete(module, link):

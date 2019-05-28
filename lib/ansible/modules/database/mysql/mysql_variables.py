@@ -119,19 +119,19 @@ def main():
             login_unix_socket=dict(type='str'),
             variable=dict(type='str'),
             value=dict(type='str'),
-            ssl_cert=dict(type='path'),
-            ssl_key=dict(type='path'),
-            ssl_ca=dict(type='path'),
+            client_cert=dict(type='path', aliases=['ssl_cert']),
+            client_key=dict(type='path', aliases=['ssl_key']),
+            ca_cert=dict(type='path', aliases=['ssl_ca']),
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
         ),
     )
     user = module.params["login_user"]
     password = module.params["login_password"]
-    ssl_cert = module.params["ssl_cert"]
-    ssl_key = module.params["ssl_key"]
-    ssl_ca = module.params["ssl_ca"]
     connect_timeout = module.params['connect_timeout']
+    ssl_cert = module.params["client_cert"]
+    ssl_key = module.params["client_key"]
+    ssl_ca = module.params["ca_cert"]
     config_file = module.params['config_file']
     db = 'mysql'
 

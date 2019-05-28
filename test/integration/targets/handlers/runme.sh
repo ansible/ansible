@@ -75,3 +75,10 @@ set -e
 
 # https://github.com/ansible/ansible/issues/47287
 [ "$(ansible-playbook test_handlers_including_task.yml -i ../../inventory -v "$@" | egrep -o 'failed=[0-9]+')" = "failed=0" ]
+
+# https://github.com/ansible/ansible/issues/27237
+set +e
+result="$(ansible-playbook test_handlers_template_run_once.yml -i inventory.handlers "$@" 2>&1)"
+set -e
+grep -q "handler A" <<< "$result"
+grep -q "handler B" <<< "$result"

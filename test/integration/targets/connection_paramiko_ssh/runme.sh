@@ -1,1 +1,7 @@
-../connection_posix/test.sh
+#!/usr/bin/env bash
+
+set -eux
+
+source ../setup_paramiko/setup.sh
+
+./test.sh

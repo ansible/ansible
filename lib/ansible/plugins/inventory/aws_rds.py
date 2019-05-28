@@ -12,32 +12,6 @@ DOCUMENTATION = '''
         - Get instances and clusters from Amazon Web Services RDS.
         - Uses a YAML configuration file that ends with aws_rds.(yml|yaml).
     options:
-        boto_profile:
-          description: The boto profile to use. The plugin will look for an instance role if no credentials
-              are provided.
-          env:
-              - name: AWS_PROFILE
-              - name: AWS_DEFAULT_PROFILE
-        aws_access_key_id:
-          description: The AWS access key to use. If you have specified a profile, you don't need to provide
-              an access key/secret key/session token.
-          env:
-              - name: AWS_ACCESS_KEY_ID
-              - name: AWS_ACCESS_KEY
-              - name: EC2_ACCESS_KEY
-        aws_secret_access_key:
-          description: The AWS secret key that corresponds to the access key. If you have specified a profile,
-              you don't need to provide an access key/secret key/session token.
-          env:
-              - name: AWS_SECRET_ACCESS_KEY
-              - name: AWS_SECRET_KEY
-              - name: EC2_SECRET_KEY
-        aws_security_token:
-          description: The AWS security token if using temporary access and secret keys.
-          env:
-              - name: AWS_SECURITY_TOKEN
-              - name: AWS_SESSION_TOKEN
-              - name: EC2_SECURITY_TOKEN
         regions:
           description: A list of regions in which to describe RDS instances and clusters. Available regions are listed here
               U(https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html)
@@ -65,6 +39,7 @@ DOCUMENTATION = '''
     extends_documentation_fragment:
         - inventory_cache
         - constructed
+        - aws_credentials
     requirements:
         - boto3
         - botocore
@@ -271,9 +246,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
             :param config_data: contents of the inventory config file
         '''
-        self.boto_profile = self.get_option('boto_profile')
-        aws_access_key_id = self.get_option('aws_access_key_id')
-        aws_secret_access_key = self.get_option('aws_secret_access_key')
+        self.boto_profile = self.get_option('aws_profile')
+        aws_access_key_id = self.get_option('aws_access_key')
+        aws_secret_access_key = self.get_option('aws_secret_key')
         aws_security_token = self.get_option('aws_security_token')
 
         if not self.boto_profile and not (aws_access_key_id and aws_secret_access_key):
@@ -333,7 +308,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         cache_needs_update = False
         if cache:
             try:
-                results = self.cache.get(cache_key)
+                results = self._cache[cache_key]
             except KeyError:
                 # if cache expires or cache file doesn't exist
                 cache_needs_update = True
@@ -348,4 +323,4 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
-            self.cache.set(cache_key, formatted_inventory)
+            self._cache[cache_key] = formatted_inventory

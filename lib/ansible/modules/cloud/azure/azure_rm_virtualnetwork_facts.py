@@ -67,7 +67,7 @@ azure_virtualnetworks:
     type: list
     example: [{
         "etag": 'W/"532ba1be-ae71-40f2-9232-3b1d9cf5e37e"',
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/vnet2001",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vnet2001",
         "location": "eastus2",
         "name": "vnet2001",
         "properties": {

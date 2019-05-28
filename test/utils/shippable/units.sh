@@ -7,10 +7,10 @@ IFS='/:' read -ra args <<< "$1"
 
 version="${args[1]}"
 
-if [[ "${COVERAGE:-}" ]]; then
-    timeout=90
+if [[ "${COVERAGE:-}" == "--coverage" ]]; then
+    timeout=99
 else
-    timeout=10
+    timeout=11
 fi
 
 ansible-test env --timeout "${timeout}" --color -v

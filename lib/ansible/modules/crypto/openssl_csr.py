@@ -21,6 +21,9 @@ description:
     - It uses the pyOpenSSL python library to interact with openssl. This module supports
       the subjectAltName, keyUsage, extendedKeyUsage, basicConstraints and OCSP Must Staple
       extensions.
+    - "Please note that the module regenerates existing CSR if it doesn't match the module's
+      options, or if it seems to be corrupt. If you are concerned that this could overwrite
+      your existing CSR, consider using the I(backup) option."
 requirements:
     - Either cryptography >= 1.3
     - Or pyOpenSSL >= 0.15
@@ -190,6 +193,13 @@ options:
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
         version_added: '2.8'
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              CSR back if you overwrote it with a new one by accident.
+        type: bool
+        default: no
+        version_added: "2.8"
 extends_documentation_fragment:
 - files
 notes:
@@ -311,6 +321,11 @@ ocsp_must_staple:
     returned: changed or success
     type: bool
     sample: false
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/www.ansible.com.csr.2019-03-09@11:22~
 '''
 
 import abc
@@ -321,6 +336,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 MINIMAL_PYOPENSSL_VERSION = '0.15'
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.3'
@@ -393,6 +409,9 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         self.request = None
         self.privatekey = None
 
+        self.backup = module.params['backup']
+        self.backup_file = None
+
         self.subject = [
             ('C', module.params['country_name']),
             ('ST', module.params['state_or_province_name']),
@@ -421,14 +440,9 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         '''Generate the certificate signing request.'''
         if not self.check(module, perms_required=False) or self.force:
             result = self._generate_csr()
-
-            try:
-                csr_file = open(self.path, 'wb')
-                csr_file.write(result)
-                csr_file.close()
-            except (IOError, OSError) as exc:
-                raise CertificateSigningRequestError(exc)
-
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
+            crypto_utils.write_file(module, result)
             self.changed = True
 
         file_args = module.load_file_common_arguments(module.params)
@@ -454,6 +468,11 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
 
         return self._check_csr()
 
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        super(CertificateSigningRequestBase, self).remove(module)
+
     def dump(self):
         '''Serialize the object into a dictionary.'''
 
@@ -468,6 +487,8 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
             'ocspMustStaple': self.ocspMustStaple,
             'changed': self.changed
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -533,6 +554,16 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             raise CertificateSigningRequestError(exc)
 
+    def _normalize_san(self, san):
+        # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+        # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
+        if san.startswith('IP Address:'):
+            san = 'IP:' + san[len('IP Address:'):]
+        if san.startswith('IP:'):
+            ip = compat_ipaddress.ip_address(san[3:])
+            san = 'IP:{0}'.format(ip.compressed)
+        return san
+
     def _check_csr(self):
         def _check_subject(csr):
             subject = [(OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])), to_bytes(sub[1])) for sub in self.subject]
@@ -544,12 +575,11 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
 
         def _check_subjectAltName(extensions):
             altnames_ext = next((ext for ext in extensions if ext.get_short_name() == b'subjectAltName'), '')
-            altnames = [altname.strip() for altname in str(altnames_ext).split(',') if altname.strip()]
-            # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
-            # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
-            altnames = [name if not name.startswith('IP Address:') else "IP:" + name.split(':', 1)[1] for name in altnames]
+            altnames = [self._normalize_san(altname.strip()) for altname in
+                        to_text(altnames_ext, errors='surrogate_or_strict').split(',') if altname.strip()]
             if self.subjectAltName:
-                if set(altnames) != set(self.subjectAltName) or altnames_ext.get_critical() != self.subjectAltName_critical:
+                if (set(altnames) != set([self._normalize_san(to_text(name)) for name in self.subjectAltName]) or
+                        altnames_ext.get_critical() != self.subjectAltName_critical):
                     return False
             else:
                 if altnames:
@@ -610,7 +640,10 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
             except crypto.Error:
                 return False
 
-        csr = crypto_utils.load_certificate_request(self.path)
+        try:
+            csr = crypto_utils.load_certificate_request(self.path, backend='pyopenssl')
+        except Exception as dummy:
+            return False
 
         return _check_subject(csr) and _check_extensions(csr) and _check_signature(csr)
 
@@ -621,182 +654,31 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         super(CertificateSigningRequestCryptography, self).__init__(module)
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
 
-    def _get_name_oid(self, id):
-        if id in ('CN', 'commonName'):
-            return cryptography.x509.oid.NameOID.COMMON_NAME
-        if id in ('C', 'countryName'):
-            return cryptography.x509.oid.NameOID.COUNTRY_NAME
-        if id in ('L', 'localityName'):
-            return cryptography.x509.oid.NameOID.LOCALITY_NAME
-        if id in ('ST', 'stateOrProvinceName'):
-            return cryptography.x509.oid.NameOID.STATE_OR_PROVINCE_NAME
-        if id in ('street', 'streetAddress'):
-            return cryptography.x509.oid.NameOID.STREET_ADDRESS
-        if id in ('O', 'organizationName'):
-            return cryptography.x509.oid.NameOID.ORGANIZATION_NAME
-        if id in ('OU', 'organizationalUnitName'):
-            return cryptography.x509.oid.NameOID.ORGANIZATIONAL_UNIT_NAME
-        if id in ('serialNumber', ):
-            return cryptography.x509.oid.NameOID.SERIAL_NUMBER
-        if id in ('SN', 'surname'):
-            return cryptography.x509.oid.NameOID.SURNAME
-        if id in ('GN', 'givenName'):
-            return cryptography.x509.oid.NameOID.GIVEN_NAME
-        if id in ('title', ):
-            return cryptography.x509.oid.NameOID.TITLE
-        if id in ('generationQualifier', ):
-            return cryptography.x509.oid.NameOID.GENERATION_QUALIFIER
-        if id in ('x500UniqueIdentifier', ):
-            return cryptography.x509.oid.NameOID.X500_UNIQUE_IDENTIFIER
-        if id in ('dnQualifier', ):
-            return cryptography.x509.oid.NameOID.DN_QUALIFIER
-        if id in ('pseudonym', ):
-            return cryptography.x509.oid.NameOID.PSEUDONYM
-        if id in ('UID', 'userId'):
-            return cryptography.x509.oid.NameOID.USER_ID
-        if id in ('DC', 'domainComponent'):
-            return cryptography.x509.oid.NameOID.DOMAIN_COMPONENT
-        if id in ('emailAddress', ):
-            return cryptography.x509.oid.NameOID.EMAIL_ADDRESS
-        if id in ('jurisdictionC', 'jurisdictionCountryName'):
-            return cryptography.x509.oid.NameOID.JURISDICTION_COUNTRY_NAME
-        if id in ('jurisdictionL', 'jurisdictionLocalityName'):
-            return cryptography.x509.oid.NameOID.JURISDICTION_LOCALITY_NAME
-        if id in ('jurisdictionST', 'jurisdictionStateOrProvinceName'):
-            return cryptography.x509.oid.NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME
-        if id in ('businessCategory', ):
-            return cryptography.x509.oid.NameOID.BUSINESS_CATEGORY
-        if id in ('postalAddress', ):
-            return cryptography.x509.oid.NameOID.POSTAL_ADDRESS
-        if id in ('postalCode', ):
-            return cryptography.x509.oid.NameOID.POSTAL_CODE
-        raise CertificateSigningRequestError('Unknown subject field identifier "{0}"'.format(id))
-
-    def _get_san(self, name):
-        if name.startswith('DNS:'):
-            return cryptography.x509.DNSName(to_text(name[4:]))
-        if name.startswith('IP:'):
-            return cryptography.x509.IPAddress(to_text(name[3:]))
-        if name.startswith('email:'):
-            return cryptography.x509.RFC822Name(to_text(name[6:]))
-        if name.startswith('URI:'):
-            return cryptography.x509.UniformResourceIdentifier(to_text(name[4:]))
-        if name.startswith('DirName:'):
-            return cryptography.x509.DirectoryName(to_text(name[8:]))
-        if ':' not in name:
-            raise CertificateSigningRequestError('Cannot parse Subject Alternative Name "{0}" (forgot "DNS:" prefix?)'.format(name))
-        raise CertificateSigningRequestError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
-
-    def _get_keyusage(self, usage):
-        if usage in ('Digital Signature', 'digitalSignature'):
-            return 'digital_signature'
-        if usage in ('Non Repudiation', 'nonRepudiation'):
-            return 'content_commitment'
-        if usage in ('Key Encipherment', 'keyEncipherment'):
-            return 'key_encipherment'
-        if usage in ('Data Encipherment', 'dataEncipherment'):
-            return 'data_encipherment'
-        if usage in ('Key Agreement', 'keyAgreement'):
-            return 'key_agreement'
-        if usage in ('Certificate Sign', 'keyCertSign'):
-            return 'key_cert_sign'
-        if usage in ('CRL Sign', 'cRLSign'):
-            return 'crl_sign'
-        if usage in ('Encipher Only', 'encipherOnly'):
-            return 'encipher_only'
-        if usage in ('Decipher Only', 'decipherOnly'):
-            return 'decipher_only'
-        raise CertificateSigningRequestError('Unknown key usage "{0}"'.format(usage))
-
-    def _get_ext_keyusage(self, usage):
-        if usage in ('serverAuth', 'TLS Web Server Authentication'):
-            return cryptography.x509.oid.ExtendedKeyUsageOID.SERVER_AUTH
-        if usage in ('clientAuth', 'TLS Web Client Authentication'):
-            return cryptography.x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH
-        if usage in ('codeSigning', 'Code Signing'):
-            return cryptography.x509.oid.ExtendedKeyUsageOID.CODE_SIGNING
-        if usage in ('emailProtection', 'E-mail Protection'):
-            return cryptography.x509.oid.ExtendedKeyUsageOID.EMAIL_PROTECTION
-        if usage in ('timeStamping', 'Time Stamping'):
-            return cryptography.x509.oid.ExtendedKeyUsageOID.TIME_STAMPING
-        if usage in ('OCSPSigning', 'OCSP Signing'):
-            return cryptography.x509.oid.ExtendedKeyUsageOID.OCSP_SIGNING
-        if usage in ('anyExtendedKeyUsage', 'Any Extended Key Usage'):
-            return cryptography.x509.oid.ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE
-        if usage in ('qcStatements', ):
-            return cryptography.x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.1.3")
-        if usage in ('DVCS', ):
-            return cryptography.x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.3.10")
-        if usage in ('IPSec User', 'ipsecUser'):
-            return cryptography.x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.3.7")
-        if usage in ('Biometric Info', 'biometricInfo'):
-            return cryptography.x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.1.2")
-        # FIXME need some more, probably all from https://www.iana.org/assignments/smi-numbers/smi-numbers.xhtml#smi-numbers-1.3.6.1.5.5.7.3
-        raise CertificateSigningRequestError('Unknown extended key usage "{0}"'.format(usage))
-
-    def _get_basic_constraints(self, constraints):
-        ca = False
-        path_length = None
-        if constraints:
-            for constraint in constraints:
-                if constraint.startswith('CA:'):
-                    if constraint == 'CA:TRUE':
-                        ca = True
-                    elif constraint == 'CA:FALSE':
-                        ca = False
-                    else:
-                        raise CertificateSigningRequestError('Unknown basic constraint value "{0}" for CA'.format(constraint[3:]))
-                elif constraint.startswith('pathlen:'):
-                    v = constraint[len('pathlen:'):]
-                    try:
-                        path_length = int(v)
-                    except Exception as e:
-                        raise CertificateSigningRequestError('Cannot parse path length constraint "{0}" ({1})'.format(v, e))
-                else:
-                    raise CertificateSigningRequestError('Unknown basic constraint "{0}"'.format(constraint))
-        return ca, path_length
-
-    def _parse_key_usage(self):
-        params = dict(
-            digital_signature=False,
-            content_commitment=False,
-            key_encipherment=False,
-            data_encipherment=False,
-            key_agreement=False,
-            key_cert_sign=False,
-            crl_sign=False,
-            encipher_only=False,
-            decipher_only=False,
-        )
-        for usage in self.keyUsage:
-            params[self._get_keyusage(usage)] = True
-        return params
-
     def _generate_csr(self):
         csr = cryptography.x509.CertificateSigningRequestBuilder()
         try:
             csr = csr.subject_name(cryptography.x509.Name([
-                cryptography.x509.NameAttribute(self._get_name_oid(entry[0]), to_text(entry[1])) for entry in self.subject
+                cryptography.x509.NameAttribute(crypto_utils.cryptography_name_to_oid(entry[0]), to_text(entry[1])) for entry in self.subject
             ]))
         except ValueError as e:
             raise CertificateSigningRequestError(e)
 
         if self.subjectAltName:
             csr = csr.add_extension(cryptography.x509.SubjectAlternativeName([
-                self._get_san(name) for name in self.subjectAltName
+                crypto_utils.cryptography_get_name(name) for name in self.subjectAltName
             ]), critical=self.subjectAltName_critical)
 
         if self.keyUsage:
-            params = self._parse_key_usage()
+            params = crypto_utils.cryptography_parse_key_usage_params(self.keyUsage)
             csr = csr.add_extension(cryptography.x509.KeyUsage(**params), critical=self.keyUsage_critical)
 
         if self.extendedKeyUsage:
-            usages = [self._get_ext_keyusage(usage) for usage in self.extendedKeyUsage]
+            usages = [crypto_utils.cryptography_name_to_oid(usage) for usage in self.extendedKeyUsage]
             csr = csr.add_extension(cryptography.x509.ExtendedKeyUsage(usages), critical=self.extendedKeyUsage_critical)
 
         if self.basicConstraints:
             params = {}
-            ca, path_length = self._get_basic_constraints(self.basicConstraints)
+            ca, path_length = crypto_utils.cryptography_get_basic_constraints(self.basicConstraints)
             csr = csr.add_extension(cryptography.x509.BasicConstraints(ca, path_length), critical=self.basicConstraints_critical)
 
         if self.ocspMustStaple:
@@ -840,7 +722,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
     def _check_csr(self):
         def _check_subject(csr):
-            subject = [(self._get_name_oid(entry[0]), entry[1]) for entry in self.subject]
+            subject = [(crypto_utils.cryptography_name_to_oid(entry[0]), entry[1]) for entry in self.subject]
             current_subject = [(sub.oid, sub.value) for sub in csr.subject]
             return set(subject) == set(current_subject)
 
@@ -853,7 +735,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         def _check_subjectAltName(extensions):
             current_altnames_ext = _find_extension(extensions, cryptography.x509.SubjectAlternativeName)
             current_altnames = [str(altname) for altname in current_altnames_ext.value] if current_altnames_ext else []
-            altnames = [str(self._get_san(altname)) for altname in self.subjectAltName] if self.subjectAltName else []
+            altnames = [str(crypto_utils.cryptography_get_name(altname)) for altname in self.subjectAltName] if self.subjectAltName else []
             if set(altnames) != set(current_altnames):
                 return False
             if altnames:
@@ -867,7 +749,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
                 return current_keyusage_ext is None
             elif current_keyusage_ext is None:
                 return False
-            params = self._parse_key_usage()
+            params = crypto_utils.cryptography_parse_key_usage_params(self.keyUsage)
             for param in params:
                 if getattr(current_keyusage_ext.value, '_' + param) != params[param]:
                     return False
@@ -878,7 +760,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         def _check_extenededKeyUsage(extensions):
             current_usages_ext = _find_extension(extensions, cryptography.x509.ExtendedKeyUsage)
             current_usages = [str(usage) for usage in current_usages_ext.value] if current_usages_ext else []
-            usages = [str(self._get_ext_keyusage(usage)) for usage in self.extendedKeyUsage] if self.extendedKeyUsage else []
+            usages = [str(crypto_utils.cryptography_name_to_oid(usage)) for usage in self.extendedKeyUsage] if self.extendedKeyUsage else []
             if set(current_usages) != set(usages):
                 return False
             if usages:
@@ -888,9 +770,9 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
         def _check_basicConstraints(extensions):
             bc_ext = _find_extension(extensions, cryptography.x509.BasicConstraints)
-            current_ca = bc_ext.ca if bc_ext else False
-            current_path_length = bc_ext.path_length if bc_ext else None
-            ca, path_length = self._get_basic_constraints(self.basicConstraints)
+            current_ca = bc_ext.value.ca if bc_ext else False
+            current_path_length = bc_ext.value.path_length if bc_ext else None
+            ca, path_length = crypto_utils.cryptography_get_basic_constraints(self.basicConstraints)
             # Check CA flag
             if ca != current_ca:
                 return False
@@ -946,8 +828,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             return key_a == key_b
 
         try:
-            with open(self.path, 'rb') as f:
-                csr = cryptography.x509.load_pem_x509_csr(f.read(), self.cryptography_backend)
+            csr = crypto_utils.load_certificate_request(self.path, backend='cryptography')
         except Exception as dummy:
             return False
 
@@ -983,6 +864,7 @@ def main():
             basic_constraints_critical=dict(type='bool', default=False, aliases=['basicConstraints_critical']),
             ocsp_must_staple=dict(type='bool', default=False, aliases=['ocspMustStaple']),
             ocsp_must_staple_critical=dict(type='bool', default=False, aliases=['ocspMustStaple_critical']),
+            backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
         add_file_common_args=True,
@@ -1007,50 +889,44 @@ def main():
 
         # Success?
         if backend == 'auto':
-            module.fail_json(msg=('Can detect none of the Python libraries '
-                                  'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
+            module.fail_json(msg=("Can't detect any of the required Python libraries "
+                                  "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
                                       MINIMAL_PYOPENSSL_VERSION))
-    if backend == 'pyopenssl':
-        if not PYOPENSSL_FOUND:
-            module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
-        try:
-            getattr(crypto.X509Req, 'get_extensions')
-        except AttributeError:
-            module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
-        csr = CertificateSigningRequestPyOpenSSL(module)
-    elif backend == 'cryptography':
-        if not CRYPTOGRAPHY_FOUND:
-            module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
-        csr = CertificateSigningRequestCryptography(module)
+    try:
+        if backend == 'pyopenssl':
+            if not PYOPENSSL_FOUND:
+                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+            try:
+                getattr(crypto.X509Req, 'get_extensions')
+            except AttributeError:
+                module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
+            csr = CertificateSigningRequestPyOpenSSL(module)
+        elif backend == 'cryptography':
+            if not CRYPTOGRAPHY_FOUND:
+                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+            csr = CertificateSigningRequestCryptography(module)
 
-    if module.params['state'] == 'present':
+        if module.params['state'] == 'present':
+            if module.check_mode:
+                result = csr.dump()
+                result['changed'] = module.params['force'] or not csr.check(module)
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = csr.dump()
-            result['changed'] = module.params['force'] or not csr.check(module)
-            module.exit_json(**result)
-
-        try:
             csr.generate(module)
-        except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
-            module.fail_json(msg=to_native(exc))
 
-    else:
+        else:
+            if module.check_mode:
+                result = csr.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = csr.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
+            csr.remove(module)
 
-        try:
-            csr.remove()
-        except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
-            module.fail_json(msg=to_native(exc))
-
-    result = csr.dump()
-
-    module.exit_json(**result)
+        result = csr.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == "__main__":

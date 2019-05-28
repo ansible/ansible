@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 set -euvx
+source virtualenv.sh
+
 
 MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 trap 'rm -rf "${MYTMPDIR}"' EXIT
@@ -70,38 +72,38 @@ ansible-vault view "$@" --vault-id some_unknown_vault_id@test-vault-client.py fo
 # Use linux setsid to test without a tty. No setsid if osx/bsd though...
 if [ -x "$(command -v setsid)" ]; then
     # tests related to https://github.com/ansible/ansible/issues/30993
-    CMD='ansible-playbook -vvvvv --ask-vault-pass test_vault.yml'
+    CMD='ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml'
     setsid sh -c "echo test-vault-password|${CMD}" < /dev/null > log 2>&1 && :
     WRONG_RC=$?
     cat log
     echo "rc was $WRONG_RC (0 is expected)"
     [ $WRONG_RC -eq 0 ]
 
-    setsid sh -c 'tty; ansible-vault --ask-vault-pass -vvvvv view test_vault.yml' < /dev/null > log 2>&1 && :
+    setsid sh -c 'tty; ansible-vault view --ask-vault-pass -vvvvv test_vault.yml' < /dev/null > log 2>&1 && :
     WRONG_RC=$?
     echo "rc was $WRONG_RC (1 is expected)"
     [ $WRONG_RC -eq 1 ]
     cat log
 
-    setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1 && :
+    setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1 && :
     WRONG_RC=$?
     echo "rc was $WRONG_RC (1 is expected)"
     [ $WRONG_RC -eq 1 ]
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password|ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password|ansible-vault --ask-vault-pass -vvvvv view vaulted.inventory' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password|ansible-vault view --ask-vault-pass -vvvvv vaulted.inventory' < /dev/null > log 2>&1
     echo $?
     cat log
 fi
@@ -403,6 +405,14 @@ ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-pass
 ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password
 ansible-playbook test_vaulted_inventory.yml -i vaulted.inventory -v "$@" --vault-password-file vault-password
 ansible-playbook test_vaulted_template.yml -i ../../inventory -v "$@" --vault-password-file vault-password
+
+
+# install TOML for parse toml inventory
+# test playbooks using vaulted files(toml)
+pip install toml
+ansible-vault encrypt  ./inventory.toml -v "$@" --vault-password-file=./vault-password
+ansible-playbook test_vaulted_inventory_toml.yml -i ./inventory.toml -v "$@" --vault-password-file vault-password
+ansible-vault decrypt  ./inventory.toml -v "$@" --vault-password-file=./vault-password
 
 # test a playbook with a host_var whose value is non-ascii utf8 (see https://github.com/ansible/ansible/issues/37258)
 ansible-playbook -i ../../inventory -v "$@" --vault-id vault-password test_vaulted_utf8_value.yml

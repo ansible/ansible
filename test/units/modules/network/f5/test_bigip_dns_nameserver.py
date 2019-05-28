@@ -106,9 +106,11 @@ class TestManager(unittest.TestCase):
             route_domain=20,
             tsig_key='key1',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

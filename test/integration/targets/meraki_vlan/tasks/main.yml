@@ -36,6 +36,20 @@
         - '"Failed to connect to" in invalid_domain.msg'
         - '"http" in http.url'
 
+  - name: Test play without auth_key
+    meraki_network:
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      type: appliance
+    delegate_to: localhost
+    ignore_errors: yes
+    register: no_key
+
+  - assert:
+      that:
+        - '"missing required arguments" in no_key.msg'
+
   - name: Create test network
     meraki_network:
       auth_key: '{{auth_key}}'
@@ -43,6 +57,15 @@
       org_name: '{{test_org_name}}'
       net_name: '{{test_net_name}}'
       type: appliance
+    delegate_to: localhost
+
+  - name: Enable VLANs on network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      enable_vlans: yes
     delegate_to: localhost
 
   - name: Create VLAN
@@ -142,6 +165,7 @@
   - assert:
       that:
         - update_vlan_idempotent.changed == False
+        - update_vlan_idempotent.data is defined
 
   - name: Add IP assignments and reserved IP ranges
     meraki_vlan:
@@ -239,6 +263,7 @@
   - assert:
       that:
         - update_vlan_idempotent.changed == False
+        - update_vlan_idempotent.data is defined
 
   - name: Update VLAN with list of DNS entries
     meraki_vlan:

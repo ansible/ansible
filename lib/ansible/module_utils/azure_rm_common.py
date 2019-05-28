@@ -27,7 +27,7 @@ AZURE_COMMON_ARGS = dict(
         choices=['auto', 'cli', 'env', 'credential_file', 'msi']
     ),
     profile=dict(type='str'),
-    subscription_id=dict(type='str', no_log=True),
+    subscription_id=dict(type='str'),
     client_id=dict(type='str', no_log=True),
     secret=dict(type='str', no_log=True),
     tenant=dict(type='str', no_log=True),
@@ -67,9 +67,10 @@ AZURE_API_PROFILES = {
         'NetworkManagementClient': '2018-08-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
-        'WebsiteManagementClient': '2016-08-01',
+        'WebSiteManagementClient': '2018-02-01',
         'PostgreSQLManagementClient': '2017-12-01',
-        'MySQLManagementClient': '2017-12-01'
+        'MySQLManagementClient': '2017-12-01',
+        'MariaDBManagementClient': '2019-03-01'
     },
 
     '2017-03-09-profile': {
@@ -160,10 +161,15 @@ try:
     from azure.storage.blob import PageBlobService, BlockBlobService
     from adal.authentication_context import AuthenticationContext
     from azure.mgmt.sql import SqlManagementClient
+    from azure.mgmt.servicebus import ServiceBusManagementClient
+    import azure.mgmt.servicebus.models as ServicebusModel
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from azure.mgmt.rdbms.mariadb import MariaDBManagementClient
     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
+    from azure.mgmt.loganalytics import LogAnalyticsManagementClient
+    import azure.mgmt.loganalytics.models as LogAnalyticsModels
 except ImportError as exc:
     HAS_AZURE_EXC = traceback.format_exc()
     HAS_AZURE = False
@@ -229,7 +235,7 @@ AZURE_PKG_VERSIONS = {
     },
     'WebSiteManagementClient': {
         'package_name': 'web',
-        'expected_version': '0.32.0'
+        'expected_version': '0.41.0'
     },
     'TrafficManagerManagementClient': {
         'package_name': 'trafficmanager',
@@ -291,6 +297,7 @@ class AzureRMModuleBase(object):
         self._marketplace_client = None
         self._sql_client = None
         self._mysql_client = None
+        self._mariadb_client = None
         self._postgresql_client = None
         self._containerregistry_client = None
         self._containerinstance_client = None
@@ -299,6 +306,8 @@ class AzureRMModuleBase(object):
         self._traffic_manager_management_client = None
         self._monitor_client = None
         self._resource = None
+        self._log_analytics_client = None
+        self._servicebus_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -861,7 +870,7 @@ class AzureRMModuleBase(object):
         if not self._web_client:
             self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient,
                                                         base_url=self._cloud_environment.endpoints.resource_manager,
-                                                        api_version='2016-08-01')
+                                                        api_version='2018-02-01')
         return self._web_client
 
     @property
@@ -910,6 +919,14 @@ class AzureRMModuleBase(object):
             self._mysql_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                           base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mysql_client
+
+    @property
+    def mariadb_client(self):
+        self.log('Getting MariaDB client')
+        if not self._mariadb_client:
+            self._mariadb_client = self.get_mgmt_svc_client(MariaDBManagementClient,
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._mariadb_client
 
     @property
     def sql_client(self):
@@ -962,6 +979,31 @@ class AzureRMModuleBase(object):
             self._monitor_client = self.get_mgmt_svc_client(MonitorManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager)
         return self._monitor_client
+
+    @property
+    def log_analytics_client(self):
+        self.log('Getting log analytics client')
+        if not self._log_analytics_client:
+            self._log_analytics_client = self.get_mgmt_svc_client(LogAnalyticsManagementClient,
+                                                                  base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._log_analytics_client
+
+    @property
+    def log_analytics_models(self):
+        self.log('Getting log analytics models')
+        return LogAnalyticsModels
+
+    @property
+    def servicebus_client(self):
+        self.log('Getting servicebus client')
+        if not self._servicebus_client:
+            self._servicebus_client = self.get_mgmt_svc_client(ServiceBusManagementClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._servicebus_client
+
+    @property
+    def servicebus_models(self):
+        return ServicebusModel
 
 
 class AzureRMAuthException(Exception):
@@ -1107,8 +1149,9 @@ class AzureRMAuth(object):
 
         return None
 
-    def _get_msi_credentials(self, subscription_id_param=None):
-        credentials = MSIAuthentication()
+    def _get_msi_credentials(self, subscription_id_param=None, **kwargs):
+        client_id = kwargs.get('client_id', None)
+        credentials = MSIAuthentication(client_id=client_id)
         subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
             try:
@@ -1164,7 +1207,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'msi':
             self.log('Retrieving credenitals from MSI')
-            return self._get_msi_credentials(arg_credentials['subscription_id'])
+            return self._get_msi_credentials(arg_credentials['subscription_id'], client_id=params.get('client_id', None))
 
         if auth_source == 'cli':
             if not HAS_AZURE_CLI_CORE:
@@ -1184,7 +1227,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'credential_file':
             self.log("Retrieving credentials from credential file")
-            profile = params.get('profile', 'default')
+            profile = params.get('profile') or 'default'
             default_credentials = self._get_profile(profile)
             return default_credentials
 

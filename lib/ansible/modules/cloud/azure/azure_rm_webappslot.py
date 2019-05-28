@@ -170,7 +170,7 @@ author:
 
 EXAMPLES = '''
   - name: Create a webapp slot
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
@@ -179,7 +179,7 @@ EXAMPLES = '''
         testkey: testvalue
 
   - name: swap the slot with production slot
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
@@ -187,14 +187,14 @@ EXAMPLES = '''
         action: swap
 
   - name: stop the slot
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
       app_state: stopped
 
   - name: udpate a webapp slot app settings
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
@@ -202,7 +202,7 @@ EXAMPLES = '''
         testkey: testvalue2
 
   - name: udpate a webapp slot frameworks
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
@@ -224,7 +224,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
     from azure.mgmt.web.models import (
         site_config, app_service_plan, Site,
@@ -563,7 +563,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 if self.app_settings:
                     app_settings = []
                     for key in self.app_settings.keys():
-                        app_settings.append(NameValuePair(key, self.app_settings[key]))
+                        app_settings.append(NameValuePair(name=key, value=self.app_settings[key]))
 
                     self.site_config['app_settings'] = app_settings
 
@@ -595,7 +595,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 if self.purge_app_settings:
                     to_be_updated = True
                     self.to_do = Actions.UpdateAppSettings
-                    self.app_settings_strDic.properties = dict()
+                    self.app_settings_strDic = dict()
 
                 # check if app settings changed
                 if self.purge_app_settings or self.is_app_settings_changed():
@@ -604,7 +604,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
 
                     if self.app_settings:
                         for key in self.app_settings.keys():
-                            self.app_settings_strDic.properties[key] = self.app_settings[key]
+                            self.app_settings_strDic[key] = self.app_settings[key]
 
         elif self.state == 'absent':
             if old_response:
@@ -682,10 +682,10 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
     # comparing existing app setting with input, determine whether it's changed
     def is_app_settings_changed(self):
         if self.app_settings:
-            if len(self.app_settings_strDic.properties) != len(self.app_settings):
+            if len(self.app_settings_strDic) != len(self.app_settings):
                 return True
 
-            if self.app_settings_strDic.properties != self.app_settings:
+            if self.app_settings_strDic != self.app_settings:
                 return True
         return False
 
@@ -716,7 +716,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                                                                       slot=self.name,
                                                                       name=self.webapp_name,
                                                                       site_envelope=self.site)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -757,13 +757,17 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
             response = self.web_client.web_apps.get(resource_group_name=self.resource_group,
                                                     name=self.webapp_name)
 
-            self.log("Response : {0}".format(response))
-            self.log("Web App instance : {0} found".format(response.name))
-            return webapp_to_dict(response)
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            if response is not None:
+                self.log("Response : {0}".format(response))
+                self.log("Web App instance : {0} found".format(response.name))
+                return webapp_to_dict(response)
 
         except CloudError as ex:
-            self.log("Didn't find web app {0} in resource group {1}".format(
-                self.webapp_name, self.resource_group))
+            pass
+
+        self.log("Didn't find web app {0} in resource group {1}".format(
+            self.webapp_name, self.resource_group))
 
         return False
 
@@ -783,12 +787,16 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                                                          name=self.webapp_name,
                                                          slot=self.name)
 
-            self.log("Response : {0}".format(response))
-            self.log("Web App slot: {0} found".format(response.name))
-            return slot_to_dict(response)
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            if response is not None:
+                self.log("Response : {0}".format(response))
+                self.log("Web App slot: {0} found".format(response.name))
+                return slot_to_dict(response)
 
         except CloudError as ex:
-            self.log("Does not find web app slot {0} in resource group {1}".format(self.name, self.resource_group))
+            pass
+
+        self.log("Does not find web app slot {0} in resource group {1}".format(self.name, self.resource_group))
 
         return False
 
@@ -805,7 +813,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 resource_group_name=self.resource_group, name=self.webapp_name)
             self.log("Response : {0}".format(response))
 
-            return response
+            return response.properties
         except CloudError as ex:
             self.fail("Failed to list application settings for web app {0} in resource group {1}: {2}".format(
                 self.name, self.resource_group, str(ex)))
@@ -823,7 +831,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 resource_group_name=self.resource_group, name=self.webapp_name, slot=slot_name)
             self.log("Response : {0}".format(response))
 
-            return response
+            return response.properties
         except CloudError as ex:
             self.fail("Failed to list application settings for web app slot {0} in resource group {1}: {2}".format(
                 self.name, self.resource_group, str(ex)))
@@ -844,7 +852,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                                                                                  name=self.webapp_name,
                                                                                  slot=slot_name,
                                                                                  kind=None,
-                                                                                 app_settings=app_settings)
+                                                                                 properties=app_settings)
             self.log("Response : {0}".format(response))
 
             return response.as_dict()
@@ -1028,7 +1036,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 app_setting_clone_from = self.list_app_settings_slot(src_slot)
 
             if self.app_settings:
-                app_setting_clone_from.properties.update(self.app_settings)
+                app_setting_clone_from.update(self.app_settings)
 
             self.update_app_settings_slot(app_settings=app_setting_clone_from)
 

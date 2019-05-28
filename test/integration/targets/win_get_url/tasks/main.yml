@@ -1,52 +1,60 @@
 ---
-- name: ensure testing folder is present
+- name: set fact out special testing dir
+  set_fact:
+    testing_dir: '{{ remote_tmp_dir }}\win_get_url .ÅÑŚÌβŁÈ [$!@^&test(;)]'
+
+- name: create test directory with space and special chars
   win_file:
-    path: '{{ item }}'
+    path: '{{ testing_dir }}'
     state: directory
-  loop:
-    - '{{ test_win_get_url_path }}'
-    - '{{ remote_http_path }}'
-    - '{{ remote_tmp_path }}'
 
 - name: copy across testing files
   win_copy:
     src: files/
-    dest: '{{test_win_get_url_path}}\'
+    dest: '{{ testing_dir }}'
+
+# False positive in Windows Defender is flagging the file as a virus and removing it. We need to add an exclusion so
+# the tests continue to work
+- name: add exclusion for the SlimFTPd binary
+  win_defender_exclusion:
+    path: '{{ remote_tmp_dir | win_dirname }}'
+    state: present
 
 - name: download SlimFTPd binary
   win_get_url:
-    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
-    dest: '{{test_win_get_url_path}}\SlimFTPd.exe'
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_get_url/SlimFTPd.exe
+    dest: '{{ testing_dir }}\SlimFTPd.exe'
+
+# SlimFTPd does not work with special chars because it is so old, use a symlink as a workaround
+- name: set fact of temp symlink for SlimFTPd
+  set_fact:
+    slimftpd_link: C:\SlimFTPd
 
 - name: template SlimFTPd configuration file
   win_template:
     src: slimftpd.conf.tmpl
-    dest: '{{test_win_get_url_path}}\slimftpd.conf'
-
-- name: create SlimFTPd service
-  win_service:
-    name: SlimFTPd
-    path: '"{{test_win_get_url_path}}\SlimFTPd.exe" -service'
-    state: started
-    dependencies:
-    - tcpip
-
-- name: create env var for win_get_url tests
-  win_environment:
-    name: '{{test_win_get_url_env_var}}'
-    level: machine
-    value: '{{test_win_get_url_path}}'
-    state: present
+    dest: '{{ testing_dir }}\slimftpd.conf'
 
 - block:
+  - name: create SLimFTPd symlink
+    win_command: cmd.exe /c mklink /d "{{ slimftpd_link }}" "{{ testing_dir }}"
+
+  - name: create SlimFTPd service
+    win_service:
+      name: SlimFTPd
+      path: '"{{ slimftpd_link }}\SlimFTPd.exe" -service'
+      state: started
+      dependencies:
+      - tcpip
+
   - name: run URL tests
-    include_tasks: tests_url.yml
+    import_tasks: tests_url.yml
 
   - name: run FTP tests
-    include_tasks: tests_ftp.yml
+    import_tasks: tests_ftp.yml
 
   - name: run checksum tests
-    include_tasks: tests_checksum.yml
+    import_tasks: tests_checksum.yml
 
   always:
   - name: remove SlimFTPd service
@@ -54,16 +62,12 @@
       name: SlimFTPd
       state: absent
 
-  - name: remove test env var for tests
-    win_environment:
-      name: '{{test_win_get_url_env_var}}'
-      level: machine
+  - name: remove temp symlink
+    win_file:
+      path: '{{ slimftpd_link }}'
       state: absent
 
-  - name: remove testing folders
-    win_file:
-      path: '{{ item }}'
+  - name: remove exclusion for the SlimFTPd binary
+    win_defender_exclusion:
+      path: '{{ remote_tmp_dir | win_dirname }}'
       state: absent
-    loop:
-      - '{{ test_win_get_url_path }}'
-      - '{{ remote_tmp_path }}'

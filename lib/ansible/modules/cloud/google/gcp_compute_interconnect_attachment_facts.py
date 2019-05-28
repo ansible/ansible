@@ -53,19 +53,20 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a interconnect attachment facts
+- name: " a interconnect attachment facts"
   gcp_compute_interconnect_attachment_facts:
-      region: us-central1
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    region: us-central1
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -153,7 +154,7 @@ items:
         will automatically connect the Interconnect to the network & region within
         which the Cloud Router is configured.
       returned: success
-      type: str
+      type: dict
     creationTimestamp:
       description:
       - Creation timestamp in RFC3339 text format.
@@ -188,7 +189,8 @@ items:
       type: list
     vlanTag8021q:
       description:
-      - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+      - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094. When using
+        PARTNER type this will be managed upstream.
       returned: success
       type: int
     region:
@@ -220,7 +222,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

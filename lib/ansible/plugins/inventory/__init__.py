@@ -34,6 +34,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -149,6 +150,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
     """ Parses an Inventory Source"""
 
     TYPE = 'generator'
+    _sanitize_group_name = staticmethod(to_safe_group_name)
 
     def __init__(self):
 
@@ -347,7 +349,7 @@ class Constructable(object):
     def _compose(self, template, variables):
         ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
-        t.set_available_variables(variables)
+        t.available_variables = variables
         return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
@@ -366,10 +368,11 @@ class Constructable(object):
         ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
         # process each 'group entry'
         if groups and isinstance(groups, dict):
-            self.templar.set_available_variables(variables)
+            variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
+            self.templar.available_variables = variables
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
-                group_name = to_safe_group_name(group_name)
+                group_name = self._sanitize_group_name(group_name)
                 try:
                     result = boolean(self.templar.template(conditional))
                 except Exception as e:
@@ -378,7 +381,7 @@ class Constructable(object):
                     continue
 
                 if result:
-                    # ensure group exists, use sanatized name
+                    # ensure group exists, use sanitized name
                     group_name = self.inventory.add_group(group_name)
                     # add host to group
                     self.inventory.add_child(group_name, host)
@@ -389,6 +392,7 @@ class Constructable(object):
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
 
+                    variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
                     try:
                         key = self._compose(keyed.get('key'), variables)
                     except Exception as e:
@@ -400,6 +404,13 @@ class Constructable(object):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
+                        if raw_parent_name:
+                            try:
+                                raw_parent_name = self.templar.template(raw_parent_name)
+                            except AnsibleError as e:
+                                if strict:
+                                    raise AnsibleParserError("Could not generate parent group %s for group %s: %s" % (raw_parent_name, key, to_native(e)))
+                                continue
 
                         new_raw_group_names = []
                         if isinstance(key, string_types):
@@ -415,17 +426,19 @@ class Constructable(object):
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
                         for bare_name in new_raw_group_names:
-                            gname = to_safe_group_name('%s%s%s' % (prefix, sep, bare_name))
-                            self.inventory.add_group(gname)
-                            self.inventory.add_child(gname, host)
+                            gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
+                            result_gname = self.inventory.add_group(gname)
+                            self.inventory.add_host(host, result_gname)
 
                             if raw_parent_name:
-                                parent_name = to_safe_group_name(raw_parent_name)
+                                parent_name = self._sanitize_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
-                                self.inventory.add_child(parent_name, gname)
+                                self.inventory.add_child(parent_name, result_gname)
 
                     else:
-                        if strict:
-                            raise AnsibleParserError("No key or key resulted empty, invalid entry")
+                        # exclude case of empty list and dictionary, because these are valid constructions
+                        # simply no groups need to be constructed, but are still falsy
+                        if strict and key not in ([], {}):
+                            raise AnsibleParserError("No key or key resulted empty for %s in host %s, invalid entry" % (keyed.get('key'), host))
                 else:
                     raise AnsibleParserError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)

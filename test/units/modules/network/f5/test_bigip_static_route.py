@@ -157,13 +157,15 @@ class TestManager(unittest.TestCase):
     def test_create_blackhole(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
             destination='10.10.10.10',
             netmask='255.255.255.255',
-            reject='yes'
+            reject='yes',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -183,13 +185,15 @@ class TestManager(unittest.TestCase):
     def test_create_route_to_pool(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
             destination='10.10.10.10',
             netmask='255.255.255.255',
-            pool="test-pool"
+            pool="test-pool",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -210,13 +214,15 @@ class TestManager(unittest.TestCase):
     def test_create_route_to_vlan(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
             destination='10.10.10.10',
             netmask='255.255.255.255',
-            vlan="test-vlan"
+            vlan="test-vlan",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -237,11 +243,13 @@ class TestManager(unittest.TestCase):
     def test_update_description(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
-            description='foo description'
+            description='foo description',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -264,11 +272,13 @@ class TestManager(unittest.TestCase):
     def test_update_description_idempotent(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
-            description='asdasd'
+            description='asdasd',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -292,10 +302,12 @@ class TestManager(unittest.TestCase):
     def test_delete(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
-            state='absent'
+            state='absent',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -316,11 +328,13 @@ class TestManager(unittest.TestCase):
     def test_invalid_unknown_params(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
-            foo="bar"
+            foo="bar",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
         with patch('ansible.module_utils.f5_utils.AnsibleModule.fail_json') as mo:
             mo.return_value = True
@@ -334,14 +348,16 @@ class TestManager(unittest.TestCase):
     def test_create_with_route_domain(self, *args):
         set_module_args(dict(
             name='test-route',
-            password='admin',
-            server='localhost',
-            user='admin',
             state='present',
             destination='10.10.10.10',
             netmask='255.255.255.255',
             route_domain=1,
-            reject='yes'
+            reject='yes',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

@@ -26,12 +26,14 @@ options:
       - This parameter is required if the C(state) is equal to C(present).
       - This parameter is not required when C(state) is C(absent) and will be
         ignored if it is provided.
+    type: str
   license_server:
     description:
       - The F5 license server to use when getting a license and validating a dossier.
       - This parameter is required if the C(state) is equal to C(present).
       - This parameter is not required when C(state) is C(absent) and will be
         ignored if it is provided.
+    type: str
     default: activate.f5.com
   state:
     description:
@@ -41,11 +43,12 @@ options:
       - When C(absent), removes the license on the system.
       - When C(revoked), removes the license on the system and revokes its future usage
         on the F5 license servers.
-    default: present
+    type: str
     choices:
       - absent
       - present
       - revoked
+    default: present
   accept_eula:
     description:
       - Declares whether you accept the BIG-IP EULA or not. By default, this
@@ -56,6 +59,7 @@ options:
       - This parameter is not required when C(state) is C(absent) and will be
         ignored if it is provided.
     type: bool
+    default: no
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -96,21 +100,15 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import iControlRestSession
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import iControlRestSession
 
 
@@ -341,7 +339,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params, client=self.client)
         self.have = ApiParameters(client=self.client)
         self.changes = UsableChanges()
@@ -875,19 +873,16 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
+        required_if=spec.required_if
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

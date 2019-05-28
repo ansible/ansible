@@ -127,7 +127,7 @@ def main():
 
     # Check if exchange already exists
     r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']),
-                     verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
+                     verify=module.params['ca_cert'], cert=(module.params['client_cert'], module.params['client_key']))
 
     if r.status_code == 200:
         exchange_exists = True
@@ -179,12 +179,12 @@ def main():
                     "type": module.params['exchange_type'],
                     "arguments": module.params['arguments']
                 }),
-                verify=module.params['cacert'],
-                cert=(module.params['cert'], module.params['key'])
+                verify=module.params['ca_cert'],
+                cert=(module.params['client_cert'], module.params['client_key'])
             )
         elif module.params['state'] == 'absent':
             r = requests.delete(url, auth=(module.params['login_user'], module.params['login_password']),
-                                verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
+                                verify=module.params['ca_cert'], cert=(module.params['client_cert'], module.params['client_key']))
 
         # RabbitMQ 3.6.7 changed this response code from 204 to 201
         if r.status_code == 204 or r.status_code == 201:

@@ -19,10 +19,15 @@ short_description: Generate OpenSSL private keys
 description:
     - This module allows one to (re)generate OpenSSL private keys.
     - One can generate L(RSA,https://en.wikipedia.org/wiki/RSA_(cryptosystem)),
-      L(DSA,https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) or
-      L(ECC,https://en.wikipedia.org/wiki/Elliptic-curve_cryptography)
-      private keys.
+      L(DSA,https://en.wikipedia.org/wiki/Digital_Signature_Algorithm),
+      L(ECC,https://en.wikipedia.org/wiki/Elliptic-curve_cryptography) or
+      L(EdDSA,https://en.wikipedia.org/wiki/EdDSA) private keys.
     - Keys are generated in PEM format.
+    - "Please note that the module regenerates private keys if they don't match
+      the module's options. In particular, if you provide another passphrase
+      (or specify none), change the keysize, etc., the private key will be
+      regenerated. If you are concerned that this could **overwrite your private key**,
+      consider using the I(backup) option."
     - The module can use the cryptography Python library, or the pyOpenSSL Python
       library. By default, it tries to detect which one is available. This can be
       overridden with the I(select_crypto_backend) option."
@@ -47,12 +52,13 @@ options:
     type:
         description:
             - The algorithm used to generate the TLS/SSL private key.
-            - Note that C(ECC) requires the C(cryptography) backend.
-            - Depending on the curve, you need a newer version of the cryptography backend.
+            - Note that C(ECC), C(X25519), C(X448), C(Ed25519) and C(Ed448) require the C(cryptography) backend.
+              C(X25519) needs cryptography 2.5 or newer, while C(X448), C(Ed25519) and C(Ed448) require
+              cryptography 2.6 or newer. For C(ECC), the minimal cryptography version required depends on the
+              I(curve) option.
         type: str
         default: RSA
-        #choices: [ DSA, ECC, RSA, X448, X25519 ]
-        choices: [ DSA, ECC, RSA ]
+        choices: [ DSA, ECC, Ed25519, Ed448, RSA, X25519, X448 ]
     curve:
         description:
             - Note that not all curves are supported by all versions of C(cryptography).
@@ -97,7 +103,9 @@ options:
         version_added: "2.4"
     cipher:
         description:
-            - The cipher to encrypt the private key. (cipher can be found by running `openssl list-cipher-algorithms`)
+            - The cipher to encrypt the private key. (Valid values can be found by
+              running `openssl list -cipher-algorithms` or `openssl list-cipher-algorithms`,
+              depending on your OpenSSL version.)
             - When using the C(cryptography) backend, use C(auto).
         type: str
         version_added: "2.4"
@@ -110,6 +118,13 @@ options:
         type: str
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
+        version_added: "2.8"
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get
+              the original private key back if you overwrote it with a new one by accident.
+        type: bool
+        default: no
         version_added: "2.8"
 extends_documentation_fragment:
 - files
@@ -182,6 +197,11 @@ fingerprint:
       sha256: "41:ab:c7:cb:d5:5f:30:60:46:99:ac:d4:00:70:cf:a1:76:4f:24:5d:10:24:57:5d:51:6e:09:97:df:2f:de:c7"
       sha384: "85:39:50:4e:de:d9:19:33:40:70:ae:10:ab:59:24:19:51:c3:a2:e4:0b:1c:b1:6e:dd:b3:0c:d9:9e:6a:46:af:da:18:f8:ef:ae:2e:c0:9a:75:2c:9b:b3:0f:3a:5f:3d"
       sha512: "fd:ed:5e:39:48:5f:9f:fe:7f:25:06:3f:79:08:cd:ee:a5:e7:b3:3d:13:82:87:1f:84:e1:f5:c7:28:77:53:94:86:56:38:69:f0:d9:35:22:01:1e:a6:60:...:0f:9b"
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/privatekey.pem.2019-03-09@11:22~
 '''
 
 import abc
@@ -222,13 +242,29 @@ else:
     try:
         import cryptography.hazmat.primitives.asymmetric.x25519
         CRYPTOGRAPHY_HAS_X25519 = True
+        try:
+            cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.private_bytes
+            CRYPTOGRAPHY_HAS_X25519_FULL = True
+        except AttributeError:
+            CRYPTOGRAPHY_HAS_X25519_FULL = False
     except ImportError:
         CRYPTOGRAPHY_HAS_X25519 = False
+        CRYPTOGRAPHY_HAS_X25519_FULL = False
     try:
         import cryptography.hazmat.primitives.asymmetric.x448
         CRYPTOGRAPHY_HAS_X448 = True
     except ImportError:
         CRYPTOGRAPHY_HAS_X448 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed25519
+        CRYPTOGRAPHY_HAS_ED25519 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED25519 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed448
+        CRYPTOGRAPHY_HAS_ED448 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED448 = False
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
@@ -255,9 +291,11 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.privatekey = None
         self.fingerprint = {}
 
-        self.mode = module.params.get('mode', None)
-        if self.mode is None:
-            self.mode = 0o600
+        self.backup = module.params['backup']
+        self.backup_file = None
+
+        if module.params['mode'] is None:
+            module.params['mode'] = '0600'
 
     @abc.abstractmethod
     def _generate_private_key_data(self):
@@ -271,32 +309,21 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         """Generate a keypair."""
 
         if not self.check(module, perms_required=False) or self.force:
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             privatekey_data = self._generate_private_key_data()
-            try:
-                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
-                os.close(privatekey_file)
-                if isinstance(self.mode, string_types):
-                    try:
-                        self.mode = int(self.mode, 8)
-                    except ValueError as e:
-                        try:
-                            st = os.lstat(self.path)
-                            self.mode = AnsibleModule._symbolic_mode_to_octal(st, self.mode)
-                        except ValueError as e:
-                            module.fail_json(msg="%s" % to_native(e), exception=traceback.format_exc())
-                os.chmod(self.path, self.mode)
-                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, self.mode)
-                os.write(privatekey_file, privatekey_data)
-                os.close(privatekey_file)
-                self.changed = True
-            except IOError as exc:
-                self.remove()
-                raise PrivateKeyError(exc)
+            crypto_utils.write_file(module, privatekey_data, 0o600)
+            self.changed = True
 
         self.fingerprint = self._get_fingerprint()
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
+
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        super(PrivateKeyBase, self).remove(module)
 
     @abc.abstractmethod
     def _check_passphrase(self):
@@ -325,6 +352,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             'changed': self.changed,
             'fingerprint': self.fingerprint,
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -363,9 +392,7 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
         try:
             crypto_utils.load_privatekey(self.path, self.passphrase)
             return True
-        except crypto.Error:
-            return False
-        except crypto_utils.OpenSSLBadPassphraseError as exc:
+        except Exception as dummy:
             return False
 
     def _check_size_and_type(self):
@@ -449,10 +476,17 @@ class PrivateKeyCryptography(PrivateKeyBase):
         self.curve = module.params['curve']
         if not CRYPTOGRAPHY_HAS_X25519 and self.type == 'X25519':
             self.module.fail_json(msg='Your cryptography version does not support X25519')
+        if not CRYPTOGRAPHY_HAS_X25519_FULL and self.type == 'X25519':
+            self.module.fail_json(msg='Your cryptography version does not support X25519 serialization')
         if not CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
             self.module.fail_json(msg='Your cryptography version does not support X448')
+        if not CRYPTOGRAPHY_HAS_ED25519 and self.type == 'Ed25519':
+            self.module.fail_json(msg='Your cryptography version does not support Ed25519')
+        if not CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
+            self.module.fail_json(msg='Your cryptography version does not support Ed448')
 
     def _generate_private_key_data(self):
+        format = cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL
         try:
             if self.type == 'RSA':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
@@ -465,10 +499,18 @@ class PrivateKeyCryptography(PrivateKeyBase):
                     key_size=self.size,
                     backend=self.cryptography_backend
                 )
-            if CRYPTOGRAPHY_HAS_X25519 and self.type == 'X25519':
+            if CRYPTOGRAPHY_HAS_X25519_FULL and self.type == 'X25519':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
+                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.generate()
+                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+            if CRYPTOGRAPHY_HAS_ED25519 and self.type == 'Ed25519':
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.generate()
+                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
+            if CRYPTOGRAPHY_HAS_ED448 and self.type == 'Ed448':
+                self.privatekey = cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey.generate()
+                format = cryptography.hazmat.primitives.serialization.PrivateFormat.PKCS8
             if self.type == 'ECC' and self.curve in self.curves:
                 if self.curves[self.curve]['deprecated']:
                     self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.curve))
@@ -490,7 +532,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
         # Serialize key
         return self.privatekey.private_bytes(
             encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
-            format=cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+            format=format,
             encryption_algorithm=encryption_algorithm
         )
 
@@ -525,12 +567,8 @@ class PrivateKeyCryptography(PrivateKeyBase):
                     backend=self.cryptography_backend
                 )
             return True
-        except TypeError as e:
-            if 'Password' in str(e) and 'encrypted' in str(e):
-                return False
-            raise PrivateKeyError(e)
-        except Exception as e:
-            raise PrivateKeyError(e)
+        except Exception as dummy:
+            return False
 
     def _check_size_and_type(self):
         privatekey = self._load_privatekey()
@@ -543,6 +581,10 @@ class PrivateKeyCryptography(PrivateKeyBase):
             return self.type == 'X25519'
         if CRYPTOGRAPHY_HAS_X448 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey):
             return self.type == 'X448'
+        if CRYPTOGRAPHY_HAS_ED25519 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey):
+            return self.type == 'Ed25519'
+        if CRYPTOGRAPHY_HAS_ED448 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey):
+            return self.type == 'Ed448'
         if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
             if self.type != 'ECC':
                 return False
@@ -568,10 +610,7 @@ def main():
             state=dict(type='str', default='present', choices=['present', 'absent']),
             size=dict(type='int', default=4096),
             type=dict(type='str', default='RSA', choices=[
-                'RSA', 'DSA', 'ECC',
-                # x25519 is missing serialization functions: https://github.com/pyca/cryptography/issues/4386
-                # x448 is also missing it: https://github.com/pyca/cryptography/pull/4580#issuecomment-437913340
-                # 'X448', 'X25519',
+                'DSA', 'ECC', 'Ed25519', 'Ed448', 'RSA', 'X25519', 'X448'
             ]),
             curve=dict(type='str', choices=[
                 'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256k1',
@@ -583,6 +622,7 @@ def main():
             path=dict(type='path', required=True),
             passphrase=dict(type='str', no_log=True),
             cipher=dict(type='str'),
+            backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
         ),
         supports_check_mode=True,
@@ -624,45 +664,39 @@ def main():
 
         # Success?
         if backend == 'auto':
-            module.fail_json(msg=('Can detect none of the Python libraries '
-                                  'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
+            module.fail_json(msg=("Can't detect any of the required Python libraries "
+                                  "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
                                       MINIMAL_PYOPENSSL_VERSION))
-    if backend == 'pyopenssl':
-        if not PYOPENSSL_FOUND:
-            module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
-        private_key = PrivateKeyPyOpenSSL(module)
-    elif backend == 'cryptography':
-        if not CRYPTOGRAPHY_FOUND:
-            module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
-        private_key = PrivateKeyCryptography(module)
+    try:
+        if backend == 'pyopenssl':
+            if not PYOPENSSL_FOUND:
+                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+            private_key = PrivateKeyPyOpenSSL(module)
+        elif backend == 'cryptography':
+            if not CRYPTOGRAPHY_FOUND:
+                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+            private_key = PrivateKeyCryptography(module)
 
-    if private_key.state == 'present':
+        if private_key.state == 'present':
+            if module.check_mode:
+                result = private_key.dump()
+                result['changed'] = module.params['force'] or not private_key.check(module)
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = private_key.dump()
-            result['changed'] = module.params['force'] or not private_key.check(module)
-            module.exit_json(**result)
-
-        try:
             private_key.generate(module)
-        except PrivateKeyError as exc:
-            module.fail_json(msg=to_native(exc))
-    else:
+        else:
+            if module.check_mode:
+                result = private_key.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = private_key.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
+            private_key.remove(module)
 
-        try:
-            private_key.remove()
-        except PrivateKeyError as exc:
-            module.fail_json(msg=to_native(exc))
-
-    result = private_key.dump()
-
-    module.exit_json(**result)
+        result = private_key.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':

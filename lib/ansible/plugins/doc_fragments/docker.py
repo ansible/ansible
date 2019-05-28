@@ -29,7 +29,7 @@ options:
     api_version:
         description:
             - The version of the Docker API running on the Docker Host.
-            - Defaults to the latest version of the API supported by docker-py.
+            - Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
             - If the value is not specified in the task, the value of environment variable C(DOCKER_API_VERSION) will be
               used instead. If the environment variable is not set, the default value will be used.
         type: str
@@ -42,27 +42,27 @@ options:
               instead. If the environment variable is not set, the default value will be used.
         type: int
         default: 60
-    cacert_path:
+    ca_cert:
         description:
             - Use a CA certificate when performing server verification by providing the path to a CA certificate file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(ca.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
         type: path
-        aliases: [ tls_ca_cert ]
-    cert_path:
+        aliases: [ tls_ca_cert, cacert_path ]
+    client_cert:
         description:
             - Path to the client's TLS certificate file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(cert.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
         type: path
-        aliases: [ tls_client_cert ]
-    key_path:
+        aliases: [ tls_client_cert, cert_path ]
+    client_key:
         description:
             - Path to the client's TLS key file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(key.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
         type: path
-        aliases: [ tls_client_key ]
+        aliases: [ tls_client_key, key_path ]
     ssl_version:
         description:
             - Provide a valid SSL version number. Default value determined by ssl.py module.
@@ -71,19 +71,20 @@ options:
         type: str
     tls:
         description:
-            -  Secure the connection to the API by using TLS without verifying the authenticity of the Docker host
-               server.
+            - Secure the connection to the API by using TLS without verifying the authenticity of the Docker host
+              server. Note that if C(tls_verify) is set to C(yes) as well, it will take precedence.
             - If the value is not specified in the task, the value of environment variable C(DOCKER_TLS) will be used
               instead. If the environment variable is not set, the default value will be used.
         type: bool
         default: no
-    tls_verify:
+    validate_certs:
         description:
             - Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
             - If the value is not specified in the task, the value of environment variable C(DOCKER_TLS_VERIFY) will be
               used instead. If the environment variable is not set, the default value will be used.
         type: bool
         default: no
+        aliases: [ tls_verify ]
     debug:
         description:
             - Debug mode
@@ -99,17 +100,17 @@ notes:
   - When connecting to Docker daemon with TLS, you might need to install additional Python packages.
     For the Docker SDK for Python, version 2.4 or newer, this can be done by installing C(docker[tls]) with M(pip).
   - Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions.
-    In general, it will use C($HOME/docker/config.json) if the C(DOCKER_CONFIG) environment variable is not specified,
+    In general, it will use C($HOME/.docker/config.json) if the C(DOCKER_CONFIG) environment variable is not specified,
     and use C($DOCKER_CONFIG/config.json) otherwise.
 '''
 
-    # Additional, more specific stuff for minimal docker-py version < 2.0
+    # Additional, more specific stuff for minimal Docker SDK for Python version < 2.0
 
     DOCKER_PY_1_DOCUMENTATION = r'''
 options: {}
 requirements:
-  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-     module has been superseded by L(docker,https://pypi.org/project/docker/)
+  - "Docker SDK for Python: Please note that the L(docker-py,https://pypi.org/project/docker-py/)
+     Python module has been superseded by L(docker,https://pypi.org/project/docker/)
      (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
      For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
      install the C(docker) Python module. Note that both modules should I(not)
@@ -118,15 +119,15 @@ requirements:
      reinstall of it is required."
 '''
 
-    # Additional, more specific stuff for minimal docker-py version >= 2.0.
-    # Note that docker-py >= 2.0 requires Python 2.7 or newer.
+    # Additional, more specific stuff for minimal Docker SDK for Python version >= 2.0.
+    # Note that Docker SDK for Python >= 2.0 requires Python 2.7 or newer.
 
     DOCKER_PY_2_DOCUMENTATION = r'''
 options: {}
 requirements:
   - "Python >= 2.7"
-  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-     module has been superseded by L(docker,https://pypi.org/project/docker/)
+  - "Docker SDK for Python: Please note that the L(docker-py,https://pypi.org/project/docker-py/)
+     Python module has been superseded by L(docker,https://pypi.org/project/docker/)
      (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
      This module does I(not) work with docker-py."
 '''

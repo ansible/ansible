@@ -24,7 +24,7 @@ version_added: "2.7"
 short_description: Get virtual machine facts.
 
 description:
-  - Get facts for all virtual machines of a resource group.
+  - Get facts for one or all virtual machines in a resource group.
 
 options:
     resource_group:
@@ -76,6 +76,32 @@ vms:
             returned: always
             type: str
             sample: admin
+        boot_diagnostics:
+            description:
+                - Information about the boot diagnostics settings.
+            returned: always
+            type: complex
+            contains:
+                enabled:
+                    description:
+                        - Indicates if boot diagnostics are enabled.
+                    type: bool
+                    sample: true
+                storage_uri:
+                    description:
+                        - Indicates the storage account used by boot diagnostics.
+                    type: str
+                    sample: https://mystorageaccountname.blob.core.windows.net/
+                console_screenshot_uri:
+                    description:
+                        - Contains a URI to grab a console screenshot.
+                        - Only present if enabled.
+                    type: str
+                serial_console_log_uri:
+                    description:
+                        - Contains a URI to grab the serial console log.
+                        - Only present if enabled.
+                    type: str
         data_disks:
             description:
                 - List of attached data disks.
@@ -201,12 +227,12 @@ vms:
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import parse_resource_id
 except Exception:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
-from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 import re
 
@@ -248,8 +274,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             self.fail("Parameter error: resource group required when filtering by name.")
         if self.name:
             self.results['vms'] = self.get_item()
+        elif self.resource_group:
+            self.results['vms'] = self.list_items_by_resourcegroup()
         else:
-            self.results['vms'] = self.list_items()
+            self.results['vms'] = self.list_all_items()
 
         return self.results
 
@@ -258,17 +286,14 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         item = None
         result = []
 
-        try:
-            item = self.compute_client.virtual_machines.get(self.resource_group, self.name)
-        except CloudError as err:
-            self.module.warn("Error getting virtual machine {0} - {1}".format(self.name, str(err)))
+        item = self.get_vm(self.resource_group, self.name)
 
-        if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_vm(item)]
+        if item and self.has_tags(item.get('tags'), self.tags):
+            result = [item]
 
         return result
 
-    def list_items(self):
+    def list_items_by_resourcegroup(self):
         self.log('List all items')
         try:
             items = self.compute_client.virtual_machines.list(self.resource_group)
@@ -278,18 +303,31 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         results = []
         for item in items:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_vm(self.get_vm(item.name)))
+                results.append(self.get_vm(self.resource_group, item.name))
         return results
 
-    def get_vm(self, name):
+    def list_all_items(self):
+        self.log('List all items')
+        try:
+            items = self.compute_client.virtual_machines.list_all()
+        except CloudError as exc:
+            self.fail("Failed to list all items - {0}".format(str(exc)))
+
+        results = []
+        for item in items:
+            if self.has_tags(item.tags, self.tags):
+                results.append(self.get_vm(parse_resource_id(item.id).get('resource_group'), item.name))
+        return results
+
+    def get_vm(self, resource_group, name):
         '''
         Get the VM with expanded instanceView
 
         :return: VirtualMachine object
         '''
         try:
-            vm = self.compute_client.virtual_machines.get(self.resource_group, name, expand='instanceview')
-            return vm
+            vm = self.compute_client.virtual_machines.get(resource_group, name, expand='instanceview')
+            return self.serialize_vm(vm)
         except Exception as exc:
             self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
 
@@ -302,7 +340,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         '''
 
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
-        resource_group = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+        resource_group = parse_resource_id(result['id']).get('resource_group')
         instance = None
         power_state = None
 
@@ -344,6 +382,18 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                 new_result['image'] = {
                     'id': image.get('id', None)
                 }
+
+        new_result['boot_diagnostics'] = {
+            'enabled': 'diagnosticsProfile' in result['properties'] and
+                       'bootDiagnostics' in result['properties']['diagnosticsProfile'] and
+                       result['properties']['diagnosticsProfile']['bootDiagnostics']['enabled'] or False,
+            'storage_uri': 'diagnosticsProfile' in result['properties'] and
+                           'bootDiagnostics' in result['properties']['diagnosticsProfile'] and
+                           result['properties']['diagnosticsProfile']['bootDiagnostics']['storageUri'] or None
+        }
+        if new_result['boot_diagnostics']['enabled']:
+            new_result['boot_diagnostics']['console_screenshot_uri'] = result['properties']['instanceView']['bootDiagnostics']['consoleScreenshotBlobUri']
+            new_result['boot_diagnostics']['serial_console_log_uri'] = result['properties']['instanceView']['bootDiagnostics']['serialConsoleLogBlobUri']
 
         vhd = result['properties']['storageProfile']['osDisk'].get('vhd')
         if vhd is not None:

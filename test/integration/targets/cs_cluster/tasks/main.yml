@@ -14,7 +14,7 @@
     name: "{{ cs_resource_prefix }}-zone"
     dns1: 8.8.8.8
     dns2: 8.8.4.4
-    network_type: basic
+    network_type: Basic
   register: zone
 - name: verify setup zone is present
   assert:
@@ -48,7 +48,7 @@
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
     zone: "{{ cs_resource_prefix }}-zone"
-    hypervisor: simulator
+    hypervisor: Simulator
     cluster_type: CloudManaged
     pod: unexistent
   register: cluster
@@ -63,7 +63,7 @@
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
     zone: "{{ cs_resource_prefix }}-zone"
-    hypervisor: simulator
+    hypervisor: Simulator
     cluster_type: CloudManaged
   register: cluster_origin
   check_mode: true
@@ -77,7 +77,7 @@
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
     zone: "{{ cs_resource_prefix }}-zone"
-    hypervisor: simulator
+    hypervisor: Simulator
     cluster_type: CloudManaged
   register: cluster_origin
   tags: disable
@@ -113,7 +113,7 @@
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
     zone: "{{ cs_resource_prefix }}-zone"
-    hypervisor: simulator
+    hypervisor: Simulator
     cluster_type: ExternalManaged
   register: cluster
   check_mode: true
@@ -132,7 +132,7 @@
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
     zone: "{{ cs_resource_prefix }}-zone"
-    hypervisor: simulator
+    hypervisor: Simulator
     cluster_type: ExternalManaged
   register: cluster
 - name: verify test update cluster
@@ -150,7 +150,7 @@
   cs_cluster:
     name: "{{ cs_resource_prefix }}-cluster"
     zone: "{{ cs_resource_prefix }}-zone"
-    hypervisor: simulator
+    hypervisor: Simulator
     cluster_type: ExternalManaged
   register: cluster
 - name: verify test update cluster idempotence

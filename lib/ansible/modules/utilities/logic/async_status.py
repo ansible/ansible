@@ -35,7 +35,6 @@ options:
 notes:
 - This module is also supported for Windows targets.
 seealso:
-- module: async_wrapper
 - ref: playbooks_async
   description: Detailed information on how to use asynchronous actions and polling.
 author:
@@ -48,7 +47,7 @@ EXAMPLES = r'''
 - name: Asynchronous yum task
   yum:
     name: docker-io
-    state: installed
+    state: present
   async: 1000
   poll: 0
   register: yum_sleeper

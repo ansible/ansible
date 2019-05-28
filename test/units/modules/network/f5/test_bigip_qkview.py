@@ -106,9 +106,11 @@ class TestMadmLocationManager(unittest.TestCase):
     def test_create_qkview_default_options(self, *args):
         set_module_args(dict(
             dest='/tmp/foo.qkview',
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -144,9 +146,11 @@ class TestBulkLocationManager(unittest.TestCase):
     def test_create_qkview_default_options(self, *args):
         set_module_args(dict(
             dest='/tmp/foo.qkview',
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

@@ -329,6 +329,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
+        mock_play.collections = None
         mock_play.ROLE_CACHE = {}
 
         i = RoleInclude.load('foo_metadata', play=mock_play, loader=fake_loader)

@@ -13,6 +13,7 @@ requirements:
   - botocore
 extends_documentation_fragment:
   - aws_credentials
+  - aws_region
 short_description: Look up AWS account attributes.
 description:
   - Describes attributes of your AWS account. You can specify one of the listed

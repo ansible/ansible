@@ -14,7 +14,7 @@
 # Backport of selectors.py from Python 3.5+ to support Python < 3.4
 # Also has the behavior specified in PEP 475 which is to retry syscalls
 # in the case of an EINTR error. This module is required because selectors34
-# does not follow this behavior and instead returns that no dile descriptor
+# does not follow this behavior and instead returns that no file descriptor
 # events have occurred rather than retry the syscall. The decision to drop
 # support for select.devpoll is made to maintain 100% test coverage.
 
@@ -34,7 +34,7 @@ except (AttributeError, ImportError):  # Python 3.3<
 
 __author__ = 'Seth Michael Larson'
 __email__ = 'sethmichaellarson@protonmail.com'
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 __license__ = 'MIT'
 
 __all__ = [

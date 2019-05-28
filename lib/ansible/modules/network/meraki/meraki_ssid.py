@@ -216,17 +216,132 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
+- name: Enable and name SSID
+  meraki_ssid:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_name: WiFi
+    name: GuestSSID
+    enabled: true
+  delegate_to: localhost
+
+- name: Set PSK with invalid encryption mode
+  meraki_ssid:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_name: WiFi
+    name: GuestSSID
+    auth_mode: psk
+    psk: abc1234
+    encryption_mode: eap
+  ignore_errors: yes
+  delegate_to: localhost
+
+- name: Configure RADIUS servers
+  meraki_ssid:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_name: WiFi
+    name: GuestSSID
+    auth_mode: open-with-radius
+    radius_servers:
+      - host: 192.0.1.200
+        port: 1234
+        secret: abc98765
+  delegate_to: localhost
+
+- name: Enable click-through splash page
+  meraki_ssid:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_name: WiFi
+    name: GuestSSID
+    splash_page: Click-through splash page
+  delegate_to: localhost
 '''
 
 RETURN = r'''
 data:
-    description: Information about queried or updated object.
-    type: list
-    returned: info
-    sample:
-      "data": {
-
-      }
+    description: List of wireless SSIDs.
+    returned: success
+    type: complex
+    contains:
+        number:
+            description: Zero-based index number for SSIDs.
+            returned: success
+            type: int
+            sample: 0
+        name:
+            description:
+              - Name of wireless SSID.
+              - This value is what is broadcasted.
+            returned: success
+            type: str
+            sample: CorpWireless
+        enabled:
+            description: Enabled state of wireless network.
+            returned: success
+            type: bool
+            sample: true
+        splashPage:
+            description: Splash page to show when user authenticates.
+            returned: success
+            type: str
+            sample: Click-through splash page
+        ssidAdminAccessible:
+            description: Whether SSID is administratively accessible.
+            returned: success
+            type: bool
+            sample: true
+        authMode:
+            description: Authentication method.
+            returned: success
+            type: str
+            sample: psk
+        psk:
+            description: Secret wireless password.
+            returned: success
+            type: str
+            sample: SecretWiFiPass
+        encryptionMode:
+            description: Wireless traffic encryption method.
+            returned: success
+            type: str
+            sample: wpa
+        wpaEncryptionMode:
+            description: Enabled WPA versions.
+            returned: success
+            type: str
+            sample: WPA2 only
+        ipAssignmentMode:
+            description: Wireless client IP assignment method.
+            returned: success
+            type: str
+            sample: NAT mode
+        minBitrate:
+            description: Minimum bitrate a wireless client can connect at.
+            returned: success
+            type: int
+            sample: 11
+        bandSelection:
+            description: Wireless RF frequency wireless network will be broadcast on.
+            returned: success
+            type: str
+            sample: 5 GHz band only
+        perClientBandwidthLimitUp:
+            description: Maximum upload bandwidth a client can use.
+            returned: success
+            type: int
+            sample: 1000
+        perClientBandwidthLimitDown:
+            description: Maximum download bandwidth a client can use.
+            returned: success
+            type: int
+            sample: 0
 '''
 
 import os
@@ -450,6 +565,8 @@ def main():
             result = meraki.request(path, 'PUT', payload=json.dumps(payload))
             meraki.result['data'] = result
             meraki.result['changed'] = True
+        else:
+            meraki.result['data'] = original
     elif meraki.params['state'] == 'absent':
         ssids = get_ssids(meraki, net_id)
         ssid_id = meraki.params['number']

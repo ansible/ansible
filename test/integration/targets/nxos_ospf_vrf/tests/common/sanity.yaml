@@ -3,6 +3,17 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
+- set_fact: def_met_default="default"
+  # CSCvi74876 Cannot remove default-metric
+  when: imagetag is not search("I7")
+
+- name: "Setup: disable feature OSPF for initial cleanup"
+  nxos_feature:
+    feature: ospf
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+
 - name: "Enable feature OSPF"
   nxos_feature:
     feature: ospf
@@ -44,6 +55,7 @@
       ospf: 2
       auto_cost: 5000
       timer_throttle_spf_hold: 1100
+      timer_throttle_lsa_hold: 2220
       timer_throttle_lsa_max: 2222
       default_metric: 1000
       log_adjacency: log
@@ -65,7 +77,7 @@
     nxos_ospf_vrf: &config2
       ospf: 2
       auto_cost: default
-      default_metric: default
+      default_metric: "{{def_met_default|default(omit)}}"
       log_adjacency: default
       timer_throttle_spf_hold: default
       passive_interface: false
@@ -97,6 +109,7 @@
     register: result
 
   - assert: *false
+    when: def_met_default is defined
 
   - name: Unconfigure ospf vrf
     nxos_ospf_vrf: &unconfig
@@ -113,6 +126,7 @@
     register: result
 
   - assert: *false
+    when: def_met_default is defined
 
   always:
   - name: "Disable feature OSPF"

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - Change the position to search os-release since clearlinux new versions are providing /etc/os-release too

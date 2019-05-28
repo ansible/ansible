@@ -30,7 +30,6 @@ requirements:
 - python >= 2.6
 - PyVmomi
 - vSphere Automation SDK
-- vCloud Suite SDK
 options:
     tag_name:
       description:
@@ -108,20 +107,17 @@ results:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
-try:
-    from com.vmware.cis.tagging_client import Tag, Category
-except ImportError:
-    pass
 
 
 class VmwareTag(VmwareRestClient):
     def __init__(self, module):
         super(VmwareTag, self).__init__(module)
-        self.tag_service = Tag(self.connect)
         self.global_tags = dict()
+        # api_client to call APIs instead of individual service
+        self.tag_service = self.api_client.tagging.Tag
         self.tag_name = self.params.get('tag_name')
         self.get_all_tags()
-        self.category_service = Category(self.connect)
+        self.category_service = self.api_client.tagging.Category
 
     def ensure_state(self):
         """
@@ -185,13 +181,15 @@ class VmwareTag(VmwareRestClient):
 
         """
         changed = False
+        tag_id = self.global_tags[self.tag_name]['tag_id']
         results = dict(msg="Tag %s is unchanged." % self.tag_name,
-                       tag_id=self.global_tags[self.tag_name]['tag_id'])
+                       tag_id=tag_id)
         tag_update_spec = self.tag_service.UpdateSpec()
         tag_desc = self.global_tags[self.tag_name]['tag_description']
         desired_tag_desc = self.params.get('tag_description')
         if tag_desc != desired_tag_desc:
-            tag_update_spec.setDescription = desired_tag_desc
+            tag_update_spec.description = desired_tag_desc
+            self.tag_service.update(tag_id, tag_update_spec)
             results['msg'] = 'Tag %s updated.' % self.tag_name
             changed = True
 

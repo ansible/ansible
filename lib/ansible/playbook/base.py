@@ -195,11 +195,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def preprocess_data(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
-
-        for base_class in self.__class__.mro():
-            method = getattr(self, "_preprocess_data_%s" % base_class.__name__.lower(), None)
-            if method:
-                return method(ds)
         return ds
 
     def load_data(self, ds, variable_manager=None, loader=None):
@@ -347,13 +342,15 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
 
         # save the omit value for later checking
-        omit_value = templar._available_variables.get('omit')
+        omit_value = templar.available_variables.get('omit')
 
         for (name, attribute) in iteritems(self._valid_attrs):
 
             if attribute.static:
                 value = getattr(self, name)
-                if templar.is_template(value):
+
+                # we don't template 'vars' but allow template as values for later use
+                if name not in ('vars',) and templar.is_template(value):
                     display.warning('"%s" is not templatable, but we found: %s, '
                                     'it will not be templated and will be used "as is".' % (name, value))
                 continue
@@ -597,7 +594,7 @@ class Base(FieldAttributeBase):
     _remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
 
     # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
+    _vars = FieldAttribute(isa='dict', priority=100, inherit=False, static=True)
 
     # module default params
     _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
@@ -615,8 +612,12 @@ class Base(FieldAttributeBase):
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')
 
-    # param names which have been deprecated/removed
-    DEPRECATED_ATTRIBUTES = [
-        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
-        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
-    ]
+    # Privilege escalation
+    _become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
+    _become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
+    _become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
+    _become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'))
+    _become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
+
+    # used to hold sudo/su stuff
+    DEPRECATED_ATTRIBUTES = []

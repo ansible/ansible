@@ -116,9 +116,11 @@ class TestManager(unittest.TestCase):
             lacp_enabled=True,
             lacp_mode='active',
             lacp_timeout='long',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

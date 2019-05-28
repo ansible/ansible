@@ -1,7 +1,7 @@
+.. _playbooks_reuse_includes:
+
 Including and Importing
 =======================
-
-.. _playbooks_reuse_includes:
 
 .. contents:: Topics
 

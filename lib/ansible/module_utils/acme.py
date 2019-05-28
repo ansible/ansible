@@ -29,6 +29,7 @@ import traceback
 
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 try:
     import cryptography
@@ -46,7 +47,7 @@ try:
     HAS_CURRENT_CRYPTOGRAPHY = (LooseVersion(CRYPTOGRAPHY_VERSION) >= LooseVersion('1.5'))
     if HAS_CURRENT_CRYPTOGRAPHY:
         _cryptography_backend = cryptography.hazmat.backends.default_backend()
-except Exception as _:
+except Exception as dummy:
     HAS_CURRENT_CRYPTOGRAPHY = False
 
 
@@ -90,7 +91,7 @@ def write_file(module, dest, content):
     except Exception as err:
         try:
             f.close()
-        except Exception as e:
+        except Exception as dummy:
             pass
         os.remove(tmpsrc)
         raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
@@ -101,7 +102,7 @@ def write_file(module, dest, content):
     if not os.path.exists(tmpsrc):
         try:
             os.remove(tmpsrc)
-        except Exception as e:
+        except Exception as dummy:
             pass
         raise ModuleFailException("Source %s does not exist" % (tmpsrc))
     if not os.access(tmpsrc, os.R_OK):
@@ -119,9 +120,10 @@ def write_file(module, dest, content):
             raise ModuleFailException("Destination %s not readable" % (dest))
         checksum_dest = module.sha1(dest)
     else:
-        if not os.access(os.path.dirname(dest), os.W_OK):
+        dirname = os.path.dirname(dest) or '.'
+        if not os.access(dirname, os.W_OK):
             os.remove(tmpsrc)
-            raise ModuleFailException("Destination dir %s not writable" % (os.path.dirname(dest)))
+            raise ModuleFailException("Destination dir %s not writable" % (dirname))
     if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
@@ -173,7 +175,7 @@ def _parse_key_openssl(openssl_binary, module, key_file=None, key_content=None):
         except Exception as err:
             try:
                 f.close()
-            except Exception as e:
+            except Exception as dummy:
                 pass
             raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
         f.close()
@@ -429,7 +431,7 @@ class ACMEDirectory(object):
     and allows to obtain a Replay-Nonce. The acme_directory URL
     needs to support unauthenticated GET requests; ACME endpoints
     requiring authentication are not supported.
-    https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.1.1
+    https://tools.ietf.org/html/rfc8555#section-7.1.1
     '''
 
     def __init__(self, module, account):
@@ -500,7 +502,7 @@ class ACMEAccount(object):
     def get_keyauthorization(self, token):
         '''
         Returns the key authorization for the given token
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.1
+        https://tools.ietf.org/html/rfc8555#section-8.1
         '''
         accountkey_json = json.dumps(self.jwk, sort_keys=True, separators=(',', ':'))
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
@@ -541,10 +543,10 @@ class ACMEAccount(object):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.2
+        https://tools.ietf.org/html/rfc8555#section-6.2
 
         If payload is None, a POST-as-GET is performed.
-        (https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.3)
+        (https://tools.ietf.org/html/rfc8555#section-6.3)
         '''
         key_data = key_data or self.key_data
         jws_header = jws_header or self.jws_header
@@ -575,7 +577,7 @@ class ACMEAccount(object):
                     try:
                         decoded_result = self.module.from_json(content.decode('utf8'))
                         # In case of badNonce error, try again (up to 5 times)
-                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.7)
+                        # (https://tools.ietf.org/html/rfc8555#section-6.7)
                         if (400 <= info['status'] < 600 and
                                 decoded_result.get('type') == 'urn:ietf:params:acme:error:badNonce' and
                                 failed_tries <= 5):
@@ -651,7 +653,7 @@ class ACMEAccount(object):
         ``False`` if it already existed (e.g. it was not newly created),
         or does not exist. In case the account was created or exists,
         ``data`` contains the account data; otherwise, it is ``None``.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
+        https://tools.ietf.org/html/rfc8555#section-7.3
         '''
         contact = contact or []
 
@@ -670,7 +672,7 @@ class ACMEAccount(object):
                 'contact': contact
             }
             if not allow_creation:
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.1
+                # https://tools.ietf.org/html/rfc8555#section-7.3.1
                 new_reg['onlyReturnExisting'] = True
             if terms_agreed:
                 new_reg['termsOfServiceAgreed'] = True
@@ -689,7 +691,7 @@ class ACMEAccount(object):
                 # A bug in Pebble (https://github.com/letsencrypt/pebble/issues/179) and
                 # Boulder (https://github.com/letsencrypt/boulder/issues/3971): this should
                 # not return a valid account object according to
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.6:
+                # https://tools.ietf.org/html/rfc8555#section-7.3.6:
                 #     "Once an account is deactivated, the server MUST NOT accept further
                 #      requests authorized by that account's key."
                 if not allow_creation:
@@ -764,7 +766,7 @@ class ACMEAccount(object):
         The account URI will be stored in ``self.uri``; if it is ``None``,
         the account does not exist.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
+        https://tools.ietf.org/html/rfc8555#section-7.3
         '''
 
         if self.uri is not None:
@@ -802,7 +804,7 @@ class ACMEAccount(object):
         would be changed (check mode), and ``account_data`` the updated
         account data.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.2
+        https://tools.ietf.org/html/rfc8555#section-7.3.2
         '''
         # Create request
         update_request = {}
@@ -822,21 +824,64 @@ class ACMEAccount(object):
         return True, account_data
 
 
-def cryptography_get_csr_domains(module, csr_filename):
+def _normalize_ip(ip):
+    try:
+        return to_native(compat_ipaddress.ip_address(to_text(ip)).compressed)
+    except ValueError:
+        # We don't want to error out on something IPAddress() can't parse
+        return ip
+
+
+def openssl_get_csr_identifiers(openssl_binary, module, csr_filename):
     '''
-    Return a set of requested domains (CN and SANs) for the CSR.
+    Return a set of requested identifiers (CN and SANs) for the CSR.
+    Each identifier is a pair (type, identifier), where type is either
+    'dns' or 'ip'.
     '''
-    domains = set([])
+    openssl_csr_cmd = [openssl_binary, "req", "-in", csr_filename, "-noout", "-text"]
+    dummy, out, dummy = module.run_command(openssl_csr_cmd, check_rc=True)
+
+    identifiers = set([])
+    common_name = re.search(r"Subject:.* CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
+    if common_name is not None:
+        identifiers.add(('dns', common_name.group(1)))
+    subject_alt_names = re.search(
+        r"X509v3 Subject Alternative Name: (?:critical)?\n +([^\n]+)\n",
+        to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
+    if subject_alt_names is not None:
+        for san in subject_alt_names.group(1).split(", "):
+            if san.lower().startswith("dns:"):
+                identifiers.add(('dns', san[4:]))
+            elif san.lower().startswith("ip:"):
+                identifiers.add(('ip', _normalize_ip(san[3:])))
+            elif san.lower().startswith("ip address:"):
+                identifiers.add(('ip', _normalize_ip(san[11:])))
+            else:
+                raise ModuleFailException('Found unsupported SAN identifier "{0}"'.format(san))
+    return identifiers
+
+
+def cryptography_get_csr_identifiers(module, csr_filename):
+    '''
+    Return a set of requested identifiers (CN and SANs) for the CSR.
+    Each identifier is a pair (type, identifier), where type is either
+    'dns' or 'ip'.
+    '''
+    identifiers = set([])
     csr = cryptography.x509.load_pem_x509_csr(read_file(csr_filename), _cryptography_backend)
     for sub in csr.subject:
         if sub.oid == cryptography.x509.oid.NameOID.COMMON_NAME:
-            domains.add(sub.value)
+            identifiers.add(('dns', sub.value))
     for extension in csr.extensions:
         if extension.oid == cryptography.x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME:
             for name in extension.value:
                 if isinstance(name, cryptography.x509.DNSName):
-                    domains.add(name.value)
-    return domains
+                    identifiers.add(('dns', name.value))
+                elif isinstance(name, cryptography.x509.IPAddress):
+                    identifiers.add(('ip', name.value.compressed))
+                else:
+                    raise ModuleFailException('Found unsupported SAN identifier {0}'.format(name))
+    return identifiers
 
 
 def cryptography_get_cert_days(module, cert_file, now=None):
@@ -875,7 +920,7 @@ def set_crypto_backend(module):
     elif backend == 'cryptography':
         try:
             cryptography.__version__
-        except Exception as _:
+        except Exception as dummy:
             module.fail_json(msg='Cannot find cryptography module!')
         HAS_CURRENT_CRYPTOGRAPHY = True
     else:

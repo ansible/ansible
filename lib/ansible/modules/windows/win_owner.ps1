@@ -17,7 +17,7 @@ $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $tr
 $user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $true
 $recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default $false -resultobj $result
 
-If (-Not (Test-Path -Path $path)) {
+If (-Not (Test-Path -LiteralPath $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
 }
 
@@ -30,23 +30,24 @@ if (!$sid) {
 Try {
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
 
-    $file = Get-Item -Path $path
-    $acl = Get-Acl $file.FullName
+    $file = Get-Item -LiteralPath $path
+    $acl = Get-Acl -LiteralPath $file.FullName
 
     If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
         $acl.setOwner($objUser)
-        Set-Acl -Path $file.FullName -AclObject $acl -WhatIf:$check_mode
+        Set-Acl -LiteralPath $file.FullName -AclObject $acl -WhatIf:$check_mode
         $result.changed = $true
     }
 
-    If ($recurse) {
-        $files = Get-ChildItem -Path $path -Force -Recurse
+    If ($recurse -and $file -is [System.IO.DirectoryInfo]) {
+        # Get-ChildItem falls flat on pre PSv5 when dealing with complex path chars
+        $files = $file.EnumerateFileSystemInfos("*", [System.IO.SearchOption]::AllDirectories)
         ForEach($file in $files){
-            $acl = Get-Acl $file.FullName
+            $acl = Get-Acl -LiteralPath $file.FullName
 
             If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
                 $acl.setOwner($objUser)
-                Set-Acl -Path $file.FullName -AclObject $acl -WhatIf:$check_mode
+                Set-Acl -LiteralPath $file.FullName -AclObject $acl -WhatIf:$check_mode
                 $result.changed = $true
             }
         }

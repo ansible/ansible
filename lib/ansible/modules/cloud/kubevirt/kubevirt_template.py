@@ -26,6 +26,16 @@ version_added: "2.8"
 author: KubeVirt Team (@kubevirt)
 
 options:
+    name:
+        description:
+            - Name of the Template object.
+        required: true
+        type: str
+    namespace:
+        description:
+            - Namespace where the Template object exists.
+        required: true
+        type: str
     objects:
         description:
             - List of any valid API objects, such as a I(DeploymentConfig), I(Service), etc. The object
@@ -35,6 +45,12 @@ options:
               user must use Ansible structure of the parameters not the Kubernetes API structure. For more information
               please take a look at M(kubevirt_vm) module and at EXAMPLES section, where you can see example.
         type: list
+    merge_type:
+        description:
+            - Whether to override the default patch merge approach with a specific type. By default, the strategic
+              merge will typically be used.
+        type: list
+        choices: [ json, merge, strategic-merge ]
     display_name:
         description:
             - "A brief, user-friendly name, which can be employed by user interfaces."
@@ -123,9 +139,7 @@ options:
 
 extends_documentation_fragment:
   - k8s_auth_options
-  - k8s_resource_options
   - k8s_state_options
-  - k8s_name_options
 
 requirements:
   - python >= 2.7
@@ -159,7 +173,7 @@ EXAMPLES = '''
     objects:
       - name: ${NAME}
         kind: VirtualMachine
-        memory: ${MEMORY_SIZE}Mi
+        memory: ${MEMORY_SIZE}
         state: present
         namespace: vms
     parameters:
@@ -191,22 +205,30 @@ kubevirt_template:
 import copy
 import traceback
 
-from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
+from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 
 from ansible.module_utils.kubevirt import (
     virtdict,
     KubeVirtRawModule,
+    API_GROUP,
     MAX_SUPPORTED_API_VERSION
 )
 
 
 TEMPLATE_ARG_SPEC = {
+    'name': {'required': True},
+    'namespace': {'required': True},
     'state': {
-        'type': 'str',
-        'choices': [
-            'present', 'absent'
-        ],
-        'default': 'present'
+        'default': 'present',
+        'choices': ['present', 'absent'],
+    },
+    'force': {
+        'type': 'bool',
+        'default': False,
+    },
+    'merge_type': {
+        'type': 'list',
+        'choices': ['json', 'merge', 'strategic-merge']
     },
     'objects': {
         'type': 'list',
@@ -261,8 +283,7 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
     @property
     def argspec(self):
         """ argspec property builder """
-        argument_spec = copy.deepcopy(COMMON_ARG_SPEC)
-        argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
+        argument_spec = copy.deepcopy(AUTH_ARG_SPEC)
         argument_spec.update(TEMPLATE_ARG_SPEC)
         return argument_spec
 
@@ -272,9 +293,14 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
 
         # Execute the CRUD of VM template:
         kind = 'Template'
+        template_api_version = 'template.openshift.io/v1'
 
         # Fill in template parameters:
         definition['parameters'] = self.params.get('parameters')
+
+        # Fill in the default Label
+        labels = definition['metadata']['labels']
+        labels['template.cnv.io/type'] = 'vm'
 
         # Fill in Openshift/Kubevirt template annotations:
         annotations = definition['metadata']['annotations']
@@ -330,14 +356,18 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
                     vm_definition['spec']['template']['spec']['networks'] = [self.params.get('default_network')]
 
                 # Set kubevirt API version:
-                vm_definition['apiVersion'] = MAX_SUPPORTED_API_VERSION
+                vm_definition['apiVersion'] = '%s/%s' % (API_GROUP, MAX_SUPPORTED_API_VERSION)
 
                 # Contruct k8s vm API object:
                 vm_template = vm_definition['spec']['template']
                 dummy, vm_def = self.construct_vm_template_definition('VirtualMachine', vm_definition, vm_template, obj)
 
                 definition['objects'].append(vm_def)
-        result = self.execute_crud(kind, definition)
+
+        # Create template:
+        resource = self.client.resources.get(api_version=template_api_version, kind=kind, name='templates')
+        definition = self.set_defaults(resource, definition)
+        result = self.perform_action(resource, definition)
 
         # Return from the module:
         self.exit_json(**{

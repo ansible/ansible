@@ -40,7 +40,8 @@
       - win_ping_with_data_result.ping == '☠'
 
 - name: test win_ping.ps1 with data as complex args
-  win_ping.ps1:
+  # win_ping.ps1: # TODO: do we want to actually support this? no other tests that I can see...
+  win_ping:
     data: bleep
   register: win_ping_ps1_result
 

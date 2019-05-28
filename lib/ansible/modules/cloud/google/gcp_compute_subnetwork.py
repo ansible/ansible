@@ -89,9 +89,10 @@ options:
     - The network this subnet belongs to.
     - Only networks that are in the distributed mode can have subnetworks.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: true
   enable_flow_logs:
     description:
@@ -140,24 +141,24 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-subnetwork"
-      auto_create_subnetworks: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-subnetwork
+    auto_create_subnetworks: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a subnetwork
   gcp_compute_subnetwork:
-      name: ansiblenet
-      region: us-west1
-      network: "{{ network }}"
-      ip_cidr_range: 172.16.0.0/16
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: ansiblenet
+    region: us-west1
+    network: "{{ network }}"
+    ip_cidr_range: 172.16.0.0/16
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -206,7 +207,7 @@ network:
   - The network this subnet belongs to.
   - Only networks that are in the distributed mode can have subnetworks.
   returned: success
-  type: str
+  type: dict
 enableFlowLogs:
   description:
   - Whether to enable flow logging for this subnetwork.
@@ -276,7 +277,7 @@ def main():
             description=dict(type='str'),
             ip_cidr_range=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True),
+            network=dict(required=True, type='dict'),
             enable_flow_logs=dict(type='bool'),
             secondary_ip_ranges=dict(
                 type='list', elements='dict', options=dict(range_name=dict(required=True, type='str'), ip_cidr_range=dict(required=True, type='str'))

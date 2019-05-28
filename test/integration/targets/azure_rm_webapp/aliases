@@ -1,5 +1,5 @@
 cloud/azure
-shippable/azure/group4
+shippable/azure/group3
 destructive
 azure_rm_webapp_facts
 azure_rm_webappslot

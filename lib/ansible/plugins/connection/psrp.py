@@ -72,7 +72,7 @@ options:
     description:
     - Whether to validate the remote server's certificate or not.
     - Set to C(ignore) to not validate any certificates.
-    - I(cert_trust_path) can be set to the path of a PEM certificate chain to
+    - I(ca_cert) can be set to the path of a PEM certificate chain to
       use in the validation.
     choices:
     - validate
@@ -80,13 +80,15 @@ options:
     default: validate
     vars:
     - name: ansible_psrp_cert_validation
-  cert_trust_path:
+  ca_cert:
     description:
     - The path to a PEM certificate chain to use when validating the server's
       certificate.
     - This value is ignored if I(cert_validation) is set to C(ignore).
     vars:
     - name: ansible_psrp_cert_trust_path
+    - name: ansible_psrp_ca_cert
+    aliases: [ cert_trust_path ]
   connection_timeout:
     description:
     - The connection timeout for making the request to the remote host.
@@ -155,6 +157,87 @@ options:
     type: bool
     default: 'no'
 
+  # auth options
+  certificate_key_pem:
+    description:
+    - The local path to an X509 certificate key to use with certificate auth.
+    vars:
+    - name: ansible_psrp_certificate_key_pem
+  certificate_pem:
+    description:
+    - The local path to an X509 certificate to use with certificate auth.
+    vars:
+    - name: ansible_psrp_certificate_pem
+  credssp_auth_mechanism:
+    description:
+    - The sub authentication mechanism to use with CredSSP auth.
+    - When C(auto), both Kerberos and NTLM is attempted with kerberos being
+      preferred.
+    choices:
+    - auto
+    - kerberos
+    - ntlm
+    default: auto
+    vars:
+    - name: ansible_psrp_credssp_auth_mechanism
+  credssp_disable_tlsv1_2:
+    description:
+    - Disables the use of TLSv1.2 on the CredSSP authentication channel.
+    - This should not be set to C(yes) unless dealing with a host that does not
+      have TLSv1.2.
+    default: no
+    type: bool
+    vars:
+    - name: ansible_psrp_credssp_disable_tlsv1_2
+  credssp_minimum_version:
+    description:
+    - The minimum CredSSP server authentication version that will be accepted.
+    - Set to C(5) to ensure the server has been patched and is not vulnerable
+      to CVE 2018-0886.
+    default: 2
+    type: int
+    vars:
+    - name: ansible_psrp_credssp_minimum_version
+  negotiate_delegate:
+    description:
+    - Allow the remote user the ability to delegate it's credentials to another
+      server, i.e. credential delegation.
+    - Only valid when Kerberos was the negotiated auth or was explicitly set as
+      the authentication.
+    - Ignored when NTLM was the negotiated auth.
+    vars:
+    - name: ansible_psrp_negotiate_delegate
+  negotiate_hostname_override:
+    description:
+    - Override the remote hostname when searching for the host in the Kerberos
+      lookup.
+    - This allows Ansible to connect over IP but authenticate with the remote
+      server using it's DNS name.
+    - Only valid when Kerberos was the negotiated auth or was explicitly set as
+      the authentication.
+    - Ignored when NTLM was the negotiated auth.
+    vars:
+    - name: ansible_psrp_negotiate_hostname_override
+  negotiate_send_cbt:
+    description:
+    - Send the Channel Binding Token (CBT) structure when authenticating.
+    - CBT is used to provide extra protection against Man in the Middle C(MitM)
+      attacks by binding the outer transport channel to the auth channel.
+    - CBT is not used when using just C(HTTP), only C(HTTPS).
+    default: yes
+    type: bool
+    vars:
+    - name: ansible_psrp_negotiate_send_cbt
+  negotiate_service:
+    description:
+    - Override the service part of the SPN used during Kerberos authentication.
+    - Only valid when Kerberos was the negotiated auth or was explicitly set as
+      the authentication.
+    - Ignored when NTLM was the negotiated auth.
+    default: WSMAN
+    vars:
+    - name: ansible_psrp_negotiate_service
+
   # protocol options
   operation_timeout:
     description:
@@ -194,13 +277,12 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _common_args
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash
-from ansible.utils.path import makedirs_safe
 
 HAS_PYPSRP = True
 PYPSRP_IMP_ERR = None
 try:
     import pypsrp
-    from pypsrp.complex_objects import GenericComplexObject, RunspacePoolState
+    from pypsrp.complex_objects import GenericComplexObject, PSInvocationState, RunspacePoolState
     from pypsrp.exceptions import AuthenticationError, WinRMError
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
@@ -319,9 +401,10 @@ class Connection(ConnectionBase):
             else:
                 display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
         else:
-            # in other cases we want to execute the cmd as the script
-            script = cmd
-            display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
+            # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
+            # rc is propagated back to the connection plugin.
+            script = to_text(u"%s\nexit $LASTEXITCODE" % cmd)
+            display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
         rc, stdout, stderr = self._exec_psrp_script(script, in_data)
         return rc, stdout, stderr
@@ -419,7 +502,7 @@ class Connection(ConnectionBase):
 
         # setup the file stream with read only mode
         setup_script = '''$ErrorActionPreference = "Stop"
-$path = "%s"
+$path = '%s'
 
 if (Test-Path -Path $path -PathType Leaf) {
     $fs = New-Object -TypeName System.IO.FileStream -ArgumentList @(
@@ -450,24 +533,23 @@ if ($bytes_read -gt 0) {
         # need to run the setup script outside of the local scope so the
         # file stream stays active between fetch operations
         rc, stdout, stderr = self._exec_psrp_script(setup_script,
-                                                    use_local_scope=False)
+                                                    use_local_scope=False,
+                                                    force_stop=True)
         if rc != 0:
             raise AnsibleError("failed to setup file stream for fetch '%s': %s"
                                % (out_path, to_native(stderr)))
         elif stdout.strip() == '[DIR]':
-            # in_path was a dir so we need to create the dir locally
-            makedirs_safe(out_path)
+            # to be consistent with other connection plugins, we assume the caller has created the target dir
             return
 
         b_out_path = to_bytes(out_path, errors='surrogate_or_strict')
-        makedirs_safe(os.path.dirname(b_out_path))
+        # to be consistent with other connection plugins, we assume the caller has created the target dir
         offset = 0
         with open(b_out_path, 'wb') as out_file:
             while True:
                 display.vvvvv("PSRP FETCH %s to %s (offset=%d" %
                               (in_path, out_path, offset), host=self._psrp_host)
-                rc, stdout, stderr = \
-                    self._exec_psrp_script(read_script % offset)
+                rc, stdout, stderr = self._exec_psrp_script(read_script % offset, force_stop=True)
                 if rc != 0:
                     raise AnsibleError("failed to transfer file to '%s': %s"
                                        % (out_path, to_native(stderr)))
@@ -476,8 +558,9 @@ if ($bytes_read -gt 0) {
                 out_file.write(data)
                 if len(data) < buffer_size:
                     break
+                offset += len(data)
 
-            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()")
+            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()", force_stop=True)
             if rc != 0:
                 display.warning("failed to close remote file stream of file "
                                 "'%s': %s" % (in_path, to_native(stderr)))
@@ -516,7 +599,7 @@ if ($bytes_read -gt 0) {
         self._psrp_auth = self.get_option('auth')
         # cert validation can either be a bool or a path to the cert
         cert_validation = self.get_option('cert_validation')
-        cert_trust_path = self.get_option('cert_trust_path')
+        cert_trust_path = self.get_option('ca_cert')
         if cert_validation == 'ignore':
             self._psrp_cert_validation = False
         elif cert_trust_path is not None:
@@ -534,6 +617,16 @@ if ($bytes_read -gt 0) {
         self._psrp_configuration_name = self.get_option('configuration_name')
         self._psrp_reconnection_retries = int(self.get_option('reconnection_retries'))
         self._psrp_reconnection_backoff = float(self.get_option('reconnection_backoff'))
+
+        self._psrp_certificate_key_pem = self.get_option('certificate_key_pem')
+        self._psrp_certificate_pem = self.get_option('certificate_pem')
+        self._psrp_credssp_auth_mechanism = self.get_option('credssp_auth_mechanism')
+        self._psrp_credssp_disable_tlsv1_2 = self.get_option('credssp_disable_tlsv1_2')
+        self._psrp_credssp_minimum_version = self.get_option('credssp_minimum_version')
+        self._psrp_negotiate_send_cbt = self.get_option('negotiate_send_cbt')
+        self._psrp_negotiate_delegate = self.get_option('negotiate_delegate')
+        self._psrp_negotiate_hostname_override = self.get_option('negotiate_hostname_override')
+        self._psrp_negotiate_service = self.get_option('negotiate_service')
 
         supported_args = []
         for auth_kwarg in AUTH_KWARGS.values():
@@ -556,6 +649,15 @@ if ($bytes_read -gt 0) {
             no_proxy=self._psrp_ignore_proxy,
             max_envelope_size=self._psrp_max_envelope_size,
             operation_timeout=self._psrp_operation_timeout,
+            certificate_key_pem=self._psrp_certificate_key_pem,
+            certificate_pem=self._psrp_certificate_pem,
+            credssp_auth_mechanism=self._psrp_credssp_auth_mechanism,
+            credssp_disable_tlsv1_2=self._psrp_credssp_disable_tlsv1_2,
+            credssp_minimum_version=self._psrp_credssp_minimum_version,
+            negotiate_send_cbt=self._psrp_negotiate_send_cbt,
+            negotiate_delegate=self._psrp_negotiate_delegate,
+            negotiate_hostname_override=self._psrp_negotiate_hostname_override,
+            negotiate_service=self._psrp_negotiate_service,
         )
 
         # Check if PSRP version supports newer read_timeout argument (needs pypsrp 0.3.0+)
@@ -580,12 +682,22 @@ if ($bytes_read -gt 0) {
             option = self.get_option('_extras')['ansible_psrp_%s' % arg]
             self._psrp_conn_kwargs[arg] = option
 
-    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True):
+    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True, force_stop=False):
         ps = PowerShell(self.runspace)
         ps.add_script(script, use_local_scope=use_local_scope)
         ps.invoke(input=input_data)
 
         rc, stdout, stderr = self._parse_pipeline_result(ps)
+
+        if force_stop:
+            # This is usually not needed because we close the Runspace after our exec and we skip the call to close the
+            # pipeline manually to save on some time. Set to True when running multiple exec calls in the same runspace.
+
+            # Current pypsrp versions raise an exception if the current state was not RUNNING. We manually set it so we
+            # can call stop without any issues.
+            ps.state = PSInvocationState.RUNNING
+            ps.stop()
+
         return rc, stdout, stderr
 
     def _parse_pipeline_result(self, pipeline):
@@ -621,29 +733,29 @@ if ($bytes_read -gt 0) {
 
             stdout_list.append(output_msg)
 
-        stdout = u"\r\n".join(stdout_list)
         if len(self.host.ui.stdout) > 0:
-            stdout += u"\r\n" + u"".join(self.host.ui.stdout)
+            stdout_list += self.host.ui.stdout
+        stdout = u"\r\n".join(stdout_list)
 
         stderr_list = []
         for error in pipeline.streams.error:
             # the error record is not as fully fleshed out like we usually get
             # in PS, we will manually create it here
-            error_msg = "%s : %s\r\n" \
-                        "%s\r\n" \
+            command_name = "%s : " % error.command_name if error.command_name else ''
+            position = "%s\r\n" % error.invocation_position_message if error.invocation_position_message else ''
+            error_msg = "%s%s\r\n%s" \
                         "    + CategoryInfo          : %s\r\n" \
                         "    + FullyQualifiedErrorId : %s" \
-                        % (error.command_name, str(error),
-                           error.invocation_position_message, error.message,
-                           error.fq_error)
+                        % (command_name, str(error), position,
+                           error.message, error.fq_error)
             stacktrace = error.script_stacktrace
             if self._play_context.verbosity >= 3 and stacktrace is not None:
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
             stderr_list.append(error_msg)
 
-        stderr = "\r\n".join(stderr_list)
         if len(self.host.ui.stderr) > 0:
-            stderr += "\r\n" + "".join(self.host.ui.stderr)
+            stderr_list += self.host.ui.stderr
+        stderr = u"\r\n".join([to_text(o) for o in stderr_list])
 
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
         display.vvvvv("PSRP STDOUT: %s" % stdout, host=self._psrp_host)

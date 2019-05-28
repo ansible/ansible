@@ -1,5 +1,5 @@
-Using Vagrant and Ansible
-=========================
+Vagrant Guide
+=============
 
 .. _vagrant_intro:
 
@@ -151,4 +151,3 @@ The "Tips and Tricks" chapter of the `Ansible Provisioner documentation
         The open issues for the Ansible provisioner in the Vagrant project
     :ref:`working_with_playbooks`
         An introduction to playbooks
-

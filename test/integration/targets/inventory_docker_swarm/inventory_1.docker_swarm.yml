@@ -1,0 +1,3 @@
+---
+plugin: docker_swarm
+docker_host: unix://var/run/docker.sock

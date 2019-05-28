@@ -76,7 +76,7 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
 requirements:
-  - "docker-py >= 2.4.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.4.0"
   - Docker API >= 1.25
 author:
   - Piotr Wojciechowski (@WojciechowskiPiotr)
@@ -122,7 +122,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-node_facts:
+node:
   description: Information about node after 'update' operation
   returned: success
   type: dict
@@ -132,7 +132,7 @@ node_facts:
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import (
@@ -253,10 +253,10 @@ class SwarmNodeManager(DockerBaseClass):
                                             node_spec=node_spec)
                 except APIError as exc:
                     self.client.fail("Failed to update node : %s" % to_native(exc))
-            self.results['node_facts'] = self.client.get_node_inspect(node_id=node_info['ID'])
+            self.results['node'] = self.client.get_node_inspect(node_id=node_info['ID'])
             self.results['changed'] = changed
         else:
-            self.results['node_facts'] = node_info
+            self.results['node'] = node_info
             self.results['changed'] = changed
 
 

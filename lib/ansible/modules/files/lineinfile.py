@@ -82,8 +82,9 @@ options:
       - If the first match is required, use(firstmatch=yes).
       - A special value is available; C(EOF) for inserting the line at the end of the file.
       - If specified regular expression has no matches, EOF will be used instead.
+      - If C(insertbefore) is set, default value C(EOF) will be ignored.
       - If regular expressions are passed to both C(regexp) and C(insertafter), C(insertafter) is only honored if no match for C(regexp) is found.
-      - May not be used with C(backrefs).
+      - May not be used with C(backrefs) or C(insertbefore).
     type: str
     choices: [ EOF, '*regex*' ]
     default: EOF
@@ -95,7 +96,7 @@ options:
       - A value is available; C(BOF) for inserting the line at the beginning of the file.
       - If specified regular expression has no matches, the line will be inserted at the end of the file.
       - If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
-      - May not be used with C(backrefs).
+      - May not be used with C(backrefs) or C(insertafter).
     type: str
     choices: [ BOF, '*regex*' ]
     version_added: "1.1"
@@ -115,7 +116,7 @@ options:
   firstmatch:
     description:
       - Used with C(insertafter) or C(insertbefore).
-      - If set, C(insertafter) and C(inserbefore) find a first line has regular expression matches.
+      - If set, C(insertafter) and C(insertbefore) find a first line has regular expression matches.
     type: bool
     default: no
     version_added: "2.5"
@@ -284,7 +285,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         bre_ins = None
 
     # index[0] is the line num where regexp has been found
-    # index[1] is the line num where insertafter/inserbefore has been found
+    # index[1] is the line num where insertafter/insertbefore has been found
     index = [-1, -1]
     m = None
     b_line = to_bytes(line, errors='surrogate_or_strict')

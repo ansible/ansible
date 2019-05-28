@@ -42,7 +42,7 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters.)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
   zone:
@@ -53,19 +53,20 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a instance facts
+- name: " a instance facts"
   gcp_compute_instance_facts:
-      zone: us-central1-a
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    zone: us-central1-a
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -225,7 +226,7 @@ items:
           - If desired, you can also attach existing non-root persistent disks using
             this property. This field is only applicable for persistent disks.
           returned: success
-          type: str
+          type: dict
         type:
           description:
           - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
@@ -323,7 +324,7 @@ items:
                 IP address pool. If you specify a static external IP address, it must
                 live in the same region as the zone of the instance.
               returned: success
-              type: str
+              type: dict
             type:
               description:
               - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
@@ -365,7 +366,7 @@ items:
             global/networks/default is used; if the network is not specified but the
             subnetwork is specified, the network is inferred.
           returned: success
-          type: str
+          type: dict
         networkIP:
           description:
           - An IPv4 internal network address to assign to the instance for this network
@@ -380,7 +381,7 @@ items:
             If the network is in auto subnet mode, providing the subnetwork is optional.
             If the network is in custom subnet mode, then this field should be specified.
           returned: success
-          type: str
+          type: dict
     scheduling:
       description:
       - Sets the scheduling options for this instance.
@@ -493,7 +494,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

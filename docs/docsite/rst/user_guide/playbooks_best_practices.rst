@@ -140,40 +140,40 @@ It is suggested that you define groups based on purpose of the host (roles) and 
 
     # file: production
 
-    [atlanta-webservers]
+    [atlanta_webservers]
     www-atl-1.example.com
     www-atl-2.example.com
 
-    [boston-webservers]
+    [boston_webservers]
     www-bos-1.example.com
     www-bos-2.example.com
 
-    [atlanta-dbservers]
+    [atlanta_dbservers]
     db-atl-1.example.com
     db-atl-2.example.com
 
-    [boston-dbservers]
+    [boston_dbservers]
     db-bos-1.example.com
 
     # webservers in all geos
     [webservers:children]
-    atlanta-webservers
-    boston-webservers
+    atlanta_webservers
+    boston_webservers
 
     # dbservers in all geos
     [dbservers:children]
-    atlanta-dbservers
-    boston-dbservers
+    atlanta_dbservers
+    boston_dbservers
 
     # everything in the atlanta geo
     [atlanta:children]
-    atlanta-webservers
-    atlanta-dbservers
+    atlanta_webservers
+    atlanta_dbservers
 
     # everything in the boston geo
     [boston:children]
-    boston-webservers
-    boston-dbservers
+    boston_webservers
+    boston_dbservers
 
 .. _groups_and_hosts:
 

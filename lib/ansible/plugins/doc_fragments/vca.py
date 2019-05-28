@@ -48,11 +48,12 @@ options:
       type: str
       choices: [ absent, present ]
       default: present
-    verify_certs:
+    validate_certs:
       description:
         - If the certificates of the authentication is to be verified.
       type: bool
       default: yes
+      aliases: [ verify_certs ]
     vdc_name:
       description:
         - The name of the vdc where the gateway is located.

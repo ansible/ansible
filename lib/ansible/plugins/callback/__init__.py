@@ -35,7 +35,7 @@ from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
-from ansible.vars.clean import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 if PY3:
     # OrderedDict is needed for a backwards compat shim on Python3.x only
@@ -104,7 +104,7 @@ class CallbackBase(AnsiblePlugin):
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        abridged_result = strip_internal_keys(result)
+        abridged_result = strip_internal_keys(module_response_deepcopy(result))
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:

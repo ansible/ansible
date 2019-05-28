@@ -502,24 +502,8 @@ There are two ways that older hosts can be used with CredSSP:
   over TLS 1.0. This is the only option when connecting to Windows Server 2008, which
   has no way of supporting TLS 1.2
 
-To enable TLS 1.2 support on Server 2008 R2 and Windows 7, the optional update
-`KB3080079 <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1-1-and-tls-1-2-in-windows-7-or-wind>`_
-needs to be installed.
-
-Once the update has been applied and the Windows host rebooted, run the following
-PowerShell commands to enable TLS 1.2:
-
-.. code-block:: powershell
-
-    $reg_path = "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2"
-    New-Item -Path $reg_path
-    New-Item -Path "$reg_path\Server"
-    New-Item -Path "$reg_path\Client"
-
-    New-ItemProperty -Path "$reg_path\Server" -Name "Enabled" -Value 1 -PropertyType DWord
-    New-ItemProperty -Path "$reg_path\Server" -Name "DisabledByDefault" -Value 0 -PropertyType DWord
-    New-ItemProperty -Path "$reg_path\Client" -Name "Enabled" -Value 1 -PropertyType DWord
-    New-ItemProperty -Path "$reg_path\Client" -Name "DisabledByDefault" -Value 0 -PropertyType DWord
+See :ref:`winrm_tls12` for more information on how to enable TLS 1.2 on the
+Windows host.
 
 Set CredSSP Certificate
 +++++++++++++++++++++++
@@ -748,6 +732,132 @@ is located in the install path of the Python package
     use the systems built-in certificate store as a trust authority.
     Certificate validation will fail if the server's certificate issuer is
     only added to the system's truststore.
+
+.. _winrm_tls12:
+
+TLS 1.2 Support
+```````````````
+As WinRM runs over the HTTP protocol, using HTTPS means that the TLS protocol
+is used to encrypt the WinRM messages. TLS will automatically attempt to
+negotiate the best protocol and cipher suite that is available to both the
+client and the server. If a match cannot be found then Ansible will error out
+with a message similar to::
+
+    HTTPSConnectionPool(host='server', port=5986): Max retries exceeded with url: /wsman (Caused by SSLError(SSLError(1, '[SSL: UNSUPPORTED_PROTOCOL] unsupported protocol (_ssl.c:1056)')))
+
+Commonly this is when the Windows host has not been configured to support
+TLS v1.2 but it could also mean the Ansible controller has an older OpenSSL
+version installed.
+
+Windows 8 and Windows Server 2012 come with TLS v1.2 installed and enabled by
+default but older hosts, like Server 2008 R2 and Windows 7, have to be enabled
+manually.
+
+.. Note:: There is a bug with the TLS 1.2 patch for Server 2008 which will stop
+    Ansible from connecting to the Windows host. This means that Server 2008
+    cannot be configured to use TLS 1.2. Server 2008 R2 and Windows 7 are not
+    affected by this issue and can use TLS 1.2.
+
+To verify what protocol the Windows host supports, you can run the following
+command on the Ansible controller::
+
+    openssl s_client -connect <hostname>:5986
+
+The output will contain information about the TLS session and the ``Protocol``
+line will display the version that was negotiated::
+
+    New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-SHA
+    Server public key is 2048 bit
+    Secure Renegotiation IS supported
+    Compression: NONE
+    Expansion: NONE
+    No ALPN negotiated
+    SSL-Session:
+        Protocol  : TLSv1
+        Cipher    : ECDHE-RSA-AES256-SHA
+        Session-ID: 962A00001C95D2A601BE1CCFA7831B85A7EEE897AECDBF3D9ECD4A3BE4F6AC9B
+        Session-ID-ctx:
+        Master-Key: ....
+        Start Time: 1552976474
+        Timeout   : 7200 (sec)
+        Verify return code: 21 (unable to verify the first certificate)
+    ---
+
+    New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+    Server public key is 2048 bit
+    Secure Renegotiation IS supported
+    Compression: NONE
+    Expansion: NONE
+    No ALPN negotiated
+    SSL-Session:
+        Protocol  : TLSv1.2
+        Cipher    : ECDHE-RSA-AES256-GCM-SHA384
+        Session-ID: AE16000050DA9FD44D03BB8839B64449805D9E43DBD670346D3D9E05D1AEEA84
+        Session-ID-ctx:
+        Master-Key: ....
+        Start Time: 1552976538
+        Timeout   : 7200 (sec)
+        Verify return code: 21 (unable to verify the first certificate)
+
+If the host is returning ``TLSv1`` then it should be configured so that
+TLS v1.2 is enable. You can do this by running the following PowerShell
+script:
+
+.. code-block:: powershell
+
+    Function Enable-TLS12 {
+        param(
+            [ValidateSet("Server", "Client")]
+            [String]$Component = "Server"
+        )
+
+        $protocols_path = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols'
+        New-Item -Path "$protocols_path\TLS 1.2\$Component" -Force
+        New-ItemProperty -Path "$protocols_path\TLS 1.2\$Component" -Name Enabled -Value 1 -Type DWORD -Force
+        New-ItemProperty -Path "$protocols_path\TLS 1.2\$Component" -Name DisabledByDefault -Value 0 -Type DWORD -Force
+    }
+
+    Enable-TLS12 -Component Server
+
+    # Not required but highly recommended to enable the Client side TLS 1.2 components
+    Enable-TLS12 -Component Client
+
+    Restart-Computer
+
+The below Ansible tasks can also be used to enable TLS v1.2:
+
+.. code-block:: yaml+jinja
+
+    - name: enable TLSv1.2 support
+      win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\{{ item.type }}
+        name: '{{ item.property }}'
+        data: '{{ item.value }}'
+        type: dword
+        state: present
+        register: enable_tls12
+      loop:
+      - type: Server
+        property: Enabled
+        value: 1
+      - type: Server
+        property: DisabledByDefault
+        value: 0
+      - type: Client
+        property: Enabled
+        value: 1
+      - type: Client
+        property: DisabledByDefault
+        value: 0
+
+    - name: reboot if TLS config was applied
+      win_reboot:
+      when: enable_tls12 is changed
+
+There are other ways to configure the TLS protocols as well as the cipher
+suites that are offered by the Windows host. One tool that can give you a GUI
+to manage these settings is `IIS Crypto <https://www.nartac.com/Products/IISCrypto/>`_
+from Nartac Software.
 
 Limitations
 ```````````

@@ -34,6 +34,29 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
+    plan:
+        description:
+            - App service plan.
+            - It can be name of existing app service plan in same resource group as function app.
+            - "It can be resource id of existing app service plan. eg.,
+              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
+            - It can be a dict which contains C(name), C(resource_group).
+            - C(name). Name of app service plan.
+            - C(resource_group). Resource group name of app service plan.
+        version_added: "2.8"
+    container_settings:
+        description: Web app container settings.
+        suboptions:
+            name:
+                description: Name of container. eg. "imagename:tag"
+            registry_server_url:
+                description: Container registry server url. eg. mydockerregistry.io
+            registry_server_user:
+                description: The container registry server user name.
+            registry_server_password:
+                description:
+                    - The container registry server password.
+        version_added: "2.8"
     storage_account:
         description:
             - Name of the storage account to use.
@@ -58,29 +81,42 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Thomas Stringer (@tstringer)"
+    - "Thomas Stringer (@trstringer)"
 '''
 
 EXAMPLES = '''
-- name: create function app
+- name: Create a function app
   azure_rm_functionapp:
-      resource_group: myResourceGroup
-      name: myfunctionapp
-      storage_account: mystorageaccount
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    storage_account: myStorageAccount
 
-- name: create a function app with app settings
+- name: Create a function app with app settings
   azure_rm_functionapp:
-      resource_group: myResourceGroup
-      name: myfunctionapp
-      storage_account: mystorageaccount
-      app_settings:
-          setting1: value1
-          setting2: value2
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    storage_account: myStorageAccount
+    app_settings:
+      setting1: value1
+      setting2: value2
 
-- name: delete a function app
+- name: Create container based function app
   azure_rm_functionapp:
-      name: myfunctionapp
-      state: absent
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    storage_account: myStorageAccount
+    plan:
+      resource_group: myResourceGroup
+      name: myAppPlan
+    container_settings:
+      name: httpd
+      registry_server_url: index.docker.io
+
+- name: Delete a function app
+  azure_rm_functionapp:
+    resource_group: myResourceGroup
+    name: myFunctionApp
+    state: absent
 '''
 
 RETURN = '''
@@ -89,7 +125,7 @@ state:
     returned: success
     type: dict
     example:
-        id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/sites/myfunctionapp
+        id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/myFunctionApp
         name: myfunctionapp
         kind: functionapp
         location: East US
@@ -111,7 +147,7 @@ state:
           - name: myfunctionapp.scm.azurewebsites.net
             ssl_state: Disabled
             host_type: Repository
-        server_farm_id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/serverfarms/EastUSPlan
+        server_farm_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/serverfarms/EastUSPlan
         reserved: false
         last_modified_time_utc: 2017-08-22T18:54:01.190Z
         scm_site_also_stopped: false
@@ -129,11 +165,22 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.web.models import Site, SiteConfig, NameValuePair, SiteSourceControl
+    from azure.mgmt.web.models import (
+        site_config, app_service_plan, Site, SiteConfig, NameValuePair, SiteSourceControl,
+        AppServicePlan, SkuDescription
+    )
     from azure.mgmt.resource.resources import ResourceManagementClient
+    from msrest.polling import LROPoller
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
+container_settings_spec = dict(
+    name=dict(type='str', required=True),
+    registry_server_url=dict(type='str'),
+    registry_server_user=dict(type='str'),
+    registry_server_password=dict(type='str', no_log=True)
+)
 
 
 class AzureRMFunctionApp(AzureRMModuleBase):
@@ -149,7 +196,14 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 type='str',
                 aliases=['storage', 'storage_account_name']
             ),
-            app_settings=dict(type='dict')
+            app_settings=dict(type='dict'),
+            plan=dict(
+                type='raw'
+            ),
+            container_settings=dict(
+                type='dict',
+                options=container_settings_spec
+            )
         )
 
         self.results = dict(
@@ -163,6 +217,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         self.location = None
         self.storage_account = None
         self.app_settings = None
+        self.plan = None
+        self.container_settings = None
 
         required_if = [('state', 'present', ['storage_account'])]
 
@@ -191,7 +247,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 resource_group_name=self.resource_group,
                 name=self.name
             )
-            exists = True
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            exists = function_app is not None
         except CloudError as exc:
             exists = False
 
@@ -211,10 +268,28 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             else:
                 self.results['changed'] = False
         else:
+            kind = 'functionapp'
+            linux_fx_version = None
+            if self.container_settings and self.container_settings.get('name'):
+                kind = 'functionapp,linux,container'
+                linux_fx_version = 'DOCKER|'
+                if self.container_settings.get('registry_server_url'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_URL'] = 'https://' + self.container_settings['registry_server_url']
+                    linux_fx_version += self.container_settings['registry_server_url'] + '/'
+                linux_fx_version += self.container_settings['name']
+                if self.container_settings.get('registry_server_user'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_USERNAME'] = self.container_settings.get('registry_server_user')
+
+                if self.container_settings.get('registry_server_password'):
+                    self.app_settings['DOCKER_REGISTRY_SERVER_PASSWORD'] = self.container_settings.get('registry_server_password')
+
+            if not self.plan and function_app:
+                self.plan = function_app.server_farm_id
+
             if not exists:
                 function_app = Site(
                     location=self.location,
-                    kind='functionapp',
+                    kind=kind,
                     site_config=SiteConfig(
                         app_settings=self.aggregated_app_settings(),
                         scm_type='LocalGit'
@@ -223,6 +298,20 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 self.results['changed'] = True
             else:
                 self.results['changed'], function_app = self.update(function_app)
+
+            # get app service plan
+            if self.plan:
+                if isinstance(self.plan, dict):
+                    self.plan = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Web/serverfarms/{2}".format(
+                        self.subscription_id,
+                        self.plan.get('resource_group', self.resource_group),
+                        self.plan.get('name')
+                    )
+                function_app.server_farm_id = self.plan
+
+            # set linux fx version
+            if linux_fx_version:
+                function_app.site_config.linux_fx_version = linux_fx_version
 
             if self.check_mode:
                 self.results['state'] = function_app.as_dict()
@@ -267,11 +356,18 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         """Construct the necessary app settings required for an Azure Function App"""
 
         function_app_settings = []
-        for key in ['AzureWebJobsStorage', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'AzureWebJobsDashboard']:
-            function_app_settings.append(NameValuePair(name=key, value=self.storage_connection_string))
-        function_app_settings.append(NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~1'))
-        function_app_settings.append(NameValuePair(name='WEBSITE_NODE_DEFAULT_VERSION', value='6.5.0'))
-        function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.name))
+
+        if self.container_settings is None:
+            for key in ['AzureWebJobsStorage', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'AzureWebJobsDashboard']:
+                function_app_settings.append(NameValuePair(name=key, value=self.storage_connection_string))
+            function_app_settings.append(NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~1'))
+            function_app_settings.append(NameValuePair(name='WEBSITE_NODE_DEFAULT_VERSION', value='6.5.0'))
+            function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.name))
+        else:
+            function_app_settings.append(NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~2'))
+            function_app_settings.append(NameValuePair(name='WEBSITES_ENABLE_APP_SERVICE_STORAGE', value=False))
+            function_app_settings.append(NameValuePair(name='AzureWebJobsStorage', value=self.storage_connection_string))
+
         return function_app_settings
 
     def aggregated_app_settings(self):
@@ -279,10 +375,18 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
         function_app_settings = self.necessary_functionapp_settings()
         for app_setting_key in self.app_settings:
-            function_app_settings.append(NameValuePair(
-                name=app_setting_key,
-                value=self.app_settings[app_setting_key]
-            ))
+            found_setting = None
+            for s in function_app_settings:
+                if s.name == app_setting_key:
+                    found_setting = s
+                    break
+            if found_setting:
+                found_setting.value = self.app_settings[app_setting_key]
+            else:
+                function_app_settings.append(NameValuePair(
+                    name=app_setting_key,
+                    value=self.app_settings[app_setting_key]
+                ))
         return function_app_settings
 
     @property

@@ -273,19 +273,23 @@ options:
     description:
       - Path to the directory containing the databases of the certificate
         authorities yum should use to verify SSL certificates.
+    aliases: [ ca_cert ]
   sslclientcert:
     description:
       - Path to the SSL client certificate yum should use to connect to
         repos/remote sites.
+    aliases: [ client_cert ]
   sslclientkey:
     description:
       - Path to the SSL client key yum should use to connect to repos/remote
         sites.
+    aliases: [ client_key ]
   sslverify:
     description:
       - Defines whether yum should verify SSL certificates/hosts at all.
     type: bool
     default: 'yes'
+    aliases: [ validate_certs ]
   state:
     description:
       - State of the repo file.
@@ -593,11 +597,11 @@ def main():
         retries=dict(),
         s3_enabled=dict(type='bool'),
         skip_if_unavailable=dict(type='bool'),
-        sslcacert=dict(),
+        sslcacert=dict(aliases=['ca_cert']),
         ssl_check_cert_permissions=dict(type='bool'),
-        sslclientcert=dict(),
-        sslclientkey=dict(),
-        sslverify=dict(type='bool'),
+        sslclientcert=dict(aliases=['client_cert']),
+        sslclientkey=dict(aliases=['client_key']),
+        sslverify=dict(type='bool', aliases=['validate_certs']),
         state=dict(choices=['present', 'absent'], default='present'),
         throttle=dict(),
         timeout=dict(),

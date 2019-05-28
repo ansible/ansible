@@ -7,72 +7,74 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: aws_ec2
     plugin_type: inventory
-    short_description: ec2 inventory source
+    short_description: EC2 inventory source
     requirements:
         - boto3
         - botocore
     extends_documentation_fragment:
         - inventory_cache
         - constructed
+        - aws_credentials
     description:
         - Get inventory hosts from Amazon Web Services EC2.
-        - Uses a YAML configuration file that ends with aws_ec2.(yml|yaml).
+        - Uses a YAML configuration file that ends with C(aws_ec2.(yml|yaml)).
+    notes:
+        - If no credentials are provided and the control node has an associated IAM instance profile then the
+          role will be used for authentication.
     options:
         plugin:
-            description: token that ensures this is a source file for the 'aws_ec2' plugin.
+            description: Token that ensures this is a source file for the plugin.
             required: True
             choices: ['aws_ec2']
-        boto_profile:
-          description: The boto profile to use.
-          env:
-              - name: AWS_PROFILE
-              - name: AWS_DEFAULT_PROFILE
-        aws_access_key_id:
-          description: The AWS access key to use. If you have specified a profile, you don't need to provide
-              an access key/secret key/session token.
-          env:
-              - name: AWS_ACCESS_KEY_ID
-              - name: AWS_ACCESS_KEY
-              - name: EC2_ACCESS_KEY
-        aws_secret_access_key:
-          description: The AWS secret key that corresponds to the access key. If you have specified a profile,
-              you don't need to provide an access key/secret key/session token.
-          env:
-              - name: AWS_SECRET_ACCESS_KEY
-              - name: AWS_SECRET_KEY
-              - name: EC2_SECRET_KEY
-        aws_security_token:
-          description: The AWS security token if using temporary access and secret keys.
-          env:
-              - name: AWS_SECURITY_TOKEN
-              - name: AWS_SESSION_TOKEN
-              - name: EC2_SECURITY_TOKEN
         regions:
           description:
-            - A list of regions in which to describe EC2 instances.
-            - If empty (the default) default this will include all regions, except possibly restricted ones like us-gov-west-1 and cn-north-1.
+              - A list of regions in which to describe EC2 instances.
+              - If empty (the default) default this will include all regions, except possibly restricted ones like us-gov-west-1 and cn-north-1.
           type: list
           default: []
         hostnames:
-          description: A list in order of precedence for hostname variables. You can use the options specified in
-              U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
-              use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
+          description:
+              - A list in order of precedence for hostname variables.
+              - You can use the options specified in U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options).
+              - To use tags as hostnames use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
           type: list
           default: []
         filters:
-          description: A dictionary of filter value pairs. Available filters are listed here
-              U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
+          description:
+              - A dictionary of filter value pairs.
+              - Available filters are listed here U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options).
           type: dict
           default: {}
+        include_extra_api_calls:
+          description:
+              - Add two additional API calls for every instance to include 'persistent' and 'events' host variables.
+              - Spot instances may be persistent and instances may have associated events.
+          type: bool
+          default: False
+          version_added: '2.8'
         strict_permissions:
-          description: By default if a 403 (Forbidden) is encountered this plugin will fail. You can set strict_permissions to
-              False in the inventory config file which will allow 403 errors to be gracefully skipped.
+          description:
+              - By default if a 403 (Forbidden) error code is encountered this plugin will fail.
+              - You can set this option to False in the inventory config file which will allow 403 errors to be gracefully skipped.
           type: bool
           default: True
+        use_contrib_script_compatible_sanitization:
+          description:
+            - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
+              This option allows you to override that, in efforts to allow migration from the old inventory script and
+              matches the sanitization of groups when the script's ``replace_dash_in_groups`` option is set to ``False``.
+              To replicate behavior of ``replace_dash_in_groups = True`` with constructed groups,
+              you will need to replace hyphens with underscores via the regex_replace filter for those entries.
+            - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
+              otherwise the core engine will just use the standard sanitization on top.
+            - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
+              which group names end up being used as.
+          type: bool
+          default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
-
 # Minimal example using environment vars or instance role credentials
 # Fetch all hosts in us-east-1, the hostname is the public DNS if it exists, otherwise the private IP address
 plugin: aws_ec2
@@ -82,23 +84,24 @@ regions:
 # Example using filters, ignoring permission errors, and specifying the hostname precedence
 plugin: aws_ec2
 boto_profile: aws_profile
-regions: # populate inventory with instances in these regions
+# Populate inventory with instances in these regions
+regions:
   - us-east-1
   - us-east-2
 filters:
-  # all instances with their `Environment` tag set to `dev`
+  # All instances with their `Environment` tag set to `dev`
   tag:Environment: dev
-  # all dev and QA hosts
+  # All dev and QA hosts
   tag:Environment:
     - dev
     - qa
   instance.group-id: sg-xxxxxxxx
-# ignores 403 errors rather than failing
+# Ignores 403 errors rather than failing
 strict_permissions: False
-# note: I(hostnames) sets the inventory_hostname. To modify ansible_host without modifying
+# Note: I(hostnames) sets the inventory_hostname. To modify ansible_host without modifying
 # inventory_hostname use compose (see example below).
 hostnames:
-  - tag:Name=Tag1,Name=Tag2  # return specific hosts only
+  - tag:Name=Tag1,Name=Tag2  # Return specific hosts only
   - tag:CustomDNSName
   - dns-name
   - private-ip-address
@@ -111,36 +114,38 @@ regions:
 # keyed_groups may be used to create custom groups
 strict: False
 keyed_groups:
-  # add e.g. x86_64 hosts to an arch_x86_64 group
+  # Add e.g. x86_64 hosts to an arch_x86_64 group
   - prefix: arch
     key: 'architecture'
-  # add hosts to tag_Name_Value groups for each Name/Value tag pair
+  # Add hosts to tag_Name_Value groups for each Name/Value tag pair
   - prefix: tag
     key: tags
-  # add hosts to e.g. instance_type_z3_tiny
+  # Add hosts to e.g. instance_type_z3_tiny
   - prefix: instance_type
     key: instance_type
-  # create security_groups_sg_abcd1234 group for each SG
+  # Create security_groups_sg_abcd1234 group for each SG
   - key: 'security_groups|json_query("[].group_id")'
     prefix: 'security_groups'
-  # create a group for each value of the Application tag
+  # Create a group for each value of the Application tag
   - key: tags.Application
     separator: ''
-  # create a group per region e.g. aws_region_us_east_2
+  # Create a group per region e.g. aws_region_us_east_2
   - key: placement.region
     prefix: aws_region
-# set individual variables with compose
+# Set individual variables with compose
 compose:
-  # use the private IP address to connect to the host
+  # Use the private IP address to connect to the host
   # (note: this does not modify inventory_hostname, which is set via I(hostnames))
   ansible_host: private_ip_address
 '''
+
+import re
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.utils.display import Display
 
 try:
@@ -379,7 +384,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 reservations = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
                 instances = []
                 for r in reservations:
-                    instances.extend(r.get('Instances'))
+                    new_instances = r['Instances']
+                    for instance in new_instances:
+                        instance.update(self._get_reservation_details(r))
+                        if self.get_option('include_extra_api_calls'):
+                            instance.update(self._get_event_set_and_persistence(connection, instance['InstanceId'], instance.get('SpotInstanceRequestId')))
+                    instances.extend(new_instances)
             except botocore.exceptions.ClientError as e:
                 if e.response['ResponseMetadata']['HTTPStatusCode'] == 403 and not strict_permissions:
                     instances = []
@@ -391,6 +401,36 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             all_instances.extend(instances)
 
         return sorted(all_instances, key=lambda x: x['InstanceId'])
+
+    def _get_reservation_details(self, reservation):
+        return {
+            'OwnerId': reservation['OwnerId'],
+            'RequesterId': reservation.get('RequesterId', ''),
+            'ReservationId': reservation['ReservationId']
+        }
+
+    def _get_event_set_and_persistence(self, connection, instance_id, spot_instance):
+        host_vars = {'Events': '', 'Persistent': False}
+        try:
+            kwargs = {'InstanceIds': [instance_id]}
+            host_vars['Events'] = connection.describe_instance_status(**kwargs)['InstanceStatuses'][0].get('Events', '')
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            if not self.get_option('strict_permissions'):
+                pass
+            else:
+                raise AnsibleError("Failed to describe instance status: %s" % to_native(e))
+        if spot_instance:
+            try:
+                kwargs = {'SpotInstanceRequestIds': [spot_instance]}
+                host_vars['Persistent'] = bool(
+                    connection.describe_spot_instance_requests(**kwargs)['SpotInstanceRequests'][0].get('Type') == 'persistent'
+                )
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                if not self.get_option('strict_permissions'):
+                    pass
+                else:
+                    raise AnsibleError("Failed to describe spot instance requests: %s" % to_native(e))
+        return host_vars
 
     def _get_tag_hostname(self, preference, instance):
         tag_hostnames = preference.split('tag:', 1)[1]
@@ -431,7 +471,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 break
         if hostname:
             if ':' in to_text(hostname):
-                return to_safe_group_name(to_text(hostname))
+                return self._sanitize_group_name((to_text(hostname)))
             else:
                 return to_text(hostname)
 
@@ -489,9 +529,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param config_data: contents of the inventory config file
         '''
 
-        self.boto_profile = self.get_option('boto_profile')
-        self.aws_access_key_id = self.get_option('aws_access_key_id')
-        self.aws_secret_access_key = self.get_option('aws_secret_access_key')
+        self.boto_profile = self.get_option('aws_profile')
+        self.aws_access_key_id = self.get_option('aws_access_key')
+        self.aws_secret_access_key = self.get_option('aws_secret_key')
         self.aws_security_token = self.get_option('aws_security_token')
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
@@ -518,9 +558,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return False
 
     def parse(self, inventory, loader, path, cache=True):
+
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        config_data = self._read_config_data(path)
+        self._read_config_data(path)
+
+        if self.get_option('use_contrib_script_compatible_sanitization'):
+            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+
         self._set_credentials()
 
         # get user specifications
@@ -539,7 +584,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         cache_needs_update = False
         if cache:
             try:
-                results = self.cache.get(cache_key)
+                results = self._cache[cache_key]
             except KeyError:
                 # if cache expires or cache file doesn't exist
                 cache_needs_update = True
@@ -552,4 +597,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
-            self.cache.set(cache_key, results)
+            self._cache[cache_key] = results
+
+    @staticmethod
+    def _legacy_script_compatible_group_sanitization(name):
+
+        # note that while this mirrors what the script used to do, it has many issues with unicode and usability in python
+        regex = re.compile(r"[^A-Za-z0-9\_\-]")
+
+        return regex.sub('_', name)

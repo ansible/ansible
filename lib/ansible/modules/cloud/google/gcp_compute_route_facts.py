@@ -49,18 +49,19 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a route facts
+- name: " a route facts"
   gcp_compute_route_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -90,7 +91,7 @@ items:
       description:
       - The network that this route applies to.
       returned: success
-      type: str
+      type: dict
     priority:
       description:
       - The priority of this route. Priority is used to break ties in cases where
@@ -121,7 +122,7 @@ items:
         instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
         .'
       returned: success
-      type: str
+      type: dict
     nextHopIp:
       description:
       - Network IP address of an instance that should handle matching packets.
@@ -131,7 +132,7 @@ items:
       description:
       - URL to a VpnTunnel that should handle matching packets.
       returned: success
-      type: str
+      type: dict
     nextHopNetwork:
       description:
       - URL to a Network that should handle matching packets.
@@ -161,7 +162,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

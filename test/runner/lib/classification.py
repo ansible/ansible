@@ -585,7 +585,7 @@ class PathMapper(object):
                     'units': 'all',
                 }
 
-        if path.startswith('lib/ansible/plugins/docs_fragments/'):
+        if path.startswith('lib/ansible/plugins/doc_fragments/'):
             return {
                 'sanity': 'all',
             }
@@ -631,17 +631,14 @@ class PathMapper(object):
             if not os.path.exists(path):
                 return minimal
 
-            target = self.integration_targets_by_name[path.split('/')[3]]
+            target = self.integration_targets_by_name.get(path.split('/')[3])
+
+            if not target:
+                display.warning('Unexpected non-target found: %s' % path)
+                return minimal
 
             if 'hidden/' in target.aliases:
-                if target.type == 'role':
-                    return minimal  # already expanded using get_dependent_paths
-
-                return {
-                    'integration': self.integration_all_target,
-                    'windows-integration': self.integration_all_target,
-                    'network-integration': self.integration_all_target,
-                }
+                return minimal  # already expanded using get_dependent_paths
 
             return {
                 'integration': target.name if 'posix/' in target.aliases else None,

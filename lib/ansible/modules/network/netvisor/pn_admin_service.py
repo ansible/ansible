@@ -135,7 +135,6 @@ from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, booleanArgs, r
 def main():
     """ This section is for arguments parsing """
 
-    global state_map
     state_map = dict(
         update='admin-service-modify'
     )

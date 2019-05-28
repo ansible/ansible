@@ -48,7 +48,6 @@ class HttpApi(HttpApiBase):
         self._device_info = None
         self._session_support = None
 
-    @property
     def supports_sessions(self):
         use_session = self.get_option('eos_use_sessions')
         try:
@@ -119,16 +118,16 @@ class HttpApi(HttpApiBase):
     def get_device_operations(self):
         return {
             'supports_diff_replace': True,
-            'supports_commit': bool(self.supports_sessions),
+            'supports_commit': bool(self.supports_sessions()),
             'supports_rollback': False,
             'supports_defaults': False,
-            'supports_onbox_diff': bool(self.supports_sessions),
+            'supports_onbox_diff': bool(self.supports_sessions()),
             'supports_commit_comment': False,
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
-            'supports_generate_diff': not bool(self.supports_sessions),
-            'supports_replace': bool(self.supports_sessions),
+            'supports_generate_diff': not bool(self.supports_sessions()),
+            'supports_replace': bool(self.supports_sessions()),
         }
 
     def get_capabilities(self):

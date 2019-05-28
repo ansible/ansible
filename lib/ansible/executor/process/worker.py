@@ -67,25 +67,36 @@ class WorkerProcess(multiprocessing.Process):
         self._variable_manager = variable_manager
         self._shared_loader_obj = shared_loader_obj
 
-        if sys.stdin.isatty():
-            # dupe stdin, if we have one
-            self._new_stdin = sys.stdin
-            try:
-                fileno = sys.stdin.fileno()
-                if fileno is not None:
-                    try:
-                        self._new_stdin = os.fdopen(os.dup(fileno))
-                    except OSError:
-                        # couldn't dupe stdin, most likely because it's
-                        # not a valid file descriptor, so we just rely on
-                        # using the one that was passed in
-                        pass
-            except (AttributeError, ValueError):
-                # couldn't get stdin's fileno, so we just carry on
-                pass
-        else:
-            # set to /dev/null
-            self._new_stdin = os.devnull
+    def _save_stdin(self):
+        self._new_stdin = os.devnull
+        try:
+            if sys.stdin.isatty() and sys.stdin.fileno() is not None:
+                try:
+                    self._new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
+                except OSError:
+                    # couldn't dupe stdin, most likely because it's
+                    # not a valid file descriptor, so we just rely on
+                    # using the one that was passed in
+                    pass
+        except (AttributeError, ValueError):
+            # couldn't get stdin's fileno, so we just carry on
+            pass
+
+    def start(self):
+        '''
+        multiprocessing.Process replaces the worker's stdin with a new file
+        opened on os.devnull, but we wish to preserve it if it is connected to
+        a terminal. Therefore dup a copy prior to calling the real start(),
+        ensuring the descriptor is preserved somewhere in the new child, and
+        make sure it is closed in the parent when start() completes.
+        '''
+
+        self._save_stdin()
+        try:
+            return super(WorkerProcess, self).start()
+        finally:
+            if self._new_stdin != os.devnull:
+                self._new_stdin.close()
 
     def _hard_exit(self, e):
         '''

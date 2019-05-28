@@ -133,6 +133,20 @@ EXAMPLES = '''
     properties: ["config.hardware.memoryMB", "guest.disk", "overallStatus"]
   delegate_to: localhost
   register: facts
+
+- name: Gather Managed object ID (moid) from a guest using the vSphere API output schema for REST Calls
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter_name }}"
+    name: "{{ vm_name }}"
+    schema: "vsphere"
+    properties:
+      - _moId
+  delegate_to: localhost
+  register: moid_facts
 '''
 
 RETURN = """
@@ -192,7 +206,9 @@ instance:
         "tags": [
             "backup"
         ],
-        "vnc": {}
+        "vnc": {},
+        "moid": "vm-42",
+        "vimref": "vim.VirtualMachine:vm-42"
     }
 """
 
@@ -202,17 +218,16 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
     from com.vmware.vapi.std_client import DynamicID
-    from com.vmware.cis.tagging_client import Tag, TagAssociation
-    HAS_VCLOUD = True
+    HAS_VSPHERE = True
 except ImportError:
-    HAS_VCLOUD = False
+    HAS_VSPHERE = False
 
 
 class VmwareTag(VmwareRestClient):
     def __init__(self, module):
         super(VmwareTag, self).__init__(module)
-        self.tag_service = Tag(self.connect)
-        self.tag_association_svc = TagAssociation(self.connect)
+        self.tag_service = self.api_client.tagging.Tag
+        self.tag_association_svc = self.api_client.tagging.TagAssociation
 
 
 def main():
@@ -229,7 +244,8 @@ def main():
         properties=dict(type='list')
     )
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']])
+                           required_one_of=[['name', 'uuid']],
+                           supports_check_mode=True)
 
     if module.params.get('folder'):
         # FindByInventoryPath() does not require an absolute path
@@ -250,9 +266,8 @@ def main():
                 instance = pyv.gather_facts(vm)
             else:
                 instance = pyv.to_json(vm, module.params['properties'])
-
             if module.params.get('tags'):
-                if not HAS_VCLOUD:
+                if not HAS_VSPHERE:
                     module.fail_json(msg="Unable to find 'vCloud Suite SDK' Python library which is required."
                                          " Please refer this URL for installation steps"
                                          " - https://code.vmware.com/web/sdk/60/vcloudsuite-python")

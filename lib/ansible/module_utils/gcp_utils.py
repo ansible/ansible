@@ -21,6 +21,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 import ast
 import os
+import json
 
 
 def navigate_hash(source, path, default=None):
@@ -61,15 +62,8 @@ def replace_resource_dict(item, value):
     else:
         if not item:
             return item
-        if isinstance(item, dict):
+        else:
             return item.get(value)
-
-        # Item could be a string or a string representing a dictionary.
-        try:
-            new_item = ast.literal_eval(item)
-            return replace_resource_dict(new_item, value)
-        except ValueError:
-            return item
 
 
 # Handles all authentication and HTTP sessions for GCP API calls.
@@ -143,7 +137,8 @@ class GcpSession(object):
                 msg="Service Account Email only works with Machine Account-based authentication"
             )
 
-        if self.module.params.get('service_account_file') is not None and self.module.params['auth_kind'] != 'serviceaccount':
+        if (self.module.params.get('service_account_file') is not None or
+                self.module.params.get('service_account_contents') is not None) and self.module.params['auth_kind'] != 'serviceaccount':
             self.module.fail_json(
                 msg="Service Account File only works with Service Account-based authentication"
             )
@@ -153,9 +148,12 @@ class GcpSession(object):
         if cred_type == 'application':
             credentials, project_id = google.auth.default(scopes=self.module.params['scopes'])
             return credentials
-        elif cred_type == 'serviceaccount':
+        elif cred_type == 'serviceaccount' and self.module.params.get('service_account_file'):
             path = os.path.realpath(os.path.expanduser(self.module.params['service_account_file']))
             return service_account.Credentials.from_service_account_file(path).with_scopes(self.module.params['scopes'])
+        elif cred_type == 'serviceaccount' and self.module.params.get('service_account_contents'):
+            cred = json.loads(self.module.params.get('service_account_contents'))
+            return service_account.Credentials.from_service_account_info(cred).with_scopes(self.module.params['scopes'])
         elif cred_type == 'machineaccount':
             return google.auth.compute_engine.Credentials(
                 self.module.params['service_account_email'])
@@ -199,6 +197,10 @@ class GcpModule(AnsibleModule):
                     required=False,
                     fallback=(env_fallback, ['GCP_SERVICE_ACCOUNT_FILE']),
                     type='path'),
+                service_account_contents=dict(
+                    required=False,
+                    fallback=(env_fallback, ['GCP_SERVICE_ACCOUNT_CONTENTS']),
+                    type='str'),
                 scopes=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_SCOPES']),
@@ -211,7 +213,7 @@ class GcpModule(AnsibleModule):
             mutual = kwargs['mutually_exclusive']
 
         kwargs['mutually_exclusive'] = mutual.append(
-            ['service_account_email', 'service_account_file']
+            ['service_account_email', 'service_account_file', 'service_account_contents']
         )
 
         AnsibleModule.__init__(self, *args, **kwargs)
@@ -228,12 +230,16 @@ class GcpModule(AnsibleModule):
         return new
 
 
-# This class takes in two dictionaries `a` and `b`.
-# These are dictionaries of arbitrary depth, but made up of standard Python
-# types only.
-# This differ will compare all values in `a` to those in `b`.
-# Note: Only keys in `a` will be compared. Extra keys in `b` will be ignored.
-# Note: On all lists, order does matter.
+# This class does difference checking according to a set of GCP-specific rules.
+# This will be primarily used for checking dictionaries.
+# In an equivalence check, the left-hand dictionary will be the request and
+# the right-hand side will be the response.
+
+# Rules:
+# Extra keys in response will be ignored.
+# Ordering of lists does not matter.
+#   - exception: lists of dictionaries are
+#     assumed to be in sorted order.
 class GcpRequest(object):
     def __init__(self, request):
         self.request = request
@@ -244,31 +250,48 @@ class GcpRequest(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    # Returns the difference between `self.request` and `b`
-    def difference(self, b):
-        return self._compare_dicts(self.request, b.request)
+    # Returns the difference between a request + response.
+    # While this is used under the hood for __eq__ and __ne__,
+    # it is useful for debugging.
+    def difference(self, response):
+        return self._compare_value(self.request, response.request)
 
-    def _compare_dicts(self, dict1, dict2):
+    def _compare_dicts(self, req_dict, resp_dict):
         difference = {}
-        for key in dict1:
-            difference[key] = self._compare_value(dict1.get(key), dict2.get(key))
+        for key in req_dict:
+            if resp_dict.get(key):
+                difference[key] = self._compare_value(req_dict.get(key), resp_dict.get(key))
 
         # Remove all empty values from difference.
-        difference2 = {}
+        sanitized_difference = {}
         for key in difference:
             if difference[key]:
-                difference2[key] = difference[key]
+                sanitized_difference[key] = difference[key]
 
-        return difference2
+        return sanitized_difference
 
     # Takes in two lists and compares them.
-    def _compare_lists(self, list1, list2):
+    # All things in the list should be identical (even if a dictionary)
+    def _compare_lists(self, req_list, resp_list):
+        # Have to convert each thing over to unicode.
+        # Python doesn't handle equality checks between unicode + non-unicode well.
         difference = []
-        for index in range(len(list1)):
-            value1 = list1[index]
-            if index < len(list2):
-                value2 = list2[index]
-                difference.append(self._compare_value(value1, value2))
+        new_req_list = self._convert_value(req_list)
+        new_resp_list = self._convert_value(resp_list)
+
+        # We have to compare each thing in the request to every other thing
+        # in the response.
+        # This is because the request value will be a subset of the response value.
+        # The assumption is that these lists will be small enough that it won't
+        # be a performance burden.
+        for req_item in new_req_list:
+            found_item = False
+            for resp_item in new_resp_list:
+                # Looking for a None value here.
+                if not self._compare_value(req_item, resp_item):
+                    found_item = True
+            if not found_item:
+                difference.append(req_item)
 
         difference2 = []
         for value in difference:
@@ -277,25 +300,69 @@ class GcpRequest(object):
 
         return difference2
 
-    def _compare_value(self, value1, value2):
+    # Compare two values of arbitrary types.
+    def _compare_value(self, req_value, resp_value):
         diff = None
         # If a None is found, a difference does not exist.
         # Only differing values matter.
-        if not value2:
+        if not resp_value:
             return None
 
         # Can assume non-None types at this point.
         try:
-            if isinstance(value1, list):
-                diff = self._compare_lists(value1, value2)
-            elif isinstance(value2, dict):
-                diff = self._compare_dicts(value1, value2)
+            if isinstance(req_value, list):
+                diff = self._compare_lists(req_value, resp_value)
+            elif isinstance(req_value, dict):
+                diff = self._compare_dicts(req_value, resp_value)
+            elif isinstance(req_value, bool):
+                diff = self._compare_boolean(req_value, resp_value)
             # Always use to_text values to avoid unicode issues.
-            elif to_text(value1) != to_text(value2):
-                diff = value1
+            elif to_text(req_value) != to_text(resp_value):
+                diff = req_value
         # to_text may throw UnicodeErrors.
         # These errors shouldn't crash Ansible and should be hidden.
         except UnicodeError:
             pass
 
         return diff
+
+    # Compare two boolean values.
+    def _compare_boolean(self, req_value, resp_value):
+        try:
+            # Both True
+            if req_value and isinstance(resp_value, bool) and resp_value:
+                return None
+            # Value1 True, resp_value 'true'
+            elif req_value and to_text(resp_value) == 'true':
+                return None
+            # Both False
+            elif not req_value and isinstance(resp_value, bool) and not resp_value:
+                return None
+            # Value1 False, resp_value 'false'
+            elif not req_value and to_text(resp_value) == 'false':
+                return None
+            else:
+                return resp_value
+
+        # to_text may throw UnicodeErrors.
+        # These errors shouldn't crash Ansible and should be hidden.
+        except UnicodeError:
+            return None
+
+    # Python (2 esp.) doesn't do comparisons between unicode + non-unicode well.
+    # This leads to a lot of false positives when diffing values.
+    # The Ansible to_text() function is meant to get all strings
+    # into a standard format.
+    def _convert_value(self, value):
+        if isinstance(value, list):
+            new_list = []
+            for item in value:
+                new_list.append(self._convert_value(item))
+            return new_list
+        elif isinstance(value, dict):
+            new_dict = {}
+            for key in value:
+                new_dict[key] = self._convert_value(value[key])
+            return new_dict
+        else:
+            return to_text(value)

@@ -16,9 +16,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_aks
 version_added: "2.6"
-short_description: Manage a managed Azure Container Service (AKS) Instance.
+short_description: Manage a managed Azure Container Service (AKS) instance
 description:
-    - Create, update and delete a managed Azure Container Service (AKS) Instance.
+    - Create, update and delete a managed Azure Container Service (AKS) instance.
 
 options:
     resource_group:
@@ -47,11 +47,11 @@ options:
             - Version of Kubernetes specified when creating the managed cluster.
     linux_profile:
         description:
-            - The linux profile suboptions.
+            - The Linux profile suboptions.
         suboptions:
             admin_username:
                 description:
-                  - The Admin Username for the Cluster.
+                    - The Admin Username for the cluster.
                 required: true
             ssh_key:
                 description:
@@ -63,16 +63,16 @@ options:
         suboptions:
             name:
                 description:
-                  - Unique name of the agent pool profile in the context of the subscription and resource group.
+                    - Unique name of the agent pool profile in the context of the subscription and resource group.
                 required: true
             count:
                 description:
                     - Number of agents (VMs) to host docker containers.
-                    - Allowed values must be in the range of 1 to 100 (inclusive).
+                    - Allowed values must be in the range of C(1) to C(100) (inclusive).
                 required: true
             vm_size:
                 description:
-                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                    - The VM Size of each of the Agent Pool VM's (e.g. C(Standard_F1) / C(Standard_D2v2)).
                 required: true
             os_disk_size_gb:
                 description:
@@ -95,7 +95,7 @@ options:
             - Existing non-RBAC enabled AKS clusters cannot currently be updated for RBAC use.
         type: bool
         default: no
-        version_added: 2.8
+        version_added: "2.8"
     network_profile:
         description:
             - Profile of network configuration.
@@ -107,30 +107,38 @@ options:
                     - With C(kubenet), nodes get an IP address from the Azure virtual network subnet.
                     - AKS features such as Virtual Nodes or network policies aren't supported with C(kubenet).
                     - C(azure) enables Azure Container Networking Interface(CNI), every pod gets an IP address from the subnet and can be accessed directly.
+                default: kubenet
                 choices:
                     - azure
                     - kubenet
             network_policy:
                 description: Network policy used for building Kubernetes network.
+                choices:
+                    - azure
+                    - calico
             pod_cidr:
                 description:
-                    - A CIDR notation IP range from which to assign pod IPs when kubenet is used.
+                    - A CIDR notation IP range from which to assign pod IPs when I(network_plugin=kubenet) is used.
                     - It should be a large address space that isn't in use elsewhere in your network environment.
                     - This address range must be large enough to accommodate the number of nodes that you expect to scale up to.
+                default: "10.244.0.0/16"
             service_cidr:
                 description:
                     - A CIDR notation IP range from which to assign service cluster IPs.
                     - It must not overlap with any Subnet IP ranges.
                     - It should be the *.10 address of your service IP address range.
+                default: "10.0.0.0/16"
             dns_service_ip:
                 description:
                     - An IP address assigned to the Kubernetes DNS service.
                     - It must be within the Kubernetes service address range specified in serviceCidr.
+                default: "10.0.0.10"
             docker_bridge_cidr:
                 description:
                     - A CIDR notation IP range assigned to the Docker bridge network.
                     - It must not overlap with any Subnet IP ranges or the Kubernetes service address range.
-        version_added: 2.8
+                default: "172.17.0.1/16"
+        version_added: "2.8"
     aad_profile:
         description:
             - Profile of Azure Active Directory configuration.
@@ -145,7 +153,7 @@ options:
                 description:
                     - The AAD tenant ID to use for authentication.
                     - If not specified, will use the tenant of the deployment subscription.
-        version_added: 2.8
+        version_added: "2.8"
     addon:
         description:
             - Profile of managed cluster add-on.
@@ -188,22 +196,22 @@ options:
                     subnet_resource_id:
                         description:
                             - Subnet associdated to the cluster.
-        version_added: 2.8
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Sertac Ozercan (@sozercan)"
-    - "Yuwei Zhou (@yuwzho)"
+    - Sertac Ozercan (@sozercan)
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
 EXAMPLES = '''
     - name: Create a managed Azure Container Services (AKS) instance
       azure_rm_aks:
-        name: acctestaks1
+        name: myAKS
         location: eastus
         resource_group: myResourceGroup
         dns_prefix: akstest
@@ -222,13 +230,13 @@ EXAMPLES = '''
 
     - name: Remove a managed Azure Container Services (AKS) instance
       azure_rm_aks:
-        name: acctestaks3
+        name: myAKS
         resource_group: myResourceGroup
         state: absent
 '''
 RETURN = '''
 state:
-    description: Current state of the Azure Container Service (AKS)
+    description: Current state of the Azure Container Service (AKS).
     returned: always
     type: dict
     example:
@@ -244,7 +252,7 @@ state:
            vnet_subnet_id: Null
         changed: false
         dns_prefix: aks9860bdcd89
-        id: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/yuwzhoaks/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
+        id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
         kubernetes_version: 1.11.4
         linux_profile:
@@ -254,7 +262,7 @@ state:
         name: aks9860bdc
         provisioning_state: Succeeded
         service_principal_profile:
-           client_id: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+           client_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         tags: {}
         type: Microsoft.ContainerService/ManagedClusters
 '''
@@ -540,10 +548,10 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                 self.fail('You cannot specify more than one agent_pool_profiles currently')
 
             available_versions = self.get_all_versions()
-            if self.kubernetes_version not in available_versions.keys():
-                self.fail("Unsupported kubernetes version. Excepted one of {0} but get {1}".format(available_versions.keys(), self.kubernetes_version))
             if not response:
                 to_be_updated = True
+                if self.kubernetes_version not in available_versions.keys():
+                    self.fail("Unsupported kubernetes version. Expected one of {0} but got {1}".format(available_versions.keys(), self.kubernetes_version))
             else:
                 self.results = response
                 self.results['changed'] = False
@@ -582,7 +590,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         to_be_updated = True
 
                     if response['kubernetes_version'] != self.kubernetes_version:
-                        upgrade_versions = available_versions.get(response['kubernetes_version'])
+                        upgrade_versions = available_versions.get(response['kubernetes_version']) or available_versions.keys()
                         if upgrade_versions and self.kubernetes_version not in upgrade_versions:
                             self.fail('Cannot upgrade kubernetes version to {0}, supported value are {1}'.format(self.kubernetes_version, upgrade_versions))
                         to_be_updated = True

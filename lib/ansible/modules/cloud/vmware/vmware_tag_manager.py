@@ -24,13 +24,13 @@ description:
 version_added: 2.8
 author:
 - Abhijeet Kasurde (@Akasurde)
+- Frederic Van Reet (@GBrawl)
 notes:
 - Tested on vSphere 6.5
 requirements:
 - python >= 2.6
 - PyVmomi
 - vSphere Automation SDK
-- vCloud Suite SDK
 options:
     tag_names:
       description:
@@ -49,10 +49,11 @@ options:
       description:
       - Type of object to work with.
       required: True
-      choices: [ VirtualMachine ]
+      choices: [ VirtualMachine, Datacenter, ClusterComputeResource, HostSystem, DistributedVirtualSwitch, DistributedVirtualPortgroup ]
     object_name:
       description:
       - Name of the object to work with.
+      - For DistributedVirtualPortgroups the format should be "switch_name:portgroup_name"
       required: True
 extends_documentation_fragment: vmware_rest_client.documentation
 '''
@@ -72,7 +73,7 @@ EXAMPLES = r'''
     state: add
   delegate_to: localhost
 
-- name: Remove a tag to a virtual machine
+- name: Remove a tag from a virtual machine
   vmware_tag_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -83,6 +84,32 @@ EXAMPLES = r'''
     object_name: Fedora_VM
     object_type: VirtualMachine
     state: remove
+  delegate_to: localhost
+
+- name: Add tags to a distributed virtual switch
+  vmware_tag_manager:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    tag_names:
+      - Sample_Tag_0003
+    object_name: Switch_0001
+    object_type: DistributedVirtualSwitch
+    state: add
+  delegate_to: localhost
+
+- name: Add tags to a distributed virtual portgroup
+  vmware_tag_manager:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    tag_names:
+      - Sample_Tag_0004
+    object_name: Switch_0001:Portgroup_0001
+    object_type: DistributedVirtualPortgroup
+    state: add
   delegate_to: localhost
 '''
 
@@ -105,13 +132,11 @@ tag_status:
         ]
     }
 '''
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
-from ansible.module_utils.vmware import PyVmomi
+from ansible.module_utils.vmware import (PyVmomi, find_dvs_by_name, find_dvspg_by_name)
 try:
     from com.vmware.vapi.std_client import DynamicID
-    from com.vmware.cis.tagging_client import Tag, TagAssociation, Category
 except ImportError:
     pass
 
@@ -131,6 +156,26 @@ class VmwareTagManager(VmwareRestClient):
         if self.object_type == 'VirtualMachine':
             self.managed_object = self.pyv.get_vm_or_template(self.object_name)
 
+        if self.object_type == 'Datacenter':
+            self.managed_object = self.pyv.find_datacenter_by_name(self.object_name)
+
+        if self.object_type == 'ClusterComputeResource':
+            self.managed_object = self.pyv.find_cluster_by_name(self.object_name)
+
+        if self.object_type == 'HostSystem':
+            self.managed_object = self.pyv.find_hostsystem_by_name(self.object_name)
+
+        if self.object_type == 'DistributedVirtualSwitch':
+            self.managed_object = find_dvs_by_name(self.pyv.content, self.object_name)
+            self.object_type = 'VmwareDistributedVirtualSwitch'
+
+        if self.object_type == 'DistributedVirtualPortgroup':
+            dvs_name, pg_name = self.object_name.split(":", 1)
+            dv_switch = find_dvs_by_name(self.pyv.content, dvs_name)
+            if dv_switch is None:
+                self.module.fail_json(msg="A distributed virtual switch with name %s does not exist" % dvs_name)
+            self.managed_object = find_dvspg_by_name(dv_switch, pg_name)
+
         if self.managed_object is None:
             self.module.fail_json(msg="Failed to find the managed object for %s with type %s" % (self.object_name, self.object_type))
 
@@ -139,9 +184,9 @@ class VmwareTagManager(VmwareRestClient):
 
         self.dynamic_managed_object = DynamicID(type=self.object_type, id=self.managed_object._moId)
 
-        self.tag_service = Tag(self.connect)
-        self.category_service = Category(self.connect)
-        self.tag_association_svc = TagAssociation(self.connect)
+        self.tag_service = self.api_client.tagging.Tag
+        self.category_service = self.api_client.tagging.Category
+        self.tag_association_svc = self.api_client.tagging.TagAssociation
 
         self.tag_names = self.params.get('tag_names')
 
@@ -222,7 +267,9 @@ def main():
         tag_names=dict(type='list', required=True),
         state=dict(type='str', choices=['absent', 'add', 'present', 'remove', 'set'], default='add'),
         object_name=dict(type='str', required=True),
-        object_type=dict(type='str', required=True, choices=['VirtualMachine']),
+        object_type=dict(type='str', required=True, choices=['VirtualMachine', 'Datacenter', 'ClusterComputeResource',
+                                                             'HostSystem', 'DistributedVirtualSwitch',
+                                                             'DistributedVirtualPortgroup']),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

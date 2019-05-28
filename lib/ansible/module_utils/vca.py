@@ -53,7 +53,7 @@ def vca_argument_spec():
         service_type=dict(default=DEFAULT_SERVICE_TYPE, choices=SERVICE_MAP.keys()),
         vdc_name=dict(),
         gateway_name=dict(default='gateway'),
-        verify_certs=dict(type='bool', default=True)
+        validate_certs=dict(type='bool', default=True, aliases=['verify_certs'])
     )
 
 
@@ -130,7 +130,7 @@ class VcaAnsibleModule(AnsibleModule):
         if service_type == 'vchs':
             version = '5.6'
 
-        verify = self.params.get('verify_certs')
+        verify = self.params.get('validate_certs')
 
         return VCA(host=host, username=username,
                    service_type=SERVICE_MAP[service_type],
@@ -293,7 +293,7 @@ def vca_login(module):
     vdc_name = module.params.get('vdc_name')
     service = module.params.get('service_id')
     version = module.params.get('api_version')
-    verify = module.params.get('verify_certs')
+    verify = module.params.get('validate_certs')
 
     _validate_module(module)
 

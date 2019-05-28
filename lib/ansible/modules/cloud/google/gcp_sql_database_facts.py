@@ -43,26 +43,23 @@ options:
   instance:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
-    - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_sql_instance
-      task and then set this instance field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a database facts
+- name: " a database facts"
   gcp_sql_database_facts:
-      instance: "{{ instance }}"
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    instance: "{{ instance }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -92,7 +89,7 @@ items:
 ################################################################################
 # Imports
 ################################################################################
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest
 import json
 
 ################################################################################
@@ -101,7 +98,7 @@ import json
 
 
 def main():
-    module = GcpModule(argument_spec=dict(instance=dict(required=True)))
+    module = GcpModule(argument_spec=dict(instance=dict(required=True, type='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/sqlservice.admin']
@@ -111,13 +108,12 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
-    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**res)
+    return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**module.params)
 
 
 def fetch_list(module, link):

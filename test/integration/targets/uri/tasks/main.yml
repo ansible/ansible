@@ -56,7 +56,7 @@
 
 - name: fetch pass_json
   uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
-  register: pass
+  register: fetch_pass_json
   with_sequence: start=0 end=4 format=pass%d
 
 - name: check pass_json
@@ -66,7 +66,7 @@
       - item.0.stat.checksum == item.1.content | checksum
   with_together:
     - "{{pass_checksum.results}}"
-    - "{{pass.results}}"
+    - "{{fetch_pass_json.results}}"
 
 
 - name: checksum fail_json
@@ -102,9 +102,12 @@
 - name: Assert that the file was not downloaded
   assert:
     that:
-      - "result.failed == true"
+      - result.failed == true
       - "'Failed to validate the SSL certificate' in result.msg or ( result.msg is match('hostname .* doesn.t match .*'))"
-      - "stat_result.stat.exists == false"
+      - stat_result.stat.exists == false
+      - result.status is defined
+      - result.status == -1
+      - result.url == 'https://' ~ badssl_host ~ '/'
 
 - name: Clean up any cruft from the results directory
   file:
@@ -232,6 +235,19 @@
     that:
       - result is failed
   when: result is not skipped
+
+- name: check if urllib3 is installed as an OS package
+  package:
+    name: "{{ uri_os_packages[ansible_os_family].urllib3 }}"
+  check_mode: yes
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default
+  register: urllib3
+
+- name: uninstall conflicting urllib3 pip package
+  pip:
+    name: urllib3
+    state: absent
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default and urllib3.changed
 
 - name: install OS packages that are needed for SNI on old python
   package:
@@ -500,6 +516,31 @@
   assert:
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Create a testing file
+  copy:
+    content: "content"
+    dest: "{{ output_dir }}/output"
+
+- name: Download a file from non existing location
+  uri:
+    url: http://does/not/exist
+    dest: "{{ output_dir }}/output"
+  ignore_errors: yes
+
+- name: Save testing file's output
+  command: "cat {{ output_dir }}/output"
+  register: file_out
+
+- name: Test the testing file was not overwritten
+  assert:
+    that:
+      - "'content' in file_out.stdout"
+
+- name: Clean up
+  file:
+    dest: "{{ output_dir }}/output"
+    state: absent
 
 - name: Test follow_redirects=none
   import_tasks: redirect-none.yml

@@ -53,19 +53,20 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a instance group facts
+- name: " a instance group facts"
   gcp_compute_instance_group_facts:
-      zone: us-central1-a
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    zone: us-central1-a
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -117,7 +118,7 @@ items:
       description:
       - The network to which all instances in the instance group belong.
       returned: success
-      type: str
+      type: dict
     region:
       description:
       - The region where the instance group is located (for regional resources).
@@ -127,7 +128,7 @@ items:
       description:
       - The subnetwork to which all instances in the instance group belong.
       returned: success
-      type: str
+      type: dict
     zone:
       description:
       - A reference to the zone where the instance group resides.
@@ -166,7 +167,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

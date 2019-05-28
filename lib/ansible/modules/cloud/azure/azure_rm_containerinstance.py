@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerinstance
 version_added: "2.5"
-short_description: Manage an Azure Container Instance.
+short_description: Manage an Azure Container Instance
 description:
     - Create, update and delete an Azure Container Instance.
 
@@ -46,14 +46,22 @@ options:
             - present
     ip_address:
         description:
-            - The IP address type of the container group (default is 'none')
+            - The IP address type of the container group.
+            - Default is C(none) and creating an instance without public IP.
         choices:
             - public
             - none
         default: 'none'
+    dns_name_label:
+        description:
+            - The Dns name label for the IP.
+        type: str
+        version_added: "2.8"
     ports:
         description:
             - List of ports exposed within the container group.
+            - This option is deprecated, using I(ports) under I(containers)".
+        type: list
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
@@ -69,6 +77,7 @@ options:
     containers:
         description:
             - List of containers.
+            - Required when creation.
         suboptions:
             name:
                 description:
@@ -81,14 +90,51 @@ options:
             memory:
                 description:
                     - The required memory of the containers in GB.
+                type: float
                 default: 1.5
             cpu:
                 description:
                     - The required number of CPU cores of the containers.
+                type: float
                 default: 1
             ports:
                 description:
                     - List of ports exposed within the container group.
+                type: list
+            environment_variables:
+                description:
+                    - List of container environment variables.
+                    - When updating existing container all existing variables will be replaced by new ones.
+                type: dict
+                suboptions:
+                    name:
+                        description:
+                            - Environment variable name.
+                        type: str
+                    value:
+                        description:
+                            - Environment variable value.
+                        type: str
+                    is_secure:
+                        description:
+                            - Is variable secure.
+                        type: bool
+                version_added: "2.8"
+            commands:
+                description:
+                    - List of commands to execute within the container instance in exec form.
+                    - When updating existing container all existing commands will be replaced by new ones.
+                type: list
+                version_added: "2.8"
+    restart_policy:
+        description:
+            - Restart policy for all containers within the container group.
+        type: str
+        choices:
+            - always
+            - on_failure
+            - never
+        version_added: "2.8"
     force_update:
         description:
             - Force update of existing container instance. Any update will result in deletion and recreation of existing containers.
@@ -100,7 +146,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -108,23 +154,21 @@ EXAMPLES = '''
   - name: Create sample container group
     azure_rm_containerinstance:
       resource_group: myResourceGroup
-      name: mynewcontainergroup
+      name: myContainerInstanceGroup
       os_type: linux
       ip_address: public
-      ports:
-        - 80
-        - 81
       containers:
-        - name: mycontainer1
+        - name: myContainer1
           image: httpd
           memory: 1.5
           ports:
             - 80
+            - 81
 '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance/containerGroups/aci1b6dd89
@@ -143,10 +187,11 @@ ip_address:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -191,6 +236,24 @@ def create_container_dict_from_obj(container):
     return results
 
 
+env_var_spec = dict(
+    name=dict(type='str', required=True),
+    value=dict(type='str', required=True),
+    is_secure=dict(type='bool')
+)
+
+
+container_spec = dict(
+    name=dict(type='str', required=True),
+    image=dict(type='str', required=True),
+    memory=dict(type='float', default=1.5),
+    cpu=dict(type='float', default=1),
+    ports=dict(type='list', elements='int'),
+    commands=dict(type='list', elements='str'),
+    environment_variables=dict(type='list', elements='dict', options=env_var_spec)
+)
+
+
 class AzureRMContainerInstance(AzureRMModuleBase):
     """Configuration class for an Azure RM container instance resource"""
 
@@ -222,6 +285,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 default='none',
                 choices=['public', 'none']
             ),
+            dns_name_label=dict(
+                type='str',
+            ),
             ports=dict(
                 type='list',
                 default=[]
@@ -241,7 +307,12 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             ),
             containers=dict(
                 type='list',
-                required=True
+                elements='dict',
+                options=container_spec
+            ),
+            restart_policy=dict(
+                type='str',
+                choices=['always', 'on_failure', 'never']
             ),
             force_update=dict(
                 type='bool',
@@ -254,17 +325,23 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.location = None
         self.state = None
         self.ip_address = None
-
+        self.dns_name_label = None
         self.containers = None
+        self.restart_policy = None
 
         self.tags = None
 
         self.results = dict(changed=False, state=dict())
         self.cgmodels = None
 
+        required_if = [
+            ('state', 'present', ['containers'])
+        ]
+
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                        supports_check_mode=True,
-                                                       supports_tags=True)
+                                                       supports_tags=True,
+                                                       required_if=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -324,7 +401,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
             self.results['id'] = response['id']
             self.results['provisioning_state'] = response['provisioning_state']
-            self.results['ip_address'] = response['ip_address']['ip']
+            self.results['ip_address'] = response['ip_address']['ip'] if 'ip_address' in response else ''
 
             self.log("Creation / Update done")
 
@@ -347,50 +424,64 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         ip_address = None
 
-        if self.ip_address == 'public':
-            # get list of ports
-            if self.ports:
-                ports = []
-                for port in self.ports:
-                    ports.append(self.cgmodels.Port(port=port, protocol="TCP"))
-                ip_address = self.cgmodels.IpAddress(ports=ports, ip=self.ip_address)
-
         containers = []
-
+        all_ports = set([])
         for container_def in self.containers:
             name = container_def.get("name")
             image = container_def.get("image")
-            memory = container_def.get("memory", 1.5)
-            cpu = container_def.get("cpu", 1)
+            memory = container_def.get("memory")
+            cpu = container_def.get("cpu")
+            commands = container_def.get("commands")
             ports = []
+            variables = []
 
             port_list = container_def.get("ports")
             if port_list:
                 for port in port_list:
+                    all_ports.add(port)
                     ports.append(self.cgmodels.ContainerPort(port=port))
+
+            variable_list = container_def.get("environment_variables")
+            if variable_list:
+                for variable in variable_list:
+                    variables.append(self.cgmodels.EnvironmentVariable(name=variable.get('name'),
+                                                                       value=variable.get('value') if not variable.get('is_secure') else None,
+                                                                       secure_value=variable.get('value') if variable.get('is_secure') else None))
 
             containers.append(self.cgmodels.Container(name=name,
                                                       image=image,
                                                       resources=self.cgmodels.ResourceRequirements(
                                                           requests=self.cgmodels.ResourceRequests(memory_in_gb=memory, cpu=cpu)
                                                       ),
-                                                      ports=ports))
+                                                      ports=ports,
+                                                      command=commands,
+                                                      environment_variables=variables))
+
+        if self.ip_address == 'public':
+            # get list of ports
+            if len(all_ports) > 0:
+                ports = []
+                for port in all_ports:
+                    ports.append(self.cgmodels.Port(port=port, protocol="TCP"))
+                ip_address = self.cgmodels.IpAddress(ports=ports, dns_name_label=self.dns_name_label, type='public')
 
         parameters = self.cgmodels.ContainerGroup(location=self.location,
                                                   containers=containers,
                                                   image_registry_credentials=registry_credentials,
-                                                  restart_policy=None,
+                                                  restart_policy=_snake_to_camel(self.restart_policy, True) if self.restart_policy else None,
                                                   ip_address=ip_address,
                                                   os_type=self.os_type,
                                                   volumes=None,
                                                   tags=self.tags)
 
-        response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
-                                                                                   container_group_name=self.name,
-                                                                                   container_group=parameters)
-
-        if isinstance(response, AzureOperationPoller):
-            response = self.get_poller_result(response)
+        try:
+            response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                       container_group_name=self.name,
+                                                                                       container_group=parameters)
+            if isinstance(response, LROPoller):
+                response = self.get_poller_result(response)
+        except CloudError as exc:
+            self.fail("Error when creating ACI {0}: {1}".format(self.name, exc.message or str(exc)))
 
         return response.as_dict()
 
@@ -401,8 +492,12 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         :return: True
         '''
         self.log("Deleting the container instance {0}".format(self.name))
-        response = self.containerinstance_client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
-        return True
+        try:
+            response = self.containerinstance_client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
+            return True
+        except CloudError as exc:
+            self.fail('Error when deleting ACI {0}: {1}'.format(self.name, exc.message or str(exc)))
+            return False
 
     def get_containerinstance(self):
         '''

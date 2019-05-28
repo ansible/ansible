@@ -138,10 +138,11 @@ options:
         - Desired state of the resource.
       default: "present"
       choices: ["present", "absent"]
-    tower_verify_ssl:
+    validate_certs:
       description:
         - Tower option to avoid certificates check.
       type: bool
+      aliases: [ tower_verify_ssl ]
 extends_documentation_fragment: tower
 '''
 
@@ -158,7 +159,7 @@ EXAMPLES = '''
     overwrite: true
     source_vars: '{ private: false }'
     state: present
-    tower_verify_ssl: false
+    validate_certs: false
 '''
 
 

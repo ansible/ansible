@@ -24,7 +24,7 @@ $spec = @{
         ignore_dependencies = @{ type = "bool"; default = $false }
         force = @{ type = "bool"; default = $false }
         name = @{ type = "list"; elements = "str"; required = $true }
-        package_params = @{ type = "str"; aliases = "params" }
+        package_params = @{ type = "str"; aliases = @("params") }
         pinned = @{ type = "bool" }
         proxy_url = @{ type = "str" }
         proxy_username = @{ type = "str" }
@@ -34,8 +34,8 @@ $spec = @{
         source_username = @{ type = "str" }
         source_password = @{ type = "str"; no_log = $true }
         state = @{ type = "str"; default = "present"; choices = "absent", "downgrade", "latest", "present", "reinstalled" }
-        timeout = @{ type = "int"; default = 2700; aliases = "execution_timeout" }
-        validate_certs = @{ type = "bool"; default = $false }
+        timeout = @{ type = "int"; default = 2700; aliases = @("execution_timeout") }
+        validate_certs = @{ type = "bool"; default = $true }
         version = @{ type = "str" }
     }
     supports_check_mode = $true
@@ -326,7 +326,9 @@ Function Get-ChocolateyPackageVersion {
 
     $command = Argv-ToString -arguments @($choco_path, "list", "--local-only", "--exact", "--limit-output", "--all-versions", $name)
     $res = Run-Command -command $command
-    if ($res.rc -ne 0) {
+
+    # Chocolatey v0.10.12 introduced enhanced exit codes, 2 means no results, e.g. no package
+    if ($res.rc -notin @(0, 2)) {
         $module.Result.command = $command
         $module.Result.rc = $res.rc
         $module.Result.stdout = $res.stdout

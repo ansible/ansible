@@ -50,6 +50,7 @@ from ansible.module_utils.connection import ConnectionError
 
 _DEVICE_CONFIGS = {}
 _CONNECTION = None
+_VALID_USER_ROLES = ['network-admin', 'network-operator']
 
 cnos_provider_spec = {
     'host': dict(),
@@ -86,6 +87,10 @@ def get_provider_argspec():
 
 def check_args(module, warnings):
     pass
+
+
+def get_user_roles():
+    return _VALID_USER_ROLES
 
 
 def get_connection(module):

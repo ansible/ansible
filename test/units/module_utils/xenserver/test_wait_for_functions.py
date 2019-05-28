@@ -90,7 +90,7 @@ def test_wait_for_vm_ip_address_bad_power_state(mocker, fake_ansible_module, Xen
     with pytest.raises(FailJsonException) as exc_info:
         xenserver.wait_for_vm_ip_address(fake_ansible_module, fake_xenapi_ref('VM'))
 
-    assert exc_info.value.kwargs['msg'] == ("Cannot wait for VM IP address when VM is in state '%s'." %
+    assert exc_info.value.kwargs['msg'] == ("Cannot wait for VM IP address when VM is in state '%s'!" %
                                             xenserver.xapi_to_module_vm_power_state(bad_power_state.lower()))
 
 

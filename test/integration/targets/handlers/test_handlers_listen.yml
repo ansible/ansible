@@ -2,7 +2,6 @@
 - name: test listen with named handlers
   hosts: localhost
   gather_facts: false
-  connection: local
   tasks:
     - name: test notify handlers listen
       command: uptime
@@ -27,7 +26,6 @@
 - name: test listen unnamed handlers
   hosts: localhost
   gather_facts: false
-  connection: local
   pre_tasks:
     - name: notify some handlers
       command: echo foo
@@ -51,7 +49,6 @@
 - name: test with mixed notify by name and listen
   hosts: localhost
   gather_facts: false
-  connection: local
   tasks:
     - name: test notify handlers names and identical listen
       command: uptime
@@ -91,7 +88,6 @@
 - name: test listen in roles
   hosts: localhost
   gather_facts: false
-  connection: local
   roles:
     - role: test_handlers_listen
   tasks:

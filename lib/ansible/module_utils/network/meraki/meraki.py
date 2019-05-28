@@ -32,11 +32,12 @@
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
 
 def meraki_argument_spec():
-    return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
+    return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY']), required=True),
                 host=dict(type='str', default='api.meraki.com'),
                 use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
@@ -249,9 +250,28 @@ class MerakiModule(object):
                 return template['id']
         self.fail_json(msg='No configuration template named {0} found'.format(name))
 
-    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None, custom=None):
-        """Build a path from the URL catalog.
+    def construct_params_list(self, keys, aliases=None):
+        qs = {}
+        for key in keys:
+            if key in aliases:
+                qs[aliases[key]] = self.module.params[key]
+            else:
+                qs[key] = self.module.params[key]
+        return qs
 
+    def encode_url_params(self, params):
+        """Encodes key value pairs for URL"""
+        return "?{0}".format(urlencode(params))
+
+    def construct_path(self,
+                       action,
+                       function=None,
+                       org_id=None,
+                       net_id=None,
+                       org_name=None,
+                       custom=None,
+                       params=None):
+        """Build a path from the URL catalog.
         Uses function property from class for catalog lookup.
         """
         built_path = None
@@ -265,6 +285,8 @@ class MerakiModule(object):
             built_path = built_path.format(org_id=org_id, net_id=net_id, **custom)
         else:
             built_path = built_path.format(org_id=org_id, net_id=net_id)
+        if params:
+            built_path += self.encode_url_params(params)
         return built_path
 
     def request(self, path, method=None, payload=None):

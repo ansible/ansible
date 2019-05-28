@@ -30,7 +30,6 @@ options:
   api_version:
     description:
       - Specific API version to be used.
-    required: yes
   provider:
     description:
       - Provider type, should be specified in no URL is given
@@ -74,6 +73,11 @@ EXAMPLES = '''
       resource_type: virtualmachinescalesets
       resource_name: myVmss
       api_version: "2017-12-01"
+
+  - name: Query all the resources in the resource group
+    azure_rm_resource_facts:
+      resource_group: "{{ resource_group }}"
+      resource_type: resources
 '''
 
 RETURN = '''
@@ -121,13 +125,12 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 default=[]
             ),
             api_version=dict(
-                type='str',
-                required=True
+                type='str'
             )
         )
         # store the results of the module operation
         self.results = dict(
-            response=None
+            response=[]
         )
         self.mgmt_client = None
         self.url = None
@@ -176,6 +179,27 @@ class AzureRMResourceFacts(AzureRMModuleBase):
             if orphan is not None:
                 self.url += '/' + orphan
 
+        # if api_version was not specified, get latest one
+        if not self.api_version:
+            try:
+                # extract provider and resource type
+                if "/providers/" in self.url:
+                    provider = self.url.split("/providers/")[1].split("/")[0]
+                    resourceType = self.url.split(provider + "/")[1].split("/")[0]
+                    url = "/subscriptions/" + self.subscription_id + "/providers/" + provider
+                    api_versions = json.loads(self.mgmt_client.query(url, "GET", {'api-version': '2015-01-01'}, None, None, [200], 0, 0).text)
+                    for rt in api_versions['resourceTypes']:
+                        if rt['resourceType'].lower() == resourceType.lower():
+                            self.api_version = rt['apiVersions'][0]
+                            break
+                else:
+                    # if there's no provider in API version, assume Microsoft.Resources
+                    self.api_version = '2018-05-01'
+                if not self.api_version:
+                    self.fail("Couldn't find api version for {0}/{1}".format(provider, resourceType))
+            except Exception as exc:
+                self.fail("Failed to obtain API version: {0}".format(str(exc)))
+
         self.results['url'] = self.url
 
         query_parameters = {}
@@ -183,18 +207,24 @@ class AzureRMResourceFacts(AzureRMModuleBase):
 
         header_parameters = {}
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+        skiptoken = None
 
-        response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
-
-        try:
-            response = json.loads(response.text)
-            if response is list:
-                self.results['response'] = response
-            else:
-                self.results['response'] = [response]
-        except Exception:
-            self.results['response'] = []
-
+        while True:
+            if skiptoken:
+                query_parameters['skiptoken'] = skiptoken
+            response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
+            try:
+                response = json.loads(response.text)
+                if isinstance(response, dict):
+                    if response.get('value'):
+                        self.results['response'] = self.results['response'] + response['value']
+                        skiptoken = response.get('nextLink')
+                    else:
+                        self.results['response'] = self.results['response'] + [response]
+            except Exception as e:
+                self.fail('Failed to parse response: ' + str(e))
+            if not skiptoken:
+                break
         return self.results
 
 

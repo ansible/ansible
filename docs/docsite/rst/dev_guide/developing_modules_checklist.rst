@@ -5,7 +5,9 @@
 Contributing your module to Ansible
 ***********************************
 
-If you want to contribute a module to Ansible, you must meet our objective and subjective requirements. Modules accepted into the `main project repo <https://github.com/ansible/ansible>`_ ship with every Ansible installation. However, contributing to the main project isn't the only way to distribute a module - you can embed modules in roles on Galaxy or simply share copies of your module code for :ref:`local use <developing_locally>`.
+If you want to contribute a module to Ansible, you must meet our objective and subjective requirements. Please read the details below, and also review our :ref:`tips for module development <developing_modules_best_practices>`.
+
+Modules accepted into the `main project repo <https://github.com/ansible/ansible>`_ ship with every Ansible installation. However, contributing to the main project isn't the only way to distribute a module - you can embed modules in roles on Galaxy or simply share copies of your module code for :ref:`local use <developing_locally>`.
 
 Contributing to Ansible: objective requirements
 ===============================================
@@ -24,7 +26,8 @@ To contribute a module to Ansible, you must:
 * minimize module dependencies
 * support :ref:`check_mode <check_mode_dry>` if possible
 * ensure your code is readable
-* if a module is named `<something>_facts`, it is because it is returning `ansible_facts`. Do not name modules that do not do this with `_facts`.
+* if a module is named ``<something>_facts``, it should be because its main purpose is returning ``ansible_facts``. Do not name modules that do not do this with ``_facts``. Only use ``ansible_facts`` for information that is specific to the host machine, for example network interfaces and their configuration, which operating system and which programs are installed.
+* Modules that query/return general information (and not ``ansible_facts``) should be named ``_info``. General information is non-host specific information, for example information on online/cloud services (you can access different accounts for the same online service from the same host), or information on VMs and containers accessible from the machine.
 
 Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via `Ansible's IRC chat channel <http://irc.freenode.net>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_.
 
@@ -36,5 +39,6 @@ If your module meets our objective requirements, we'll review your code to see i
 Other checklists
 ================
 
+* :ref:`Tips for module development <developing_modules_best_practices>`.
 * `Amazon development checklist <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_.
 * :ref:`Windows development checklist <developing_modules_general_windows>`.

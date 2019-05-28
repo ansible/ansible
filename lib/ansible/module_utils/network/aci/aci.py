@@ -38,9 +38,8 @@ import os
 from copy import deepcopy
 
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 # Optional, only used for APIC signature-based authentication
 try:
@@ -70,7 +69,7 @@ def aci_argument_spec():
         port=dict(type='int', required=False),
         username=dict(type='str', default='admin', aliases=['user']),
         password=dict(type='str', no_log=True),
-        private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
+        private_key=dict(type='str', aliases=['cert_key'], no_log=True),  # Beware, this is not the same as client_key !
         certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
         output_level=dict(type='str', default='normal', choices=['debug', 'info', 'normal']),
         timeout=dict(type='int', default=30),
@@ -142,23 +141,6 @@ class ACIModule(object):
         elif value is False:
             return false
 
-        # When we expect value is of type=raw, deprecate in Ansible v2.8 (and all modules use type=bool)
-        try:
-            # This supports all Ansible boolean types
-            bool_value = boolean(value)
-            if bool_value is True:
-                return true
-            elif bool_value is False:
-                return false
-        except Exception:
-            # This provides backward compatibility to Ansible v2.4, deprecate in Ansible v2.8
-            if value == true:
-                self.module.deprecate("Boolean value '%s' is no longer valid, please use 'yes' as a boolean value." % value, '2.9')
-                return true
-            elif value == false:
-                self.module.deprecate("Boolean value '%s' is no longer valid, please use 'no' as a boolean value." % value, '2.9')
-                return false
-
         # If all else fails, escalate back to user
         self.module.fail_json(msg="Boolean value '%s' is an invalid ACI boolean value.")
 
@@ -227,16 +209,39 @@ class ACIModule(object):
         if payload is None:
             payload = ''
 
-        # Use the private key basename (without extension) as certificate_name
-        if self.params['certificate_name'] is None:
-            self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
-
-        try:
-            with open(self.params['private_key'], 'r') as priv_key_fh:
-                private_key_content = priv_key_fh.read()
-            sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
-        except Exception:
-            self.module.fail_json(msg='Cannot load private key %s' % self.params['private_key'])
+        # Check if we got a private key. This allows the use of vaulting the private key.
+        if self.params['private_key'].startswith('-----BEGIN PRIVATE KEY-----'):
+            try:
+                sig_key = load_privatekey(FILETYPE_PEM, self.params['private_key'])
+            except Exception:
+                self.module.fail_json(msg="Cannot load provided 'private_key' parameter.")
+            # Use the username as the certificate_name value
+            if self.params['certificate_name'] is None:
+                self.params['certificate_name'] = self.params['username']
+        elif self.params['private_key'].startswith('-----BEGIN CERTIFICATE-----'):
+            self.module.fail_json(msg="Provided 'private_key' parameter value appears to be a certificate. Please correct.")
+        else:
+            # If we got a private key file, read from this file.
+            # NOTE: Avoid exposing any other credential as a filename in output...
+            if not os.path.exists(self.params['private_key']):
+                self.module.fail_json(msg="The provided private key file does not appear to exist. Is it a filename?")
+            try:
+                with open(self.params['private_key'], 'r') as fh:
+                    private_key_content = fh.read()
+            except Exception:
+                self.module.fail_json(msg="Cannot open private key file '%s'." % self.params['private_key'])
+            if private_key_content.startswith('-----BEGIN PRIVATE KEY-----'):
+                try:
+                    sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
+                except Exception:
+                    self.module.fail_json(msg="Cannot load private key file '%s'." % self.params['private_key'])
+                # Use the private key basename (without extension) as certificate_name
+                if self.params['certificate_name'] is None:
+                    self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
+            elif private_key_content.startswith('-----BEGIN CERTIFICATE-----'):
+                self.module.fail_json(msg="Provided private key file %s appears to be a certificate. Please correct." % self.params['private_key'])
+            else:
+                self.module.fail_json(msg="Provided private key file '%s' does not appear to be a private key. Please correct." % self.params['private_key'])
 
         # NOTE: ACI documentation incorrectly adds a space between method and path
         sig_request = method + path + payload
@@ -245,7 +250,7 @@ class ACIModule(object):
         self.headers['Cookie'] = 'APIC-Certificate-Algorithm=v1.0; ' +\
                                  'APIC-Certificate-DN=%s; ' % sig_dn +\
                                  'APIC-Certificate-Fingerprint=fingerprint; ' +\
-                                 'APIC-Request-Signature=%s' % sig_signature
+                                 'APIC-Request-Signature=%s' % to_native(sig_signature)
 
     def response_json(self, rawoutput):
         ''' Handle APIC JSON response output '''
@@ -313,7 +318,7 @@ class ACIModule(object):
             self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key'] is not None:
+        if self.params['private_key']:
             self.cert_auth(path=path, payload=payload)
 
         # Perform request
@@ -350,7 +355,7 @@ class ACIModule(object):
             self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key'] is not None:
+        if self.params['private_key']:
             self.cert_auth(path=path, method='GET')
 
         # Perform request
@@ -397,7 +402,7 @@ class ACIModule(object):
                 self.filter_string += '&'
             else:
                 self.filter_string = '?'
-            self.filter_string += urlencode(accepted_params)
+            self.filter_string += '&'.join(['%s=%s' % (k, v) for (k, v) in accepted_params.items()])
 
     # TODO: This could be designed to accept multiple obj_classes and keys
     def build_filter(self, obj_class, params):
@@ -820,7 +825,7 @@ class ACIModule(object):
 
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
-            if self.params['private_key'] is not None:
+            if self.params['private_key']:
                 self.cert_auth(method='DELETE')
 
             resp, info = fetch_url(self.module, self.url,
@@ -956,7 +961,7 @@ class ACIModule(object):
         uri = self.url + self.filter_string
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key'] is not None:
+        if self.params['private_key']:
             self.cert_auth(path=self.path + self.filter_string, method='GET')
 
         resp, info = fetch_url(self.module, uri,
@@ -1057,7 +1062,7 @@ class ACIModule(object):
             return
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
-            if self.params['private_key'] is not None:
+            if self.params['private_key']:
                 self.cert_auth(method='POST', payload=json.dumps(self.config))
 
             resp, info = fetch_url(self.module, self.url,

@@ -91,6 +91,7 @@
       - modify_org.changed == True
       - 'modify_org.data.name == "IntTestOrgRenamed"'
       - modify_org_idempotent.changed == False
+      - modify_org_idempotent.data is defined
 
 - name: List all organizations
   meraki_organization:

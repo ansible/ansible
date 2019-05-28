@@ -10,11 +10,13 @@ import re
 import time
 import textwrap
 import functools
-import pipes
 import sys
 import hashlib
 import difflib
 import filecmp
+import random
+import string
+import shutil
 
 import lib.pytar
 import lib.thread
@@ -50,12 +52,15 @@ from lib.util import (
     is_binary_file,
     find_executable,
     raw_command,
-    get_coverage_path,
+    get_python_path,
     get_available_port,
     generate_pip_command,
     find_python,
     get_docker_completion,
+    get_remote_completion,
     named_temporary_file,
+    COVERAGE_OUTPUT_PATH,
+    cmd_quote,
 )
 
 from lib.docker_util import (
@@ -112,6 +117,7 @@ from lib.metadata import (
 from lib.integration import (
     integration_test_environment,
     integration_test_config_file,
+    setup_common_temp_dir,
 )
 
 SUPPORTED_PYTHON_VERSIONS = (
@@ -207,17 +213,22 @@ def install_command_requirements(args, python_version=None):
     # first pass to install requirements, changes expected unless environment is already set up
     changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
-    if not changes:
-        return  # no changes means we can stop early
+    if changes:
+        # second pass to check for conflicts in requirements, changes are not expected here
+        changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
-    # second pass to check for conflicts in requirements, changes are not expected here
-    changes = run_pip_commands(args, pip, commands, detect_pip_changes)
+        if changes:
+            raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
+                                   '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
-    if not changes:
-        return  # no changes means no conflicts
-
-    raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
-                           '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+    # ask pip to check for conflicts between installed packages
+    try:
+        run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
+    except SubprocessError as ex:
+        if ex.stderr.strip() == 'ERROR: unknown command "check"':
+            display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
+        else:
+            raise
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
@@ -238,20 +249,7 @@ def run_pip_commands(args, pip, commands, detect_pip_changes=False):
 
         before_list = after_list
 
-        try:
-            run_command(args, cmd)
-        except SubprocessError as ex:
-            if ex.status != 2:
-                raise
-
-            # If pip is too old it won't understand the arguments we passed in, so we'll need to upgrade it.
-
-            # Installing "coverage" on ubuntu 16.04 fails with the error:
-            # AttributeError: 'Requirement' object has no attribute 'project_name'
-            # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
-            # Upgrading pip works around the issue.
-            run_command(args, pip + ['install', '--upgrade', 'pip'])
-            run_command(args, cmd)
+        run_command(args, cmd)
 
         after_list = pip_list(args, pip) if detect_pip_changes else None
 
@@ -359,7 +357,7 @@ def command_network_integration(args):
     instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
-        get_coverage_path(args, args.python_executable)  # initialize before starting threads
+        get_python_path(args, args.python_executable)  # initialize before starting threads
 
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
@@ -527,7 +525,7 @@ def command_windows_integration(args):
     httptester_id = None
 
     if args.windows:
-        get_coverage_path(args, args.python_executable)  # initialize before starting threads
+        get_python_path(args, args.python_executable)  # initialize before starting threads
 
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
@@ -833,6 +831,12 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     current_environment = None  # type: EnvironmentDescription | None
 
+    # common temporary directory path that will be valid on both the controller and the remote
+    # it must be common because it will be referenced in environment variables that are shared across multiple hosts
+    common_temp_path = '/tmp/ansible-test-%s' % ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
+
+    setup_common_temp_dir(args, common_temp_path)
+
     try:
         for target in targets_iter:
             if args.start_at and not found:
@@ -863,11 +867,11 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
                         if cloud_environment:
                             cloud_environment.setup_once()
 
-                        run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, inventory_path, False)
+                        run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, inventory_path, common_temp_path, False)
 
                         start_time = time.time()
 
-                        run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, inventory_path, True)
+                        run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, inventory_path, common_temp_path, True)
 
                         if not args.explain:
                             # create a fresh test directory for each test target
@@ -879,9 +883,9 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
                         try:
                             if target.script_path:
-                                command_integration_script(args, target, test_dir, inventory_path)
+                                command_integration_script(args, target, test_dir, inventory_path, common_temp_path)
                             else:
-                                command_integration_role(args, target, start_at_task, test_dir, inventory_path)
+                                command_integration_role(args, target, start_at_task, test_dir, inventory_path, common_temp_path)
                                 start_at_task = None
                         finally:
                             if post_target:
@@ -945,6 +949,15 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     finally:
         if not args.explain:
+            if args.coverage:
+                coverage_temp_path = os.path.join(common_temp_path, COVERAGE_OUTPUT_PATH)
+                coverage_save_path = 'test/results/coverage'
+
+                for filename in os.listdir(coverage_temp_path):
+                    shutil.copy(os.path.join(coverage_temp_path, filename), os.path.join(coverage_save_path, filename))
+
+            remove_tree(common_temp_path)
+
             results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
 
             data = dict(
@@ -1086,7 +1099,7 @@ rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
         raise ApplicationError('No supported port forwarding mechanism detected.')
 
 
-def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, inventory_path, always):
+def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, inventory_path, temp_path, always):
     """
     :type args: IntegrationConfig
     :type test_dir: str
@@ -1094,6 +1107,7 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
     :type targets_dict: dict[str, IntegrationTarget]
     :type targets_executed: set[str]
     :type inventory_path: str
+    :type temp_path: str
     :type always: bool
     """
     for target_name in target_names:
@@ -1108,9 +1122,9 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
             make_dirs(test_dir)
 
         if target.script_path:
-            command_integration_script(args, target, test_dir, inventory_path)
+            command_integration_script(args, target, test_dir, inventory_path, temp_path)
         else:
-            command_integration_role(args, target, None, test_dir, inventory_path)
+            command_integration_role(args, target, None, test_dir, inventory_path, temp_path)
 
         targets_executed.add(target_name)
 
@@ -1138,6 +1152,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
@@ -1147,7 +1162,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
 
     if 'non_local/' in target.aliases:
         if args.coverage:
-            display.warning('Skipping coverage reporting for non-local test: %s' % target.name)
+            display.warning('Skipping coverage reporting on Ansible modules for non-local test: %s' % target.name)
 
         env.update(dict(ANSIBLE_TEST_REMOTE_INTERPRETER=''))
 
@@ -1156,12 +1171,13 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     return env
 
 
-def command_integration_script(args, target, test_dir, inventory_path):
+def command_integration_script(args, target, test_dir, inventory_path, temp_path):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type test_dir: str
     :type inventory_path: str
+    :type temp_path: str
     """
     display.info('Running %s integration test script' % target.name)
 
@@ -1189,17 +1205,18 @@ def command_integration_script(args, target, test_dir, inventory_path):
             if config_path:
                 cmd += ['-e', '@%s' % config_path]
 
-            coverage = args.coverage and 'non_local/' not in target.aliases
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, coverage=coverage)
+            module_coverage = 'non_local/' not in target.aliases
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
 
 
-def command_integration_role(args, target, start_at_task, test_dir, inventory_path):
+def command_integration_role(args, target, start_at_task, test_dir, inventory_path, temp_path):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type start_at_task: str | None
     :type test_dir: str
     :type inventory_path: str
+    :type temp_path: str
     """
     display.info('Running %s integration test role' % target.name)
 
@@ -1225,7 +1242,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             hosts=hosts,
             gather_facts=gather_facts,
             vars_files=[
-                test_env.vars_file,
+                os.path.relpath(test_env.vars_file, test_env.integration_dir),
             ],
             roles=[
                 target.name,
@@ -1246,7 +1263,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
             display.info('>>> Playbook: %s\n%s' % (filename, playbook.strip()), verbosity=3)
 
-            cmd = ['ansible-playbook', filename, '-i', test_env.inventory_path]
+            cmd = ['ansible-playbook', filename, '-i', os.path.relpath(test_env.inventory_path, test_env.integration_dir)]
 
             if start_at_task:
                 cmd += ['--start-at-task', start_at_task]
@@ -1272,8 +1289,8 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
             env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
 
-            coverage = args.coverage and 'non_local/' not in target.aliases
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, coverage=coverage)
+            module_coverage = 'non_local/' not in target.aliases
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
 
 
 def command_units(args):
@@ -1600,17 +1617,7 @@ def get_integration_local_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --allow-destructive or prefixing with "destructive/" to run locally: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
-    if args.python_version.startswith('3'):
-        python_version = 3
-    else:
-        python_version = 2
-
-    skip = 'skip/python%d/' % python_version
-    skipped = [target.name for target in targets if skip in target.aliases]
-    if skipped:
-        exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
-                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
+    exclude_targets_by_python_version(targets, args.python_version, exclude)
 
     return exclude
 
@@ -1640,22 +1647,9 @@ def get_integration_docker_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --docker-privileged to run under docker: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
-    python_version = 2  # images are expected to default to python 2 unless otherwise specified
+    python_version = get_python_version(args, get_docker_completion(), args.docker_raw)
 
-    python_version = int(get_docker_completion().get(args.docker_raw, {}).get('python', str(python_version)))
-
-    if args.python:  # specifying a numeric --python option overrides the default python
-        if args.python.startswith('3'):
-            python_version = 3
-        elif args.python.startswith('2'):
-            python_version = 2
-
-    skip = 'skip/python%d/' % python_version
-    skipped = [target.name for target in targets if skip in target.aliases]
-    if skipped:
-        exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
-                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
+    exclude_targets_by_python_version(targets, python_version, exclude)
 
     return exclude
 
@@ -1688,16 +1682,99 @@ def get_integration_remote_filter(args, targets):
         display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
                         % (skip.rstrip('/'), args.remote.replace('/', ' '), ', '.join(skipped)))
 
-    python_version = 2  # remotes are expected to default to python 2
+    python_version = get_python_version(args, get_remote_completion(), args.remote)
 
-    skip = 'skip/python%d/' % python_version
+    exclude_targets_by_python_version(targets, python_version, exclude)
+
+    return exclude
+
+
+def exclude_targets_by_python_version(targets, python_version, exclude):
+    """
+    :type targets: tuple[IntegrationTarget]
+    :type python_version: str
+    :type exclude: list[str]
+    """
+    if not python_version:
+        display.warning('Python version unknown. Unable to skip tests based on Python version.')
+        return
+
+    python_major_version = python_version.split('.')[0]
+
+    skip = 'skip/python%s/' % python_version
     skipped = [target.name for target in targets if skip in target.aliases]
     if skipped:
         exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
+        display.warning('Excluding tests marked "%s" which are not supported on python %s: %s'
                         % (skip.rstrip('/'), python_version, ', '.join(skipped)))
 
-    return exclude
+    skip = 'skip/python%s/' % python_major_version
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on python %s: %s'
+                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
+
+
+def get_python_version(args, configs, name):
+    """
+    :type args: EnvironmentConfig
+    :type configs: dict[str, dict[str, str]]
+    :type name: str
+    """
+    config = configs.get(name, {})
+    config_python = config.get('python')
+
+    if not config or not config_python:
+        if args.python:
+            return args.python
+
+        display.warning('No Python version specified. '
+                        'Use completion config or the --python option to specify one.', unique=True)
+
+        return ''  # failure to provide a version may result in failures or reduced functionality later
+
+    supported_python_versions = config_python.split(',')
+    default_python_version = supported_python_versions[0]
+
+    if args.python and args.python not in supported_python_versions:
+        raise ApplicationError('Python %s is not supported by %s. Supported Python version(s) are: %s' % (
+            args.python, name, ', '.join(sorted(supported_python_versions))))
+
+    python_version = args.python or default_python_version
+
+    return python_version
+
+
+def get_python_interpreter(args, configs, name):
+    """
+    :type args: EnvironmentConfig
+    :type configs: dict[str, dict[str, str]]
+    :type name: str
+    """
+    if args.python_interpreter:
+        return args.python_interpreter
+
+    config = configs.get(name, {})
+
+    if not config:
+        if args.python:
+            guess = 'python%s' % args.python
+        else:
+            guess = 'python'
+
+        display.warning('Using "%s" as the Python interpreter. '
+                        'Use completion config or the --python-interpreter option to specify the path.' % guess, unique=True)
+
+        return guess
+
+    python_version = get_python_version(args, configs, name)
+
+    python_dir = config.get('python_dir', '/usr/bin')
+    python_interpreter = os.path.join(python_dir, 'python%s' % python_version)
+    python_interpreter = config.get('python%s' % python_version, python_interpreter)
+
+    return python_interpreter
 
 
 class EnvironmentDescription(object):

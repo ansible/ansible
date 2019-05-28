@@ -24,26 +24,42 @@ DOCUMENTATION = '''
             choices: ['gcp_compute']
         zones:
           description: A list of regions in which to describe GCE instances.
-          default: all zones available to a given project
+                       If none provided, it defaults to all zones available to a given project.
+          type: list
         projects:
           description: A list of projects in which to describe GCE instances.
+          type: list
+          required: True
         filters:
           description: >
             A list of filter value pairs. Available filters are listed here
             U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list).
             Each additional filter in the list will act be added as an AND condition
             (filter1 and filter2)
+          type: list
         hostnames:
           description: A list of options that describe the ordering for which
               hostnames should be assigned. Currently supported hostnames are
               'public_ip', 'private_ip', or 'name'.
           default: ['public_ip', 'private_ip', 'name']
+          type: list
         auth_kind:
             description:
                 - The type of credential used.
+            required: True
+            choices: ['application', 'serviceaccount', 'machineaccount']
+        scopes:
+            description: list of authentication scopes
+            type: list
+            default: ['https://www.googleapis.com/auth/compute']
         service_account_file:
             description:
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
+            required: True
+            type: path
+            env:
+                - name: GCE_CREDENTIALS_FILE_PATH
+                  version_added: "2.8"
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
@@ -51,6 +67,26 @@ DOCUMENTATION = '''
         vars_prefix:
             description: prefix to apply to host variables, does not include facts nor params
             default: ''
+        use_contrib_script_compatible_sanitization:
+          description:
+            - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
+              This option allows you to override that, in efforts to allow migration from the old inventory script.
+            - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
+              otherwise the core engine will just use the standard sanitization on top.
+            - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
+              which group names end up being used as.
+          type: bool
+          default: False
+          version_added: '2.8'
+        retrieve_image_info:
+          description:
+            - Populate the C(image) host fact for the instances returned with the GCP image name
+            - By default this plugin does not attempt to resolve the boot image of an instance to the image name cataloged in GCP
+              because of the performance overhead of the task.
+            - Unless this option is enabled, the C(image) host variable will be C(null)
+          type: bool
+          default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -63,10 +99,11 @@ projects:
 filters:
   - machineType = n1-standard-1
   - scheduling.automaticRestart = true AND machineType = n1-standard-1
-scopes:
-  - https://www.googleapis.com/auth/compute
 service_account_file: /tmp/service_account.json
 auth_kind: serviceaccount
+scopes:
+ - 'https://www.googleapis.com/auth/cloud-platform'
+ - 'https://www.googleapis.com/auth/compute.readonly'
 keyed_groups:
   # Create groups from GCE labels
   - prefix: gcp
@@ -80,16 +117,16 @@ compose:
   ansible_host: networkInterfaces[0].accessConfigs[0].natIP
 '''
 
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.six import string_types
-from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
 import json
 
+from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException, HAS_GOOGLE_LIBRARIES
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
-# The mappings give an array of keys to get from the filter name to the value
-# returned by boto3's GCE describe_instances method.
+
+# Mocking a module to reuse module_utils
 class GcpMockModule(object):
     def __init__(self, params):
         self.params = params
@@ -101,6 +138,8 @@ class GcpMockModule(object):
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'gcp_compute'
+
+    _instances = r"https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances"
 
     def __init__(self):
         super(InventoryModule, self).__init__()
@@ -117,7 +156,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 self.inventory.set_variable(hostname, self.get_option('vars_prefix') + key, item[key])
             except (ValueError, TypeError) as e:
-                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_native(e)))
+                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_text(e)))
         self.inventory.add_child('all', hostname)
 
     def verify_file(self, path):
@@ -132,13 +171,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return True
         return False
 
-    def self_link(self, params):
-        '''
-            :param params: a dict containing all of the fields relevant to build URL
-            :return the formatted URL as a string.
-        '''
-        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances".format(**params)
-
     def fetch_list(self, params, link, query):
         '''
             :param params: a dict containing all of the fields relevant to build URL
@@ -146,17 +178,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param query: a formatted query string
             :return the JSON response containing a list of instances.
         '''
-        module = GcpMockModule(params)
-        auth = GcpSession(module, 'compute')
-        response = auth.get(link, params={'filter': query})
-        return self._return_if_object(module, response)
+        response = self.auth_session.get(link, params={'filter': query})
+        return self._return_if_object(self.fake_module, response)
 
-    def _get_zones(self, config_data):
+    def _get_zones(self, project, config_data):
         '''
             :param config_data: dict of info from inventory file
             :return an array of zones that this project has access to
         '''
-        link = "https://www.googleapis.com/compute/v1/projects/{project}/zones".format(**config_data)
+        link = "https://www.googleapis.com/compute/v1/projects/%s/zones" % project
         zones = []
         zones_response = self.fetch_list(config_data, link, '')
         for item in zones_response['items']:
@@ -213,7 +243,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return result
 
-    def _format_items(self, items):
+    def _format_items(self, items, project_disks):
         '''
             :param items: A list of hosts
         '''
@@ -233,9 +263,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         network['subnetwork'] = self._format_network_info(network['subnetwork'])
 
             host['project'] = host['selfLink'].split('/')[6]
+            host['image'] = self._get_image(host, project_disks)
         return items
 
-    def _add_hosts(self, items, config_data, format_items=True):
+    def _add_hosts(self, items, config_data, format_items=True, project_disks=None):
         '''
             :param items: A list of hosts
             :param config_data: configuration data
@@ -244,7 +275,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not items:
             return
         if format_items:
-            items = self._format_items(items)
+            items = self._format_items(items, project_disks)
 
         for host in items:
             self._populate_host(host)
@@ -309,6 +340,71 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         return accessConfig[u'natIP']
         return None
 
+    def _get_image(self, instance, project_disks):
+        '''
+            :param instance: A instance response from GCP
+            :return the image of this instance or None
+        '''
+        image = None
+        if project_disks and 'disks' in instance:
+            for disk in instance['disks']:
+                if disk.get('boot'):
+                    image = project_disks[disk["source"]]
+        return image
+
+    def _get_project_disks(self, config_data, query):
+        '''
+            project space disk images
+        '''
+
+        try:
+            self._project_disks
+        except AttributeError:
+            self._project_disks = {}
+            request_params = {'maxResults': 500, 'filter': query}
+
+            for project in config_data['projects']:
+                session_responses = []
+                page_token = True
+                while page_token:
+                    response = self.auth_session.get(
+                        'https://www.googleapis.com/compute/v1/projects/{0}/aggregated/disks'.format(project),
+                        params=request_params
+                    )
+                    response_json = response.json()
+                    if 'nextPageToken' in response_json:
+                        request_params['pageToken'] = response_json['nextPageToken']
+                    elif 'pageToken' in request_params:
+                        del request_params['pageToken']
+
+                    if 'items' in response_json:
+                        session_responses.append(response_json)
+                    page_token = 'pageToken' in request_params
+
+            for response in session_responses:
+                if 'items' in response:
+                    # example k would be a zone or region name
+                    # example v would be { "disks" : [], "otherkey" : "..." }
+                    for zone_or_region, aggregate in response['items'].items():
+                        if 'zones' in zone_or_region:
+                            if 'disks' in aggregate:
+                                zone = zone_or_region.replace('zones/', '')
+                                for disk in aggregate['disks']:
+                                    if 'zones' in config_data and zone in config_data['zones']:
+                                        # If zones specified, only store those zones' data
+                                        if 'sourceImage' in disk:
+                                            self._project_disks[disk['selfLink']] = disk['sourceImage'].split('/')[-1]
+                                        else:
+                                            self._project_disks[disk['selfLink']] = disk['selfLink'].split('/')[-1]
+
+                                    else:
+                                        if 'sourceImage' in disk:
+                                            self._project_disks[disk['selfLink']] = disk['sourceImage'].split('/')[-1]
+                                        else:
+                                            self._project_disks[disk['selfLink']] = disk['selfLink'].split('/')[-1]
+
+        return self._project_disks
+
     def _get_privateip(self, item):
         '''
             :param item: A host response from GCP
@@ -320,32 +416,38 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return interface[u'networkIP']
 
     def parse(self, inventory, loader, path, cache=True):
+
+        if not HAS_GOOGLE_LIBRARIES:
+            raise AnsibleParserError('gce inventory plugin cannot start: %s' % missing_required_lib('google-auth'))
+
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = {}
         config_data = self._read_config_data(path)
 
-        # get user specifications
-        if 'zones' in config_data:
-            if not isinstance(config_data['zones'], list):
-                raise AnsibleParserError("Zones must be a list in GCP inventory YAML files")
+        if self.get_option('use_contrib_script_compatible_sanitization'):
+            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
 
-        # get user specifications
-        if 'projects' not in config_data:
-            raise AnsibleParserError("Projects must be included in inventory YAML file")
+        # setup parameters as expected by 'fake module class' to reuse module_utils w/o changing the API
+        params = {
+            'filters': self.get_option('filters'),
+            'projects': self.get_option('projects'),
+            'scopes': self.get_option('scopes'),
+            'zones': self.get_option('zones'),
+            'auth_kind': self.get_option('auth_kind'),
+            'service_account_file': self.get_option('service_account_file'),
+            'service_account_email': self.get_option('service_account_email'),
+        }
 
-        if not isinstance(config_data['projects'], list):
-            raise AnsibleParserError("Projects must be a list in GCP inventory YAML files")
+        self.fake_module = GcpMockModule(params)
+        self.auth_session = GcpSession(self.fake_module, 'compute')
 
-        # add in documented defaults
-        if 'filters' not in config_data:
-            config_data['filters'] = None
+        query = self._get_query_options(params['filters'])
 
-        projects = config_data['projects']
-        zones = config_data.get('zones')
-        config_data['scopes'] = ['https://www.googleapis.com/auth/compute']
-
-        query = self._get_query_options(config_data['filters'])
+        if self.get_option('retrieve_image_info'):
+            project_disks = self._get_project_disks(config_data, query)
+        else:
+            project_disks = None
 
         # Cache logic
         if cache:
@@ -357,26 +459,33 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         cache_needs_update = False
         if cache:
             try:
-                results = self.cache.get(cache_key)
+                results = self._cache[cache_key]
                 for project in results:
                     for zone in results[project]:
-                        self._add_hosts(results[project][zone], config_data, False)
+                        self._add_hosts(results[project][zone], config_data, False, project_disks=project_disks)
             except KeyError:
                 cache_needs_update = True
 
         if not cache or cache_needs_update:
             cached_data = {}
-            for project in projects:
+            for project in params['projects']:
                 cached_data[project] = {}
-                config_data['project'] = project
-                if not zones:
-                    zones = self._get_zones(config_data)
+                params['project'] = project
+                if not params['zones']:
+                    zones = self._get_zones(project, params)
+                else:
+                    zones = params['zones']
                 for zone in zones:
-                    config_data['zone'] = zone
-                    link = self.self_link(config_data)
-                    resp = self.fetch_list(config_data, link, query)
-                    self._add_hosts(resp.get('items'), config_data)
+                    link = self._instances % (project, zone)
+                    params['zone'] = zone
+                    resp = self.fetch_list(params, link, query)
+                    self._add_hosts(resp.get('items'), config_data, project_disks=project_disks)
                     cached_data[project][zone] = resp.get('items')
 
         if cache_needs_update:
-            self.cache.set(cache_key, cached_data)
+            self._cache[cache_key] = cached_data
+
+    @staticmethod
+    def _legacy_script_compatible_group_sanitization(name):
+
+        return name

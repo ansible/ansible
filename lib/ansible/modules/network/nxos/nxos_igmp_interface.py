@@ -367,7 +367,7 @@ def config_igmp_interface(delta, existing, existing_oif_prefix_source):
     def_vals = get_igmp_interface_defaults()
 
     for key, value in delta.items():
-        if key == 'oif_ps':
+        if key == 'oif_ps' and value != 'default':
             for each in value:
                 if each in existing_oif_prefix_source:
                     existing_oif_prefix_source.remove(each)
@@ -497,7 +497,7 @@ def main():
         oif_routemap=dict(required=False, type='str'),
         oif_prefix=dict(required=False, type='str', removed_in_version='2.10'),
         oif_source=dict(required=False, type='str', removed_in_version='2.10'),
-        oif_ps=dict(required=False, type='list', elements='dict'),
+        oif_ps=dict(required=False, type='raw'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
                    default='present')
@@ -592,7 +592,7 @@ def main():
     delta = dict(set(proposed.items()).difference(existing.items()))
 
     if oif_ps:
-        if oif_ps == ['default']:
+        if oif_ps == 'default':
             delta['oif_ps'] = []
         else:
             delta['oif_ps'] = oif_ps

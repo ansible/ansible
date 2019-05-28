@@ -23,6 +23,8 @@ from distutils.version import LooseVersion
 
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
+from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 
@@ -56,14 +58,14 @@ except ImportError as exc:
 # to ensure the user does not have both ``docker`` and ``docker-py`` modules
 # installed, as they utilize the same namespace are are incompatible
 try:
-    # docker
+    # docker (Docker SDK for Python >= 2.0.0)
     import docker.models  # noqa: F401
     HAS_DOCKER_MODELS = True
 except ImportError:
     HAS_DOCKER_MODELS = False
 
 try:
-    # docker-py
+    # docker-py (Docker SDK for Python < 2.0.0)
     import docker.ssladapter  # noqa: F401
     HAS_DOCKER_SSLADAPTER = True
 except ImportError:
@@ -82,21 +84,19 @@ DOCKER_COMMON_ARGS = dict(
     tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME, fallback=(env_fallback, ['DOCKER_TLS_HOSTNAME'])),
     api_version=dict(type='str', default='auto', fallback=(env_fallback, ['DOCKER_API_VERSION']), aliases=['docker_api_version']),
     timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS, fallback=(env_fallback, ['DOCKER_TIMEOUT'])),
-    cacert_path=dict(type='path', aliases=['tls_ca_cert']),
-    cert_path=dict(type='path', aliases=['tls_client_cert']),
-    key_path=dict(type='path', aliases=['tls_client_key']),
+    ca_cert=dict(type='path', aliases=['tls_ca_cert', 'cacert_path']),
+    client_cert=dict(type='path', aliases=['tls_client_cert', 'cert_path']),
+    client_key=dict(type='path', aliases=['tls_client_key', 'key_path']),
     ssl_version=dict(type='str', fallback=(env_fallback, ['DOCKER_SSL_VERSION'])),
     tls=dict(type='bool', default=DEFAULT_TLS, fallback=(env_fallback, ['DOCKER_TLS'])),
-    tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY, fallback=(env_fallback, ['DOCKER_TLS_VERIFY'])),
+    validate_certs=dict(type='bool', default=DEFAULT_TLS_VERIFY, fallback=(env_fallback, ['DOCKER_TLS_VERIFY']), aliases=['tls_verify']),
     debug=dict(type='bool', default=False)
 )
 
-DOCKER_MUTUALLY_EXCLUSIVE = [
-    ['tls', 'tls_verify']
-]
+DOCKER_MUTUALLY_EXCLUSIVE = []
 
 DOCKER_REQUIRED_TOGETHER = [
-    ['cert_path', 'key_path']
+    ['client_cert', 'client_key']
 ]
 
 DEFAULT_DOCKER_REGISTRY = 'https://index.docker.io/v1/'
@@ -107,7 +107,7 @@ BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 if not HAS_DOCKER_PY:
     docker_version = None
 
-    # No docker-py. Create a place holder client to allow
+    # No Docker SDK for Python. Create a place holder client to allow
     # instantiation of AnsibleModule and proper error handing
     class Client(object):  # noqa: F811
         def __init__(self, **kwargs):
@@ -161,6 +161,106 @@ class DockerBaseClass(object):
         #         log_file.write(msg + u'\n')
 
 
+def update_tls_hostname(result):
+    if result['tls_hostname'] is None:
+        # get default machine name from the url
+        parsed_url = urlparse(result['docker_host'])
+        if ':' in parsed_url.netloc:
+            result['tls_hostname'] = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
+        else:
+            result['tls_hostname'] = parsed_url
+
+
+def _get_tls_config(fail_function, **kwargs):
+    try:
+        tls_config = TLSConfig(**kwargs)
+        return tls_config
+    except TLSParameterError as exc:
+        fail_function("TLS config error: %s" % exc)
+
+
+def get_connect_params(auth, fail_function):
+    if auth['tls'] or auth['tls_verify']:
+        auth['docker_host'] = auth['docker_host'].replace('tcp://', 'https://')
+
+    if auth['tls_verify'] and auth['cert_path'] and auth['key_path']:
+        # TLS with certs and host verification
+        if auth['cacert_path']:
+            tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
+                                         ca_cert=auth['cacert_path'],
+                                         verify=True,
+                                         assert_hostname=auth['tls_hostname'],
+                                         ssl_version=auth['ssl_version'],
+                                         fail_function=fail_function)
+        else:
+            tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
+                                         verify=True,
+                                         assert_hostname=auth['tls_hostname'],
+                                         ssl_version=auth['ssl_version'],
+                                         fail_function=fail_function)
+
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    if auth['tls_verify'] and auth['cacert_path']:
+        # TLS with cacert only
+        tls_config = _get_tls_config(ca_cert=auth['cacert_path'],
+                                     assert_hostname=auth['tls_hostname'],
+                                     verify=True,
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    if auth['tls_verify']:
+        # TLS with verify and no certs
+        tls_config = _get_tls_config(verify=True,
+                                     assert_hostname=auth['tls_hostname'],
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    if auth['tls'] and auth['cert_path'] and auth['key_path']:
+        # TLS with certs and no host verification
+        tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
+                                     verify=False,
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    if auth['tls']:
+        # TLS with no certs and not host verification
+        tls_config = _get_tls_config(verify=False,
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
+        return dict(base_url=auth['docker_host'],
+                    tls=tls_config,
+                    version=auth['api_version'],
+                    timeout=auth['timeout'])
+
+    # No TLS
+    return dict(base_url=auth['docker_host'],
+                version=auth['api_version'],
+                timeout=auth['timeout'])
+
+
+DOCKERPYUPGRADE_SWITCH_TO_DOCKER = "Try `pip uninstall docker-py` followed by `pip install docker`."
+DOCKERPYUPGRADE_UPGRADE_DOCKER = "Use `pip install --upgrade docker` to upgrade."
+DOCKERPYUPGRADE_RECOMMEND_DOCKER = ("Use `pip install --upgrade docker-py` to upgrade. "
+                                    "Hint: if you do not need Python 2.6 support, try "
+                                    "`pip uninstall docker-py` instead followed by `pip install docker`.")
+
+
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
@@ -200,34 +300,35 @@ class AnsibleDockerClient(Client):
         self.docker_py_version = LooseVersion(docker_version)
 
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
-            self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
-                      "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
-                      "module. It is recommended to install the docker module if no support for Python 2.6 is required. "
-                      "Please note that simply uninstalling one of the modules can leave the other module in a broken state.")
+            self.fail("Cannot have both the docker-py and docker python modules (old and new version of Docker "
+                      "SDK for Python) installed together as they use the same namespace and cause a corrupt "
+                      "installation. Please uninstall both packages, and re-install only the docker-py or docker "
+                      "python module. It is recommended to install the docker module if no support for Python 2.6 "
+                      "is required. Please note that simply uninstalling one of the modules can leave the other "
+                      "module in a broken state.")
 
         if not HAS_DOCKER_PY:
             if NEEDS_DOCKER_PY2:
-                msg = "Failed to import docker - %s. Try `pip install docker`"
+                msg = "Failed to import docker (Docker SDK for Python) - %s. Try `pip install docker`."
             else:
-                msg = "Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)"
+                msg = "Failed to import docker or docker-py (Docker SDK for Python) - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)."
             self.fail(msg % HAS_DOCKER_ERROR)
 
         if self.docker_py_version < LooseVersion(min_docker_version):
-            if NEEDS_DOCKER_PY2:
-                if docker_version < LooseVersion('2.0'):
-                    msg = "Error: docker-py version is %s, while this module requires docker %s. Try `pip uninstall docker-py` and then `pip install docker`"
-                else:
-                    msg = "Error: docker version is %s. Minimum version required is %s. Use `pip install --upgrade docker` to upgrade."
-            else:
+            msg = "Error: Docker SDK for Python version is %s. Minimum version required is %s. "
+            if not NEEDS_DOCKER_PY2:
                 # The minimal required version is < 2.0 (and the current version as well).
                 # Advertise docker (instead of docker-py) for non-Python-2.6 users.
-                msg = ("Error: docker / docker-py version is %s. Minimum version required is %s. "
-                       "Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` followed by `pip install docker`")
+                msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
+            elif docker_version < LooseVersion('2.0'):
+                msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
+            else:
+                msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
             self.fail(msg % (docker_version, min_docker_version))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
-        self._connect_params = self._get_connect_params()
+        self._connect_params = get_connect_params(self.auth_params, fail_function=self.fail)
 
         try:
             super(AnsibleDockerClient, self).__init__(**self._connect_params)
@@ -240,7 +341,7 @@ class AnsibleDockerClient(Client):
             self.docker_api_version_str = self.version()['ApiVersion']
             self.docker_api_version = LooseVersion(self.docker_api_version_str)
             if self.docker_api_version < LooseVersion(min_docker_api_version):
-                self.fail('docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
+                self.fail('Docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
 
         if option_minimal_versions is not None:
             self._get_minimal_versions(option_minimal_versions, option_minimal_versions_ignore_params)
@@ -305,7 +406,7 @@ class AnsibleDockerClient(Client):
             if use_tls == 'encrypt':
                 params['tls'] = True
             if use_tls == 'verify':
-                params['tls_verify'] = True
+                params['validate_certs'] = True
 
         result = dict(
             docker_host=self._get_value('docker_host', params['docker_host'], 'DOCKER_HOST',
@@ -314,116 +415,28 @@ class AnsibleDockerClient(Client):
                                          'DOCKER_TLS_HOSTNAME', DEFAULT_TLS_HOSTNAME),
             api_version=self._get_value('api_version', params['api_version'], 'DOCKER_API_VERSION',
                                         'auto'),
-            cacert_path=self._get_value('cacert_path', params['cacert_path'], 'DOCKER_CERT_PATH', None),
-            cert_path=self._get_value('cert_path', params['cert_path'], 'DOCKER_CERT_PATH', None),
-            key_path=self._get_value('key_path', params['key_path'], 'DOCKER_CERT_PATH', None),
+            cacert_path=self._get_value('cacert_path', params['ca_cert'], 'DOCKER_CERT_PATH', None),
+            cert_path=self._get_value('cert_path', params['client_cert'], 'DOCKER_CERT_PATH', None),
+            key_path=self._get_value('key_path', params['client_key'], 'DOCKER_CERT_PATH', None),
             ssl_version=self._get_value('ssl_version', params['ssl_version'], 'DOCKER_SSL_VERSION', None),
             tls=self._get_value('tls', params['tls'], 'DOCKER_TLS', DEFAULT_TLS),
-            tls_verify=self._get_value('tls_verfy', params['tls_verify'], 'DOCKER_TLS_VERIFY',
+            tls_verify=self._get_value('tls_verfy', params['validate_certs'], 'DOCKER_TLS_VERIFY',
                                        DEFAULT_TLS_VERIFY),
             timeout=self._get_value('timeout', params['timeout'], 'DOCKER_TIMEOUT',
                                     DEFAULT_TIMEOUT_SECONDS),
         )
 
-        if result['tls_hostname'] is None:
-            # get default machine name from the url
-            parsed_url = urlparse(result['docker_host'])
-            if ':' in parsed_url.netloc:
-                result['tls_hostname'] = parsed_url.netloc[:parsed_url.netloc.rindex(':')]
-            else:
-                result['tls_hostname'] = parsed_url
+        update_tls_hostname(result)
 
         return result
-
-    def _get_tls_config(self, **kwargs):
-        self.log("get_tls_config:")
-        for key in kwargs:
-            self.log("  %s: %s" % (key, kwargs[key]))
-        try:
-            tls_config = TLSConfig(**kwargs)
-            return tls_config
-        except TLSParameterError as exc:
-            self.fail("TLS config error: %s" % exc)
-
-    def _get_connect_params(self):
-        auth = self.auth_params
-
-        self.log("connection params:")
-        for key in auth:
-            self.log("  %s: %s" % (key, auth[key]))
-
-        if auth['tls'] or auth['tls_verify']:
-            auth['docker_host'] = auth['docker_host'].replace('tcp://', 'https://')
-
-        if auth['tls'] and auth['cert_path'] and auth['key_path']:
-            # TLS with certs and no host verification
-            tls_config = self._get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
-                                              verify=False,
-                                              ssl_version=auth['ssl_version'])
-            return dict(base_url=auth['docker_host'],
-                        tls=tls_config,
-                        version=auth['api_version'],
-                        timeout=auth['timeout'])
-
-        if auth['tls']:
-            # TLS with no certs and not host verification
-            tls_config = self._get_tls_config(verify=False,
-                                              ssl_version=auth['ssl_version'])
-            return dict(base_url=auth['docker_host'],
-                        tls=tls_config,
-                        version=auth['api_version'],
-                        timeout=auth['timeout'])
-
-        if auth['tls_verify'] and auth['cert_path'] and auth['key_path']:
-            # TLS with certs and host verification
-            if auth['cacert_path']:
-                tls_config = self._get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
-                                                  ca_cert=auth['cacert_path'],
-                                                  verify=True,
-                                                  assert_hostname=auth['tls_hostname'],
-                                                  ssl_version=auth['ssl_version'])
-            else:
-                tls_config = self._get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
-                                                  verify=True,
-                                                  assert_hostname=auth['tls_hostname'],
-                                                  ssl_version=auth['ssl_version'])
-
-            return dict(base_url=auth['docker_host'],
-                        tls=tls_config,
-                        version=auth['api_version'],
-                        timeout=auth['timeout'])
-
-        if auth['tls_verify'] and auth['cacert_path']:
-            # TLS with cacert only
-            tls_config = self._get_tls_config(ca_cert=auth['cacert_path'],
-                                              assert_hostname=auth['tls_hostname'],
-                                              verify=True,
-                                              ssl_version=auth['ssl_version'])
-            return dict(base_url=auth['docker_host'],
-                        tls=tls_config,
-                        version=auth['api_version'],
-                        timeout=auth['timeout'])
-
-        if auth['tls_verify']:
-            # TLS with verify and no certs
-            tls_config = self._get_tls_config(verify=True,
-                                              assert_hostname=auth['tls_hostname'],
-                                              ssl_version=auth['ssl_version'])
-            return dict(base_url=auth['docker_host'],
-                        tls=tls_config,
-                        version=auth['api_version'],
-                        timeout=auth['timeout'])
-        # No TLS
-        return dict(base_url=auth['docker_host'],
-                    version=auth['api_version'],
-                    timeout=auth['timeout'])
 
     def _handle_ssl_error(self, error):
         match = re.match(r"hostname.*doesn\'t match (\'.*\')", str(error))
         if match:
-            self.fail("You asked for verification that Docker host name matches %s. The actual hostname is %s. "
-                      "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. "
-                      "You may also use TLS without verification by setting the tls parameter to true."
+            self.fail("You asked for verification that Docker daemons certificate's hostname matches %s. "
+                      "The actual certificate's hostname is %s. Most likely you need to set DOCKER_TLS_HOSTNAME "
+                      "or pass `tls_hostname` with a value of %s. You may also use TLS without verification by "
+                      "setting the `tls` parameter to true."
                       % (self.auth_params['tls_hostname'], match.group(1), match.group(1)))
         self.fail("SSL Exception: %s" % (error))
 
@@ -461,18 +474,16 @@ class AnsibleDockerClient(Client):
                     else:
                         usg = 'set %s option' % (option, )
                     if not support_docker_api:
-                        msg = 'docker API version is %s. Minimum version required is %s to %s.'
+                        msg = 'Docker API version is %s. Minimum version required is %s to %s.'
                         msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
                     elif not support_docker_py:
+                        msg = "Docker SDK for Python version is %s. Minimum version required is %s to %s. "
                         if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "Consider switching to the 'docker' package if you do not require Python 2.6 support.")
+                            msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
                         elif self.docker_py_version < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "You have to switch to the Python 'docker' package. First uninstall 'docker-py' before "
-                                   "installing 'docker' to avoid a broken installation.")
+                            msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
                         else:
-                            msg = "docker version is %s. Minimum version required is %s to %s."
+                            msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
                         msg = msg % (docker_version, data['docker_py_version'], usg)
                     else:
                         # should not happen
@@ -617,9 +628,9 @@ class AnsibleDockerClient(Client):
 
     def _image_lookup(self, name, tag):
         '''
-        Including a tag in the name parameter sent to the docker-py images method does not
-        work consistently. Instead, get the result set for name and manually check if the tag
-        exists.
+        Including a tag in the name parameter sent to the Docker SDK for Python images method
+        does not work consistently. Instead, get the result set for name and manually check
+        if the tag exists.
         '''
         try:
             response = self.images(name=name)
@@ -628,10 +639,12 @@ class AnsibleDockerClient(Client):
         images = response
         if tag:
             lookup = "%s:%s" % (name, tag)
+            lookup_digest = "%s@%s" % (name, tag)
             images = []
             for image in response:
                 tags = image.get('RepoTags')
-                if tags and lookup in tags:
+                digests = image.get('RepoDigests')
+                if (tags and lookup in tags) or (digests and lookup_digest in digests):
                     images = [image]
                     break
         return images
@@ -659,6 +672,46 @@ class AnsibleDockerClient(Client):
         new_tag = self.find_image(name, tag)
 
         return new_tag, old_tag == new_tag
+
+    def report_warnings(self, result, warnings_key=None):
+        '''
+        Checks result of client operation for warnings, and if present, outputs them.
+
+        warnings_key should be a list of keys used to crawl the result dictionary.
+        For example, if warnings_key == ['a', 'b'], the function will consider
+        result['a']['b'] if these keys exist. If the result is a non-empty string, it
+        will be reported as a warning. If the result is a list, every entry will be
+        reported as a warning.
+
+        In most cases (if warnings are returned at all), warnings_key should be
+        ['Warnings'] or ['Warning']. The default value (if not specified) is ['Warnings'].
+        '''
+        if warnings_key is None:
+            warnings_key = ['Warnings']
+        for key in warnings_key:
+            if not isinstance(result, Mapping):
+                return
+            result = result.get(key)
+        if isinstance(result, Sequence):
+            for warning in result:
+                self.module.warn('Docker warning: {0}'.format(warning))
+        elif isinstance(result, string_types) and result:
+            self.module.warn('Docker warning: {0}'.format(result))
+
+    def inspect_distribution(self, image):
+        '''
+        Get image digest by directly calling the Docker API when running Docker SDK < 4.0.0
+        since prior versions did not support accessing private repositories.
+        '''
+        if self.docker_py_version < LooseVersion('4.0.0'):
+            registry = auth.resolve_repository_name(image)[0]
+            header = auth.get_config_header(self, registry)
+            if header:
+                return self._result(self._get(
+                    self._url('/distribution/{0}/json', image),
+                    headers={'X-Registry-Auth': header}
+                ), json=True)
+        return super(AnsibleDockerClient, self).inspect_distribution(image)
 
 
 def compare_dict_allow_more_present(av, bv):
@@ -794,6 +847,12 @@ class DifferenceTracker(object):
             before[item['name']] = item['active']
             after[item['name']] = item['parameter']
         return before, after
+
+    def has_difference_for(self, name):
+        '''
+        Returns a boolean if a difference exists for name
+        '''
+        return any(diff for diff in self._diff if diff['name'] == name)
 
     def get_legacy_docker_container_diffs(self):
         '''

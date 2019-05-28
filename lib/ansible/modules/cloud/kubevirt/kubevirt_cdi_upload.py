@@ -41,11 +41,12 @@ options:
     description:
       - URL containing the host and port on which the CDI Upload Proxy is available.
       - "More info: U(https://github.com/kubevirt/containerized-data-importer/blob/master/doc/upload.md#expose-cdi-uploadproxy-service)"
-  upload_host_verify_ssl:
+  upload_host_validate_certs:
     description:
       - Whether or not to verify the CDI Upload Proxy's SSL certificates against your system's CA trust store.
     default: true
     type: bool
+    aliases: [ upload_host_verify_ssl ]
   path:
     description:
       - Path of local image file to transfer.
@@ -71,7 +72,7 @@ EXAMPLES = '''
     pvc_namespace: default
     pvc_name: pvc-vm1
     upload_host: https://localhost:8443
-    upload_host_verify_ssl: false
+    upload_host_validate_certs: false
     path: /tmp/cirros-0.4.0-x86_64-disk.img
 '''
 
@@ -97,9 +98,10 @@ SERVICE_ARG_SPEC = {
     'pvc_name': {'required': True},
     'pvc_namespace': {'required': True},
     'upload_host': {'required': True},
-    'upload_host_verify_ssl': {
+    'upload_host_validate_certs': {
         'type': 'bool',
-        'default': True
+        'default': True,
+        'aliases': ['upload_host_verify_ssl']
     },
     'path': {'required': True},
     'merge_type': {
@@ -135,7 +137,7 @@ class KubeVirtCDIUpload(KubernetesRawModule):
         pvc_name = self.params.get('pvc_name')
         pvc_namespace = self.params.get('pvc_namespace')
         upload_host = self.params.get('upload_host')
-        upload_host_verify_ssl = self.params.get('upload_host_verify_ssl')
+        upload_host_verify_ssl = self.params.get('upload_host_validate_certs')
         path = self.params.get('path')
 
         definition = defaultdict(defaultdict)
@@ -158,11 +160,20 @@ class KubeVirtCDIUpload(KubernetesRawModule):
         result = self.perform_action(resource, definition)
 
         headers = {'Authorization': "Bearer {0}".format(result['result']['status']['token'])}
-        files = {'file': imgfile}
         url = "{0}/{1}/upload".format(upload_host, API)
-        requests.post(url, files=files, headers=headers, verify=upload_host_verify_ssl)
+        ret = requests.post(url, data=imgfile, headers=headers, verify=upload_host_verify_ssl)
+
+        if ret.status_code != 200:
+            self.fail_request("Something went wrong while uploading data", method='POST', url=url,
+                              reason=ret.reason, status_code=ret.status_code)
 
         self.exit_json(changed=True)
+
+    def fail_request(self, msg, **kwargs):
+        req_info = {}
+        for k, v in kwargs.items():
+            req_info['req_' + k] = v
+        self.fail_json(msg=msg, **req_info)
 
 
 def main():

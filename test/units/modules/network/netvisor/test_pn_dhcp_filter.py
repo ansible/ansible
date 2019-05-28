@@ -57,19 +57,19 @@ class TestDhcpFilterModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_trusted_ports': '1', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 dhcp-filter-create name foo  trusted-ports 1'
+        expected_cmd = ' switch sw01 dhcp-filter-create name foo  trusted-ports 1'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_dhcp_filter_delete(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 dhcp-filter-delete name foo '
+        expected_cmd = ' switch sw01 dhcp-filter-delete name foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_dhcp_filter_update(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_trusted_ports': '2', 'state': 'update'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 dhcp-filter-modify name foo  trusted-ports 2'
+        expected_cmd = ' switch sw01 dhcp-filter-modify name foo  trusted-ports 2'
         self.assertEqual(result['cli_cmd'], expected_cmd)

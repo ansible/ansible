@@ -83,11 +83,11 @@ def ensure_type(value, value_type, origin=None):
     if value_type:
         value_type = value_type.lower()
 
-    if value_type in ('boolean', 'bool'):
-        value = boolean(value, strict=False)
+    if value is not None:
+        if value_type in ('boolean', 'bool'):
+            value = boolean(value, strict=False)
 
-    elif value is not None:
-        if value_type in ('integer', 'int'):
+        elif value_type in ('integer', 'int'):
             value = int(value)
 
         elif value_type == 'float':
@@ -399,8 +399,14 @@ class ConfigManager(object):
         if config in defs:
 
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
+            direct_aliases = []
+            if direct:
+                direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
             if direct and config in direct:
                 value = direct[config]
+                origin = 'Direct'
+            elif direct and direct_aliases:
+                value = direct_aliases[0]
                 origin = 'Direct'
 
             else:

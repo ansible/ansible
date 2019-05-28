@@ -32,9 +32,10 @@ options:
         - Email cannot be updated.
         - Required when creating or editing an administrator.
         type: str
-    orgAccess:
+    org_access:
         description:
         - Privileges assigned to the administrator in the organization.
+        aliases: [ orgAccess ]
         choices: [ full, none, read-only ]
         type: str
     tags:
@@ -42,10 +43,29 @@ options:
         - Tags the administrator has privileges on.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
         - If C(none) is specified, C(network) or C(tags) must be specified.
+        suboptions:
+            tag:
+                description:
+                - Object tag which privileges should be assigned.
+                type: str
+            access:
+                description:
+                - The privilege of the dashboard administrator for the tag.
+                type: str
     networks:
         description:
         - List of networks the administrator has privileges on.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
+        suboptions:
+            id:
+                description:
+                - Network ID for which administrator should have privileges assigned.
+                type: str
+            access:
+                description:
+                - The privilege of the dashboard administrator on the network.
+                - Valid options are C(full), C(read-only), or C(none).
+                type: str
     state:
         description:
         - Create or modify, or delete an organization
@@ -97,7 +117,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Create new administrator with organization access
@@ -106,7 +126,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Create a new administrator with organization access
@@ -115,7 +135,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Revoke access to an organization for an administrator
@@ -124,6 +144,32 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: absent
     email: jane@doe.com
+
+- name: Create a new administrator with full access to two tags
+  meraki_admin:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    name: Jane Doe
+    orgAccess: read-only
+    email: jane@doe.com
+    tags:
+        - tag: tenant
+          access: full
+        - tag: corporate
+          access: read-only
+
+- name: Create a new administrator with full access to a network
+  meraki_admin:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    name: Jane Doe
+    orgAccess: read-only
+    email: jane@doe.com
+    networks:
+        - id: N_12345
+          access: full
 '''
 
 RETURN = r'''
@@ -284,8 +330,8 @@ def create_admin(meraki, org_id, name, email):
 
     is_admin_existing = find_admin(meraki, get_admins(meraki, org_id), email)
 
-    if meraki.params['orgAccess'] is not None:
-        payload['orgAccess'] = meraki.params['orgAccess']
+    if meraki.params['org_access'] is not None:
+        payload['orgAccess'] = meraki.params['org_access']
     if meraki.params['tags'] is not None:
         payload['tags'] = json.loads(meraki.params['tags'])
     if meraki.params['networks'] is not None:
@@ -308,7 +354,6 @@ def create_admin(meraki, org_id, name, email):
         if not meraki.params['networks']:
             payload['networks'] = []
         if meraki.is_update_required(is_admin_existing, payload) is True:
-            # meraki.fail_json(msg='Update is required!!!', original=is_admin_existing, proposed=payload)
             path = meraki.construct_path('update', function='admin', org_id=org_id) + is_admin_existing['id']
             r = meraki.request(path,
                                method='PUT',
@@ -318,7 +363,7 @@ def create_admin(meraki, org_id, name, email):
                 meraki.result['changed'] = True
                 return r
         else:
-            # meraki.fail_json(msg='No update is required!!!')
+            meraki.result['data'] = is_admin_existing
             return -1
 
 
@@ -329,7 +374,7 @@ def main():
     argument_spec.update(state=dict(type='str', choices=['present', 'query', 'absent'], required=True),
                          name=dict(type='str'),
                          email=dict(type='str'),
-                         orgAccess=dict(type='str', choices=['full', 'read-only', 'none']),
+                         org_access=dict(type='str', aliases=['orgAccess'], choices=['full', 'read-only', 'none']),
                          tags=dict(type='json'),
                          networks=dict(type='json'),
                          org_name=dict(type='str', aliases=['organization']),

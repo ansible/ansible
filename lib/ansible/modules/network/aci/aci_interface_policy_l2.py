@@ -196,7 +196,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         vlan_scope=dict(type='str', choices=['global', 'portlocal']),  # No default provided on purpose
         qinq=dict(type='str', choices=['core', 'disabled', 'edge']),
-        vepa=dict(type='raw'),  # Turn into a boolean in v2.9
+        vepa=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

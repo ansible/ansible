@@ -1,0 +1,36 @@
+---
+- debug: msg="START connection={{ ansible_connection }}/set_hostname.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+  - name: setup
+    cnos_config:
+      lines: "hostname switch"
+      match: none
+
+  - name: configure hostname
+    cnos_system:
+      hostname: foo
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: verify hostname
+    cnos_system:
+      hostname: foo
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: teardown
+    cnos_config:
+      lines: "hostname switch"
+      match: none
+
+- debug: msg="END connection={{ ansible_connection }}/set_hostname.yaml"

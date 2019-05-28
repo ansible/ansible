@@ -65,9 +65,10 @@ options:
     description:
     - The network this VPN gateway is accepting traffic for.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: true
   region:
     description:
@@ -81,32 +82,32 @@ notes:
 EXAMPLES = '''
 - name: create a address
   gcp_compute_address:
-      name: "address-vpngateway"
-      region: us-west1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: address-vpngateway
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: address
 
 - name: create a network
   gcp_compute_network:
-      name: "network-vpngateway"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-vpngateway
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "test_object"
-      region: us-west1
-      network: "{{ network }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-west1
+    network: "{{ network }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -139,7 +140,7 @@ network:
   description:
   - The network this VPN gateway is accepting traffic for.
   returned: success
-  type: str
+  type: dict
 tunnels:
   description:
   - A list of references to VpnTunnel resources associated with this VPN gateway.
@@ -179,7 +180,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True),
+            network=dict(required=True, type='dict'),
             region=dict(required=True, type='str'),
         )
     )
@@ -221,7 +222,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="TargetVpnGateway cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

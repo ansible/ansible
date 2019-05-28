@@ -4,18 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-SIZE_RANGES = {
-    'Y': 1 << 80,
-    'Z': 1 << 70,
-    'E': 1 << 60,
-    'P': 1 << 50,
-    'T': 1 << 40,
-    'G': 1 << 30,
-    'M': 1 << 20,
-    'K': 1 << 10,
-    'B': 1,
-}
-
 FILE_ATTRIBUTES = {
     'A': 'noatime',
     'a': 'append',
@@ -39,33 +27,33 @@ FILE_ATTRIBUTES = {
     'Z': 'compresseddirty',
 }
 
-PASS_BOOLS = ('no_log', 'debug', 'diff')
-
 # Ansible modules can be written in any language.
 # The functions available here can be used to do many common tasks,
 # to simplify development of Python modules.
 
 import __main__
 import atexit
-import locale
-import os
-import re
-import shlex
-import signal
-import subprocess
-import sys
-import types
-import time
-import select
-import shutil
-import stat
-import tempfile
-import traceback
-import grp
-import pwd
-import platform
 import errno
 import datetime
+import grp
+import fcntl
+import locale
+import os
+import pwd
+import platform
+import re
+import select
+import shlex
+import shutil
+import signal
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+import types
+
 from collections import deque
 from itertools import chain, repeat
 
@@ -91,17 +79,26 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
+from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.common.text.converters import (
+    jsonify,
+    container_to_bytes as json_dict_unicode_to_bytes,
+    container_to_text as json_dict_bytes_to_unicode,
+)
+
+from ansible.module_utils.common.text.formatters import (
+    lenient_lowercase,
+    bytes_to_human,
+    human_to_bytes,
+    SIZE_RANGES,
+)
+
 try:
-    import json
-    # Detect the python-json library which is incompatible
-    try:
-        if not isinstance(json.loads, types.FunctionType) or not isinstance(json.dumps, types.FunctionType):
-            raise ImportError
-    except AttributeError:
-        raise ImportError
-except ImportError:
-    print('\n{"msg": "Error: ansible requires the stdlib json and was not found!", "failed": true}')
+    from ansible.module_utils.common._json_compat import json
+except ImportError as e:
+    print('\n{{"msg": "Error: ansible requires the stdlib json: {0}", "failed": true}}'.format(to_native(e)))
     sys.exit(1)
+
 
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:
@@ -158,6 +155,7 @@ from ansible.module_utils.common.parameters import (
     list_deprecations,
     list_no_log_values,
     PASS_VARS,
+    PASS_BOOLS,
 )
 
 from ansible.module_utils.six import (
@@ -171,10 +169,30 @@ from ansible.module_utils.six import (
     text_type,
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
-from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.common.validation import (
+    check_missing_parameters,
+    check_mutually_exclusive,
+    check_required_arguments,
+    check_required_by,
+    check_required_if,
+    check_required_one_of,
+    check_required_together,
+    count_terms,
+    check_type_bool,
+    check_type_bits,
+    check_type_bytes,
+    check_type_float,
+    check_type_int,
+    check_type_jsonarg,
+    check_type_list,
+    check_type_dict,
+    check_type_path,
+    check_type_raw,
+    check_type_str,
+    safe_eval,
+)
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
-
 
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -292,45 +310,6 @@ def get_all_subclasses(cls):
 
 
 # End compat shims
-
-
-def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
-    ''' Recursively convert dict keys and values to byte str
-
-        Specialized for json return because this only handles, lists, tuples,
-        and dict container types (the containers that the json module returns)
-    '''
-
-    if isinstance(d, text_type):
-        return to_bytes(d, encoding=encoding, errors=errors)
-    elif isinstance(d, dict):
-        return dict(map(json_dict_unicode_to_bytes, iteritems(d), repeat(encoding), repeat(errors)))
-    elif isinstance(d, list):
-        return list(map(json_dict_unicode_to_bytes, d, repeat(encoding), repeat(errors)))
-    elif isinstance(d, tuple):
-        return tuple(map(json_dict_unicode_to_bytes, d, repeat(encoding), repeat(errors)))
-    else:
-        return d
-
-
-def json_dict_bytes_to_unicode(d, encoding='utf-8', errors='surrogate_or_strict'):
-    ''' Recursively convert dict keys and values to byte str
-
-        Specialized for json return because this only handles, lists, tuples,
-        and dict container types (the containers that the json module returns)
-    '''
-
-    if isinstance(d, binary_type):
-        # Warning, can traceback
-        return to_text(d, encoding=encoding, errors=errors)
-    elif isinstance(d, dict):
-        return dict(map(json_dict_bytes_to_unicode, iteritems(d), repeat(encoding), repeat(errors)))
-    elif isinstance(d, list):
-        return list(map(json_dict_bytes_to_unicode, d, repeat(encoding), repeat(errors)))
-    elif isinstance(d, tuple):
-        return tuple(map(json_dict_bytes_to_unicode, d, repeat(encoding), repeat(errors)))
-    else:
-        return d
 
 
 def _remove_values_conditions(value, no_log_strings, deferred_removals):
@@ -516,73 +495,6 @@ def heuristic_log_sanitize(data, no_log_values=None):
     return output
 
 
-def bytes_to_human(size, isbits=False, unit=None):
-
-    base = 'Bytes'
-    if isbits:
-        base = 'bits'
-    suffix = ''
-
-    for suffix, limit in sorted(iteritems(SIZE_RANGES), key=lambda item: -item[1]):
-        if (unit is None and size >= limit) or unit is not None and unit.upper() == suffix[0]:
-            break
-
-    if limit != 1:
-        suffix += base[0]
-    else:
-        suffix = base
-
-    return '%.2f %s' % (size / limit, suffix)
-
-
-def human_to_bytes(number, default_unit=None, isbits=False):
-
-    '''
-    Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument.
-    example: human_to_bytes('10M') <=> human_to_bytes(10, 'M')
-    '''
-    m = re.search(r'^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
-    if m is None:
-        raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
-    try:
-        num = float(m.group(1))
-    except Exception:
-        raise ValueError("human_to_bytes() can't interpret following number: %s (original input string: %s)" % (m.group(1), number))
-
-    unit = m.group(2)
-    if unit is None:
-        unit = default_unit
-
-    if unit is None:
-        ''' No unit given, returning raw number '''
-        return int(round(num))
-    range_key = unit[0].upper()
-    try:
-        limit = SIZE_RANGES[range_key]
-    except Exception:
-        raise ValueError("human_to_bytes() failed to convert %s (unit = %s). The suffix must be one of %s" % (number, unit, ", ".join(SIZE_RANGES.keys())))
-
-    # default value
-    unit_class = 'B'
-    unit_class_name = 'byte'
-    # handling bits case
-    if isbits:
-        unit_class = 'b'
-        unit_class_name = 'bit'
-    # check unit value if more than one character (KB, MB)
-    if len(unit) > 1:
-        expect_message = 'expect %s%s or %s' % (range_key, unit_class, range_key)
-        if range_key == 'B':
-            expect_message = 'expect %s or %s' % (unit_class, unit_class_name)
-
-        if unit_class_name in unit.lower():
-            pass
-        elif unit[1] != unit_class:
-            raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (number, expect_message))
-
-    return int(round(num * limit))
-
-
 def _load_params():
     ''' read the modules parameters and store them globally.
 
@@ -645,44 +557,6 @@ def env_fallback(*args, **kwargs):
         if arg in os.environ:
             return os.environ[arg]
     raise AnsibleFallbackNotFound
-
-
-def _lenient_lowercase(lst):
-    """Lowercase elements of a list.
-
-    If an element is not a string, pass it through untouched.
-    """
-    lowered = []
-    for value in lst:
-        try:
-            lowered.append(value.lower())
-        except AttributeError:
-            lowered.append(value)
-    return lowered
-
-
-def _json_encode_fallback(obj):
-    if isinstance(obj, Set):
-        return list(obj)
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    raise TypeError("Cannot json serialize %s" % to_native(obj))
-
-
-def jsonify(data, **kwargs):
-    for encoding in ("utf-8", "latin-1"):
-        try:
-            return json.dumps(data, encoding=encoding, default=_json_encode_fallback, **kwargs)
-        # Old systems using old simplejson module does not support encoding keyword.
-        except TypeError:
-            try:
-                new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
-            except UnicodeDecodeError:
-                continue
-            return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
-        except UnicodeDecodeError:
-            continue
-    raise UnicodeError('Invalid unicode encoding encountered')
 
 
 def missing_required_lib(library, reason=None, url=None):
@@ -836,8 +710,10 @@ class AnsibleModule(object):
         if self._tmpdir is None:
             basedir = None
 
-            basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
-            if not os.path.exists(basedir):
+            if self._remote_tmp is not None:
+                basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
+
+            if basedir is not None and not os.path.exists(basedir):
                 try:
                     os.makedirs(basedir, mode=0o700)
                 except (OSError, IOError) as e:
@@ -1566,20 +1442,27 @@ class AnsibleModule(object):
         if legal_inputs is None:
             legal_inputs = self._legal_inputs
 
-        for (k, v) in list(param.items()):
+        for k in list(param.keys()):
 
             if check_invalid_arguments and k not in legal_inputs:
                 unsupported_parameters.add(k)
-            elif k.startswith('_ansible_'):
-                # handle setting internal properties from internal ansible vars
-                key = k.replace('_ansible_', '')
-                if key in PASS_BOOLS:
-                    setattr(self, PASS_VARS[key], self.boolean(v))
-                else:
-                    setattr(self, PASS_VARS[key], v)
 
-                # clean up internal params:
-                del self.params[k]
+        for k in PASS_VARS:
+            # handle setting internal properties from internal ansible vars
+            param_key = '_ansible_%s' % k
+            if param_key in param:
+                if k in PASS_BOOLS:
+                    setattr(self, PASS_VARS[k][0], self.boolean(param[param_key]))
+                else:
+                    setattr(self, PASS_VARS[k][0], param[param_key])
+
+                # clean up internal top level params:
+                if param_key in self.params:
+                    del self.params[param_key]
+            else:
+                # use defaults if not already set
+                if not hasattr(self, PASS_VARS[k][0]):
+                    setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
         if unsupported_parameters:
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
@@ -1591,80 +1474,72 @@ class AnsibleModule(object):
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
     def _count_terms(self, check, param=None):
-        count = 0
         if param is None:
             param = self.params
-        for term in check:
-            if term in param:
-                count += 1
-        return count
+        return count_terms(check, param)
 
     def _check_mutually_exclusive(self, spec, param=None):
-        if spec is None:
-            return
-        for check in spec:
-            count = self._count_terms(check, param)
-            if count > 1:
-                msg = "parameters are mutually exclusive: %s" % ', '.join(check)
-                if self._options_context:
-                    msg += " found in %s" % " -> ".join(self._options_context)
-                self.fail_json(msg=msg)
+        if param is None:
+            param = self.params
+
+        try:
+            check_mutually_exclusive(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_required_one_of(self, spec, param=None):
         if spec is None:
             return
-        for check in spec:
-            count = self._count_terms(check, param)
-            if count == 0:
-                msg = "one of the following is required: %s" % ', '.join(check)
-                if self._options_context:
-                    msg += " found in %s" % " -> ".join(self._options_context)
-                self.fail_json(msg=msg)
+
+        if param is None:
+            param = self.params
+
+        try:
+            check_required_one_of(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_required_together(self, spec, param=None):
         if spec is None:
             return
-        for check in spec:
-            counts = [self._count_terms([field], param) for field in check]
-            non_zero = [c for c in counts if c > 0]
-            if len(non_zero) > 0:
-                if 0 in counts:
-                    msg = "parameters are required together: %s" % ', '.join(check)
-                    if self._options_context:
-                        msg += " found in %s" % " -> ".join(self._options_context)
-                    self.fail_json(msg=msg)
+        if param is None:
+            param = self.params
+
+        try:
+            check_required_together(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_required_by(self, spec, param=None):
         if spec is None:
             return
         if param is None:
             param = self.params
-        for (key, value) in spec.items():
-            if key not in param or param[key] is None:
-                continue
-            missing = []
-            # Support strings (single-item lists)
-            if isinstance(value, string_types):
-                value = [value, ]
-            for required in value:
-                if required not in param or param[required] is None:
-                    missing.append(required)
-            if len(missing) > 0:
-                self.fail_json(msg="missing parameter(s) required by '%s': %s" % (key, ', '.join(missing)))
+
+        try:
+            check_required_by(spec, param)
+        except TypeError as e:
+            self.fail_json(msg=to_native(e))
 
     def _check_required_arguments(self, spec=None, param=None):
-        ''' ensure all required arguments are present '''
-        missing = []
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
-        for (k, v) in spec.items():
-            required = v.get('required', False)
-            if required and k not in param:
-                missing.append(k)
-        if len(missing) > 0:
-            msg = "missing required arguments: %s" % ", ".join(missing)
+
+        try:
+            check_required_arguments(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
@@ -1675,33 +1550,14 @@ class AnsibleModule(object):
             return
         if param is None:
             param = self.params
-        for sp in spec:
-            missing = []
-            max_missing_count = 0
-            is_one_of = False
-            if len(sp) == 4:
-                key, val, requirements, is_one_of = sp
-            else:
-                key, val, requirements = sp
 
-            # is_one_of is True at least one requirement should be
-            # present, else all requirements should be present.
-            if is_one_of:
-                max_missing_count = len(requirements)
-                term = 'any'
-            else:
-                term = 'all'
-
-            if key in param and param[key] == val:
-                for check in requirements:
-                    count = self._count_terms((check,), param)
-                    if count == 0:
-                        missing.append(check)
-            if len(missing) and len(missing) >= max_missing_count:
-                msg = "%s is %s but %s of the following are missing: %s" % (key, val, term, ', '.join(missing))
-                if self._options_context:
-                    msg += " found in %s" % " -> ".join(self._options_context)
-                self.fail_json(msg=msg)
+        try:
+            check_required_if(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
@@ -1729,7 +1585,7 @@ class AnsibleModule(object):
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
                         if param[k] == 'False':
-                            lowered_choices = _lenient_lowercase(choices)
+                            lowered_choices = lenient_lowercase(choices)
                             overlap = BOOLEANS_FALSE.intersection(choices)
                             if len(overlap) == 1:
                                 # Extract from a set
@@ -1737,7 +1593,7 @@ class AnsibleModule(object):
 
                         if param[k] == 'True':
                             if lowered_choices is None:
-                                lowered_choices = _lenient_lowercase(choices)
+                                lowered_choices = lenient_lowercase(choices)
                             overlap = BOOLEANS_TRUE.intersection(choices)
                             if len(overlap) == 1:
                                 (param[k],) = overlap
@@ -1755,160 +1611,59 @@ class AnsibleModule(object):
                 self.fail_json(msg=msg)
 
     def safe_eval(self, value, locals=None, include_exceptions=False):
-
-        # do not allow method calls to modules
-        if not isinstance(value, string_types):
-            # already templated to a datavaluestructure, perhaps?
-            if include_exceptions:
-                return (value, None)
-            return value
-        if re.search(r'\w\.\w+\(', value):
-            if include_exceptions:
-                return (value, None)
-            return value
-        # do not allow imports
-        if re.search(r'import \w+', value):
-            if include_exceptions:
-                return (value, None)
-            return value
-        try:
-            result = literal_eval(value)
-            if include_exceptions:
-                return (result, None)
-            else:
-                return result
-        except Exception as e:
-            if include_exceptions:
-                return (value, e)
-            return value
+        return safe_eval(value, locals, include_exceptions)
 
     def _check_type_str(self, value):
-        if isinstance(value, string_types):
-            return value
+        opts = {
+            'error': False,
+            'warn': False,
+            'ignore': True
+        }
 
         # Ignore, warn, or error when converting to a string.
-        # The current default is to warn. Change this in Anisble 2.12 to error.
-        common_msg = 'quote the entire value to ensure it does not change.'
-        if self._string_conversion_action == 'error':
-            msg = common_msg.capitalize()
-            raise TypeError(msg)
-        elif self._string_conversion_action == 'warn':
-            msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
-                   'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
-            self.warn(msg)
-        return to_native(value, errors='surrogate_or_strict')
+        allow_conversion = opts.get(self._string_conversion_action, True)
+        try:
+            return check_type_str(value, allow_conversion)
+        except TypeError:
+            common_msg = 'quote the entire value to ensure it does not change.'
+            if self._string_conversion_action == 'error':
+                msg = common_msg.capitalize()
+                raise TypeError(to_native(msg))
+            elif self._string_conversion_action == 'warn':
+                msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
+                       'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+                self.warn(to_native(msg))
+                return to_native(value, errors='surrogate_or_strict')
 
     def _check_type_list(self, value):
-        if isinstance(value, list):
-            return value
-
-        if isinstance(value, string_types):
-            return value.split(",")
-        elif isinstance(value, int) or isinstance(value, float):
-            return [str(value)]
-
-        raise TypeError('%s cannot be converted to a list' % type(value))
+        return check_type_list(value)
 
     def _check_type_dict(self, value):
-        if isinstance(value, dict):
-            return value
-
-        if isinstance(value, string_types):
-            if value.startswith("{"):
-                try:
-                    return json.loads(value)
-                except Exception:
-                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
-                    if exc is not None:
-                        raise TypeError('unable to evaluate string as dictionary')
-                    return result
-            elif '=' in value:
-                fields = []
-                field_buffer = []
-                in_quote = False
-                in_escape = False
-                for c in value.strip():
-                    if in_escape:
-                        field_buffer.append(c)
-                        in_escape = False
-                    elif c == '\\':
-                        in_escape = True
-                    elif not in_quote and c in ('\'', '"'):
-                        in_quote = c
-                    elif in_quote and in_quote == c:
-                        in_quote = False
-                    elif not in_quote and c in (',', ' '):
-                        field = ''.join(field_buffer)
-                        if field:
-                            fields.append(field)
-                        field_buffer = []
-                    else:
-                        field_buffer.append(c)
-
-                field = ''.join(field_buffer)
-                if field:
-                    fields.append(field)
-                return dict(x.split("=", 1) for x in fields)
-            else:
-                raise TypeError("dictionary requested, could not parse JSON or key=value")
-
-        raise TypeError('%s cannot be converted to a dict' % type(value))
+        return check_type_dict(value)
 
     def _check_type_bool(self, value):
-        if isinstance(value, bool):
-            return value
-
-        if isinstance(value, string_types) or isinstance(value, int):
-            return self.boolean(value)
-
-        raise TypeError('%s cannot be converted to a bool' % type(value))
+        return check_type_bool(value)
 
     def _check_type_int(self, value):
-        if isinstance(value, integer_types):
-            return value
-
-        if isinstance(value, string_types):
-            return int(value)
-
-        raise TypeError('%s cannot be converted to an int' % type(value))
+        return check_type_int(value)
 
     def _check_type_float(self, value):
-        if isinstance(value, float):
-            return value
-
-        if isinstance(value, (binary_type, text_type, int)):
-            return float(value)
-
-        raise TypeError('%s cannot be converted to a float' % type(value))
+        return check_type_float(value)
 
     def _check_type_path(self, value):
-        value = self._check_type_str(value)
-        return os.path.expanduser(os.path.expandvars(value))
+        return check_type_path(value)
 
     def _check_type_jsonarg(self, value):
-        # Return a jsonified string.  Sometimes the controller turns a json
-        # string into a dict/list so transform it back into json here
-        if isinstance(value, (text_type, binary_type)):
-            return value.strip()
-        else:
-            if isinstance(value, (list, tuple, dict)):
-                return self.jsonify(value)
-        raise TypeError('%s cannot be converted to a json string' % type(value))
+        return check_type_jsonarg(value)
 
     def _check_type_raw(self, value):
-        return value
+        return check_type_raw(value)
 
     def _check_type_bytes(self, value):
-        try:
-            self.human_to_bytes(value)
-        except ValueError:
-            raise TypeError('%s cannot be converted to a Byte value' % type(value))
+        return check_type_bytes(value)
 
     def _check_type_bits(self, value):
-        try:
-            self.human_to_bytes(value, isbits=True)
-        except ValueError:
-            raise TypeError('%s cannot be converted to a Bit value' % type(value))
+        return check_type_bits(value)
 
     def _handle_options(self, argument_spec=None, params=None):
         ''' deal with options to create sub spec '''
@@ -2313,23 +2068,20 @@ class AnsibleModule(object):
         sys.exit(1)
 
     def fail_on_missing_params(self, required_params=None):
-        ''' This is for checking for required params when we can not check via argspec because we
-        need more information than is simply given in the argspec.
-        '''
         if not required_params:
             return
-        missing_params = []
-        for required_param in required_params:
-            if not self.params.get(required_param):
-                missing_params.append(required_param)
-        if missing_params:
-            self.fail_json(msg="missing required arguments: %s" % ', '.join(missing_params))
+        try:
+            check_missing_parameters(self.params, required_params)
+        except TypeError as e:
+            self.fail_json(msg=to_native(e))
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
-        if not os.path.exists(filename):
+        b_filename = to_bytes(filename, errors='surrogate_or_strict')
+
+        if not os.path.exists(b_filename):
             return None
-        if os.path.isdir(filename):
+        if os.path.isdir(b_filename):
             self.fail_json(msg="attempted to take checksum of directory: %s" % filename)
 
         # preserve old behaviour where the third parameter was a hash algorithm object
@@ -2343,7 +2095,7 @@ class AnsibleModule(object):
                                    (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
 
         blocksize = 64 * 1024
-        infile = open(os.path.realpath(filename), 'rb')
+        infile = open(os.path.realpath(b_filename), 'rb')
         block = infile.read(blocksize)
         while block:
             digest_method.update(block)
@@ -2584,7 +2336,7 @@ class AnsibleModule(object):
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
         data = b('')
         if file_descriptor in rfds:
-            data = os.read(file_descriptor.fileno(), 9000)
+            data = os.read(file_descriptor.fileno(), self.get_buffer_size(file_descriptor))
             if data == b(''):
                 rpipes.remove(file_descriptor)
 
@@ -2905,10 +2657,20 @@ class AnsibleModule(object):
     # In 2.0, moved from inside the module to the toplevel
     is_executable = is_executable
 
+    @staticmethod
+    def get_buffer_size(fd):
+        try:
+            # 1032 == FZ_GETPIPE_SZ
+            buffer_size = fcntl.fcntl(fd, 1032)
+        except Exception:
+            try:
+                # not as exact as above, but should be good enough for most platforms that fail the previous call
+                buffer_size = select.PIPE_BUF
+            except Exception:
+                buffer_size = 9000  # use sane default JIC
+
+        return buffer_size
+
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
-
-
-def get_timestamp():
-    return datetime.datetime.now().replace(microsecond=0).isoformat()

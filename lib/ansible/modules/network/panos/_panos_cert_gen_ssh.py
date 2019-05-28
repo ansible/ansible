@@ -87,15 +87,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.compat.paramiko import paramiko
 import time
-
-try:
-    import paramiko
-    HAS_LIB = True
-except ImportError:
-    HAS_LIB = False
 
 _PROMPTBUFF = 4096
 
@@ -170,7 +165,7 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['key_filename', 'password']])
-    if not HAS_LIB:
+    if paramiko is None:
         module.fail_json(msg='paramiko is required for this module')
 
     ip_address = module.params["ip_address"]

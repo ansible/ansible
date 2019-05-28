@@ -49,18 +49,19 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a target http proxy facts
+- name: " a target http proxy facts"
   gcp_compute_target_http_proxy_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -94,7 +95,7 @@ items:
       - A reference to the UrlMap resource that defines the mapping from URL to the
         BackendService.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################
@@ -119,7 +120,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

@@ -8,6 +8,7 @@ import os
 import time
 
 from ansible import constants as C
+from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import combine_vars
 
@@ -34,6 +35,13 @@ class ActionModule(ActionBase):
             fact_filter = mod_args.pop('filter', None)
             if fact_filter is not None:
                 self._display.warning('Ignoring filter(%s) for %s' % (fact_filter, fact_module))
+
+        # Strip out keys with ``None`` values, effectively mimicking ``omit`` behavior
+        # This ensures we don't pass a ``None`` value as an argument expecting a specific type
+        mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
+
+        # handle module defaults
+        mod_args = get_action_args_with_defaults(fact_module, mod_args, self._task.module_defaults, self._templar)
 
         return mod_args
 

@@ -104,7 +104,7 @@ class Peer(object):
         self.call_peer_commands()
 
     def get_to_be_probed_hosts(self, hosts):
-        peercmd = [self.glustercmd, 'pool', 'list']
+        peercmd = [self.glustercmd, 'pool', 'list', '--mode=script']
         rc, output, err = self.module.run_command(peercmd,
                                                   environ_update=self.lang)
         peers_in_cluster = [line.split('\t')[1].strip() for
@@ -124,7 +124,7 @@ class Peer(object):
         result['changed'] = False
 
         for node in self.nodes:
-            peercmd = [self.glustercmd, 'peer', self.action, node]
+            peercmd = [self.glustercmd, 'peer', self.action, node, '--mode=script']
             if self.force:
                 peercmd.append(self.force)
             rc, out, err = self.module.run_command(peercmd,

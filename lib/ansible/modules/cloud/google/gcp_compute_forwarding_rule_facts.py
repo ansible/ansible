@@ -54,19 +54,20 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a forwarding rule facts
+- name: " a forwarding rule facts"
   gcp_compute_forwarding_rule_facts:
-      region: us-west1
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    region: us-west1
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -118,15 +119,13 @@ items:
       type: str
     backendService:
       description:
-      - A reference to a BackendService to receive the matched traffic.
-      - This is used for internal load balancing.
-      - "(not used for external load balancing) ."
+      - A BackendService to receive the matched traffic. This is used only for INTERNAL
+        load balancing.
       returned: success
-      type: str
+      type: dict
     ipVersion:
       description:
-      - The IP Version that will be used by this forwarding rule. Valid options are
-        IPV4 or IPV6. This can only be specified for a global forwarding rule.
+      - ipVersion is not a valid field for regional forwarding rules.
       returned: success
       type: str
     loadBalancingScheme:
@@ -153,9 +152,9 @@ items:
       - For internal load balancing, this field identifies the network that the load
         balanced IP should belong to for this Forwarding Rule. If this field is not
         specified, the default network will be used.
-      - This field is not used for external load balancing.
+      - This field is only used for INTERNAL load balancing.
       returned: success
-      type: str
+      type: dict
     portRange:
       description:
       - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -183,29 +182,51 @@ items:
       type: list
     subnetwork:
       description:
-      - A reference to a subnetwork.
-      - For internal load balancing, this field identifies the subnetwork that the
-        load balanced IP should belong to for this Forwarding Rule.
+      - The subnetwork that the load balanced IP should belong to for this Forwarding
+        Rule. This field is only used for INTERNAL load balancing.
       - If the network specified is in auto subnet mode, this field is optional. However,
         if the network is in custom subnet mode, a subnetwork must be specified.
-      - This field is not used for external load balancing.
       returned: success
-      type: str
+      type: dict
     target:
       description:
+      - This field is only used for EXTERNAL load balancing.
       - A reference to a TargetPool resource to receive the matched traffic.
-      - For regional forwarding rules, this target must live in the same region as
-        the forwarding rule. For global forwarding rules, this target must be a global
-        load balancing resource. The forwarded traffic must be of a type appropriate
-        to the target object.
-      - This field is not used for internal load balancing.
+      - This target must live in the same region as the forwarding rule.
+      - The forwarded traffic must be of a type appropriate to the target object.
       returned: success
-      type: str
+      type: dict
+    allPorts:
+      description:
+      - For internal TCP/UDP load balancing (i.e. load balancing scheme is INTERNAL
+        and protocol is TCP/UDP), set this to true to allow packets addressed to any
+        ports to be forwarded to the backends configured with this forwarding rule.
+        Used with backend service. Cannot be set if port or portRange are set.
+      returned: success
+      type: bool
     networkTier:
       description:
       - 'The networking tier used for configuring this address. This field can take
         the following values: PREMIUM or STANDARD. If this field is not specified,
         it is assumed to be PREMIUM.'
+      returned: success
+      type: str
+    serviceLabel:
+      description:
+      - An optional prefix to the service name for this Forwarding Rule.
+      - If specified, will be the first label of the fully qualified service name.
+      - The label must be 1-63 characters long, and comply with RFC1035.
+      - Specifically, the label must be 1-63 characters long and match the regular
+        expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must
+        be a lowercase letter, and all following characters must be a dash, lowercase
+        letter, or digit, except the last character, which cannot be a dash.
+      - This field is only used for INTERNAL load balancing.
+      returned: success
+      type: str
+    serviceName:
+      description:
+      - The internal fully qualified service name for this Forwarding Rule.
+      - This field is only used for INTERNAL load balancing.
       returned: success
       type: str
     region:
@@ -238,7 +259,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

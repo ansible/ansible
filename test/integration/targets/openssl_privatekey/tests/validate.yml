@@ -105,6 +105,25 @@
   loop_control:
     label: "{{ item.item.curve }}"
 
+- name: Validate other type generation (just check changed)
+  assert:
+    that:
+    - item is changed
+  loop: "{{ privatekey_t1_generate.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.type }}"
+
+
+- name: Validate other type generation idempotency
+  assert:
+    that:
+    - item is not changed
+  loop: "{{ privatekey_t1_idempotency.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.type }}"
+
 - name: Validate passphrase changing
   assert:
     that:
@@ -113,3 +132,31 @@
       - passphrase_3 is changed
       - passphrase_4 is not changed
       - passphrase_5 is changed
+      - passphrase_1.backup_file is undefined
+      - passphrase_2.backup_file is undefined
+      - passphrase_3.backup_file is string
+      - passphrase_4.backup_file is undefined
+      - passphrase_5.backup_file is string
+
+- name: Verify that broken key will be regenerated
+  assert:
+    that:
+      - output_broken is changed
+
+- name: Validate remove
+  assert:
+    that:
+      - remove_1 is changed
+      - remove_2 is not changed
+      - remove_1.backup_file is string
+      - remove_2.backup_file is undefined
+
+- name: Validate mode
+  assert:
+    that:
+      - privatekey_mode_1 is changed
+      - privatekey_mode_1_stat.stat.mode == '0400'
+      - privatekey_mode_2 is not changed
+      - privatekey_mode_3 is changed
+      - privatekey_mode_3_stat.stat.mode == '0400'
+      - privatekey_mode_1_stat.stat.mtime != privatekey_mode_3_stat.stat.mtime

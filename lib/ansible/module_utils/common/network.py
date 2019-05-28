@@ -79,6 +79,36 @@ def to_subnet(addr, mask, dotted_notation=False):
     return '%s/%s' % ('.'.join(network), cidr)
 
 
+def to_ipv6_subnet(addr):
+    """ IPv6 addresses are eight groupings. The first four groupings (64 bits) comprise the subnet address. """
+
+    # https://tools.ietf.org/rfc/rfc2374.txt
+
+    # Split by :: to identify omitted zeros
+    ipv6_prefix = addr.split('::')[0]
+
+    # Get the first four groups, or as many as are found + ::
+    found_groups = []
+    for group in ipv6_prefix.split(':'):
+        found_groups.append(group)
+        if len(found_groups) == 4:
+            break
+    if len(found_groups) < 4:
+        found_groups.append('::')
+
+    # Concatenate network address parts
+    network_addr = ''
+    for group in found_groups:
+        if group != '::':
+            network_addr += str(group)
+        network_addr += str(':')
+
+    # Ensure network address ends with ::
+    if not network_addr.endswith('::'):
+        network_addr += str(':')
+    return network_addr
+
+
 def to_ipv6_network(addr):
     """ IPv6 addresses are eight groupings. The first three groupings (48 bits) comprise the network address. """
 

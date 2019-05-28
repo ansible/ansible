@@ -73,7 +73,7 @@ options:
 EXAMPLES = """
 - name: admin-syslog functionality
   pn_admin_syslog:
-    pn_cliswitch: sw01
+    pn_cliswitch: "sw01"
     state: "absent"
     pn_name: "foo"
     pn_scope: "local"
@@ -116,6 +116,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -129,7 +130,7 @@ def check_cli(module, cli):
     name = module.params['pn_name']
 
     cli += ' admin-syslog-show format name no-show-headers'
-    out = module.run_command(cli.split(), use_unsafe_shell=True)[1]
+    out = run_commands(module, cli)[1]
 
     out = out.split()
 

@@ -145,7 +145,7 @@ def get_connection(module):
     if hasattr(module, 'connection'):
         return module.connection
 
-    capabilities = get_device_capabilities(module)
+    capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
     if network_api == 'cliconf':
         module.connection = Connection(module._socket_path)
@@ -157,7 +157,7 @@ def get_connection(module):
     return module.connection
 
 
-def get_device_capabilities(module):
+def get_capabilities(module):
     if hasattr(module, 'capabilities'):
         return module.capabilities
     try:
@@ -317,12 +317,12 @@ def etree_findall(root, node):
 
 
 def is_cliconf(module):
-    capabilities = get_device_capabilities(module)
+    capabilities = get_capabilities(module)
     return (capabilities.get('network_api') == 'cliconf')
 
 
 def is_netconf(module):
-    capabilities = get_device_capabilities(module)
+    capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
     if network_api == 'netconf':
         if not HAS_NCCLIENT:
@@ -471,16 +471,21 @@ def load_config(module, command_filter, commit=False, replace=False,
             response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
             if module._diff:
                 diff = response.get('diff')
+
+            # Overwrite the default diff by the IOS XR commit diff.
+            # See plugins/cliconf/iosxr.py for this key set: show_commit_config_diff
+            diff = response.get('show_commit_config_diff')
+
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
     return diff
 
 
-def run_commands(module, commands, check_rc=True, return_timestamps=False):
+def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
     try:
-        return connection.run_commands(commands=commands, check_rc=check_rc, return_timestamps=return_timestamps)
+        return connection.run_commands(commands=commands, check_rc=check_rc)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 

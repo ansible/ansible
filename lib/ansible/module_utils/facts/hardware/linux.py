@@ -30,7 +30,7 @@ from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.basic import bytes_to_human
+from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
 
@@ -159,6 +159,7 @@ class LinuxHardware(Hardware):
         i = 0
         vendor_id_occurrence = 0
         model_name_occurrence = 0
+        processor_occurence = 0
         physid = 0
         coreid = 0
         sockets = {}
@@ -186,13 +187,18 @@ class LinuxHardware(Hardware):
             data = line.split(":", 1)
             key = data[0].strip()
 
+            try:
+                val = data[1].strip()
+            except IndexError:
+                val = ""
+
             if xen:
                 if key == 'flags':
                     # Check for vme cpu flag, Xen paravirt does not expose this.
                     #   Need to detect Xen paravirt because it exposes cpuinfo
                     #   differently than Xen HVM or KVM and causes reporting of
                     #   only a single cpu core.
-                    if 'vme' not in data:
+                    if 'vme' not in val:
                         xen_paravirt = True
 
             # model name is for Intel arch, Processor (mind the uppercase P)
@@ -201,33 +207,41 @@ class LinuxHardware(Hardware):
             if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
                 if 'processor' not in cpu_facts:
                     cpu_facts['processor'] = []
-                cpu_facts['processor'].append(data[1].strip())
+                cpu_facts['processor'].append(val)
                 if key == 'vendor_id':
                     vendor_id_occurrence += 1
                 if key == 'model name':
                     model_name_occurrence += 1
+                if key == 'processor':
+                    processor_occurence += 1
                 i += 1
             elif key == 'physical id':
-                physid = data[1].strip()
+                physid = val
                 if physid not in sockets:
                     sockets[physid] = 1
             elif key == 'core id':
-                coreid = data[1].strip()
+                coreid = val
                 if coreid not in sockets:
                     cores[coreid] = 1
             elif key == 'cpu cores':
-                sockets[physid] = int(data[1].strip())
+                sockets[physid] = int(val)
             elif key == 'siblings':
-                cores[coreid] = int(data[1].strip())
+                cores[coreid] = int(val)
             elif key == '# processors':
-                cpu_facts['processor_cores'] = int(data[1].strip())
+                cpu_facts['processor_cores'] = int(val)
             elif key == 'ncpus active':
-                i = int(data[1].strip())
+                i = int(val)
 
         # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
         if vendor_id_occurrence > 0:
             if vendor_id_occurrence == model_name_occurrence:
                 i = vendor_id_occurrence
+
+        # The fields for ARM CPUs do not always include 'vendor_id' or 'model name',
+        # and sometimes includes both 'processor' and 'Processor'.
+        # Always use 'processor' count for ARM systems
+        if collected_facts.get('ansible_architecture').startswith(('armv', 'aarch')):
+            i = processor_occurence
 
         # FIXME
         if collected_facts.get('ansible_architecture') != 's390x':

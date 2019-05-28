@@ -4,6 +4,8 @@ set -eux -o pipefail
 
 ansible-playbook setup.yml
 
+trap 'ansible-playbook cleanup.yml' EXIT
+
 # Need a relative custom roles path for testing various scenarios of -p
 galaxy_relative_rolespath="my/custom/roles/path"
 

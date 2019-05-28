@@ -553,7 +553,7 @@ try {
     }
 
     if ($state -eq "absent") {
-        if ($existing_target -ne $null) {
+        if ($null -ne $existing_target) {
             if ($null -ne $path -and $existing_target.Path -ne $path) {
                 $module.FailJson("did not delete mapped drive $letter, the target path is pointing to a different location at $( $existing_target.Path )")
             }

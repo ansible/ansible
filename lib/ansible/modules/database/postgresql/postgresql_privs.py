@@ -11,152 +11,190 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: postgresql_privs
-version_added: "1.2"
-short_description: Grant or revoke privileges on PostgreSQL database objects.
+version_added: '1.2'
+short_description: Grant or revoke privileges on PostgreSQL database objects
 description:
-  - Grant or revoke privileges on PostgreSQL database objects.
-  - This module is basically a wrapper around most of the functionality of
-    PostgreSQL's GRANT and REVOKE statements with detection of changes
-    (GRANT/REVOKE I(privs) ON I(type) I(objs) TO/FROM I(roles))
+- Grant or revoke privileges on PostgreSQL database objects.
+- This module is basically a wrapper around most of the functionality of
+  PostgreSQL's GRANT and REVOKE statements with detection of changes
+  (GRANT/REVOKE I(privs) ON I(type) I(objs) TO/FROM I(roles)).
 options:
   database:
     description:
-      - Name of database to connect to.
-      - 'Alias: I(db)'
+    - Name of database to connect to.
     required: yes
+    type: str
+    aliases:
+    - db
+    - login_db
   state:
     description:
-      - If C(present), the specified privileges are granted, if C(absent) they
-        are revoked.
+    - If C(present), the specified privileges are granted, if C(absent) they are revoked.
+    type: str
     default: present
-    choices: [present, absent]
+    choices: [ absent, present ]
   privs:
     description:
-      - Comma separated list of privileges to grant/revoke.
-      - 'Alias: I(priv)'
+    - Comma separated list of privileges to grant/revoke.
+    type: str
+    aliases:
+    - priv
   type:
     description:
-      - Type of database object to set privileges on.
-      - The `default_prives` choice is available starting at version 2.7.
-      - The 'foreign_data_wrapper' and 'foreign_server' object types are available from Ansible version '2.8'.
+    - Type of database object to set privileges on.
+    - The `default_prives` choice is available starting at version 2.7.
+    - The 'foreign_data_wrapper' and 'foreign_server' object types are available from Ansible version '2.8'.
+    type: str
     default: table
-    choices: [table, sequence, function, database,
-              schema, language, tablespace, group,
-              default_privs, foreign_data_wrapper, foreign_server]
+    choices: [ database, default_privs, foreign_data_wrapper, foreign_server, function,
+               group, language, table, tablespace, schema, sequence ]
   objs:
     description:
-      - Comma separated list of database objects to set privileges on.
-      - If I(type) is C(table) or C(sequence), the special value
-        C(ALL_IN_SCHEMA) can be provided instead to specify all database
-        objects of type I(type) in the schema specified via I(schema). (This
-        also works with PostgreSQL < 9.0.)
-      - If I(type) is C(database), this parameter can be omitted, in which case
-        privileges are set for the database specified via I(database).
-      - 'If I(type) is I(function), colons (":") in object names will be
-        replaced with commas (needed to specify function signatures, see
-        examples)'
-      - 'Alias: I(obj)'
+    - Comma separated list of database objects to set privileges on.
+    - If I(type) is C(table), C(partition table), C(sequence) or C(function),
+      the special valueC(ALL_IN_SCHEMA) can be provided instead to specify all
+      database objects of type I(type) in the schema specified via I(schema).
+      (This also works with PostgreSQL < 9.0.) (C(ALL_IN_SCHEMA) is available
+       for C(function) and C(partition table) from version 2.8)
+    - If I(type) is C(database), this parameter can be omitted, in which case
+      privileges are set for the database specified via I(database).
+    - 'If I(type) is I(function), colons (":") in object names will be
+      replaced with commas (needed to specify function signatures, see examples)'
+    type: str
+    aliases:
+    - obj
   schema:
     description:
-      - Schema that contains the database objects specified via I(objs).
-      - May only be provided if I(type) is C(table), C(sequence), C(function)
-        or C(default_privs). Defaults to  C(public) in these cases.
+    - Schema that contains the database objects specified via I(objs).
+    - May only be provided if I(type) is C(table), C(sequence), C(function)
+      or C(default_privs). Defaults to  C(public) in these cases.
+    type: str
   roles:
     description:
-      - Comma separated list of role (user/group) names to set permissions for.
-      - The special value C(PUBLIC) can be provided instead to set permissions
-        for the implicitly defined PUBLIC group.
-      - 'Alias: I(role)'
+    - Comma separated list of role (user/group) names to set permissions for.
+    - The special value C(PUBLIC) can be provided instead to set permissions
+      for the implicitly defined PUBLIC group.
+    type: str
     required: yes
+    aliases:
+    - role
   fail_on_role:
-    version_added: "2.8"
+    version_added: '2.8'
     description:
-      - If C(yes), fail when target role (for whom privs need to be granted) does not exist.
-        Otherwise just warn and continue.
+    - If C(yes), fail when target role (for whom privs need to be granted) does not exist.
+      Otherwise just warn and continue.
     default: yes
     type: bool
   session_role:
-    version_added: "2.8"
-    description: |
-      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
-      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+    version_added: '2.8'
+    description:
+    - Switch to session_role after connecting.
+    - The specified session_role must be a role that the current login_user is a member of.
+    - Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+    type: str
+  target_roles:
+    description:
+    - A list of existing role (user/group) names to set as the
+      default permissions for database objects subsequently created by them.
+    - Parameter I(target_roles) is only available with C(type=default_privs).
+    type: str
+    version_added: '2.8'
   grant_option:
     description:
-      - Whether C(role) may grant/revoke the specified privileges/group
-        memberships to others.
-      - Set to C(no) to revoke GRANT OPTION, leave unspecified to
-        make no changes.
-      - I(grant_option) only has an effect if I(state) is C(present).
-      - 'Alias: I(admin_option)'
+    - Whether C(role) may grant/revoke the specified privileges/group memberships to others.
+    - Set to C(no) to revoke GRANT OPTION, leave unspecified to make no changes.
+    - I(grant_option) only has an effect if I(state) is C(present).
     type: bool
+    aliases:
+    - admin_option
   host:
     description:
-      - Database host address. If unspecified, connect via Unix socket.
-      - 'Alias: I(login_host)'
+    - Database host address. If unspecified, connect via Unix socket.
+    type: str
+    aliases:
+    - login_host
   port:
     description:
-      - Database port to connect to.
+    - Database port to connect to.
+    type: int
     default: 5432
+    aliases:
+    - login_port
   unix_socket:
     description:
-      - Path to a Unix domain socket for local connections.
-      - 'Alias: I(login_unix_socket)'
+    - Path to a Unix domain socket for local connections.
+    type: str
+    aliases:
+    - login_unix_socket
   login:
     description:
-      - The username to authenticate with.
-      - 'Alias: I(login_user)'
+    - The username to authenticate with.
+    type: str
     default: postgres
+    aliases:
+    - login_user
   password:
     description:
-      - The password to authenticate with.
-      - 'Alias: I(login_password))'
+    - The password to authenticate with.
+    type: str
+    aliases:
+    - login_password
   ssl_mode:
     description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
-      - Default of C(prefer) matches libpq default.
+    - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+    - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+    - Default of C(prefer) matches libpq default.
+    type: str
     default: prefer
-    choices: [disable, allow, prefer, require, verify-ca, verify-full]
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
     version_added: '2.3'
-  ssl_rootcert:
+  ca_cert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
-        verified to be signed by one of these authorities.
+    - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+    - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
     version_added: '2.3'
-notes:
-  - Default authentication assumes that postgresql_privs is run by the
-    C(postgres) user on the remote host. (Ansible's C(user) or C(sudo-user)).
-  - This module requires Python package I(psycopg2) to be installed on the
-    remote host. In the default case of the remote host also being the
-    PostgreSQL server, PostgreSQL has to be installed there as well, obviously.
-    For Debian/Ubuntu-based systems, install packages I(postgresql) and
-    I(python-psycopg2).
-  - Parameters that accept comma separated lists (I(privs), I(objs), I(roles))
-    have singular alias names (I(priv), I(obj), I(role)).
-  - To revoke only C(GRANT OPTION) for a specific object, set I(state) to
-    C(present) and I(grant_option) to C(no) (see examples).
-  - Note that when revoking privileges from a role R, this role  may still have
-    access via privileges granted to any role R is a member of including
-    C(PUBLIC).
-  - Note that when revoking privileges from a role R, you do so as the user
-    specified via I(login). If R has been granted the same privileges by
-    another user also, R can still access database objects via these privileges.
-  - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
-  - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
-requirements: [psycopg2]
-extends_documentation_fragment:
-  - postgres
-author: "Bernhard Weitzhofer (@b6d)"
-"""
+    type: str
+    aliases:
+    - ssl_rootcert
 
-EXAMPLES = """
+notes:
+- Default authentication assumes that postgresql_privs is run by the
+  C(postgres) user on the remote host. (Ansible's C(user) or C(sudo-user)).
+- This module requires Python package I(psycopg2) to be installed on the
+  remote host. In the default case of the remote host also being the
+  PostgreSQL server, PostgreSQL has to be installed there as well, obviously.
+  For Debian/Ubuntu-based systems, install packages I(postgresql) and I(python-psycopg2).
+- Parameters that accept comma separated lists (I(privs), I(objs), I(roles))
+  have singular alias names (I(priv), I(obj), I(role)).
+- To revoke only C(GRANT OPTION) for a specific object, set I(state) to
+  C(present) and I(grant_option) to C(no) (see examples).
+- Note that when revoking privileges from a role R, this role  may still have
+  access via privileges granted to any role R is a member of including C(PUBLIC).
+- Note that when revoking privileges from a role R, you do so as the user
+  specified via I(login). If R has been granted the same privileges by
+  another user also, R can still access database objects via these privileges.
+- When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
+- The ca_cert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
+
+requirements:
+- psycopg2
+
+extends_documentation_fragment:
+- postgres
+
+author:
+- Bernhard Weitzhofer (@b6d)
+'''
+
+EXAMPLES = r'''
 # On database "library":
 # GRANT SELECT, INSERT, UPDATE ON TABLE public.books, public.authors
 # TO librarian, reader WITH GRANT OPTION
-- postgresql_privs:
+- name: Grant privs to librarian and reader on database library
+  postgresql_privs:
     database: library
     state: present
     privs: SELECT,INSERT,UPDATE
@@ -166,8 +204,8 @@ EXAMPLES = """
     roles: librarian,reader
     grant_option: yes
 
-# Same as above leveraging default values:
-- postgresql_privs:
+- name: Same as above leveraging default values
+  postgresql_privs:
     db: library
     privs: SELECT,INSERT,UPDATE
     objs: books,authors
@@ -177,7 +215,8 @@ EXAMPLES = """
 # REVOKE GRANT OPTION FOR INSERT ON TABLE books FROM reader
 # Note that role "reader" will be *granted* INSERT privilege itself if this
 # isn't already the case (since state: present).
-- postgresql_privs:
+- name: Revoke privs from reader
+  postgresql_privs:
     db: library
     state: present
     priv: INSERT
@@ -185,26 +224,26 @@ EXAMPLES = """
     role: reader
     grant_option: no
 
-# REVOKE INSERT, UPDATE ON ALL TABLES IN SCHEMA public FROM reader
 # "public" is the default schema. This also works for PostgreSQL 8.x.
-- postgresql_privs:
+- name: REVOKE INSERT, UPDATE ON ALL TABLES IN SCHEMA public FROM reader
+  postgresql_privs:
     db: library
     state: absent
     privs: INSERT,UPDATE
     objs: ALL_IN_SCHEMA
     role: reader
 
-# GRANT ALL PRIVILEGES ON SCHEMA public, math TO librarian
-- postgresql_privs:
+- name: GRANT ALL PRIVILEGES ON SCHEMA public, math TO librarian
+  postgresql_privs:
     db: library
     privs: ALL
     type: schema
     objs: public,math
     role: librarian
 
-# GRANT ALL PRIVILEGES ON FUNCTION math.add(int, int) TO librarian, reader
 # Note the separation of arguments with colons.
-- postgresql_privs:
+- name: GRANT ALL PRIVILEGES ON FUNCTION math.add(int, int) TO librarian, reader
+  postgresql_privs:
     db: library
     privs: ALL
     type: function
@@ -212,41 +251,41 @@ EXAMPLES = """
     schema: math
     roles: librarian,reader
 
-# GRANT librarian, reader TO alice, bob WITH ADMIN OPTION
 # Note that group role memberships apply cluster-wide and therefore are not
 # restricted to database "library" here.
-- postgresql_privs:
+- name: GRANT librarian, reader TO alice, bob WITH ADMIN OPTION
+  postgresql_privs:
     db: library
     type: group
     objs: librarian,reader
     roles: alice,bob
     admin_option: yes
 
-# GRANT ALL PRIVILEGES ON DATABASE library TO librarian
 # Note that here "db: postgres" specifies the database to connect to, not the
 # database to grant privileges on (which is specified via the "objs" param)
-- postgresql_privs:
+- name: GRANT ALL PRIVILEGES ON DATABASE library TO librarian
+  postgresql_privs:
     db: postgres
     privs: ALL
     type: database
     obj: library
     role: librarian
 
-# GRANT ALL PRIVILEGES ON DATABASE library TO librarian
 # If objs is omitted for type "database", it defaults to the database
 # to which the connection is established
-- postgresql_privs:
+- name: GRANT ALL PRIVILEGES ON DATABASE library TO librarian
+  postgresql_privs:
     db: library
     privs: ALL
     type: database
     role: librarian
 
 # Available since version 2.7
-# ALTER DEFAULT PRIVILEGES ON DATABASE library TO librarian
 # Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
 # ALL_DEFAULT works only with privs=ALL
 # For specific
-- postgresql_privs:
+- name: ALTER DEFAULT PRIVILEGES ON DATABASE library TO librarian
+  postgresql_privs:
     db: library
     objs: ALL_DEFAULT
     privs: ALL
@@ -255,18 +294,19 @@ EXAMPLES = """
     grant_option: yes
 
 # Available since version 2.7
-# ALTER DEFAULT PRIVILEGES ON DATABASE library TO reader
 # Objs must be set, ALL_DEFAULT to TABLES/SEQUENCES/TYPES/FUNCTIONS
 # ALL_DEFAULT works only with privs=ALL
 # For specific
-- postgresql_privs:
+- name: ALTER DEFAULT PRIVILEGES ON DATABASE library TO reader, step 1
+  postgresql_privs:
     db: library
     objs: TABLES,SEQUENCES
     privs: SELECT
     type: default_privs
     role: reader
 
-- postgresql_privs:
+- name: ALTER DEFAULT PRIVILEGES ON DATABASE library TO reader, step 2
+  postgresql_privs:
     db: library
     objs: TYPES
     privs: USAGE
@@ -274,23 +314,74 @@ EXAMPLES = """
     role: reader
 
 # Available since version 2.8
-# GRANT ALL PRIVILEGES ON FOREIGN DATA WRAPPER fdw TO reader
-- postgresql_privs:
+- name: GRANT ALL PRIVILEGES ON FOREIGN DATA WRAPPER fdw TO reader
+  postgresql_privs:
     db: test
     objs: fdw
     privs: ALL
     type: foreign_data_wrapper
     role: reader
 
-# GRANT ALL PRIVILEGES ON FOREIGN SERVER fdw_server TO reader
-- postgresql_privs:
+# Available since version 2.8
+- name: GRANT ALL PRIVILEGES ON FOREIGN SERVER fdw_server TO reader
+  postgresql_privs:
     db: test
     objs: fdw_server
     privs: ALL
     type: foreign_server
     role: reader
 
-"""
+# Available since version 2.8
+# Grant 'execute' permissions on all functions in schema 'common' to role 'caller'
+- name: GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA common TO caller
+  postgresql_privs:
+    type: function
+    state: present
+    privs: EXECUTE
+    roles: caller
+    objs: ALL_IN_SCHEMA
+    schema: common
+
+# Available since version 2.8
+# ALTER DEFAULT PRIVILEGES FOR ROLE librarian IN SCHEMA library GRANT SELECT ON TABLES TO reader
+# GRANT SELECT privileges for new TABLES objects created by librarian as
+# default to the role reader.
+# For specific
+- name: ALTER privs
+  postgresql_privs:
+    db: library
+    schema: library
+    objs: TABLES
+    privs: SELECT
+    type: default_privs
+    role: reader
+    target_roles: librarian
+
+# Available since version 2.8
+# ALTER DEFAULT PRIVILEGES FOR ROLE librarian IN SCHEMA library REVOKE SELECT ON TABLES FROM reader
+# REVOKE SELECT privileges for new TABLES objects created by librarian as
+# default from the role reader.
+# For specific
+- name: ALTER privs
+  postgresql_privs:
+    db: library
+    state: absent
+    schema: library
+    objs: TABLES
+    privs: SELECT
+    type: default_privs
+    role: reader
+    target_roles: librarian
+'''
+
+RETURN = r'''
+queries:
+  description: List of executed queries.
+  returned: always
+  type: list
+  sample: ['REVOKE GRANT OPTION FOR INSERT ON TABLE "books" FROM "reader";']
+  version_added: '2.8'
+'''
 
 import traceback
 
@@ -305,6 +396,7 @@ except ImportError:
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import pg_quote_identifier
+from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 
 VALID_PRIVS = frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE',
@@ -314,6 +406,8 @@ VALID_DEFAULT_OBJS = {'TABLES': ('ALL', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 
                       'SEQUENCES': ('ALL', 'SELECT', 'UPDATE', 'USAGE'),
                       'FUNCTIONS': ('ALL', 'EXECUTE'),
                       'TYPES': ('ALL', 'USAGE')}
+
+executed_queries = []
 
 
 class Error(Exception):
@@ -364,7 +458,7 @@ class Connection(object):
             "port": "port",
             "database": "database",
             "ssl_mode": "sslmode",
-            "ssl_rootcert": "sslrootcert"
+            "ca_cert": "sslrootcert"
         }
 
         kw = dict((params_map[k], getattr(params, k)) for k in params_map
@@ -375,9 +469,9 @@ class Connection(object):
         if is_localhost and params.unix_socket != "":
             kw["host"] = params.unix_socket
 
-        sslrootcert = params.ssl_rootcert
+        sslrootcert = params.ca_cert
         if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-            raise ValueError('psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+            raise ValueError('psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
         self.connection = psycopg2.connect(**kw)
         self.cursor = self.connection.cursor()
@@ -411,7 +505,7 @@ class Connection(object):
         query = """SELECT relname
                    FROM pg_catalog.pg_class c
                    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-                   WHERE nspname = %s AND relkind in ('r', 'v', 'm')"""
+                   WHERE nspname = %s AND relkind in ('r', 'v', 'm', 'p')"""
         self.cursor.execute(query, (schema,))
         return [t[0] for t in self.cursor.fetchall()]
 
@@ -425,6 +519,16 @@ class Connection(object):
         self.cursor.execute(query, (schema,))
         return [t[0] for t in self.cursor.fetchall()]
 
+    def get_all_functions_in_schema(self, schema):
+        if not self.schema_exists(schema):
+            raise Error('Schema "%s" does not exist.' % schema)
+        query = """SELECT p.proname, oidvectortypes(p.proargtypes)
+                    FROM pg_catalog.pg_proc p
+                    JOIN pg_namespace n ON n.oid = p.pronamespace
+                    WHERE nspname = %s"""
+        self.cursor.execute(query, (schema,))
+        return ["%s(%s)" % (t[0], t[1]) for t in self.cursor.fetchall()]
+
     # Methods for getting access control lists and group membership info
 
     # To determine whether anything has changed after granting/revoking
@@ -437,7 +541,7 @@ class Connection(object):
         query = """SELECT relacl
                    FROM pg_catalog.pg_class c
                    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-                   WHERE nspname = %s AND relkind = 'r' AND relname = ANY (%s)
+                   WHERE nspname = %s AND relkind in ('r','p') AND relname = ANY (%s)
                    ORDER BY relname"""
         self.cursor.execute(query, (schema, tables))
         return [t[0] for t in self.cursor.fetchall()]
@@ -516,7 +620,7 @@ class Connection(object):
 
     # Manipulating privileges
 
-    def manipulate_privs(self, obj_type, privs, objs, roles,
+    def manipulate_privs(self, obj_type, privs, objs, roles, target_roles,
                          state, grant_option, schema_qualifier=None, fail_on_role=True):
         """Manipulate database object privileges.
 
@@ -528,6 +632,8 @@ class Connection(object):
                      privileges for.
         :param roles: Either a list of role names or "PUBLIC"
                       for the implicitly defined "PUBLIC" group
+        :param target_roles: List of role names to grant/revoke
+                             default privileges as.
         :param state: "present" to grant privileges, "absent" to revoke.
         :param grant_option: Only for state "present": If True, set
                              grant/admin option. If False, revoke it.
@@ -617,17 +723,24 @@ class Connection(object):
 
             for_whom = ','.join(for_whom)
 
+        # as_who:
+        as_who = None
+        if target_roles:
+            as_who = ','.join(pg_quote_identifier(r, 'role') for r in target_roles)
+
         status_before = get_status(objs)
 
         query = QueryBuilder(state) \
             .for_objtype(obj_type) \
             .with_grant_option(grant_option) \
             .for_whom(for_whom) \
+            .as_who(as_who) \
             .for_schema(schema_qualifier) \
             .set_what(set_what) \
             .for_objs(objs) \
             .build()
 
+        executed_queries.append(query)
         self.cursor.execute(query)
         status_after = get_status(objs)
         return status_before != status_after
@@ -637,6 +750,7 @@ class QueryBuilder(object):
     def __init__(self, state):
         self._grant_option = None
         self._for_whom = None
+        self._as_who = None
         self._set_what = None
         self._obj_type = None
         self._state = state
@@ -660,6 +774,10 @@ class QueryBuilder(object):
         self._for_whom = who
         return self
 
+    def as_who(self, target_roles):
+        self._as_who = target_roles
+        return self
+
     def set_what(self, what):
         self._set_what = what
         return self
@@ -679,9 +797,15 @@ class QueryBuilder(object):
 
     def add_default_revoke(self):
         for obj in self._objs:
-            self.query.append(
-                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
-                                                                                            self._for_whom))
+            if self._as_who:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} REVOKE ALL ON {2} FROM {3};'.format(self._as_who,
+                                                                                                             self._schema, obj,
+                                                                                                             self._for_whom))
+            else:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                                self._for_whom))
 
     def add_grant_option(self):
         if self._grant_option:
@@ -698,13 +822,28 @@ class QueryBuilder(object):
 
     def add_default_priv(self):
         for obj in self._objs:
-            self.query.append(
-                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT {1} ON {2} TO {3}'.format(self._schema, self._set_what,
-                                                                                        obj,
-                                                                                        self._for_whom))
+            if self._as_who:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} GRANT {2} ON {3} TO {4}'.format(self._as_who,
+                                                                                                         self._schema,
+                                                                                                         self._set_what,
+                                                                                                         obj,
+                                                                                                         self._for_whom))
+            else:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT {1} ON {2} TO {3}'.format(self._schema,
+                                                                                            self._set_what,
+                                                                                            obj,
+                                                                                            self._for_whom))
             self.add_grant_option()
-        self.query.append(
-            'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT USAGE ON TYPES TO {1}'.format(self._schema, self._for_whom))
+        if self._as_who:
+            self.query.append(
+                'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} GRANT USAGE ON TYPES TO {2}'.format(self._as_who,
+                                                                                                         self._schema,
+                                                                                                         self._for_whom))
+        else:
+            self.query.append(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT USAGE ON TYPES TO {1}'.format(self._schema, self._for_whom))
         self.add_grant_option()
 
     def build_present(self):
@@ -719,48 +858,54 @@ class QueryBuilder(object):
         if self._obj_type == 'default_privs':
             self.query = []
             for obj in ['TABLES', 'SEQUENCES', 'TYPES']:
-                self.query.append(
-                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
-                                                                                                self._for_whom))
+                if self._as_who:
+                    self.query.append(
+                        'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} REVOKE ALL ON {2} FROM {3};'.format(self._as_who,
+                                                                                                                 self._schema, obj,
+                                                                                                                 self._for_whom))
+                else:
+                    self.query.append(
+                        'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                                    self._for_whom))
         else:
             self.query.append('REVOKE {0} FROM {1};'.format(self._set_what, self._for_whom))
 
 
 def main():
+    argument_spec = postgres_common_argument_spec()
+    argument_spec.update(
+        database=dict(required=True, aliases=['db', 'login_db']),
+        state=dict(default='present', choices=['present', 'absent']),
+        privs=dict(required=False, aliases=['priv']),
+        type=dict(default='table',
+                  choices=['table',
+                           'sequence',
+                           'function',
+                           'database',
+                           'schema',
+                           'language',
+                           'tablespace',
+                           'group',
+                           'default_privs',
+                           'foreign_data_wrapper',
+                           'foreign_server']),
+        objs=dict(required=False, aliases=['obj']),
+        schema=dict(required=False),
+        roles=dict(required=True, aliases=['role']),
+        session_role=dict(required=False),
+        target_roles=dict(required=False),
+        grant_option=dict(required=False, type='bool',
+                          aliases=['admin_option']),
+        host=dict(default='', aliases=['login_host']),
+        unix_socket=dict(default='', aliases=['login_unix_socket']),
+        login=dict(default='postgres', aliases=['login_user']),
+        password=dict(default='', aliases=['login_password'], no_log=True),
+        fail_on_role=dict(type='bool', default=True),
+    )
+
     module = AnsibleModule(
-        argument_spec=dict(
-            database=dict(required=True, aliases=['db']),
-            state=dict(default='present', choices=['present', 'absent']),
-            privs=dict(required=False, aliases=['priv']),
-            type=dict(default='table',
-                      choices=['table',
-                               'sequence',
-                               'function',
-                               'database',
-                               'schema',
-                               'language',
-                               'tablespace',
-                               'group',
-                               'default_privs',
-                               'foreign_data_wrapper',
-                               'foreign_server']),
-            objs=dict(required=False, aliases=['obj']),
-            schema=dict(required=False),
-            roles=dict(required=True, aliases=['role']),
-            session_role=dict(required=False),
-            grant_option=dict(required=False, type='bool',
-                              aliases=['admin_option']),
-            host=dict(default='', aliases=['login_host']),
-            port=dict(type='int', default=5432),
-            unix_socket=dict(default='', aliases=['login_unix_socket']),
-            login=dict(default='postgres', aliases=['login_user']),
-            password=dict(default='', aliases=['login_password'], no_log=True),
-            ssl_mode=dict(default="prefer",
-                          choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None),
-            fail_on_role=dict(type='bool', default=True),
-        ),
-        supports_check_mode=True
+        argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     fail_on_role = module.params['fail_on_role']
@@ -824,6 +969,8 @@ def main():
             objs = conn.get_all_tables_in_schema(p.schema)
         elif p.type == 'sequence' and p.objs == 'ALL_IN_SCHEMA':
             objs = conn.get_all_sequences_in_schema(p.schema)
+        elif p.type == 'function' and p.objs == 'ALL_IN_SCHEMA':
+            objs = conn.get_all_functions_in_schema(p.schema)
         elif p.type == 'default_privs':
             if p.objs == 'ALL_DEFAULT':
                 objs = frozenset(VALID_DEFAULT_OBJS.keys())
@@ -841,9 +988,9 @@ def main():
         else:
             objs = p.objs.split(',')
 
-        # function signatures are encoded using ':' to separate args
-        if p.type == 'function':
-            objs = [obj.replace(':', ',') for obj in objs]
+            # function signatures are encoded using ':' to separate args
+            if p.type == 'function':
+                objs = [obj.replace(':', ',') for obj in objs]
 
         # roles
         if p.roles == 'PUBLIC':
@@ -860,11 +1007,23 @@ def main():
                 else:
                     module.warn("Role '%s' does not exist, nothing to do" % roles[0].strip())
 
+        # check if target_roles is set with type: default_privs
+        if p.target_roles and not p.type == 'default_privs':
+            module.warn('"target_roles" will be ignored '
+                        'Argument "type: default_privs" is required for usage of "target_roles".')
+
+        # target roles
+        if p.target_roles:
+            target_roles = p.target_roles.split(',')
+        else:
+            target_roles = None
+
         changed = conn.manipulate_privs(
             obj_type=p.type,
             privs=privs,
             objs=objs,
             roles=roles,
+            target_roles=target_roles,
             state=p.state,
             grant_option=p.grant_option,
             schema_qualifier=p.schema,
@@ -883,7 +1042,7 @@ def main():
         conn.rollback()
     else:
         conn.commit()
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, queries=executed_queries)
 
 
 if __name__ == '__main__':

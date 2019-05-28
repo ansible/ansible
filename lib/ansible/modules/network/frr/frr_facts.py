@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: frr_facts
 version_added: "2.8"
-author: "Nilashish Chakraborty (@nilashishc)"
+author: "Nilashish Chakraborty (@NilashishC)"
 short_description: Collect facts from remote devices running Free Range Routing (FRR).
 description:
   - Collects a base set of device facts from a remote device that
@@ -73,7 +73,15 @@ ansible_net_hostname:
   returned: always
   type: str
 ansible_net_version:
-  description: The operating system version running on the remote device
+  description: The FRR version running on the remote device
+  returned: always
+  type: str
+ansible_net_api:
+  description: The name of the transport
+  returned: always
+  type: str
+ansible_net_python_version:
+  description: The Python version that the Ansible controller is using
   returned: always
   type: str
 
@@ -108,6 +116,7 @@ ansible_net_mpls_ldp_neighbors:
   type: dict
 """
 
+import platform
 import re
 
 from ansible.module_utils.network.frr.frr import run_commands, get_capabilities
@@ -159,6 +168,9 @@ class Default(FactsBase):
             val = device_info.get('network_os_%s' % item)
             if val:
                 platform_facts[item] = val
+
+        platform_facts['api'] = resp['network_api']
+        platform_facts['python_version'] = platform.python_version()
 
         return platform_facts
 

@@ -47,12 +47,13 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a managed zone facts
+- name: " a managed zone facts"
   gcp_dns_managed_zone_facts:
-      dns_name: test.somewild2.example.com.
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    dns_name: test.somewild2.example.com.
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -95,7 +96,7 @@ items:
         is a set of DNS name servers that all host the same ManagedZones. Most users
         will leave this field unset.
       returned: success
-      type: list
+      type: str
     creationTime:
       description:
       - The time that this resource was created on the server.
@@ -107,6 +108,33 @@ items:
       - A set of key/value label pairs to assign to this ManagedZone.
       returned: success
       type: dict
+    visibility:
+      description:
+      - 'The zone''s visibility: public zones are exposed to the Internet, while private
+        zones are visible only to Virtual Private Cloud resources.'
+      - 'Must be one of: `public`, `private`.'
+      returned: success
+      type: str
+    privateVisibilityConfig:
+      description:
+      - For privately visible zones, the set of Virtual Private Cloud resources that
+        the zone is visible from.
+      returned: success
+      type: complex
+      contains:
+        networks:
+          description:
+          - The list of VPC networks that can see this zone.
+          returned: success
+          type: complex
+          contains:
+            networkUrl:
+              description:
+              - The fully qualified URL of the VPC network to bind to.
+              - This should be formatted like `U(https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`)
+                .
+              returned: success
+              type: str
 '''
 
 ################################################################################

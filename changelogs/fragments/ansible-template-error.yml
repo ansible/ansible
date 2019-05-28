@@ -1,3 +1,0 @@
-bugfixes:
-- Add new ``AnsibleTemplateError`` that various templating related exceptions inherit from,
-  making it easier to catch them without enumerating. (https://github.com/ansible/ansible/issues/50154)

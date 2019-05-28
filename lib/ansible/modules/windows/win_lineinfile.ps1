@@ -87,7 +87,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 	# Read the dest file lines using the indicated encoding into a mutable ArrayList.
 	$before = [System.IO.File]::ReadAllLines($cleanpath, $encodingobj)
-	If ($before -eq $null) {
+	If ($null -eq $before) {
 		$lines = New-Object System.Collections.ArrayList;
 	}
 	Else {
@@ -116,7 +116,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 	}
 
 	# index[0] is the line num where regexp has been found
-	# index[1] is the line num where insertafter/inserbefore has been found
+	# index[1] is the line num where insertafter/insertbefore has been found
 	$index = -1, -1;
 	$lineno = 0;
 
@@ -191,7 +191,15 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 			$result.backup = $result.backup_file
 		}
 
-		$after = WriteLines $lines $path $linesep $encodingobj $validate $check_mode;
+		$writelines_params = @{
+			outlines = $lines
+			path = $path
+			linesep = $linesep
+			encodingobj = $encodingobj
+			validate = $validate
+			check_mode = $check_mode
+		}
+		$after = WriteLines @writelines_params;
 
 		if ($diff_support) {
 			$result.diff.after = $after;
@@ -224,7 +232,7 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 	# interchangeable in windows pathnames, but .NET framework internals do not support that.
 	$cleanpath = $path.Replace("/", "\");
 	$before = [System.IO.File]::ReadAllLines($cleanpath, $encodingobj);
-	If ($before -eq $null) {
+	If ($null -eq $before) {
 		$lines = New-Object System.Collections.ArrayList;
 	}
 	Else {
@@ -273,7 +281,15 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 			$result.backup = $result.backup_file
 		}
 
-		$after = WriteLines $left $path $linesep $encodingobj $validate $check_mode;
+		$writelines_params = @{
+			outlines = $left
+			path = $path
+			linesep = $linesep
+			encodingobj = $encodingobj
+			validate = $validate
+			check_mode = $check_mode
+		}
+		$after = WriteLines @writelines_params;
 
 		if ($diff_support) {
 			$result.diff.after = $after;
@@ -395,7 +411,22 @@ If ($state -eq "present") {
 		$insertafter = "EOF";
 	}
 
-	Present $path $regexp $line $insertafter $insertbefore $create $backup $backrefs $validate $encodingobj $linesep $check_mode $diff_support;
+	$present_params = @{
+		path = $path
+		regexp = $regexp
+		line = $line
+		insertafter = $insertafter
+		insertbefore = $insertbefore
+		create = $create
+		backup = $backup
+		backrefs = $backrefs
+		validate = $validate
+		encodingobj = $encodingobj
+		linesep = $linesep
+		check_mode = $check_mode
+		diff_support = $diff_support
+	}
+	Present @present_params;
 
 }
 ElseIf ($state -eq "absent") {
@@ -404,5 +435,16 @@ ElseIf ($state -eq "absent") {
 		Fail-Json @{} "one of line= or regexp= is required with state=absent";
 	}
 
-	Absent $path $regexp $line $backup $validate $encodingobj $linesep $check_mode $diff_support;
+	$absent_params = @{
+		path = $path
+		regexp = $regexp
+		line = $line
+		backup = $backup
+		validate = $validate
+		encodingobj = $encodingobj
+		linesep = $linesep
+		check_mode = $check_mode
+		diff_support = $diff_support
+	}
+	Absent @absent_params;
 }

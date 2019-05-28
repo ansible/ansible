@@ -120,8 +120,9 @@ EXAMPLES = '''
       logConfiguration:
         logDriver: awslogs
         options:
-          awslogs-group: ecs
+          awslogs-group: /ecs/test-cluster-taskdef
           awslogs-region: us-west-2
+          awslogs-stream-prefix: ecs
     - name: busybox
       command:
         - >
@@ -154,7 +155,7 @@ EXAMPLES = '''
       - containerPort: 8080
         hostPort:      8080
       cpu: 512
-      memory: 1GB
+      memory: 1024
     state: present
 
 - name: Create task definition
@@ -169,7 +170,7 @@ EXAMPLES = '''
         hostPort:      8080
     launch_type: FARGATE
     cpu: 512
-    memory: 1GB
+    memory: 1024
     state: present
     network_mode: awsvpc
 '''

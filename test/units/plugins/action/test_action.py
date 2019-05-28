@@ -121,7 +121,7 @@ class TestActionBase(unittest.TestCase):
         mock_connection = MagicMock()
 
         # create a mock shared loader object
-        def mock_find_plugin(name, options):
+        def mock_find_plugin(name, options, collection_list=None):
             if name == 'badmodule':
                 return None
             elif '.ps1' in options:
@@ -214,7 +214,7 @@ class TestActionBase(unittest.TestCase):
         self.assertEqual(env_string, "FOO=foo")
 
         # test environment with a variable in it
-        templar.set_available_variables(variables=dict(the_var='bar'))
+        templar.available_variables = dict(the_var='bar')
         mock_task.environment = [dict(FOO='{{the_var}}')]
         env_string = action_base._compute_environment_string()
         self.assertEqual(env_string, "FOO=bar")

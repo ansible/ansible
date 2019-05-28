@@ -91,9 +91,11 @@ class TestManager(unittest.TestCase):
             description='this is a description',
             threshold_sensitivity='low',
             default_whitelist='whitelist1',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

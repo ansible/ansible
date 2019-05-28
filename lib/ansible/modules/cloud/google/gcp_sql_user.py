@@ -61,9 +61,10 @@ options:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_sql_instance
-      task and then set this instance field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_sql_instance task and then set this instance field to "{{ name-of-resource
+      }}"'
     required: true
   password:
     description:
@@ -75,30 +76,30 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: "{{resource_name}}-1"
-      settings:
-        ip_configuration:
-          authorized_networks:
-          - name: google dns server
-            value: 8.8.8.8/32
-        tier: db-n1-standard-1
-      region: us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{resource_name}}-1"
+    settings:
+      ip_configuration:
+        authorized_networks:
+        - name: google dns server
+          value: 8.8.8.8/32
+      tier: db-n1-standard-1
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instance
 
 - name: create a user
   gcp_sql_user:
-      name: test-user
-      host: 10.1.2.3
-      password: secret-password
-      instance: "{{ instance }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test-user
+    host: 10.1.2.3
+    password: secret-password
+    instance: "{{ instance }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -118,7 +119,7 @@ instance:
   description:
   - The name of the Cloud SQL instance. This does not include the project ID.
   returned: success
-  type: str
+  type: dict
 password:
   description:
   - The password for the user.
@@ -147,7 +148,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             host=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            instance=dict(required=True),
+            instance=dict(required=True, type='dict'),
             password=dict(type='str'),
         )
     )

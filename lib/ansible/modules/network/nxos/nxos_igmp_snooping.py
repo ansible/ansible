@@ -181,11 +181,12 @@ def config_igmp_snooping(delta, existing, default=False):
 
     commands = []
     command = None
+    gt_command = None
     for key, value in delta.items():
         if value:
             if default and key == 'group_timeout':
                 if existing.get(key):
-                    command = 'no ' + CMDS.get(key).format(existing.get(key))
+                    gt_command = 'no ' + CMDS.get(key).format(existing.get(key))
             elif value == 'default' and key == 'group_timeout':
                 if existing.get(key):
                     command = 'no ' + CMDS.get(key).format(existing.get(key))
@@ -198,6 +199,9 @@ def config_igmp_snooping(delta, existing, default=False):
             commands.append(command)
         command = None
 
+    if gt_command:
+        # ensure that group-timeout command is configured last
+        commands.append(gt_command)
     return commands
 
 

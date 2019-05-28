@@ -8,7 +8,7 @@ This section discusses the behavioral changes between Ansible 2.7 and Ansible 2.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog for 2.8 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.8.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.8 <https://github.com/ansible/ansible/blob/stable-2.8/changelogs/CHANGELOG-v2.8.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -35,7 +35,7 @@ Beginning in version 2.8, a task cannot notify ``import_tasks`` or a static ``in
 The goal of a static import is to act as a pre-processor, where the import is replaced by the tasks defined within the imported file. When
 using an import, a task can notify any of the named tasks within the imported file, but not the name of the import itself.
 
-To achieve the results of notifying a single name but running mulitple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
+To achieve the results of notifying a single name but running multiple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
 
 Jinja Undefined values
 ----------------------
@@ -153,7 +153,7 @@ Command Line
 Become Prompting
 ----------------
 
-Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges on unix systems or ``enable`` mode on network devices):
+Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges on Unix systems or ``enable`` mode on network devices):
 
 By default in Ansible 2.8::
 
@@ -190,7 +190,7 @@ Deprecated
   2. The ``FactCache.update()`` method has been converted to follow the dict API.  It now takes a
      dictionary as its sole argument and updates itself with the dictionary's items.  The previous
      API where ``update()`` took a key and a value will now issue a deprecation warning and will be
-     removed in 2.12.  If you need the old behaviour switch to ``FactCache.first_order_merge()``
+     removed in 2.12.  If you need the old behavior switch to ``FactCache.first_order_merge()``
      instead.
 
 * Supporting file-backed caching via self.cache is deprecated and will
@@ -212,16 +212,10 @@ Modules
 Major changes in popular modules are detailed here
 
 The exec wrapper that runs PowerShell modules has been changed to set ``$ErrorActionPreference = "Stop"`` globally.
-This may mean that custom modules can fail if they implicitly relied on this behaviour. To get the old behaviour back,
-add ``$ErrorActionPreference = "Continue"`` to the top of the module. This change was made to restore the old behaviour
-of the EAP that was accidentally removed in a previous release and ensure that modules are more resiliant to errors
+This may mean that custom modules can fail if they implicitly relied on this behavior. To get the old behavior back,
+add ``$ErrorActionPreference = "Continue"`` to the top of the module. This change was made to restore the old behavior
+of the EAP that was accidentally removed in a previous release and ensure that modules are more resilient to errors
 that may occur in execution.
-
-PowerShell module options and option choices are currently case insensitive to what is defined in the module
-specification. This behaviour is deprecated and a warning displayed to the user if a case insensitive match was found.
-A future release of Ansible will make these checks case sensitive.
-
-The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options would be ignored but are now not.
 
 Modules removed
 ---------------
@@ -239,12 +233,20 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.12. Please update your playbooks accordingly.
 
-* ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
-* ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+* ``foreman`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
+* ``katello`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
-* ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
-* ``gce`` use :ref `gce_compute_instance <gce_compute_instance_module>` instead.
-* ``panos`` use `Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
+* ``digital_ocean`` use :ref:`digital_ocean_droplet <digital_ocean_droplet_module>` instead.
+* ``gce`` use :ref:`gcp_compute_instance <gcp_compute_instance_module>` instead.
+* ``gcspanner`` use :ref:`gcp_spanner_instance <gcp_spanner_instance_module>` and :ref:`gcp_spanner_database <gcp_spanner_database_module>` instead.
+* ``gcdns_record`` use :ref:`gcp_dns_resource_record_set <gcp_dns_resource_record_set_module>` instead.
+* ``gcdns_zone`` use :ref:`gcp_dns_managed_zone <gcp_dns_managed_zone_module>` instead.
+* ``gcp_forwarding_rule`` use :ref:`gcp_compute_global_forwarding_rule <gcp_compute_global_forwarding_rule_module>` or :ref:`gcp_compute_forwarding_rule <gcp_compute_forwarding_rule_module>` instead.
+* ``gcp_healthcheck`` use :ref:`gcp_compute_health_check <gcp_compute_health_check_module>`, :ref:`gcp_compute_http_health_check <gcp_compute_http_health_check_module>`, or :ref:`gcp_compute_https_health_check <gcp_compute_https_health_check_module>` instead.
+* ``gcp_backend_service`` use :ref:`gcp_compute_backend_service <gcp_compute_backend_service_module>` instead.
+* ``gcp_target_proxy`` use :ref:`gcp_compute_target_http_proxy <gcp_compute_target_http_proxy_module>` instead.
+* ``gcp_url_map`` use :ref:`gcp_compute_url_map <gcp_compute_url_map_module>` instead.
+* ``panos`` use the `Palo Alto Networks Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
 
 Noteworthy module changes
@@ -258,16 +260,16 @@ Noteworthy module changes
 * The ``win_scheduled_task`` module deprecated support for specifying a trigger repetition as a list and this format
   will be removed in Ansible 2.12. Instead specify the repetition as a dictionary value.
 
-* The ``win_feature`` module has removed the deprecated ``restart_needed`` return value, use the standardised
+* The ``win_feature`` module has removed the deprecated ``restart_needed`` return value, use the standardized
   ``reboot_required`` value instead.
 
 * The ``win_package`` module has removed the deprecated ``restart_required`` and ``exit_code`` return value, use the
-  standardised ``reboot_required`` and ``rc`` value instead.
+  standardized ``reboot_required`` and ``rc`` value instead.
 
 * The ``win_get_url`` module has removed the deprecated ``win_get_url`` return dictionary, contained values are
   returned directly.
 
-* The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardised
+* The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardized
   ``validate_certs`` option instead.
 
 * The ``vmware_local_role_facts`` module now returns a list of dicts instead of a dict of dicts for role information.
@@ -299,7 +301,7 @@ Noteworthy module changes
 
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
 * The renamed ``docker_compose`` module used to return one fact per service, named same as the service. A dictionary
-  of these facts is returned as the regular return value ``service_facts``. The returned facts will be removed in
+  of these facts is returned as the regular return value ``services``. The returned facts will be removed in
   Ansible 2.12.
 
 * The ``docker_swarm_service`` module no longer sets a defaults for the following options:
@@ -310,13 +312,44 @@ Noteworthy module changes
 * ``vmware_vm_facts`` used to return dict of dict with virtual machine's facts. Ansible 2.8 and onwards will return list of dict with virtual machine's facts.
   Please see module ``vmware_vm_facts`` documentation for example.
 
+* ``vmware_guest_snapshot`` module used to return ``results``. Since Ansible 2.8 and onwards ``results`` is a reserved keyword, it is replaced by ``snapshot_results``.
+  Please see module ``vmware_guest_snapshots`` documentation for example.
+
 * The ``panos`` modules have been deprecated in favor of using the Palo Alto Networks `Ansible Galaxy role
   <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.  Contributions to the role can be made
   `here <https://github.com/PaloAltoNetworks/ansible-pan>`_.
 
+* The ``ipa_user`` module originally always sent ``password`` to FreeIPA regardless of whether the password changed. Now the module only sends ``password`` if ``update_password`` is set to ``always``, which is the default.
+
+* The ``win_psexec`` has deprecated the undocumented ``extra_opts`` module option. This will be removed in Ansible 2.10.
+
+* The ``win_nssm`` module has deprecated the following options in favor of using the ``win_service`` module to configure the service after installing it with ``win_nssm``:
+  * ``dependencies``, use ``dependencies`` of ``win_service`` instead
+  * ``start_mode``, use ``start_mode`` of ``win_service`` instead
+  * ``user``, use ``username`` of ``win_service`` instead
+  * ``password``, use ``password`` of ``win_service`` instead
+  These options will be removed in Ansible 2.12.
+
+* The ``win_nssm`` module has also deprecated the ``start``, ``stop``, and ``restart`` values of the ``status`` option.
+  You should use the ``win_service`` module to control the running state of the service. This will be removed in Ansible 2.12.
+
+* The ``status`` module option for ``win_nssm`` has changed its default value to ``present``. Before, the default was ``start``.
+  Consequently, the service is no longer started by default after creation with ``win_nssm``, and you should use
+  the ``win_service`` module to start it if needed.
+
+* The ``app_parameters`` module option for ``win_nssm`` has been deprecated; use ``argument`` instead. This will be removed in Ansible 2.12.
+
+* The ``app_parameters_free_form`` module option for ``win_nssm`` has been aliased to the new ``arguments`` option.
+
+* The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options
+  would be ignored but are now not.
+
+* The ``openssl_pkcs12`` module will now regenerate the pkcs12 file if there are differences between the file on disk and the parameters passed to the module.
 
 Plugins
 =======
+
+* Ansible no longer defaults to the ``paramiko`` connection plugin when using macOS as the control node. Ansible will now use the ``ssh`` connection plugin by default on a macOS control node.  Since ``ssh`` supports connection persistence between tasks and playbook runs, it performs better than ``paramiko``. If you are using password authentication, you will need to install ``sshpass`` when using the ``ssh`` connection plugin. Or you can explicitly set the connection type to ``paramiko`` to maintain the pre-2.8 behavior on macOS.
 
 * Connection plugins have been standardized to allow use of ``ansible_<conn-type>_user``
   and ``ansible_<conn-type>_password`` variables.  Variables such as
@@ -384,5 +417,5 @@ Networking
   ``save`` and ``force`` parameters, use the ``save_when`` parameter to replicate their
   functionality.
 
-* The ``nxos_vrf_af`` module has removed the ``safi`` paramter. This parameter was deprecated
+* The ``nxos_vrf_af`` module has removed the ``safi`` parameter. This parameter was deprecated
   in Ansible 2.4 and has had no impact on the module since then.

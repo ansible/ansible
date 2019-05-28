@@ -12,7 +12,7 @@ import pytest
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
@@ -22,7 +22,7 @@ from ansible.utils import context_objects as co
 
 @pytest.fixture
 def parser():
-    parser = opt_help.create_base_parser()
+    parser = opt_help.create_base_parser('testparser')
 
     opt_help.add_runas_options(parser)
     opt_help.add_meta_options(parser)
@@ -45,27 +45,24 @@ def reset_cli_args():
 
 
 def test_play_context(mocker, parser, reset_cli_args):
-    (options, args) = parser.parse_args(['-vv', '--check'])
-    options.args = args
+    options = parser.parse_args(['-vv', '--check'])
     context._init_global_context(options)
     play = Play.load({})
     play_context = PlayContext(play=play)
 
-    # Note: **Must** test the value from _attributes here because play_context.connection will end
-    # up calling PlayContext._get_attr_connection() which changes the 'smart' connection type into
-    # the best guessed type (and since C.DEFAULT_TRANSPORT starts off as smart, we would then never
-    # match)
-    assert play_context._attributes['connection'] == C.DEFAULT_TRANSPORT
     assert play_context.remote_addr is None
     assert play_context.remote_user is None
     assert play_context.password == ''
-    assert play_context.port is None
     assert play_context.private_key_file == C.DEFAULT_PRIVATE_KEY_FILE
     assert play_context.timeout == C.DEFAULT_TIMEOUT
-    assert play_context.shell is None
     assert play_context.verbosity == 2
     assert play_context.check_mode is True
-    assert play_context.no_log is None
+
+    mock_play = mocker.MagicMock()
+    mock_play.force_handlers = True
+
+    play_context = PlayContext(play=mock_play)
+    assert play_context.force_handlers is True
 
     mock_task = mocker.MagicMock()
     mock_task.connection = 'mocktask'
@@ -91,12 +88,7 @@ def test_play_context(mocker, parser, reset_cli_args):
 
     assert play_context.connection == 'mock_inventory'
     assert play_context.remote_user == 'mocktask'
-    assert play_context.port == 4321
     assert play_context.no_log is True
-    assert play_context.become is True
-    assert play_context.become_method == "mocktask"
-    assert play_context.become_user == "mocktaskroot"
-    assert play_context.become_pass == "mocktaskpass"
 
     mock_task.no_log = False
     play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
@@ -104,8 +96,7 @@ def test_play_context(mocker, parser, reset_cli_args):
 
 
 def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
-    (options, args) = parser.parse_args([])
-    options.args = args
+    options = parser.parse_args([])
     context._init_global_context(options)
     play_context = PlayContext()
 
@@ -147,6 +138,7 @@ def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
                                                                       default_exe, success, default_cmd), cmd) is not None)
 
     play_context.become_pass = None
+    play_context.become_method = 'su'
     play_context.set_become_plugin(become_loader.get('su'))
     play_context.become_flags = su_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
@@ -154,33 +146,39 @@ def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
                                                                       success, default_cmd), cmd) is not None)
 
     play_context.set_become_plugin(become_loader.get('pbrun'))
+    play_context.become_method = 'pbrun'
     play_context.become_flags = pbrun_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match("""%s %s -u %s 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user,
                                                        success, default_cmd), cmd) is not None
 
     play_context.set_become_plugin(become_loader.get('pfexec'))
+    play_context.become_method = 'pfexec'
     play_context.become_flags = pfexec_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match('''%s %s "'echo %s; %s'"''' % (pfexec_exe, pfexec_flags, success, default_cmd), cmd) is not None
 
     play_context.set_become_plugin(become_loader.get('doas'))
+    play_context.become_method = 'doas'
     play_context.become_flags = doas_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert (re.match("""%s %s -u %s %s -c 'echo %s; %s'""" % (doas_exe, doas_flags, play_context.become_user, default_exe, success,
                                                               default_cmd), cmd) is not None)
 
     play_context.set_become_plugin(become_loader.get('ksu'))
+    play_context.become_method = 'ksu'
     play_context.become_flags = ksu_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert (re.match("""%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags,
                                                               default_exe, success, default_cmd), cmd) is not None)
 
     play_context.set_become_plugin(become_loader.get('bad'))
+    play_context.become_method = 'bad'
     with pytest.raises(AnsibleError):
         play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
 
     play_context.set_become_plugin(become_loader.get('dzdo'))
+    play_context.become_method = 'dzdo'
     play_context.become_flags = dzdo_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match("""%s %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, dzdo_flags, play_context.become_user, default_exe,

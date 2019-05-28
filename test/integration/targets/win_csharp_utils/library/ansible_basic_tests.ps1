@@ -58,7 +58,7 @@ Function Assert-DictionaryEquals {
 
         if ($actual_value -is [System.Collections.IDictionary]) {
             $actual_value | Assert-DictionaryEquals -Expected $expected_value
-        } elseif ($actual_value -is [System.Collections.ArrayList]) {
+        } elseif ($actual_value -is [System.Collections.ArrayList] -or $actual_value -is [Array]) {
             for ($i = 0; $i -lt $actual_value.Count; $i++) {
                 $actual_entry = $actual_value[$i]
                 $expected_entry = $expected_value[$i]
@@ -584,7 +584,8 @@ $tests = @{
                     option1 = 1
                 }
             }
-            warnings = @($expected_warnings)
+            # We have disabled the warning for now
+            #warnings = @($expected_warnings)
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
@@ -656,25 +657,25 @@ $tests = @{
                         dict = @{
                             pass = "plain"
                             hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-                            sub_hide = "****word"
+                            sub_hide = "********word"
                             int_hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
                         }
                         custom = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
                         list = @(
                             "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
-                            "****word",
+                            "********word",
                             "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
                             "pa ss",
                             @{
                                 pass = "plain"
                                 hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
-                                sub_hide = "****word"
+                                sub_hide = "********word"
                                 int_hide = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
                             }
                         )
-                        data = "Oops this is secret: ****"
+                        data = "Oops this is secret: ********"
                     }
-                    username = "user - **** - name"
+                    username = "user - ******** - name"
                     password = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
                 }
             }
@@ -685,21 +686,21 @@ $tests = @{
 
         $expected_event = @'
 test_no_log - Invoked with:
-  username: user - **** - name
+  username: user - ******** - name
   dict: dict: sub_hide: ****word
       pass: plain
-      int_hide: ****56
+      int_hide: ********56
       hide: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-      data: Oops this is secret: ****
+      data: Oops this is secret: ********
       custom: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
       list: 
       - VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-      - ****word
-      - ****567
+      - ********word
+      - ********567
       - pa ss
-      - sub_hide: ****word
+      - sub_hide: ********word
           pass: plain
-          int_hide: ****56
+          int_hide: ********56
           hide: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
   password2: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
   password: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
@@ -1779,8 +1780,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: ABC"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "ABC"}}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Case insensitive choice no_log" = {
@@ -1807,8 +1809,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"}}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Case insentitive choice as list" = {
@@ -1836,8 +1839,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: AbC, jkl"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = $complex_args}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Invalid choice" = {
@@ -1894,7 +1898,7 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equals -Expected $true
 
-        $expected_msg = "value of option_key must be one of: a, b. Got no match for: ***"
+        $expected_msg = "value of option_key must be one of: a, b. Got no match for: ********"
 
         $actual.Keys.Count | Assert-Equals -Expected 4
         $actual.changed | Assert-Equals -Expected $false
@@ -2342,6 +2346,23 @@ test_no_log - Invoked with:
         $actual.changed | Assert-Equals -Expected $false
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = @{}}
         $actual.output | Assert-DictionaryEquals -Expected @{a = "a"; b = "b"}
+    }
+
+    "String json array to object" = {
+        $input_json = '["abc", "def"]'
+        $actual = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
+        $actual -is [Array] | Assert-Equals -Expected $true
+        $actual.Length | Assert-Equals -Expected 2
+        $actual[0] | Assert-Equals -Expected "abc"
+        $actual[1] | Assert-Equals -Expected "def"
+    }
+
+    "String json array of dictionaries to object" = {
+        $input_json = '[{"abc":"def"}]'
+        $actual = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
+        $actual -is [Array] | Assert-Equals -Expected $true
+        $actual.Length | Assert-Equals -Expected 1
+        $actual[0] | Assert-DictionaryEquals -Expected @{"abc" = "def"}
     }
 }
 

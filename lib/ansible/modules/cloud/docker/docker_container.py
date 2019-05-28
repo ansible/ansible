@@ -61,7 +61,7 @@ options:
       - Allows to specify how properties of existing containers are compared with
         module options to decide whether the container should be recreated / updated
         or not. Only options which correspond to the state of a container as handled
-        by the Docker daemon can be specified.
+        by the Docker daemon can be specified, as well as C(networks).
       - Must be a dictionary specifying for an option one of the keys C(strict), C(ignore)
         and C(allow_more_present).
       - If C(strict) is specified, values are tested for equality, and changes always
@@ -293,7 +293,7 @@ options:
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
-        This option requires Docker API 1.25+.
+        This option requires Docker API >= 1.25.
     type: bool
     default: no
     version_added: "2.6"
@@ -423,18 +423,34 @@ options:
             can be used in the network to reach this container.
         type: list
     version_added: "2.2"
+  networks_cli_compatible:
+    description:
+      - "When networks are provided to the module via the I(networks) option, the module
+         behaves differently than C(docker run --network): C(docker run --network other)
+         will create a container with network C(other) attached, but the default network
+         not attached. This module with C(networks: {name: other}) will create a container
+         with both C(default) and C(other) attached. If I(purge_networks) is set to C(yes),
+         the C(default) network will be removed afterwards."
+      - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
+         C(docker run --network) and will I(not) add the default network if C(networks) is
+         specified. If C(networks) is not specified, the default network will be attached."
+      - Current value is C(no). A new default of C(yes) will be set in Ansible 2.12.
+    type: bool
+    version_added: "2.8"
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
     type: bool
   oom_score_adj:
     description:
-      - An integer value containing the score given to the container in order to tune OOM killer preferences.
+      - An integer value containing the score given to the container in order to tune
+        OOM killer preferences.
     type: int
     version_added: "2.2"
   output_logs:
     description:
-      - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
+      - If set to true, output of the container command will be printed (only effective
+        when log_driver is set to json-file or journald.
     type: bool
     default: no
     version_added: "2.7"
@@ -446,7 +462,8 @@ options:
   pid_mode:
     description:
       - Set the PID namespace mode for the container.
-      - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
+      - Note that Docker SDK for Python < 2.0 only supports 'host'. Newer versions of the
+        Docker SDK for Python (docker) allow all values supported by the docker daemon.
     type: str
   pids_limit:
     description:
@@ -469,7 +486,6 @@ options:
       - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are I(not) allowed. This
         is different from the C(docker) command line utility. Use the L(dig lookup,../lookup/dig.html)
         to resolve hostnames."
-      - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
       - A value of C(all) will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
@@ -579,9 +595,9 @@ options:
         will be set to this value.
       - When the container is stopped, will be used as a timeout for stopping the
         container. In case the container has a custom C(StopTimeout) configuration,
-        the behavior depends on the version of docker. New versions of docker will
-        always use the container's configured C(StopTimeout) value if it has been
-        configured.
+        the behavior depends on the version of the docker daemon. New versions of
+        the docker daemon will always use the container's configured C(StopTimeout)
+        value if it has been configured.
     type: int
   trust_image_content:
     description:
@@ -622,7 +638,7 @@ options:
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
       - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
         C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
-        Note that docker might not support all modes and combinations of such modes."
+        Note that the docker daemon might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
       - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
@@ -654,9 +670,10 @@ author:
   - "Daan Oosterveld (@dusdanig)"
   - "Chris Houseknecht (@chouseknecht)"
   - "Kassian Sun (@kassiansun)"
+  - "Felix Fontein (@felixfontein)"
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "Docker API >= 1.20"
 '''
 
@@ -923,7 +940,7 @@ import re
 import shlex
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import human_to_bytes
+from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DifferenceTracker,
@@ -931,7 +948,8 @@ from ansible.module_utils.docker.common import (
     compare_generic,
     is_image_name_id,
     sanitize_result,
-    parse_healthcheck
+    parse_healthcheck,
+    DOCKER_COMMON_ARGS,
 )
 from ansible.module_utils.six import string_types
 
@@ -944,7 +962,7 @@ try:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import APIError, NotFound
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 
@@ -1071,6 +1089,7 @@ class TaskParameters(DockerBaseClass):
         self.network_mode = None
         self.userns_mode = None
         self.networks = None
+        self.networks_cli_compatible = None
         self.oom_killer = None
         self.oom_score_adj = None
         self.paused = None
@@ -1255,6 +1274,16 @@ class TaskParameters(DockerBaseClass):
             if getattr(self, value, None) is not None:
                 if self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
+
+        if self.networks_cli_compatible and self.networks:
+            network = self.networks[0]
+            params = dict()
+            for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
+                if network.get(para):
+                    params[para] = network[para]
+            network_config = dict()
+            network_config[network['name']] = self.client.create_endpoint_config(**params)
+            result['networking_config'] = self.client.create_networking_config(network_config)
         return result
 
     def _expand_host_paths(self):
@@ -1350,7 +1379,7 @@ class TaskParameters(DockerBaseClass):
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
             # blkio_weight can always be updated, but can only be set on creation
-            # when docker-py and docker API are new enough
+            # when Docker SDK for Python and Docker API are new enough
             host_config_params['blkio_weight'] = 'blkio_weight'
 
         if self.client.docker_py_version >= LooseVersion('3.0'):
@@ -1556,7 +1585,14 @@ class TaskParameters(DockerBaseClass):
         if self.log_options is not None:
             options['Config'] = dict()
             for k, v in self.log_options.items():
-                options['Config'][k] = str(v)
+                if not isinstance(v, string_types):
+                    self.client.module.warn(
+                        "Non-string value found for log_options option '%s'. The value is automatically converted to '%s'. "
+                        "If this is not correct, or you want to avoid such warnings, please quote the value." % (k, str(v))
+                    )
+                v = str(v)
+                self.log_options[k] = v
+                options['Config'][k] = v
 
         try:
             return LogConfig(**options)
@@ -1592,8 +1628,8 @@ class TaskParameters(DockerBaseClass):
         if self.env:
             for name, value in self.env.items():
                 if not isinstance(value, string_types):
-                    self.fail("Non-string value found for env option. "
-                              "Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s" % (name, ))
+                    self.fail("Non-string value found for env option. Ambiguous env options must be "
+                              "wrapped in quotes to avoid them being interpreted. Key: %s" % (name, ))
                 final_env[name] = str(value)
         return final_env
 
@@ -1818,15 +1854,15 @@ class Container(DockerBaseClass):
             config_mapping['log_options'] = log_config.get('Config')
 
         if self.parameters.client.option_minimal_versions['auto_remove']['supported']:
-            # auto_remove is only supported in docker>=2; unfortunately it has a default
-            # value, that's why we have to jump through the hoops here
+            # auto_remove is only supported in Docker SDK for Python >= 2.0.0; unfortunately
+            # it has a default value, that's why we have to jump through the hoops here
             config_mapping['auto_remove'] = host_config.get('AutoRemove')
 
         if self.parameters.client.option_minimal_versions['stop_timeout']['supported']:
-            # stop_timeout is only supported in docker>=2.1. Note that stop_timeout
-            # has a hybrid role, in that it used to be something only used for stopping
-            # containers, and is now also used as a container property. That's why
-            # it needs special handling here.
+            # stop_timeout is only supported in Docker SDK for Python >= 2.1. Note that
+            # stop_timeout has a hybrid role, in that it used to be something only used
+            # for stopping containers, and is now also used as a container property.
+            # That's why it needs special handling here.
             config_mapping['stop_timeout'] = config.get('StopTimeout')
 
         if self.parameters.client.docker_api_version < LooseVersion('1.22'):
@@ -2260,6 +2296,7 @@ class ContainerManager(DockerBaseClass):
         container = self._get_container(self.parameters.name)
         was_running = container.running
         was_paused = container.paused
+        container_created = False
 
         # If the image parameter was passed then we need to deal with the image
         # version comparison. Otherwise we handle this depending on whether
@@ -2277,6 +2314,7 @@ class ContainerManager(DockerBaseClass):
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
+            container_created = True
         else:
             # Existing container
             different, differences = container.has_different_configuration(image)
@@ -2301,18 +2339,19 @@ class ContainerManager(DockerBaseClass):
                 new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
+                container_created = True
 
         if container and container.exists:
             container = self.update_limits(container)
-            container = self.update_networks(container)
+            container = self.update_networks(container, container_created)
 
             if state == 'started' and not container.running:
                 self.diff_tracker.add('running', parameter=True, active=was_running)
                 container = self.container_start(container.Id)
             elif state == 'started' and self.parameters.restart:
                 self.diff_tracker.add('running', parameter=True, active=was_running)
-                self.container_stop(container.Id)
-                container = self.container_start(container.Id)
+                self.diff_tracker.add('restarted', parameter=True, active=False)
+                container = self.container_restart(container.Id)
             elif state == 'stopped' and container.running:
                 self.diff_tracker.add('running', parameter=False, active=was_running)
                 self.container_stop(container.Id)
@@ -2400,24 +2439,25 @@ class ContainerManager(DockerBaseClass):
             return self._get_container(container.Id)
         return container
 
-    def update_networks(self, container):
-        has_network_differences, network_differences = container.has_network_differences()
+    def update_networks(self, container, container_created):
         updated_container = container
-        if has_network_differences:
-            if self.diff.get('differences'):
-                self.diff['differences'].append(dict(network_differences=network_differences))
-            else:
-                self.diff['differences'] = [dict(network_differences=network_differences)]
-            for netdiff in network_differences:
-                self.diff_tracker.add(
-                    'network.{0}'.format(netdiff['parameter']['name']),
-                    parameter=netdiff['parameter'],
-                    active=netdiff['container']
-                )
-            self.results['changed'] = True
-            updated_container = self._add_networks(container, network_differences)
+        if self.parameters.comparisons['networks']['comparison'] != 'ignore' or container_created:
+            has_network_differences, network_differences = container.has_network_differences()
+            if has_network_differences:
+                if self.diff.get('differences'):
+                    self.diff['differences'].append(dict(network_differences=network_differences))
+                else:
+                    self.diff['differences'] = [dict(network_differences=network_differences)]
+                for netdiff in network_differences:
+                    self.diff_tracker.add(
+                        'network.{0}'.format(netdiff['parameter']['name']),
+                        parameter=netdiff['parameter'],
+                        active=netdiff['container']
+                    )
+                self.results['changed'] = True
+                updated_container = self._add_networks(container, network_differences)
 
-        if self.parameters.purge_networks:
+        if (self.parameters.comparisons['networks']['comparison'] == 'strict' and self.parameters.networks is not None) or self.parameters.purge_networks:
             has_extra_networks, extra_networks = container.has_extra_networks()
             if has_extra_networks:
                 if self.diff.get('differences'):
@@ -2480,6 +2520,7 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 new_container = self.client.create_container(image, **create_parameters)
+                self.client.report_warnings(new_container)
             except Exception as exc:
                 self.fail("Error creating container: %s" % str(exc))
             return self._get_container(new_container['Id'])
@@ -2542,8 +2583,8 @@ class ContainerManager(DockerBaseClass):
                     pass
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:
-                        # New docker versions do not allow containers to be removed if they are paused
-                        # Make sure we don't end up in an infinite loop
+                        # New docker daemon versions do not allow containers to be removed
+                        # if they are paused. Make sure we don't end up in an infinite loop.
                         if count == 3:
                             self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
                         count += 1
@@ -2572,7 +2613,8 @@ class ContainerManager(DockerBaseClass):
             self.results['changed'] = True
             if not self.check_mode and callable(getattr(self.client, 'update_container')):
                 try:
-                    self.client.update_container(container_id, **update_parameters)
+                    result = self.client.update_container(container_id, **update_parameters)
+                    self.client.report_warnings(result)
                 except Exception as exc:
                     self.fail("Error updating container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
@@ -2591,6 +2633,19 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error killing container %s: %s" % (container_id, exc))
         return response
 
+    def container_restart(self, container_id):
+        self.results['actions'].append(dict(restarted=container_id, timeout=self.parameters.stop_timeout))
+        self.results['changed'] = True
+        if not self.check_mode:
+            try:
+                if self.parameters.stop_timeout:
+                    response = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
+                else:
+                    response = self.client.restart(container_id)
+            except Exception as exc:
+                self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
+        return self._get_container(container_id)
+
     def container_stop(self, container_id):
         if self.parameters.force_kill:
             self.container_kill(container_id)
@@ -2608,8 +2663,8 @@ class ContainerManager(DockerBaseClass):
                         response = self.client.stop(container_id)
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:
-                        # New docker versions do not allow containers to be removed if they are paused
-                        # Make sure we don't end up in an infinite loop
+                        # New docker daemon versions do not allow containers to be removed
+                        # if they are paused. Make sure we don't end up in an infinite loop.
                         if count == 3:
                             self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
                         count += 1
@@ -2640,13 +2695,11 @@ def detect_ipvX_address_usage(client):
 
 class AnsibleDockerClientContainer(AnsibleDockerClient):
     # A list of module options which are not docker container properties
-    __NON_CONTAINER_PROPERTY_OPTIONS = (
-        'docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
-        'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
-        'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks', 'recreate',
-        'restart', 'state', 'trust_image_content', 'networks', 'cleanup', 'kill_signal',
+    __NON_CONTAINER_PROPERTY_OPTIONS = tuple([
+        'env_file', 'force_kill', 'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks',
+        'recreate', 'restart', 'state', 'trust_image_content', 'networks', 'cleanup', 'kill_signal',
         'output_logs', 'paused'
-    )
+    ] + list(DOCKER_COMMON_ARGS.keys()))
 
     def _parse_comparisons(self):
         comparisons = {}
@@ -2660,6 +2713,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             env='set',
             entrypoint='list',
             etc_hosts='set',
+            networks='set(dict)',
             ulimits='set(dict)',
             device_read_bps='set(dict)',
             device_write_bps='set(dict)',
@@ -2675,7 +2729,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             for alias in data.get('aliases', []):
                 all_options.add(alias)
             # Ignore options which aren't used as container properties
-            if option in self.__NON_CONTAINER_PROPERTY_OPTIONS:
+            if option in self.__NON_CONTAINER_PROPERTY_OPTIONS and option != 'networks':
                 continue
             # Determine option type
             if option in explicit_types:
@@ -2701,6 +2755,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Process legacy ignore options
         if self.module.params['ignore_image']:
             comparisons['image']['comparison'] = 'ignore'
+        if self.module.params['purge_networks']:
+            comparisons['networks']['comparison'] = 'strict'
         # Process options
         if self.module.params.get('comparisons'):
             # If '*' appears in comparisons, process it first
@@ -2708,7 +2764,12 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 value = self.module.params['comparisons']['*']
                 if value not in ('strict', 'ignore'):
                     self.fail("The wildcard can only be used with comparison modes 'strict' and 'ignore'!")
-                for dummy, v in comparisons.items():
+                for option, v in comparisons.items():
+                    if option == 'networks':
+                        # `networks` is special: only update if
+                        # some value is actually specified
+                        if self.module.params['networks'] is None:
+                            continue
                     v['comparison'] = value
             # Now process all other comparisons.
             comp_aliases_used = {}
@@ -2719,8 +2780,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 key_main = comp_aliases.get(key)
                 if key_main is None:
                     if key_main in all_options:
-                        self.fail(("The module option '%s' cannot be specified in the comparisons dict," +
-                                   " since it does not correspond to container's state!") % key)
+                        self.fail("The module option '%s' cannot be specified in the comparisons dict, "
+                                  "since it does not correspond to container's state!" % key)
                     self.fail("Unknown module option '%s' in comparisons dict!" % key)
                 if key_main in comp_aliases_used:
                     self.fail("Both '%s' and '%s' (aliases of %s) are specified in comparisons dict!" % (key, comp_aliases_used[key_main], key_main))
@@ -2743,6 +2804,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Check legacy values
         if self.module.params['ignore_image'] and comparisons['image']['comparison'] != 'ignore':
             self.module.warn('The ignore_image option has been overridden by the comparisons option!')
+        if self.module.params['purge_networks'] and comparisons['networks']['comparison'] != 'strict':
+            self.module.warn('The purge_networks option has been overridden by the comparisons option!')
         self.comparisons = comparisons
 
     def _get_additional_minimal_versions(self):
@@ -2753,14 +2816,14 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             if stop_timeout_needed_for_update and not stop_timeout_supported:
                 # We warn (instead of fail) since in older versions, stop_timeout was not used
                 # to update the container's configuration, but only when stopping a container.
-                self.module.warn("docker or docker-py version is %s. Minimum version required is 2.1 to update "
+                self.module.warn("Docker SDK for Python's version is %s. Minimum version required is 2.1 to update "
                                  "the container's stop_timeout configuration. "
-                                 "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+                                 "If you use the 'docker-py' module, you have to switch to the 'docker' Python package." % (docker_version,))
         else:
             if stop_timeout_needed_for_update and not stop_timeout_supported:
                 # We warn (instead of fail) since in older versions, stop_timeout was not used
                 # to update the container's configuration, but only when stopping a container.
-                self.module.warn("docker API version is %s. Minimum version required is 1.25 to set or "
+                self.module.warn("Docker API version is %s. Minimum version required is 1.25 to set or "
                                  "update the container's stop_timeout configuration." % (self.docker_api_version_str,))
         self.option_minimal_versions['stop_timeout']['supported'] = stop_timeout_supported
 
@@ -2780,8 +2843,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             dns_opts=dict(docker_api_version='1.21', docker_py_version='1.10.0'),
             ipc_mode=dict(docker_api_version='1.25'),
             mac_address=dict(docker_api_version='1.25'),
-            oom_killer=dict(docker_py_version='2.0.0'),
-            oom_score_adj=dict(docker_api_version='1.22', docker_py_version='2.0.0'),
+            oom_score_adj=dict(docker_api_version='1.22'),
             shm_size=dict(docker_api_version='1.22'),
             stop_signal=dict(docker_api_version='1.21'),
             tmpfs=dict(docker_api_version='1.22'),
@@ -2888,6 +2950,7 @@ def main():
             aliases=dict(type='list', elements='str'),
             links=dict(type='list', elements='str'),
         )),
+        networks_cli_compatible=dict(type='bool'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
         output_logs=dict(type='bool', default=False),
@@ -2933,6 +2996,16 @@ def main():
         supports_check_mode=True,
         min_docker_api_version='1.20',
     )
+    if client.module.params['networks_cli_compatible'] is None and client.module.params['networks']:
+        client.module.deprecate(
+            'Please note that docker_container handles networks slightly different than docker CLI. '
+            'If you specify networks, the default network will still be attached as the first network. '
+            '(You can specify purge_networks to remove all networks not explicitly listed.) '
+            'This behavior will change in Ansible 2.12. You can change the behavior now by setting '
+            'the new `networks_cli_compatible` option to `yes`, and remove this warning by setting '
+            'it to `no`',
+            version='2.12'
+        )
 
     cm = ContainerManager(client)
     client.module.exit_json(**sanitize_result(cm.results))

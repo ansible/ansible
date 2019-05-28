@@ -36,9 +36,22 @@ class TestVyosFactsModule(TestVyosModule):
         self.mock_run_commands = patch('ansible.modules.network.vyos.vyos_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.vyos.vyos_facts.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {
+            'device_info': {
+                'network_os': 'vyos',
+                'network_os_hostname': 'vyos01',
+                'network_os_model': 'VMware',
+                'network_os_version': 'VyOS 1.1.7'
+            },
+            'network_api': 'cliconf'
+        }
+
     def tearDown(self):
         super(TestVyosFactsModule, self).tearDown()
         self.mock_run_commands.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None):
         def load_from_file(*args, **kwargs):
@@ -61,7 +74,7 @@ class TestVyosFactsModule(TestVyosModule):
         set_module_args(dict(gather_subset='default'))
         result = self.execute_module()
         facts = result.get('ansible_facts')
-        self.assertEqual(len(facts), 5)
+        self.assertEqual(len(facts), 8)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
@@ -69,7 +82,7 @@ class TestVyosFactsModule(TestVyosModule):
         set_module_args(dict(gather_subset='!all'))
         result = self.execute_module()
         facts = result.get('ansible_facts')
-        self.assertEqual(len(facts), 5)
+        self.assertEqual(len(facts), 8)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 
@@ -77,7 +90,7 @@ class TestVyosFactsModule(TestVyosModule):
         set_module_args(dict(gather_subset=['!neighbors', '!config']))
         result = self.execute_module()
         facts = result.get('ansible_facts')
-        self.assertEqual(len(facts), 5)
+        self.assertEqual(len(facts), 8)
         self.assertEqual(facts['ansible_net_hostname'].strip(), 'vyos01')
         self.assertEqual(facts['ansible_net_version'], 'VyOS 1.1.7')
 

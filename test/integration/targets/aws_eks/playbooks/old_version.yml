@@ -1,5 +1,6 @@
 - hosts: localhost
   connection: local
+  environment: "{{ ansible_test.environment }}"
 
   tasks:
     - name: try and use aws_eks_cluster module

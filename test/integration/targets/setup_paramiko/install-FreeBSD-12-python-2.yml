@@ -1,0 +1,3 @@
+- name: Install Paramiko for Python 2 on FreeBSD 12
+  pkgng:
+    name: py27-paramiko

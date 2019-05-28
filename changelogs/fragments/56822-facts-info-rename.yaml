@@ -1,0 +1,5 @@
+minor_changes:
+- The ``python_requirements_facts`` module has been renamed to ``python_requirements_info``.
+- The ``zabbix_group_facts`` module has been renamed to ``zabbix_group_info``.
+- The ``zabbix_host_facts`` module has been renamed to ``zabbix_host_info``.
+- The ``k8s_facts`` module has been renamed to ``k8s_info``.

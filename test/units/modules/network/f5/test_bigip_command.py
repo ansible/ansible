@@ -66,9 +66,6 @@ class TestParameters(unittest.TestCase):
             commands=[
                 "tmsh show sys version"
             ],
-            server='localhost',
-            user='admin',
-            password='password'
         )
         p = Parameters(params=args)
         assert len(p.commands) == 1
@@ -89,9 +86,11 @@ class TestManager(unittest.TestCase):
             commands=[
                 "tmsh show sys version"
             ],
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -117,9 +116,11 @@ class TestManager(unittest.TestCase):
             commands=[
                 "tmsh create ltm virtual foo"
             ],
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -145,10 +146,12 @@ class TestManager(unittest.TestCase):
             commands=[
                 "show sys version"
             ],
-            server='localhost',
-            user='admin',
-            password='password',
-            transport='cli'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin',
+                transport='cli'
+            )
         ))
 
         module = AnsibleModule(
@@ -186,9 +189,11 @@ class TestManager(unittest.TestCase):
               enabled search-base-dn cn=users,dc=domain,dc=com servers add {
               ldap.server.com } }
             """,
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,

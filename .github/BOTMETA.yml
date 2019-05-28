@@ -42,6 +42,8 @@ files:
     support: core
   changelogs/fragments/:
     support: community
+  $modules:
+    ignored: ryansb
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph nadirollo tedder
   $modules/cloud/amazon/aws_api_gateway.py: willthames
@@ -124,6 +126,9 @@ files:
     labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
+  $modules/cloud/docker/docker_compose.py:
+    <<: *docker
+    maintainers: $team_docker sluther
   $modules/cloud/docker/docker_network.py:
     <<: *docker
     maintainers: $team_docker olsaki
@@ -139,7 +144,14 @@ files:
     keywords: [ hcloud, hetzner cloud ]
     labels: [ cloud, hcloud ]
     maintainers: $team_hcloud
-  $modules/cloud/kubevirt/: machacekondra mmazur pkliczewski
+  $modules/cloud/huawei/: &huawei
+    keywords: [ cloud, huawei, hwc ]
+    labels: [ cloud, huawei ]
+    maintainers: $team_huawei
+  $modules/cloud/kubevirt/: &kubevirt
+    keywords: [ kubevirt ]
+    labels: [ cloud, kubevirt ]
+    maintainers: $team_kubevirt
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: glitchcrab
@@ -161,8 +173,12 @@ files:
   $modules/cloud/misc/virt_pool.py: *virt
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
-  $modules/cloud/opennebula/: ilicmilan kustodian
+  $modules/cloud/opennebula/: ilicmilan kustodian xorel rsmontero
   $modules/cloud/openstack/: $team_openstack
+  $modules/cloud/oracle/: &oracle
+    labels: [ cloud, oracle ]
+    maintainers: $team_oracle
+    support: community
   $modules/cloud/ovirt/: *ovirt
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/rackspace/:
@@ -175,7 +191,7 @@ files:
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
   $modules/cloud/vmware/: &vmware
-    ignored: cigamit jcpowermac mtnbikenc tchernomax
+    ignored: cigamit jcpowermac mtnbikenc tchernomax ckotte
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
     labels: [ cloud, vmware ]
     maintainers: $team_vmware
@@ -199,6 +215,7 @@ files:
     keywords: [ acme, letsencrypt, lets encrypt, luks, openssl ]
     labels: crypto
     maintainers: $team_crypto
+    supershipit: felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/mysql/: &mysql
@@ -255,7 +272,9 @@ files:
   $modules/monitoring/zabbix/: eikef D3DeFi
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
-  $modules/net_tools/basics/uri.py: $team_ansible
+  $modules/net_tools/basics/uri.py:
+    ignored: romeotheriault
+    maintainers: $team_ansible
   $modules/net_tools/cloudflare_dns.py: andreaso
   $modules/net_tools/exoscale/: resmo
   $modules/net_tools/ldap/: jtyr
@@ -266,10 +285,10 @@ files:
     labels:
       - networking
       - infoblox
-  $modules/net_tools/netbox/: fragmentedpacket
+  $modules/net_tools/netbox/: FragmentedPacket
   $modules/network/a10/: ericchou1 mischapeters
   $modules/network/aci/: &aci
-    keywords: [ ACI, Cisco MSC, Cisco MSO, MultiSite, Multi-Site ]
+    keywords: [ aci, cisco msc, cisco mso, multisite, multi-site ]
     labels: [ aci, cisco, networking ]
     maintainers: $team_aci
     notified: koladiya
@@ -300,6 +319,11 @@ files:
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
   $modules/network/fortimanager/: $team_fortimanager
+  $modules/network/ftd/: &ftd
+    keywords: [ firepower, ftd ]
+    labels: [ cisco, ftd, networking ]
+    maintainers: $team_ftd
+    support: community
   $modules/network/illumos/: *solaris
   $modules/network/interface/: $team_networking
   $modules/network/ios/: &ios
@@ -401,13 +425,17 @@ files:
     maintainers: $team_ansible kustodian
     ignored: skvidal
   $modules/packaging/os/zypper.py:
-    ignored: dirtyharrycallahan
-  $modules/packaging/os/zypper_repository.py: robinro
+    ignored: dirtyharrycallahan robinro
   $modules/remote_management/foreman/: ehelms
-  $modules/remote_management/hpilo/: dagwieers haad
+  $modules/remote_management/hpilo/:
+    ignored: dagwieers
+    maintainers: haad
   $modules/remote_management/imc/:
     labels: [ cisco ]
     maintainers: $team_imc
+  $modules/remote_management/intersight/: &intersight
+    labels: [ cisco, remote_management, intersight ]
+    maintainers: $team_intersight
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/lxca/: navalkp prabhosa
   $modules/remote_management/manageiq/: $team_manageiq
@@ -467,6 +495,8 @@ files:
   $modules/system/solaris: *solaris
   $modules/system/sysctl.py: Akasurde
   $modules/system/systemd.py: $team_ansible
+  $modules/system/ufw.py:
+    notified: felixfontein
   $modules/system/user.py: $team_ansible samdoran
   $modules/utilities/helper/meta.py: $team_ansible
   $modules/utilities/logic/assert.py: $team_ansible
@@ -665,6 +695,12 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
+  $module_utils/hwc_utils.py: &huawei_hwc
+    <<: *huawei
+    support: community
+    labels:
+      - networking
+      - huawei
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -674,6 +710,7 @@ files:
       - k8s
   $module_utils/keycloak.py:
     maintainers: eikef
+  $module_utils/kubevirt.py: *kubevirt
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
   $module_utils/memset.py:
@@ -738,6 +775,7 @@ files:
     labels:
       - fortimanager
       - networking
+  $module_utils/network/ftd: *ftd
   $module_utils/network/ios:
     <<: *ios
     maintainers: $team_networking $team_ios
@@ -781,6 +819,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
+  $module_utils/oracle/: *oracle
   $module_utils/ovirt.py: *ovirt
   $module_utils/postgres.py: *postgresql
   $module_utils/powershell: *windows_core
@@ -789,6 +828,7 @@ files:
     labels: pure_storage
   $module_utils/redfish_utils.py:
     maintainers: $team_redfish
+  $module_utils/remote_management/intersight: *intersight
   $module_utils/remote_management/lxca:
     maintainers: navalkp prabhosa
     labels: lxca
@@ -1074,14 +1114,24 @@ files:
   $plugins/doc_fragments/docker.py:
     <<: *docker
     support: community
+  $plugins/doc_fragments/gcp.py:
+    support: community
+    supershipit: $team_google
+    maintainers: $team_google
+  $plugins/doc_fragments/hwc.py: *huawei
+  $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
   $plugins/doc_fragments/postgres.py: *postgresql
   $plugins/doc_fragments/proxysql.py: *mysql
+  $plugins/doc_fragments/ucs.py: *ucs
   $plugins/doc_fragments/vultr.py: *vultr
+  $plugins/doc_fragments/ovirt.py: *ovirt
+  $plugins/doc_fragments/ovirt_facts.py: *ovirt
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
+  $plugins/doc_fragments/oracle*: *oracle
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -1104,13 +1154,15 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
-  $plugins/httpapi/ftd.py:
-    support: community
-    maintainers: annikulin $team_networking
+  $plugins/httpapi/ftd.py: *ftd
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
     support: core
+  $plugins/inventory/docker: *docker
+  $plugins/inventory/docker_swarm.py:
+    <<: *docker
+    maintainers: $team_docker morph027
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
@@ -1152,7 +1204,7 @@ files:
     keywords:
       - vmware inventory
       - vmware dynamic inventory plugin
-    ignored: cigamit jcpowermac mtnbikenc tchernomax
+    ignored: cigamit jcpowermac mtnbikenc tchernomax ckotte
   $plugins/inventory/vultr.py: *vultr
   $plugins/inventory/yaml.py:
     support: core
@@ -1186,6 +1238,8 @@ files:
   $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
+  $plugins/lookup/manifold:
+    maintainers: galanoff
 ###############################
 # plugins/netconf
   $plugins/netconf/:
@@ -1276,6 +1330,44 @@ files:
     keywords:
       - jinja
       - jinja2
+##############################
+# docs
+  docs/:
+    maintainers:
+      - acozine
+  docs/docsite/rst/community/:
+    maintainers:
+      - gundalow
+  docs/docsite/rst/dev_guide/:
+    maintainers:
+      - gundalow
+  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
+  docs/docsite/rst/network/:
+    labels: networking
+    maintainers:
+      - samccann
+  docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
+  docs/docsite/rst/scenario_guides/guide_aws.rst:
+    labels:
+      - aws
+      - cloud
+    maintainers: s-hertel
+  docs/docsite/rst/scenario_guides/guide_azure.rst:
+    labels:
+      - azure
+      - cloud
+    maintainers: $team_azure
+  docs/docsite/rst/scenario_guides/guide_cloudstack.rst:
+    labels:
+      - cloud
+      - cloudstack
+    maintainers: $team_cloudstack
+  docs/docsite/rst/scenario_guides/guide_docker.rst: *docker
+  docs/docsite/rst/scenario_guides/guide_vmware.rst: *vmware
+  docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
+  docs/docsite/rst/user_guide/windows: *windows_core
+###############################
+# 'test' is a component path, then 'test' label will be automatically added
   test/sanity/validate-modules:
     notified:
       - mattclay
@@ -1289,27 +1381,8 @@ files:
     notified:
       - gundalow
       - sivel
-  docs/:
-    maintainers:
-      - acozine
-  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
-  docs/docsite/rst/network/:
-    labels: networking
-    maintainers:
-      - samccann
-  docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
-  docs/docsite/rst/scenario_guides/guide_docker.rst: *docker
-  docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
-###############################
-# 'test' is a component path, then 'test' label will be automatically added
-  test/runner/:
-    notified: mattclay
-  test/runner/lib/cloud/acme.py: *crypto
-  test/sanity/:
-    notified: mattclay
-  test/utils/shippable/:
-    notified: mattclay
-  test/integration/targets/aci: *aci
+  test/integration/targets/aci_: *aci
+  test/integration/targets/asa_: *asa
   test/integration/targets/acme: *crypto
   test/integration/targets/aix: *aix
   test/integration/targets/cloudscale:
@@ -1322,41 +1395,61 @@ files:
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
-  test/integration/targets/meraki: *meraki
-  test/integration/targets/mso: *aci
+  test/integration/targets/hwc_: *huawei
+  test/integration/targets/inventory_docker: *docker
+  test/integration/targets/inventory_docker_swarm:
+    <<: *docker
+    maintainers: $team_docker morph027
+  test/integration/targets/intersight: *intersight
+  test/integration/targets/ios_: *ios
+  test/integration/targets/iosxr_: *ios
+  test/integration/targets/meraki_: *meraki
+  test/integration/targets/mso_: *aci
   test/integration/targets/mysql: *mysql
-  test/integration/targets/nxos: *nxos
+  test/integration/targets/nxos_: *nxos
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
+  test/integration/targets/scaleway_: *scaleway
   test/integration/targets/setup_acme: *crypto
   test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_openssl: *crypto
   test/integration/targets/setup_mysql_db: *mysql
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
-  test/integration/targets/ucs: *ucs
+  test/integration/targets/ucs_: *ucs
   test/integration/targets/vultr: *vultr
   test/legacy/:
     notified: mattclay
-  test/legacy/scaleway:
-    <<: *scaleway
-    support: community
+  test/runner/:
+    notified: mattclay
+  test/runner/lib/cloud/acme.py: *crypto
+  test/sanity/:
+    notified: mattclay
+  test/sanity/pep8/legacy-files.txt:
+    notified: mattclay
   test/units/module_utils/docker/:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
-  test/units/module_utils/test_acme.py: *crypto
+  test/units/module_utils/hwc: *huawei_hwc
+  test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
     <<: *docker
     support: community
+  test/units/modules/cloud/xenserver/: bvitnik
+  test/units/modules/crypto/: *crypto
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
+  test/units/modules/network/aireos: *aireos
+  test/units/modules/network/ftd: *ftd
+  test/units/modules/network/ios: *ios
+  test/units/modules/network/iosxr: *iosxr
+  test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
-  test/units/modules/cloud/xenserver/: bvitnik
   test/units/modules/storage/hpe3par: *hpe3par
-  test/sanity/pep8/legacy-files.txt:
+  test/utils/shippable/:
     notified: mattclay
   hacking/report.py:
     notified: mattclay
@@ -1374,7 +1467,7 @@ macros:
   team_asa: gdpak ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
-  team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
+  team_azure: haroldwongms nitzmahone trstringer yuwzho yungezz zikalino
   team_bsd: bcoca dagwieers jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
@@ -1386,42 +1479,47 @@ macros:
   team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
+  team_ftd: annikulin
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
+  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang
   team_imc: dagwieers
+  team_intersight: dsoper2 movinalot
   team_ios: rcarrillocruz
   team_iosxr: rcarrillocruz gdpak
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
+  team_kubevirt: machacekondra mmazur pkliczewski
   team_linode: InTheCloudDan lwm displague rmcintosh
   team_macos: akasurde dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
-  team_meraki: dagwieers kbreit
+  team_meraki: kbreit
   team_mysql: bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
-  team_netbox: sieben anthony25 fragmentedpacket nikkytub pilou-
+  team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi pdam preetiparasar csharpe-pn
   team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha chrisvanheuveln
   team_onyx: anasbadaha samerd
-  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull
+  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull gtema
   team_openswitch: Qalthos gdpak
+  team_oracle: nalsaber manojmeda mross22
   team_ovirt: machacekondra mwperina mnecas
-  team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem
+  team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem tcraxs
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych opslounge
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
-  team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
+  team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
   team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_tower: ghjm matburt wwitzel3 ryanpetrello rooftopcellist AlanCoding jladdjr kdelee
-  team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb
-  team_vmware: Akasurde dav1x warthog9 ckotte Tomorrow9
+  team_ucs: dsoper2 movinalot SDBrett vallard vvb
+  team_vmware: Akasurde dav1x warthog9 Tomorrow9 goneri
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
-  team_windows: dagwieers jborean93 jhawkesworth nitzmahone
+  team_windows: jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93

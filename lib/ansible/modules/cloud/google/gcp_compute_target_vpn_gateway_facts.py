@@ -53,19 +53,20 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a target vpn gateway facts
+- name: " a target vpn gateway facts"
   gcp_compute_target_vpn_gateway_facts:
-      region: us-west1
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    region: us-west1
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -98,7 +99,7 @@ items:
       description:
       - The network this VPN gateway is accepting traffic for.
       returned: success
-      type: str
+      type: dict
     tunnels:
       description:
       - A list of references to VpnTunnel resources associated with this VPN gateway.
@@ -139,7 +140,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

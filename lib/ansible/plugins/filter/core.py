@@ -36,7 +36,7 @@ import yaml
 
 import datetime
 from functools import partial
-from random import Random, SystemRandom, shuffle, random
+from random import Random, SystemRandom, shuffle
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
@@ -45,9 +45,10 @@ from ansible.module_utils.six import iteritems, string_types, integer_types, rer
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
@@ -61,7 +62,8 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
-    transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, **kw)
+    default_flow_style = kw.pop('default_flow_style', None)
+    transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
     return to_text(transformed)
 
 
@@ -299,8 +301,10 @@ def combine(*terms, **kwargs):
     dicts = []
     for t in terms:
         if isinstance(t, MutableMapping):
+            recursive_check_defined(t)
             dicts.append(t)
         elif isinstance(t, list):
+            recursive_check_defined(t)
             dicts.append(combine(*t, **kwargs))
         else:
             raise AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
@@ -510,7 +514,7 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
     ''' takes a dictionary and transforms it into a list of dictionaries,
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
-    if not isinstance(mydict, MutableMapping):
+    if not isinstance(mydict, Mapping):
         raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
 
     ret = []
@@ -529,7 +533,7 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
     return dict((item[key_name], item[value_name]) for item in mylist)
 
 
-def random_mac(value):
+def random_mac(value, seed=None):
     ''' takes string prefix, and return it completed with random bytes
         to get a complete 6 bytes MAC address '''
 
@@ -554,8 +558,12 @@ def random_mac(value):
     if len(err):
         raise AnsibleFilterError('Invalid value (%s) for random_mac: %s' % (value, err))
 
-    # Generate random float and make it int
-    v = int(random() * 10.0**10)
+    if seed is None:
+        r = SystemRandom()
+    else:
+        r = Random(seed)
+    # Generate random int between x1000000000 and xFFFFFFFFFF
+    v = r.randint(68719476736, 1099511627775)
     # Select first n chars to complement input prefix
     remain = 2 * (6 - len(mac_items))
     rnd = ('%x' % v)[:remain]

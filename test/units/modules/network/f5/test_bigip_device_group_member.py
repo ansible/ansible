@@ -84,9 +84,11 @@ class TestManager(unittest.TestCase):
                 name="bigip1",
                 device_group="dg1",
                 state="present",
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 

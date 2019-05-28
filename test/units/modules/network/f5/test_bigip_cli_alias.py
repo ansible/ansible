@@ -98,9 +98,11 @@ class TestManager(unittest.TestCase):
                 description='another description',
                 scope='shared',
                 state="present",
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 

@@ -353,8 +353,9 @@ class HAProxy(object):
             state = self.get_state_for(pxname, svname)
 
             # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
-            if state[0]['status'] == status:
-                if not self._drain or (state[0]['scur'] == '0' and state == 'MAINT'):
+            # When using track we get a status like this: MAINT (via pxname/svname) so we need to do substring matching
+            if status in state[0]['status']:
+                if not self._drain or (state[0]['scur'] == '0' and 'MAINT' in state):
                     return True
             else:
                 time.sleep(self.wait_interval)

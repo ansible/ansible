@@ -5,7 +5,7 @@
 - name: Test addition of absent flatpak remote (check mode)
   flatpak_remote:
     name: flatpak-test
-    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpakrepo_url: /tmp/flatpak/repo/dummy-repo.flatpakrepo
     state: present
   register: addition_result
   check_mode: true
@@ -19,7 +19,7 @@
 - name: Test non-existent idempotency of addition of absent flatpak remote (check mode)
   flatpak_remote:
     name: flatpak-test
-    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpakrepo_url: /tmp/flatpak/repo/dummy-repo.flatpakrepo
     state: present
   register: double_addition_result
   check_mode: true
@@ -57,7 +57,7 @@
 - name: Test addition of present flatpak remote (check mode)
   flatpak_remote:
     name: check-mode-test-remote
-    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    flatpakrepo_url: /tmp/flatpak/repo/dummy-repo.flatpakrepo
     state: present
   register: addition_result
   check_mode: true

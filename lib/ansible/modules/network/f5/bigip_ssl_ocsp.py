@@ -23,10 +23,12 @@ options:
   name:
     description:
       - Specifies the name of the OCSP certificate validator.
+    type: str
     required: True
   cache_error_timeout:
     description:
       - Specifies the lifetime of an error response in the cache, in seconds.
+    type: int
   proxy_server_pool:
     description:
       - Specifies the proxy server pool the BIG-IP system uses to fetch the OCSP
@@ -35,17 +37,21 @@ options:
       - Use this option when either the OCSP responder cannot be reached on any of
         BIG-IP system's interfaces or one or more servers can proxy an HTTP request
         to an external server and fetch the response.
+    type: str
   cache_timeout:
     description:
       - Specifies the lifetime of the OCSP response in the cache, in seconds.
+    type: str
   clock_skew:
     description:
       - Specifies the tolerable absolute difference in the clocks of the responder
         and the BIG-IP system, in seconds.
+    type: int
   connections_limit:
     description:
       - Specifies the maximum number of connections per second allowed for the
         OCSP certificate validator.
+    type: int
   dns_resolver:
     description:
       - Specifies the internal DNS resolver the BIG-IP system uses to fetch the
@@ -55,29 +61,36 @@ options:
       - Use this option when either there is a DNS server that can do the
         name-resolution of the OCSP responders or the OCSP responder can be
         reached on one of BIG-IP system's interfaces.
+    type: str
   route_domain:
     description:
       - Specifies the route domain for fetching an OCSP response using HTTP
         forward proxy.
+    type: str
   hash_algorithm:
     description:
       - Specifies a hash algorithm used to sign an OCSP request.
+    type: str
     choices:
       - sha256
       - sha1
   certificate:
     description:
       - Specifies a certificate used to sign an OCSP request.
+    type: str
   key:
     description:
       - Specifies a key used to sign an OCSP request.
+    type: str
   passphrase:
     description:
       - Specifies a passphrase used to sign an OCSP request.
+    type: str
   status_age:
     description:
       - Specifies the maximum allowed lag time that the BIG-IP system accepts for
         the 'thisUpdate' time in the OCSP response.
+    type: int
   strict_responder_checking:
     description:
       - Specifies whether the responder's certificate is checked for an OCSP
@@ -87,36 +100,42 @@ options:
     description:
       - Specifies the time interval that the BIG-IP system waits for before
         ending the connection to the OCSP responder, in seconds.
+    type: int
   trusted_responders:
     description:
       - Specifies the certificates used for validating the OCSP response
         when the responder's certificate has been omitted from the response.
+    type: str
   responder_url:
     description:
       - Specifies the absolute URL that overrides the OCSP responder URL
         obtained from the certificate's AIA extensions. This should be an
         HTTP-based URL.
+    type: str
   update_password:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
         C(on_create) will only set the password for newly created OCSP validators.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   state:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures that the resource does not exist.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 notes:
   - Requires BIG-IP >= 13.x.
@@ -222,11 +241,8 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.icontrol import tmos_version
@@ -234,11 +250,8 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.icontrol import tmos_version
@@ -490,7 +503,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -750,16 +763,12 @@ def main():
         required_together=spec.required_together,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

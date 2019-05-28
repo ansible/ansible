@@ -47,8 +47,8 @@ def manageiq_argument_spec():
         username=dict(default=os.environ.get('MIQ_USERNAME', None)),
         password=dict(default=os.environ.get('MIQ_PASSWORD', None), no_log=True),
         token=dict(default=os.environ.get('MIQ_TOKEN', None), no_log=True),
-        verify_ssl=dict(default=True, type='bool'),
-        ca_bundle_path=dict(required=False, default=None),
+        validate_certs=dict(default=True, type='bool', aliases=['verify_ssl']),
+        ca_cert=dict(required=False, default=None, aliases=['ca_bundle_path']),
     )
 
     return dict(
@@ -103,8 +103,8 @@ class ManageIQ(object):
         username = params['username']
         password = params['password']
         token = params['token']
-        verify_ssl = params['verify_ssl']
-        ca_bundle_path = params['ca_bundle_path']
+        verify_ssl = params['validate_certs']
+        ca_bundle_path = params['ca_cert']
 
         self._module = module
         self._api_url = url + '/api'

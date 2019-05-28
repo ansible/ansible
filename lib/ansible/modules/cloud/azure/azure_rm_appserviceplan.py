@@ -38,10 +38,9 @@ options:
 
     sku:
         description:
-            - The pricing tiers, e.g., F1, D1, B1, B2, B3, S1, P1, P1V2 etc.
+            - The pricing tiers, e.g., C(F1), C(D1), C(B1), C(B2), C(B3), C(S1), C(P1), C(P1V2) etc.
             - Please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/plans/) for more detail.
-            - For linux app service plan, please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/) for more detail.
-
+            - For Linux app service plan, please see U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/) for more detail.
     is_linux:
         description:
             - Describe whether to host webapp on Linux worker.
@@ -54,54 +53,54 @@ options:
 
     state:
       description:
-        - Assert the state of the app service plan.
-        - Use C(present) to create or update an app service plan and C(absent) to delete it.
+          - Assert the state of the app service plan.
+          - Use C(present) to create or update an app service plan and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yunge Zhu (@yungezz)"
+    - Yunge Zhu (@yungezz)
 
 '''
 
 EXAMPLES = '''
     - name: Create a windows app service plan
       azure_rm_appserviceplan:
-        name: "windowsplan1"
         resource_group: myResourceGroup
-        location: "eastus"
+        name: myAppPlan
+        location: eastus
         sku: S1
 
     - name: Create a linux app service plan
       azure_rm_appserviceplan:
         resource_group: myResourceGroup
-        name: "linuxplan1"
-        location: "eastus"
+        name: myAppPlan
+        location: eastus
         sku: S1
         is_linux: true
         number_of_workers: 1
 
     - name: update sku of existing windows app service plan
       azure_rm_appserviceplan:
-        name: "windowsplan2"
         resource_group: myResourceGroup
-        location: "eastus"
+        name: myAppPlan
+        location: eastus
         sku: S2
 '''
 
 RETURN = '''
 azure_appserviceplan:
-    description: Facts about the current state of the app service plan
+    description: Facts about the current state of the app service plan.
     returned: always
     type: dict
     sample: {
-            "id": "/subscriptions/<subs_id>/resourceGroups/ansiblewebapp1_plan/providers/Microsoft.Web/serverfarms/win_appplan11"
+            "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/serverfarms/myAppPlan"
     }
 '''
 
@@ -110,6 +109,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from msrestazure.azure_operation import AzureOperationPoller
     from msrest.serialization import Model
     from azure.mgmt.web.models import (
@@ -315,10 +315,11 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
 
         try:
             response = self.web_client.app_service_plans.get(self.resource_group, self.name)
-            self.log("Response : {0}".format(response))
-            self.log("App Service Plan : {0} found".format(response.name))
+            if response:
+                self.log("Response : {0}".format(response))
+                self.log("App Service Plan : {0} found".format(response.name))
 
-            return appserviceplan_to_dict(response)
+                return appserviceplan_to_dict(response)
         except CloudError as ex:
             self.log("Didn't find app service plan {0} in resource group {1}".format(self.name, self.resource_group))
 
@@ -340,10 +341,10 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
             plan_def = AppServicePlan(
                 location=self.location, app_service_plan_name=self.name, sku=sku_def, reserved=self.is_linux, tags=self.tags if self.tags else None)
 
-            poller = self.web_client.app_service_plans.create_or_update(self.resource_group, self.name, plan_def)
+            response = self.web_client.app_service_plans.create_or_update(self.resource_group, self.name, plan_def)
 
-            if isinstance(poller, AzureOperationPoller):
-                response = self.get_poller_result(poller)
+            if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
+                response = self.get_poller_result(response)
 
             self.log("Response : {0}".format(response))
 

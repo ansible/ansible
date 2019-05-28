@@ -58,18 +58,15 @@ options:
       uid:
         description:
           - UID of the config file's owner.
-        type: int
-        default: 0
+        type: str
       gid:
         description:
           - GID of the config file's group.
-        type: int
-        default: 0
+        type: str
       mode:
         description:
-          - File access mode inside the container.
-        type: str
-        default: "0o444"
+          - File access mode inside the container. Must be an octal number (like C(0644) or C(0444)).
+        type: int
   constraints:
     description:
       - List of the service constraints.
@@ -299,7 +296,59 @@ options:
         description:
           - Whether the mount should be read-only.
         type: bool
-        default: no
+      labels:
+        description:
+          - Volume labels to apply.
+        type: dict
+        version_added: "2.8"
+      propagation:
+        description:
+          - The propagation mode to use.
+          - Can only be used when I(mode) is C(bind).
+        type: str
+        choices:
+          - shared
+          - slave
+          - private
+          - rshared
+          - rslave
+          - rprivate
+        version_added: "2.8"
+      no_copy:
+        description:
+          - Disable copying of data from a container when a volume is created.
+          - Can only be used when I(mode) is C(volume).
+        type: bool
+        version_added: "2.8"
+      driver_config:
+        description:
+          - Volume driver configuration.
+          - Can only be used when I(mode) is C(volume).
+        suboptions:
+          name:
+            description:
+              - Name of the volume-driver plugin to use for the volume.
+            type: str
+          options:
+            description:
+              - Options as key-value pairs to pass to the driver for this volume.
+            type: dict
+        type: dict
+        version_added: "2.8"
+      tmpfs_size:
+        description:
+          - "Size of the tmpfs mount (format: C(<number>[<unit>])). Number is a positive integer.
+            Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+            C(T) (tebibyte), or C(P) (pebibyte)."
+          - Can only be used when I(mode) is C(tmpfs).
+        type: str
+        version_added: "2.8"
+      tmpfs_mode:
+        description:
+          - File mode of the tmpfs in octal.
+          - Can only be used when I(mode) is C(tmpfs).
+        type: int
+        version_added: "2.8"
   name:
     description:
       - Service name.
@@ -416,8 +465,9 @@ options:
   resolve_image:
     description:
       - If the current image digest should be resolved from registry and updated if changed.
+      - Requires API version >= 1.30.
     type: bool
-    default: yes
+    default: no
     version_added: 2.8
   restart_config:
     description:
@@ -485,6 +535,58 @@ options:
       - Corresponds to the C(--restart-window) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config.window) instead.
     type: raw
+  rollback_config:
+    description:
+      - Configures how the service should be rolled back in case of a failing update.
+    suboptions:
+      parallelism:
+        description:
+          - The number of containers to rollback at a time. If set to 0, all containers rollback simultaneously.
+          - Corresponds to the C(--rollback-parallelism) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: int
+      delay:
+        description:
+          - Delay between task rollbacks.
+          - "Accepts a string in a format that look like:
+            C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+          - Corresponds to the C(--rollback-delay) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: str
+      failure_action:
+        description:
+          - Action to take in case of rollback failure.
+          - Corresponds to the C(--rollback-failure-action) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: str
+        choices:
+          - continue
+          - pause
+      monitor:
+        description:
+          - Duration after each task rollback to monitor for failure.
+          - "Accepts a string in a format that look like:
+            C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+          - Corresponds to the C(--rollback-monitor) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: str
+      max_failure_ratio:
+        description:
+          - Fraction of tasks that may fail during a rollback.
+          - Corresponds to the C(--rollback-max-failure-ratio) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: float
+      order:
+        description:
+          - Specifies the order of operations during rollbacks.
+          - Corresponds to the C(--rollback-order) option of C(docker service create).
+          - Requires API version >= 1.29.
+        type: str
+        choices:
+          - stop-first
+          - start-first
+    type: dict
+    version_added: "2.8"
   secrets:
     description:
       - List of dictionaries describing the service secrets.
@@ -509,21 +611,20 @@ options:
       uid:
         description:
           - UID of the secret file's owner.
-        type: int
-        default: 0
+        type: str
       gid:
         description:
           - GID of the secret file's group.
-        type: int
-        default: 0
+        type: str
       mode:
         description:
-          - File access mode inside the container.
+          - File access mode inside the container. Must be an octal number (like C(0644) or C(0444)).
         type: int
-        default: 0o444
   state:
     description:
-      - Service state.
+      - I(absent) - A service matching the specified name will be removed and have its tasks stopped.
+      - I(present) - Asserts the existence of a service matching the name and provided configuration parameters.
+        Unspecified configuration parameters will be set to docker defaults.
     type: str
     required: yes
     default: present
@@ -570,10 +671,12 @@ options:
         description:
           - Action to take in case of container failure.
           - Corresponds to the C(--update-failure-action) option of C(docker service create).
+          - Usage of I(rollback) requires API version >= 1.29.
         type: str
         choices:
           - continue
           - pause
+          - rollback
       monitor:
         description:
           - Time to monitor updated tasks for failures.
@@ -619,11 +722,13 @@ options:
     description:
       - Action to take in case of container failure.
       - Corresponds to the C(--update-failure-action) option of C(docker service create).
+      - Usage of I(rollback) requires API version >= 1.29.
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config.failure_action) instead.
     type: str
     choices:
       - continue
       - pause
+      - rollback
   update_monitor:
     description:
       - Time to monitor updated tasks for failures.
@@ -667,10 +772,10 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
 requirements:
-  - "docker >= 2.0.2"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.0.2"
   - "Docker API >= 1.24"
 notes:
-  - "Images will only resolve to the latest digest when using Docker API >= 1.30 and docker-py >= 3.2.0.
+  - "Images will only resolve to the latest digest when using Docker API >= 1.30 and Docker SDK for Python >= 3.2.0.
      When using older versions use C(force_update: true) to trigger the swarm to resolve a new image."
 '''
 
@@ -743,7 +848,13 @@ swarm_service:
         "readonly": false,
         "source": "/tmp/",
         "target": "/remote_tmp/",
-        "type": "bind"
+        "type": "bind",
+        "labels": null,
+        "propagation": null,
+        "no_copy": null,
+        "driver_config": null,
+        "tmpfs_size": null,
+        "tmpfs_mode": null
       }
     ],
     "networks": null,
@@ -855,6 +966,17 @@ EXAMPLES = '''
       delay: 10s
       order: stop-first
 
+- name: Set rollback config
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    update_config:
+      failure_action: rollback
+    rollback_config:
+      parallelism: 2
+      delay: 10s
+      order: stop-first
+
 - name: Set placement preferences
   docker_swarm_service:
     name: myservice
@@ -952,7 +1074,7 @@ try:
         NotFound,
     )
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 
@@ -1022,6 +1144,42 @@ def get_value(key, values, default=None):
     return value if value is not None else default
 
 
+def has_dict_changed(new_dict, old_dict):
+    """
+    Check if new_dict has differences compared to old_dict while
+    ignoring keys in old_dict which are None in new_dict.
+    """
+    if new_dict is None:
+        return False
+    if not new_dict and old_dict:
+        return True
+    if not old_dict and new_dict:
+        return True
+    defined_options = dict(
+        (option, value) for option, value in new_dict.items()
+        if value is not None
+    )
+    for option, value in defined_options.items():
+        if value != old_dict.get(option):
+            return True
+    return False
+
+
+def has_list_of_dicts_changed(new_list, old_list):
+    """
+    Check two lists of dicts has differences.
+    """
+    if new_list is None:
+        return False
+    old_list = old_list or []
+    if len(new_list) != len(old_list):
+        return True
+    for new_item, old_item in zip(new_list, old_list):
+        if has_dict_changed(new_item, old_item):
+            return True
+    return False
+
+
 class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
@@ -1067,6 +1225,7 @@ class DockerService(DockerBaseClass):
         self.restart_policy_attempts = None
         self.restart_policy_delay = None
         self.restart_policy_window = None
+        self.rollback_config = None
         self.update_delay = None
         self.update_parallelism = None
         self.update_failure_action = None
@@ -1117,6 +1276,7 @@ class DockerService(DockerBaseClass):
             'restart_policy_delay': self.restart_policy_delay,
             'restart_policy_attempts': self.restart_policy_attempts,
             'restart_policy_window': self.restart_policy_window,
+            'rollback_config': self.rollback_config,
             'update_delay': self.update_delay,
             'update_parallelism': self.update_parallelism,
             'update_failure_action': self.update_failure_action,
@@ -1213,6 +1373,29 @@ class DockerService(DockerBaseClass):
             'update_monitor': monitor,
             'update_max_failure_ratio': max_failure_ratio,
             'update_order': order
+        }
+
+    @staticmethod
+    def get_rollback_config_from_ansible_params(params):
+        if params['rollback_config'] is None:
+            return None
+        rollback_config = params['rollback_config'] or {}
+        delay = get_nanoseconds_from_raw_option(
+            'rollback_config.delay',
+            rollback_config.get('delay')
+        )
+        monitor = get_nanoseconds_from_raw_option(
+            'rollback_config.monitor',
+            rollback_config.get('monitor')
+        )
+        return {
+            'parallelism': rollback_config.get('parallelism'),
+            'delay': delay,
+            'failure_action': rollback_config.get('failure_action'),
+            'monitor': monitor,
+            'max_failure_ratio': rollback_config.get('max_failure_ratio'),
+            'order': rollback_config.get('order'),
+
         }
 
     @staticmethod
@@ -1348,6 +1531,7 @@ class DockerService(DockerBaseClass):
             )
 
         s.env = get_docker_environment(ap['env'], ap['env_files'])
+        s.rollback_config = cls.get_rollback_config_from_ansible_params(ap)
 
         update_config = cls.get_update_config_from_ansible_params(ap)
         for key, value in update_config.items():
@@ -1410,6 +1594,21 @@ class DockerService(DockerBaseClass):
                 service_m['type'] = param_m['type']
                 service_m['source'] = param_m['source']
                 service_m['target'] = param_m['target']
+                service_m['labels'] = param_m['labels']
+                service_m['no_copy'] = param_m['no_copy']
+                service_m['propagation'] = param_m['propagation']
+                service_m['driver_config'] = param_m['driver_config']
+                service_m['tmpfs_mode'] = param_m['tmpfs_mode']
+                tmpfs_size = param_m['tmpfs_size']
+                if tmpfs_size is not None:
+                    try:
+                        tmpfs_size = human_to_bytes(tmpfs_size)
+                    except ValueError as exc:
+                        raise ValueError(
+                            'Failed to convert tmpfs_size to bytes: %s' % exc
+                        )
+
+                service_m['tmpfs_size'] = tmpfs_size
                 s.mounts.append(service_m)
 
         if ap['configs'] is not None:
@@ -1453,11 +1652,11 @@ class DockerService(DockerBaseClass):
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if self.mounts is not None and self.mounts != (os.mounts or []):
+        if has_list_of_dicts_changed(self.mounts, os.mounts):
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if self.configs is not None and self.configs != (os.configs or []):
+        if has_list_of_dicts_changed(self.configs, os.configs):
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if self.secrets is not None and self.secrets != (os.secrets or []):
+        if has_list_of_dicts_changed(self.secrets, os.secrets):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
         if self.networks is not None and self.networks != (os.networks or []):
             differences.add('networks', parameter=self.networks, active=os.networks)
@@ -1502,6 +1701,8 @@ class DockerService(DockerBaseClass):
             differences.add('restart_policy_delay', parameter=self.restart_policy_delay, active=os.restart_policy_delay)
         if self.restart_policy_window is not None and self.restart_policy_window != os.restart_policy_window:
             differences.add('restart_policy_window', parameter=self.restart_policy_window, active=os.restart_policy_window)
+        if has_dict_changed(self.rollback_config, os.rollback_config):
+            differences.add('rollback_config', parameter=self.rollback_config, active=os.rollback_config)
         if self.update_delay is not None and self.update_delay != os.update_delay:
             differences.add('update_delay', parameter=self.update_delay, active=os.update_delay)
         if self.update_parallelism is not None and self.update_parallelism != os.update_parallelism:
@@ -1592,44 +1793,71 @@ class DockerService(DockerBaseClass):
         if self.mounts is not None:
             mounts = []
             for mount_config in self.mounts:
-                mounts.append(
-                    types.Mount(
-                        target=mount_config['target'],
-                        source=mount_config['source'],
-                        type=mount_config['type'],
-                        read_only=mount_config['readonly']
-                    )
-                )
+                mount_options = {
+                    'target': 'target',
+                    'source': 'source',
+                    'type': 'type',
+                    'readonly': 'read_only',
+                    'propagation': 'propagation',
+                    'labels': 'labels',
+                    'no_copy': 'no_copy',
+                    'driver_config': 'driver_config',
+                    'tmpfs_size': 'tmpfs_size',
+                    'tmpfs_mode': 'tmpfs_mode'
+                }
+                mount_args = {}
+                for option, mount_arg in mount_options.items():
+                    value = mount_config.get(option)
+                    if value is not None:
+                        mount_args[mount_arg] = value
+
+                mounts.append(types.Mount(**mount_args))
 
         configs = None
         if self.configs is not None:
             configs = []
             for config_config in self.configs:
-                configs.append(
-                    types.ConfigReference(
-                        config_id=config_config['config_id'],
-                        config_name=config_config['config_name'],
-                        filename=config_config.get('filename'),
-                        uid=config_config.get('uid'),
-                        gid=config_config.get('gid'),
-                        mode=config_config.get('mode')
-                    )
-                )
+                config_args = {
+                    'config_id': config_config['config_id'],
+                    'config_name': config_config['config_name']
+                }
+                filename = config_config.get('filename')
+                if filename:
+                    config_args['filename'] = filename
+                uid = config_config.get('uid')
+                if uid:
+                    config_args['uid'] = uid
+                gid = config_config.get('gid')
+                if gid:
+                    config_args['gid'] = gid
+                mode = config_config.get('mode')
+                if mode:
+                    config_args['mode'] = mode
+
+                configs.append(types.ConfigReference(**config_args))
 
         secrets = None
         if self.secrets is not None:
             secrets = []
             for secret_config in self.secrets:
-                secrets.append(
-                    types.SecretReference(
-                        secret_id=secret_config['secret_id'],
-                        secret_name=secret_config['secret_name'],
-                        filename=secret_config.get('filename'),
-                        uid=secret_config.get('uid'),
-                        gid=secret_config.get('gid'),
-                        mode=secret_config.get('mode')
-                    )
-                )
+                secret_args = {
+                    'secret_id': secret_config['secret_id'],
+                    'secret_name': secret_config['secret_name']
+                }
+                filename = secret_config.get('filename')
+                if filename:
+                    secret_args['filename'] = filename
+                uid = secret_config.get('uid')
+                if uid:
+                    secret_args['uid'] = uid
+                gid = secret_config.get('gid')
+                if gid:
+                    secret_args['gid'] = gid
+                mode = secret_config.get('mode')
+                if mode:
+                    secret_args['mode'] = mode
+
+                secrets.append(types.SecretReference(**secret_args))
 
         dns_config_args = {}
         if self.dns is not None:
@@ -1728,6 +1956,24 @@ class DockerService(DockerBaseClass):
             restart_policy_args['window'] = self.restart_policy_window
         return types.RestartPolicy(**restart_policy_args) if restart_policy_args else None
 
+    def build_rollback_config(self):
+        if self.rollback_config is None:
+            return None
+        rollback_config_options = [
+            'parallelism',
+            'delay',
+            'failure_action',
+            'monitor',
+            'max_failure_ratio',
+            'order',
+        ]
+        rollback_config_args = {}
+        for option in rollback_config_options:
+            value = self.rollback_config.get(option)
+            if value is not None:
+                rollback_config_args[option] = value
+        return types.RollbackConfig(**rollback_config_args) if rollback_config_args else None
+
     def build_resources(self):
         resources_args = {}
         if self.limit_cpu is not None:
@@ -1787,14 +2033,14 @@ class DockerService(DockerBaseClass):
             ports = {}
             for port in self.publish:
                 if port.get('mode'):
-                    ports[int(port['published_port'])] = (
-                        int(port['target_port']),
+                    ports[port['published_port']] = (
+                        port['target_port'],
                         port['protocol'],
                         port['mode'],
                     )
                 else:
-                    ports[int(port['published_port'])] = (
-                        int(port['target_port']),
+                    ports[port['published_port']] = (
+                        port['target_port'],
                         port['protocol'],
                     )
             endpoint_spec_args['ports'] = ports
@@ -1808,6 +2054,7 @@ class DockerService(DockerBaseClass):
         task_template = self.build_task_template(container_spec, placement)
 
         update_config = self.build_update_config()
+        rollback_config = self.build_rollback_config()
         service_mode = self.build_service_mode()
         networks = self.build_networks(docker_networks)
         endpoint_spec = self.build_endpoint_spec()
@@ -1815,6 +2062,8 @@ class DockerService(DockerBaseClass):
         service = {'task_template': task_template, 'mode': service_mode}
         if update_config:
             service['update_config'] = update_config
+        if rollback_config:
+            service['rollback_config'] = rollback_config
         if networks:
             service['networks'] = networks
         if endpoint_spec:
@@ -1870,6 +2119,17 @@ class DockerServiceManager(object):
             ds.update_monitor = update_config_data.get('Monitor')
             ds.update_max_failure_ratio = update_config_data.get('MaxFailureRatio')
             ds.update_order = update_config_data.get('Order')
+
+        rollback_config_data = raw_data['Spec'].get('RollbackConfig')
+        if rollback_config_data:
+            ds.rollback_config = {
+                'parallelism': rollback_config_data.get('Parallelism'),
+                'delay': rollback_config_data.get('Delay'),
+                'failure_action': rollback_config_data.get('FailureAction'),
+                'monitor': rollback_config_data.get('Monitor'),
+                'max_failure_ratio': rollback_config_data.get('MaxFailureRatio'),
+                'order': rollback_config_data.get('Order'),
+            }
 
         dns_config = task_template_data['ContainerSpec'].get('DNSConfig')
         if dns_config:
@@ -1962,11 +2222,24 @@ class DockerServiceManager(object):
         if raw_data_mounts:
             ds.mounts = []
             for mount_data in raw_data_mounts:
+                bind_options = mount_data.get('BindOptions', {})
+                volume_options = mount_data.get('VolumeOptions', {})
+                tmpfs_options = mount_data.get('TmpfsOptions', {})
+                driver_config = volume_options.get('DriverConfig', {})
+                driver_config = dict(
+                    (key.lower(), value) for key, value in driver_config.items()
+                ) or None
                 ds.mounts.append({
                     'source': mount_data['Source'],
                     'type': mount_data['Type'],
                     'target': mount_data['Target'],
-                    'readonly': mount_data.get('ReadOnly', False)
+                    'readonly': mount_data.get('ReadOnly'),
+                    'propagation': bind_options.get('Propagation'),
+                    'no_copy': volume_options.get('NoCopy'),
+                    'labels': volume_options.get('Labels'),
+                    'driver_config': driver_config,
+                    'tmpfs_mode': tmpfs_options.get('Mode'),
+                    'tmpfs_size': tmpfs_options.get('SizeBytes'),
                 })
 
         raw_data_configs = task_template_data['ContainerSpec'].get('Configs')
@@ -1977,8 +2250,8 @@ class DockerServiceManager(object):
                     'config_id': config_data['ConfigID'],
                     'config_name': config_data['ConfigName'],
                     'filename': config_data['File'].get('Name'),
-                    'uid': int(config_data['File'].get('UID')),
-                    'gid': int(config_data['File'].get('GID')),
+                    'uid': config_data['File'].get('UID'),
+                    'gid': config_data['File'].get('GID'),
                     'mode': config_data['File'].get('Mode')
                 })
 
@@ -1990,8 +2263,8 @@ class DockerServiceManager(object):
                     'secret_id': secret_data['SecretID'],
                     'secret_name': secret_data['SecretName'],
                     'filename': secret_data['File'].get('Name'),
-                    'uid': int(secret_data['File'].get('UID')),
-                    'gid': int(secret_data['File'].get('GID')),
+                    'uid': secret_data['File'].get('UID'),
+                    'gid': secret_data['File'].get('GID'),
                     'mode': secret_data['File'].get('Mode')
                 })
 
@@ -2013,26 +2286,28 @@ class DockerServiceManager(object):
 
     def update_service(self, name, old_service, new_service):
         service_data = new_service.build_docker_service(self.get_networks_names_ids())
-        self.client.update_service(
+        result = self.client.update_service(
             old_service.service_id,
             old_service.service_version,
             name=name,
             **service_data
         )
+        # Prior to Docker SDK 4.0.0 no warnings were returned and will thus be ignored.
+        # (see https://github.com/docker/docker-py/pull/2272)
+        self.client.report_warnings(result, ['Warning'])
 
     def create_service(self, name, service):
         service_data = service.build_docker_service(self.get_networks_names_ids())
-        self.client.create_service(name=name, **service_data)
+        result = self.client.create_service(name=name, **service_data)
+        self.client.report_warnings(result, ['Warning'])
 
     def remove_service(self, name):
         self.client.remove_service(name)
 
-    def get_image_digest(self, name, resolve=True):
+    def get_image_digest(self, name, resolve=False):
         if (
             not name
             or not resolve
-            or self.client.docker_py_version < LooseVersion('3.2')
-            or self.client.docker_api_version < LooseVersion('1.30')
         ):
             return name
         repo, tag = parse_repository_tag(name)
@@ -2173,6 +2448,26 @@ def _detect_healthcheck_start_period(client):
     return False
 
 
+def _detect_mount_tmpfs_usage(client):
+    for mount in client.module.params['mounts'] or []:
+        if mount.get('type') == 'tmpfs':
+            return True
+        if mount.get('tmpfs_size') is not None:
+            return True
+        if mount.get('tmpfs_mode') is not None:
+            return True
+    return False
+
+
+def _detect_update_config_failure_action_rollback(client):
+    rollback_config_failure_action = (
+        (client.module.params['update_config'] or {}).get('failure_action')
+    )
+    update_failure_action = client.module.params['update_failure_action']
+    failure_action = rollback_config_failure_action or update_failure_action
+    return failure_action == 'rollback'
+
+
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
@@ -2184,25 +2479,44 @@ def main():
             type=dict(
                 type='str',
                 default='bind',
-                choices=['bind', 'volume', 'tmpfs']
+                choices=['bind', 'volume', 'tmpfs'],
             ),
-            readonly=dict(type='bool', default=False),
+            readonly=dict(type='bool'),
+            labels=dict(type='dict'),
+            propagation=dict(
+                type='str',
+                choices=[
+                    'shared',
+                    'slave',
+                    'private',
+                    'rshared',
+                    'rslave',
+                    'rprivate'
+                ]
+            ),
+            no_copy=dict(type='bool'),
+            driver_config=dict(type='dict', options=dict(
+                name=dict(type='str'),
+                options=dict(type='dict')
+            )),
+            tmpfs_size=dict(type='str'),
+            tmpfs_mode=dict(type='int')
         )),
         configs=dict(type='list', elements='dict', options=dict(
             config_id=dict(type='str', required=True),
             config_name=dict(type='str', required=True),
             filename=dict(type='str'),
-            uid=dict(type='int', default=0),
-            gid=dict(type='int', default=0),
-            mode=dict(type='int', default=0o444),
+            uid=dict(type='str'),
+            gid=dict(type='str'),
+            mode=dict(type='int'),
         )),
         secrets=dict(type='list', elements='dict', options=dict(
             secret_id=dict(type='str', required=True),
             secret_name=dict(type='str', required=True),
             filename=dict(type='str'),
-            uid=dict(type='int', default=0),
-            gid=dict(type='int', default=0),
-            mode=dict(type='int', default=0o444),
+            uid=dict(type='str'),
+            gid=dict(type='str'),
+            mode=dict(type='int'),
         )),
         networks=dict(type='list', elements='str'),
         command=dict(type='raw'),
@@ -2265,7 +2579,7 @@ def main():
         )),
         reserve_cpu=dict(type='float', removed_in_version='2.12'),
         reserve_memory=dict(type='str', removed_in_version='2.12'),
-        resolve_image=dict(type='bool', default=True),
+        resolve_image=dict(type='bool', default=False),
         restart_config=dict(type='dict', options=dict(
             condition=dict(type='str', choices=['none', 'on-failure', 'any']),
             delay=dict(type='str'),
@@ -2280,10 +2594,24 @@ def main():
         restart_policy_delay=dict(type='raw', removed_in_version='2.12'),
         restart_policy_attempts=dict(type='int', removed_in_version='2.12'),
         restart_policy_window=dict(type='raw', removed_in_version='2.12'),
+        rollback_config=dict(type='dict', options=dict(
+            parallelism=dict(type='int'),
+            delay=dict(type='str'),
+            failure_action=dict(
+                type='str',
+                choices=['continue', 'pause']
+            ),
+            monitor=dict(type='str'),
+            max_failure_ratio=dict(type='float'),
+            order=dict(type='str'),
+        )),
         update_config=dict(type='dict', options=dict(
             parallelism=dict(type='int'),
             delay=dict(type='str'),
-            failure_action=dict(type='str', choices=['continue', 'pause']),
+            failure_action=dict(
+                type='str',
+                choices=['continue', 'pause', 'rollback']
+            ),
             monitor=dict(type='str'),
             max_failure_ratio=dict(type='float'),
             order=dict(type='str'),
@@ -2292,7 +2620,7 @@ def main():
         update_parallelism=dict(type='int', removed_in_version='2.12'),
         update_failure_action=dict(
             type='str',
-            choices=['continue', 'pause'],
+            choices=['continue', 'pause', 'rollback'],
             removed_in_version='2.12'
         ),
         update_monitor=dict(type='raw', removed_in_version='2.12'),
@@ -2326,6 +2654,8 @@ def main():
         stop_signal=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
         publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         read_only=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
+        resolve_image=dict(docker_api_version='1.30', docker_py_version='3.2.0'),
+        rollback_config=dict(docker_py_version='3.5.0', docker_api_version='1.28'),
         # specials
         publish_mode=dict(
             docker_py_version='3.0.0',
@@ -2346,6 +2676,12 @@ def main():
                 'max_failure_ratio'
             ) is not None,
             usage_msg='set update_config.max_failure_ratio'
+        ),
+        update_config_failure_action=dict(
+            docker_py_version='3.5.0',
+            docker_api_version='1.28',
+            detect_usage=_detect_update_config_failure_action_rollback,
+            usage_msg='set update_config.failure_action.rollback'
         ),
         update_config_monitor=dict(
             docker_py_version='2.1.0',
@@ -2378,8 +2714,19 @@ def main():
             ) is not None,
             usage_msg='set placement.constraints'
         ),
+        mounts_tmpfs=dict(
+            docker_py_version='2.6.0',
+            detect_usage=_detect_mount_tmpfs_usage,
+            usage_msg='set mounts.tmpfs'
+        ),
+        rollback_config_order=dict(
+            docker_api_version='1.29',
+            detect_usage=lambda c: (c.module.params['rollback_config'] or {}).get(
+                'order'
+            ) is not None,
+            usage_msg='set rollback_config.order'
+        ),
     )
-
     required_if = [
         ('state', 'present', ['image'])
     ]

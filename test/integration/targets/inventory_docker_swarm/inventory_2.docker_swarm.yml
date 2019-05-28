@@ -1,0 +1,5 @@
+---
+plugin: docker_swarm
+docker_host: unix://var/run/docker.sock
+verbose_output: no
+include_host_uri: yes

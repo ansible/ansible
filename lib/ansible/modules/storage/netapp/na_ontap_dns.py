@@ -40,6 +40,13 @@ options:
     description:
     - List of IPv4 addresses of name servers such as '123.123.123.123'.
 
+  skip_validation:
+    type: bool
+    description:
+    - By default, all nameservers are checked to validate they are available to resolve.
+    - If you DNS servers are not yet installed or momentarily not available, you can set this option to 'true'
+    - to bypass the check for all servers specified in nameservers field.
+    version_added: '2.8'
 '''
 
 EXAMPLES = """
@@ -52,6 +59,7 @@ EXAMPLES = """
         vserver:  "{{vservername}}"
         domains: sales.bar.com
         nameservers: 10.193.0.250,10.192.0.250
+        skip_validation: true
 """
 
 RETURN = """
@@ -77,7 +85,8 @@ class NetAppOntapDns(object):
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str'),
             domains=dict(required=False, type='list'),
-            nameservers=dict(required=False, type='list')
+            nameservers=dict(required=False, type='list'),
+            skip_validation=dict(required=False, type='bool')
         ))
 
         self.module = AnsibleModule(
@@ -112,6 +121,10 @@ class NetAppOntapDns(object):
             domain.set_content(each)
             domains.add_child_elem(domain)
         dns.add_child_elem(domains)
+        if self.parameters.get('skip_validation'):
+            validation = netapp_utils.zapi.NaElement('skip-config-validation')
+            validation.set_content(str(self.parameters['skip_validation']))
+            dns.add_child_elem(validation)
         try:
             self.server.invoke_successfully(dns, True)
         except netapp_utils.zapi.NaApiError as error:
@@ -151,6 +164,7 @@ class NetAppOntapDns(object):
         attrs['nameservers'] = [each.get_content() for each in nameservers.get_children()]
         domains = dns_info.get_child_by_name('domains')
         attrs['domains'] = [each.get_content() for each in domains.get_children()]
+        attrs['skip_validation'] = dns_info.get_child_by_name('skip-config-validation')
         return attrs
 
     def modify_dns(self, dns_attrs):
@@ -173,6 +187,10 @@ class NetAppOntapDns(object):
                 domains.add_child_elem(domain)
             dns.add_child_elem(domains)
         if changed:
+            if self.parameters.get('skip_validation'):
+                validation = netapp_utils.zapi.NaElement('skip-config-validation')
+                validation.set_content(str(self.parameters['skip_validation']))
+                dns.add_child_elem(validation)
             try:
                 self.server.invoke_successfully(dns, True)
             except netapp_utils.zapi.NaApiError as error:

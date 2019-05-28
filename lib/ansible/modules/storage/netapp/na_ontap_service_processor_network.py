@@ -213,28 +213,30 @@ class NetAppOntapServiceProcessorNetwork(object):
 
     def modify_service_processor_network(self, params=None):
         """
-        Modify a service processor network
+        Modify a service processor network.
+        :param params: A dict of modified options.
+        When dhcp is not set to v4, ip_address, netmask, and gateway_ip_address must be specified even if remains the same.
         """
-        if params.get('is_enabled') is None:  # is-enabled is mandatory for ZAPI service-processor-network-modify
-            params['is_enabled'] = self.parameters['is_enabled']
-        if params['is_enabled'] is False:
-            if len(params) > 1:
-                self.module.fail_json(msg='Error: Cannot modify any other parameter for a disabled service processor network')
+        if self.parameters['is_enabled'] is False:
+            if params.get('is_enabled') and len(params) > 1:
+                self.module.fail_json(msg='Error: Cannot modify any other parameter for a service processor network if option "is_enabled" is set to false.')
+            elif params.get('is_enabled') is None and len(params) > 0:
+                self.module.fail_json(msg='Error: Cannot modify a service processor network if it is disabled.')
 
         sp_modify = netapp_utils.zapi.NaElement('service-processor-network-modify')
         sp_modify.add_new_child("node", self.parameters['node'])
         sp_modify.add_new_child("address-type", self.parameters['address_type'])
         sp_attributes = dict()
-        for item_key in params:
+        for item_key in self.parameters:
             if item_key in self.na_helper.zapi_string_keys:
                 zapi_key = self.na_helper.zapi_string_keys.get(item_key)
-                sp_attributes[zapi_key] = params[item_key]
+                sp_attributes[zapi_key] = self.parameters[item_key]
             elif item_key in self.na_helper.zapi_bool_keys:
                 zapi_key = self.na_helper.zapi_bool_keys.get(item_key)
-                sp_attributes[zapi_key] = self.na_helper.get_value_for_bool(from_zapi=False, value=params[item_key])
-            elif item_key in self.na_helper.zapi_bool_keys:
+                sp_attributes[zapi_key] = self.na_helper.get_value_for_bool(from_zapi=False, value=self.parameters[item_key])
+            elif item_key in self.na_helper.zapi_int_keys:
                 zapi_key = self.na_helper.zapi_int_keys.get(item_key)
-                sp_attributes[zapi_key] = self.na_helper.get_value_for_int(from_zapi=False, value=params[item_key])
+                sp_attributes[zapi_key] = self.na_helper.get_value_for_int(from_zapi=False, value=self.parameters[item_key])
         sp_modify.translate_struct(sp_attributes)
         try:
             self.server.invoke_successfully(sp_modify, enable_tunneling=True)

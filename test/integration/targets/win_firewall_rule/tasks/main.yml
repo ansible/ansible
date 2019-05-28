@@ -95,6 +95,24 @@
     that:
     - change_firewall_rule.changed == true
 
+- name: Disable firewall rule
+  win_firewall_rule:
+    name: http
+    enabled: no
+
+- name: Get the actual values from the changed firewall rule
+  win_shell: '(New-Object -ComObject HNetCfg.FwPolicy2).Rules | Where-Object { $_.Name -eq "http" } | Foreach-Object { $_.LocalPorts; $_.Enabled; $_.Action; $_.Direction; $_.Protocol }'
+  register: firewall_rule_actual
+
+- name: Ensure that disabling the rule did not change the previous values
+  assert:
+    that:
+      - "firewall_rule_actual.stdout_lines[0] == '80'" # LocalPorts = 80
+      - "firewall_rule_actual.stdout_lines[1] == 'False'" # Enabled = False
+      - "firewall_rule_actual.stdout_lines[2] == '0'" # Action = block
+      - "firewall_rule_actual.stdout_lines[3] == '1'" # Direction = in
+      - "firewall_rule_actual.stdout_lines[4] == '6'" # Protocol = tcp
+
 - name: Add firewall rule when remoteip is range
   win_firewall_rule:
     name: http

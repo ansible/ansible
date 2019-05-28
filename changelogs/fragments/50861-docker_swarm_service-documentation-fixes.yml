@@ -1,4 +1,0 @@
-bugfixes:
-  - "docker_swarm_service - Document minimal API version for ``configs`` and ``secrets``."
-  - "docker_swarm_service - Document ``labels`` and ``container_labels`` with correct type."
-  - "docker_swarm_service - Document ``limit_memory`` and ``reserve_memory`` correctly on how to specify sizes."

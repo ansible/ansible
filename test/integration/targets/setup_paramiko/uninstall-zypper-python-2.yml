@@ -1,0 +1,4 @@
+- name: Uninstall Paramiko for Python 2 using zypper
+  command: zypper --quiet --non-interactive remove --clean-deps python2-paramiko
+  args:
+    warn: no

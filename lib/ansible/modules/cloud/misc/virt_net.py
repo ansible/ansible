@@ -133,6 +133,7 @@ EXAMPLES = '''
 # Add a new host in the dhcp pool
 - virt_net:
     name: br_nat
+    command: modify
     xml: "<host mac='FC:C2:33:00:6c:3c' name='my_vm' ip='192.168.122.30'/>"
 '''
 
@@ -200,28 +201,16 @@ class LibvirtConnection(object):
         self.conn = conn
 
     def find_entry(self, entryid):
-        # entryid = -1 returns a list of everything
+        if entryid == -1:  # Get active entries
+            names = self.conn.listNetworks() + self.conn.listDefinedNetworks()
+            return [self.conn.networkLookupByName(n) for n in names]
 
-        results = []
-
-        # Get active entries
-        for name in self.conn.listNetworks():
-            entry = self.conn.networkLookupByName(name)
-            results.append(entry)
-
-        # Get inactive entries
-        for name in self.conn.listDefinedNetworks():
-            entry = self.conn.networkLookupByName(name)
-            results.append(entry)
-
-        if entryid == -1:
-            return results
-
-        for entry in results:
-            if entry.name() == entryid:
-                return entry
-
-        raise EntryNotFound("network %s not found" % entryid)
+        try:
+            return self.conn.networkLookupByName(entryid)
+        except libvirt.libvirtError as e:
+            if e.get_error_code() == libvirt.VIR_ERR_NO_NETWORK:
+                raise EntryNotFound("network %s not found" % entryid)
+            raise
 
     def create(self, entryid):
         if not self.module.check_mode:
@@ -273,8 +262,8 @@ class LibvirtConnection(object):
                         res = 0
                     if res == 0:
                         return True
-            #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
+        #  command, section, parentIndex, xml, flags=0
+        self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
@@ -284,11 +273,18 @@ class LibvirtConnection(object):
                 return self.module.exit_json(changed=True)
 
     def undefine(self, entryid):
-        if not self.module.check_mode:
+        entry = None
+        try:
+            entry = self.find_entry(entryid)
+            found = True
+        except EntryNotFound:
+            found = False
+
+        if found:
             return self.find_entry(entryid).undefine()
-        else:
-            if not self.find_entry(entryid):
-                return self.module.exit_json(changed=True)
+
+        if self.module.check_mode:
+            return self.module.exit_json(changed=found)
 
     def get_status2(self, entry):
         state = entry.isActive()
@@ -417,19 +413,27 @@ class VirtNetwork(object):
         return self.conn.set_autostart(entryid, state)
 
     def create(self, entryid):
-        return self.conn.create(entryid)
+        if self.conn.get_status(entryid) == "active":
+            return
+        try:
+            return self.conn.create(entryid)
+        except libvirt.libvirtError as e:
+            if e.get_error_code() == libvirt.VIR_ERR_NETWORK_EXIST:
+                return None
+            raise
 
     def modify(self, entryid, xml):
         return self.conn.modify(entryid, xml)
 
     def start(self, entryid):
-        return self.conn.create(entryid)
+        return self.create(entryid)
 
     def stop(self, entryid):
-        return self.conn.destroy(entryid)
+        if self.conn.get_status(entryid) == "active":
+            return self.conn.destroy(entryid)
 
     def destroy(self, entryid):
-        return self.conn.destroy(entryid)
+        return self.stop(entryid)
 
     def undefine(self, entryid):
         return self.conn.undefine(entryid)

@@ -1,0 +1,7 @@
+---
+- name: Check if Format-Volume is supported
+  win_shell: if (Get-Command -Name Format-Volume -ErrorAction SilentlyContinue) { $true } else { $false }
+  register: module_present
+
+- include: pre_test.yml
+  when: module_present.stdout | trim | bool

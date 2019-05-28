@@ -153,7 +153,7 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "docker-compose >= 1.7.0"
   - "Docker API >= 1.20"
   - "PyYAML >= 3.11"
@@ -165,7 +165,6 @@ EXAMPLES = '''
 
 - name: Run using a project directory
   hosts: localhost
-  connection: local
   gather_facts: no
   tasks:
     - docker_compose:
@@ -220,7 +219,6 @@ EXAMPLES = '''
 
 - name: Scale the web service to 2
   hosts: localhost
-  connection: local
   gather_facts: no
   tasks:
     - docker_compose:
@@ -234,7 +232,6 @@ EXAMPLES = '''
 
 - name: Run with inline v2 compose
   hosts: localhost
-  connection: local
   gather_facts: no
   tasks:
     - docker_compose:
@@ -269,7 +266,6 @@ EXAMPLES = '''
 
 - name: Run with inline v1 compose
   hosts: localhost
-  connection: local
   gather_facts: no
   tasks:
     - docker_compose:
@@ -302,7 +298,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-service_facts:
+services:
   description:
   - A dictionary mapping the service's name to a dictionary of containers.
   - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
@@ -463,7 +459,7 @@ try:
     from compose.cli.command import project_from_options
     from compose.service import NoSuchImageError
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
-    from compose.const import DEFAULT_TIMEOUT
+    from compose.const import DEFAULT_TIMEOUT, LABEL_SERVICE, LABEL_PROJECT, LABEL_ONE_OFF
     HAS_COMPOSE = True
     HAS_COMPOSE_EXC = None
     MINIMUM_COMPOSE_VERSION = '1.7.0'
@@ -686,7 +682,7 @@ class ContainerManager(DockerBaseClass):
         start_deps = self.dependencies
         service_names = self.services
         detached = True
-        result = dict(changed=False, actions=[], ansible_facts=dict(), service_facts=dict())
+        result = dict(changed=False, actions=[], ansible_facts=dict(), services=dict())
 
         up_options = {
             u'--no-recreate': False,
@@ -716,6 +712,25 @@ class ContainerManager(DockerBaseClass):
             build_output = self.cmd_build()
             result['changed'] = build_output['changed']
             result['actions'] += build_output['actions']
+
+        if self.remove_orphans:
+            containers = self.client.containers(
+                filters={
+                    'label': [
+                        '{0}={1}'.format(LABEL_PROJECT, self.project.name),
+                        '{0}={1}'.format(LABEL_ONE_OFF, "False")
+                    ],
+                }
+            )
+
+            orphans = []
+            for container in containers:
+                service_name = container.get('Labels', {}).get(LABEL_SERVICE)
+                if service_name not in self.project.service_names:
+                    orphans.append(service_name)
+
+            if orphans:
+                result['changed'] = True
 
         for service in self.project.services:
             if not service_names or service.name in service_names:
@@ -772,7 +787,7 @@ class ContainerManager(DockerBaseClass):
         for service in self.project.services:
             service_facts = dict()
             result['ansible_facts'][service.name] = service_facts
-            result['service_facts'][service.name] = service_facts
+            result['services'][service.name] = service_facts
             for container in service.containers(stopped=True):
                 inspection = container.inspect()
                 # pare down the inspection data to the most useful bits

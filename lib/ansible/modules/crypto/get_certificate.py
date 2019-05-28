@@ -24,9 +24,9 @@ options:
         - The host to get the cert for (IP is fine)
       type: str
       required: true
-    ca_certs:
+    ca_cert:
       description:
-        - A PEM file containing a list of root certificates; if present, the cert will be validated against these root certs.
+        - A PEM file containing one or more root certificates; if present, the cert will be validated against these root certs.
         - Note that this only validates the certificate is signed by the chain; not that the cert is valid for the host presenting it.
       type: path
     port:
@@ -41,7 +41,7 @@ options:
       default: 10
 
 notes:
-  - When using ca_certs on OS X it has been reported that in some conditions the validate will always succeed.
+  - When using ca_cert on OS X it has been reported that in some conditions the validate will always succeed.
 
 requirements:
   - "python >= 2.6"
@@ -107,6 +107,12 @@ EXAMPLES = '''
   delegate_to: localhost
   run_once: true
   register: cert
+
+- name: How many days until cert expires
+  debug:
+    msg: "cert expires in: {{ expire_days }} days."
+  vars:
+    expire_days: "{{ (( cert.not_after | to_datetime('%Y%m%d%H%M%SZ')) - (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ')) ).days }}"
 '''
 
 import traceback
@@ -130,14 +136,14 @@ else:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ca_certs=dict(type='path'),
+            ca_cert=dict(type='path'),
             host=dict(type='str', required=True),
             port=dict(type='int', required=True),
             timeout=dict(type='int', default=10),
         ),
     )
 
-    ca_certs = module.params.get('ca_certs')
+    ca_cert = module.params.get('ca_cert')
     host = module.params.get('host')
     port = module.params.get('port')
     timeout = module.params.get('timeout')
@@ -152,12 +158,12 @@ def main():
     if timeout:
         setdefaulttimeout(timeout)
 
-    if ca_certs:
-        if not isfile(ca_certs):
-            module.fail_json(msg="ca_certs file does not exist")
+    if ca_cert:
+        if not isfile(ca_cert):
+            module.fail_json(msg="ca_cert file does not exist")
 
     try:
-        cert = get_server_certificate((host, port), ca_certs=ca_certs)
+        cert = get_server_certificate((host, port), ca_certs=ca_cert)
         x509 = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
     except Exception as e:
         module.fail_json(msg="Failed to get cert from port with error: {0}".format(e))

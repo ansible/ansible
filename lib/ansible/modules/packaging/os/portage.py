@@ -74,7 +74,7 @@ options:
     description:
       - Do not re-emerge installed packages (--noreplace)
     type: bool
-    default: 'no'
+    default: 'yes'
 
   nodeps:
     description:
@@ -288,9 +288,9 @@ def emerge_packages(module, packages):
     """Run emerge command against given list of atoms."""
     p = module.params
 
-    if not (p['update'] or p['noreplace'] or p['state'] == 'latest'):
+    if p['noreplace'] and not (p['update'] or p['state'] == 'latest'):
         for package in packages:
-            if not query_package(module, package, 'emerge'):
+            if p['noreplace'] and not query_package(module, package, 'emerge'):
                 break
         else:
             module.exit_json(changed=False, msg='Packages already present.')
@@ -472,7 +472,7 @@ def main():
             newuse=dict(default=False, type='bool'),
             changed_use=dict(default=False, type='bool'),
             oneshot=dict(default=False, type='bool'),
-            noreplace=dict(default=False, type='bool'),
+            noreplace=dict(default=True, type='bool'),
             nodeps=dict(default=False, type='bool'),
             onlydeps=dict(default=False, type='bool'),
             depclean=dict(default=False, type='bool'),

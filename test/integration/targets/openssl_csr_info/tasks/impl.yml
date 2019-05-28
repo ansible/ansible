@@ -1,0 +1,43 @@
+---
+- debug:
+    msg: "Executing tests with backend {{ select_crypto_backend }}"
+
+- name: ({{select_crypto_backend}}) Get CSR info
+  openssl_csr_info:
+    path: '{{ output_dir }}/csr_1.csr'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get CSR info
+  openssl_csr_info:
+    path: '{{ output_dir }}/csr_2.csr'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get CSR info
+  openssl_csr_info:
+    path: '{{ output_dir }}/csr_3.csr'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"
+
+- name: ({{select_crypto_backend}}) Get CSR info
+  openssl_csr_info:
+    path: '{{ output_dir }}/csr_4.csr'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result
+
+- name: Update result list
+  set_fact:
+    info_results: "{{ info_results + [result] }}"

@@ -81,19 +81,19 @@ EXAMPLES = '''
     - name: Create virtual network peering
       azure_rm_virtualnetworkpeering:
         resource_group: myResourceGroup
-        name: vnet_peer1
-        virtual_network: myVnet1
+        virtual_network: myVirtualNetwork
+        name: myPeering
         remote_virtual_network:
           resource_group: mySecondResourceGroup
-          name: myVnet2
+          name: myRemoteVirtualNetwork
         allow_virtual_network_access: false
         allow_forwarded_traffic: true
 
     - name: Delete the virtual network peering
       azure_rm_virtualnetworkpeering:
         resource_group: myResourceGroup
-        name: vnet_peer1
-        virtual_network: myVnet1
+        virtual_network: myVirtualNetwork
+        name: myPeering
         state: absent
 '''
 RETURN = '''
@@ -102,11 +102,13 @@ id:
     returned: always
     type: dict
     example:
-        id: /subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.Network/virtualNetworks/xxxx/virtualNetworkPeerings/peer1
+        id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualN
+             etwork/virtualNetworkPeerings/myPeering"
 '''
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import is_valid_resource_id
     from msrest.polling import LROPoller
 except ImportError:
     # This is handled in azure_rm_common
@@ -233,7 +235,7 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
             self.fail('Resource group of virtual_network is not same as param resource_group')
 
         # parse remote virtual_network
-        self.remote_virtual_network = self.parse_resource_to_dict(self.remote_virtual_network)
+        self.remote_virtual_network = self.format_vnet_id(self.remote_virtual_network)
 
         # get vnet peering
         response = self.get_vnet_peering()
@@ -247,9 +249,7 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                     self.fail("Cannot update virtual_network of Virtual Network Peering!")
 
                 # check remote vnet id not changed
-                exisiting_remote_vnet = self.parse_resource_to_dict(response['remote_virtual_network'])
-                if exisiting_remote_vnet['resource_group'] != self.remote_virtual_network['resource_group'] or \
-                   exisiting_remote_vnet['name'] != self.remote_virtual_network['name']:
+                if response['remote_virtual_network'].lower() != self.remote_virtual_network.lower():
                     self.fail("Cannot update remote_virtual_network of Virtual Network Peering!")
 
                 # check if update
@@ -264,12 +264,6 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                 if not virtual_network:
                     self.fail("Virtual network {0} in resource group {1} does not exist!".format(
                         self.virtual_network['name'], self.virtual_network['resource_group']))
-
-                # check if remote vnet exists
-                remote_virtual_network = self.get_vnet(self.remote_virtual_network['resource_group'], self.remote_virtual_network['name'])
-                if not remote_virtual_network:
-                    self.fail("Virtual network {0} in resource group {1} does not exist!".format(
-                        self.remote_virtual_network['name'], self.remote_virtual_network['resource_group']))
 
         elif self.state == 'absent':
             if response:
@@ -295,6 +289,28 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
             self.results['id'] = response['id']
 
         return self.results
+
+    def format_vnet_id(self, vnet):
+        if not vnet:
+            return vnet
+        if isinstance(vnet, dict) and vnet.get('name') and vnet.get('resource_group'):
+            remote_vnet_id = format_resource_id(vnet['name'],
+                                                self.subscription_id,
+                                                'Microsoft.Network',
+                                                'virtualNetworks',
+                                                vnet['resource_group'])
+        elif isinstance(vnet, str):
+            if is_valid_resource_id(vnet):
+                remote_vnet_id = vnet
+            else:
+                remote_vnet_id = format_resource_id(vnet,
+                                                    self.subscription_id,
+                                                    'Microsoft.Network',
+                                                    'virtualNetworks',
+                                                    self.resource_group)
+        else:
+            self.fail("remote_virtual_network could be a valid resource id, dict of name and resource_group, name of virtual network in same resource group.")
+        return remote_vnet_id
 
     def check_update(self, exisiting_vnet_peering):
         if self.allow_forwarded_traffic != exisiting_vnet_peering['allow_forwarded_traffic']:
@@ -333,15 +349,10 @@ class AzureRMVirtualNetworkPeering(AzureRMModuleBase):
                                      'Microsoft.Network',
                                      'virtualNetworks',
                                      self.virtual_network['resource_group'])
-        remote_vnet_id = format_resource_id(self.remote_virtual_network['name'],
-                                            self.subscription_id,
-                                            'Microsoft.Network',
-                                            'virtualNetworks',
-                                            self.remote_virtual_network['resource_group'])
         peering = self.network_models.VirtualNetworkPeering(
             id=vnet_id,
             name=self.name,
-            remote_virtual_network=self.network_models.SubResource(id=remote_vnet_id),
+            remote_virtual_network=self.network_models.SubResource(id=self.remote_virtual_network),
             allow_virtual_network_access=self.allow_virtual_network_access,
             allow_gateway_transit=self.allow_gateway_transit,
             allow_forwarded_traffic=self.allow_forwarded_traffic,

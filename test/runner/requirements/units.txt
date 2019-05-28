@@ -4,8 +4,8 @@ cryptography
 pycrypto
 jinja2
 mock
-nose
 passlib
+pypsrp
 pytest
 pytest-mock
 pytest-xdist

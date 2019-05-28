@@ -17,7 +17,7 @@ from ansible.modules.storage.netapp.na_ontap_vscan_on_access_policy \
     import NetAppOntapVscanOnAccessPolicy as policy_module  # module under test
 
 if not netapp_utils.has_netapp_lib():
-    pytestmark = pytest.skip('skipping as missing required netapp_lib')
+    pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 HAS_NETAPP_ZAPI_MSG = "pip install netapp_lib is required"
 
 

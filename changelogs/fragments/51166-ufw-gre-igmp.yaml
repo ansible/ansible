@@ -1,2 +1,0 @@
-minor_changes:
-- "ufw - ``proto`` can now also be ``gre`` and ``igmp``."

@@ -61,12 +61,13 @@ NIOS_IPV6_FIXED_ADDRESS = 'ipv6fixedaddress'
 NIOS_NEXT_AVAILABLE_IP = 'func:nextavailableip'
 NIOS_IPV4_NETWORK_CONTAINER = 'networkcontainer'
 NIOS_IPV6_NETWORK_CONTAINER = 'ipv6networkcontainer'
+NIOS_MEMBER = 'member'
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(fallback=(env_fallback, ['INFOBLOX_HOST'])),
     'username': dict(fallback=(env_fallback, ['INFOBLOX_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['INFOBLOX_PASSWORD']), no_log=True),
-    'ssl_verify': dict(type='bool', default=False, fallback=(env_fallback, ['INFOBLOX_SSL_VERIFY'])),
+    'validate_certs': dict(type='bool', default=False, fallback=(env_fallback, ['INFOBLOX_SSL_VERIFY']), aliases=['ssl_verify']),
     'silent_ssl_warnings': dict(type='bool', default=True),
     'http_request_timeout': dict(type='int', default=10, fallback=(env_fallback, ['INFOBLOX_HTTP_REQUEST_TIMEOUT'])),
     'http_pool_connections': dict(type='int', default=10),
@@ -88,7 +89,7 @@ def get_connector(*args, **kwargs):
                         'to be installed.  It can be installed using the '
                         'command `pip install infoblox-client`')
 
-    if not set(kwargs.keys()).issubset(NIOS_PROVIDER_SPEC.keys()):
+    if not set(kwargs.keys()).issubset(list(NIOS_PROVIDER_SPEC.keys()) + ['ssl_verify']):
         raise Exception('invalid or unsupported keyword argument for connector')
     for key, value in iteritems(NIOS_PROVIDER_SPEC):
         if key not in kwargs:
@@ -102,6 +103,10 @@ def get_connector(*args, **kwargs):
             env = ('INFOBLOX_%s' % key).upper()
             if env in os.environ:
                 kwargs[key] = os.environ.get(env)
+
+    if 'validate_certs' in kwargs.keys():
+        kwargs['ssl_verify'] = kwargs['validate_certs']
+        kwargs.pop('validate_certs', None)
 
     return Connector(kwargs)
 
@@ -134,6 +139,37 @@ def flatten_extattrs(value):
         }
     '''
     return dict([(k, v['value']) for k, v in iteritems(value)])
+
+
+def member_normalize(member_spec):
+    ''' Transforms the member module arguments into a valid WAPI struct
+    This function will transform the arguments into a structure that
+    is a valid WAPI structure in the format of:
+        {
+            key: <value>,
+        }
+    It will remove any arguments that are set to None since WAPI will error on
+    that condition.
+    The remainder of the value validation is performed by WAPI
+    Some parameters in ib_spec are passed as a list in order to pass the validation for elements.
+    In this function, they are converted to dictionary.
+    '''
+    member_elements = ['vip_setting', 'ipv6_setting', 'lan2_port_setting', 'mgmt_port_setting',
+                       'pre_provisioning', 'network_setting', 'v6_network_setting',
+                       'ha_port_setting', 'lan_port_setting', 'lan2_physical_setting',
+                       'lan_ha_port_setting', 'mgmt_network_setting', 'v6_mgmt_network_setting']
+    for key in member_spec.keys():
+        if key in member_elements and member_spec[key] is not None:
+            member_spec[key] = member_spec[key][0]
+        if isinstance(member_spec[key], dict):
+            member_spec[key] = member_normalize(member_spec[key])
+        elif isinstance(member_spec[key], list):
+            for x in member_spec[key]:
+                if isinstance(x, dict):
+                    x = member_normalize(x)
+        elif member_spec[key] is None:
+            del member_spec[key]
+    return member_spec
 
 
 class WapiBase(object):
@@ -221,7 +257,6 @@ class WapiModule(WapiBase):
 
         # get object reference
         ib_obj_ref, update, new_name = self.get_object_ref(self.module, ib_obj_type, obj_filter, ib_spec)
-
         proposed_object = {}
         for key, value in iteritems(ib_spec):
             if self.module.params[key] is not None:
@@ -244,6 +279,9 @@ class WapiModule(WapiBase):
         else:
             current_object = obj_filter
             ref = None
+        # checks if the object type is member to normalize the attributes being passed
+        if (ib_obj_type == NIOS_MEMBER):
+            proposed_object = member_normalize(proposed_object)
 
         # checks if the name's field has been updated
         if update and new_name:
@@ -261,6 +299,12 @@ class WapiModule(WapiBase):
             if ref is None:
                 if not self.module.check_mode:
                     self.create_object(ib_obj_type, proposed_object)
+                result['changed'] = True
+            # Check if NIOS_MEMBER and the flag to call function create_token is set
+            elif (ib_obj_type == NIOS_MEMBER) and (proposed_object['create_token']):
+                proposed_object = None
+                # the function creates a token that can be used by a pre-provisioned member to join the grid
+                result['api_results'] = self.call_func('create_token', ref, proposed_object)
                 result['changed'] = True
             elif modified:
                 self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
@@ -411,9 +455,17 @@ class WapiModule(WapiBase):
             temp = ib_spec['restart_if_needed']
             del ib_spec['restart_if_needed']
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
-            # reinstate restart_if_needed key if it's set to true in play
-            if module.params['restart_if_needed']:
+            # reinstate restart_if_needed if ib_obj is none, meaning there's no existing nios_zone ref
+            if not ib_obj:
                 ib_spec['restart_if_needed'] = temp
+        elif (ib_obj_type == NIOS_MEMBER):
+            # del key 'create_token' as nios_member get_object fails with the key present
+            temp = ib_spec['create_token']
+            del ib_spec['create_token']
+            ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+            if temp:
+                # reinstate 'create_token' key
+                ib_spec['create_token'] = temp
         else:
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
         return ib_obj, update, new_name

@@ -53,19 +53,20 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a subnetwork facts
+- name: " a subnetwork facts"
   gcp_compute_subnetwork_facts:
-      region: us-west1
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    region: us-west1
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -114,7 +115,7 @@ items:
       - The network this subnet belongs to.
       - Only networks that are in the distributed mode can have subnetworks.
       returned: success
-      type: str
+      type: dict
     enableFlowLogs:
       description:
       - Whether to enable flow logging for this subnetwork.
@@ -185,7 +186,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

@@ -60,9 +60,10 @@ options:
     description:
     - The name of the bucket.
     - 'This field represents a link to a Bucket resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
-      task and then set this bucket field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
+      }}"'
     required: true
   entity:
     description:
@@ -108,22 +109,22 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: "{{ resource_name }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: bucket
 
 - name: create a bucket access control
   gcp_storage_bucket_access_control:
-      bucket: "test_object"
-      entity: user-alexstephen@google.com
-      role: WRITER
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    bucket: test_object
+    entity: user-alexstephen@google.com
+    role: WRITER
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -131,7 +132,7 @@ bucket:
   description:
   - The name of the bucket.
   returned: success
-  type: str
+  type: dict
 domain:
   description:
   - The domain associated with the entity.
@@ -203,7 +204,7 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            bucket=dict(required=True),
+            bucket=dict(required=True, type='dict'),
             entity=dict(required=True, type='str'),
             entity_id=dict(type='str'),
             project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str', choices=['editors', 'owners', 'viewers']))),

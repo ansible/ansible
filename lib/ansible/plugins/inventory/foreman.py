@@ -72,7 +72,7 @@ validate_certs: False
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
 
@@ -175,7 +175,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
         ret = self._get_json(url, [404])
         if not ret or not isinstance(ret, MutableMapping) or not ret.get('all_parameters', False):
-            ret = []
+            return {}
         return ret.get('all_parameters')
 
     def _get_facts_by_id(self, hid):
@@ -215,9 +215,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                             try:
                                 self.inventory.set_variable(host['name'], self.get_option('vars_prefix') + k, v)
                             except ValueError as e:
-                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_native(e)))
+                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_text(e)))
                 except ValueError as e:
-                    self.display.warning("Could not get host info for %s, skipping: %s" % (host['name'], to_native(e)))
+                    self.display.warning("Could not get host info for %s, skipping: %s" % (host['name'], to_text(e)))
 
                 # set host vars from params
                 if self.get_option('want_params'):

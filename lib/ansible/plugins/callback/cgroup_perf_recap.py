@@ -46,6 +46,26 @@ DOCUMENTATION = '''
         ini:
           - section: callback_cgroup_perf_recap
             key: cpu_poll_interval
+      memory_poll_interval:
+        description: Interval between memory polling for determining memory usage. A lower value may produce inaccurate
+                     results, a higher value may not be short enough to collect results for short tasks.
+        default: 0.25
+        type: float
+        env:
+          - name: CGROUP_MEMORY_POLL_INTERVAL
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: memory_poll_interval
+      pid_poll_interval:
+        description: Interval between PID polling for determining PID count. A lower value may produce inaccurate
+                     results, a higher value may not be short enough to collect results for short tasks.
+        default: 0.25
+        type: float
+        env:
+          - name: CGROUP_PID_POLL_INTERVAL
+        ini:
+          - section: callback_cgroup_perf_recap
+            key: pid_poll_interval
       display_recap:
         description: Controls whether the recap is printed at the end, useful if you will automatically
                      process the output files
@@ -158,6 +178,10 @@ class BaseProf(with_metaclass(ABCMeta, threading.Thread)):
 
 class MemoryProf(BaseProf):
     """Python thread for recording memory usage"""
+    def __init__(self, path, poll_interval=0.25, obj=None, writer=None):
+        super(MemoryProf, self).__init__(path, obj=obj, writer=writer)
+        self._poll_interval = poll_interval
+
     def poll(self):
         with open(self.path) as f:
             val = int(f.read().strip()) / 1024**2
@@ -169,7 +193,7 @@ class MemoryProf(BaseProf):
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
-        time.sleep(0.01)
+        time.sleep(self._poll_interval)
 
 
 class CpuProf(BaseProf):
@@ -197,6 +221,10 @@ class CpuProf(BaseProf):
 
 
 class PidsProf(BaseProf):
+    def __init__(self, path, poll_interval=0.25, obj=None, writer=None):
+        super(PidsProf, self).__init__(path, obj=obj, writer=writer)
+        self._poll_interval = poll_interval
+
     def poll(self):
         with open(self.path) as f:
             val = int(f.read().strip())
@@ -208,7 +236,7 @@ class PidsProf(BaseProf):
             except ValueError:
                 # We may be profiling after the playbook has ended
                 self.running = False
-        time.sleep(0.01)
+        time.sleep(self._poll_interval)
 
 
 def csv_writer(writer, timestamp, task_name, task_uuid, value):
@@ -280,6 +308,8 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         cpu_poll_interval = self.get_option('cpu_poll_interval')
+        memory_poll_interval = self.get_option('memory_poll_interval')
+        pid_poll_interval = self.get_option('pid_poll_interval')
         self._display_recap = self.get_option('display_recap')
 
         control_group = to_bytes(self.get_option('control_group'), errors='surrogate_or_strict')
@@ -320,9 +350,9 @@ class CallbackModule(CallbackBase):
             return
 
         self._profiler_map = {
-            'memory': partial(MemoryProf, mem_current_file),
+            'memory': partial(MemoryProf, mem_current_file, poll_interval=memory_poll_interval),
             'cpu': partial(CpuProf, cpu_usage_file, poll_interval=cpu_poll_interval),
-            'pids': partial(PidsProf, pid_current_file),
+            'pids': partial(PidsProf, pid_current_file, poll_interval=pid_poll_interval),
         }
 
         write_files = self.get_option('write_files')
@@ -364,6 +394,15 @@ class CallbackModule(CallbackBase):
     def _profile(self, obj=None):
         prev_task = None
         results = dict.fromkeys(self._features)
+        if not obj or self._file_per_task:
+            for dummy, f in self._files.items():
+                if f is None:
+                    continue
+                try:
+                    f.close()
+                except Exception:
+                    pass
+
         try:
             for name, prof in self._profilers.items():
                 prof.running = False
@@ -382,7 +421,7 @@ class CallbackModule(CallbackBase):
                     pass
 
         if obj is not None:
-            if self._file_per_task:
+            if self._file_per_task or self._counter == 0:
                 self._open_files(task_uuid=obj._uuid)
 
             for feature in self._features:
@@ -396,12 +435,6 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_stats(self, stats):
         self._profile()
-
-        for dummy, f in self._files.items():
-            try:
-                f.close()
-            except Exception:
-                pass
 
         if not self._display_recap:
             return

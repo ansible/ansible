@@ -56,7 +56,6 @@ options:
   description:
     description:
     - An optional description of this resource.
-    - Provide this property when you create the resource.
     required: false
   name:
     description:
@@ -69,8 +68,8 @@ options:
     required: true
   ip_version:
     description:
-    - The IP Version that will be used by this address. Valid options are IPV4 or
-      IPV6. The default value is IPV4.
+    - The IP Version that will be used by this address. Valid options are `IPV4` or
+      `IPV6`. The default value is `IPV4`.
     required: false
     choices:
     - IPV4
@@ -88,18 +87,18 @@ options:
     - INTERNAL
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/globalAddresses)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/globalAddresses)'
 - 'Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address)'
 '''
 
 EXAMPLES = '''
 - name: create a global address
   gcp_compute_global_address:
-      name: "test_object"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -116,7 +115,6 @@ creationTimestamp:
 description:
   description:
   - An optional description of this resource.
-  - Provide this property when you create the resource.
   returned: success
   type: str
 id:
@@ -136,8 +134,8 @@ name:
   type: str
 ipVersion:
   description:
-  - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
-    The default value is IPV4.
+  - The IP Version that will be used by this address. Valid options are `IPV4` or
+    `IPV6`. The default value is `IPV4`.
   returned: success
   type: str
 region:
@@ -219,7 +217,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="GlobalAddress cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

@@ -104,7 +104,8 @@ def main():
             code, response = connection.send_request('/web_api/publish', payload)
         else:
             code, response = connection.send_request('/web_api/discard', payload)
-
+        if code != 200:
+            module.fail_json(msg=response)
         result['checkpoint_session'] = response
     else:
         module.fail_json(msg='Check Point device returned error {0} with message {1}'.format(code, response))

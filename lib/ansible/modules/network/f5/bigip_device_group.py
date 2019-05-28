@@ -26,6 +26,7 @@ options:
   name:
     description:
       - Specifies the name of the device group.
+    type: str
     required: True
   type:
     description:
@@ -36,12 +37,14 @@ options:
       - A C(sync-only) device group has no such failover. When creating a new
         device group, this option will default to C(sync-only).
       - This setting cannot be changed once it has been set.
+    type: str
     choices:
       - sync-failover
       - sync-only
   description:
     description:
       - Description of the device group.
+    type: str
   auto_sync:
     description:
       - Indicates whether configuration synchronization occurs manually or
@@ -78,10 +81,12 @@ options:
       - Using incremental synchronization operations can reduce the per-device sync/load
         time for configuration changes.
       - This setting is relevant only when C(full_sync) is C(no).
+    type: int
   state:
     description:
       - When C(state) is C(present), ensures the device group exists.
       - When C(state) is C(absent), ensures that the device group is removed.
+    type: str
     choices:
       - present
       - absent
@@ -168,18 +173,12 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -364,7 +363,7 @@ class ReportableChanges(Changes):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -593,7 +592,9 @@ class ArgumentSpec(object):
             name=dict(
                 required=True
             ),
-            max_incremental_sync_size=dict(),
+            max_incremental_sync_size=dict(
+                type='int'
+            ),
             state=dict(
                 default='present',
                 choices=['absent', 'present']
@@ -613,16 +614,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

@@ -274,7 +274,7 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
 
     # build scope
     def build_scope(self):
-        subscription_scope = '/subscription/' + self.subscription_id
+        subscription_scope = '/subscriptions/' + self.subscription_id
         if self.scope is None:
             return subscription_scope
         return self.scope
@@ -331,7 +331,7 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
             response = self._client.role_definitions.create_or_update(role_definition_id=self.role['name'] if self.role else str(uuid.uuid4()),
                                                                       scope=self.scope,
                                                                       role_definition=role_definition)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -348,8 +348,7 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
         self.log("Deleting the role definition {0}".format(self.name))
         scope = self.build_scope()
         try:
-            response = self._client.role_definitions.delete(name=self.name,
-                                                            scope=scope,
+            response = self._client.role_definitions.delete(scope=scope,
                                                             role_definition_id=role_definition_id)
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)

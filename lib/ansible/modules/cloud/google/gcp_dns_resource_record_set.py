@@ -85,9 +85,10 @@ options:
     description:
     - Identifies the managed zone addressed by this request.
     - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_dns_managed_zone
-      task and then set this managed_zone field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_dns_managed_zone task and then set this managed_zone field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -95,28 +96,28 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a managed zone
   gcp_dns_managed_zone:
-      name: "managedzone-rrs"
-      dns_name: testzone-4.com.
-      description: test zone
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: managedzone-rrs
+    dns_name: testzone-4.com.
+    description: test zone
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: managed_zone
 
 - name: create a resource record set
   gcp_dns_resource_record_set:
-      name: www.testzone-4.com.
-      managed_zone: "{{ managed_zone }}"
-      type: A
-      ttl: 600
-      target:
-      - 10.1.2.3
-      - 40.5.6.7
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: www.testzone-4.com.
+    managed_zone: "{{ managed_zone }}"
+    type: A
+    ttl: 600
+    target:
+    - 10.1.2.3
+    - 40.5.6.7
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -144,7 +145,7 @@ managed_zone:
   description:
   - Identifies the managed zone addressed by this request.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -172,7 +173,7 @@ def main():
             type=dict(required=True, type='str', choices=['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NAPTR', 'NS', 'PTR', 'SOA', 'SPF', 'SRV', 'TLSA', 'TXT']),
             ttl=dict(type='int'),
             target=dict(type='list', elements='str'),
-            managed_zone=dict(required=True),
+            managed_zone=dict(required=True, type='dict'),
         )
     )
 

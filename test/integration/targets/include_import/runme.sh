@@ -10,6 +10,10 @@ function gen_task_files() {
     done
 }
 
+## Adhoc
+
+ansible -m include_role -a name=role1 localhost
+
 ## Import (static)
 
 # Playbook
@@ -85,7 +89,7 @@ ansible-playbook public_exposure/no_bleeding.yml -i inventory "$@"
 ansible-playbook public_exposure/no_overwrite_roles.yml -i inventory "$@"
 
 # https://github.com/ansible/ansible/pull/48068
-ansible-playbook run_once/playbook.yml "$@"
+ANSIBLE_HOST_PATTERN_MISMATCH=warning ansible-playbook run_once/playbook.yml "$@"
 
 # https://github.com/ansible/ansible/issues/48936
 ansible-playbook -v handler_addressing/playbook.yml 2>&1 | tee test_handler_addressing.out
@@ -94,3 +98,6 @@ test "$(egrep -c 'include handler task|ERROR! The requested handler '"'"'do_impo
 # https://github.com/ansible/ansible/issues/49969
 ansible-playbook -v parent_templating/playbook.yml 2>&1 | tee test_parent_templating.out
 test "$(egrep -c 'Templating the path of the parent include_tasks failed.' test_parent_templating.out)" = 0
+
+# https://github.com/ansible/ansible/issues/54618
+ansible-playbook test_loop_var_bleed.yaml "$@"

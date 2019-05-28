@@ -236,6 +236,30 @@
       - result is not changed
       - result.hcloud_server.backup_window != ""
 
+- name: test rebuild server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    image: ubuntu-18.04
+    state: rebuild
+  register: result_after_test
+- name: verify rebuild server
+  assert:
+    that:
+      - result_after_test is changed
+      - result.hcloud_server.id == result_after_test.hcloud_server.id
+
+- name: test rebuild server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    image: ubuntu-18.04
+    state: rebuild
+  register: result_after_test
+  check_mode: true
+- name: verify rebuild server with check mode
+  assert:
+    that:
+      - result_after_test is changed
+
 - name: absent server
   hcloud_server:
     name: "{{ hcloud_server_name }}"
@@ -283,7 +307,7 @@
       - ci@ansible.hetzner.cloud
     labels:
       key: value
-      mylabel: 123
+      mylabel: "val123"
     state: started
   register: main_server
 - name: verify create server with labels
@@ -291,7 +315,7 @@
     that:
       - main_server is changed
       - main_server.hcloud_server.labels.key == "value"
-      - main_server.hcloud_server.labels.mylabel == 123
+      - main_server.hcloud_server.labels.mylabel == "val123"
 
 - name: test update server with labels
   hcloud_server:
@@ -302,7 +326,7 @@
       - ci@ansible.hetzner.cloud
     labels:
       key: other
-      mylabel: 123
+      mylabel: "val123"
     state: started
   register: main_server
 - name: verify update server with labels
@@ -310,7 +334,25 @@
     that:
       - main_server is changed
       - main_server.hcloud_server.labels.key == "other"
-      - main_server.hcloud_server.labels.mylabel == 123
+      - main_server.hcloud_server.labels.mylabel == "val123"
+
+
+- name: test update server with labels in other order
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    labels:
+      mylabel: "val123"
+      key: other
+    state: started
+  register: main_server
+- name: verify update server with labels in other order
+  assert:
+    that:
+      - main_server is not changed
 
 - name: cleanup with labels
   hcloud_server:

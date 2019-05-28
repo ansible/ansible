@@ -172,8 +172,6 @@ def main():
     org_id = meraki.params['org_id']
     if not org_id:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    nets = meraki.get_nets(org_id=org_id)
-
     net_id = None
     if net_id is None:
         nets = meraki.get_nets(org_id=org_id)
@@ -212,6 +210,8 @@ def main():
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             meraki.result['data'] = response
             meraki.result['changed'] = True
+        else:
+            meraki.result['data'] = current
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

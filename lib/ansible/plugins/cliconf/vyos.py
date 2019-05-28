@@ -52,7 +52,7 @@ class Cliconf(CliconfBase):
         reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
-        match = re.search(r'Version:\s*(\S+)', data)
+        match = re.search(r'Version:\s*(.*)', data)
         if match:
             device_info['network_os_version'] = match.group(1)
 
@@ -109,6 +109,8 @@ class Cliconf(CliconfBase):
                 self.discard_changes()
         else:
             self.send_command('exit')
+            if to_text(self._connection.get_prompt(), errors='surrogate_or_strict').strip().endswith('#'):
+                self.discard_changes()
 
         if diff_config:
             resp['diff'] = diff_config
@@ -116,14 +118,13 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
-
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:

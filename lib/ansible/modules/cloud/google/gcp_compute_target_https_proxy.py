@@ -86,9 +86,10 @@ options:
       resource. If not set, the TargetHttpsProxy resource will not have any SSL policy
       configured.
     - 'This field represents a link to a SslPolicy resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_ssl_policy
-      task and then set this ssl_policy field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_ssl_policy task and then set this ssl_policy field to "{{ name-of-resource
+      }}"'
     required: false
     version_added: 2.8
   url_map:
@@ -96,108 +97,97 @@ options:
     - A reference to the UrlMap resource that defines the mapping from URL to the
       BackendService.
     - 'This field represents a link to a UrlMap resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_url_map
-      task and then set this url_map field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_url_map task and then set this url_map field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetHttpsProxies)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/targetHttpsProxies)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/http/target-proxies)'
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "instancegroup-targethttpsproxy"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instancegroup-targethttpsproxy
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancegroup
 
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: "httphealthcheck-targethttpsproxy"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: httphealthcheck-targethttpsproxy
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "backendservice-targethttpsproxy"
-      backends:
-      - group: "{{ instancegroup }}"
-      health_checks:
-      - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: backendservice-targethttpsproxy
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: backendservice
 
 - name: create a url map
   gcp_compute_url_map:
-      name: "urlmap-targethttpsproxy"
-      default_service: "{{ backendservice }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: urlmap-targethttpsproxy
+    default_service: "{{ backendservice }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: urlmap
 
 - name: create a ssl certificate
   gcp_compute_ssl_certificate:
-      name: "sslcert-targethttpsproxy"
-      description: A certificate for testing. Do not use this certificate in production
-      certificate: |
-        -----BEGIN CERTIFICATE-----
-        MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
-        EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT
-        BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
-        b3JtMR8wHQYDVQQDDBZ3d3cubXktc2VjdXJlLXNpdGUuY29tMSEwHwYJKoZIhvcN
-        AQkBFhJuZWxzb25hQGdvb2dsZS5jb20wHhcNMTcwNjI4MDQ1NjI2WhcNMjcwNjI2
-        MDQ1NjI2WjCBsDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCldhc2hpbmd0b24xETAP
-        BgNVBAcMCEtpcmtsYW5kMRUwEwYDVQQKDAxHb29nbGUsIEluYy4xHjAcBgNVBAsM
-        FUdvb2dsZSBDbG91ZCBQbGF0Zm9ybTEfMB0GA1UEAwwWd3d3Lm15LXNlY3VyZS1z
-        aXRlLmNvbTEhMB8GCSqGSIb3DQEJARYSbmVsc29uYUBnb29nbGUuY29tMFkwEwYH
-        KoZIzj0CAQYIKoZIzj0DAQcDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ
-        4mzkzTv0dXyB750fOGN02HtkpBOZzzvUARTR10JQoSe2/5PIwaNQME4wHQYDVR0O
-        BBYEFKIQC3A2SDpxcdfn0YLKineDNq/BMB8GA1UdIwQYMBaAFKIQC3A2SDpxcdfn
-        0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
-        M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ
-        zqGNhIPGq2ULqXKK8BY=
-        -----END CERTIFICATE-----
-      private_key: |
-        -----BEGIN EC PRIVATE KEY-----
-        MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
-        AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
-        OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
-        -----END EC PRIVATE KEY-----
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: sslcert-targethttpsproxy
+    description: A certificate for testing. Do not use this certificate in production
+    certificate: "-----BEGIN CERTIFICATE----- MIICqjCCAk+gAwIBAgIJAIuJ+0352Kq4MAoGCCqGSM49BAMCMIGwMQswCQYDVQQG
+      EwJVUzETMBEGA1UECAwKV2FzaGluZ3RvbjERMA8GA1UEBwwIS2lya2xhbmQxFTAT BgNVBAoMDEdvb2dsZSwgSW5jLjEeMBwGA1UECwwVR29vZ2xlIENsb3VkIFBsYXRm
+      b3JtMR8wHQYDVQQDDBZ3d3cubXktc2VjdXJlLXNpdGUuY29tMSEwHwYJKoZIhvcN AQkBFhJuZWxzb25hQGdvb2dsZS5jb20wHhcNMTcwNjI4MDQ1NjI2WhcNMjcwNjI2
+      MDQ1NjI2WjCBsDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCldhc2hpbmd0b24xETAP BgNVBAcMCEtpcmtsYW5kMRUwEwYDVQQKDAxHb29nbGUsIEluYy4xHjAcBgNVBAsM
+      FUdvb2dsZSBDbG91ZCBQbGF0Zm9ybTEfMB0GA1UEAwwWd3d3Lm15LXNlY3VyZS1z aXRlLmNvbTEhMB8GCSqGSIb3DQEJARYSbmVsc29uYUBnb29nbGUuY29tMFkwEwYH
+      KoZIzj0CAQYIKoZIzj0DAQcDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ 4mzkzTv0dXyB750fOGN02HtkpBOZzzvUARTR10JQoSe2/5PIwaNQME4wHQYDVR0O
+      BBYEFKIQC3A2SDpxcdfn0YLKineDNq/BMB8GA1UdIwQYMBaAFKIQC3A2SDpxcdfn 0YLKineDNq/BMAwGA1UdEwQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhALs4vy+O
+      M3jcqgA4fSW/oKw6UJxp+M6a+nGMX+UJR3YgAiEAvvl39QRVAiv84hdoCuyON0lJ zqGNhIPGq2ULqXKK8BY=
+      -----END CERTIFICATE-----"
+    private_key: "-----BEGIN EC PRIVATE KEY----- MHcCAQEEIObtRo8tkUqoMjeHhsOh2ouPpXCgBcP+EDxZCB/tws15oAoGCCqGSM49
+      AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
+      -----END EC PRIVATE KEY-----"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: sslcert
 
 - name: create a target https proxy
   gcp_compute_target_https_proxy:
-      name: "test_object"
-      ssl_certificates:
-      - "{{ sslcert }}"
-      url_map: "{{ urlmap }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    ssl_certificates:
+    - "{{ sslcert }}"
+    url_map: "{{ urlmap }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -247,12 +237,12 @@ sslPolicy:
     resource. If not set, the TargetHttpsProxy resource will not have any SSL policy
     configured.
   returned: success
-  type: str
+  type: dict
 urlMap:
   description:
   - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -277,9 +267,9 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             quic_override=dict(type='str', choices=['NONE', 'ENABLE', 'DISABLE']),
-            ssl_certificates=dict(required=True, type='list'),
-            ssl_policy=dict(),
-            url_map=dict(required=True),
+            ssl_certificates=dict(required=True, type='list', elements='dict'),
+            ssl_policy=dict(type='dict'),
+            url_map=dict(required=True, type='dict'),
         )
     )
 

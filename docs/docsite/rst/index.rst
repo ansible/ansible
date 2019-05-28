@@ -47,16 +47,12 @@ Ansible releases a new major release of Ansible approximately three to four time
 
 .. toctree::
    :glob:
-   :maxdepth: 2
-   :caption: Scenario Guides
+   :maxdepth: 1
+   :caption: Common Ansible Scenarios
 
-   scenario_guides/guide_*
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Ansible for VMWare
-
-   vmware/index
+   scenario_guides/cloud_guides
+   scenario_guides/network_guides
+   scenario_guides/virt_guides
 
 .. toctree::
    :maxdepth: 2

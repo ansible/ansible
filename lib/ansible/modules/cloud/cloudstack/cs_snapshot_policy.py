@@ -19,115 +19,128 @@ short_description: Manages volume snapshot policies on Apache CloudStack based c
 description:
     - Create, update and delete volume snapshot policies.
 version_added: '2.2'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   volume:
     description:
       - Name of the volume.
-      - Either C(volume) or C(vm) is required.
+      - Either I(volume) or I(vm) is required.
+    type: str
   volume_type:
     description:
       - Type of the volume.
+    type: str
     choices:
       - DATADISK
       - ROOT
-    version_added: "2.3"
+    version_added: '2.3'
   vm:
     description:
       - Name of the instance to select the volume from.
-      - Use C(volume_type) if VM has a DATADISK and ROOT volume.
-      - In case of C(volume_type=DATADISK), additionally use C(device_id) if VM has more than one DATADISK volume.
-      - Either C(volume) or C(vm) is required.
-    version_added: "2.3"
+      - Use I(volume_type) if VM has a DATADISK and ROOT volume.
+      - In case of I(volume_type=DATADISK), additionally use I(device_id) if VM has more than one DATADISK volume.
+      - Either I(volume) or I(vm) is required.
+    type: str
+    version_added: '2.3'
   device_id:
     description:
       - ID of the device on a VM the volume is attached to.
       - This will only be considered if VM has multiple DATADISK volumes.
-    version_added: "2.3"
+    type: int
+    version_added: '2.3'
   vpc:
     description:
       - Name of the vpc the instance is deployed in.
-    version_added: "2.3"
+    type: str
+    version_added: '2.3'
   interval_type:
     description:
       - Interval of the snapshot.
+    type: str
     default: daily
     choices: [ hourly, daily, weekly, monthly ]
     aliases: [ interval ]
   max_snaps:
     description:
       - Max number of snapshots.
+    type: int
     default: 8
     aliases: [ max ]
   schedule:
     description:
-      - Time the snapshot is scheduled. Required if C(state=present).
-      - 'Format for C(interval_type=HOURLY): C(MM)'
-      - 'Format for C(interval_type=DAILY): C(MM:HH)'
-      - 'Format for C(interval_type=WEEKLY): C(MM:HH:DD (1-7))'
-      - 'Format for C(interval_type=MONTHLY): C(MM:HH:DD (1-28))'
+      - Time the snapshot is scheduled. Required if I(state=present).
+      - 'Format for I(interval_type=HOURLY): C(MM)'
+      - 'Format for I(interval_type=DAILY): C(MM:HH)'
+      - 'Format for I(interval_type=WEEKLY): C(MM:HH:DD (1-7))'
+      - 'Format for I(interval_type=MONTHLY): C(MM:HH:DD (1-28))'
+    type: str
   time_zone:
     description:
       - Specifies a timezone for this command.
+    type: str
     default: UTC
     aliases: [ timezone ]
   state:
     description:
       - State of the snapshot policy.
+    type: str
     default: present
     choices: [ present, absent ]
   domain:
     description:
       - Domain the volume is related to.
+    type: str
   account:
     description:
       - Account the volume is related to.
+    type: str
   project:
     description:
       - Name of the project the volume is related to.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: ensure a snapshot policy daily at 1h00 UTC
-  local_action:
-    module: cs_snapshot_policy
+  cs_snapshot_policy:
     volume: ROOT-478
     schedule: '00:1'
     max_snaps: 3
+  delegate_to: localhost
 
 - name: ensure a snapshot policy daily at 1h00 UTC on the second DATADISK of VM web-01
-  local_action:
-    module: cs_snapshot_policy
+  cs_snapshot_policy:
     vm: web-01
     volume_type: DATADISK
     device_id: 2
     schedule: '00:1'
     max_snaps: 3
+  delegate_to: localhost
 
 - name: ensure a snapshot policy hourly at minute 5 UTC
-  local_action:
-    module: cs_snapshot_policy
+  cs_snapshot_policy:
     volume: ROOT-478
     schedule: '5'
     interval_type: hourly
     max_snaps: 1
+  delegate_to: localhost
 
 - name: ensure a snapshot policy weekly on Sunday at 05h00, TZ Europe/Zurich
-  local_action:
-    module: cs_snapshot_policy
+  cs_snapshot_policy:
     volume: ROOT-478
     schedule: '00:5:1'
     interval_type: weekly
     max_snaps: 1
     time_zone: 'Europe/Zurich'
+  delegate_to: localhost
 
 - name: ensure a snapshot policy is absent
-  local_action:
-    module: cs_snapshot_policy
+  cs_snapshot_policy:
     volume: ROOT-478
     interval_type: hourly
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

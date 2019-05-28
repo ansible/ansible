@@ -69,7 +69,7 @@ class TaskInclude(Task):
             raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
         if not task.args.get('_raw_params'):
-            task.args['_raw_params'] = task.args.pop('file')
+            task.args['_raw_params'] = task.args.pop('file', None)
 
         apply_attrs = task.args.get('apply', {})
         if apply_attrs and task.action != 'include_tasks':
@@ -82,7 +82,7 @@ class TaskInclude(Task):
     def preprocess_data(self, ds):
         ds = super(TaskInclude, self).preprocess_data(ds)
 
-        diff = set(ds.keys()).difference(TaskInclude.VALID_INCLUDE_KEYWORDS)
+        diff = set(ds.keys()).difference(self.VALID_INCLUDE_KEYWORDS)
         for k in diff:
             # This check doesn't handle ``include`` as we have no idea at this point if it is static or not
             if ds[k] is not Sentinel and ds['action'] in ('include_tasks', 'include_role'):

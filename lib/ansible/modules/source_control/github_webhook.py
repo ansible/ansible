@@ -255,6 +255,8 @@ def main():
         for hook in repo.get_hooks():
             if hook.config.get("url") == module.params["url"]:
                 break
+        else:
+            hook = None
     except github.GithubException as err:
         module.fail_json(msg="Unable to get hooks from repository %s: %s" % (
             module.params["repository"], to_native(err)))

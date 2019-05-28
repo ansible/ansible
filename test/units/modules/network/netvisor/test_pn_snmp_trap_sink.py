@@ -51,7 +51,7 @@ class TestSnmpTrapSinkModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_community': 'foo',
                          'pn_dest_host': '192.168.67.8', 'pn_type': 'TRAP_TYPE_V2_INFORM', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 snmp-trap-sink-create  type TRAP_TYPE_V2_INFORM dest-host 192.168.67.8 '
+        expected_cmd = ' switch sw01 snmp-trap-sink-create  type TRAP_TYPE_V2_INFORM dest-host 192.168.67.8 '
         expected_cmd += 'community foo dest-port 162'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
@@ -59,5 +59,5 @@ class TestSnmpTrapSinkModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_community': 'foo',
                          'pn_dest_host': '192.168.67.8', 'pn_type': 'TRAP_TYPE_V2_INFORM', 'state': 'absent'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 snmp-trap-sink-delete  community foo dest-host 192.168.67.8 dest-port 162'
+        expected_cmd = ' switch sw01 snmp-trap-sink-delete  community foo dest-host 192.168.67.8 dest-port 162'
         self.assertEqual(result['cli_cmd'], expected_cmd)

@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerinstance_facts
 version_added: "2.8"
-short_description: Get Azure Container Instance facts.
+short_description: Get Azure Container Instance facts
 description:
     - Get facts of Container Instance.
 
@@ -37,7 +37,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -45,7 +45,7 @@ EXAMPLES = '''
   - name: Get specific Container Instance facts
     azure_rm_containerinstance_facts:
       resource_group: myResourceGroup
-      name: container_group_name
+      name: myContainer
 
   - name: List Container Instances in a specified resource group name
     azure_rm_containerinstance_facts:
@@ -63,8 +63,8 @@ container_groups:
                 - The resource id.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
-                    containers"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance/contain
+                     erGroups/myContainer"
         resource_group:
             description:
                 - Resource group where the container exists.
@@ -95,6 +95,12 @@ container_groups:
             returned: always
             type: str
             sample: 173.15.18.1
+        dns_name_label:
+            description:
+                - The Dns name label for the IP.
+            returned: always
+            type: str
+            sample: mydomain
         ports:
             description:
                 - List of ports exposed by the container instance.
@@ -113,15 +119,15 @@ container_groups:
                         - The name of the container instance.
                     returned: always
                     type: str
-                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
-                            containers"
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance
+                             /containerGroups/myContainer"
                 image:
                     description:
                         - The container image name.
                     returned: always
                     type: str
-                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
-                            containers"
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance
+                             /containerGroups/myContainer"
                 memory:
                     description:
                         - The required memory of the containers in GB.
@@ -140,6 +146,25 @@ container_groups:
                     returned: always
                     type: list
                     sample: [ 80, 81 ]
+                commands:
+                    description:
+                        - List of commands to execute within the container instance in exec form.
+                    returned: always
+                    type: list
+                    sample: [ "pip install abc" ]
+                environment_variables:
+                    description:
+                        - List of container environment variables.
+                    type: complex
+                    contains:
+                        name:
+                            description:
+                                - Environment variable name.
+                            type: str
+                        value:
+                            description:
+                                - Environment variable value.
+                            type: str
         tags:
             description: Tags assigned to the resource. Dictionary of string:string pairs.
             type: dict
@@ -147,6 +172,7 @@ container_groups:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _camel_to_snake
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -244,7 +270,7 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
     def format_item(self, item):
         d = item.as_dict()
         containers = d['containers']
-        ports = d['ip_address']['ports']
+        ports = d['ip_address']['ports'] if 'ip_address' in d else []
         resource_group = d['id'].split('resourceGroups/')[1].split('/')[0]
 
         for port_index in range(len(ports)):
@@ -257,7 +283,9 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
                 'image': old_container['image'],
                 'memory': old_container['resources']['requests']['memory_in_gb'],
                 'cpu': old_container['resources']['requests']['cpu'],
-                'ports': []
+                'ports': [],
+                'commands': old_container.get('command'),
+                'environment_variables': old_container.get('environment_variables')
             }
             for port_index in range(len(old_container['ports'])):
                 new_container['ports'].append(old_container['ports'][port_index]['port'])
@@ -268,10 +296,12 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
             'resource_group': resource_group,
             'name': d['name'],
             'os_type': d['os_type'],
-            'ip_address': 'public' if d['ip_address']['type'] == 'Public' else 'none',
+            'dns_name_label': d['ip_address'].get('dns_name_label'),
+            'ip_address': d['ip_address']['ip'] if 'ip_address' in d else '',
             'ports': ports,
             'location': d['location'],
             'containers': containers,
+            'restart_policy': _camel_to_snake(d.get('restart_policy')) if d.get('restart_policy') else None,
             'tags': d.get('tags', None)
         }
         return d

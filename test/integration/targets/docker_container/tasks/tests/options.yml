@@ -5,23 +5,9 @@
     cname_h1: "{{ cname_prefix ~ '-options-h1' }}"
     cname_h2: "{{ cname_prefix ~ '-options-h2' }}"
     cname_h3: "{{ cname_prefix ~ '-options-h3' }}"
-    nname_1: "{{ cname_prefix ~ '-network-1' }}"
-    nname_2: "{{ cname_prefix ~ '-network-2' }}"
 - name: Registering container name
   set_fact:
     cnames: "{{ cnames }} + [cname, cname_h1, cname_h2, cname_h3]"
-    dnetworks: "{{ dnetworks }} + [nname_1, nname_2]"
-
-- name: Create networks
-  docker_network:
-    name: "{{ network_name }}"
-    state: present
-  loop:
-  - "{{ nname_1 }}"
-  - "{{ nname_2 }}"
-  loop_control:
-    loop_var: network_name
-  when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
 ## auto_remove #####################################################
@@ -101,7 +87,7 @@
 - assert:
     that:
     - blkio_weight_1 is changed
-    - blkio_weight_2 is not changed
+    - "blkio_weight_2 is not changed or 'Docker warning: Your kernel does not support Block I/O weight or the cgroup is not mounted. Weight discarded.' in blkio_weight_2.warnings"
     - blkio_weight_3 is changed
 
 ####################################################################
@@ -356,7 +342,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 0
+    cpuset_cpus: "0"
     state: started
   register: cpuset_cpus_1
 
@@ -365,7 +351,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 0
+    cpuset_cpus: "0"
     state: started
   register: cpuset_cpus_2
 
@@ -374,7 +360,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 1
+    cpuset_cpus: "1"
     state: started
     force_kill: yes
   # This will fail if the system the test is run on doesn't have
@@ -404,7 +390,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 0
+    cpuset_mems: "0"
     state: started
   register: cpuset_mems_1
 
@@ -413,7 +399,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 0
+    cpuset_mems: "0"
     state: started
   register: cpuset_mems_2
 
@@ -422,7 +408,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 1
+    cpuset_mems: "1"
     state: started
     force_kill: yes
   # This will fail if the system the test is run on doesn't have
@@ -951,6 +937,7 @@
     dns_search_domains:
     - example.org
     - example.com
+    force_kill: yes
   register: dns_search_domains_3
 
 - name: dns_search_domains (changed elements)
@@ -1014,6 +1001,7 @@
     dns_servers:
     - 8.8.8.8
     - 1.1.1.1
+    force_kill: yes
   register: dns_servers_3
 
 - name: dns_servers (changed elements)
@@ -1115,7 +1103,7 @@
     state: started
   register: entrypoint_2
 
-- name: entrypoint (change order idempotency)
+- name: entrypoint (change order, should not be idempotent)
   docker_container:
     image: alpine:3.8
     entrypoint:
@@ -1125,6 +1113,7 @@
     - "-v"
     name: "{{ cname }}"
     state: started
+    force_kill: yes
   register: entrypoint_3
 
 - name: entrypoint (less parameters)
@@ -1355,8 +1344,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
-    - 5678
+    - "9001"
+    - "9002"
   register: exposed_ports_1
 
 - name: exposed_ports (idempotency)
@@ -1366,8 +1355,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 5678
-    - 1234
+    - "9002"
+    - "9001"
   register: exposed_ports_2
 
 - name: exposed_ports (less ports)
@@ -1377,7 +1366,7 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
+    - "9002"
   register: exposed_ports_3
 
 - name: exposed_ports (more ports)
@@ -1387,8 +1376,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
-    - 1235
+    - "9002"
+    - "9003"
     force_kill: yes
   register: exposed_ports_4
 
@@ -1423,8 +1412,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
-    - 5678
+    - "1234"
+    - "5678"
   register: groups_1
 
 - name: groups (idempotency)
@@ -1434,8 +1423,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 5678
-    - 1234
+    - "5678"
+    - "1234"
   register: groups_2
 
 - name: groups (less groups)
@@ -1445,7 +1434,7 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
+    - "1234"
   register: groups_3
 
 - name: groups (more groups)
@@ -1455,8 +1444,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
-    - 2345
+    - "1234"
+    - "2345"
     force_kill: yes
   register: groups_4
 
@@ -2138,6 +2127,7 @@
     log_options:
       labels: production_status
       env: os,customer
+      max-file: 5
   register: log_options_1
 
 - name: log_options (idempotency)
@@ -2150,6 +2140,7 @@
     log_options:
       env: os,customer
       labels: production_status
+      max-file: 5
   register: log_options_2
 
 - name: log_options (less log options)
@@ -2172,7 +2163,7 @@
     log_driver: json-file
     log_options:
       labels: production_status
-      max-file: 1
+      max-size: 10m
     force_kill: yes
   register: log_options_4
 
@@ -2187,6 +2178,8 @@
     that:
     - log_options_1 is changed
     - log_options_2 is not changed
+    - "'Non-string value found for log_options option \\'max-file\\'. The value is automatically converted to \\'5\\'. If this is not correct, or you want to
+avoid such warnings, please quote the value.' in log_options_2.warnings"
     - log_options_3 is not changed
     - log_options_4 is changed
 
@@ -2434,164 +2427,6 @@
     - memory_swappiness_3 is changed
 
 ####################################################################
-## network_mode ####################################################
-####################################################################
-
-- name: network_mode
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: host
-  register: network_mode_1
-
-- name: network_mode (idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: host
-  register: network_mode_2
-
-- name: network_mode (change)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: none
-    force_kill: yes
-  register: network_mode_3
-
-- name: network_mode (container mode setup)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname_h1 }}"
-    state: started
-
-- name: network_mode (container mode)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: "container:{{ cname_h1 }}"
-    force_kill: yes
-  register: network_mode_4
-
-- name: network_mode (container mode idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    network_mode: "container:{{ cname_h1 }}"
-  register: network_mode_5
-
-- name: cleanup
-  docker_container:
-    name: "{{ container_name }}"
-    state: absent
-    force_kill: yes
-  loop:
-  - "{{ cname }}"
-  - "{{ cname_h1 }}"
-  loop_control:
-    loop_var: container_name
-  diff: no
-
-- assert:
-    that:
-    - network_mode_1 is changed
-    - network_mode_2 is not changed
-    - network_mode_3 is changed
-    - network_mode_4 is changed
-    - network_mode_5 is not changed
-
-####################################################################
-## networks, purge_networks ########################################
-####################################################################
-
-- block:
-  - name: networks, purge_networks
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-      - name: "{{ nname_1 }}"
-    register: networks_1
-
-  - name: networks, purge_networks (idempotency)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: "{{ nname_1 }}"
-      - name: bridge
-    register: networks_2
-
-  - name: networks (less networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      networks:
-      - name: bridge
-    register: networks_3
-
-  - name: networks, purge_networks (less networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-    register: networks_4
-
-  - name: networks, purge_networks (more networks)
-    docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
-      name: "{{ cname }}"
-      state: started
-      purge_networks: yes
-      networks:
-      - name: bridge
-      - name: "{{ nname_2 }}"
-      force_kill: yes
-    register: networks_5
-
-  - name: cleanup
-    docker_container:
-      name: "{{ cname }}"
-      state: absent
-      force_kill: yes
-    diff: no
-
-  - assert:
-      that:
-      - networks_1 is changed
-      - networks_2 is not changed
-      - networks_3 is not changed
-      - networks_4 is changed
-      - networks_5 is changed
-
-  when: docker_py_version is version('1.10.0', '>=')
-
-####################################################################
 ## oom_killer ######################################################
 ####################################################################
 
@@ -2603,7 +2438,6 @@
     oom_killer: yes
     state: started
   register: oom_killer_1
-  ignore_errors: yes
 
 - name: oom_killer (idempotency)
   docker_container:
@@ -2613,7 +2447,6 @@
     oom_killer: yes
     state: started
   register: oom_killer_2
-  ignore_errors: yes
 
 - name: oom_killer (change)
   docker_container:
@@ -2624,7 +2457,6 @@
     state: started
     force_kill: yes
   register: oom_killer_3
-  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2638,12 +2470,6 @@
     - oom_killer_1 is changed
     - oom_killer_2 is not changed
     - oom_killer_3 is changed
-  when: docker_py_version is version('2.0.0', '>=')
-- assert:
-    that:
-    - oom_killer_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_killer_1.msg"
-  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## oom_score_adj ###################################################
@@ -2657,7 +2483,6 @@
     oom_score_adj: 5
     state: started
   register: oom_score_adj_1
-  ignore_errors: yes
 
 - name: oom_score_adj (idempotency)
   docker_container:
@@ -2667,7 +2492,6 @@
     oom_score_adj: 5
     state: started
   register: oom_score_adj_2
-  ignore_errors: yes
 
 - name: oom_score_adj (change)
   docker_container:
@@ -2678,7 +2502,6 @@
     state: started
     force_kill: yes
   register: oom_score_adj_3
-  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -2692,12 +2515,6 @@
     - oom_score_adj_1 is changed
     - oom_score_adj_2 is not changed
     - oom_score_adj_3 is changed
-  when: docker_py_version is version('2.0.0', '>=')
-- assert:
-    that:
-    - oom_score_adj_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in oom_score_adj_1.msg"
-  when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
 ## output_logs #####################################################
@@ -2941,8 +2758,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
-    - 5678
+    - '9001'
+    - '9002'
   register: published_ports_1
 
 - name: published_ports (idempotency)
@@ -2952,8 +2769,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 5678
-    - 1234
+    - '9002'
+    - '9001'
   register: published_ports_2
 
 - name: published_ports (less published_ports)
@@ -2963,7 +2780,7 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
+    - '9002'
   register: published_ports_3
 
 - name: published_ports (more published_ports)
@@ -2973,8 +2790,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
-    - 2345
+    - '9002'
+    - '9003'
     force_kill: yes
   register: published_ports_4
 
@@ -3042,109 +2859,6 @@
     - read_only_1 is changed
     - read_only_2 is not changed
     - read_only_3 is changed
-
-####################################################################
-## recreate ########################################################
-####################################################################
-
-- name: recreate (created)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: present
-    force_kill: yes
-  register: recreate_1
-
-- name: recreate (created, recreate)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    recreate: yes
-    state: present
-    force_kill: yes
-  register: recreate_2
-
-- name: recreate (started)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    force_kill: yes
-  register: recreate_3
-
-- name: recreate (started, recreate)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    recreate: yes
-    state: started
-    force_kill: yes
-  register: recreate_4
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    force_kill: yes
-  diff: no
-
-- debug: var=recreate_1
-- debug: var=recreate_2
-- debug: var=recreate_3
-- debug: var=recreate_4
-
-- assert:
-    that:
-    - recreate_1 is changed
-    - recreate_2 is changed
-    - recreate_3 is changed
-    - recreate_4 is changed
-    - recreate_1.container.Id != recreate_2.container.Id
-    - recreate_2.container.Id == recreate_3.container.Id
-    - recreate_3.container.Id != recreate_4.container.Id
-
-####################################################################
-## restart #########################################################
-####################################################################
-
-- name: restart
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    force_kill: yes
-  register: restart_1
-
-- name: restart (restart)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    restart: yes
-    state: started
-    force_kill: yes
-  register: restart_2
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    force_kill: yes
-  diff: no
-
-- debug: var=restart_1
-- debug: var=restart_2
-
-- assert:
-    that:
-    - restart_1 is changed
-    - restart_2 is changed
-    - restart_1.container.Id == restart_2.container.Id
 
 ####################################################################
 ## restart_policy ##################################################
@@ -3413,7 +3127,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 30
+    stop_signal: "30"
     state: started
   register: stop_signal_1
 
@@ -3422,7 +3136,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 30
+    stop_signal: "30"
     state: started
   register: stop_signal_2
 
@@ -3431,7 +3145,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 9
+    stop_signal: "9"
     state: started
     force_kill: yes
   register: stop_signal_3
@@ -4143,15 +3857,3 @@
 ####################################################################
 ####################################################################
 ####################################################################
-
-- name: Delete networks
-  docker_network:
-    name: "{{ network_name }}"
-    state: absent
-    force: yes
-  loop:
-  - "{{ nname_1 }}"
-  - "{{ nname_2 }}"
-  loop_control:
-    loop_var: network_name
-  when: docker_py_version is version('1.10.0', '>=')

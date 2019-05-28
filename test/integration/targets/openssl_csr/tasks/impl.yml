@@ -249,7 +249,15 @@
     cipher: auto
     select_crypto_backend: cryptography
 
-- name: Generate publickey - PEM format
+- name: Generate CSR with privatekey passphrase
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: hunter2
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: passphrase_1
+
+- name: Generate CSR (failed passphrase 1)
   openssl_csr:
     path: '{{ output_dir }}/csr_pw1.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
@@ -258,7 +266,7 @@
   ignore_errors: yes
   register: passphrase_error_1
 
-- name: Generate publickey - PEM format
+- name: Generate CSR (failed passphrase 2)
   openssl_csr:
     path: '{{ output_dir }}/csr_pw2.csr'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
@@ -267,10 +275,247 @@
   ignore_errors: yes
   register: passphrase_error_2
 
-- name: Generate publickey - PEM format
+- name: Generate CSR (failed passphrase 3)
   openssl_csr:
     path: '{{ output_dir }}/csr_pw3.csr'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_3
+
+- name: Create broken CSR
+  copy:
+    dest: "{{ output_dir }}/csrbroken.csr"
+    content: "broken"
+- name: Regenerate broken CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csrbroken.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      commonName: This is for Ansible
+    useCommonNameForSAN: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: output_broken
+
+- name: Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_1
+- name: Generate CSR (idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_2
+- name: Generate CSR (change)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: ansible.com
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_3
+- name: Generate CSR (remove)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    state: absent
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_4
+- name: Generate CSR (remove, idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backup.csr'
+    state: absent
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_backup_5
+
+- name: Generate CSR with everything
+  openssl_csr:
+    path: '{{ output_dir }}/csr_everything.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+      C: de
+      L: Somewhere
+      ST: Zurich
+      streetAddress: Welcome Street
+      O: Ansible
+      organizationalUnitName: Crypto Department
+      serialNumber: "1234"
+      SN: Last Name
+      GN: First Name
+      title: Chief
+      pseudonym: test
+      UID: asdf
+      emailAddress: test@example.com
+      postalAddress: 1234 Somewhere
+      postalCode: "1234"
+    useCommonNameForSAN: no
+    key_usage:
+      - digitalSignature
+      - keyAgreement
+      - Non Repudiation
+      - Key Encipherment
+      - dataEncipherment
+      - Certificate Sign
+      - cRLSign
+      - Encipher Only
+      - decipherOnly
+    key_usage_critical: yes
+    extended_key_usage:
+      - serverAuth  # the same as "TLS Web Server Authentication"
+      - TLS Web Server Authentication
+      - TLS Web Client Authentication
+      - Code Signing
+      - E-mail Protection
+      - timeStamping
+      - OCSPSigning
+      - Any Extended Key Usage
+      - qcStatements
+      - DVCS
+      - IPSec User
+      - biometricInfo
+    subject_alt_name:
+      - "DNS:www.ansible.com"
+      - "IP:1.2.3.4"
+      - "IP:::1"
+      - "email:test@example.org"
+      - "URI:https://example.org/test/index.html"
+    basic_constraints:
+      - "CA:TRUE"
+      - "pathlen:23"
+    basic_constraints_critical: yes
+    ocsp_must_staple: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: everything_1
+
+- name: Generate CSR with everything (idempotent, check mode)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_everything.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+      C: de
+      L: Somewhere
+      ST: Zurich
+      streetAddress: Welcome Street
+      O: Ansible
+      organizationalUnitName: Crypto Department
+      serialNumber: "1234"
+      SN: Last Name
+      GN: First Name
+      title: Chief
+      pseudonym: test
+      UID: asdf
+      emailAddress: test@example.com
+      postalAddress: 1234 Somewhere
+      postalCode: "1234"
+    useCommonNameForSAN: no
+    key_usage:
+      - digitalSignature
+      - keyAgreement
+      - Non Repudiation
+      - Key Encipherment
+      - dataEncipherment
+      - Certificate Sign
+      - cRLSign
+      - Encipher Only
+      - decipherOnly
+    key_usage_critical: yes
+    extended_key_usage:
+      - serverAuth  # the same as "TLS Web Server Authentication"
+      - TLS Web Server Authentication
+      - TLS Web Client Authentication
+      - Code Signing
+      - E-mail Protection
+      - timeStamping
+      - OCSPSigning
+      - Any Extended Key Usage
+      - qcStatements
+      - DVCS
+      - IPSec User
+      - biometricInfo
+    subject_alt_name:
+      - "DNS:www.ansible.com"
+      - "IP:1.2.3.4"
+      - "IP:::1"
+      - "email:test@example.org"
+      - "URI:https://example.org/test/index.html"
+    basic_constraints:
+      - "CA:TRUE"
+      - "pathlen:23"
+    basic_constraints_critical: yes
+    ocsp_must_staple: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  register: everything_2
+
+- name: Generate CSR with everything (idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_everything.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+      C: de
+      L: Somewhere
+      ST: Zurich
+      streetAddress: Welcome Street
+      O: Ansible
+      organizationalUnitName: Crypto Department
+      serialNumber: "1234"
+      SN: Last Name
+      GN: First Name
+      title: Chief
+      pseudonym: test
+      UID: asdf
+      emailAddress: test@example.com
+      postalAddress: 1234 Somewhere
+      postalCode: "1234"
+    useCommonNameForSAN: no
+    key_usage:
+      - digitalSignature
+      - keyAgreement
+      - Non Repudiation
+      - Key Encipherment
+      - dataEncipherment
+      - Certificate Sign
+      - cRLSign
+      - Encipher Only
+      - decipherOnly
+    key_usage_critical: yes
+    extended_key_usage:
+      - serverAuth  # the same as "TLS Web Server Authentication"
+      - TLS Web Server Authentication
+      - TLS Web Client Authentication
+      - Code Signing
+      - E-mail Protection
+      - timeStamping
+      - OCSPSigning
+      - Any Extended Key Usage
+      - qcStatements
+      - DVCS
+      - IPSec User
+      - biometricInfo
+    subject_alt_name:
+      - "DNS:www.ansible.com"
+      - "IP:1.2.3.4"
+      - "IP:::1"
+      - "email:test@example.org"
+      - "URI:https://example.org/test/index.html"
+    basic_constraints:
+      - "CA:TRUE"
+      - "pathlen:23"
+    basic_constraints_critical: yes
+    ocsp_must_staple: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: everything_3

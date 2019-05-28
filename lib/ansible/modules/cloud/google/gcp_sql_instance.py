@@ -82,13 +82,6 @@ options:
       to Second Generation instances.
     required: false
     suboptions:
-      available:
-        description:
-        - The availability status of the failover replica. A false status indicates
-          that the failover replica is out of sync. The master can only failover to
-          the failover replica when the status is true.
-        required: false
-        type: bool
       name:
         description:
         - The name of the failover replica. If specified at instance creation, a failover
@@ -286,31 +279,24 @@ options:
             description:
             - Define the backup start time in UTC (HH:MM) .
             required: false
-      settings_version:
-        description:
-        - The version of instance settings. This is a required field for update method
-          to make sure concurrent updates are handled properly. During update, use
-          the most recent settingsVersion value for this instance and do not try to
-          update this value.
-        required: false
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: "{{resource_name}}-2"
-      settings:
-        ip_configuration:
-          authorized_networks:
-          - name: google dns server
-            value: 8.8.8.8/32
-        tier: db-n1-standard-1
-      region: us-central1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: "{{resource_name}}-2"
+    settings:
+      ip_configuration:
+        authorized_networks:
+        - name: google dns server
+          value: 8.8.8.8/32
+      tier: db-n1-standard-1
+    region: us-central1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -624,7 +610,7 @@ def main():
             backend_type=dict(type='str', choices=['FIRST_GEN', 'SECOND_GEN', 'EXTERNAL']),
             connection_name=dict(type='str'),
             database_version=dict(type='str', choices=['MYSQL_5_5', 'MYSQL_5_6', 'MYSQL_5_7', 'POSTGRES_9_6']),
-            failover_replica=dict(type='dict', options=dict(available=dict(type='bool'), name=dict(type='str'))),
+            failover_replica=dict(type='dict', options=dict(name=dict(type='str'))),
             instance_type=dict(type='str', choices=['CLOUD_SQL_INSTANCE', 'ON_PREMISES_INSTANCE', 'READ_REPLICA_INSTANCE']),
             ipv6_address=dict(type='str'),
             master_instance_name=dict(type='str'),
@@ -672,7 +658,6 @@ def main():
                     backup_configuration=dict(
                         type='dict', options=dict(enabled=dict(type='bool'), binary_log_enabled=dict(type='bool'), start_time=dict(type='str'))
                     ),
-                    settings_version=dict(type='int'),
                 ),
             ),
         )
@@ -867,10 +852,10 @@ class InstanceFailoverreplica(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'available': self.request.get('available'), u'name': self.request.get('name')})
+        return remove_nones_from_dict({u'name': self.request.get('name')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'available': self.request.get(u'available'), u'name': self.request.get(u'name')})
+        return remove_nones_from_dict({u'name': self.request.get(u'name')})
 
 
 class InstanceIpaddressesArray(object):
@@ -987,7 +972,6 @@ class InstanceSettings(object):
                 u'tier': self.request.get('tier'),
                 u'availabilityType': self.request.get('availability_type'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get('backup_configuration', {}), self.module).to_request(),
-                u'settingsVersion': self.request.get('settings_version'),
             }
         )
 
@@ -998,7 +982,6 @@ class InstanceSettings(object):
                 u'tier': self.request.get(u'tier'),
                 u'availabilityType': self.request.get(u'availabilityType'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
-                u'settingsVersion': self.request.get(u'settingsVersion'),
             }
         )
 

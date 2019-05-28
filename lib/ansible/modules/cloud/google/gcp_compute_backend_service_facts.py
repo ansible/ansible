@@ -49,18 +49,19 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a backend service facts
+- name: " a backend service facts"
   gcp_compute_backend_service_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -84,7 +85,6 @@ items:
           - Specifies the balancing mode for this backend.
           - For global HTTP(S) or TCP/SSL load balancing, the default is UTILIZATION.
             Valid values are UTILIZATION, RATE (for HTTP(S)) and CONNECTION (for TCP/SSL).
-          - This cannot be used for internal load balancing.
           returned: success
           type: str
         capacityScaler:
@@ -95,7 +95,6 @@ items:
             configured capacity (depending on balancingMode). A setting of 0 means
             the group is completely drained, offering 0% of its available Capacity.
             Valid range is [0.0,1.0].
-          - This cannot be used for internal load balancing.
           returned: success
           type: str
         description:
@@ -106,13 +105,18 @@ items:
           type: str
         group:
           description:
-          - This instance group defines the list of instances that serve traffic.
-            Member virtual machine instances from each instance group must live in
-            the same zone as the instance group itself.
-          - No two backends in a backend service are allowed to use same Instance
-            Group resource.
-          - When the BackendService has load balancing scheme INTERNAL, the instance
-            group must be in a zone within the same region as the BackendService.
+          - The fully-qualified URL of an Instance Group or Network Endpoint Group
+            resource. In case of instance group this defines the list of instances
+            that serve traffic. Member virtual machine instances from each instance
+            group must live in the same zone as the instance group itself. No two
+            backends in a backend service are allowed to use same Instance Group resource.
+          - For Network Endpoint Groups this defines list of endpoints. All endpoints
+            of Network Endpoint Group must be hosted on instances located in the same
+            zone as the Network Endpoint Group.
+          - Backend service can not contain mix of Instance Group and Network Endpoint
+            Group backends.
+          - Note that you must specify an Instance Group or Network Endpoint Group
+            resource using the fully-qualified URL, rather than a partial URL.
           returned: success
           type: str
         maxConnections:
@@ -121,7 +125,6 @@ items:
             with either CONNECTION or UTILIZATION balancing modes.
           - For CONNECTION mode, either maxConnections or maxConnectionsPerInstance
             must be set.
-          - This cannot be used for internal load balancing.
           returned: success
           type: int
         maxConnectionsPerInstance:
@@ -131,7 +134,6 @@ items:
             used in either CONNECTION or UTILIZATION balancing modes.
           - For CONNECTION mode, either maxConnections or maxConnectionsPerInstance
             must be set.
-          - This cannot be used for internal load balancing.
           returned: success
           type: int
         maxRate:
@@ -140,7 +142,6 @@ items:
           - Can be used with either RATE or UTILIZATION balancing modes, but required
             if RATE mode. For RATE mode, either maxRate or maxRatePerInstance must
             be set.
-          - This cannot be used for internal load balancing.
           returned: success
           type: int
         maxRatePerInstance:
@@ -149,14 +150,12 @@ items:
             This is used to calculate the capacity of the group. Can be used in either
             balancing mode. For RATE mode, either maxRate or maxRatePerInstance must
             be set.
-          - This cannot be used for internal load balancing.
           returned: success
           type: str
         maxUtilization:
           description:
           - Used when balancingMode is UTILIZATION. This ratio defines the CPU utilization
             target for the group. The default is 0.8. Valid range is [0.0, 1.0].
-          - This cannot be used for internal load balancing.
           returned: success
           type: str
     cdnPolicy:
@@ -205,9 +204,20 @@ items:
               - "'&' and '=' will be percent encoded and not treated as delimiters."
               returned: success
               type: list
+        signedUrlCacheMaxAgeSec:
+          description:
+          - Maximum number of seconds the response to a signed URL request will be
+            considered fresh, defaults to 1hr (3600s). After this time period, the
+            response will be revalidated before being served.
+          - 'When serving responses to signed URL requests, Cloud CDN will internally
+            behave as though all responses from this backend had a "Cache-Control:
+            public, max-age=[TTL]" header, regardless of any existing Cache-Control
+            header. The actual headers served in responses will not be altered.'
+          returned: success
+          type: int
     connectionDraining:
       description:
-      - Settings for connection draining.
+      - Settings for connection draining .
       returned: success
       type: complex
       contains:
@@ -222,6 +232,12 @@ items:
       - Creation timestamp in RFC3339 text format.
       returned: success
       type: str
+    fingerprint:
+      description:
+      - Fingerprint of this resource. A hash of the contents stored in this object.
+        This field is used in optimistic locking.
+      returned: success
+      type: str
     description:
       description:
       - An optional description of this resource.
@@ -230,7 +246,6 @@ items:
     enableCDN:
       description:
       - If true, enable Cloud CDN for this BackendService.
-      - When the load balancing scheme is INTERNAL, this field is not used.
       returned: success
       type: bool
     healthChecks:
@@ -238,8 +253,6 @@ items:
       - The list of URLs to the HttpHealthCheck or HttpsHealthCheck resource for health
         checking this BackendService. Currently at most one health check can be specified,
         and a health check is required.
-      - For internal load balancing, a URL to a HealthCheck resource must be specified
-        instead.
       returned: success
       type: list
     id:
@@ -260,24 +273,25 @@ items:
           type: bool
         oauth2ClientId:
           description:
-          - OAuth2 Client ID for IAP.
+          - OAuth2 Client ID for IAP .
           returned: success
           type: str
         oauth2ClientSecret:
           description:
-          - OAuth2 Client Secret for IAP.
+          - OAuth2 Client Secret for IAP .
           returned: success
           type: str
         oauth2ClientSecretSha256:
           description:
-          - OAuth2 Client Secret SHA-256 for IAP.
+          - OAuth2 Client Secret SHA-256 for IAP .
           returned: success
           type: str
     loadBalancingScheme:
       description:
       - Indicates whether the backend service will be used with internal or external
         load balancing. A backend service created for one type of load balancing cannot
-        be used with the other.
+        be used with the other. Must be `EXTERNAL` for a global backend service. Defaults
+        to `EXTERNAL`.
       returned: success
       type: str
     name:
@@ -294,29 +308,25 @@ items:
       description:
       - Name of backend port. The same name should appear in the instance groups referenced
         by this service. Required when the load balancing scheme is EXTERNAL.
-      - When the load balancing scheme is INTERNAL, this field is not used.
       returned: success
       type: str
     protocol:
       description:
       - The protocol this BackendService uses to communicate with backends.
-      - Possible values are HTTP, HTTPS, TCP, and SSL. The default is HTTP.
-      - For internal load balancing, the possible values are TCP and UDP, and the
-        default is TCP.
+      - 'Possible values are HTTP, HTTPS, HTTP2, TCP, and SSL. The default is HTTP.
+        **NOTE**: HTTP2 is only valid for beta HTTP/2 load balancer types and may
+        result in errors if used with the GA API.'
       returned: success
       type: str
-    region:
+    securityPolicy:
       description:
-      - The region where the regional backend service resides.
-      - This field is not applicable to global backend services.
+      - The security policy associated with this backend service.
       returned: success
       type: str
     sessionAffinity:
       description:
       - Type of session affinity to use. The default is NONE.
       - When the load balancing scheme is EXTERNAL, can be NONE, CLIENT_IP, or GENERATED_COOKIE.
-      - When the load balancing scheme is INTERNAL, can be NONE, CLIENT_IP, CLIENT_IP_PROTO,
-        or CLIENT_IP_PORT_PROTO.
       - When the protocol is UDP, this field is not used.
       returned: success
       type: str
@@ -350,7 +360,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

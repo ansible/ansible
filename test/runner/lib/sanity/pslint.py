@@ -76,18 +76,23 @@ class PslintTest(SanitySingleVersion):
         if not find_executable('pwsh', required='warning'):
             return SanitySkipped(self.name)
 
-        cmd = ['test/sanity/pslint/pslint.ps1'] + paths
+        # Make sure requirements are installed before running sanity checks
+        cmds = [
+            ['test/runner/requirements/sanity.ps1'],
+            ['test/sanity/pslint/pslint.ps1'] + paths
+        ]
 
-        try:
-            stdout, stderr = run_command(args, cmd, capture=True)
-            status = 0
-        except SubprocessError as ex:
-            stdout = ex.stdout
-            stderr = ex.stderr
-            status = ex.status
+        for cmd in cmds:
+            try:
+                stdout, stderr = run_command(args, cmd, capture=True)
+                status = 0
+            except SubprocessError as ex:
+                stdout = ex.stdout
+                stderr = ex.stderr
+                status = ex.status
 
-        if stderr:
-            raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+            if stderr:
+                raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
         if args.explain:
             return SanitySuccess(self.name)
@@ -96,13 +101,15 @@ class PslintTest(SanitySingleVersion):
             'Information',
             'Warning',
             'Error',
+            'ParseError',
         ]
 
         cwd = os.getcwd() + '/'
 
-        # replace unicode smart quotes with ascii versions
+        # replace unicode smart quotes and ellipsis with ascii versions
         stdout = re.sub(u'[\u2018\u2019]', "'", stdout)
         stdout = re.sub(u'[\u201c\u201d]', '"', stdout)
+        stdout = re.sub(u'[\u2026]', '...', stdout)
 
         messages = json.loads(stdout)
 

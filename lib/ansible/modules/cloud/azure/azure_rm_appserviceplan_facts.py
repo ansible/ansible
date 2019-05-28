@@ -19,7 +19,7 @@ module: azure_rm_appserviceplan_facts
 
 version_added: "2.7"
 
-short_description: Get azure app service plan facts.
+short_description: Get azure app service plan facts
 
 description:
     - Get facts for a specific app service plan or all app service plans in a resource group, or all app service plan in current subscription.
@@ -39,14 +39,14 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu (@yungezz)"
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
     - name: Get facts for app service plan by name
       azure_rm_appserviceplan_facts:
         resource_group: myResourceGroup
-        name: winwebapp1
+        name: myAppServicePlan
 
     - name: Get azure_rm_appserviceplan_facts for app service plan in resource group
       azure_rm_webapp_facts:
@@ -141,10 +141,7 @@ class AzureRMAppServicePlanFacts(AzureRMModuleBase):
             tags=dict(type='list')
         )
 
-        self.results = dict(
-            changed=False,
-            ansible_facts=dict(azure_appserviceplans=[])
-        )
+        self.results = dict(changed=False)
 
         self.name = None
         self.resource_group = None
@@ -214,19 +211,19 @@ class AzureRMAppServicePlanFacts(AzureRMModuleBase):
         return results
 
     def construct_curated_plan(self, plan):
-        plan_info = self.serialize_obj(plan, AZURE_OBJECT_CLASS)
+        plan_facts = self.serialize_obj(plan, AZURE_OBJECT_CLASS)
 
         curated_output = dict()
-        curated_output['id'] = plan_info['id']
-        curated_output['name'] = plan_info['name']
-        curated_output['resource_group'] = plan_info['properties']['resourceGroup']
-        curated_output['location'] = plan_info['location']
-        curated_output['tags'] = plan_info.get('tags', None)
+        curated_output['id'] = plan_facts['id']
+        curated_output['name'] = plan_facts['name']
+        curated_output['resource_group'] = plan_facts['properties']['resourceGroup']
+        curated_output['location'] = plan_facts['location']
+        curated_output['tags'] = plan_facts.get('tags', None)
         curated_output['is_linux'] = False
-        curated_output['kind'] = plan_info['kind']
-        curated_output['sku'] = plan_info['sku']
+        curated_output['kind'] = plan_facts['kind']
+        curated_output['sku'] = plan_facts['sku']
 
-        if plan_info['properties'].get('reserved', None):
+        if plan_facts['properties'].get('reserved', None):
             curated_output['is_linux'] = True
 
         return curated_output

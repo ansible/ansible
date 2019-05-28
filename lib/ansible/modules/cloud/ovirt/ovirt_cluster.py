@@ -241,12 +241,14 @@ options:
                in the cluster. If the automatic deployment of the external
                network provider is supported, the networks of the referenced
                network provider are available on every host in the cluster."
-            - "External network provider is described by following dictionary:"
-            - "C(name) - Name of the external network provider. Either C(name)
-               or C(id) is required."
-            - "C(id) - ID of the external network provider. Either C(name) or
-               C(id) is required."
             - "This is supported since oVirt version 4.2."
+        suboptions:
+            name:
+                description:
+                    - Name of the external network provider. Either C(name) or C(id) is required.
+            id:
+                description:
+                    - ID of the external network provider. Either C(name) or C(id) is required.
         version_added: 2.5
     firewall_type:
         description:

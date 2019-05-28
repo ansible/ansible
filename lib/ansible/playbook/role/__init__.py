@@ -26,7 +26,7 @@ from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
+from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
@@ -91,7 +91,7 @@ def hash_params(params):
     return frozenset((params,))
 
 
-class Role(Base, Become, Conditional, Taggable):
+class Role(Base, Conditional, Taggable, CollectionSearch):
 
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
@@ -99,6 +99,7 @@ class Role(Base, Become, Conditional, Taggable):
     def __init__(self, play=None, from_files=None, from_include=False):
         self._role_name = None
         self._role_path = None
+        self._role_collection = None
         self._role_params = dict()
         self._loader = None
 
@@ -166,6 +167,7 @@ class Role(Base, Become, Conditional, Taggable):
             if role_include.role not in play.ROLE_CACHE:
                 play.ROLE_CACHE[role_include.role] = dict()
 
+            # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
             play.ROLE_CACHE[role_include.role][hashed_params] = r
             return r
 
@@ -176,6 +178,7 @@ class Role(Base, Become, Conditional, Taggable):
     def _load_role_data(self, role_include, parent_role=None):
         self._role_name = role_include.role
         self._role_path = role_include.get_role_path()
+        self._role_collection = role_include._role_collection
         self._role_params = role_include.get_role_params()
         self._variable_manager = role_include.get_variable_manager()
         self._loader = role_include.get_loader()
@@ -193,9 +196,6 @@ class Role(Base, Become, Conditional, Taggable):
                 )
             else:
                 self._attributes[attr_name] = role_include._attributes[attr_name]
-
-        # ensure all plugins dirs for this role are added to plugin search path
-        add_all_plugin_dirs(self._role_path)
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
@@ -217,6 +217,29 @@ class Role(Base, Become, Conditional, Taggable):
             self._dependencies = self._load_dependencies()
         else:
             self._metadata = RoleMetadata()
+
+        # reset collections list; roles do not inherit collections from parents, just use the defaults
+        # FUTURE: use a private config default for this so we can allow it to be overridden later
+        self.collections = []
+
+        # configure plugin/collection loading; either prepend the current role's collection or configure legacy plugin loading
+        # FIXME: need exception for explicit ansible.legacy?
+        if self._role_collection:
+            self.collections.insert(0, self._role_collection)
+        else:
+            # legacy role, ensure all plugin dirs under the role are added to plugin search path
+            add_all_plugin_dirs(self._role_path)
+
+        # collections can be specified in metadata for legacy or collection-hosted roles
+        if self._metadata.collections:
+            self.collections.extend(self._metadata.collections)
+
+        # if any collections were specified, ensure that core or legacy synthetic collections are always included
+        if self.collections:
+            # default append collection is core for collection-hosted roles, legacy for others
+            default_append_collection = 'ansible.builtin' if self.collections else 'ansible.legacy'
+            if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
+                self.collections.append(default_append_collection)
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
         if task_data:

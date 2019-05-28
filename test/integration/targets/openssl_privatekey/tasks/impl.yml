@@ -55,10 +55,6 @@
   when: select_crypto_backend == 'pyopenssl'
 - set_fact:
     ecc_types:
-    # - curve: X448
-    #   min_cryptography_version: "2.5"
-    # - curve: X25519
-    #   min_cryptography_version: "2.0"
     - curve: secp384r1
       openssl_name: secp384r1
       min_cryptography_version: "0.5"
@@ -143,12 +139,48 @@
     label: "{{ item.curve }}"
   register: privatekey_ecc_idempotency
 
+- block:
+  - name: Test other type generation
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey-{{ item.type }}.pem'
+      type: "{{ item.type }}"
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    when: cryptography_version.stdout is version(item.min_version, '>=')
+    loop: "{{ types }}"
+    loop_control:
+      label: "{{ item.type }}"
+    register: privatekey_t1_generate
+
+  - name: Test other type generation (idempotency)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey-{{ item.type }}.pem'
+      type: "{{ item.type }}"
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    when: cryptography_version.stdout is version(item.min_version, '>=')
+    loop: "{{ types }}"
+    loop_control:
+      label: "{{ item.type }}"
+    register: privatekey_t1_idempotency
+
+  when: select_crypto_backend == 'cryptography'
+  vars:
+    types:
+      - type: X25519
+        min_version: '2.5'
+      - type: Ed25519
+        min_version: '2.6'
+      - type: Ed448
+        min_version: '2.6'
+      - type: X448
+        min_version: '2.6'
+
 - name: Generate privatekey with passphrase
   openssl_privatekey:
     path: '{{ output_dir }}/privatekeypw.pem'
     passphrase: hunter2
     cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
     select_crypto_backend: '{{ select_crypto_backend }}'
+    backup: yes
   register: passphrase_1
 
 - name: Generate privatekey with passphrase (idempotent)
@@ -157,18 +189,21 @@
     passphrase: hunter2
     cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
     select_crypto_backend: '{{ select_crypto_backend }}'
+    backup: yes
   register: passphrase_2
 
 - name: Regenerate privatekey without passphrase
   openssl_privatekey:
     path: '{{ output_dir }}/privatekeypw.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
+    backup: yes
   register: passphrase_3
 
 - name: Regenerate privatekey without passphrase (idempotent)
   openssl_privatekey:
     path: '{{ output_dir }}/privatekeypw.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
+    backup: yes
   register: passphrase_4
 
 - name: Regenerate privatekey with passphrase
@@ -177,4 +212,65 @@
     passphrase: hunter2
     cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
     select_crypto_backend: '{{ select_crypto_backend }}'
+    backup: yes
   register: passphrase_5
+
+- name: Create broken key
+  copy:
+    dest: "{{ output_dir }}/broken"
+    content: "broken"
+- name: Regenerate broken key
+  openssl_privatekey:
+    path: '{{ output_dir }}/broken.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: output_broken
+
+- name: Remove module
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+    backup: yes
+    state: absent
+  register: remove_1
+
+- name: Remove module (idempotent)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+    backup: yes
+    state: absent
+  register: remove_2
+
+- name: Generate privatekey_mode (mode 0400)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_mode_1
+- name: Stat for privatekey_mode
+  stat:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+  register: privatekey_mode_1_stat
+
+- name: Generate privatekey_mode (mode 0400, idempotency)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_mode_2
+
+- name: Generate privatekey_mode (mode 0400, force)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+    force: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_mode_3
+- name: Stat for privatekey_mode
+  stat:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+  register: privatekey_mode_3_stat

@@ -37,8 +37,8 @@ options:
             - "ID of the Virtual Machine to manage. Either C(vm_id) or C(vm_name) is required if C(state) is I(attached) or I(detached)."
     state:
         description:
-            - "Should the Virtual Machine disk be present/absent/attached/detached."
-        choices: ['present', 'absent', 'attached', 'detached']
+            - "Should the Virtual Machine disk be present/absent/attached/detached/exported."
+        choices: ['present', 'absent', 'attached', 'detached', 'exported']
         default: 'present'
     download_image_path:
         description:
@@ -77,8 +77,9 @@ options:
         choices: ['raw', 'cow']
     content_type:
         description:
-            - Specify if the disk is a data disk or ISO image
-        choices: ['data', 'iso']
+            - Specify if the disk is a data disk or ISO image or a one of a the Hosted Engine disk types
+            - The Hosted Engine disk content types are available with Engine 4.3+ and Ansible 2.8
+        choices: ['data', 'iso', 'hosted_engine', 'hosted_engine_sanlock', 'hosted_engine_metadata', 'hosted_engine_configuration']
         default: 'data'
         version_added: "2.8"
     sparse:
@@ -126,13 +127,28 @@ options:
     logical_unit:
         description:
             - "Dictionary which describes LUN to be directly attached to VM:"
-            - "C(address) - Address of the storage server. Used by iSCSI."
-            - "C(port) - Port of the storage server. Used by iSCSI."
-            - "C(target) - iSCSI target."
-            - "C(lun_id) - LUN id."
-            - "C(username) - CHAP Username to be used to access storage server. Used by iSCSI."
-            - "C(password) - CHAP Password of the user to be used to access storage server. Used by iSCSI."
-            - "C(storage_type) - Storage type either I(fcp) or I(iscsi)."
+        suboptions:
+            address:
+                description:
+                    - Address of the storage server. Used by iSCSI.
+            port:
+                description:
+                    - Port of the storage server. Used by iSCSI.
+            target:
+                description:
+                    - iSCSI target.
+            lun_id:
+                description:
+                    - LUN id.
+            username:
+                description:
+                    - CHAP Username to be used to access storage server. Used by iSCSI.
+            password:
+                description:
+                    - CHAP Password of the user to be used to access storage server. Used by iSCSI.
+            storage_type:
+                description:
+                    - Storage type either I(fcp) or I(iscsi).
     sparsify:
         description:
             - "I(True) if the disk should be sparsified."
@@ -385,7 +401,7 @@ def transfer(connection, module, direction, transfer_func):
             raise Exception(
                 "Error occurred while uploading image. The transfer is in %s" % transfer.phase
             )
-        if module.params.get('logical_unit'):
+        if not module.params.get('logical_unit'):
             disks_service = connection.system_service().disks_service()
             wait(
                 service=disks_service.service(module.params['id']),
@@ -596,6 +612,23 @@ def searchable_attributes(module):
     return dict((k, v) for k, v in attributes.items() if v is not None)
 
 
+def get_vm_service(connection, module):
+    if module.params.get('vm_id') is not None or module.params.get('vm_name') is not None and module.params['state'] != 'absent':
+        vms_service = connection.system_service().vms_service()
+
+        # If `vm_id` isn't specified, find VM by name:
+        vm_id = module.params['vm_id']
+        if vm_id is None:
+            vm_id = get_id_by_name(vms_service, module.params['vm_name'])
+
+        if vm_id is None:
+            module.fail_json(
+                msg="VM don't exists, please create it first."
+            )
+
+        return vms_service.vm_service(vm_id)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -614,7 +647,10 @@ def main():
         profile=dict(default=None),
         quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
-        content_type=dict(default='data', choices=['data', 'iso']),
+        content_type=dict(
+            default='data',
+            choices=['data', 'iso', 'hosted_engine', 'hosted_engine_sanlock', 'hosted_engine_metadata', 'hosted_engine_configuration']
+        ),
         sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
@@ -659,23 +695,31 @@ def main():
             service=disks_service,
         )
 
+        force_create = False
+        vm_service = get_vm_service(connection, module)
         if lun:
             disk = _search_by_lun(disks_service, lun.get('id'))
+        else:
+            disk = disks_module.search_entity(search_params=searchable_attributes(module))
+            if vm_service and disk:
+                # If the VM don't exist in VMs disks, but still it's found it means it was found
+                # for template with same name as VM, so we should force create the VM disk.
+                force_create = disk.id not in [a.disk.id for a in vm_service.disk_attachments_service().list() if a.disk]
 
         ret = None
         # First take care of creating the VM, if needed:
         if state in ('present', 'detached', 'attached'):
             ret = disks_module.create(
-                entity=disk,
-                search_params=searchable_attributes(module),
+                entity=disk if not force_create else None,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
                 fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL if lun is None else False,
+                force_create=force_create,
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])
             # We need to pass ID to the module, so in case we want detach/attach disk
             # we have this ID specified to attach/detach method:
-            module.params['id'] = ret['id'] if disk is None else disk.id
+            module.params['id'] = ret['id']
 
             # Upload disk image in case it's new disk or force parameter is passed:
             if module.params['upload_image_path'] and (is_new_disk or module.params['force']):
@@ -689,13 +733,14 @@ def main():
                 ret['changed'] = ret['changed'] or downloaded
 
             # Disk sparsify, only if disk is of image type:
-            disk = disks_service.disk_service(module.params['id']).get()
-            if disk.storage_type == otypes.DiskStorageType.IMAGE:
-                ret = disks_module.action(
-                    action='sparsify',
-                    action_condition=lambda d: module.params['sparsify'],
-                    wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
-                )
+            if not module.check_mode:
+                disk = disks_service.disk_service(module.params['id']).get()
+                if disk.storage_type == otypes.DiskStorageType.IMAGE:
+                    ret = disks_module.action(
+                        action='sparsify',
+                        action_condition=lambda d: module.params['sparsify'],
+                        wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+                    )
 
         # Export disk as image to glance domain
         elif state == 'exported':
@@ -716,20 +761,8 @@ def main():
             ret = disks_module.remove()
 
         # If VM was passed attach/detach disks to/from the VM:
-        if module.params.get('vm_id') is not None or module.params.get('vm_name') is not None and state != 'absent':
-            vms_service = connection.system_service().vms_service()
-
-            # If `vm_id` isn't specified, find VM by name:
-            vm_id = module.params['vm_id']
-            if vm_id is None:
-                vm_id = getattr(search_by_name(vms_service, module.params['vm_name']), 'id', None)
-
-            if vm_id is None:
-                module.fail_json(
-                    msg="VM don't exists, please create it first."
-                )
-
-            disk_attachments_service = vms_service.vm_service(vm_id).disk_attachments_service()
+        if vm_service:
+            disk_attachments_service = vm_service.disk_attachments_service()
             disk_attachments_module = DiskAttachmentsModule(
                 connection=connection,
                 module=module,

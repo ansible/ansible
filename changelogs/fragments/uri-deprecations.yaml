@@ -1,0 +1,2 @@
+minor_changes:
+- uri - Remove deprecated ``HEADER_`` support (https://github.com/ansible/ansible/issues/55310)

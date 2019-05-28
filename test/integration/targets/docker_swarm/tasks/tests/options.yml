@@ -61,6 +61,16 @@
   register: output_6
   ignore_errors: yes
 
+- name: autolock_managers (force new swarm)
+  docker_swarm:
+    state: present
+    force: yes
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
+    autolock_managers: yes
+  diff: yes
+  register: output_7
+  ignore_errors: yes
+
 - name: assert autolock_managers changes
   assert:
     that:
@@ -89,6 +99,16 @@
        - 'output_6.diff.before is defined'
        - 'output_6.diff.after is defined'
   when: docker_py_version is version('2.6.0', '>=')
+
+- name: assert UnlockKey in swarm_facts
+  assert:
+    that:
+      - 'output_2.swarm_facts.UnlockKey'
+      - 'output_3.swarm_facts.UnlockKey is none'
+      - 'output_6.swarm_facts.UnlockKey is none'
+      - 'output_7.swarm_facts.UnlockKey'
+  when: docker_py_version is version('2.7.0', '>=')
+
 - assert:
     that:
     - output_1 is failed

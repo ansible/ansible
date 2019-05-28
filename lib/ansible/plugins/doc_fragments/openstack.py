@@ -24,7 +24,8 @@ options:
       - Dictionary containing auth information as needed by the cloud's auth
         plugin strategy. For the default I(password) plugin, this would contain
         I(auth_url), I(username), I(password), I(project_name) and any
-        information about domains if the cloud supports them. For other plugins,
+        information about domains (for example, I(os_user_domain_name) or I(os_project_domain_name)) if the cloud supports them.
+        For other plugins,
         this param will need to contain whatever parameters that auth plugin
         requires. This parameter is not needed if a named cloud is provided or
         OpenStack OS_* environment variables are present.
@@ -54,26 +55,29 @@ options:
       - How long should the socket layer wait before timing out for API calls.
         If this is omitted, nothing will be passed to the requests library.
     type: int
-  verify:
+  validate_certs:
     description:
       - Whether or not SSL API requests should be verified.
       - Before Ansible 2.3 this defaulted to C(yes).
     type: bool
     default: no
-    aliases: [ validate_certs ]
-  cacert:
+    aliases: [ verify ]
+  ca_cert:
     description:
       - A path to a CA Cert bundle that can be used as part of verifying
         SSL API requests.
     type: str
-  cert:
+    aliases: [ cacert ]
+  client_cert:
     description:
       - A path to a client certificate to use as part of the SSL transaction.
     type: str
-  key:
+    aliases: [ cert ]
+  client_key:
     description:
       - A path to a client key to use as part of the SSL transaction.
     type: str
+    aliases: [ key ]
   interface:
     description:
         - Endpoint URL type to fetch from the service catalog.
@@ -84,7 +88,7 @@ options:
     version_added: "2.3"
 requirements:
   - python >= 2.7
-  - openstacksdk
+  - openstacksdk >= 0.12.0
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
     may be used instead of providing explicit values.

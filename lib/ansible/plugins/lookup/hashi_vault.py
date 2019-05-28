@@ -54,8 +54,9 @@ DOCUMENTATION = """
     mount_point:
       description: vault mount point, only required if you have a custom mount point.
       default: ldap
-    cacert:
+    ca_cert:
       description: path to certificate to use for authentication.
+      aliases: [ cacert ]
     validate_certs:
       description: controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
       type: boolean
@@ -219,14 +220,14 @@ class HashiVault:
         if mount_point is None:
             mount_point = 'userpass'
 
-        self.client.auth_userpass(username, password, mount_point)
+        self.client.auth_userpass(username, password, mount_point=mount_point)
 
     def auth_ldap(self, **kwargs):
         username, password, mount_point = self.check_params(**kwargs)
         if mount_point is None:
             mount_point = 'ldap'
 
-        self.client.auth_ldap(username, password, mount_point)
+        self.client.auth_ldap(username, password, mount_point=mount_point)
 
     def boolean_or_cacert(self, validate_certs, cacert):
         validate_certs = boolean(validate_certs, strict=False)
@@ -266,6 +267,10 @@ class LookupModule(LookupBase):
             except ValueError:
                 raise AnsibleError("hashi_vault lookup plugin needs key=value pairs, but received %s" % terms)
             vault_dict[key] = value
+
+        if 'ca_cert' in vault_dict.keys():
+            vault_dict['cacert'] = vault_dict['ca_cert']
+            vault_dict.pop('ca_cert', None)
 
         vault_conn = HashiVault(**vault_dict)
 

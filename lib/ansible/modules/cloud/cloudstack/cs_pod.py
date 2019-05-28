@@ -16,73 +16,81 @@ module: cs_pod
 short_description: Manages pods on Apache CloudStack based clouds.
 description:
     - Create, update, delete pods.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the pod.
+    type: str
     required: true
   id:
     description:
       - uuid of the existing pod.
+    type: str
   start_ip:
     description:
       - Starting IP address for the Pod.
-      - Required on C(state=present)
+      - Required on I(state=present)
+    type: str
   end_ip:
     description:
       - Ending IP address for the Pod.
+    type: str
   netmask:
     description:
       - Netmask for the Pod.
-      - Required on C(state=present)
+      - Required on I(state=present)
+    type: str
   gateway:
     description:
       - Gateway for the Pod.
-      - Required on C(state=present)
+      - Required on I(state=present)
+    type: str
   zone:
     description:
       - Name of the zone in which the pod belongs to.
       - If not set, default zone is used.
+    type: str
   state:
     description:
       - State of the pod.
-    default: 'present'
-    choices: [ 'present', 'enabled', 'disabled', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, enabled, disabled, absent ]
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Ensure a pod is present
-  local_action:
-    module: cs_pod
+  cs_pod:
     name: pod1
     zone: ch-zrh-ix-01
     start_ip: 10.100.10.101
     gateway: 10.100.10.1
     netmask: 255.255.255.0
+  delegate_to: localhost
 
 - name: Ensure a pod is disabled
-  local_action:
-    module: cs_pod
+  cs_pod:
     name: pod1
     zone: ch-zrh-ix-01
     state: disabled
+  delegate_to: localhost
 
 - name: Ensure a pod is enabled
-  local_action:
-    module: cs_pod
+  cs_pod:
     name: pod1
     zone: ch-zrh-ix-01
     state: enabled
+  delegate_to: localhost
 
 - name: Ensure a pod is absent
-  local_action:
-    module: cs_pod
+  cs_pod:
     name: pod1
     zone: ch-zrh-ix-01
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

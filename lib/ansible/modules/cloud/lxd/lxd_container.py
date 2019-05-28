@@ -112,16 +112,18 @@ options:
         required: false
         default: unix:/var/snap/lxd/common/lxd/unix.socket
         version_added: '2.8'
-    key_file:
+    client_key:
         description:
           - The client certificate key file path.
         required: false
         default: '"{}/.config/lxc/client.key" .format(os.environ["HOME"])'
-    cert_file:
+        aliases: [ key_file ]
+    client_cert:
         description:
           - The client certificate file path.
         required: false
         default: '"{}/.config/lxc/client.crt" .format(os.environ["HOME"])'
+        aliases: [ cert_file ]
     trust_password:
         description:
           - The client trusted password.
@@ -143,7 +145,7 @@ notes:
   - You can copy a file from the host to the container
     with the Ansible M(copy) and M(template) module and the `lxd` connection plugin.
     See the example below.
-  - You can copy a file in the creatd container to the localhost
+  - You can copy a file in the created container to the localhost
     with `command=lxc file pull container_name/dir/filename filename`.
     See the first example below.
 '''
@@ -179,6 +181,30 @@ EXAMPLES = '''
       raw: apt-get install -y python
       when: python_install_check.rc == 1
 
+# An example for creating an Ubuntu 14.04 container using an image fingerprint.
+# This requires changing 'server' and 'protocol' key values, replacing the
+# 'alias' key with with 'fingerprint' and supplying an appropriate value that
+# matches the container image you wish to use.
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a started container
+      lxd_container:
+        name: mycontainer
+        state: started
+        source:
+          type: image
+          mode: pull
+          # Provides current (and older) Ubuntu images with listed fingerprints
+          server: https://cloud-images.ubuntu.com/releases
+          # Protocol used by 'ubuntu' remote (as shown by 'lxc remote list')
+          protocol: simplestreams
+          # This provides an Ubuntu 14.04 LTS amd64 image from 20150814.
+          fingerprint: e9a8bdfab6dc
+        profiles: ["default"]
+        wait_for_ipv4_addresses: true
+        timeout: 600
+
 # An example for deleting a container
 - hosts: localhost
   connection: local
@@ -204,9 +230,9 @@ EXAMPLES = '''
     - name: Restart a container
       lxd_container:
         url: https://127.0.0.1:8443
-        # These cert_file and key_file values are equal to the default values.
-        #cert_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
-        #key_file: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
+        # These client_cert and client_key values are equal to the default values.
+        #client_cert: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
+        #client_key: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
         trust_password: mypassword
         name: mycontainer
         state: restarted
@@ -298,8 +324,8 @@ class LXDContainerManagement(object):
         self.force_stop = self.module.params['force_stop']
         self.addresses = None
 
-        self.key_file = self.module.params.get('key_file', None)
-        self.cert_file = self.module.params.get('cert_file', None)
+        self.key_file = self.module.params.get('client_key', None)
+        self.cert_file = self.module.params.get('client_cert', None)
         self.debug = self.module._verbosity >= 4
 
         try:
@@ -601,13 +627,15 @@ def main():
                 type='str',
                 default='unix:/var/snap/lxd/common/lxd/unix.socket'
             ),
-            key_file=dict(
+            client_key=dict(
                 type='str',
-                default='{0}/.config/lxc/client.key'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.key'.format(os.environ['HOME']),
+                aliases=['key_file']
             ),
-            cert_file=dict(
+            client_cert=dict(
                 type='str',
-                default='{0}/.config/lxc/client.crt'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.crt'.format(os.environ['HOME']),
+                aliases=['cert_file']
             ),
             trust_password=dict(type='str', no_log=True)
         ),

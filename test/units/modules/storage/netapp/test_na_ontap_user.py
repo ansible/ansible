@@ -52,10 +52,11 @@ def fail_json(*args, **kwargs):  # pylint: disable=unused-argument
 class MockONTAPConnection(object):
     ''' mock server connection to ONTAP host '''
 
-    def __init__(self, kind=None, parm1=None):
+    def __init__(self, kind=None, parm1=None, parm2=None):
         ''' save arguments '''
         self.type = kind
         self.parm1 = parm1
+        self.parm2 = parm2
         self.xml_in = None
         self.xml_out = None
 
@@ -63,7 +64,7 @@ class MockONTAPConnection(object):
         ''' mock invoke_successfully returning xml data '''
         self.xml_in = xml
         if self.type == 'user':
-            xml = self.build_user_info(self.parm1)
+            xml = self.build_user_info(self.parm1, self.parm2)
         self.xml_out = xml
         return xml
 
@@ -73,11 +74,11 @@ class MockONTAPConnection(object):
         pass
 
     @staticmethod
-    def build_user_info(locked):
+    def build_user_info(locked, role_name):
         ''' build xml data for user-info '''
         xml = netapp_utils.zapi.NaElement('xml')
         data = {'num-records': 1,
-                'attributes-list': {'security-login-account-info': {'is-locked': locked}}}
+                'attributes-list': {'security-login-account-info': {'is-locked': locked, 'role-name': role_name}}}
 
         xml.translate_struct(data)
         print(xml.to_string())
@@ -104,6 +105,7 @@ class TestMyModule(unittest.TestCase):
             user_name = 'test'
             vserver = 'ansible_test'
             application = 'console'
+            lock_user = 'False'
             authentication_method = 'password'
         else:
             hostname = 'hostname'
@@ -173,7 +175,7 @@ class TestMyModule(unittest.TestCase):
         set_module_args(module_args)
         my_obj = my_module()
         if not self.use_vsim:
-            my_obj.server = MockONTAPConnection('user', 'false')
+            my_obj.server = MockONTAPConnection('user', 'false', 'test')
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
         print('Info: test_user_apply: %s' % repr(exc.value))
@@ -182,7 +184,7 @@ class TestMyModule(unittest.TestCase):
         set_module_args(module_args)
         my_obj = my_module()
         if not self.use_vsim:
-            my_obj.server = MockONTAPConnection('user', 'false')
+            my_obj.server = MockONTAPConnection('user', 'false', 'test')
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
         print('Info: test_user_delete: %s' % repr(exc.value))
@@ -198,7 +200,7 @@ class TestMyModule(unittest.TestCase):
         set_module_args(module_args)
         my_obj = my_module()
         if not self.use_vsim:
-            my_obj.server = MockONTAPConnection('user', 'false')
+            my_obj.server = MockONTAPConnection('user', 'false', 'test')
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
         print('Info: test_user_apply: %s' % repr(exc.value))
@@ -219,11 +221,11 @@ class TestMyModule(unittest.TestCase):
         module_args.update(self.set_default_args())
         module_args.update({'name': 'create'})
         module_args.update({'role_name': 'test'})
-        module_args.update({'lock_user': 'true'})
+        module_args.update({'lock_user': 'false'})
         set_module_args(module_args)
         my_obj = my_module()
         if not self.use_vsim:
-            my_obj.server = MockONTAPConnection('user', 'true')
+            my_obj.server = MockONTAPConnection('user', 'false', 'test')
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
         print('Info: test_user_apply: %s' % repr(exc.value))
@@ -232,7 +234,7 @@ class TestMyModule(unittest.TestCase):
         set_module_args(module_args)
         my_obj = my_module()
         if not self.use_vsim:
-            my_obj.server = MockONTAPConnection('user', 'true')
+            my_obj.server = MockONTAPConnection('user', 'true', 'test')
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
         print('Info: test_user_unlock: %s' % repr(exc.value))
@@ -244,6 +246,39 @@ class TestMyModule(unittest.TestCase):
         module_args.update(self.set_default_args())
         module_args.update({'name': 'create'})
         module_args.update({'role_name': 'test'})
+        module_args.update({'set_password': '123456'})
+        set_module_args(module_args)
+        my_obj = my_module()
+        if not self.use_vsim:
+            my_obj.server = MockONTAPConnection('user', 'true')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        print('Info: test_user_apply: %s' % repr(exc.value))
+        assert exc.value.args[0]['changed']
+
+    def test_ensure_user_role_update_called(self):
+        ''' set password '''
+        module_args = {}
+        module_args.update(self.set_default_args())
+        module_args.update({'name': 'create'})
+        module_args.update({'role_name': 'test123'})
+        module_args.update({'set_password': '123456'})
+        set_module_args(module_args)
+        my_obj = my_module()
+        if not self.use_vsim:
+            my_obj.server = MockONTAPConnection('user', 'true')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        print('Info: test_user_apply: %s' % repr(exc.value))
+        assert exc.value.args[0]['changed']
+
+    def test_ensure_user_role_update_additional_application_called(self):
+        ''' set password '''
+        module_args = {}
+        module_args.update(self.set_default_args())
+        module_args.update({'name': 'create'})
+        module_args.update({'role_name': 'test123'})
+        module_args.update({'application': 'http'})
         module_args.update({'set_password': '123456'})
         set_module_args(module_args)
         my_obj = my_module()

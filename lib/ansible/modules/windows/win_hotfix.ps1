@@ -83,7 +83,7 @@ Function Get-HotfixMetadataFromName($name) {
 Function Get-HotfixMetadataFromFile($extract_path) {
     # MSU contents https://support.microsoft.com/en-us/help/934307/description-of-the-windows-update-standalone-installer-in-windows
     $metadata_path = Get-ChildItem -Path $extract_path | Where-Object { $_.Extension -eq ".xml" }
-    if ($metadata_path -eq $null) {
+    if ($null -eq $metadata_path) {
         Fail-Json $result "failed to get metadata xml inside MSU file, cannot get hotfix metadata required for this task"
     }
     [xml]$xml = Get-Content -Path $metadata_path.FullName
@@ -102,12 +102,12 @@ Function Get-HotfixMetadataFromFile($extract_path) {
     }
 
     $package_properties_path = Get-ChildItem -Path $extract_path | Where-Object { $_.Extension -eq ".txt" }
-    if ($package_properties_path -eq $null) {
+    if ($null -eq $package_properties_path) {
         $hotfix_kb = "UNKNOWN"
     } else {
         $package_ini = Get-Content -Path $package_properties_path.FullName
         $entry = $package_ini | Where-Object { $_.StartsWith("KB Article Number") }
-        if ($entry -eq $null) {
+        if ($null -eq $entry) {
             $hotfix_kb = "UNKNOWN"
         } else {
             $hotfix_kb = ($entry -split '=')[-1]
@@ -130,7 +130,7 @@ Function Get-HotfixMetadataFromKB($kb) {
     $packages = Get-WindowsPackage -Online
     $identifier = $packages | Where-Object { $_.PackageName -like "*$kb*" }
 
-    if ($identifier -eq $null) {
+    if ($null -eq $identifier) {
         # still haven't found the KB, need to loop through the results and check the description
         foreach ($package in $packages) {
             $raw_metadata = Get-HotfixMetadataFromName -name $package.PackageName
@@ -141,7 +141,7 @@ Function Get-HotfixMetadataFromKB($kb) {
         }
 
         # if we still haven't found the package then we need to throw an error
-        if ($metadata -eq $null) {
+        if ($null -eq $metadata) {
             Fail-Json $result "failed to get DISM package from KB, to continue specify hotfix_identifier instead"
         }
     } else {
@@ -155,11 +155,11 @@ if ($state -eq "absent") {
     # uninstall hotfix
     # this is a pretty poor way of doing this, is there a better way?
 
-    if ($hotfix_identifier -ne $null) {
+    if ($null -ne $hotfix_identifier) {
         $hotfix_metadata = Get-HotfixMetadataFromName -name $hotfix_identifier
-    } elseif ($hotfix_kb -ne $null) {
+    } elseif ($null -ne $hotfix_kb) {
         $hotfix_install_info = Get-Hotfix -Id $hotfix_kb -ErrorAction SilentlyContinue
-        if ($hotfix_install_info -ne $null) {
+        if ($null -ne $hotfix_install_info) {
             $hotfix_metadata = Get-HotfixMetadataFromKB -kb $hotfix_kb
         } else {
             $hotfix_metadata = @{state = "NotPresent"}
@@ -185,11 +185,11 @@ if ($state -eq "absent") {
             }
             $result.reboot_required = $remove_Result.RestartNeeded
         }
-        
+
         $result.changed = $true
-    }    
+    }
 } else {
-    if ($source -eq $null) {
+    if ($null -eq $source) {
         Fail-Json $result "source must be set when state=present"
     }
     if (-not (Test-Path -Path $source -PathType Leaf)) {
@@ -202,12 +202,12 @@ if ($state -eq "absent") {
         $hotfix_metadata = Get-HotfixMetadataFromFile -extract_path $extract_path
 
         # validate the hotfix matches if the hotfix id has been passed in
-        if ($hotfix_identifier -ne $null) {
+        if ($null -ne $hotfix_identifier) {
             if ($hotfix_metadata.name -ne $hotfix_identifier) {
                 Fail-Json $result "the hotfix identifier $hotfix_identifier does not match with the source msu identifier $($hotfix_metadata.name), please omit or specify the correct identifier to continue"
             }
         }
-        if ($hotfix_kb -ne $null) {
+        if ($null -ne $hotfix_kb) {
             if ($hotfix_metadata.kb -ne $hotfix_kb) {
                 Fail-Json $result "the hotfix KB $hotfix_kb does not match with the source msu KB $($hotfix_metadata.kb), please omit or specify the correct KB to continue"
             }

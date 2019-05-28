@@ -63,9 +63,10 @@ options:
     description:
     - The instance to create the database on.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_spanner_instance
-      task and then set this instance field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_spanner_instance task and then set this instance field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 notes:
@@ -76,26 +77,26 @@ notes:
 EXAMPLES = '''
 - name: create a instance
   gcp_spanner_instance:
-      name: "instance-database"
-      display_name: My Spanner Instance
-      node_count: 2
-      labels:
-        cost_center: ti-1700004
-      config: regional-us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instance-database
+    display_name: My Spanner Instance
+    node_count: 2
+    labels:
+      cost_center: ti-1700004
+    config: regional-us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instance
 
 - name: create a database
   gcp_spanner_database:
-      name: webstore
-      instance: "{{ instance }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: webstore
+    instance: "{{ instance }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -117,7 +118,7 @@ instance:
   description:
   - The instance to create the database on.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -140,7 +141,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             extra_statements=dict(type='list', elements='str'),
-            instance=dict(required=True),
+            instance=dict(required=True, type='dict'),
         )
     )
 
@@ -180,7 +181,8 @@ def create(module, link):
 
 
 def update(module, link):
-    module.fail_json(msg="Database cannot be edited")
+    delete(module, self_link(module))
+    create(module, collection(module))
 
 
 def delete(module, link):

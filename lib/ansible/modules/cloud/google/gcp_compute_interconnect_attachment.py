@@ -82,9 +82,10 @@ options:
       will automatically connect the Interconnect to the network & region within which
       the Cloud Router is configured.
     - 'This field represents a link to a Router resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_router
-      task and then set this router field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_router task and then set this router field to "{{ name-of-resource
+      }}"'
     required: true
   name:
     description:
@@ -107,7 +108,8 @@ options:
     required: false
   vlan_tag8021q:
     description:
-    - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+    - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094. When using
+      PARTNER type this will be managed upstream.
     required: false
   region:
     description:
@@ -119,14 +121,14 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a interconnect attachment
   gcp_compute_interconnect_attachment:
-      name: "test_object"
-      region: us-central1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      interconnect: https://googleapis.com/compute/v1/projects/test_project/global/interconnects/...
-      router: https://googleapis.com/compute/v1/projects/test_project/regions/us-central1/routers/...
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-central1
+    project: test_project
+    auth_kind: serviceaccount
+    interconnect: https://googleapis.com/compute/v1/projects/test_project/global/interconnects/...
+    router: https://googleapis.com/compute/v1/projects/test_project/regions/us-central1/routers/...
+    service_account_file: "/tmp/auth.pem"
+    state: present
   register: disk
 '''
 
@@ -214,7 +216,7 @@ router:
     automatically connect the Interconnect to the network & region within which the
     Cloud Router is configured.
   returned: success
-  type: str
+  type: dict
 creationTimestamp:
   description:
   - Creation timestamp in RFC3339 text format.
@@ -248,7 +250,8 @@ candidateSubnets:
   type: list
 vlanTag8021q:
   description:
-  - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+  - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094. When using
+    PARTNER type this will be managed upstream.
   returned: success
   type: int
 region:
@@ -282,7 +285,7 @@ def main():
             description=dict(type='str'),
             edge_availability_domain=dict(type='str'),
             type=dict(type='str', choices=['DEDICATED', 'PARTNER', 'PARTNER_PROVIDER']),
-            router=dict(required=True),
+            router=dict(required=True, type='dict'),
             name=dict(required=True, type='str'),
             candidate_subnets=dict(type='list', elements='str'),
             vlan_tag8021q=dict(type='int'),
@@ -327,7 +330,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="InterconnectAttachment cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):
@@ -484,10 +488,10 @@ class InterconnectAttachmentPrivateinterconnectinfo(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'tag8021q': self.request.get('tag8021q')})
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict({u'tag8021q': self.request.get(u'tag8021q')})
+        return remove_nones_from_dict({})
 
 
 if __name__ == '__main__':

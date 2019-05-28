@@ -215,6 +215,14 @@ CACHE_PLUGIN_TIMEOUT:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
+COLLECTIONS_PATHS:
+  name: ordered list of root paths for loading installed Ansible collections content
+  default: ~/.ansible/collections:/usr/share/ansible/collections
+  type: pathspec
+  env:
+  - {name: ANSIBLE_COLLECTIONS_PATHS}
+  ini:
+  - {key: collections_paths, section: defaults}
 COLOR_CHANGED:
   name: Color for 'changed' task status
   default: yellow
@@ -319,14 +327,14 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
-CONDITINAL_BARE_VARS:
+CONDITIONAL_BARE_VARS:
   name: Allow bare variable evaluation in conditionals
   default: True
   type: boolean
   description:
-    - With this setting on (True), runing conditional evaluation 'var' is treated differently 'var.subkey' as the first is evaluted
-      directly while the second goes though the Jinja2 parser. But 'false' strings in 'var' get evaluated as booleans.
-    - With this settting off they both evalutate the same but in cases in which 'var' was 'false' (a string) it won't get evaluated as a boolean anymore.
+    - With this setting on (True), running conditional evaluation 'var' is treated differently than 'var.subkey' as the first is evaluated
+      directly while the second goes through the Jinja2 parser. But 'false' strings in 'var' get evaluated as booleans.
+    - With this setting off they both evaluate the same but in cases in which 'var' was 'false' (a string) it won't get evaluated as a boolean anymore.
     - Currently this setting defaults to 'True' but will soon change to 'False' and the setting itself will be removed in the future.
     - Expect the default to change in version 2.10 and that this setting eventually will be deprecated after 2.12
   env: [{name: ANSIBLE_CONDITIONAL_BARE_VARS}]
@@ -410,32 +418,6 @@ DEFAULT_ASK_PASS:
   - {key: ask_pass, section: defaults}
   type: boolean
   yaml: {key: defaults.ask_pass}
-DEFAULT_ASK_SUDO_PASS:
-  name: Ask for the sudo password
-  default: False
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.9"
-    alternatives: become
-  description:
-    - This controls whether an Ansible playbook should prompt for a sudo password.
-  env: [{name: ANSIBLE_ASK_SUDO_PASS}]
-  ini:
-  - {key: ask_sudo_pass, section: defaults}
-  type: boolean
-DEFAULT_ASK_SU_PASS:
-  name: Ask for the su password
-  default: False
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.9"
-    alternatives: become
-  description:
-    - This controls whether an Ansible playbook should prompt for a su password.
-  env: [{name: ANSIBLE_ASK_SU_PASS}]
-  ini:
-  - {key: ask_su_pass, section: defaults}
-  type: boolean
 DEFAULT_ASK_VAULT_PASS:
   name: Ask for the vault password(s)
   default: False
@@ -482,14 +464,15 @@ DEFAULT_BECOME_FLAGS:
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
   - {key: become_flags, section: privilege_escalation}
-DEFAULT_BECOME_PLUGIN_PATH:
+BECOME_PLUGIN_PATH:
   name: Become plugins path
-  default: ~/.ansible/plugins/become:/usr/share/ansible/become
+  default: ~/.ansible/plugins/become:/usr/share/ansible/plugins/become
   description: Colon separated paths in which Ansible will search for Become Plugins.
   env: [{name: ANSIBLE_BECOME_PLUGINS}]
   ini:
   - {key: become_plugins, section: defaults}
   type: pathspec
+  version_added: "2.8"
 DEFAULT_BECOME_USER:
   # FIXME: should really be blank and make -u passing optional depending on it
   name: Set the user you 'become' via privilege escalation
@@ -761,7 +744,13 @@ DEFAULT_LIBVIRT_LXC_NOSECLABEL:
   description:
     - "This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
       This is necessary when running on systems which do not have SELinux."
-  env: [{name: LIBVIRT_LXC_NOSECLABEL}]
+  env:
+  - name: LIBVIRT_LXC_NOSECLABEL
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_LIBVIRT_LXC_NOSECLABEL" environment variable
+  - name: ANSIBLE_LIBVIRT_LXC_NOSECLABEL
   ini:
   - {key: libvirt_lxc_noseclabel, section: selinux}
   type: boolean
@@ -836,19 +825,6 @@ DEFAULT_MODULE_COMPRESSION:
   - {key: module_compression, section: defaults}
 # vars:
 #   - name: ansible_module_compression
-DEFAULT_MODULE_LANG:
-  name: Target language environment
-  default: "{{ CONTROLLER_LANG }}"
-  description:
-    - "Language locale setting to use for modules when they execute on the target."
-    - "If empty it tries to set itself to the LANG environment variable on the controller."
-    - "This is only used if DEFAULT_MODULE_SET_LOCALE is set to true"
-  env: [{name: ANSIBLE_MODULE_LANG}]
-  ini:
-  - {key: module_lang, section: defaults}
-  deprecated:
-    why: Modules are coded to set their own locale if needed for screenscraping
-    version: "2.9"
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
@@ -864,18 +840,6 @@ DEFAULT_MODULE_PATH:
   ini:
   - {key: library, section: defaults}
   type: pathspec
-DEFAULT_MODULE_SET_LOCALE:
-  name: Target locale
-  default: False
-  description:
-    - Controls if we set locale for modules when executing on the target.
-  env: [{name: ANSIBLE_MODULE_SET_LOCALE}]
-  ini:
-  - {key: module_set_locale, section: defaults}
-  type: boolean
-  deprecated:
-    why: Modules are coded to set their own locale if needed for screenscraping
-    version: "2.9"
 DEFAULT_MODULE_UTILS_PATH:
   name: Module Utils Path
   description: Colon separated paths in which Ansible will search for Module utils files, which are shared by modules.
@@ -1093,39 +1057,6 @@ DEFAULT_SU:
   - {key: su, section: defaults}
   type: boolean
   yaml: {key: defaults.su}
-DEFAULT_SU_EXE:
-  name: su executable
-  default: su
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.9"
-    alternatives: become
-  description: 'specify an "su" executable, otherwise it relies on PATH.'
-  env: [{name: ANSIBLE_SU_EXE}]
-  ini:
-  - {key: su_exe, section: defaults}
-DEFAULT_SU_FLAGS:
-  name: su flags
-  default: ''
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.9"
-    alternatives: become
-  description: 'Flags to pass to su'
-  env: [{name: ANSIBLE_SU_FLAGS}]
-  ini:
-  - {key: su_flags, section: defaults}
-DEFAULT_SU_USER:
-  name: su user
-  default:
-  description: 'User you become when using "su", leaving it blank will use the default configured on the target (normally root)'
-  env: [{name: ANSIBLE_SU_USER}]
-  ini:
-  - {key: su_user, section: defaults}
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.9"
-    alternatives: become
 DEFAULT_SYSLOG_FACILITY:
   name: syslog facility
   default: LOG_USER
@@ -1304,7 +1235,13 @@ DISPLAY_SKIPPED_HOSTS:
   name: Show skipped results
   default: True
   description: "Toggle to control displaying skipped task/host entries in a task in the default callback"
-  env: [{name: DISPLAY_SKIPPED_HOSTS}]
+  env:
+  - name: DISPLAY_SKIPPED_HOSTS
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_DISPLAY_SKIPPED_HOSTS" environment variable
+  - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
   ini:
   - {key: display_skipped_hosts, section: defaults}
   type: boolean
@@ -1316,6 +1253,17 @@ DOCSITE_ROOT_URL:
   ini:
   - {key: docsite_root_url, section: defaults}
   version_added: "2.8"
+DUPLICATE_DICT_KEY_WARNINGS:
+  name: Toggle warnings for duplicate dict keys in YAML
+  default: True
+  description:
+    - By default Ansible will issue a warning when a duplicate dict key is encountered in YAML.
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_DUPLICATE_DICT_KEY_WARNINGS}]
+  ini:
+  - {key: duplicate_dict_key_warnings, section: defaults}
+  type: boolean
+  version_added: "2.9"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
   default: True
@@ -1467,15 +1415,17 @@ INTERPRETER_PYTHON_FALLBACK:
   version_added: "2.8"
 TRANSFORM_INVALID_GROUP_CHARS:
   name: Transform invalid characters in group names
-  default: False
+  default: 'never'
   description:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
-    - If 'false' it will allow for the group name but warn about the issue.
-    - When 'true' it will replace any invalid charachters with '_' (underscore).
+    - If 'never' it will allow for the group name but warn about the issue.
+    - When 'always' it will replace any invalid charachters with '_' (underscore) and warn the user
+    - When 'silently', it does the same as 'always' sans the warnings.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
   - {key: force_valid_group_names, section: defaults}
-  type: bool
+  type: string
+  choices: ['always', 'never', 'silently']
   version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
@@ -1591,7 +1541,13 @@ NETWORK_GROUP_MODULES:
   name: Network module families
   default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
   description: 'TODO: write it'
-  env: [{name: NETWORK_GROUP_MODULES}]
+  env:
+  - name: NETWORK_GROUP_MODULES
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_NETWORK_GROUP_MODULES" environment variable
+  - name: ANSIBLE_NETWORK_GROUP_MODULES
   ini:
   - {key: network_group_modules, section: defaults}
   type: list
@@ -1606,6 +1562,14 @@ INJECT_FACTS_AS_VARS:
   - {key: inject_facts_as_vars, section: defaults}
   type: boolean
   version_added: "2.5"
+OLD_PLUGIN_CACHE_CLEARING:
+  description: Previouslly Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in prevoius plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour.
+  env: [{name: ANSIBLE_OLD_PLUGIN_CACHE_CLEAR}]
+  ini:
+  - {key: old_plugin_cache_clear, section: defaults}
+  type: boolean
+  default: False
+  version_added: "2.8"
 PARAMIKO_HOST_KEY_AUTO_ADD:
   # TODO: move to plugin
   default: False

@@ -93,9 +93,11 @@ class TestUntypedManager(unittest.TestCase):
             enforced_policy='enforced1',
             staged_policy='staged1',
             service_policy='service1',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

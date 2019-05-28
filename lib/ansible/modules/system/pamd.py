@@ -482,7 +482,7 @@ class PamdService(object):
                 else:
                     self._head = current_line.next
                     current_line.next.prev = None
-            changed += 1
+                changed += 1
 
             current_line = current_line.next
         return changed
