@@ -73,6 +73,8 @@ Noteworthy module changes
 * The ``zabbix_group_facts`` module was renamed to :ref:`zabbix_group_info <zabbix_group_info_module>`.
 * The ``zabbix_host_facts`` module was renamed to :ref:`zabbix_host_info <zabbix_host_info_module>`.
 * The ``k8s_facts`` module was renamed to :ref:`k8s_info <k8s_info_module>`.
+* The ``bigip_device_facts`` module was renamed to :ref:`bigip_device_info <bigip_device_info_module>`.
+* The ``bigiq_device_facts`` module was renamed to :ref:`bigiq_device_info <bigiq_device_info_module>`.
 
 
 Plugins
