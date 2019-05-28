@@ -1282,7 +1282,7 @@ class TaskParameters(DockerBaseClass):
                 if network.get(para):
                     params[para] = network[para]
             network_config = dict()
-            network_config[network['name']] = self.client.create_endpoint_config(params)
+            network_config[network['name']] = self.client.create_endpoint_config(**params)
             result['networking_config'] = self.client.create_networking_config(network_config)
         return result
 
