@@ -246,7 +246,7 @@ except ImportError:
     pass    # Handled by AnsibleAWSModule
 
 
-@AWSRetry.exponential_backoff(retries=5, delay=5)
+@AWSRetry.exponential_backoff(retries=3, delay=2)
 def get_with_backoff(connection, **kwargs):
     paginator = connection.get_paginator('scan')
     return paginator.paginate(**kwargs).build_full_result()
@@ -302,10 +302,16 @@ def main():
         update_expression=dict(type='str')
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=True)
+    required_if = [
+        [ "action", "get", ['filter_expression', 'expression_attribute_values'] ],
+        [ "action", "put", ['item'] ],
+        [ "action", "update", ['primary_key', 'update_expression'] ],
+        [ "action", "delete", ['condition_expression', 'expression_attribute_values'] ]
+    ]
 
-    required_together = [['update_expression', 'expression_attribute_values']]
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True,
+                              required_if=required_if)
 
     connection = module.client('dynamodb')
 
