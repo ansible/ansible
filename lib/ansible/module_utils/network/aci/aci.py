@@ -118,7 +118,7 @@ class ACIModule(object):
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set.')
             self.params['output_level'] = 'debug'
 
-        # Inject fetch_url() if provided
+        # Inject fetch_url() if provided, otherwise use default
         if self.module.fetch_url:
             self.fetch_url = self.module.fetch_url
         else:
