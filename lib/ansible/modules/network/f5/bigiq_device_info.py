@@ -14,15 +14,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: bigiq_device_facts
-short_description: Collect facts from F5 BIG-IQ devices
+module: bigiq_device_info
+short_description: Collect information from F5 BIG-IQ devices
 description:
-  - Collect facts from F5 BIG-IQ devices.
+  - Collect information from F5 BIG-IQ devices.
+  - This module was called C(bigiq_device_facts) before Ansible 2.9. The usage did not change.
 version_added: 2.8
 options:
   gather_subset:
     description:
-      - When supplied, this argument will restrict the facts returned to a given subset.
+      - When supplied, this argument will restrict the information returned to a given subset.
       - Can specify a list of values to include a larger subset.
       - Values can also be used with an initial C(!) to specify that a specific subset
         should not be collected.
@@ -49,8 +50,8 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Collect BIG-IQ facts
-  bigiq_device_facts:
+- name: Collect BIG-IQ information
+  bigiq_device_info:
     gather_subset:
       - system-info
       - vlans
@@ -60,8 +61,8 @@ EXAMPLES = r'''
       password: secret
   delegate_to: localhost
 
-- name: Collect all BIG-IQ facts
-  bigiq_device_facts:
+- name: Collect all BIG-IQ information
+  bigiq_device_info:
     gather_subset:
       - all
     provider:
@@ -70,8 +71,8 @@ EXAMPLES = r'''
       password: secret
   delegate_to: localhost
 
-- name: Collect all BIG-IP facts except trunks
-  bigiq_device_facts:
+- name: Collect all BIG-IP information except trunks
+  bigiq_device_info:
     gather_subset:
       - all
       - "!trunks"
@@ -84,7 +85,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 applications:
-  description: Application related facts
+  description: Application related information
   returned: When C(managed-devices) is specified in C(gather_subset).
   type: complex
   contains:
@@ -169,7 +170,7 @@ applications:
       sample: no
   sample: hash/dictionary of values
 managed_devices:
-  description: Managed device related facts.
+  description: Managed device related information.
   returned: When C(managed-devices) is specified in C(gather_subset).
   type: complex
   contains:
@@ -307,7 +308,7 @@ managed_devices:
       sample: 13.1.1
   sample: hash/dictionary of values
 purchased_pool_licenses:
-  description: Purchased Pool License related facts.
+  description: Purchased Pool License related information.
   returned: When C(purchased-pool-licenses) is specified in C(gather_subset).
   type: complex
   contains:
@@ -403,7 +404,7 @@ purchased_pool_licenses:
       sample: XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
   sample: hash/dictionary of values
 regkey_pools:
-  description: Regkey Pool related facts.
+  description: Regkey Pool related information.
   returned: When C(regkey-pools) is specified in C(gather_subset).
   type: complex
   contains:
@@ -492,7 +493,7 @@ regkey_pools:
       sample: hash/dictionary of values
   sample: hash/dictionary of values
 system_info:
-  description: System info related facts.
+  description: System info related information.
   returned: When C(system-info) is specified in C(gather_subset).
   type: complex
   contains:
@@ -683,7 +684,7 @@ system_info:
       sample: 603202
   sample: hash/dictionary of values
 vlans:
-  description: List of VLAN facts.
+  description: List of VLAN information.
   returned: When C(vlans) is specified in C(gather_subset).
   type: complex
   contains:
@@ -2297,6 +2298,8 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
+    if module._name == 'bigiq_device_facts':
+        module.deprecate("The 'bigiq_device_facts' module has been renamed to 'bigiq_device_info'", version='2.13')
 
     try:
         mm = ModuleManager(module=module)
