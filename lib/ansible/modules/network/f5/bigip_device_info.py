@@ -15,15 +15,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: bigip_device_facts
-short_description: Collect facts from F5 BIG-IP devices
+module: bigip_device_info
+short_description: Collect information from F5 BIG-IP devices
 description:
-  - Collect facts from F5 BIG-IP devices.
+  - Collect information from F5 BIG-IP devices.
+  - This module was called C(bigip_device_facts) before Ansible 2.9. The usage did not change.
 version_added: 2.7
 options:
   gather_subset:
     description:
-      - When supplied, this argument will restrict the facts returned to a given subset.
+      - When supplied, this argument will restrict the information returned to a given subset.
       - Can specify a list of values to include a larger subset.
       - Values can also be used with an initial C(!) to specify that a specific subset
         should not be collected.
@@ -164,8 +165,8 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Collect BIG-IP facts
-  bigip_device_facts:
+- name: Collect BIG-IP information
+  bigip_device_info:
     gather_subset:
       - interfaces
       - vlans
@@ -175,8 +176,8 @@ EXAMPLES = r'''
       password: secret
   delegate_to: localhost
 
-- name: Collect all BIG-IP facts
-  bigip_device_facts:
+- name: Collect all BIG-IP information
+  bigip_device_info:
     gather_subset:
       - all
     provider:
@@ -185,8 +186,8 @@ EXAMPLES = r'''
       password: secret
   delegate_to: localhost
 
-- name: Collect all BIG-IP facts except trunks
-  bigip_device_facts:
+- name: Collect all BIG-IP information except trunks
+  bigip_device_info:
     gather_subset:
       - all
       - "!trunks"
@@ -199,7 +200,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 asm_policy_stats:
-  description: Miscellaneous ASM policy related facts.
+  description: Miscellaneous ASM policy related information.
   returned: When C(asm-policy-stats) is specified in C(gather_subset).
   type: complex
   contains:
@@ -235,7 +236,7 @@ asm_policy_stats:
       sample: 3
   sample: hash/dictionary of values
 asm_policies:
-  description: Detailed facts for ASM policies present on device.
+  description: Detailed information for ASM policies present on device.
   returned: When C(asm-policies) is specified in C(gather_subset).
   type: complex
   contains:
@@ -474,7 +475,7 @@ asm_policies:
           sample: 1
   sample: hash/dictionary of values
 asm_server_technologies:
-  description: Detailed facts for ASM server technologies present on device.
+  description: Detailed information for ASM server technologies present on device.
   returned: When C(asm-server-technologies) is specified in C(gather_subset).
   type: complex
   contains:
@@ -502,7 +503,7 @@ asm_server_technologies:
       sample: https://localhost/mgmt/tm/asm/server-technologies/NQG7CT02OBC2cQWbnP7T-A?ver=13.1.0
   sample: hash/dictionary of values
 asm_signature_sets:
-  description: Detailed facts for ASM signature sets present on device.
+  description: Detailed information for ASM signature sets present on device.
   returned: When C(asm-signature-sets) is specified in C(gather_subset).
   type: complex
   contains:
@@ -565,7 +566,7 @@ asm_signature_sets:
       sample: yes
   sample: hash/dictionary of values
 client_ssl_profiles:
-  description: Client SSL Profile related facts.
+  description: Client SSL Profile related information.
   returned: When C(client-ssl-profiles) is specified in C(gather_subset).
   type: complex
   contains:
@@ -816,7 +817,7 @@ client_ssl_profiles:
       type: str
   sample: hash/dictionary of values
 devices:
-  description: Device related facts.
+  description: Device related information.
   returned: When C(devices) is specified in C(gather_subset).
   type: complex
   contains:
@@ -960,7 +961,7 @@ devices:
       sample: 2.2.2.2
     self:
       description:
-        - Whether this device is the one that was queried for facts, or not.
+        - Whether this device is the one that was queried for information, or not.
       returned: queried
       type: bool
       sample: yes
@@ -1014,7 +1015,7 @@ devices:
           sample: 1026
   sample: hash/dictionary of values
 device_groups:
-  description: Device group related facts.
+  description: Device group related information.
   returned: When C(device-groups) is specified in C(gather_subset).
   type: complex
   contains:
@@ -1081,7 +1082,7 @@ device_groups:
       sample: yes
   sample: hash/dictionary of values
 external_monitors:
-  description: External monitor related facts.
+  description: External monitor related information.
   returned: When C(external-monitors) is specified in C(gather_subset).
   type: complex
   contains:
@@ -1171,7 +1172,7 @@ external_monitors:
       sample: 0
   sample: hash/dictionary of values
 fasthttp_profiles:
-  description: FastHTTP profile related facts.
+  description: FastHTTP profile related information.
   returned: When C(fasthttp-profiles) is specified in C(gather_subset).
   type: complex
   contains:
@@ -1343,7 +1344,7 @@ fasthttp_profiles:
       sample: enabled
   sample: hash/dictionary of values
 fastl4_profiles:
-  description: FastL4 profile related facts.
+  description: FastL4 profile related information.
   returned: When C(fastl4-profiles) is specified in C(gather_subset).
   type: complex
   contains:
@@ -1720,7 +1721,7 @@ fastl4_profiles:
       sample: fallback
   sample: hash/dictionary of values
 gateway_icmp_monitors:
-  description: Gateway ICMP monitor related facts.
+  description: Gateway ICMP monitor related information.
   returned: When C(gateway-icmp-monitors) is specified in C(gather_subset).
   type: complex
   contains:
@@ -1834,9 +1835,9 @@ gateway_icmp_monitors:
   sample: hash/dictionary of values
 gtm_pools:
   description:
-    - GTM pool related facts.
-    - Every "type" of pool has the exact same list of possible facts. Therefore,
-      the list of facts here is presented once instead of 6 times.
+    - GTM pool related information.
+    - Every "type" of pool has the exact same list of possible information. Therefore,
+      the list of information here is presented once instead of 6 times.
   returned: When any of C(gtm-pools) or C(gtm-*-pools) is specified in C(gather_subset).
   type: complex
   contains:
@@ -1977,7 +1978,7 @@ gtm_pools:
   sample: hash/dictionary of values
 gtm_servers:
   description:
-    - GTM server related facts.
+    - GTM server related information.
   returned: When C(gtm-servers) is specified in C(gather_subset).
   type: complex
   contains:
@@ -2142,9 +2143,9 @@ gtm_servers:
   sample: hash/dictionary of values
 gtm_wide_ips:
   description:
-    - GTM Wide IP related facts.
-    - Every "type" of wide-ip has the exact same list of possible facts. Therefore,
-      the list of facts here is presented once instead of 6 times.
+    - GTM Wide IP related information.
+    - Every "type" of wide-ip has the exact same list of possible information. Therefore,
+      the list of information here is presented once instead of 6 times.
   returned: When any of C(gtm-wide-ips) or C(gtm-*-wide-ips) is specified in C(gather_subset).
   type: complex
   contains:
@@ -2233,7 +2234,7 @@ gtm_wide_ips:
       type: complex
   sample: hash/dictionary of values
 http_monitors:
-  description: HTTP monitor related facts.
+  description: HTTP monitor related information.
   returned: When C(http-monitors) is specified in C(gather_subset).
   type: complex
   contains:
@@ -2389,7 +2390,7 @@ http_monitors:
       sample: user1
   sample: hash/dictionary of values
 https_monitors:
-  description: HTTPS monitor related facts.
+  description: HTTPS monitor related information.
   returned: When C(https-monitors) is specified in C(gather_subset).
   type: complex
   contains:
@@ -2551,7 +2552,7 @@ https_monitors:
       sample: user1
   sample: hash/dictionary of values
 http_profiles:
-  description: HTTP profile related facts.
+  description: HTTP profile related information.
   returned: When C(http-profiles) is specified in C(gather_subset).
   type: complex
   contains:
@@ -2767,7 +2768,7 @@ http_profiles:
       sample: preserve
   sample: hash/dictionary of values
 iapp_services:
-  description: iApp v1 service related facts.
+  description: iApp v1 service related information.
   returned: When C(iapp-services) is specified in C(gather_subset).
   type: complex
   contains:
@@ -2852,7 +2853,7 @@ iapp_services:
       sample: My service
   sample: hash/dictionary of values
 icmp_monitors:
-  description: ICMP monitor related facts.
+  description: ICMP monitor related information.
   returned: When C(icmp-monitors) is specified in C(gather_subset).
   type: complex
   contains:
@@ -2964,7 +2965,7 @@ icmp_monitors:
       sample: 0
   sample: hash/dictionary of values
 interfaces:
-  description: Interface related facts.
+  description: Interface related information.
   returned: When C(interfaces) is specified in C(gather_subset).
   type: complex
   contains:
@@ -3093,7 +3094,7 @@ interfaces:
       sample: auto
   sample: hash/dictionary of values
 irules:
-  description: iRule related facts.
+  description: iRule related information.
   returned: When C(irules) is specified in C(gather_subset).
   type: complex
   contains:
@@ -3738,7 +3739,7 @@ ltm_policies:
       sample: hash/dictionary of values
   sample: hash/dictionary of values
 nodes:
-  description: Node related facts.
+  description: Node related information.
   returned: When C(nodes) is specified in C(gather_subset).
   type: complex
   contains:
@@ -3842,7 +3843,7 @@ nodes:
       sample: and_list
   sample: hash/dictionary of values
 oneconnect_profiles:
-  description: OneConnect profile related facts.
+  description: OneConnect profile related information.
   returned: When C(oneconnect-profiles) is specified in C(gather_subset).
   type: complex
   contains:
@@ -4010,7 +4011,7 @@ provision_info:
       sample: 0
   sample: hash/dictionary of values
 self_ips:
-  description: Self-IP related facts.
+  description: Self-IP related information.
   returned: When C(self-ips) is specified in C(gather_subset).
   type: complex
   contains:
@@ -4085,7 +4086,7 @@ self_ips:
       sample: no
   sample: hash/dictionary of values
 server_ssl_profiles:
-  description: Server SSL related facts.
+  description: Server SSL related information.
   returned: When C(server-ssl-profiles) is specified in C(gather_subset).
   type: complex
   contains:
@@ -4638,7 +4639,7 @@ software_volumes:
       sample: 13.1.0.4
   sample: hash/dictionary of values
 ssl_certs:
-  description: SSL certificate related facts.
+  description: SSL certificate related information.
   returned: When C(ssl-certs) is specified in C(gather_subset).
   type: complex
   contains:
@@ -4732,7 +4733,7 @@ ssl_certs:
       sample: "2018-05-15T21:11:15Z"
   sample: hash/dictionary of values
 ssl_keys:
-  description: SSL certificate related facts.
+  description: SSL certificate related information.
   returned: When C(ssl-certs) is specified in C(gather_subset).
   type: complex
   contains:
@@ -4782,7 +4783,7 @@ ssl_keys:
       sample: 1fcf7de3dd8e834d613099d8e10b2060cd9ecc9f
   sample: hash/dictionary of values
 system_db:
-  description: System DB related facts.
+  description: System DB related information.
   returned: When C(system-db) is specified in C(gather_subset).
   type: complex
   contains:
@@ -4824,7 +4825,7 @@ system_db:
       sample: string
   sample: hash/dictionary of values
 system_info:
-  description: Traffic group related facts.
+  description: Traffic group related information.
   returned: When C(traffic-groups) is specified in C(gather_subset).
   type: complex
   contains:
@@ -5018,7 +5019,7 @@ system_info:
       sample: 603202
   sample: hash/dictionary of values
 tcp_monitors:
-  description: TCP monitor related facts.
+  description: TCP monitor related information.
   returned: When C(tcp-monitors) is specified in C(gather_subset).
   type: complex
   contains:
@@ -5145,7 +5146,7 @@ tcp_monitors:
       sample: 0
   sample: hash/dictionary of values
 tcp_half_open_monitors:
-  description: TCP Half-open monitor related facts.
+  description: TCP Half-open monitor related information.
   returned: When C(tcp-half-open-monitors) is specified in C(gather_subset).
   type: complex
   contains:
@@ -5224,7 +5225,7 @@ tcp_half_open_monitors:
       sample: 0
   sample: hash/dictionary of values
 tcp_profiles:
-  description: TCP profile related facts.
+  description: TCP profile related information.
   returned: When C(tcp-profiles) is specified in C(gather_subset).
   type: complex
   contains:
@@ -5798,7 +5799,7 @@ tcp_profiles:
       sample: 2000
   sample: hash/dictionary of values
 traffic_groups:
-  description: Traffic group related facts.
+  description: Traffic group related information.
   returned: When C(traffic-groups) is specified in C(gather_subset).
   type: complex
   contains:
@@ -5863,7 +5864,7 @@ traffic_groups:
       sample: "00:98:76:54:32:10"
   sample: hash/dictionary of values
 trunks:
-  description: Trunk related facts.
+  description: Trunk related information.
   returned: When C(trunks) is specified in C(gather_subset).
   type: complex
   contains:
@@ -5956,7 +5957,7 @@ trunks:
       sample: 1
   sample: hash/dictionary of values
 udp_profiles:
-  description: UDP profile related facts.
+  description: UDP profile related information.
   returned: When C(udp-profiles) is specified in C(gather_subset).
   type: complex
   contains:
@@ -6088,7 +6089,7 @@ udp_profiles:
       sample: yes
   sample: hash/dictionary of values
 vcmp_guests:
-  description: vCMP related facts.
+  description: vCMP related information.
   returned: When C(vcmp-guests) is specified in C(gather_subset).
   type: complex
   contains:
@@ -6199,7 +6200,7 @@ vcmp_guests:
       sample: guest1.img
   sample: hash/dictionary of values
 virtual_addresses:
-  description: Virtual address related facts.
+  description: Virtual address related information.
   returned: When C(virtual-addresses) is specified in C(gather_subset).
   type: complex
   contains:
@@ -6299,7 +6300,7 @@ virtual_addresses:
       sample: no
   sample: hash/dictionary of values
 virtual_servers:
-  description: Virtual address related facts.
+  description: Virtual address related information.
   returned: When C(virtual-addresses) is specified in C(gather_subset).
   type: complex
   contains:
@@ -6788,7 +6789,7 @@ virtual_servers:
       sample: 8
   sample: hash/dictionary of values
 vlans:
-  description: List of VLAN facts.
+  description: List of VLAN information.
   returned: When C(vlans) is specified in C(gather_subset).
   type: complex
   contains:
@@ -6969,7 +6970,7 @@ class BaseManager(object):
         # A list of modules currently provisioned on the device.
         #
         # This list is used by different fact managers to check to see
-        # if they should even attempt to gather facts. If the module is
+        # if they should even attempt to gather information. If the module is
         # not provisioned, then it is likely that the REST API will not
         # return valid data.
         #
@@ -16044,6 +16045,8 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
+    if module._name == 'bigip_device_facts':
+        module.deprecate("The 'bigip_device_facts' module has been renamed to 'bigip_device_info'", version='2.13')
 
     try:
         mm = ModuleManager(module=module)
