@@ -102,7 +102,7 @@ class PullCLI(CLI):
                                  help='Do a full clone, instead of a shallow one. (deprecated in favor of using depth or export in --module-args)')
         self.parser.add_argument('-C', '--checkout', dest='checkout',
                                  help="".join(["branch/tag/commit to checkout. Defaults to behavior of repository module.",
-                                             "(deprecated, use --module-args 'version=<checkout>' or --module-args 'revision=<checkout>')"]))
+                                               "(deprecated, use --module-args 'version=<checkout>' or --module-args 'revision=<checkout>')"]))
         self.parser.add_argument('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
                                  help="adds the hostkey for the repo url if not already added (deprecated, use --module-args 'accept_hostkey=yes')")
         self.parser.add_argument('-a', '--module-args', dest='module_args', default=None,
@@ -112,14 +112,14 @@ class PullCLI(CLI):
                                       % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
         self.parser.add_argument('--verify-commit', dest='verify', default=False, action='store_true',
                                  help="".join(['verify GPG signature of checked out commit, if it fails abort running the playbook. ',
-                                             'This needs the corresponding VCS module to support such an operation.',
-                                             " (deprecated, use --module-args 'verify_commit=yes')"]))
+                                               'This needs the corresponding VCS module to support such an operation.',
+                                               " (deprecated, use --module-args 'verify_commit=yes')"]))
         self.parser.add_argument('--clean', dest='clean', default=False, action='store_true',
                                  help='modified files in the working repository will be discarded')
         self.parser.add_argument('--track-subs', dest='tracksubs', default=False, action='store_true',
                                  help="".join(["submodules will track the latest changes. This is equivalent to specifying",
-                                             " the --remote flag to git submodule update.",
-                                             " (deprecated, use --module-args 'track_submodules=yes')"]))
+                                               " the --remote flag to git submodule update.",
+                                               " (deprecated, use --module-args 'track_submodules=yes')"]))
         # add a subset of the check_opts flag group manually, as the full set's
         # shortcodes conflict with above --checkout/-C
         self.parser.add_argument("--check", default=False, dest='check', action='store_true',
