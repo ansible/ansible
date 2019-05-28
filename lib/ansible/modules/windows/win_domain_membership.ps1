@@ -9,19 +9,19 @@ Set-StrictMode -Version 2
 
 $ErrorActionPreference = "Stop"
 
+$log_path = $null
+
 Function Write-DebugLog {
     Param(
-    [string]$msg
+        [string]$msg
     )
 
     $DebugPreference = "Continue"
+    $ErrorActionPreference = "Continue"
     $date_str = Get-Date -Format u
     $msg = "$date_str $msg"
 
     Write-Debug $msg
-
-    $log_path = Get-AnsibleParam -obj $params -name "log_path"
-
     if($log_path) {
         Add-Content $log_path $msg
     }
@@ -178,7 +178,7 @@ Function Join-Workgroup {
 
     # we're already on a workgroup- change it.
     Else {
-        Set-Workgroup $workgroup_name
+        Set-Workgroup $workgroup_name > $null
     }
 }
 
@@ -199,6 +199,7 @@ $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
 
+$log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
 
 If ($state -eq "domain") {
@@ -211,6 +212,8 @@ Else { # workgroup
         Fail-Json @{} "workgroup_name is required when state is 'workgroup'"
     }
 }
+
+$global:log_path = $log_path
 
 Try {
 
@@ -286,7 +289,7 @@ Try {
             If(-not $_ansible_check_mode) {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
-                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
+                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password > $null
 
                     # this change requires a reboot
                     $result.reboot_required = $true

@@ -18,7 +18,6 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "a
 $bind_port = Get-AnsibleParam -obj $params -name "port" -type "int"
 $bind_ip = Get-AnsibleParam -obj $params -name "ip" -type "str"
 $bind_hostname = Get-AnsibleParam -obj $params -name "hostname" -type "str"
-#TODO: $bind_ssl = Get-AnsibleParam -obj $params -name "ssl" -type "str"
 
 # Custom site Parameters from string where properties
 # are separated by a pipe and property name/values by colon.

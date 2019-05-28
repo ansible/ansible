@@ -77,7 +77,6 @@ try {
     $forest_context = New-Object -TypeName System.DirectoryServices.ActiveDirectory.DirectoryContext -ArgumentList Forest, $dns_domain_name
     $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetForest($forest_context)
 } catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
-    Add-Warning -obj $result -message "Error during forest query initialization: $($_.Exception.Message)"
 } catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryOperationException] { }
 
 if (-not $forest) {

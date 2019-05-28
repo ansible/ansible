@@ -437,7 +437,7 @@ if($gather_subset.Contains('winrm')) {
         Try {
             $winrm_cert_expiry += Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object Thumbprint -EQ $winrm_cert_thumbprint.Value.ToString().ToUpper() | Select-Object NotAfter
         } Catch {
-            Add-Warning -obj $result -message "Error during certificate expiration retrieval"
+            Add-Warning -obj $result -message "Error during certificate expiration retrieval: $($_.Exception.Message)"
         }
     }
 

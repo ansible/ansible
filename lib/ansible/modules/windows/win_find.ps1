@@ -250,9 +250,7 @@ Function Get-FileStat($file) {
         try {
             $lnk_source = [Ansible.Command.SymLinkHelper]::GetSymbolicLinkTarget($file)
             $file_stat.lnk_source = $lnk_source
-        } catch {
-            #Add-Warning -obj $result -message "symlink source retrieval error: $($_.Exception.Message)"
-        }
+        } catch {}
     } elseif ($file.PSIsContainer) {
         $isdir = $true
 
@@ -268,10 +266,7 @@ Function Get-FileStat($file) {
         try {
             $dir_files = $file.EnumerateFiles("*", [System.IO.SearchOption]::AllDirectories)
         } catch [System.IO.DirectoryNotFoundException] { # Broken ReparsePoint/Symlink, cannot enumerate
-            Add-Warning -obj $result -message "symlink enumeration error: $($_.Exception.Message)"
-      	} catch [System.UnauthorizedAccessException] {  # No ListDirectory permissions, Get-ChildItem ignored this
-       	    Add-Warning -obj $result -message "symlink enumeration error: $($_.Exception.Message)"
-      	}
+      	} catch [System.UnauthorizedAccessException] {}  # No ListDirectory permissions, Get-ChildItem ignored this
         $size = 0
         foreach ($dir_file in $dir_files) {
             $size += $dir_file.Length
@@ -307,11 +302,7 @@ Function Get-FilesInFolder($path) {
     try {
         $dir_files = $dir.EnumerateFileSystemInfos("*", [System.IO.SearchOption]::TopDirectoryOnly)
     } catch [System.IO.DirectoryNotFoundException] { # Broken ReparsePoint/Symlink, cannot enumerate
-    	Add-Warning -obj $result -message "symlink enumeration error: $($_.Exception.Message)"
-    } catch [System.UnauthorizedAccessException] {  # No ListDirectory permissions, Get-ChildItem ignored this
-        Add-Warning -obj $result -message "symlink enumeration error: $($_.Exception.Message)"
-    }
-
+    } catch [System.UnauthorizedAccessException] {}  # No ListDirectory permissions, Get-ChildItem ignored this
     foreach ($item in $dir_files) {
         if ($item -is [System.IO.DirectoryInfo] -and $recurse) {
             if (($item.Attributes -like '*ReparsePoint*' -and $follow) -or ($item.Attributes -notlike '*ReparsePoint*')) {

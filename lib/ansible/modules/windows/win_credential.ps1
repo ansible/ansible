@@ -513,19 +513,19 @@ Function ConvertTo-CredentialAttribute {
 }
 
 Function Get-DiffInfo {
-    param($Ansible_Credential)
+    param($AnsibleCredential)
 
     $diff = @{
-        alias = $Ansible_Credential.TargetAlias
+        alias = $AnsibleCredential.TargetAlias
         attributes = [System.Collections.ArrayList]@()
-        comment = $Ansible_Credential.Comment
-        name = $Ansible_Credential.TargetName
-        persistence = $Ansible_Credential.Persist.ToString()
-        type = $Ansible_Credential.Type.ToString()
-        username = $Ansible_Credential.UserName
+        comment = $AnsibleCredential.Comment
+        name = $AnsibleCredential.TargetName
+        persistence = $AnsibleCredential.Persist.ToString()
+        type = $AnsibleCredential.Type.ToString()
+        username = $AnsibleCredential.UserName
     }
 
-    foreach ($attribute in $Ansible_Credential.Attributes) {
+    foreach ($attribute in $AnsibleCredential.Attributes) {
         $attribute_info = @{
             name = $attribute.Keyword
             data = $null
@@ -573,7 +573,7 @@ $type = switch ($type) {
 
 $existing_credential = [Ansible.CredentialManager.Credential]::GetCredential($name, $type)
 if ($null -ne $existing_credential) {
-    $module.Diff.before = Get-DiffInfo -Ansible_Credential $existing_credential
+    $module.Diff.before = Get-DiffInfo -AnsibleCredential $existing_credential
 }
 
 if ($state -eq "absent") {
@@ -705,7 +705,7 @@ if ($state -eq "absent") {
     } else {
         # Get a new copy of the credential and use that to set the after diff
         $new_credential = [Ansible.CredentialManager.Credential]::GetCredential($name, $type)
-        $module.Diff.after = Get-DiffInfo -Ansible_Credential $new_credential
+        $module.Diff.after = Get-DiffInfo -AnsibleCredential $new_credential
     }
 }
 
