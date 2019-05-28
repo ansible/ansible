@@ -67,7 +67,7 @@ options:
       and value of your resource''s selfLink Alternatively, you can add `register:
       name-of-resource` to a gcp_compute_target_vpn_gateway task and then set this
       target_vpn_gateway field to "{{ name-of-resource }}"'
-    required: true
+    required: false
   router:
     description:
     - URL of router resource to be used for dynamic routing.
@@ -80,7 +80,7 @@ options:
   peer_ip:
     description:
     - IP address of the peer VPN gateway. Only IPv4 is supported.
-    required: true
+    required: false
   shared_secret:
     description:
     - Shared secret used to set the secure session between the Cloud VPN gateway and
@@ -266,9 +266,9 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            target_vpn_gateway=dict(required=True, type='dict'),
+            target_vpn_gateway=dict(type='dict'),
             router=dict(type='dict'),
-            peer_ip=dict(required=True, type='str'),
+            peer_ip=dict(type='str'),
             shared_secret=dict(required=True, type='str'),
             ike_version=dict(default=2, type='int'),
             local_traffic_selector=dict(type='list', elements='str'),

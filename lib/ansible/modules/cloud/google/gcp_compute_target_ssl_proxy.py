@@ -65,10 +65,8 @@ options:
     description:
     - Specifies the type of proxy header to append before sending data to the backend,
       either NONE or PROXY_V1. The default is NONE.
+    - 'Some valid choices include: "NONE", "PROXY_V1"'
     required: false
-    choices:
-    - NONE
-    - PROXY_V1
   service:
     description:
     - A reference to the BackendService resource.
@@ -251,7 +249,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
+            proxy_header=dict(type='str'),
             service=dict(required=True, type='dict'),
             ssl_certificates=dict(required=True, type='list', elements='dict'),
             ssl_policy=dict(type='dict'),
