@@ -19,7 +19,7 @@ version_added: '2.9'
 requirements:
   - This module requires Windows Forms.
 options:
-  powerstate:
+  state:
     description:
     - A PowerState indicating the power activity mode to which to transition.
     type: str
@@ -31,7 +31,7 @@ options:
     - If set to C(false), to cause Windows to send a power state change
       request to every application.
     type: bool
-    default: true
+    default: false
   disablewake:
     description:
     - If set to C(true), disables restoring the system's power status to
@@ -61,12 +61,12 @@ EXAMPLES = r'''
 
 - name: Forces the shutdown of a machine
   win_powerstate:
-    powerstate: shutdown
+    state: shutdown
     force: true
 
 - name: Disables restoring from hibernated to active on a wake event
   win_powerstate:
-    powerstate: hibernate
+    state: hibernate
     disablewake: true
 '''
 
@@ -80,5 +80,5 @@ module_args:
   description: The arguments passed to the module.
   returned: always
   type: dict
-  sample: { "disablewake": true, "force": false, "powerstate": "shutdown"}
+  sample: { "disablewake": true, "force": false, "state": "shutdown"}
 '''
