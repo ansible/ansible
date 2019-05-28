@@ -33,12 +33,12 @@ options:
     description:
       - The rule's display name.
     type: str
+    required: yes
   group:
     description:
       - The group name for the rule.
     version_added: '2.9'
     type: str
-    required: yes
   direction:
     description:
       - Whether this rule is for inbound or outbound traffic.
