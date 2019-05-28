@@ -1,0 +1,2 @@
+bugfixes:
+  - rabbitmq_policy - Add full check for rabbit policy changes (https://github.com/ansible/ansible/issues/29264)
