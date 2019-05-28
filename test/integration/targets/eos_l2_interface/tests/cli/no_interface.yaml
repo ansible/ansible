@@ -1,6 +1,6 @@
 ---
 - debug:
-    msg: "START eos_l3_interface/cli/no_interface.yaml on connection={{ ansible_connection }}"
+    msg: "START eos_l2_interface/cli/no_interface.yaml on connection={{ ansible_connection }}"
 
 - name: Create fake interface
   eos_interface:
@@ -33,4 +33,4 @@
     that: "result.warnings is not defined"
 
 - debug:
-    msg: "END eos_l3_interface/cli/no_interface.yaml on connection={{ ansible_connection }}"
+    msg: "END eos_l2_interface/cli/no_interface.yaml on connection={{ ansible_connection }}"
