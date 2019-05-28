@@ -61,7 +61,7 @@
     that:
       - result.changed == True
       - result.sequence == 'foobar'
-      - result.queries == ["CREATE SEQUENCE \"foobar\""]
+      - result.queries == ["CREATE SEQUENCE \"public\".\"foobar\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the new seqeunce "foobar" not exists
@@ -96,7 +96,7 @@
     that:
       - result.changed == True
       - result.sequence == 'foobar'
-      - result.queries == ["CREATE SEQUENCE \"foobar\""]
+      - result.queries == ["CREATE SEQUENCE \"public\".\"foobar\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the new seqeunce "foobar" exists
@@ -132,7 +132,7 @@
     that:
       - result.changed == True
       - result.sequence == 'foobar'
-      - result.queries == ["DROP SEQUENCE \"foobar\""]
+      - result.queries == ["DROP SEQUENCE \"public\".\"foobar\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the seqeunce "foobar" still exists
@@ -167,7 +167,7 @@
     that:
       - result.changed == True
       - result.sequence == 'foobar'
-      - result.queries == ["DROP SEQUENCE \"foobar\""]
+      - result.queries == ["DROP SEQUENCE \"public\".\"foobar\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the seqeunce "foobar" not exists
@@ -245,7 +245,7 @@
       - result.minvalue == '1'
       - result.maxvalue == '1000'
       - result.cycle == 'YES'
-      - result.queries == ["CREATE SEQUENCE \"foobar_desc\" INCREMENT BY -1 MINVALUE 1 MAXVALUE 1000 START WITH 101 CYCLE"]
+      - result.queries == ["CREATE SEQUENCE \"public\".\"foobar_desc\" INCREMENT BY -1 MINVALUE 1 MAXVALUE 1000 START WITH 101 CYCLE"]
 
 # Real SQL check
 - name: postgresql_sequence - check that the new seqeunce "foobar_desc" exists
@@ -280,7 +280,7 @@
       - result.changed == True
       - result.sequence == 'foobar_desc'
       - result.newname == 'foobar_with_options'
-      - result.queries == ["ALTER SEQUENCE \"foobar_desc\" RENAME TO \"foobar_with_options\""]
+      - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_desc\" RENAME TO \"foobar_with_options\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the seqeunce "foobar_desc" still exists and is not renamed
@@ -316,7 +316,7 @@
       - result.changed == True
       - result.sequence == 'foobar_desc'
       - result.newname == 'foobar_with_options'
-      - result.queries == ["ALTER SEQUENCE \"foobar_desc\" RENAME TO \"foobar_with_options\""]
+      - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_desc\" RENAME TO \"foobar_with_options\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the renamed seqeunce "foobar_with_options" exists
@@ -354,7 +354,7 @@
       - result.sequence == 'foobar_with_options'
       - result.schema == 'public'
       - result.newschema == 'foobar_schema'
-      - result.queries == ["ALTER SEQUENCE \"foobar_with_options\" SET SCHEMA \"foobar_schema\""]
+      - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_with_options\" SET SCHEMA \"foobar_schema\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the seqeunce "foobar_with_options" still exists in the old schema
@@ -391,7 +391,7 @@
       - result.sequence == 'foobar_with_options'
       - result.schema == 'public'
       - result.newschema == 'foobar_schema'
-      - result.queries == ["ALTER SEQUENCE \"foobar_with_options\" SET SCHEMA \"foobar_schema\""]
+      - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_with_options\" SET SCHEMA \"foobar_schema\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the seqeunce "foobar_with_options" exists in new schema
@@ -541,7 +541,7 @@
     that:
       - result.changed == True
       - result.sequence == 'seq1'
-      - result.queries == ["DROP SEQUENCE \"seq1\" CASCADE"]
+      - result.queries == ["DROP SEQUENCE \"public\".\"seq1\" CASCADE"]
 
 # Real SQL check
 - name: postgresql_sequence - check that the seqeunce "seq1" still exists
@@ -577,7 +577,7 @@
     that:
       - result.changed == True
       - result.sequence == 'seq1'
-      - result.queries == ["DROP SEQUENCE \"seq1\" CASCADE"]
+      - result.queries == ["DROP SEQUENCE \"public\".\"seq1\" CASCADE"]
 
 # Real SQL check
 - name: postgresql_sequence - check that the seqeunce "seq1" not exists
@@ -587,6 +587,42 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
     query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'seq1'"
+  register: result
+
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.rowcount == 0
+
+####################
+# Test: create sequence with owner in checkmode
+- name: postgresql_sequence - create a new seqeunce with name "foobar2" with owner "{{ db_user2 }}"
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_sequence:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: foobar2
+    owner: "{{ db_user2 }}"
+  register: result
+
+# Checks
+- name: postgresql_sequence - check with assert the output
+  assert:
+    that:
+      - result.changed == True
+      - result.sequence == 'foobar2'
+      - result.queries == ["CREATE SEQUENCE \"public\".\"foobar2\"", "ALTER SEQUENCE \"public\".\"foobar2\" OWNER TO \"ansible_db_user2\""]
+
+# Real SQL check
+- name: postgresql_sequence - check that the new seqeunce "foobar2" does not exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT sequence_name FROM information_schema.sequences WHERE sequence_name = 'foobar2'"
   register: result
 
 - name: postgresql_sequence - check with assert the output
@@ -612,7 +648,7 @@
     that:
       - result.changed == True
       - result.sequence == 'foobar2'
-      - result.queries == ["CREATE SEQUENCE \"foobar2\"", "ALTER SEQUENCE \"foobar2\" OWNER TO \"ansible_db_user2\""]
+      - result.queries == ["CREATE SEQUENCE \"public\".\"foobar2\"", "ALTER SEQUENCE \"public\".\"foobar2\" OWNER TO \"ansible_db_user2\""]
 
 # Real SQL check
 - name: postgresql_sequence - check that the new seqeunce "foobar2" exists

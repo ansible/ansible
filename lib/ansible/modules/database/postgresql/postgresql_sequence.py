@@ -4,7 +4,7 @@
 # Copyright: (c) 2019, Tobias Birkefeld (@tcraxs) <t@craxs.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -113,6 +113,7 @@ options:
   schema:
     description:
     - The schema in the new I(sequence) will be created.
+    default: public
     type: str
   newschema:
     description:
@@ -255,7 +256,8 @@ cycle:
     type: str
     sample: 'NO'
 owner:
-    description: Shows the current owner of the sequence.
+    description: Shows the current owner of the sequence
+                 after the successful run of the task.
     returned: always
     type: str
     sample: 'postgres'
@@ -273,8 +275,6 @@ newschema:
 
 
 try:
-    from psycopg2 import __version__ as PSYCOPG2_VERSION
-    from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED as READ_COMMITTED
     from psycopg2.extras import DictCursor
 except ImportError:
     # psycopg2 is checked by connect_to_db()
@@ -282,32 +282,85 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
+
+
+def exec_sql(obj, query, ddl=False, add_to_executed=True):
+    """Execute SQL.
+
+    Auxiliary function for PostgreSQL user classes.
+
+    Returns a query result if possible or True/False if ddl=True arg was passed.
+    It necessary for statements that don't return any result (like DDL queries).
+
+    Arguments:
+        obj (obj) -- must be an object of a user class.
+            The object must have module (AnsibleModule class object) and
+            cursor (psycopg cursor object) attributes
+        query (str) -- SQL query to execute
+        ddl (bool) -- must return True or False instead of rows (typical for DDL queries)
+            (default False)
+        add_to_executed (bool) -- append the query to obj.executed_queries attribute
+    """
+    try:
+        obj.cursor.execute(query)
+
+        if add_to_executed:
+            obj.executed_queries.append(query)
+
+        if not ddl:
+            res = obj.cursor.fetchall()
+            return res
+        return True
+    except Exception as e:
+        obj.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
+    return False
 
 
 class Sequence(object):
-    def __init__(self, name, module, cursor, schema):
-        if not schema:
-            schema = 'public'
-        self.name = name
+    """Implements behavior of CREATE, ALTER or DROP SEQUENCE PostgreSQL command.
+
+    Arguments:
+        module (AnsibleModule) -- object of AnsibleModule class
+        cursor (cursor) -- cursor objec of psycopg2 library
+
+    Attributes:
+        module (AnsibleModule) -- object of AnsibleModule class
+        cursor (cursor) -- cursor objec of psycopg2 library
+        changed (bool) --  something was changed after execution or not
+        executed_queries (list) -- executed queries
+        name (str) -- name of the sequence
+        owner (str) -- name of the owner of the sequence
+        schema (str) -- name of the schema (default: public)
+        data_type (str) -- data type of the sequence
+        start_value (int) -- value of the sequence start
+        minvalue (int) -- minimum value of the sequence
+        maxvalue (int) -- maximum value of the sequence
+        increment (int) -- increment value of the sequence
+        cycle (bool) -- sequence can cycle or not
+        new_name (str) -- name of the renamed sequence
+        new_schema (str) -- name of the new schema
+        exists (bool) -- sequence exists or not
+    """
+
+    def __init__(self, module, cursor):
         self.module = module
         self.cursor = cursor
+        self.executed_queries = []
+        self.name = self.module.params['sequence']
         self.owner = ''
-        self.sequence_schema = schema
+        self.schema = self.module.params['schema']
         self.data_type = ''
         self.start_value = ''
-        self.minimum_value = ''
-        self.maximum_value = ''
+        self.minvalue = ''
+        self.maxvalue = ''
         self.increment = ''
-        self.cycle_option = ''
+        self.cycle = ''
         self.new_name = ''
         self.new_schema = ''
-
         self.exists = False
-        self.executed_queries = []
         # Collect info
         self.get_info()
 
@@ -330,9 +383,9 @@ class Sequence(object):
                  "AND c.relkind = 'S'::\"char\" "
                  "AND sequence_name = '%s' "
                  "AND sequence_schema = '%s'" % (self.name,
-                                                 self.sequence_schema))
+                                                 self.schema))
 
-        res = self.__exec_sql(query, add_to_executed=False)
+        res = exec_sql(self, query, add_to_executed=False)
 
         if not res:
             self.exists = False
@@ -340,114 +393,81 @@ class Sequence(object):
 
         if res:
             self.exists = True
-            self.sequence_schema = res[0]['schemaname']
+            self.schema = res[0]['schemaname']
             self.name = res[0]['sequencename']
             self.owner = res[0]['sequenceowner']
             self.data_type = res[0]['data_type']
             self.start_value = res[0]['start_value']
-            self.minimum_value = res[0]['min_value']
-            self.maximum_value = res[0]['max_value']
+            self.minvalue = res[0]['min_value']
+            self.maxvalue = res[0]['max_value']
             self.increment = res[0]['increment_by']
-            self.cycle_option = res[0]['cycle']
+            self.cycle = res[0]['cycle']
 
-    def create(self, data_type=None, increment=None, minimum_value=None,
-               maximum_value=None, start=None, cache=None, cycle_option=False,
-               schema=None):
-        """Create function for sequence"""
-        query = "CREATE SEQUENCE"
+    def create(self):
+        """Implements CREATE SEQUENCE command behavior."""
+        query = ['CREATE SEQUENCE']
+        query.append(self.__add_schema())
 
-        if schema:
-            query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                 pg_quote_identifier(self.name, 'sequence'))
-        else:
-            query += " %s" % pg_quote_identifier(self.name, 'sequence')
+        if self.module.params.get('data_type'):
+            query.append('AS %s' % self.module.params['data_type'])
 
-        if data_type:
-            query += " AS %s" % data_type
+        if self.module.params.get('increment'):
+            query.append('INCREMENT BY %s' % self.module.params['increment'])
 
-        if increment:
-            query += " INCREMENT BY %s" % increment
+        if self.module.params.get('minvalue'):
+            query.append('MINVALUE %s' % self.module.params['minvalue'])
 
-        if minimum_value:
-            query += " MINVALUE %s" % minimum_value
+        if self.module.params.get('maxvalue'):
+            query.append('MAXVALUE %s' % self.module.params['maxvalue'])
 
-        if maximum_value:
-            query += " MAXVALUE %s" % maximum_value
+        if self.module.params.get('start'):
+            query.append('START WITH %s' % self.module.params['start'])
 
-        if start:
-            query += " START WITH %s" % start
+        if self.module.params.get('cache'):
+            query.append('CACHE %s' % self.module.params['cache'])
 
-        if cache:
-            query += " CACHE %s" % cache
+        if self.module.params.get('cycle'):
+            query.append('CYCLE')
 
-        if cycle_option:
-            query += " CYCLE"
+        return exec_sql(self, ' '.join(query), ddl=True)
 
-        return self.__exec_sql(query, ddl=True)
+    def drop(self):
+        """Implements DROP SEQUENCE command behavior."""
+        query = ['DROP SEQUENCE']
+        query.append(self.__add_schema())
 
-    def drop(self, cascade=False, schema=None):
-        query = "DROP SEQUENCE"
-        if schema:
-            query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                 pg_quote_identifier(self.name, 'sequence'))
-        else:
-            query += " %s" % pg_quote_identifier(self.name, 'sequence')
+        if self.module.params.get('cascade'):
+            query.append('CASCADE')
 
-        if cascade:
-            query += " CASCADE"
+        return exec_sql(self, ' '.join(query), ddl=True)
 
-        return self.__exec_sql(query, ddl=True)
+    def rename(self):
+        """Implements ALTER SEQUENCE RENAME TO command behavior."""
+        query = ['ALTER SEQUENCE']
+        query.append(self.__add_schema())
+        query.append('RENAME TO %s' % pg_quote_identifier(self.module.params['rename_to'], 'sequence'))
 
-    def rename(self, rename_to, schema=None):
-        query = "ALTER SEQUENCE"
-        if schema:
-            query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                 pg_quote_identifier(self.name, 'sequence'))
-        else:
-            query += " %s" % pg_quote_identifier(self.name, 'sequence')
+        return exec_sql(self, ' '.join(query), ddl=True)
 
-        query += " RENAME TO %s" % pg_quote_identifier(rename_to, 'sequence')
+    def set_owner(self):
+        """Implements ALTER SEQUENCE OWNER TO command behavior."""
+        query = ['ALTER SEQUENCE']
+        query.append(self.__add_schema())
+        query.append('OWNER TO %s' % pg_quote_identifier(self.module.params['owner'], 'role'))
 
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, ' '.join(query), ddl=True)
 
-    def set_owner(self, new_owner, schema=None):
-        query = "ALTER SEQUENCE"
-        if schema:
-            query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                 pg_quote_identifier(self.name, 'sequence'))
-        else:
-            query += " %s" % pg_quote_identifier(self.name, 'sequence')
+    def set_schema(self):
+        """Implements ALTER SEQUENCE SET SCHEMA command behavior."""
+        query = ['ALTER SEQUENCE']
+        query.append(self.__add_schema())
+        query .append('SET SCHEMA %s' % pg_quote_identifier(self.module.params['newschema'], 'schema'))
 
-        query += " OWNER TO %s" % pg_quote_identifier(new_owner, 'role')
+        return exec_sql(self, ' '.join(query), ddl=True)
 
-        return self.__exec_sql(query, ddl=True)
-
-    def set_schema(self, newschema, schema=None):
-        query = "ALTER SEQUENCE"
-        if schema:
-            query += " %s.%s" % (pg_quote_identifier(schema, 'schema'),
-                                 pg_quote_identifier(self.name, 'sequence'))
-        else:
-            query += " %s" % pg_quote_identifier(self.name, 'sequence')
-
-        query += " SET SCHEMA %s" % pg_quote_identifier(newschema, 'schema')
-
-        return self.__exec_sql(query, ddl=True)
-
-    def __exec_sql(self, query, ddl=False, add_to_executed=True):
-        try:
-            self.cursor.execute(query)
-
-            if add_to_executed:
-                self.executed_queries.append(query)
-
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
+    def __add_schema(self):
+        return '.'.join([pg_quote_identifier(self.schema, 'schema'),
+                        pg_quote_identifier(self.name, 'sequence')])
 
 
 # ===========================================
@@ -458,7 +478,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         sequence=dict(type='str', required=True, aliases=['name']),
-        state=dict(type='str', default="present", choices=["absent", "present"]),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         data_type=dict(type='str', choices=['bigint', 'integer', 'smallint']),
         increment=dict(type='int'),
         minvalue=dict(type='int', aliases=['min']),
@@ -466,7 +486,7 @@ def main():
         start=dict(type='int'),
         cache=dict(type='int'),
         cycle=dict(type='bool'),
-        schema=dict(type='str'),
+        schema=dict(type='str', default='public'),
         cascade=dict(type='bool'),
         rename_to=dict(type='str'),
         owner=dict(type='str'),
@@ -476,121 +496,120 @@ def main():
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=(('positional_args', 'named_args'),),
         supports_check_mode=True,
+        mutually_exclusive=[
+            ['absent', 'data_type'],
+            ['absent', 'increment'],
+            ['absent', 'minvalue'],
+            ['absent', 'maxvalue'],
+            ['absent', 'start'],
+            ['absent', 'cache'],
+            ['absent', 'cycle'],
+            ['absent', 'rename_to'],
+            ['absent', 'owner'],
+            ['absent', 'newschema'],
+            ['rename_to', 'data_type'],
+            ['rename_to', 'increment'],
+            ['rename_to', 'minvalue'],
+            ['rename_to', 'maxvalue'],
+            ['rename_to', 'start'],
+            ['rename_to', 'cache'],
+            ['rename_to', 'cycle'],
+            ['rename_to', 'cascade'],
+            ['rename_to', 'owner'],
+            ['rename_to', 'newschema'],
+            ['cascade', 'data_type'],
+            ['cascade', 'increment'],
+            ['cascade', 'minvalue'],
+            ['cascade', 'maxvalue'],
+            ['cascade', 'start'],
+            ['cascade', 'cache'],
+            ['cascade', 'cycle'],
+            ['cascade', 'owner'],
+            ['cascade', 'newschema'],
+        ]
     )
 
-    sequence = module.params["sequence"]
-    state = module.params["state"]
-    data_type = module.params["data_type"]
-    increment = module.params["increment"]
-    minvalue = module.params["minvalue"]
-    maxvalue = module.params["maxvalue"]
-    start = module.params["start"]
-    cache = module.params["cache"]
-    cycle = module.params["cycle"]
-    cascade = module.params["cascade"]
-    rename_to = module.params["rename_to"]
-    schema = module.params["schema"]
-    owner = module.params["owner"]
-    newschema = module.params["newschema"]
+    # Note: we don't need to check mutually exclusive params here, because they are
+    # checked automatically by AnsibleModule (mutually_exclusive=[] list above).
 
-    # Check mutual exclusive parameters:
-    if state == 'absent' and (data_type or increment or minvalue or maxvalue or
-                              start or cache or cycle or
-                              rename_to or newschema or owner):
-        module.fail_json(msg="'%s': state=absent is mutually exclusive with: "
-                             "data_type, increment, minvalue, maxvalue, "
-                             "start, cache, cycle, "
-                             "rename_to, newschema or owner" % sequence)
+    # sequence = module.params["sequence"]
+    # state = module.params["state"]
+    # data_type = module.params["data_type"]
+    # increment = module.params["increment"]
+    # minvalue = module.params["minvalue"]
+    # maxvalue = module.params["maxvalue"]
+    # start = module.params["start"]
+    # cache = module.params["cache"]
+    # cycle = module.params["cycle"]
+    # cascade = module.params["cascade"]
+    # rename_to = module.params["rename_to"]
+    # schema = module.params["schema"]
+    # owner = module.params["owner"]
+    # newschema = module.params["newschema"]
 
-    if rename_to and (data_type or increment or minvalue or maxvalue or start
-                      or cache or cycle or cascade or newschema or owner):
-        module.fail_json(msg="'%s': rename_to is mutually exclusive with: "
-                             "data_type, increment, minvalue, maxvalue, "
-                             "start, cache, cycle, cascade, "
-                             "newschema or owner" % sequence)
-
-    if cascade and (data_type or increment or minvalue or maxvalue or start or
-                    cache or cycle or rename_to or
-                    newschema or owner):
-        module.fail_json(msg="'%s': cascade is mutually exclusive with: "
-                             "data_type, increment, minvalue, "
-                             "maxvalue, start, cache, cycle, "
-                             "rename_to, newschema "
-                             "or owner" % sequence)
-
+    # Connect to DB and make cursor object:
     db_connection = connect_to_db(module, autocommit=True)
-    cursor = db_connection.cursor(cursor_factory=DictCursor)
-
     # Change autocommit to False if check_mode:
     if module.check_mode:
-        if PSYCOPG2_VERSION >= '2.4.2':
-            db_connection.set_session(autocommit=False)
-        else:
-            db_connection.set_isolation_level(READ_COMMITTED)
+        db_connection.set_session(autocommit=False)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############
-    # Do main job:
-    sequence_obj = Sequence(sequence, module, cursor, schema)
+    # Create the object and do main job:
+    data = Sequence(module, cursor)
 
     # Set defaults:
-    autocommit = False
     changed = False
 
     # Create new sequence
-    if not sequence_obj.exists and state == 'present':
-        if rename_to:
-            module.fail_json(msg="Sequence '%s' does not exist, nothing to rename" % sequence)
-        if newschema:
-            module.fail_json(msg="Sequence '%s' does not exist, change of schema not possible" % sequence)
+    if not data.exists and module.params['state'] == 'present':
+        if module.params.get('rename_to'):
+            module.fail_json(msg="Sequence '%s' does not exist, nothing to rename" % module.params['sequence'])
+        if module.params.get('newschema'):
+            module.fail_json(msg="Sequence '%s' does not exist, change of schema not possible" % module.params['sequence'])
 
-        changed = sequence_obj.create(data_type=data_type, increment=increment,
-                                      minimum_value=minvalue,
-                                      maximum_value=maxvalue, start=start,
-                                      cache=cache, cycle_option=cycle,
-                                      schema=schema)
+        changed = data.create()
 
     # Drop non-existing sequence
-    elif not sequence_obj.exists and state == 'absent':
+    elif not data.exists and module.params['state'] == 'absent':
         # Nothing to do
-        module.warn(warning="Tries to drop nonexistent sequence '%s'" % sequence)
+        module.warn(warning="Tries to drop nonexistent sequence '%s'" % module.params['sequence'])
 
     # Drop existing sequence
-    elif sequence_obj.exists and state == 'absent':
-        changed = sequence_obj.drop(cascade=cascade, schema=schema)
+    elif data.exists and module.params['state'] == 'absent':
+        changed = data.drop()
 
     # Rename sequence
-    if sequence_obj.exists and rename_to:
-        if sequence_obj.name != rename_to:
-            changed = sequence_obj.rename(rename_to, schema=schema)
+    if data.exists and module.params.get('rename_to'):
+        if data.name != module.params['rename_to']:
+            changed = data.rename()
             if changed:
-                sequence_obj.new_name = rename_to
+                data.new_name = module.params['rename_to']
 
     # Refresh information
-    if state == 'present':
-        sequence_obj.get_info()
+    if module.params['state'] == 'present':
+        data.get_info()
 
     # Change owner, schema and settings
-    if state == 'present' and sequence_obj.exists:
+    if module.params['state'] == 'present' and data.exists:
         # change owner
-        if owner:
-            if sequence_obj.owner != owner:
-                changed = sequence_obj.set_owner(owner, schema=schema)
+        if module.params.get('owner'):
+            if data.owner != module.params['owner']:
+                changed = data.set_owner()
 
         # Set schema
-        if newschema:
-            if sequence_obj.sequence_schema != newschema:
-                changed = sequence_obj.set_schema(newschema, schema=schema)
+        if module.params.get('newschema'):
+            if data.schema != module.params['newschema']:
+                changed = data.set_schema()
                 if changed:
-                    sequence_obj.new_schema = newschema
+                    data.new_schema = module.params['newschema']
 
     # Rollback if it's possible and check_mode:
-    if not autocommit:
-        if module.check_mode:
-            db_connection.rollback()
-        else:
-            db_connection.commit()
+    if module.check_mode:
+        db_connection.rollback()
+    else:
+        db_connection.commit()
 
     cursor.close()
     db_connection.close()
@@ -599,28 +618,25 @@ def main():
     kw = dict(
         changed=changed,
         state='present',
-        sequence=sequence_obj.name,
-        queries=sequence_obj.executed_queries,
-        schema=sequence_obj.sequence_schema,
-        data_type=sequence_obj.data_type,
-        increment=sequence_obj.increment,
-        minvalue=sequence_obj.minimum_value,
-        maxvalue=sequence_obj.maximum_value,
-        start=sequence_obj.start_value,
-        cycle=sequence_obj.cycle_option,
-        owner=sequence_obj.owner,
+        sequence=data.name,
+        queries=data.executed_queries,
+        schema=data.schema,
+        data_type=data.data_type,
+        increment=data.increment,
+        minvalue=data.minvalue,
+        maxvalue=data.maxvalue,
+        start=data.start_value,
+        cycle=data.cycle,
+        owner=data.owner,
     )
 
-    if state == 'present':
-        kw['state'] = 'present'
+    if module.params['state'] == 'present':
+        if data.new_name:
+            kw['newname'] = data.new_name
+        if data.new_schema:
+            kw['newschema'] = data.new_schema
 
-        if sequence_obj.new_name:
-            kw['newname'] = sequence_obj.new_name
-
-        if sequence_obj.new_schema:
-            kw['newschema'] = sequence_obj.new_schema
-
-    elif state == 'absent':
+    elif module.params['state'] == 'absent':
         kw['state'] = 'absent'
 
     module.exit_json(**kw)
