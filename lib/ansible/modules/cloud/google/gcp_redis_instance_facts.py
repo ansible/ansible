@@ -58,8 +58,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -109,7 +109,7 @@ items:
       type: dict
     redisConfigs:
       description:
-      - Redis configuration parameters, according to U(http://redis.io/topics/config.)
+      - Redis configuration parameters, according to U(http://redis.io/topics/config).
       - 'Please check Memorystore documentation for the list of supported parameters:
         U(https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs)
         .'
@@ -188,7 +188,7 @@ def main():
         items = items.get('instances')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

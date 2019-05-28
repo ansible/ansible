@@ -44,7 +44,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length >= 1
+      - results['resources'] | length >= 1
 # ----------------------------------------------------------------------------
 - name: create a repository that already exists
   gcp_sourcerepo_repository:
@@ -82,7 +82,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a repository that does not exist
   gcp_sourcerepo_repository:
