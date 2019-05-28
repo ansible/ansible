@@ -26,12 +26,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ali_instance_facts
+module: ali_instance_info
 version_added: "2.8"
-short_description: Gather facts on instances of Alibaba Cloud ECS.
+short_description: Gather information on instances of Alibaba Cloud ECS.
 description:
      - This module fetches data from the Open API in Alicloud.
        The module must be called from within the ECS instance itself.
+     - This module was called C(ali_instance_facts) before Ansible 2.9. The usage did not change.
 
 options:
     availability_zone:
@@ -71,14 +72,14 @@ EXAMPLES = '''
 
   tasks:
     - name: Find all instances in the specified region
-      ali_instance_facts:
+      ali_instance_info:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
       register: all_instances
 
     - name: Find all instances based on the specified ids
-      ali_instance_facts:
+      ali_instance_info:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -88,7 +89,7 @@ EXAMPLES = '''
       register: instances_by_ids
 
     - name: Find all instances based on the specified names/name-prefixes
-      ali_instance_facts:
+      ali_instance_info:
         alicloud_access_key: '{{ alicloud_access_key }}'
         alicloud_secret_key: '{{ alicloud_secret_key }}'
         alicloud_region: '{{ alicloud_region }}'
@@ -373,6 +374,8 @@ def main():
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'ali_instance_facts':
+        module.deprecate("The 'ali_instance_facts' module has been renamed to 'ali_instance_info'", version='2.13')
 
     if HAS_FOOTMARK is False:
         module.fail_json(msg=missing_required_lib('footmark'), exception=FOOTMARK_IMP_ERR)
