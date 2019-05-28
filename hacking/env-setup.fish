@@ -83,10 +83,10 @@ pushd $ANSIBLE_HOME
 
 if [ $QUIET ]
     gen_egg_info ^ /dev/null
-    find . -type f -name "*.pyc" -exec rm -f '{}' ';' ^ /dev/null
+    find . -type f -name "*.pyc" | xargs rm -f ^ /dev/null
 else
     gen_egg_info
-    find . -type f -name "*.pyc" -exec rm -f '{}' ';'
+    find . -type f -name "*.pyc" | xargs rm -f
 end
 
 popd
