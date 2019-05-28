@@ -886,7 +886,7 @@ def main():
                                'has been renamed and will be removed in Ansible 2.12.' % (build_option, option, option))
     if client.module.params['source'] == 'build':
         if (not client.module.params['build'] or not client.module.params['build'].get('path')):
-            client.module.fail('If "source" is set to "build", the "build.path" option must be specified.')
+            client.fail('If "source" is set to "build", the "build.path" option must be specified.')
         if client.module.params['build'].get('pull') is None:
             client.module.warn("The default for build.pull is currently 'yes', but will be changed to 'no' in Ansible 2.12. "
                                "Please set build.pull explicitly to the value you need.")
