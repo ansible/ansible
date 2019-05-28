@@ -54,6 +54,87 @@
         that:
           - result.changed
 
+    - name: inserting db record with a primary record that already exists
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: put
+        item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
+        <<: *aws_connection_info
+      register: result
+    - name: assert status
+      assert:
+        that:
+          - result.changed
+
+    - name: inserting db record with a primary key that already exists updating status field
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: put
+        item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "blue"}, "person": {"S": "ochoa"}}
+        <<: *aws_connection_info
+      register: result
+    - name: assert status
+      assert:
+        that:
+          - result.changed
+
+    - name: gets previously updated item
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: get
+        filter_expression: 'bank = :bank_name AND quantity = :number'
+        expression_attribute_values: {":bank_name": {"S": "hsbc"}, ":number": {"N": "1000"}}
+        <<: *aws_connection_info
+      register: result
+    - name: assert data is correct
+      assert:
+        that:
+          - '''[{"bank": {"s": "hsbc"}, "quantity": {"n": "1000"}, "person": {"s": "ochoa"}, "status": {"s": "blue"}}] in result.returned_items'''
+
+    - name: inserting db record on a table that doesnt exist
+      dynamodb:
+        table: "willfail"
+        action: put
+        item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: result
+    - name: assert failure
+      assert:
+        that:
+          - result.failed
+          - '"Table willfail doesnt exist" in result.msg'
+
+    - name: test missing required_if parameters when updating
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: update
+        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+        expression_attribute_values: {":status": {"S": "red"}}
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: result
+    - name: assert failure
+      assert:
+        that:
+          - result.failed
+          - '"parameters are required together: primary_key, update_expression" in result.msg'
+
+    - name: test invalid primary key when updating
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: update
+        primary_key: {"willfail": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+        expression_attribute_values: {":status": {"S": "red"}}
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: result
+    - name: assert failure
+      assert:
+        that:
+          - result.failed
+          - '"Check the primary key, it doesnt match your table config" in result.msg'
+
     - name: updating db record with the status protected word
       dynamodb:
         table: "{{ dynamo_db_table }}"
@@ -98,6 +179,19 @@
         that:
           - '''[{"bank": {"s": "hsbc"}, "quantity": {"n": "1000"}, "person": {"s": "ochoa"}, "status": {"s": "red"}}] in result.returned_items'''
 
+    - name: Gets an item that doesnt exist
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: get
+        filter_expression: 'bank = :bank_name AND quantity = :number'
+        expression_attribute_values: {":bank_name": {"S": "willfail"}, ":number": {"N": "1000"}}
+        <<: *aws_connection_info
+      register: result
+    - name: assert data is correct
+      assert:
+        that:
+          - '[] in result.returned_items'
+
     - name: updating to delete attribute 'person' in previously added db record
       dynamodb:
         table: "{{ dynamo_db_table }}"
@@ -124,6 +218,35 @@
       assert:
         that:
           - result.changed
+
+    - name: Gets a single item
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: get
+        filter_expression: 'bank = :bank_name AND quantity = :number'
+        expression_attribute_values: {":bank_name": {"S": "hsbc"}, ":number": {"N": "1000"}}
+        <<: *aws_connection_info
+      register: result
+    - name: assert that person is no longer present
+      assert:
+        that:
+          - '''[{"bank": {"s": "hsbc"}, "quantity": {"n": "1000"}, "status": {"s": "red"}}] in result.returned_items'''
+
+    - name: deletes a single db record that doesnt match conditional expression (doesnt exist)
+      dynamodb:
+        table: "{{ dynamo_db_table }}"
+        action: delete
+        primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "2000"}}
+        condition_expression: quantity = :quantity
+        expression_attribute_values: {":quantity": {"N": "2000"}}
+        <<: *aws_connection_info
+      ignore_errors: yes
+      register: result
+    - name: assert failure
+      assert:
+        that:
+          - result.failed
+          - '"No item matching your conditional expression" in result.msg'
 
     - name: deletes a single db record
       dynamodb:
