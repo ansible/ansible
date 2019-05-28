@@ -50,7 +50,8 @@ Function Ensure-FeatureInstallation {
 
     Write-DebugLog "Ensuring required Windows features are installed..." 
     $feature_result = Install-WindowsFeature $required_features
-
+    $result.reboot_required = $feature_result.RestartNeeded
+    
     If(-not $feature_result.Success) {
         Exit-Json -message ("Error installing AD-Domain-Services and RSAT-ADDS features: {0}" -f ($feature_result | Out-String))
     }
