@@ -1,7 +1,27 @@
+# This is the configuration template for ansible-test VMware integration tests.
+#
+# You do not need this template if you are:
+#
+# 1) Running integration tests without using ansible-test.
+# 2) Using the automatically provisioned VMware credentials in ansible-test.
+#
+# If you do not want to use the automatically provisioned temporary VMware credentials,
+# fill in the @VAR placeholders below and save this file without the .template extension.
+# This will cause ansible-test to use the given configuration instead of temporary credentials.
+#
+# NOTE: Automatic provisioning of VMware credentials requires an ansible-core-ci API key.
+
 [DEFAULT]
-vcenter_username: @VMWARE_USER
+vcenter_username: @VMWARE_USERNAME
 vcenter_password: @VMWARE_PASSWORD
-vcenter_hostname: @VMWARE_HOST
+vcenter_hostname: @VMWARE_HOSTNAME
 vcenter_port: @VMWARE_PORT
-vmware_ssh_port: @VMWARE_SSH_PORT
 vmware_validate_certs: @VMWARE_VALIDATE_CERTS
+esxi1_username: @ESXI1_USERNAME
+esxi1_hostname: @ESXI1_HOSTNAME
+esxi1_https_port: @ESXI1_HTTPS_PORT
+esxi1_password: @ESXI1_PASSWORD
+esxi2_username: @ESXI2_USERNAME
+esxi2_hostname: @ESXI2_HOSTNAME
+esxi2_https_port: @ESXI2_HTTPS_PORT
+esxi2_password: @ESXI2_PASSWORD

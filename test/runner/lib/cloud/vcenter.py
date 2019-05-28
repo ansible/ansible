@@ -100,6 +100,7 @@ class VcenterProvider(CloudProvider):
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super(VcenterProvider, self).setup()
 
+        self._set_cloud_config('vmware_test_platform', self.vmware_test_platform)
         if self._use_static_config():
             self._setup_static()
         elif self.vmware_test_platform == 'worldstream':
@@ -111,7 +112,7 @@ class VcenterProvider(CloudProvider):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
         """
-        if self.managed:
+        if self.managed and self.vmware_test_platform != 'worldstream':
             return ['--link', self.DOCKER_SIMULATOR_NAME]
 
         return []
@@ -119,6 +120,7 @@ class VcenterProvider(CloudProvider):
     def cleanup(self):
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
         if self.vmware_test_platform == 'worldstream':
+
             if self.aci:
                 self.aci.stop()
 
@@ -194,10 +196,9 @@ class VcenterProvider(CloudProvider):
 
         if not self.args.explain:
             response = aci.start()
-            values = response['esxi']
             self.aci = aci
 
-            config = self._populate_config_template(config, values)
+            config = self._populate_config_template(config, response)
             self._write_config(config)
 
     def _create_ansible_core_ci(self):
@@ -248,8 +249,7 @@ class VcenterEnvironment(CloudEnvironment):
         """
         :rtype: CloudEnvironmentConfig
         """
-        vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', '')
-
+        vmware_test_platform = self._get_cloud_config('vmware_test_platform')
         if vmware_test_platform == 'worldstream':
             parser = ConfigParser()
             parser.read(self.config_path)
