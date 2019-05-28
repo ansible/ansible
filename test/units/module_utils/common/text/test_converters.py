@@ -42,7 +42,7 @@ class TestJsonEncodeFallback:
 
         assert _json_encode_fallback(test_input) == expected
 
-    @pytest.mark.parametrize('test_input,expected', [(set([1]), [1]),])
+    @pytest.mark.parametrize('test_input,expected', [(set([1]), [1]), ])
     def test_set(self, test_input, expected):
         """
         Test for passing a set object to _json_encode_fallback().
