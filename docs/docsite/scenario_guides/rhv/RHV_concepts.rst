@@ -1,5 +1,6 @@
 .. _RHV_concepts:
 
+
 ***************************
 Ansible for RHV Concepts
 ***************************
@@ -11,6 +12,7 @@ examples in this guide.
 
 .. contents:: Topics
 
+
 Control Node
 ============
 
@@ -21,6 +23,7 @@ control node - laptops, shared desktops, and servers can all run Ansible.
 Sorry, but Windows cannot be used as a control node. 
 There can be multiple control nodes.
 
+
 Delegation
 ==========
 
@@ -28,6 +31,7 @@ If you want to perform a RHV specific task on one host within a RHV Datacenter,
  use the ``delegate_to`` keyword on a task. 
 This delegation host will be any host where you have ``pyVmomi`` installed. 
 Your control node and ``delegate_to`` host can be same or different.
+
 
 Modules
 =======
