@@ -151,7 +151,7 @@ def main():
                 module.fail_json(msg="User %s is not valid" % user)
             filters['user'] = u['id']
         if group:
-            g = cloud.get_group(group)
+            g = cloud.get_group(group, domain_id=filters['domain'])
             if g is None:
                 module.fail_json(msg="Group %s is not valid" % group)
             filters['group'] = g['id']
