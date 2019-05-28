@@ -94,10 +94,8 @@ options:
           in the same region as the router. If set to `GLOBAL`, this network's cloud
           routers will advertise routes with all subnetworks of this network, across
           regions.
+        - 'Some valid choices include: "REGIONAL", "GLOBAL"'
         required: true
-        choices:
-        - REGIONAL
-        - GLOBAL
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/networks)'
@@ -213,7 +211,7 @@ def main():
             ipv4_range=dict(type='str'),
             name=dict(required=True, type='str'),
             auto_create_subnetworks=dict(type='bool'),
-            routing_config=dict(type='dict', options=dict(routing_mode=dict(required=True, type='str', choices=['REGIONAL', 'GLOBAL']))),
+            routing_config=dict(type='dict', options=dict(routing_mode=dict(required=True, type='str'))),
         ),
         mutually_exclusive=[['auto_create_subnetworks', 'ipv4_range']],
     )

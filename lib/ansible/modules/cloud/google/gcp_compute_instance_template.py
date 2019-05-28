@@ -180,18 +180,14 @@ options:
               either SCSI or NVME. The default is SCSI.
             - Persistent disks must always use SCSI and the request will fail if you
               attempt to attach a persistent disk in any other format than SCSI.
+            - 'Some valid choices include: "SCSI", "NVME"'
             required: false
-            choices:
-            - SCSI
-            - NVME
           mode:
             description:
             - The mode in which to attach this disk, either READ_WRITE or READ_ONLY.
               If not specified, the default is to attach the disk in READ_WRITE mode.
+            - 'Some valid choices include: "READ_WRITE", "READ_ONLY"'
             required: false
-            choices:
-            - READ_WRITE
-            - READ_ONLY
           source:
             description:
             - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
@@ -210,10 +206,8 @@ options:
             description:
             - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not
               specified, the default is PERSISTENT.
+            - 'Some valid choices include: "SCRATCH", "PERSISTENT"'
             required: false
-            choices:
-            - SCRATCH
-            - PERSISTENT
       machine_type:
         description:
         - The machine type to use in the VM instance template.
@@ -281,9 +275,8 @@ options:
               type:
                 description:
                 - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
+                - 'Some valid choices include: "ONE_TO_ONE_NAT"'
                 required: true
-                choices:
-                - ONE_TO_ONE_NAT
           alias_ip_ranges:
             description:
             - An array of alias IP ranges for this network interface. Can only be
@@ -875,10 +868,10 @@ def main():
                                     source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
                                 ),
                             ),
-                            interface=dict(type='str', choices=['SCSI', 'NVME']),
-                            mode=dict(type='str', choices=['READ_WRITE', 'READ_ONLY']),
+                            interface=dict(type='str'),
+                            mode=dict(type='str'),
                             source=dict(type='dict'),
-                            type=dict(type='str', choices=['SCRATCH', 'PERSISTENT']),
+                            type=dict(type='str'),
                         ),
                     ),
                     machine_type=dict(required=True, type='str'),
@@ -892,11 +885,7 @@ def main():
                             access_configs=dict(
                                 type='list',
                                 elements='dict',
-                                options=dict(
-                                    name=dict(required=True, type='str'),
-                                    nat_ip=dict(type='dict'),
-                                    type=dict(required=True, type='str', choices=['ONE_TO_ONE_NAT']),
-                                ),
+                                options=dict(name=dict(required=True, type='str'), nat_ip=dict(type='dict'), type=dict(required=True, type='str')),
                             ),
                             alias_ip_ranges=dict(
                                 type='list', elements='dict', options=dict(ip_cidr_range=dict(type='str'), subnetwork_range_name=dict(type='str'))
@@ -1090,14 +1079,19 @@ def raise_if_errors(response, err_path, module):
 
 
 def encode_request(request, module):
-    if 'metadata' in request and request['metadata'] is not None:
-        request['metadata'] = metadata_encoder(request['metadata'])
+    if 'properties' in request and request['properties'] is not None and 'metadata' in request['properties'] and request['properties']['metadata'] is not None:
+        request['properties']['metadata'] = metadata_encoder(request['properties']['metadata'])
     return request
 
 
 def decode_response(response, module):
-    if 'metadata' in response and response['metadata'] is not None:
-        response['metadata'] = metadata_decoder(response['metadata'])
+    if (
+        'properties' in response
+        and response['properties'] is not None
+        and 'metadata' in response['properties']
+        and response['properties']['metadata'] is not None
+    ):
+        response['properties']['metadata'] = metadata_decoder(response['properties']['metadata'])
     return response
 
 

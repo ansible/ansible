@@ -258,13 +258,15 @@ resources:
       type: int
     labelFingerprint:
       description:
-      - A fingerprint for this request, which is essentially a hash of the metadata's
-        contents and used for optimistic locking. The fingerprint is initially generated
-        by Compute Engine and changes after every request to modify or update metadata.
-        You must always provide an up-to-date fingerprint hash in order to update
-        or change metadata.
+      - The fingerprint used for optimistic locking of this resource. Used internally
+        during updates.
       returned: success
       type: str
+    labels:
+      description:
+      - Labels to apply to this instance. A list of key->value pairs.
+      returned: success
+      type: dict
     metadata:
       description:
       - The metadata key/value pairs to assign to instances that are created from
