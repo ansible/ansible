@@ -39,14 +39,13 @@ options:
   pattern:
     description:
       - A regex of queues to apply the policy to. Required when
-        C(state=present). 'Required' flag was changed to 'false' in 2.8.
-        version.
+        C(state=present). This option is no longer required as of Ansible 2.9.
     required: false
     default: null
   tags:
     description:
       - A dict or string describing the policy. Required when
-        C(state=present). 'Required' flag was changed to 'false' in 2.8.
+        C(state=present). This option is no longer required as of Ansible 2.9.
     required: false
     default: null
   priority:
