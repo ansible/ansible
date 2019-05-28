@@ -70,11 +70,8 @@ options:
   type:
     description:
     - The type of InterconnectAttachment you wish to create. Defaults to DEDICATED.
+    - 'Some valid choices include: "DEDICATED", "PARTNER", "PARTNER_PROVIDER"'
     required: false
-    choices:
-    - DEDICATED
-    - PARTNER
-    - PARTNER_PROVIDER
   router:
     description:
     - URL of the cloud router to be used for dynamic routing. This router must be
@@ -284,7 +281,7 @@ def main():
             interconnect=dict(type='str'),
             description=dict(type='str'),
             edge_availability_domain=dict(type='str'),
-            type=dict(type='str', choices=['DEDICATED', 'PARTNER', 'PARTNER_PROVIDER']),
+            type=dict(type='str'),
             router=dict(required=True, type='dict'),
             name=dict(required=True, type='str'),
             candidate_subnets=dict(type='list', elements='str'),
