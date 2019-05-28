@@ -117,6 +117,12 @@ class ACIModule(object):
         if self.module._debug:
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set.')
             self.params['output_level'] = 'debug'
+            
+        # Inject fetch_url() if provided
+        if self.module.fetch_url:
+            self.fetch_url = self.module.fetch_url
+        else:
+            self.fetch_url = fetch_url
 
         if self.params['private_key']:
             # Perform signature-based authentication, no need to log on separately
@@ -174,7 +180,7 @@ class ACIModule(object):
         else:
             url = '%(protocol)s://%(host)s/api/aaaLogin.json' % self.params
         payload = {'aaaUser': {'attributes': {'name': self.params['username'], 'pwd': self.params['password']}}}
-        resp, auth = fetch_url(self.module, url,
+        resp, auth = self.fetch_url(self.module, url,
                                data=json.dumps(payload),
                                method='POST',
                                timeout=self.params['timeout'],
@@ -322,7 +328,7 @@ class ACIModule(object):
             self.cert_auth(path=path, payload=payload)
 
         # Perform request
-        resp, info = fetch_url(self.module, self.url,
+        resp, info = self.fetch_url(self.module, self.url,
                                data=payload,
                                headers=self.headers,
                                method=self.params['method'].upper(),
@@ -359,7 +365,7 @@ class ACIModule(object):
             self.cert_auth(path=path, method='GET')
 
         # Perform request
-        resp, query = fetch_url(self.module, self.url,
+        resp, query = self.fetch_url(self.module, self.url,
                                 data=None,
                                 headers=self.headers,
                                 method='GET',
@@ -828,7 +834,7 @@ class ACIModule(object):
             if self.params['private_key']:
                 self.cert_auth(method='DELETE')
 
-            resp, info = fetch_url(self.module, self.url,
+            resp, info = self.fetch_url(self.module, self.url,
                                    headers=self.headers,
                                    method='DELETE',
                                    timeout=self.params['timeout'],
@@ -964,7 +970,7 @@ class ACIModule(object):
         if self.params['private_key']:
             self.cert_auth(path=self.path + self.filter_string, method='GET')
 
-        resp, info = fetch_url(self.module, uri,
+        resp, info = self.fetch_url(self.module, uri,
                                headers=self.headers,
                                method='GET',
                                timeout=self.params['timeout'],
@@ -1065,7 +1071,7 @@ class ACIModule(object):
             if self.params['private_key']:
                 self.cert_auth(method='POST', payload=json.dumps(self.config))
 
-            resp, info = fetch_url(self.module, self.url,
+            resp, info = self.fetch_url(self.module, self.url,
                                    data=json.dumps(self.config),
                                    headers=self.headers,
                                    method='POST',
