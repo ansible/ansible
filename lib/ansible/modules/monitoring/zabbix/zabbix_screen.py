@@ -38,7 +38,7 @@ options:
             - >
               The available states are: C(present) (default) and C(absent). If the screen already exists, and the state is not C(absent), the screen
               will be updated as needed.
-            - You can sort hosts aplabetically, set C(sort) option to C(true)
+            - To sort hosts alphabetically, set the C(sort) option to C(true)
         required: true
 
 extends_documentation_fragment:
