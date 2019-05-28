@@ -1,0 +1,117 @@
+# Test code for mysql_info module
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+###################
+# Prepare for tests
+#
+
+# Create role for tests
+- name: mysql_info -  create mysql user {{ user_name }}
+  mysql_user:
+    name: '{{ user_name }}'
+    password: '{{ user_pass }}'
+    state: present
+    priv: '*.*:ALL'
+    login_unix_socket: '{{ mysql_socket }}'
+
+# Create default MySQL config file with credentials
+- name: mysql_info - create default config file
+  template:
+    src: my.cnf.j2
+    dest: '/root/.my.cnf'
+    mode: 0400
+
+# Create non-default MySQL config file with credentials
+- name: mysql_info - create non-default config file
+  template:
+    src: my.cnf.j2
+    dest: '/root/non-default_my.cnf'
+    mode: 0400
+
+###############
+# Do tests
+
+# Access by default cred file
+- name: mysql_info - collect default cred file
+  mysql_info:
+    login_user: '{{ user_name }}'
+  register: result
+
+- assert:
+    that:
+    - result.changed == false
+    - result.version != {}
+    - result.settings != {}
+    - result.databases != {}
+    - result.engines != {}
+    - result.users != {}
+
+# Access by non-default cred file
+- name: mysql_info - check non-default cred file
+  mysql_info:
+    login_user: '{{ user_name }}'
+    config_file: '/root/non-default_my.cnf'
+  register: result
+
+- assert:
+    that:
+    - result.changed == false
+    - result.version != {}
+
+# Remove cred files
+- name: mysql_info - remove cred files
+  file:
+    path: '{{ item }}'
+    state: absent
+  with_items:
+  - '/root/.my.cnf'
+  - '/root/non-default_my.cnf'
+
+# Access with password
+- name: mysql_info - check access with password
+  mysql_info:
+    login_user: '{{ user_name }}'
+    login_password: '{{ user_pass }}'
+  register: result
+
+- assert:
+    that:
+    - result.changed == false
+    - result.version != {}
+
+# Test excluding
+- name: Collect all info except settings and users
+  mysql_info:
+    login_user: '{{ user_name }}'
+    login_password: '{{ user_pass }}'
+    filter: "!settings,!users"
+  register: result
+
+- assert:
+    that:
+    - result.changed == false
+    - result.version != {}
+    - result.databases != {}
+    - result.engines != {}
+    - result.settings is not defined
+    - result.users is not defined
+
+# Test including
+- name: Collect info only about version and databases
+  mysql_info:
+    login_user: '{{ user_name }}'
+    login_password: '{{ user_pass }}'
+    filter:
+    - version
+    - databases
+  register: result
+
+- assert:
+    that:
+    - result.changed == false
+    - result.version != {}
+    - result.databases != {}
+    - result.engines is not defined
+    - result.settings is not defined
+    - result.users is not defined
