@@ -1,0 +1,3 @@
+bugfixes:
+  - netapp_e_lun_mapping - Fix hosts with same lun number conflict in netapp_e_lun_mapping
+  - netapp_e_lun_mapping - Fix netapp_e_host module bug when lun=0
