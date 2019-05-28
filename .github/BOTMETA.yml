@@ -427,7 +427,9 @@ files:
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan robinro
   $modules/remote_management/foreman/: ehelms
-  $modules/remote_management/hpilo/: dagwieers haad
+  $modules/remote_management/hpilo/:
+    ignored: dagwieers
+    maintainers: haad
   $modules/remote_management/imc/:
     labels: [ cisco ]
     maintainers: $team_imc
@@ -1493,7 +1495,7 @@ macros:
   team_linode: InTheCloudDan lwm displague rmcintosh
   team_macos: akasurde dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
-  team_meraki: dagwieers kbreit
+  team_meraki: kbreit
   team_mysql: bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
   team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
@@ -1519,5 +1521,5 @@ macros:
   team_vmware: Akasurde dav1x warthog9 Tomorrow9 goneri
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
-  team_windows: dagwieers jborean93 jhawkesworth nitzmahone
+  team_windows: jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
