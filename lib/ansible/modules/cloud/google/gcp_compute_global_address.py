@@ -70,21 +70,17 @@ options:
     description:
     - The IP Version that will be used by this address. Valid options are `IPV4` or
       `IPV6`. The default value is `IPV4`.
+    - 'Some valid choices include: "IPV4", "IPV6"'
     required: false
-    choices:
-    - IPV4
-    - IPV6
   address_type:
     description:
     - The type of the address to reserve, default is EXTERNAL.
     - "* EXTERNAL indicates public/external single IP address."
     - "* INTERNAL indicates internal IP ranges belonging to some network."
+    - 'Some valid choices include: "EXTERNAL", "INTERNAL"'
     required: false
     default: EXTERNAL
     version_added: 2.8
-    choices:
-    - EXTERNAL
-    - INTERNAL
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/globalAddresses)'
@@ -175,8 +171,8 @@ def main():
             address=dict(type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
-            address_type=dict(default='EXTERNAL', type='str', choices=['EXTERNAL', 'INTERNAL']),
+            ip_version=dict(type='str'),
+            address_type=dict(default='EXTERNAL', type='str'),
         )
     )
 
