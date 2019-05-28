@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 
 import pytest
 import datetime
-import dateutil.tz
 from copy import copy
 
 from ansible.errors import AnsibleError
@@ -33,36 +32,39 @@ try:
 except ImportError:
     pytestmark = pytest.mark.skip("This test requires the boto3 and botocore Python libraries")
 
-simple_variable_success_response = {
-    'Name': 'secret',
-    'VersionId': 'cafe8168-e6ce-4e59-8830-5b143faf6c52',
-    'SecretString': '{"secret":"simplesecret"}',
-    'VersionStages': ['AWSCURRENT'],
-    'CreatedDate': datetime.datetime(2019, 4, 4, 11, 41, 0, 878000, tzinfo=dateutil.tz.tzlocal()),
-    'ResponseMetadata': {
-        'RequestId': '21099462-597c-490a-800f-8b7a41e5151c',
-        'HTTPStatusCode': 200,
-        'HTTPHeaders': {
-            'date': 'Thu, 04 Apr 2019 10:43:12 GMT',
-            'content-type': 'application/x-amz-json-1.1',
-            'content-length': '252',
-            'connection': 'keep-alive',
-            'x-amzn-requestid': '21099462-597c-490a-800f-8b7a41e5151c'
-        },
-        'RetryAttempts': 0
+
+@pytest.fixture
+def dummy_credentials():
+    dummy_credentials = {}
+    dummy_credentials['boto_profile'] = None
+    dummy_credentials['aws_secret_key'] = "notasecret"
+    dummy_credentials['aws_access_key'] = "notakey"
+    dummy_credentials['aws_security_token'] = None
+    dummy_credentials['region'] = 'eu-west-1'
+    return dummy_credentials
+
+
+def test_lookup_variable(mocker, dummy_credentials):
+    dateutil_tz = pytest.importorskip("dateutil.tz")
+    simple_variable_success_response = {
+        'Name': 'secret',
+        'VersionId': 'cafe8168-e6ce-4e59-8830-5b143faf6c52',
+        'SecretString': '{"secret":"simplesecret"}',
+        'VersionStages': ['AWSCURRENT'],
+        'CreatedDate': datetime.datetime(2019, 4, 4, 11, 41, 0, 878000, tzinfo=dateutil_tz.tzlocal()),
+        'ResponseMetadata': {
+            'RequestId': '21099462-597c-490a-800f-8b7a41e5151c',
+            'HTTPStatusCode': 200,
+            'HTTPHeaders': {
+                'date': 'Thu, 04 Apr 2019 10:43:12 GMT',
+                'content-type': 'application/x-amz-json-1.1',
+                'content-length': '252',
+                'connection': 'keep-alive',
+                'x-amzn-requestid': '21099462-597c-490a-800f-8b7a41e5151c'
+            },
+            'RetryAttempts': 0
+        }
     }
-}
-
-
-dummy_credentials = {}
-dummy_credentials['boto_profile'] = None
-dummy_credentials['aws_secret_key'] = "notasecret"
-dummy_credentials['aws_access_key'] = "notakey"
-dummy_credentials['aws_security_token'] = None
-dummy_credentials['region'] = 'eu-west-1'
-
-
-def test_lookup_variable(mocker):
     lookup = lookup_loader.get('aws_secret')
     boto3_double = mocker.MagicMock()
     boto3_double.Session.return_value.client.return_value.get_secret_value.return_value = simple_variable_success_response
@@ -79,7 +81,7 @@ error_response = {'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Fak
 operation_name = 'FakeOperation'
 
 
-def test_warn_denied_variable(mocker):
+def test_warn_denied_variable(mocker, dummy_credentials):
     boto3_double = mocker.MagicMock()
     boto3_double.Session.return_value.client.return_value.get_secret_value.side_effect = ClientError(error_response, operation_name)
 
