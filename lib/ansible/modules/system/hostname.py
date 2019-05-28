@@ -613,10 +613,22 @@ class CentOSHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class ClearLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Clear-linux-os'
+    strategy_class = SystemdStrategy
+
+
 class CloudlinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Cloudlinux'
     strategy_class = RedHatStrategy
+
+
+class CoreosHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Coreos'
+    strategy_class = SystemdStrategy
 
 
 class ScientificHostname(Hostname):
