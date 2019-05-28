@@ -28,7 +28,7 @@ Delegation
 ==========
 
 If you want to perform a RHV specific task on one host within a RHV Datacenter,
- use the ``delegate_to`` keyword on a task. 
+use the ``delegate_to`` keyword on a task. 
 This delegation host will be any host where you have ``pyVmomi`` installed. 
 Your control node and ``delegate_to`` host can be same or different.
 
