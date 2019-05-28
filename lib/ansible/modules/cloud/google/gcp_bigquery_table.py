@@ -118,9 +118,8 @@ options:
       type:
         description:
         - The only type supported is DAY, which will generate one partition per day.
+        - 'Some valid choices include: "DAY"'
         required: false
-        choices:
-        - DAY
   schema:
     description:
     - Describes the schema of this table.
@@ -142,11 +141,8 @@ options:
           mode:
             description:
             - The field mode.
+            - 'Some valid choices include: "NULLABLE", "REQUIRED", "REPEATED"'
             required: false
-            choices:
-            - NULLABLE
-            - REQUIRED
-            - REPEATED
           name:
             description:
             - The field name.
@@ -154,17 +150,9 @@ options:
           type:
             description:
             - The field data type.
+            - 'Some valid choices include: "STRING", "BYTES", "INTEGER", "FLOAT",
+              "TIMESTAMP", "DATE", "TIME", "DATETIME", "RECORD"'
             required: false
-            choices:
-            - STRING
-            - BYTES
-            - INTEGER
-            - FLOAT
-            - TIMESTAMP
-            - DATE
-            - TIME
-            - DATETIME
-            - RECORD
   encryption_configuration:
     description:
     - Custom encryption configuration.
@@ -197,10 +185,8 @@ options:
       compression:
         description:
         - The compression type of the data source.
+        - 'Some valid choices include: "GZIP", "NONE"'
         required: false
-        choices:
-        - GZIP
-        - NONE
       ignore_unknown_values:
         description:
         - Indicates if BigQuery should allow extra values that are not represented
@@ -216,24 +202,19 @@ options:
       source_format:
         description:
         - The data format.
+        - 'Some valid choices include: "CSV", "GOOGLE_SHEETS", "NEWLINE_DELIMITED_JSON",
+          "AVRO", "DATASTORE_BACKUP", "BIGTABLE"'
         required: false
-        choices:
-        - CSV
-        - GOOGLE_SHEETS
-        - NEWLINE_DELIMITED_JSON
-        - AVRO
-        - DATASTORE_BACKUP
-        - BIGTABLE
       source_uris:
         description:
-        - 'The fully-qualified URIs that point to your data in Google Cloud. For Google
-          Cloud Storage URIs: Each URI can contain one ''*'' wildcard character and
-          it must come after the ''bucket'' name. Size limits related to load jobs
-          apply to external data sources. For Google Cloud Bigtable URIs: Exactly
-          one URI can be specified and it has be a fully specified and valid HTTPS
-          URL for a Google Cloud Bigtable table. For Google Cloud Datastore backups,
-          exactly one URI can be specified. Also, the ''*'' wildcard character is
-          not allowed.'
+        - The fully-qualified URIs that point to your data in Google Cloud.
+        - 'For Google Cloud Storage URIs: Each URI can contain one ''*'' wildcard
+          character and it must come after the ''bucket'' name. Size limits related
+          to load jobs apply to external data sources. For Google Cloud Bigtable URIs:
+          Exactly one URI can be specified and it has be a fully specified and valid
+          HTTPS URL for a Google Cloud Bigtable table. For Google Cloud Datastore
+          backups, exactly one URI can be specified. Also, the ''*'' wildcard character
+          is not allowed.'
         required: false
       schema:
         description:
@@ -257,11 +238,8 @@ options:
               mode:
                 description:
                 - Field mode.
+                - 'Some valid choices include: "NULLABLE", "REQUIRED", "REPEATED"'
                 required: false
-                choices:
-                - NULLABLE
-                - REQUIRED
-                - REPEATED
               name:
                 description:
                 - Field name.
@@ -269,17 +247,9 @@ options:
               type:
                 description:
                 - Field data type.
+                - 'Some valid choices include: "STRING", "BYTES", "INTEGER", "FLOAT",
+                  "TIMESTAMP", "DATE", "TIME", "DATETIME", "RECORD"'
                 required: false
-                choices:
-                - STRING
-                - BYTES
-                - INTEGER
-                - FLOAT
-                - TIMESTAMP
-                - DATE
-                - TIME
-                - DATETIME
-                - RECORD
       google_sheets_options:
         description:
         - Additional options if sourceFormat is set to GOOGLE_SHEETS.
@@ -311,10 +281,8 @@ options:
           encoding:
             description:
             - The character encoding of the data.
+            - 'Some valid choices include: "UTF-8", "ISO-8859-1"'
             required: false
-            choices:
-            - UTF-8
-            - ISO-8859-1
           field_delimiter:
             description:
             - The separator for fields in a CSV file.
@@ -361,10 +329,8 @@ options:
                   encoding:
                     description:
                     - The encoding of the values when the type is not STRING.
+                    - 'Some valid choices include: "TEXT", "BINARY"'
                     required: false
-                    choices:
-                    - TEXT
-                    - BINARY
                   field_name:
                     description:
                     - If the qualifier is not a valid BigQuery field identifier, a
@@ -384,20 +350,14 @@ options:
                   type:
                     description:
                     - The type to convert the value in cells of this column.
+                    - 'Some valid choices include: "BYTES", "STRING", "INTEGER", "FLOAT",
+                      "BOOLEAN"'
                     required: false
-                    choices:
-                    - BYTES
-                    - STRING
-                    - INTEGER
-                    - FLOAT
-                    - BOOLEAN
               encoding:
                 description:
                 - The encoding of the values when the type is not STRING.
+                - 'Some valid choices include: "TEXT", "BINARY"'
                 required: false
-                choices:
-                - TEXT
-                - BINARY
               family_id:
                 description:
                 - Identifier of the column family.
@@ -411,13 +371,9 @@ options:
               type:
                 description:
                 - The type to convert the value in cells of this column family.
+                - 'Some valid choices include: "BYTES", "STRING", "INTEGER", "FLOAT",
+                  "BOOLEAN"'
                 required: false
-                choices:
-                - BYTES
-                - STRING
-                - INTEGER
-                - FLOAT
-                - BOOLEAN
   dataset:
     description:
     - Name of the dataset.
@@ -699,13 +655,13 @@ externalDataConfiguration:
       type: str
     sourceUris:
       description:
-      - 'The fully-qualified URIs that point to your data in Google Cloud. For Google
-        Cloud Storage URIs: Each URI can contain one ''*'' wildcard character and
-        it must come after the ''bucket'' name. Size limits related to load jobs apply
-        to external data sources. For Google Cloud Bigtable URIs: Exactly one URI
-        can be specified and it has be a fully specified and valid HTTPS URL for a
-        Google Cloud Bigtable table. For Google Cloud Datastore backups, exactly one
-        URI can be specified. Also, the ''*'' wildcard character is not allowed.'
+      - The fully-qualified URIs that point to your data in Google Cloud.
+      - 'For Google Cloud Storage URIs: Each URI can contain one ''*'' wildcard character
+        and it must come after the ''bucket'' name. Size limits related to load jobs
+        apply to external data sources. For Google Cloud Bigtable URIs: Exactly one
+        URI can be specified and it has be a fully specified and valid HTTPS URL for
+        a Google Cloud Bigtable table. For Google Cloud Datastore backups, exactly
+        one URI can be specified. Also, the ''*'' wildcard character is not allowed.'
       returned: success
       type: list
     schema:
@@ -917,7 +873,7 @@ def main():
                     ),
                 ),
             ),
-            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), type=dict(type='str', choices=['DAY']))),
+            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), type=dict(type='str'))),
             schema=dict(
                 type='dict',
                 options=dict(
@@ -927,9 +883,9 @@ def main():
                         options=dict(
                             description=dict(type='str'),
                             fields=dict(type='list', elements='str'),
-                            mode=dict(type='str', choices=['NULLABLE', 'REQUIRED', 'REPEATED']),
+                            mode=dict(type='str'),
                             name=dict(type='str'),
-                            type=dict(type='str', choices=['STRING', 'BYTES', 'INTEGER', 'FLOAT', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']),
+                            type=dict(type='str'),
                         ),
                     )
                 ),
@@ -940,10 +896,10 @@ def main():
                 type='dict',
                 options=dict(
                     autodetect=dict(type='bool'),
-                    compression=dict(type='str', choices=['GZIP', 'NONE']),
+                    compression=dict(type='str'),
                     ignore_unknown_values=dict(type='bool'),
                     max_bad_records=dict(default=0, type='int'),
-                    source_format=dict(type='str', choices=['CSV', 'GOOGLE_SHEETS', 'NEWLINE_DELIMITED_JSON', 'AVRO', 'DATASTORE_BACKUP', 'BIGTABLE']),
+                    source_format=dict(type='str'),
                     source_uris=dict(type='list', elements='str'),
                     schema=dict(
                         type='dict',
@@ -954,9 +910,9 @@ def main():
                                 options=dict(
                                     description=dict(type='str'),
                                     fields=dict(type='list', elements='str'),
-                                    mode=dict(type='str', choices=['NULLABLE', 'REQUIRED', 'REPEATED']),
+                                    mode=dict(type='str'),
                                     name=dict(type='str'),
-                                    type=dict(type='str', choices=['STRING', 'BYTES', 'INTEGER', 'FLOAT', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']),
+                                    type=dict(type='str'),
                                 ),
                             )
                         ),
@@ -967,7 +923,7 @@ def main():
                         options=dict(
                             allow_jagged_rows=dict(type='bool'),
                             allow_quoted_newlines=dict(type='bool'),
-                            encoding=dict(type='str', choices=['UTF-8', 'ISO-8859-1']),
+                            encoding=dict(type='str'),
                             field_delimiter=dict(type='str'),
                             quote=dict(type='str'),
                             skip_leading_rows=dict(default=0, type='int'),
@@ -986,17 +942,17 @@ def main():
                                         type='list',
                                         elements='dict',
                                         options=dict(
-                                            encoding=dict(type='str', choices=['TEXT', 'BINARY']),
+                                            encoding=dict(type='str'),
                                             field_name=dict(type='str'),
                                             only_read_latest=dict(type='bool'),
                                             qualifier_string=dict(required=True, type='str'),
-                                            type=dict(type='str', choices=['BYTES', 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN']),
+                                            type=dict(type='str'),
                                         ),
                                     ),
-                                    encoding=dict(type='str', choices=['TEXT', 'BINARY']),
+                                    encoding=dict(type='str'),
                                     family_id=dict(type='str'),
                                     only_read_latest=dict(type='bool'),
-                                    type=dict(type='str', choices=['BYTES', 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN']),
+                                    type=dict(type='str'),
                                 ),
                             ),
                         ),
