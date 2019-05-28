@@ -181,10 +181,10 @@ class ACIModule(object):
             url = '%(protocol)s://%(host)s/api/aaaLogin.json' % self.params
         payload = {'aaaUser': {'attributes': {'name': self.params['username'], 'pwd': self.params['password']}}}
         resp, auth = self.fetch_url(self.module, url,
-                               data=json.dumps(payload),
-                               method='POST',
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'])
+                                    data=json.dumps(payload),
+                                    method='POST',
+                                    timeout=self.params['timeout'],
+                                    use_proxy=self.params['use_proxy'])
 
         # Handle APIC response
         if auth['status'] != 200:
@@ -329,11 +329,11 @@ class ACIModule(object):
 
         # Perform request
         resp, info = self.fetch_url(self.module, self.url,
-                               data=payload,
-                               headers=self.headers,
-                               method=self.params['method'].upper(),
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'])
+                                    data=payload,
+                                    headers=self.headers,
+                                    method=self.params['method'].upper(),
+                                    timeout=self.params['timeout'],
+                                    use_proxy=self.params['use_proxy'])
 
         self.response = info['msg']
         self.status = info['status']
@@ -366,11 +366,11 @@ class ACIModule(object):
 
         # Perform request
         resp, query = self.fetch_url(self.module, self.url,
-                                data=None,
-                                headers=self.headers,
-                                method='GET',
-                                timeout=self.params['timeout'],
-                                use_proxy=self.params['use_proxy'])
+                                        data=None,
+                                        headers=self.headers,
+                                        method='GET',
+                                        timeout=self.params['timeout'],
+                                        use_proxy=self.params['use_proxy'])
 
         # Handle APIC response
         if query['status'] != 200:
@@ -835,10 +835,10 @@ class ACIModule(object):
                 self.cert_auth(method='DELETE')
 
             resp, info = self.fetch_url(self.module, self.url,
-                                   headers=self.headers,
-                                   method='DELETE',
-                                   timeout=self.params['timeout'],
-                                   use_proxy=self.params['use_proxy'])
+                                        headers=self.headers,
+                                        method='DELETE',
+                                        timeout=self.params['timeout'],
+                                        use_proxy=self.params['use_proxy'])
 
             self.response = info['msg']
             self.status = info['status']
@@ -971,10 +971,10 @@ class ACIModule(object):
             self.cert_auth(path=self.path + self.filter_string, method='GET')
 
         resp, info = self.fetch_url(self.module, uri,
-                               headers=self.headers,
-                               method='GET',
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'])
+                                    headers=self.headers,
+                                    method='GET',
+                                    timeout=self.params['timeout'],
+                                    use_proxy=self.params['use_proxy'])
         self.response = info['msg']
         self.status = info['status']
         self.method = 'GET'
@@ -1072,11 +1072,11 @@ class ACIModule(object):
                 self.cert_auth(method='POST', payload=json.dumps(self.config))
 
             resp, info = self.fetch_url(self.module, self.url,
-                                   data=json.dumps(self.config),
-                                   headers=self.headers,
-                                   method='POST',
-                                   timeout=self.params['timeout'],
-                                   use_proxy=self.params['use_proxy'])
+                                        data=json.dumps(self.config),
+                                        headers=self.headers,
+                                        method='POST',
+                                        timeout=self.params['timeout'],
+                                        use_proxy=self.params['use_proxy'])
 
             self.response = info['msg']
             self.status = info['status']
