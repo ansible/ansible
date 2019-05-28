@@ -139,12 +139,12 @@ class TestContainerToText:
             ((1, 2), (1, 2)),
             (1, 1),
             (1.1, 1.1),
-            ('str', 'str'),
-            (b'str', 'str'),
-            (u'str', 'str'),
-            ([b'str'], ['str']),
-            ((b'str'), ('str')),
-            ({b'str': b'str'}, {'str': 'str'}),
+            ('str', u'str'),
+            (b'str', u'str'),
+            (u'str', u'str'),
+            ([b'str'], [u'str']),
+            ((b'str'), (u'str')),
+            ({b'str': b'str'}, {u'str': u'str'}),
         ]
     )
     @pytest.mark.parametrize('encoding', ['utf-8', 'latin1'])
@@ -164,9 +164,9 @@ class TestContainerToText:
             (1.1, 1.1),
             (True, True),
             (None, None),
-            ('str'.encode(DEFAULT_ENCODING), 'str'),
-            (['str'.encode(DEFAULT_ENCODING)], ['str']),
-            (('str'.encode(DEFAULT_ENCODING)), ('str')),
+            ('str'.encode(DEFAULT_ENCODING), u'str'),
+            (['str'.encode(DEFAULT_ENCODING)], [u'str']),
+            (('str'.encode(DEFAULT_ENCODING)), (u'str')),
             ({b'str': b'str'}, {u'str': u'str'}),
         ]
     )
