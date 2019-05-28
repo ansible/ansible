@@ -70,8 +70,9 @@ class TestJsonEncodeFallback:
         It must fail with TypeError.
         """
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as excinfo:
             _json_encode_fallback(test_input)
+            assert "Cannot json serialize" in str(excinfo.value)
 
 
 class TestContainerToBytes:
