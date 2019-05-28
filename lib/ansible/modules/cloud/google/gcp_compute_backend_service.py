@@ -66,12 +66,9 @@ options:
         - Specifies the balancing mode for this backend.
         - For global HTTP(S) or TCP/SSL load balancing, the default is UTILIZATION.
           Valid values are UTILIZATION, RATE (for HTTP(S)) and CONNECTION (for TCP/SSL).
+        - 'Some valid choices include: "UTILIZATION", "RATE", "CONNECTION"'
         required: false
         default: UTILIZATION
-        choices:
-        - UTILIZATION
-        - RATE
-        - CONNECTION
       capacity_scaler:
         description:
         - A multiplier applied to the group's maximum servicing capacity (based on
@@ -242,11 +239,10 @@ options:
       load balancing. A backend service created for one type of load balancing cannot
       be used with the other. Must be `EXTERNAL` for a global backend service. Defaults
       to `EXTERNAL`.
+    - 'Some valid choices include: "EXTERNAL"'
     required: false
     default: EXTERNAL
     version_added: 2.7
-    choices:
-    - EXTERNAL
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -267,13 +263,8 @@ options:
     - 'Possible values are HTTP, HTTPS, HTTP2, TCP, and SSL. The default is HTTP.
       **NOTE**: HTTP2 is only valid for beta HTTP/2 load balancer types and may result
       in errors if used with the GA API.'
+    - 'Some valid choices include: "HTTP", "HTTPS", "HTTP2", "TCP", "SSL"'
     required: false
-    choices:
-    - HTTP
-    - HTTPS
-    - HTTP2
-    - TCP
-    - SSL
   security_policy:
     description:
     - The security policy associated with this backend service.
@@ -284,11 +275,8 @@ options:
     - Type of session affinity to use. The default is NONE.
     - When the load balancing scheme is EXTERNAL, can be NONE, CLIENT_IP, or GENERATED_COOKIE.
     - When the protocol is UDP, this field is not used.
+    - 'Some valid choices include: "NONE", "CLIENT_IP", "GENERATED_COOKIE"'
     required: false
-    choices:
-    - NONE
-    - CLIENT_IP
-    - GENERATED_COOKIE
   timeout_sec:
     description:
     - How many seconds to wait for the backend before considering it a failed request.
@@ -636,7 +624,7 @@ def main():
                 type='list',
                 elements='dict',
                 options=dict(
-                    balancing_mode=dict(default='UTILIZATION', type='str', choices=['UTILIZATION', 'RATE', 'CONNECTION']),
+                    balancing_mode=dict(default='UTILIZATION', type='str'),
                     capacity_scaler=dict(default=1.0, type='str'),
                     description=dict(type='str'),
                     group=dict(type='str'),
@@ -671,12 +659,12 @@ def main():
                 type='dict',
                 options=dict(enabled=dict(type='bool'), oauth2_client_id=dict(required=True, type='str'), oauth2_client_secret=dict(required=True, type='str')),
             ),
-            load_balancing_scheme=dict(default='EXTERNAL', type='str', choices=['EXTERNAL']),
+            load_balancing_scheme=dict(default='EXTERNAL', type='str'),
             name=dict(required=True, type='str'),
             port_name=dict(type='str'),
-            protocol=dict(type='str', choices=['HTTP', 'HTTPS', 'HTTP2', 'TCP', 'SSL']),
+            protocol=dict(type='str'),
             security_policy=dict(type='str'),
-            session_affinity=dict(type='str', choices=['NONE', 'CLIENT_IP', 'GENERATED_COOKIE']),
+            session_affinity=dict(type='str'),
             timeout_sec=dict(type='int', aliases=['timeout_seconds']),
         )
     )

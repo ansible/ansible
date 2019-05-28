@@ -69,11 +69,8 @@ options:
         description:
         - Describes the rights granted to the user specified by the other member of
           the access object .
+        - 'Some valid choices include: "READER", "WRITER", "OWNER"'
         required: false
-        choices:
-        - READER
-        - WRITER
-        - OWNER
       special_group:
         description:
         - A special group to grant access to.
@@ -311,7 +308,7 @@ def main():
                 options=dict(
                     domain=dict(type='str'),
                     group_by_email=dict(type='str'),
-                    role=dict(type='str', choices=['READER', 'WRITER', 'OWNER']),
+                    role=dict(type='str'),
                     special_group=dict(type='str'),
                     user_by_email=dict(type='str'),
                     view=dict(

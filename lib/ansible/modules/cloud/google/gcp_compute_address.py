@@ -66,12 +66,10 @@ options:
     description:
     - The type of address to reserve, either INTERNAL or EXTERNAL.
     - If unspecified, defaults to EXTERNAL.
+    - 'Some valid choices include: "INTERNAL", "EXTERNAL"'
     required: false
     default: EXTERNAL
     version_added: 2.7
-    choices:
-    - INTERNAL
-    - EXTERNAL
   description:
     description:
     - An optional description of this resource.
@@ -89,11 +87,9 @@ options:
     - 'The networking tier used for configuring this address. This field can take
       the following values: PREMIUM or STANDARD. If this field is not specified, it
       is assumed to be PREMIUM.'
+    - 'Some valid choices include: "PREMIUM", "STANDARD"'
     required: false
     version_added: 2.8
-    choices:
-    - PREMIUM
-    - STANDARD
   subnetwork:
     description:
     - The URL of the subnetwork in which to reserve the address. If an IP address
@@ -216,10 +212,10 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             address=dict(type='str'),
-            address_type=dict(default='EXTERNAL', type='str', choices=['INTERNAL', 'EXTERNAL']),
+            address_type=dict(default='EXTERNAL', type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
+            network_tier=dict(type='str'),
             subnetwork=dict(type='dict'),
             region=dict(required=True, type='str'),
         )
