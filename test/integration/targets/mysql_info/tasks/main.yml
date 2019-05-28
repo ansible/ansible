@@ -45,7 +45,7 @@
     - result.settings != {}
     - result.databases != {}
     - result.engines != {}
-    - result.roles != {}
+    - result.users != {}
 
 # Access by non-default cred file
 - name: mysql_info - check non-default cred file
@@ -81,11 +81,11 @@
     - result.version != {}
 
 # Test excluding
-- name: Collect all info except settings and roles
+- name: Collect all info except settings and users
   mysql_info:
     login_user: '{{ user_name }}'
     login_password: '{{ user_pass }}'
-    filter: "!settings,!roles"
+    filter: "!settings,!users"
   register: result
 
 - assert:
@@ -95,7 +95,7 @@
     - result.databases != {}
     - result.engines != {}
     - result.settings is not defined
-    - result.roles is not defined
+    - result.users is not defined
 
 # Test including
 - name: Collect info only about version and databases
@@ -114,4 +114,4 @@
     - result.databases != {}
     - result.engines is not defined
     - result.settings is not defined
-    - result.roles is not defined
+    - result.users is not defined
