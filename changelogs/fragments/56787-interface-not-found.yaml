@@ -1,0 +1,2 @@
+bugfixes:
+- Fix "Interface not found" errors when using eos_l2_interface with nonexistant interfaces configured
