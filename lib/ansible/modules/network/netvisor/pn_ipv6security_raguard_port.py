@@ -32,7 +32,6 @@ options:
     type: str
     choices: ['present', 'absent']
     default: 'present'
-    type: str
   pn_name:
     description:
       - RA Guard Policy Name.
