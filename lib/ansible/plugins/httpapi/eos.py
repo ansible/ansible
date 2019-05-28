@@ -119,7 +119,7 @@ class HttpApi(HttpApiBase):
             except Exception as exc:
                 if check_rc:
                     raise
-                return to_text(exc)
+                return to_list(to_text(exc))
 
             if output == 'json':
                 response = [json.loads(item) for item in response]
