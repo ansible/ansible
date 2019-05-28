@@ -24,7 +24,7 @@
 
 - name: Try to Hibernate host
   win_powerstate:
-    powerstate: hibernate
+    state: hibernate
   register: win_powerstatehibernate_result
 
 - name: assert win_powerstatehibernate_result (Windows Client) for suspend state
@@ -41,7 +41,7 @@
 
 - name: Force Shutdown to host (Check Mode)
   win_powerstate:
-    powerstate: shutdown
+    state: shutdown
     force: true
   register: win_powerstateshutdown_result
   check_mode: true

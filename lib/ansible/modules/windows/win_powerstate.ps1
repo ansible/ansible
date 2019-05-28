@@ -3,25 +3,22 @@
 # Copyright: (c) 2019, Jose Angel Munoz (@imjoseangel) <josea.munoz@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
-$ErrorActionPreference = "Stop"
-
-$params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-
-$powerstate = Get-AnsibleParam -obj $params -name "powerstate" -type "str" -default "suspend" -validateset "shutdown", "suspend", "hibernate"
-$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
-$disablewake = Get-AnsibleParam -obj $params -name "disablewake" -type "bool" -default $true
-
-$result = @{
-    changed     = $false
-    module_args = @{
-        powerstate  = $powerstate
-        force       = $force
-        disablewake = $disablewake
+$spec = @{
+    options             = @{
+        state       = @{ type = "str"; choices = "shutdown", "suspend", "hibernate"; default = "suspend" }
+        force       = @{ type = "bool"; default = $false }
+        disablewake = @{ type = "bool"; default = $true }
     }
+    supports_check_mode = $true
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$state = $module.Params.state
+$force = $module.Params.force
+$disablewake = $module.Params.disablewake
 
 function Set-PowerState {
 
@@ -40,7 +37,8 @@ function Set-PowerState {
 
     if ((Get-CimInstance -Class Win32_OperatingSystem).Caption -match "\sServer\s") {
 
-        Exit-Json -obj $result -message "Can not change to state $PowerState on Windows Servers"
+        $module.Warn("Can not change to state $PowerState on Windows Servers")
+
     }
     else {
 
@@ -53,10 +51,10 @@ function Set-PowerState {
             }
             catch [System.InvalidOperationException], [System.Security.SecurityException] {
 
-                Fail-Json $result -message "Could not Add Windows Forms Type"
+                $module.FailJson("Could not Add Windows Forms Type")
             }
 
-            $result.changed = $true
+            $module.Result.changed = $true
         }
         else {
             try {
@@ -65,43 +63,43 @@ function Set-PowerState {
             }
             catch [System.InvalidOperationException], [System.Security.SecurityException] {
 
-                Fail-Json $result -message "Could not Add Windows Forms Type"
+                $module.FailJson("Could not Add Windows Forms Type")
             }
 
-            $result.changed = $true
-            $result.module_args.check_mode = $true
+            $module.Result.changed = $true
+            $module.Result.check_mode = $true
         }
     }
 }
 
-if (($powerstate -eq "suspend") -or ($powerstate -eq "hibernate")) {
+if (($state -eq "suspend") -or ($state -eq "hibernate")) {
 
     try {
 
-        Set-PowerState -PowerState $powerstate -Force:$force -DisableWake:$disablewake -WhatIf:$check_mode
+        Set-PowerState -PowerState $state -Force:$force -DisableWake:$disablewake -WhatIf:$module.CheckMode
     }
     catch [System.InvalidOperationException] {
 
-        Fail-Json -obj $result -message "Could not change to state $powerstate"
+        $module.FailJson("Could not change to state $state")
     }
 }
 
-elseif ($powerstate -eq "shutdown") {
+elseif ($state -eq "shutdown") {
     try {
 
-        Stop-Computer -Force:$force -WhatIf:$check_mode
-        $result.changed = $true
+        Stop-Computer -Force:$force -WhatIf:$module.CheckMode
+        $module.Result.changed = $true
 
-        if ($check_mode) {
+        if ($module.CheckMode) {
 
-            $result.module_args.check_mode = $true
+            $module.Result.check_mode = $true
         }
     }
 
     catch [System.InvalidOperationException] {
 
-        Fail-Json -obj $result -message "Could not change to state $powerstate"
+        $module.FailJson("Could not change to state $state")
     }
 }
 
-Exit-Json -obj $result
+$module.ExitJson()
