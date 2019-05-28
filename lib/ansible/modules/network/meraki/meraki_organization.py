@@ -38,6 +38,7 @@ options:
         description:
         - ID of organization.
         aliases: [ id ]
+        type: str
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -124,7 +125,7 @@ def main():
     argument_spec.update(clone=dict(type='str'),
                          state=dict(type='str', choices=['present', 'query'], default='present'),
                          org_name=dict(type='str', aliases=['name', 'organization']),
-                         org_id=dict(type='int', aliases=['id']),
+                         org_id=dict(type='str', aliases=['id']),
                          )
 
     # seed the result dict in the object

@@ -175,8 +175,6 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['absent', 'query', 'present'], default='query'),
-                         org_name=dict(type='str', aliases=['organization']),
-                         org_id=dict(type='int'),
                          config_template=dict(type='str', aliases=['name']),
                          net_name=dict(type='str'),
                          net_id=dict(type='str'),

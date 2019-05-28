@@ -219,8 +219,6 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['present', 'query'], default='present'),
-                         org_name=dict(type='str', aliases=['organization']),
-                         org_id=dict(type='int'),
                          v2c_enabled=dict(type='bool'),
                          v3_enabled=dict(type='bool'),
                          v3_auth_mode=dict(type='str', choices=['SHA', 'MD5']),
