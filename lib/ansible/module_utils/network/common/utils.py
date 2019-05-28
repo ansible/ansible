@@ -421,7 +421,7 @@ def load_provider(spec, args):
                 provider[key] = None
     if 'authorize' in provider:
         # Coerce authorize to provider if a string has somehow snuck in.
-        provider['authorize'] = boolean(provider['authorize'])
+        provider['authorize'] = boolean(provider['authorize'] or False)
     args['provider'] = provider
     return provider
 
