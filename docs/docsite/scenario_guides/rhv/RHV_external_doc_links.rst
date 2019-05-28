@@ -1,8 +1,8 @@
 .. _rhv_external_doc_links:
 
-******************************
+***********************************
 List of useful links for RHV/ oVirt
-******************************
+***********************************
 
 The following are various external documents and guides, on the topic of 
 oVirt/ RHV and Ansible.
