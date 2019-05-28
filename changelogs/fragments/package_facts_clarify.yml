@@ -1,0 +1,2 @@
+bugfixes:
+  - clarify error messages for 'auto' and missing libs, add missing lib msg for rpm.
