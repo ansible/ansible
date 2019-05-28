@@ -1,0 +1,2 @@
+minor_changes:
+- The ``xenserver_guest_facts`` module has been renamed to ``xenserver_guest_info``.
