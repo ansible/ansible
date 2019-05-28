@@ -190,6 +190,8 @@ class OnyxTelemetryAgentModule(BaseOnyxModule):
         self._commands.append(
             'docker start %s %s %s now-and-init privileged network sdk' %
             (image_name, image_version, container_name))
+        self._commands.append(
+            'docker copy-sdk %s to /' % container_name)
 
     def _check_container_exists(self, image, version):
         current_image = self._current_config.get('docker_image')

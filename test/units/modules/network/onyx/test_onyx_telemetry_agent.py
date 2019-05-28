@@ -44,6 +44,7 @@ class TestOnyxTelemetryAgentModule(TestOnyxModule):
         CONTAINER_IMAGE, CONTAINER_IMAGE_VER)
     CMD_DOCKER_START = "docker start %s %s %s now-and-init privileged network sdk" % (
         CONTAINER_IMAGE, CONTAINER_IMAGE_VER, CONTAINER_NAME)
+    CMD_COPY_SDK = 'docker copy-sdk %s to /' % CONTAINER_NAME
     CMD_NO_DOCKER_SHUTDOWN = "no docker shutdown"
     CMD_IMAGE_FETCH = 'image fetch %s {0}'.format(
         module.OnyxTelemetryAgentModule.IMAGE_FILE)
@@ -105,7 +106,8 @@ class TestOnyxTelemetryAgentModule(TestOnyxModule):
                  install_mode='pull'))
         commands = [
             self.CMD_DOCKER_PULL,
-            self.CMD_DOCKER_START
+            self.CMD_DOCKER_START,
+            self.CMD_COPY_SDK
         ]
         self.execute_module(changed=True, commands=commands)
 
@@ -117,7 +119,8 @@ class TestOnyxTelemetryAgentModule(TestOnyxModule):
         commands = [
             self.CMD_NO_DOCKER_SHUTDOWN,
             self.CMD_DOCKER_PULL,
-            self.CMD_DOCKER_START
+            self.CMD_DOCKER_START,
+            self.CMD_COPY_SDK
         ]
         self.execute_module(changed=True, commands=commands)
 
@@ -159,7 +162,8 @@ class TestOnyxTelemetryAgentModule(TestOnyxModule):
         commands = [
             self.CMD_IMAGE_FETCH % url,
             self.CMD_IMAGE_LOAD,
-            self.CMD_DOCKER_START
+            self.CMD_DOCKER_START,
+            self.CMD_COPY_SDK
         ]
         self.execute_module(changed=True, commands=commands)
 
@@ -177,7 +181,8 @@ class TestOnyxTelemetryAgentModule(TestOnyxModule):
         commands = [
             self.CMD_IMAGE_FETCH % url,
             self.CMD_IMAGE_LOAD,
-            self.CMD_DOCKER_START
+            self.CMD_DOCKER_START,
+            self.CMD_COPY_SDK
         ]
         self.execute_module(changed=True, commands=commands)
 
@@ -194,7 +199,8 @@ class TestOnyxTelemetryAgentModule(TestOnyxModule):
         commands = [
             self.CMD_IMAGE_FETCH % url,
             self.CMD_IMAGE_LOAD,
-            self.CMD_DOCKER_START
+            self.CMD_DOCKER_START,
+            self.CMD_COPY_SDK
         ]
         self.execute_module(changed=True, commands=commands)
 
@@ -209,6 +215,7 @@ class TestOnyxTelemetryAgentModule(TestOnyxModule):
             self.CMD_NO_DOCKER_SHUTDOWN,
             self.CMD_IMAGE_FETCH % url,
             self.CMD_IMAGE_LOAD,
-            self.CMD_DOCKER_START
+            self.CMD_DOCKER_START,
+            self.CMD_COPY_SDK
         ]
         self.execute_module(changed=True, commands=commands)
