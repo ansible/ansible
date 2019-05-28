@@ -24,7 +24,7 @@ options:
   state:
     description:
       - Whether to add or remove the specified virtual directory.
-      - removing will remove the virtual directory and all under it (Recursively)
+      - Removing will remove the virtual directory and all under it (Recursively).
     type: str
     choices: [ absent, present ]
     default: present
