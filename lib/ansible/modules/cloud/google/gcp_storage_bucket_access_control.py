@@ -90,19 +90,13 @@ options:
       team:
         description:
         - The team.
+        - 'Some valid choices include: "editors", "owners", "viewers"'
         required: false
-        choices:
-        - editors
-        - owners
-        - viewers
   role:
     description:
     - The access permission for the entity.
+    - 'Some valid choices include: "OWNER", "READER", "WRITER"'
     required: false
-    choices:
-    - OWNER
-    - READER
-    - WRITER
 extends_documentation_fragment: gcp
 '''
 
@@ -207,8 +201,8 @@ def main():
             bucket=dict(required=True, type='dict'),
             entity=dict(required=True, type='str'),
             entity_id=dict(type='str'),
-            project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str', choices=['editors', 'owners', 'viewers']))),
-            role=dict(type='str', choices=['OWNER', 'READER', 'WRITER']),
+            project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str'))),
+            role=dict(type='str'),
         )
     )
 
