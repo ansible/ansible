@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_policydefinition
 version_added: "2.9"
-short_description: Manage Azure Policy Definition.
+short_description: Manage Azure Policy Definition
 description:
     - Create, update and delete instance of Azure policy definition.
 
@@ -32,13 +32,16 @@ options:
     policy_type:
         description:
             - The type of policy definition.
-            - Possible value is Custom.
+            - Possible value is C(Custom).
         choices:
             - custom
     mode:
         description:
             - The policy definition mode.
-            - Possible values are Indexed, and All.
+            - Possible values are C(Indexed) and C(All).
+            - "I(mode=all) determines all resource types will be evaluated for a policy 
+              and I(mode=indexed) means the policy only evaluate resource types that support tags and location."
+            - Refer U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure#mode) for more details.
         choices:
             - indexed
             - all
@@ -62,6 +65,8 @@ options:
     metadata:
         description:
             - The policy definition metadata.
+            - Defines subproperties primarily used by the Azure portal to display user-friendly information.
+            - Refer U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure#parameter-properties) for more details.
             - Metadata in space-separated key=value pairs.
         type: dict
     state:
