@@ -92,19 +92,13 @@ options:
           team:
             description:
             - The team.
+            - 'Some valid choices include: "editors", "owners", "viewers"'
             required: false
-            choices:
-            - editors
-            - owners
-            - viewers
       role:
         description:
         - The access permission for the entity.
+        - 'Some valid choices include: "OWNER", "READER", "WRITER"'
         required: false
-        choices:
-        - OWNER
-        - READER
-        - WRITER
   cors:
     description:
     - The bucket's Cross-Origin Resource Sharing (CORS) configuration.
@@ -161,10 +155,8 @@ options:
       role:
         description:
         - The access permission for the entity.
+        - 'Some valid choices include: "OWNER", "READER"'
         required: true
-        choices:
-        - OWNER
-        - READER
   lifecycle:
     description:
     - The bucket's lifecycle configuration.
@@ -190,10 +182,8 @@ options:
                 description:
                 - Type of the action. Currently, only Delete and SetStorageClass are
                   supported.
+                - 'Some valid choices include: "Delete", "SetStorageClass"'
                 required: false
-                choices:
-                - Delete
-                - SetStorageClass
           condition:
             description:
             - The condition(s) under which the action will be taken.
@@ -274,14 +264,9 @@ options:
     - Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY.
       If this value is not specified when the bucket is created, it will default to
       STANDARD. For more information, see storage classes.
+    - 'Some valid choices include: "MULTI_REGIONAL", "REGIONAL", "STANDARD", "NEARLINE",
+      "COLDLINE", "DURABLE_REDUCED_AVAILABILITY"'
     required: false
-    choices:
-    - MULTI_REGIONAL
-    - REGIONAL
-    - STANDARD
-    - NEARLINE
-    - COLDLINE
-    - DURABLE_REDUCED_AVAILABILITY
   versioning:
     description:
     - The bucket's versioning configuration.
@@ -329,14 +314,9 @@ options:
     - '- "projectPrivate": Object owner gets OWNER access, and project team members
       get access according to their roles.'
     - '- "publicRead": Object owner gets OWNER access, and allUsers get READER access.'
+    - 'Some valid choices include: "authenticatedRead", "bucketOwnerFullControl",
+      "bucketOwnerRead", "private", "projectPrivate", "publicRead"'
     required: false
-    choices:
-    - authenticatedRead
-    - bucketOwnerFullControl
-    - bucketOwnerRead
-    - private
-    - projectPrivate
-    - publicRead
 extends_documentation_fragment: gcp
 '''
 
@@ -745,10 +725,8 @@ def main():
                     bucket=dict(required=True, type='dict'),
                     entity=dict(required=True, type='str'),
                     entity_id=dict(type='str'),
-                    project_team=dict(
-                        type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str', choices=['editors', 'owners', 'viewers']))
-                    ),
-                    role=dict(type='str', choices=['OWNER', 'READER', 'WRITER']),
+                    project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str'))),
+                    role=dict(type='str'),
                 ),
             ),
             cors=dict(
@@ -768,7 +746,7 @@ def main():
                     bucket=dict(required=True, type='dict'),
                     entity=dict(required=True, type='str'),
                     object=dict(type='str'),
-                    role=dict(required=True, type='str', choices=['OWNER', 'READER']),
+                    role=dict(required=True, type='str'),
                 ),
             ),
             lifecycle=dict(
@@ -778,9 +756,7 @@ def main():
                         type='list',
                         elements='dict',
                         options=dict(
-                            action=dict(
-                                type='dict', options=dict(storage_class=dict(type='str'), type=dict(type='str', choices=['Delete', 'SetStorageClass']))
-                            ),
+                            action=dict(type='dict', options=dict(storage_class=dict(type='str'), type=dict(type='str'))),
                             condition=dict(
                                 type='dict',
                                 options=dict(
@@ -800,13 +776,11 @@ def main():
             metageneration=dict(type='int'),
             name=dict(type='str'),
             owner=dict(type='dict', options=dict(entity=dict(type='str'))),
-            storage_class=dict(type='str', choices=['MULTI_REGIONAL', 'REGIONAL', 'STANDARD', 'NEARLINE', 'COLDLINE', 'DURABLE_REDUCED_AVAILABILITY']),
+            storage_class=dict(type='str'),
             versioning=dict(type='dict', options=dict(enabled=dict(type='bool'))),
             website=dict(type='dict', options=dict(main_page_suffix=dict(type='str'), not_found_page=dict(type='str'))),
             project=dict(type='str'),
-            predefined_default_object_acl=dict(
-                type='str', choices=['authenticatedRead', 'bucketOwnerFullControl', 'bucketOwnerRead', 'private', 'projectPrivate', 'publicRead']
-            ),
+            predefined_default_object_acl=dict(type='str'),
         )
     )
 
