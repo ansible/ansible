@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_hdinsightcluster_facts
 version_added: "2.8"
-short_description: Get Azure HDInsight Cluster facts.
+short_description: Get Azure HDInsight Cluster facts
 description:
     - Get facts of Azure HDInsight Cluster.
 
@@ -36,7 +36,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -53,7 +53,8 @@ EXAMPLES = '''
 
 RETURN = '''
 clusters:
-    description: A list of dictionaries containing facts for HDInsight Cluster.
+    description:
+        - A list of dictionaries containing facts for HDInsight Cluster.
     returned: always
     type: complex
     contains:
@@ -128,7 +129,7 @@ clusters:
                     sample: 2
                 vm_size:
                     description:
-                        - The size of the VM
+                        - The size of the VM.
                     returned: always
                     type: str
                     sample: Standard_D3
@@ -138,7 +139,7 @@ clusters:
                     contains:
                         username:
                             description:
-                                - User name
+                                - User name.
                             returned: always
                             type: str
                             sample: myuser

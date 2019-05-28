@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_hdinsightcluster
 version_added: "2.8"
-short_description: Manage Azure HDInsight Cluster instance.
+short_description: Manage Azure HDInsight Cluster instance
 description:
     - Create, update and delete instance of Azure HDInsight Cluster.
 
@@ -35,7 +35,7 @@ options:
             - Resource location. If not set, location from the resource group will be used as default.
     cluster_version:
         description:
-            - The version of the cluster. For example I(3.6)
+            - The version of the cluster. For example C(3.6).
     os_type:
         description:
             - The type of operating system.
@@ -85,17 +85,17 @@ options:
                     - The instance count of the cluster.
             vm_size:
                 description:
-                    - The size of the VM
+                    - The size of the VM.
             linux_profile:
                 description:
                     - The Linux OS profile.
                 suboptions:
                     username:
                         description:
-                            - User name
+                            - SSH user name.
                     password:
                         description:
-                            - Password
+                            - SSH password.
     storage_accounts:
         description:
             - The list of storage accounts in the cluster.
@@ -103,7 +103,7 @@ options:
         suboptions:
             name:
                 description:
-                    - Blob storage endpoint.
+                    - Blob storage endpoint. eg. storage_account_name.blob.core.windwos.net.
             is_default:
                 description:
                     - Whether or not the storage account is the default storage account.
@@ -115,19 +115,19 @@ options:
                     - The storage account access key.
     state:
       description:
-        - Assert the state of the cluster.
-        - Use C(present) to create or update a cluster and C(absent) to delete it.
+          - Assert the state of the cluster.
+          - Use C(present) to create or update a cluster and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
