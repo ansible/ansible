@@ -42,13 +42,12 @@ class TestJsonEncodeFallback:
 
         assert _json_encode_fallback(test_input) == expected
 
-    @pytest.mark.parametrize('test_input,expected', [(set([1]), [1]), ])
-    def test_set(self, test_input, expected):
+    def test_set(self):
         """
         Test for passing a set object to _json_encode_fallback().
         """
 
-        assert _json_encode_fallback(test_input) == expected
+        assert _json_encode_fallback(set([1])) == [1]
 
     @pytest.mark.parametrize(
         'test_input',
@@ -72,8 +71,6 @@ class TestJsonEncodeFallback:
 
         with pytest.raises(TypeError, match='Cannot json serialize'):
             _json_encode_fallback(test_input)
-
-        assert "Cannot json serialize" in str(excinfo.value)
 
 
 class TestContainerToBytes:
