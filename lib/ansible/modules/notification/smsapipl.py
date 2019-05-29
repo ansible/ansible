@@ -16,12 +16,17 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: smsapipl
+
 short_description: Send SMS via smsapi.pl
+
 version_added: "2.9"
+
 description:
   - "Module to send SMS via smsapi.pl; it allow replace Polish diacritic chars to Latin alpha."
+
 requirements:
   - "smsapi-client >= 2.3.0"
+
 options:
   api_key:
     description:
@@ -52,6 +57,7 @@ options:
       - If True, Polish diacritic chars are replace by Latin chars
     default: true
     type: bool
+
 author:
   - Mateusz Kozieł (@mateusz-koziel)
 '''
@@ -154,4 +160,4 @@ def main():
 
 
 if __name__ == '__main__':
-main()
+    main()
