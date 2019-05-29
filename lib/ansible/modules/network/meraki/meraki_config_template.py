@@ -229,9 +229,13 @@ def main():
     if meraki.params['org_name']:
         org_id = meraki.get_org_id(meraki.params['org_name'])
     net_id = meraki.params['net_id']
-    nets = meraki.get_nets(org_id=org_id)
-    if meraki.params['net_name']:
-        net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+    nets = None
+    if net_id is None:
+        if meraki.params['net_name'] is not None:
+            nets = meraki.get_nets(org_id=org_id)
+            net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+        else:
+            nets = meraki.get_nets(org_id=org_id)
 
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_config_templates(meraki, org_id)
@@ -239,6 +243,8 @@ def main():
         template_id = get_template_id(meraki,
                                       meraki.params['config_template'],
                                       get_config_templates(meraki, org_id))
+        if nets is None:
+            nets = meraki.get_nets(org_id=org_id)
         if is_network_bound(meraki, nets, net_id, template_id) is False:
             template_bind = bind(meraki,
                                  net_id,
@@ -261,6 +267,8 @@ def main():
             template_id = get_template_id(meraki,
                                           meraki.params['config_template'],
                                           get_config_templates(meraki, org_id))
+            if nets is None:
+                nets = meraki.get_nets(org_id=org_id)
             if is_network_bound(meraki, nets, net_id, template_id) is True:
                 config_unbind = unbind(meraki,
                                        net_id)
