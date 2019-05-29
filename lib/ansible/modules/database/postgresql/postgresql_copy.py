@@ -77,19 +77,6 @@ options:
 
 notes:
 - Supports PostgreSQL version 9.4+.
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-
-requirements:
-- psycopg2
 
 author:
 - Andrew Klychkov (@Andersson007)
@@ -329,7 +316,6 @@ class PgCopyData(object):
             table (str) - Table name that needs to be checked.
                 It can be SQL SELECT statement that was passed
                 instead of the table name.
-
         """
 
         if 'SELECT' in table:
