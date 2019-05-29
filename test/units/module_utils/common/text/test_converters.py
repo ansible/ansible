@@ -129,19 +129,23 @@ class TestContainerToBytes:
         assert container_to_bytes(test_input, errors='surrogate_or_strict') == expected
 
     @pytest.mark.parametrize(
-        'test_input,encoding',
+        'test_input,encoding,expected',
         [
-            (u'くらとみ', 'latin1'),
-            (u'café', 'shift_jis'),
+            (u'くらとみ', 'latin1', b'????'),
+            (u'café', 'shift_jis', b'caf?'),
         ]
     )
-    def test_incompatible_chars_and_encodings(self, test_input, encoding):
+    def test_incompatible_chars_and_encodings(self, test_input, encoding, expected):
         """
         Test for passing incompatible characters and encodings container_to_bytes().
         """
 
-        with pytest.raises(UnicodeEncodeError, match="codec can't encode"):
-            container_to_bytes(test_input, encoding=encoding, errors='surrogate_or_strict')
+        for err in ('surrogate_or_strict', 'strict'):
+            with pytest.raises(UnicodeEncodeError, match="codec can't encode"):
+                container_to_bytes(test_input, encoding=encoding, errors=err)
+
+        assert container_to_bytes(test_input, encoding=encoding,
+                                  errors='surrogate_then_replace') == expected
 
 
 class TestContainerToText:
