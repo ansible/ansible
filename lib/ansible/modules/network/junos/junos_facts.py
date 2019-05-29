@@ -354,7 +354,8 @@ def main():
 
         if subset not in VALID_SUBSETS:
             module.fail_json(msg='Subset must be one of [%s], got %s' %
-                             (', '.join(VALID_SUBSETS), subset))
+                             (', '.join(sorted([subset for subset in
+                                                VALID_SUBSETS])), subset))
 
         if exclude:
             exclude_subsets.add(subset)
