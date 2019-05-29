@@ -30,6 +30,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
 from ansible._internal._errors._handler import ErrorHandler
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
@@ -40,7 +41,6 @@ from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
-from ansible._internal._templating._engine import TemplateEngine
 from ansible.vars.hostvars import HostVars
 from ansible.vars.manager import VariableManager
 from ansible.utils.display import Display
@@ -327,7 +327,11 @@ class TaskQueueManager:
         # hosts so we know what failed this round.
         for host_name in self._failed_hosts.keys():
             host = self._inventory.get_host(host_name)
-            iterator.mark_host_failed(host)
+            if host is None:
+                iterator.host_not_in_invenotry(host_name)
+            else:
+                iterator.mark_host_failed(host)
+
         for host_name in self._unreachable_hosts.keys():
             iterator._play._removed_hosts.append(host_name)
 
