@@ -23,6 +23,7 @@ from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_pim_interface
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
+
 class TestNxosPimInterfaceBfdModule(TestNxosModule):
 
     module = nxos_pim_interface
@@ -61,7 +62,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface eth2/1',
                 'ip pim bfd-instance',
-        ])
+            ])
 
         # default (None) -> False (disable)
         set_module_args(dict(interface='eth2/1', bfd=False))
@@ -70,7 +71,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface eth2/1',
                 'ip pim bfd-instance disable',
-        ])
+            ])
 
         # default (None) -> default (None) (idempotence)
         set_module_args(dict(interface='eth2/1', bfd='default'))
@@ -97,7 +98,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface Ethernet9/2',
                 'ip pim bfd-instance',
-        ])
+            ])
 
         # False (disable) -> False (disable) (idempotence)
         set_module_args(dict(interface='Ethernet9/2', bfd='false'))
@@ -110,7 +111,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface Ethernet9/2',
                 'no ip pim bfd-instance',
-        ])
+            ])
         # False (disable) -> interface state 'default'
         set_module_args(dict(interface='Ethernet9/3', state='default'))
         self.execute_module(
@@ -118,7 +119,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface Ethernet9/3',
                 'no ip pim bfd-instance',
-        ])
+            ])
 
         # False (disable) -> interface state 'absent'
         set_module_args(dict(interface='Ethernet9/3', state='absent'))
@@ -127,7 +128,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface Ethernet9/3',
                 'no ip pim bfd-instance',
-        ])
+            ])
 
     def test_bfd_3(self):
         # From True
@@ -142,7 +143,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface Ethernet9/3',
                 'ip pim bfd-instance disable',
-        ])
+            ])
 
         # True -> True (idempotence)
         set_module_args(dict(interface='Ethernet9/3', bfd='true'))
@@ -155,7 +156,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface Ethernet9/3',
                 'no ip pim bfd-instance',
-        ])
+            ])
 
         # True -> interface state 'default'
         set_module_args(dict(interface='Ethernet9/3', state='default'))
@@ -164,7 +165,7 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface Ethernet9/3',
                 'no ip pim bfd-instance',
-        ])
+            ])
 
         # True -> interface state 'absent'
         set_module_args(dict(interface='Ethernet9/3', state='absent'))
@@ -173,4 +174,4 @@ class TestNxosPimInterfaceBfdModule(TestNxosModule):
             commands=[
                 'interface Ethernet9/3',
                 'no ip pim bfd-instance',
-        ])
+            ])

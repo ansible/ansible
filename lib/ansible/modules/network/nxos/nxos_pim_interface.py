@@ -173,10 +173,10 @@ PARAM_TO_DEFAULT_KEYMAP = {
 }
 
 BFD_KEYMAP = {
-   None: None,
-   'default': 'no ip pim bfd-instance',
-   False: 'ip pim bfd-instance disable',
-   True: 'ip pim bfd-instance',
+    None: None,
+    'default': 'no ip pim bfd-instance',
+    False: 'ip pim bfd-instance disable',
+    True: 'ip pim bfd-instance',
 }
 
 
@@ -461,6 +461,7 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
             command.append(each)
 
     return command
+
 
 def normalize_proposed_values(proposed):
     keys = proposed.keys()
