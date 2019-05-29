@@ -43,7 +43,7 @@ options:
         required: true
     name:
         description:
-            - name of the DNS zone.
+            - Name of the DNS zone.
         required: true
     state:
         description:
@@ -69,9 +69,9 @@ options:
     resolution_virtual_networks:
         description:
             - A list of references to virtual networks that resolve records in this DNS zone.
-            - This is a only when I(type=(private).
+            - This is a only when I(type=private).
             - Each element can be the name or resource id, or a dict contains C(name), C(resource_group) information of the virtual network.
-        version_added: 2.8
+        version_added: '2.8'
         type: list
 
 extends_documentation_fragment:
