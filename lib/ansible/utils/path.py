@@ -116,6 +116,6 @@ def cleanup_tmp_dir(path):
                 # Importing here to avoid circular import
                 from ansible.utils.display import Display
                 display = Display()
-                display.display('Unable to remove temporary file {0}'.format(to_native(e)))
+                display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
     except Exception:
         pass
