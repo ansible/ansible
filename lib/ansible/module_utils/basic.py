@@ -1613,7 +1613,7 @@ class AnsibleModule(object):
     def safe_eval(self, value, locals=None, include_exceptions=False):
         return safe_eval(value, locals, include_exceptions)
 
-    def _check_type_str(self, value):
+    def _check_type_str(self, value, param=None):
         opts = {
             'error': False,
             'warn': False,
@@ -1626,12 +1626,17 @@ class AnsibleModule(object):
             return check_type_str(value, allow_conversion)
         except TypeError:
             common_msg = 'quote the entire value to ensure it does not change.'
+            from_msg = '{0!r}'.format(value)
+            to_msg = '{0!r}'.format(to_text(value))
+            if param is not None:
+                from_msg = '{0}: {1!r}'.format(param, value)
+                to_msg = '{0}: {1!r}'.format(param, to_text(value))
             if self._string_conversion_action == 'error':
                 msg = common_msg.capitalize()
                 raise TypeError(to_native(msg))
             elif self._string_conversion_action == 'warn':
-                msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
-                       'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+                msg = ("The value '{0}' (type {1.__class__.__name__}) was converted to '{2}' (type string). "
+                       "If this does not look like what you expect, {3}").format(from_msg, value, to_msg, common_msg)
                 self.warn(to_native(msg))
                 return to_native(value, errors='surrogate_or_strict')
 
@@ -1751,9 +1756,16 @@ class AnsibleModule(object):
     def _handle_elements(self, wanted, param, values):
         type_checker, wanted_name = self._get_wanted_type(wanted, param)
         validated_params = []
+        # Get param name for strings so we can later display this value in a useful error message if needed
+        kwargs = {}
+        if wanted_name == 'str':
+            if isinstance(param, string_types):
+                kwargs['param'] = param
+            elif isinstance(param, dict):
+                kwargs['param'] = list(param.keys())[0]
         for value in values:
             try:
-                validated_params.append(type_checker(value))
+                validated_params.append(type_checker(value, **kwargs))
             except (TypeError, ValueError) as e:
                 msg = "Elements value for option %s" % param
                 if self._options_context:
@@ -1780,8 +1792,13 @@ class AnsibleModule(object):
                 continue
 
             type_checker, wanted_name = self._get_wanted_type(wanted, k)
+            # Get param name for strings so we can later display this value in a useful error message if needed
+            kwargs = {}
+            if wanted_name == 'str':
+                kwargs['param'] = list(param.keys())[0]
+
             try:
-                param[k] = type_checker(value)
+                param[k] = type_checker(value, **kwargs)
                 wanted_elements = v.get('elements', None)
                 if wanted_elements:
                     if wanted != 'list' or not isinstance(param[k], list):
