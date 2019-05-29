@@ -86,6 +86,7 @@ class TestContainerToBytes:
             ((1, 2), (1, 2)),
             (1, 1),
             (1.1, 1.1),
+            (b'str', b'str'),
             (u'str', b'str'),
             ([u'str'], [b'str']),
             ((u'str'), (b'str')),
@@ -161,6 +162,7 @@ class TestContainerToText:
             (1.1, 1.1),
             (True, True),
             (None, None),
+            (u'str', u'str'),
             ('str'.encode(DEFAULT_ENCODING), u'str'),
             (['str'.encode(DEFAULT_ENCODING)], [u'str']),
             (('str'.encode(DEFAULT_ENCODING)), (u'str')),
@@ -184,6 +186,7 @@ class TestJsonify:
         [
             (1, '1'),
             (u'string', u'"string"'),
+            (b'string', u'"string"'),
             (False, u'false'),
             ('b_string'.encode('utf-8'), u'"b_string"'),
         ]
