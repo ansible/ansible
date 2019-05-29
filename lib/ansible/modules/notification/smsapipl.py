@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -19,13 +20,13 @@ module: smsapipl
 
 short_description: Send SMS via smsapi.pl
 
-version_added: "2.9"
-
 description:
   - "Module to send SMS via smsapi.pl; it allow replace Polish diacritic chars to Latin alpha."
 
-requirements:
-  - "smsapi-client >= 2.3.0"
+version_added: "2.8"
+
+author:
+  - Mateusz Kozieł (@mateusz-koziel)
 
 options:
   api_key:
@@ -57,9 +58,9 @@ options:
       - If True, Polish diacritic chars are replace by Latin chars
     default: true
     type: bool
-
-author:
-  - Mateusz Kozieł (@mateusz-koziel)
+    
+requirements:
+    - "smsapi-client >= 2.3.0"
 '''
 
 EXAMPLES = '''
