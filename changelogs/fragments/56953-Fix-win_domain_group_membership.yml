@@ -1,0 +1,2 @@
+bugfixes:
+- "win_domain_group_membership - Bug fix while Adding and Deleting a group from another group(https://github.com/ansible/ansible/pull/56953)"
