@@ -3,17 +3,20 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- name: "Disable feature PIM"
+- name: "Setup: Disable features"
   nxos_feature: &disable_feature
-    feature: pim
+    feature: "{{ item }}"
     provider: "{{ connection }}"
     state: disabled
+  loop: ['pim', 'bfd']
+  ignore_errors: yes
 
-- name: "Enable feature PIM"
+- name: "Setup: Enable features"
   nxos_feature:
-    feature: pim
+    feature: "{{ item }}"
     provider: "{{ connection }}"
     state: enabled
+  loop: ['pim', 'bfd']
 
 - set_fact: testint="{{ nxos_int1 }}"
 
@@ -115,6 +118,7 @@
       hello_interval: 40
       sparse: True
       border: True
+      bfd: True
       provider: "{{ connection }}"
       state: present
     register: result
@@ -132,6 +136,7 @@
       interface: "{{ testint }}"
       sparse: False
       border: False
+      bfd: False
       provider: "{{ connection }}"
       state: present
     register: result
@@ -193,5 +198,6 @@
   always:
   - name: "Disable feature PIM"
     nxos_feature: *disable_feature
+    loop: ['pim', 'bfd']
 
 - debug: msg="END connection={{ ansible_connection }} nxos_pim_interface sanity test"
