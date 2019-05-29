@@ -876,7 +876,7 @@ class Legacy(FactsBase):
     def parse_module(self, data):
         objects = list()
         for line in data.splitlines():
-            if line == '':
+            if line == '' or re.search(r'\b' + 'Sw' + r'\b', line):
                 break
             if line[0].isdigit():
                 obj = {}
@@ -896,7 +896,7 @@ class Legacy(FactsBase):
                     if items:
                         obj['type'] = items[0]
                         obj['model'] = items[1]
-                        obj['status'] = items[2]
+                        obj['status'] = items[-1]
 
                 objects.append(obj)
         return objects
@@ -910,9 +910,11 @@ class Legacy(FactsBase):
             line = l.split()
             if len(line) > 1:
                 obj = {}
+                if re.search(r'Direction', data, re.M):
+                    obj['direction'] = line[-2]
                 obj['name'] = line[0]
                 obj['model'] = line[1]
-                obj['hw_ver'] = line[-2]
+                obj['hw_ver'] = line[2]
                 obj['status'] = line[-1]
                 objects.append(obj)
         return objects
