@@ -454,9 +454,7 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
 
 class ValidCollectionTests(object):
 
-    expected_collection_dirs = ('docs', 'playbooks', 'plugins', 'plugins/action', 'plugins/filter',
-                                'plugins/inventory', 'plugins/lookup', 'plugins/module_utils', 'plugins/modules',
-                                'roles')
+    expected_collection_dirs = ('docs', 'plugins', 'roles')
 
     @classmethod
     def setUpCollection(cls, collection_name, galaxy_args=None, skeleton_path=None):
@@ -496,10 +494,6 @@ class ValidCollectionTests(object):
         for item in ['namespace', 'name', 'version', 'authors', 'description', 'license', 'tags', 'dependencies',
                      'repository', 'documentation', 'homepage', 'issues']:
             self.assertIn(item, metadata, msg='unable to find {0}'.format(item))
-
-    def test_readme(self):
-        readme_path = os.path.join(self.collection_dir, 'README.md')
-        self.assertTrue(os.path.exists(readme_path), msg='Readme doesn\'t exist')
 
     def test_collection_dirs(self):
         for d in self.expected_collection_dirs:
@@ -601,6 +595,10 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
     def test_skeleton_option(self):
         self.assertEquals(self.collection_skeleton_path, context.CLIARGS['collection_skeleton'],
                           msg='Skeleton path was not parsed properly from the command line')
+
+    def test_readme(self):
+        readme_path = os.path.join(self.collection_dir, 'README.md')
+        self.assertTrue(os.path.exists(readme_path), msg='Readme doesn\'t exist')
 
 
 def test_invalid_skeleton_path():

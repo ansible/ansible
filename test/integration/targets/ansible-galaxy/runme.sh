@@ -117,7 +117,7 @@ pushd "${galaxy_testdir}"
     ansible-galaxy collection init ansible_test.my_collection
 
     # Test that the collection skeleton was created in the expected directory
-    for galaxy_collection_dir in "docs" "playbooks" "plugins" "plugins/action" "plugins/filter" "plugins/inventory" "plugins/lookup" "plugins/module_utils" "plugins/modules" "roles"
+    for galaxy_collection_dir in "docs" "plugins" "roles"
     do
         [[ -d "${galaxy_testdir}/ansible_test/my_collection/${galaxy_collection_dir}" ]]
     done
@@ -133,7 +133,7 @@ pushd "${galaxy_testdir}"
     ansible-galaxy collection init ansible_test.my_collection --init-path "${galaxy_testdir}/test"
 
     # Test that the collection skeleton was created in the expected directory
-    for galaxy_collection_dir in "docs" "playbooks" "plugins" "plugins/action" "plugins/filter" "plugins/inventory" "plugins/lookup" "plugins/module_utils" "plugins/modules" "roles"
+    for galaxy_collection_dir in "docs" "plugins" "roles"
     do
         [[ -d "${galaxy_testdir}/test/ansible_test/my_collection/${galaxy_collection_dir}" ]]
     done

@@ -28,6 +28,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.collection_loader import is_collection_ref
 from ansible.utils.display import Display
+from ansible.utils.plugin_docs import get_versioned_doclink
 
 display = Display()
 
@@ -300,7 +301,8 @@ class GalaxyCLI(CLI):
             repository_url='http://example.com/repository',
             documentation_url='http://docs.example.com',
             homepage_url='http://example.com',
-            min_ansible_version=ansible_version[:3]  # x.y
+            min_ansible_version=ansible_version[:3],  # x.y
+            ansible_plugin_list_dir=get_versioned_doclink('plugins/plugins.html'),
         )
 
         if galaxy_type == 'role':
@@ -362,7 +364,7 @@ class GalaxyCLI(CLI):
                 elif ext == ".j2" and not in_templates_dir:
                     src_template = os.path.join(rel_root, f)
                     dest_file = os.path.join(obj_path, rel_root, filename)
-                    template_env.get_template(src_template).stream(inject_data).dump(dest_file)
+                    template_env.get_template(src_template).stream(inject_data).dump(dest_file, encoding='utf-8')
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
                     shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path))
