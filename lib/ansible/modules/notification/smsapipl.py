@@ -23,7 +23,7 @@ short_description: Send SMS via smsapi.pl
 description:
   - "Module to send SMS via smsapi.pl; it allow replace Polish diacritic chars to Latin alpha."
 
-version_added: "2.8"
+version_added: "2.9"
 
 author:
   - Mateusz Kozieł (@mateusz-koziel)
