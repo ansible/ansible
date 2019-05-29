@@ -118,7 +118,7 @@
         - disable_vlan_idempotent is not changed
         - disable_vlan_idempotent.data is defined
 
-  - name: Create network with type wireless
+  - name: Create network with type wireless and disable my.meraki.com
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
@@ -126,10 +126,11 @@
       net_name: IntTestNetworkWireless
       type: wireless
       timezone: America/Chicago
+      disable_my_meraki: yes
     delegate_to: localhost
     register: create_net_wireless
 
-  - name: Create network with type wireless and check for idempotency
+  - name: Create network with type wireless, disable my.meraki.com, and check for idempotency
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
@@ -137,6 +138,7 @@
       net_name: IntTestNetworkWireless
       type: wireless
       timezone: America/Chicago
+      disable_my_meraki: yes
     delegate_to: localhost
     register: create_net_wireless_idempotent
 
@@ -154,7 +156,7 @@
         - appliance
         - switch
       timezone: America/Chicago
-      disable_my_meraki: yes
+      enable_my_meraki: no
     delegate_to: localhost
     register: create_net_combined
 
@@ -164,10 +166,69 @@
       state: present
       org_name: '{{test_org_name}}'
       net_name: IntTestNetworkCombined
-      disable_my_meraki: no
+      enable_my_meraki: yes
     delegate_to: localhost
     register: enable_meraki_com
-    
+
+  - name: Disable my.meraki.com for next test
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      enable_my_meraki: no
+    delegate_to: localhost
+
+  - name: Enable remote status page
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      enable_remote_status_page: yes
+    delegate_to: localhost
+    register: disable_remote_status
+
+  - debug:
+      msg: '{{disable_remote_status}}'
+
+  - assert:
+      that:
+        - disable_remote_status.data.disableRemoteStatusPage == False
+
+  - name: Disable remote status page
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      enable_remote_status_page: no
+    delegate_to: localhost
+    register: enable_remote_status
+
+  - debug:
+      msg: '{{enable_remote_status}}'
+
+  - assert:
+      that:
+        - enable_remote_status.data.disableRemoteStatusPage == True
+
+  - name: Test status pages are mutually exclusive when on
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      enable_my_meraki: yes
+      enable_remote_status_page: no
+    delegate_to: localhost
+    register: status_exclusivity
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - '"must be true when setting" in status_exclusivity.msg'
+
   - name: Create network with one tag
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -241,6 +302,7 @@
         - '"IntTestNetworkSwitch" in create_net_switch.data.name'
         - '"IntTestNetworkSwitchOrgID" in create_net_switch_org_id.data.name'
         - '"IntTestNetworkWireless" in create_net_wireless.data.name'
+        - create_net_wireless.data.disableMyMerakiCom == True
         - create_net_wireless_idempotent.changed == False
         - create_net_wireless_idempotent.data is defined
         - '"first_tag" in create_net_tag.data.tags'
