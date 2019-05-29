@@ -165,7 +165,7 @@ class GcpSession(object):
             'User-Agent': "Google-Ansible-MM-{0}".format(self.product)
         }
 
-    def _merge_dictionaries(self, a, b):
+    def merge_dictionaries(self, a, b):
         new = a.copy()
         new.update(b)
         return new
