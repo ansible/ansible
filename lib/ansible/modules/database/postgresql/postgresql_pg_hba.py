@@ -301,6 +301,7 @@ class PgHba(object):
         if not self.changed():
             return False
 
+        contents = self.render()
         if self.pg_hba_file:
             if not (os.path.isfile(self.pg_hba_file) or self.create):
                 raise PgHbaError("pg_hba file '{0}' doesn't exist. "
@@ -316,7 +317,7 @@ class PgHba(object):
             filed, __path = tempfile.mkstemp(prefix='pg_hba')
             fileh = os.fdopen(filed, 'w')
 
-        fileh.write(self.render())
+        fileh.write(contents)
         self.unchanged()
         fileh.close()
         return True
