@@ -24,7 +24,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
-from ansible.plugins.loader import become_loader
+from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
@@ -1048,11 +1048,20 @@ class TaskExecutor:
             raise AnsibleError("Unable to find location of 'ansible-connection'. "
                                "Please set or check the value of ANSIBLE_CONNECTION_PATH")
 
+        env = os.environ.copy()
+        env.update({
+            'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
+            'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
+            'ANSIBLE_CONNECTION_PLUGINS': connection_loader.print_paths(),
+            'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
+            'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
+            'ANSIBLE_TERMINAL_PLUGINS': terminal_loader.print_paths(),
+        })
         python = sys.executable
         master, slave = pty.openpty()
         p = subprocess.Popen(
             [python, ansible_connection, to_text(os.getppid())],
-            stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
         )
         os.close(slave)
 
