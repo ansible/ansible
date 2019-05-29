@@ -1513,8 +1513,13 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
+<<<<<<< faz_plugin_utils_and_module
   team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_tower: ghjm matburt wwitzel3 ryanpetrello rooftopcellist AlanCoding jladdjr kdelee
+=======
+  team_solaris: bcoca dagwieers danowar2k fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
+  team_tower: ghjm matburt ryanpetrello rooftopcellist AlanCoding jladdjr kdelee
+>>>>>>> faz_plugin_utils_and_module~409
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
   team_vmware: Akasurde dav1x warthog9 Tomorrow9 goneri
   team_virt: joshainglis karmab
