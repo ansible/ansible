@@ -16,7 +16,7 @@ module: aci_interface_policy_port_security
 short_description: Manage port security (l2:PortSecurityPol)
 description:
 - Manage port security on Cisco ACI fabrics.
-version_added: '2.9'
+version_added: '2.4'
 options:
   port_security:
     description:
@@ -36,6 +36,7 @@ options:
     - The APIC defaults to C(0) when unset during creation.
     type: int
   port_security_timeout:
+    version_added: '2.9'
     description:
     - The delay time in seconds before MAC learning is re-enabled
     - Accepted values range between C(60) and C(3600)
