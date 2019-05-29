@@ -128,7 +128,6 @@ class TestContainerToBytes:
 
         assert container_to_bytes(test_input, errors='surrogate_or_strict') == expected
 
-
     @pytest.mark.parametrize(
         'test_input,encoding',
         [
