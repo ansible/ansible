@@ -60,7 +60,7 @@ options:
         type: bool
         version_added: "2.6"
     avi_login_info:
-         description:       
+        description:       
             - Avi login info dictionary which can be used in lieu of enumerating Avi Controller login details.
             - This dictionary should not contain login secrets avi_credentials should be used for login secrets.
             - This should contain information like controller, username, tenant, api_version
