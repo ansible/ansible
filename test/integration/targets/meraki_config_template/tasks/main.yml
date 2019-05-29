@@ -14,7 +14,7 @@
       auth_key: '{{ auth_key }}'
       host: marrrraki.com
       state: query
-      org_name: DevTestOrg
+      org_name: '{{test_org_name}}'
       output_level: debug
     delegate_to: localhost
     register: invalid_domain
