@@ -133,7 +133,7 @@ RETURN = '''
 id:
     description:
         - Resource ID
-    returned: always
+    returned: when state is present
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/policyDefinitions/mytestpolicy"
 '''
