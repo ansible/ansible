@@ -16,8 +16,8 @@ DOCUMENTATION = '''
 module: os_group_facts
 short_description: Retrieve facts about one or more OpenStack groups
 extends_documentation_fragment: openstack
-version_added: "2.1"
-author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
+version_added: "2.9"
+author: "Phillipe Smith (@phsmith)"
 description:
     - Retrieve facts about a one or more OpenStack groups
 requirements:
@@ -127,7 +127,7 @@ def main():
                 # We assume admin is passing domain id
                 dom = opcloud.get_domain(domain)['id']
                 domain = dom
-            except:
+            except Exception:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 dom = opcloud.search_domains(filters={'name': domain})
