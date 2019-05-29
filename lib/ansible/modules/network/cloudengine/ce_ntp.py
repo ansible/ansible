@@ -442,7 +442,7 @@ class Ntp(object):
 
         # get all ntp config info
         root = ElementTree.fromstring(xml_str)
-        ntpsite = root.findall("data/ntp/ntpUCastCfgs/ntpUCastCfg")
+        ntpsite = root.findall("ntp/ntpUCastCfgs/ntpUCastCfg")
         for nexthop in ntpsite:
             ntp_dict = dict()
             for ele in nexthop:
