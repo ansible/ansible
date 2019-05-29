@@ -196,6 +196,21 @@ class TestContainerToText:
 
         assert container_to_text(test_input, errors='surrogate_or_strict') == expected
 
+    @pytest.mark.parametrize(
+        'test_input,encoding,expected',
+        [
+            (u'й'.encode('utf-8'), 'latin1', u'Ð¹'),
+            (u'café'.encode('utf-8'), 'shift_jis', u'cafﾃｩ'),
+        ]
+    )
+    @pytest.mark.parametrize('errors', ['strict', 'surrogate_or_strict', 'surrogate_then_replace'])
+    def test_incompatible_encodings_chars(self, test_input, encoding, errors, expected):
+        """
+        Test for passing incompatible characters and encodings container_to_text().
+        """
+
+        assert container_to_text(test_input, encoding=encoding, errors=errors) == expected
+
 
 class TestJsonify:
 
