@@ -23,8 +23,10 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
+from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils._text import to_native, to_text
 from ansible.playbook.role.requirement import RoleRequirement
+from ansible.utils.collection_loader import is_collection_ref
 from ansible.utils.display import Display
 
 display = Display()
@@ -36,6 +38,11 @@ class GalaxyCLI(CLI):
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url")
 
     def __init__(self, args):
+        # Inject role into sys.argv[1] as a backwards compatibility step
+        if len(args) > 1 and args[1] not in ['-h', '--help'] and 'role' not in args and 'collection' not in args:
+            # TODO: Should we add a warning here and eventually deprecate the implicit role subcommand choice
+            args.insert(1, 'role')
+
         self.api = None
         self.galaxy = None
         super(GalaxyCLI, self).__init__(args)
@@ -73,14 +80,23 @@ class GalaxyCLI(CLI):
         force = opt_help.argparse.ArgumentParser(add_help=False)
         force.add_argument('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
-        subparsers = self.parser.add_subparsers(dest='action')
-        subparsers.required = True
+        # Add sub parser for the Galaxy role type (role or collection)
+        type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
+        type_parser.required = True
 
-        delete_parser = subparsers.add_parser('delete', parents=[user_repo, common],
-                                              help='Removes the role from Galaxy. It does not remove or alter the actual GitHub repository.')
+        # Define the actions for the role object type
+        role = type_parser.add_parser('role',
+                                      parents=[common],
+                                      help='Manage an Ansible Galaxy role.')
+        role_parser = role.add_subparsers(metavar='ACTION', dest='role')
+        role_parser.required = True
+
+
+        delete_parser = role_parser.add_parser('delete', parents=[user_repo, common],
+                                               help='Removes the role from Galaxy. It does not remove or alter the actual GitHub repository.')
         delete_parser.set_defaults(func=self.execute_delete)
 
-        import_parser = subparsers.add_parser('import', help='Import a role', parents=[user_repo, common])
+        import_parser = role_parser.add_parser('import', help='Import a role', parents=[user_repo, common])
         import_parser.set_defaults(func=self.execute_import)
         import_parser.add_argument('--no-wait', dest='wait', action='store_false', default=True, help="Don't wait for import results.")
         import_parser.add_argument('--branch', dest='reference',
@@ -89,24 +105,20 @@ class GalaxyCLI(CLI):
         import_parser.add_argument('--status', dest='check_status', action='store_true', default=False,
                                    help='Check the status of the most recent import request for given github_user/github_repo.')
 
-        info_parser = subparsers.add_parser('info', help='View more details about a specific role.',
-                                            parents=[offline, common, roles_path])
+        info_parser = role_parser.add_parser('info', help='View more details about a specific role.',
+                                             parents=[offline, common, roles_path])
         info_parser.set_defaults(func=self.execute_info)
         info_parser.add_argument('args', nargs='+', help='role', metavar='role_name[,version]')
 
-        init_parser = subparsers.add_parser('init', help='Initialize new role with the base structure of a role.',
-                                            parents=[offline, force, common])
-        init_parser.set_defaults(func=self.execute_init)
-        init_parser.add_argument('--init-path', dest='init_path', default="./",
-                                 help='The path in which the skeleton role will be created. The default is the current working directory.')
-        init_parser.add_argument('--type', dest='role_type', action='store', default='default',
-                                 help="Initialize using an alternate role type. Valid types include: 'container', 'apb' and 'network'.")
-        init_parser.add_argument('--role-skeleton', dest='role_skeleton', default=C.GALAXY_ROLE_SKELETON,
-                                 help='The path to a role skeleton that the new role should be based upon.')
-        init_parser.add_argument('role_name', help='Role name')
+        rinit_parser = self.add_init_parser(role_parser, [offline, force, common])
+        rinit_parser.add_argument('--type',
+                                  dest='role_type',
+                                  action='store',
+                                  default='default',
+                                  help="Initialize using an alternate role type. Valid types include: 'container', 'apb' and 'network'.")
 
-        install_parser = subparsers.add_parser('install', help='Install Roles from file(s), URL(s) or tar file(s)',
-                                               parents=[force, common, roles_path])
+        install_parser = role_parser.add_parser('install', help='Install Roles from file(s), URL(s) or tar file(s)',
+                                                parents=[force, common, roles_path])
         install_parser.set_defaults(func=self.execute_install)
         install_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                     help='Ignore errors and continue with the next specified role.')
@@ -120,31 +132,27 @@ class GalaxyCLI(CLI):
         install_exclusive.add_argument('--force-with-deps', dest='force_with_deps', action='store_true', default=False,
                                        help="Force overwriting an existing role and it's dependencies")
 
-        remove_parser = subparsers.add_parser('remove', help='Delete roles from roles_path.', parents=[common, roles_path])
+        remove_parser = role_parser.add_parser('remove', help='Delete roles from roles_path.', parents=[common, roles_path])
         remove_parser.set_defaults(func=self.execute_remove)
         remove_parser.add_argument('args', help='Role(s)', metavar='role', nargs='+')
 
-        list_parser = subparsers.add_parser('list', help='Show the name and version of each role installed in the roles_path.',
+        list_parser = role_parser.add_parser('list', help='Show the name and version of each role installed in the roles_path.',
                                             parents=[common, roles_path])
         list_parser.set_defaults(func=self.execute_list)
         list_parser.add_argument('role', help='Role', nargs='?', metavar='role')
 
-        login_parser = subparsers.add_parser('login', parents=[common],
-                                             help="Login to api.github.com server in order to use ansible-galaxy sub "
-                                                  "command such as 'import', 'delete' and 'setup'")
-        login_parser.set_defaults(func=self.execute_login)
-        login_parser.add_argument('--github-token', dest='token', default=None, help='Identify with github token rather than username and password.')
+        self.add_login_parser(role_parser, [common])
 
-        search_parser = subparsers.add_parser('search', help='Search the Galaxy database by tags, platforms, author and multiple keywords.',
-                                              parents=[common])
+        search_parser = role_parser.add_parser('search', help='Search the Galaxy database by tags, platforms, author and multiple keywords.',
+                                               parents=[common])
         search_parser.set_defaults(func=self.execute_search)
         search_parser.add_argument('--platforms', dest='platforms', help='list of OS platforms to filter by')
         search_parser.add_argument('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
         search_parser.add_argument('--author', dest='author', help='GitHub username')
         search_parser.add_argument('args', help='Search terms', metavar='searchterm', nargs='*')
 
-        setup_parser = subparsers.add_parser('setup', help='Manage the integration between Galaxy and the given source.',
-                                             parents=[roles_path, common])
+        setup_parser = role_parser.add_parser('setup', help='Manage the integration between Galaxy and the given source.',
+                                              parents=[roles_path, common])
         setup_parser.set_defaults(func=self.execute_setup)
         setup_parser.add_argument('--remove', dest='remove_id', default=None,
                                   help='Remove the integration matching the provided ID value. Use --list to see ID values.')
@@ -153,6 +161,54 @@ class GalaxyCLI(CLI):
         setup_parser.add_argument('github_user', help='GitHub username')
         setup_parser.add_argument('github_repo', help='GitHub repository')
         setup_parser.add_argument('secret', help='Secret')
+
+        # Define the actions for the collection object type
+        collection = type_parser.add_parser('collection',
+                                            parents=[common],
+                                            help='Manage an Ansible Galaxy collection.')
+
+        collection_parser = collection.add_subparsers(metavar='ACTION', dest='collection')
+        collection_parser.required = True
+
+        self.add_init_parser(collection_parser, [offline, force, common])
+        self.add_login_parser(collection_parser, [common])
+
+    def add_init_parser(self, parser, parents):
+        galaxy_type = parser.dest
+
+        obj_name_kwargs = {}
+        if galaxy_type == 'collection':
+            obj_name_kwargs['type'] = GalaxyCLI._validate_collection_name
+
+        init_parser = parser.add_parser('init',
+                                        help='Initialize new {0} with the base structure of a {0}.'.format(galaxy_type),
+                                        parents=parents)
+        init_parser.set_defaults(func=self.execute_init)
+
+        init_parser.add_argument('--init-path',
+                                 dest='init_path',
+                                 default='./',
+                                 help='The path in which the skeleton {0} will be created. The default is the current working directory.'.format(galaxy_type))
+        init_parser.add_argument('--{0}-skeleton'.format(galaxy_type),
+                                 dest='{0}_skeleton'.format(galaxy_type),
+                                 default=C.GALAXY_ROLE_SKELETON,
+                                 help='The path to a {0} skeleton that the new {0} should be based upon.'.format(galaxy_type))
+        init_parser.add_argument('{0}_name'.format(galaxy_type),
+                                 help='{0} name'.format(galaxy_type.capitalize()),
+                                 **obj_name_kwargs)
+
+        return init_parser
+
+    def add_login_parser(self, parser, parents):
+        login_parser = parser.add_parser('login',
+                                         parents=parents,
+                                         help="Login to api.github.com server in order to use ansible-galaxy <TYPE> "
+                                              "sub command such as 'import', 'delete' and 'setup'")
+        login_parser.set_defaults(func=self.execute_login)
+        login_parser.add_argument('--github-token',
+                                  dest='token',
+                                  default=None,
+                                  help='Identify with github token rather than username and password.')
 
     def post_process_args(self, options):
         options = super(GalaxyCLI, self).post_process_args(options)
@@ -199,6 +255,13 @@ class GalaxyCLI(CLI):
 
         return u'\n'.join(text)
 
+    @staticmethod
+    def _validate_collection_name(name):
+        if not is_collection_ref('ansible_collections.{0}'.format(name)):
+            raise AnsibleError("Invalid collection name, must be in the format <namespace>.<collection>")
+
+        return name
+
 ############################
 # execute actions
 ############################
@@ -208,50 +271,75 @@ class GalaxyCLI(CLI):
         creates the skeleton framework of a role that complies with the galaxy metadata format.
         """
 
+        galaxy_type = context.CLIARGS['type']
         init_path = context.CLIARGS['init_path']
         force = context.CLIARGS['force']
-        role_skeleton = context.CLIARGS['role_skeleton']
+        obj_skeleton = context.CLIARGS['{0}_skeleton'.format(galaxy_type)]
 
-        role_name = context.CLIARGS['role_name']
-        role_path = os.path.join(init_path, role_name)
-        if os.path.exists(role_path):
-            if os.path.isfile(role_path):
-                raise AnsibleError("- the path %s already exists, but is a file - aborting" % role_path)
-            elif not force:
-                raise AnsibleError("- the directory %s already exists."
-                                   "you can use --force to re-initialize this directory,\n"
-                                   "however it will reset any main.yml files that may have\n"
-                                   "been modified there already." % role_path)
+        obj_name = context.CLIARGS['{0}_name'.format(galaxy_type)]
 
         inject_data = dict(
-            role_name=role_name,
             author='your name',
             description='your description',
             company='your company (optional)',
             license='license (GPL-2.0-or-later, MIT, etc)',
             issue_tracker_url='http://example.com/issue/tracker',
-            min_ansible_version='2.4',
-            role_type=context.CLIARGS['role_type']
+            repository_url='http://example.com/repository',
+            documentation_url='http://docs.example.com',
+            homepage_url='http://example.com',
+            min_ansible_version=ansible_version[:3]  # x.y
         )
 
-        # create role directory
-        if not os.path.exists(role_path):
-            os.makedirs(role_path)
+        if galaxy_type == 'role':
+            inject_data['role_name'] = obj_name
+            inject_data['role_type'] = context.CLIARGS['role_type']
+            obj_path = os.path.join(init_path, obj_name)
+        elif galaxy_type == 'collection':
+            namespace, collection_name = obj_name.split('.', 1)
 
-        if role_skeleton is not None:
+            inject_data['namespace'] = namespace
+            inject_data['collection_name'] = collection_name
+            obj_path = os.path.join(init_path, namespace, collection_name)
+
+        if os.path.exists(obj_path):
+            if os.path.isfile(obj_path):
+                raise AnsibleError("- the path %s already exists, but is a file - aborting" % obj_path)
+            elif not force:
+                raise AnsibleError("- the directory %s already exists."
+                                   "you can use --force to re-initialize this directory,\n"
+                                   "however it will reset any main.yml files that may have\n"
+                                   "been modified there already." % obj_path)
+
+        if obj_skeleton is not None:
             skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
         else:
-            role_skeleton = self.galaxy.default_role_skeleton_path
+            obj_skeleton = self.galaxy.default_role_skeleton_path
             skeleton_ignore_expressions = ['^.*/.git_keep$']
 
-        role_skeleton = os.path.expanduser(role_skeleton)
+        obj_skeleton = os.path.expanduser(obj_skeleton)
         skeleton_ignore_re = [re.compile(x) for x in skeleton_ignore_expressions]
 
-        template_env = Environment(loader=FileSystemLoader(role_skeleton))
+        if not os.path.exists(obj_skeleton):
+            raise AnsibleError("- the skeleton path '{0}' does not exist, cannot init {1}".format(
+                to_native(obj_skeleton, errors='surrogate_then_replace'), galaxy_type)
+            )
 
-        for root, dirs, files in os.walk(role_skeleton, topdown=True):
-            rel_root = os.path.relpath(root, role_skeleton)
-            in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
+        template_env = Environment(loader=FileSystemLoader(obj_skeleton))
+
+        # create role directory
+        if not os.path.exists(obj_path):
+            os.makedirs(obj_path)
+
+        for root, dirs, files in os.walk(obj_skeleton, topdown=True):
+            rel_root = os.path.relpath(root, obj_skeleton)
+            rel_dirs = rel_root.split(os.sep)
+            rel_root_dir = rel_dirs[0]
+            if galaxy_type == 'collection':
+                # A collection can contain templates in playbooks/*/templates and roles/*/templates
+                in_templates_dir = rel_root_dir in ['playbooks', 'roles'] and 'templates' in rel_dirs
+            else:
+                in_templates_dir = rel_root_dir == 'templates'
+
             dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
             for f in files:
@@ -260,18 +348,18 @@ class GalaxyCLI(CLI):
                     continue
                 elif ext == ".j2" and not in_templates_dir:
                     src_template = os.path.join(rel_root, f)
-                    dest_file = os.path.join(role_path, rel_root, filename)
+                    dest_file = os.path.join(obj_path, rel_root, filename)
                     template_env.get_template(src_template).stream(inject_data).dump(dest_file)
                 else:
-                    f_rel_path = os.path.relpath(os.path.join(root, f), role_skeleton)
-                    shutil.copyfile(os.path.join(root, f), os.path.join(role_path, f_rel_path))
+                    f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
+                    shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path))
 
             for d in dirs:
-                dir_path = os.path.join(role_path, rel_root, d)
+                dir_path = os.path.join(obj_path, rel_root, d)
                 if not os.path.exists(dir_path):
                     os.makedirs(dir_path)
 
-        display.display("- %s was created successfully" % role_name)
+        display.display("- %s was created successfully" % obj_name)
 
     def execute_info(self):
         """

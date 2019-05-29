@@ -1,0 +1,45 @@
+Collection Name
+===============
+
+A brief description of the collection goes here.
+
+
+Requirements
+------------
+
+Any pre-requisites that may not be covered by Ansible itself or the collection should be mentioned here. For instance, if the a module or plugin included in the collection requires a Python library, it may be a good idea to mention in this section that the boto package is required.
+
+
+Dependencies
+------------
+
+A list of other collections hosted on Galaxy should go here.
+
+
+Example Playbook
+----------------
+
+Including an example of how to use your collection is always nice for users too:
+
+    - hosts: servers
+      collections:
+      - {{ namespace }}.{{ collection_name }}
+
+      tasks:
+      - name: call a module in the collection
+        module:
+
+      - name: call a role using the fully qualified collection name
+        include_role: {{ namespace }}.{{ collection_name }}.role
+
+
+License
+-------
+
+BSD
+
+
+Author Information
+------------------
+
+An optional section for the role authors to include contact information, or a website (HTML is not allowed).

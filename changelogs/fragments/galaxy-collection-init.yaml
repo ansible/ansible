@@ -1,0 +1,2 @@
+minor_features:
+- ansible-galaxy - Add ``collection init`` command to create a skeleton Collections directory
