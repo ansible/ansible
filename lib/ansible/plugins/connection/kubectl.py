@@ -72,7 +72,7 @@ DOCUMENTATION = """
           - name: K8S_AUTH_EXTRA_ARGS
       kubectl_kubeconfig:
         description:
-          - Path to a kubectl config file. Defaults to I(~/.kube/conig)
+          - Path to a kubectl config file. Defaults to I(~/.kube/config)
         default: ''
         vars:
           - name: ansible_kubectl_kubeconfig
