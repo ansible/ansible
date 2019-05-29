@@ -16,7 +16,7 @@ module: smsapipl
 
 short_description: Send SMS via smsapi.pl
 
-version_added: "2.7"
+version_added: "2.9"
 
 description:
   - "Module to send SMS via smsapi.pl; it allow replace Polish diacritic chars to Latin alpha."
@@ -33,11 +33,6 @@ options:
     choices:
       - check
       - send
-    type: str
-  api_key:
-    description:
-      - API token generated for account on smsapi.pl
-    required: true
     type: str
   to:
     description:
@@ -101,7 +96,7 @@ def check_points(data):
     try:
         result = client.account.balance()
         return False, False, result.points
-    except:
+    except smsapi.exception.SendException:
         result = 'Something went wrong'
         return True, False, result
 
