@@ -201,7 +201,7 @@ def set_snmp(meraki, org_id):
         full_compare['v2cEnabled'] = False
     path = meraki.construct_path('create', org_id=org_id)
     snmp = get_snmp(meraki, org_id)
-    ignored_parameters = ('v3AuthPass', 'v3PrivPass', 'hostname', 'port', 'v2CommunityString', 'v3User')
+    ignored_parameters = ['v3AuthPass', 'v3PrivPass', 'hostname', 'port', 'v2CommunityString', 'v3User']
     if meraki.is_update_required(snmp, full_compare, optional_ignore=ignored_parameters):
         r = meraki.request(path,
                            method='PUT',

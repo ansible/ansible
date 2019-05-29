@@ -70,6 +70,7 @@ class MerakiModule(object):
         self.original = None
         self.proposed = dict()
         self.merged = None
+        self.ignored_keys = ['id', 'organizationId']
 
         # debug output
         self.filter_string = ''
@@ -84,7 +85,7 @@ class MerakiModule(object):
                          'network': '/organizations/{org_id}/networks',
                          'admins': '/organizations/{org_id}/admins',
                          'configTemplates': '/organizations/{org_id}/configTemplates',
-                         'samlRoles': '/organizations/{org_id}/samlRoles',
+                         'samlymbols': '/organizations/{org_id}/samlRoles',
                          'ssids': '/networks/{net_id}/ssids',
                          'groupPolicies': '/networks/{net_id}/groupPolicies',
                          'staticRoutes': '/networks/{net_id}/staticRoutes',
@@ -128,30 +129,48 @@ class MerakiModule(object):
         else:
             self.params['protocol'] = 'http'
 
-    def is_update_required(self, original, proposed, optional_ignore=None):
-        """Compare original and proposed data to see if an update is needed."""
-        is_changed = False
-        ignored_keys = ('id', 'organizationId')
-        if not optional_ignore:
-            optional_ignore = ('')
-
-        # for k, v in original.items():
-        #     try:
-        #         if k not in ignored_keys and k not in optional_ignore:
-        #             if v != proposed[k]:
-        #                 is_changed = True
-        #     except KeyError:
-        #         if v != '':
-        #             is_changed = True
-        for k, v in proposed.items():
+    def sanitize(self, original, proposed):
+        """Determine which keys are unique to original"""
+        keys = []
+        for k, v in original.items():
             try:
-                if k not in ignored_keys and k not in optional_ignore:
-                    if v != original[k]:
-                        is_changed = True
+                if proposed[k] and k not in self.ignored_keys:
+                    pass
             except KeyError:
-                if v != '':
-                    is_changed = True
-        return is_changed
+                keys.append(k)
+        return keys
+
+    def is_update_required(self, original, proposed, optional_ignore=None):
+        ''' Compare two data-structures '''
+        self.ignored_keys.append('net_id')
+        if optional_ignore is not None:
+            self.ignored_keys = self.ignored_keys + optional_ignore
+
+        if type(original) != type(proposed):
+            # self.fail_json(msg="Types don't match")
+            return True
+        if isinstance(original, list):
+            if len(original) != len(proposed):
+                # self.fail_json(msg="Length of lists don't match")
+                return True
+            for a, b in zip(original, proposed):
+                if self.is_update_required(a, b):
+                    # self.fail_json(msg="List doesn't match", a=a, b=b)
+                    return True
+        elif isinstance(original, dict):
+            for k, v in proposed.items():
+                if k not in self.ignored_keys:
+                    if k in original:
+                        if self.is_update_required(original[k], proposed[k]):
+                            return True
+                    else:
+                        # self.fail_json(msg="Key not in original", k=k)
+                        return True
+        else:
+            if original != proposed:
+                # self.fail_json(msg="Fallback", original=original, proposed=proposed)
+                return True
+        return False
 
     def get_orgs(self):
         """Downloads all organizations for a user."""
