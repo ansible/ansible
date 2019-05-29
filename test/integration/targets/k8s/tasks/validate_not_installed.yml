@@ -1,3 +1,9 @@
+  - python_requirements_facts:
+      dependencies:
+        - openshift
+        - kubernetes
+        - kubernetes-validate
+
   - k8s:
       definition:
         apiVersion: v1
