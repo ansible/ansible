@@ -54,13 +54,13 @@ options:
     policy_rule:
         description:
             - The policy rule.
-            - Policy rules in JSON format, or a path or url to a file containing JSON rules.
+            - Policy rules in JSON format string or a dict follows the policy rule
             - Refer U(https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/2018-05-01/policydefinitions) for more details.
             - This link U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure) can be helpful.
     parameters:
         description:
             - Required if a parameter is used in policy rule.
-            - JSON formatted string or a path to a file or url with parameter definitions.
+            - JSON formatted string or a dict contains parameter definitions.
             - Refer U(https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/2018-05-01/policydefinitions) for more details.
     metadata:
         description:
@@ -89,7 +89,12 @@ EXAMPLES = '''
 - name: Create policy definition
   azure_rm_policydefinition:
     name: mytestpolicy
-    policy_rule: "https://xxxxxxxx.blob.core.windows.net/templates/test_policy.json"
+    policy_rule:
+        if:
+            field: type
+            equals: Microsoft.Storage/storageAccounts/read
+        then:
+            effect: deny
     metadata:
         fortesting: yes
     mode: all
