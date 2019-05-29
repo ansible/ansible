@@ -45,6 +45,17 @@ EXAMPLES = """
       - "/path/to/biz.txt"
 
 - name: |
+        include tasks only if files exist.  Note the use of query() to return
+        a blank list for the loop if no files are found.
+  import_tasks: '{{ item }}'
+  vars:
+    params:
+      files:
+        - path/tasks.yaml
+        - path/other_tasks.yaml
+  loop: "{{ q('first_found', params, errors='ignore') }}"
+
+- name: |
         copy first existing file found to /some/file,
         looking in relative directories from where the task is defined and
         including any play objects that contain it
@@ -166,5 +177,5 @@ class LookupModule(LookupBase):
                 return [path]
         if skip:
             return []
-        raise AnsibleLookupError("No file was found when using first_found. Use the 'skip: true' option to allow this task to be skipped if no "
+        raise AnsibleLookupError("No file was found when using first_found. Use errors='ignore' to allow this task to be skipped if no "
                                  "files are found")
