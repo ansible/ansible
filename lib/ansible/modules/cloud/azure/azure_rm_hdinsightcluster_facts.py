@@ -174,7 +174,7 @@ clusters:
                     sample: TCP
         tags:
             description:
-                - Tags
+                - The tags of the resource.
             returned: always
             type: complex
             sample: {}
