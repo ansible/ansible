@@ -16,7 +16,7 @@ module: azure_rm_image_facts
 
 version_added: "2.8"
 
-short_description: Get facts about azure custom images.
+short_description: Get facts about azure custom images
 
 description:
     - List azure custom images. The images can be listed where scope of listing can be based on subscription, resource group, name or tags.
@@ -36,7 +36,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Madhura Naniwadekar (@Madhura-CSI)"
+    - Madhura Naniwadekar (@Madhura-CSI)
 '''
 
 
@@ -60,7 +60,8 @@ EXAMPLES = '''
 
 RETURN = '''
 images:
-    description: List of image dicts.
+    description:
+        - List of image dicts.
     returned: always
     type: complex
     contains:
@@ -98,7 +99,7 @@ images:
             type: str
         os_state:
             description:
-                - Specifies image operating system state. Possible values are 'Generalized' or 'Specialized'.
+                - Specifies image operating system state. Possible values are C(Generalized) or C(Specialized).
             returned: always
             type: str
             sample: Generalized
@@ -121,7 +122,7 @@ images:
             sample: Succeeded
         source:
             description:
-                - Resource id of source VM from which the image is created
+                - Resource id of source VM from which the image is created.
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/xx
         tags:
