@@ -1,34 +1,50 @@
 #!/usr/bin/python
+#
+# Copyright (C) 2018 Apcon.
+#
+# GNU General Public License v3.0+
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Module to execute apconos Commands on Apcon Switches.
+# Apcon Networking
 
-# (c) 2019, Ansible by Red Hat, inc
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
 module: apconos_update
-version_added: ""
-author: ""
+version_added: "2.9.0"
+author: "David Lee (@davidlee-ap)"
 short_description: update firmware on apcon network devices
 description:
   - Sends update commands to APCON Network devices. Commands check
-    current versions and statues on the devices to decide if update 
+    current versions and statues on the devices to decide if update
     should be executed.
+notes:
+  - tested against apcon iis+ii
 options:
   device:
     description:
-      - specify a device. Valid values are [all], [blade]. 
-        Choosing [all] will sequentially update software on 
+      - specify a device. Valid values are [all], [blade].
+        Choosing [all] will sequentially update software on
         both controllers, all blades and the backplane from a tftp server.
         Choosing [blade] will download the software from the controller
         and update the software for any APCON blades. If an tftp server
         address is provided, [blade] option will downloads the software from
         a TFTP server for a special blade.
-        default: all
-        choices: ['all', 'blade']
+    default: all
+    choices: ['all', 'blade']
   blade_letter:
     description:
       - specify a blade letter.
@@ -73,13 +89,22 @@ options:
 
 EXAMPLES = """
 - name: Update APCON Devices
-    update_update:
+    apconos_update:
       device: all
       ipaddress: 10.0.0.100
       filename:  firmware_6.01_1550.pem
 """
 
 RETURN = """
+stdout:
+  description: The set of response from the commands
+  returned: On success
+current version:
+  description: Current version
+  returned: On success
+stdout_lines:
+  description: The value of stdout split into a list
+  returned: On success
 """
 
 import re
@@ -88,19 +113,19 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.apconos.apconos import load_config, run_commands 
+from ansible.module_utils.network.apconos.apconos import load_config, run_commands
 from ansible.module_utils.network.apconos.apconos import apconos_argument_spec, check_args
 from ansible.module_utils.six import string_types
-from ansible.utils.display import Display
 
-display = Display()
 
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
             item = str(item).split('\n')
         yield item
+
 
 def check_version(module):
     """check if current version is higher.
@@ -114,6 +139,7 @@ def check_version(module):
     else:
         return cur_version, (version[0]) > (cur_version)
 
+
 def construct_update_command(module):
     """construct update command
     """
@@ -124,20 +150,14 @@ def construct_update_command(module):
     filename = module.params['filename']
     if device[0] == 'all':
         command[0] = command[0] + ' ' + device[0] + ' ' \
-                     + ipaddress[0] + ' ' + filename[0] + ' false'
-    #elif device[0] == 'backplane':
-    #    command[0] = command[0] + ' device backplane'
+            + ipaddress[0] + ' ' + filename[0] + ' false'
     elif device[0] == 'blade':
-        #if ipaddress == None:
-        #    command[0] = command[0] + ' ' + ' device blade ' + blade_letter[0] + ' false'
-        #else:
         if ipaddress and blade_letter and filename:
             command[0] = command[0] + ' ' + ' device blade standalone ' + blade_letter[0] \
-                     + ' ' +  ipaddress[0] + ' ' + filename[0] + ' false'
-    #elif device[0] == 'controller':
-    #    command[0] = command[0] + ' standby controller'
+                + ' ' + ipaddress[0] + ' ' + filename[0] + ' false'
 
-    return command 
+    return command
+
 
 def main():
     """ main entry point for module execution
@@ -153,8 +173,7 @@ def main():
         blade_letter=dict(default='A', type='list'),
         ipaddress=dict(type='list'),
         filename=dict(type='list'),
-        version=dict(type='list'),
-        )
+        version=dict(type='list'),)
 
     spec.update(apconos_argument_spec)
 

@@ -40,3 +40,4 @@ panos_security_policy
 s3
 vsphere_guest
 win_msi
+apconos_config
