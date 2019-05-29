@@ -25,9 +25,6 @@
           - "'Failed to import the required Python library (openshift >= 0.7.2)' in k8s_append_hash.msg"
           - "'. This is required for append_hash.' in k8s_append_hash.msg"
 
-    # merge_type
-    - include_tasks: crd.yml
-
     # validate
     - name: attempt to use validate with older openshift
       k8s:
