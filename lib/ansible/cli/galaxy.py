@@ -91,7 +91,6 @@ class GalaxyCLI(CLI):
         role_parser = role.add_subparsers(metavar='ACTION', dest='role')
         role_parser.required = True
 
-
         delete_parser = role_parser.add_parser('delete', parents=[user_repo, common],
                                                help='Removes the role from Galaxy. It does not remove or alter the actual GitHub repository.')
         delete_parser.set_defaults(func=self.execute_delete)
@@ -137,7 +136,7 @@ class GalaxyCLI(CLI):
         remove_parser.add_argument('args', help='Role(s)', metavar='role', nargs='+')
 
         list_parser = role_parser.add_parser('list', help='Show the name and version of each role installed in the roles_path.',
-                                            parents=[common, roles_path])
+                                             parents=[common, roles_path])
         list_parser.set_defaults(func=self.execute_list)
         list_parser.add_argument('role', help='Role', nargs='?', metavar='role')
 
@@ -265,6 +264,20 @@ class GalaxyCLI(CLI):
 ############################
 # execute actions
 ############################
+
+    def execute_role(self):
+        """
+        Perform the action on an Ansible Galaxy role.
+        """
+        # To satisfy doc build
+        pass
+
+    def execute_collection(self):
+        """
+        Perform the action on an Ansible Galaxy collection.
+        """
+        # To satisfy doc build
+        pass
 
     def execute_init(self):
         """
