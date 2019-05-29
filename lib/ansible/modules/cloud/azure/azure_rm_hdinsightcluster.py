@@ -103,7 +103,7 @@ options:
         suboptions:
             name:
                 description:
-                    - Blob storage endpoint. eg. storage_account_name.blob.core.windwos.net.
+                    - Blob storage endpoint. Fox example storage_account_name.blob.core.windows.net.
             is_default:
                 description:
                     - Whether or not the storage account is the default storage account.
