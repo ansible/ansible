@@ -32,7 +32,7 @@ options:
     policy_type:
         description:
             - The type of policy set definition.
-            - Possible values are NotSpecified, BuiltIn, and Custom.
+            - Possible values are C(NotSpecified), C(BuiltIn), and C(Custom).
             - Currently, user through Ansible module can only create policy set definition with custom type.
         choices:
             - custom
@@ -45,18 +45,20 @@ options:
     parameters:
         description:
             - Required if a parameter is used in policy rule.
-            - JSON formatted string or a path to a file or url with parameter definitions.
+            - JSON formatted string or a dict containing parameter definitions.
             - The parameters element of policy set definition is compatible with the policy definition
             - You can refer U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure) for more details.
     metadata:
         description:
             - The policy set definition metadata.
+            - Defines subproperties primarily used by the Azure portal to display user-friendly information.
+            - Refer U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure#parameter-properties) for more details.
             - Metadata in space-separated key=value pairs.
         type: dict
     policy_definitions:
         description:
             - An array of policy definition references.
-            - Policy definitions in JSON format, or a path to a file containing policy rules.
+            - Policy definitions in JSON format or a list containing policy rules.
             - The ID of the policy definition or policy set definition define the policy definition reference.
             - Required when creating the policy set definitions
             - You can refer U(https://docs.microsoft.com/en-us/azure/templates/Microsoft.Authorization/2018-05-01/policySetDefinitions) for more details.
@@ -144,13 +146,13 @@ class AzureRMPolicySetDefinition(AzureRMModuleBase):
                 type='str'
             ),
             policy_definitions=dict(
-                type='str'
+                type='raw'
             ),
             metadata=dict(
                 type='dict'
             ),
             parameters=dict(
-                type='str'
+                type='raw'
             ),
             management_group=dict(
                 type='str'
@@ -193,8 +195,8 @@ class AzureRMPolicySetDefinition(AzureRMModuleBase):
 
         response = self.get_policy_set_definition()
 
-        self.policy_definitions = self.load_file_string_or_url(self.policy_definitions) if self.policy_definitions else None
-        self.parameters = self.load_file_string_or_url(self.parameters) if self.parameters else None
+        self.policy_definitions = self.load_file_string_or_dict(self.policy_definitions) if self.policy_definitions else None
+        self.parameters = self.load_file_string_or_dict(self.parameters) if self.parameters else None
         self.policy_type = self.rm_policy_models.PolicyType[self.policy_type] if self.policy_type else None
 
         if self.state == 'present':
@@ -325,44 +327,10 @@ class AzureRMPolicySetDefinition(AzureRMModuleBase):
             policy_definitions_list.append(policy_definition_dict)
         return policy_definitions_list
 
-    def get_file_json(self, file_path):
-        try:
-            content = self.read_file_content(file_path)
-            return json.loads(content)
-        except Exception as exc:
-            self.fail("Failed to parse {0} with exception:\n    {1}".format(file_path, str(exc)))
-
-    def read_file_content(self, file_path, allow_binary=False):
-        from codecs import open as codecs_open
-        # Note, always put 'utf-8-sig' first, so that BOM in WinOS won't cause trouble.
-        for encoding in ['utf-8-sig', 'utf-8', 'utf-16', 'utf-16le', 'utf-16be']:
-            try:
-                with codecs_open(file_path, encoding=encoding) as f:
-                    self.log("Attempting to read file {0} as {1}".format(file_path, encoding))
-                    return f.read()
-            except (UnicodeError, UnicodeDecodeError):
-                pass
-
-        if allow_binary:
-            try:
-                with open(file_path, 'rb') as input_file:
-                    self.log("Attempting to read file {0} as binary".format(file_path))
-                    return base64.b64encode(input_file.read()).decode("utf-8")
-            except Exception:
-                pass
-        self.fail("Failed to decode file {0} - unknown decoding".format(file_path))
-
-    def load_file_string_or_url(self, file_or_string_or_url):
-        url = urlparse(file_or_string_or_url)
-        if url.scheme == 'http' or url.scheme == 'https' or url.scheme == 'file':
-            response = open_url(file_or_string_or_url)
-            reader = codecs.getreader('utf-8')
-            result = json.load(reader(response))
-            response.close()
-            return result
-        if os.path.exists(file_or_string_or_url):
-            return self.get_file_json(file_or_string_or_url)
-        return json.loads(file_or_string_or_url)
+    def load_file_string_or_dict(self, file_or_string_or_dict):
+        if isinstance(file_or_string_or_dict, dict) or isinstance(file_or_string_or_dict, list):
+            return file_or_string_or_dict
+        return json.loads(file_or_string_or_dict)
 
 
 def main():
