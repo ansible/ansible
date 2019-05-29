@@ -16,7 +16,7 @@ module: aci_interface_policy_port_security
 short_description: Manage port security (l2:PortSecurityPol)
 description:
 - Manage port security on Cisco ACI fabrics.
-version_added: '2.4'
+version_added: '2.9'
 options:
   port_security:
     description:
@@ -204,7 +204,7 @@ def main():
     port_security_timeout = module.params['port_security_timeout']
     if max_end_points is not None and max_end_points not in range(12001):
         module.fail_json(msg='The "max_end_points" must be between 0 and 12000')
-    if port_security_timeout is not None and port_security_timeout not in range(60,3601):
+    if port_security_timeout is not None and port_security_timeout not in range(60, 3601):
         module.fail_json(msg='The "port_security_timeout" must be between 60 and 3600')
     state = module.params['state']
 
