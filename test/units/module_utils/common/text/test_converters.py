@@ -54,7 +54,8 @@ class TestJsonEncodeFallback:
         [
             1,
             1.1,
-            'string',
+            u'string',
+            b'string',
             [1, 2],
             True,
             None,
@@ -85,14 +86,13 @@ class TestContainerToBytes:
             ((1, 2), (1, 2)),
             (1, 1),
             (1.1, 1.1),
-            ('str', b'str'),
-            (['str'], [b'str']),
-            (('str'), (b'str')),
-            ({'str': 'str'}, {b'str': b'str'}),
+            (u'str', b'str'),
+            ([u'str'], [b'str']),
+            ((u'str'), (b'str')),
             ({u'str': u'str'}, {b'str': b'str'}),
         ]
     )
-    @pytest.mark.parametrize('encoding', ['utf-8', 'latin1'])
+    @pytest.mark.parametrize('encoding', ['utf-8', 'latin1', 'shift_jis', 'big5', 'koi8_r'])
     @pytest.mark.parametrize('errors', ['strict', 'ignore'])
     def test_to_bytes_different_types(self, test_input, expected, encoding, errors):
         """Test for passing objects to container_to_bytes()."""
@@ -144,7 +144,7 @@ class TestContainerToText:
             ({b'str': b'str'}, {u'str': u'str'}),
         ]
     )
-    @pytest.mark.parametrize('encoding', ['utf-8', 'latin1'])
+    @pytest.mark.parametrize('encoding', ['utf-8', 'latin1', 'shift-jis', 'big5', 'koi8_r'])
     @pytest.mark.parametrize('errors', ['strict', 'ignore'])
     def test_to_text_different_types(self, test_input, expected, encoding, errors):
         """Test for passing objects to container_to_text()."""
@@ -190,7 +190,7 @@ class TestJsonify:
     )
     def test_common_test(self, test_input, expected):
         """
-        Test for passing common set object to _json_encode_fallback().
+        Test for jsonify().
         """
 
         assert jsonify(test_input) == expected
