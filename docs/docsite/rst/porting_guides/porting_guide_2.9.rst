@@ -69,6 +69,17 @@ Noteworthy module changes
 * `vmware_dvswitch <vmware_dvswitch_module>` accepts `folder` parameter to place dvswitch in user defined folder. This option makes `datacenter` as an optional parameter.
 * `vmware_datastore_cluster <vmware_datastore_cluster_module>` accepts `folder` parameter to place datastore cluster in user defined folder. This option makes `datacenter` as an optional parameter.
 
+<<<<<<< faz_plugin_utils_and_module
+=======
+* The ``python_requirements_facts`` module was renamed to :ref:`python_requirements_info <python_requirements_info_module>`.
+* The ``zabbix_group_facts`` module was renamed to :ref:`zabbix_group_info <zabbix_group_info_module>`.
+* The ``zabbix_host_facts`` module was renamed to :ref:`zabbix_host_info <zabbix_host_info_module>`.
+* The ``k8s_facts`` module was renamed to :ref:`k8s_info <k8s_info_module>`.
+* The ``bigip_device_facts`` module was renamed to :ref:`bigip_device_info <bigip_device_info_module>`.
+* The ``bigiq_device_facts`` module was renamed to :ref:`bigiq_device_info <bigiq_device_info_module>`.
+* The ``one_image_facts`` module was renamed to :ref:`one_image_info <one_image_info_module>`.
+
+>>>>>>> faz_plugin_utils_and_module~390
 
 Plugins
 =======
