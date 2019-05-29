@@ -366,11 +366,11 @@ class ACIModule(object):
 
         # Perform request
         resp, query = self.fetch_url(self.module, self.url,
-                                        data=None,
-                                        headers=self.headers,
-                                        method='GET',
-                                        timeout=self.params['timeout'],
-                                        use_proxy=self.params['use_proxy'])
+                                     data=None,
+                                     headers=self.headers,
+                                     method='GET',
+                                     timeout=self.params['timeout'],
+                                     use_proxy=self.params['use_proxy'])
 
         # Handle APIC response
         if query['status'] != 200:
