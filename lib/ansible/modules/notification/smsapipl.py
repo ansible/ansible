@@ -25,7 +25,7 @@ description:
   - "Module to send SMS via smsapi.pl; it allow replace Polish diacritic chars to Latin alpha."
 
 requirements:
-  - smsapi-client
+  - "smsapi-client >= 2.3.0"
 
 options:
   api_key:
