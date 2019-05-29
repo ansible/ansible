@@ -31,7 +31,13 @@ class TerminalModule(TerminalBase):
         re.compile(br'[\r\n]?<.+>(?:\s*)$'),
         re.compile(br'[\r\n]?\[.+\](?:\s*)$'),
     ]
+    #: terminal initial prompt
+    #: The password needs to be changed. Change now? [Y/N]:
+    terminal_initial_prompt = br'Change\s*now\s*\?\s*\[Y\/N\]\s*:'
 
+    #: terminal initial answer
+    #: do not change password when it is asked to change with initial connection.
+    terminal_initial_answer = b'N'
     terminal_stderr_re = [
         re.compile(br"% ?Error: "),
         re.compile(br"^% \w+", re.M),
