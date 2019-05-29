@@ -25,9 +25,6 @@ from ansible.module_utils.network.apconos.apconos import apconos_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.connection import Connection
 from ansible.module_utils._text import to_text
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class ActionModule(_ActionModule):
@@ -51,12 +48,10 @@ class ActionModule(_ActionModule):
             pc.become_pass = provider['auth_pass']
             pc.become_method = 'enable'
 
-            display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
             connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
             socket_path = connection.run()
-            display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
             if not socket_path:
                 return {'failed': True,
                         'msg': 'unable to open shell. Please see: ' +
@@ -72,7 +67,6 @@ class ActionModule(_ActionModule):
         conn = Connection(socket_path)
         out = conn.get_prompt()
         if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-            display.vvvv('In Config mode, sending exit to device', self._play_context.remote_addr)
             conn.send_command('exit')
         else:
             conn.send_command('enable')

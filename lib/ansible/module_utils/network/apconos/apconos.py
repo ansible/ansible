@@ -36,7 +36,7 @@ import socket
 import re
 from distutils.cmd import Command
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, EntityCollection
 from ansible.module_utils.connection import Connection, exec_command
 from ansible.module_utils.connection import ConnectionError
@@ -107,8 +107,7 @@ def get_connection(module):
 def get_config(module, flags=None):
     flags = [] if flags is None else flags
 
-    cmd += ' '.join(flags)
-    cmd = cmd.strip()
+    cmd = ' '.join(flags).strip()
 
     try:
         return _DEVICE_CONFIGS[cmd]
@@ -118,6 +117,7 @@ def get_config(module, flags=None):
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
+
 
 def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
@@ -132,6 +132,7 @@ def run_commands(module, commands, check_rc=True):
 
     return responses
 
+
 def load_config(module, config):
     try:
         conn = get_connection(module)
@@ -139,6 +140,7 @@ def load_config(module, config):
         conn.edit_config(config)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
+
 
 def get_defaults_flag(module):
     rc, out, err = exec_command(module, 'display running-config ?')
@@ -153,4 +155,3 @@ def get_defaults_flag(module):
         return 'all'
     else:
         return 'full'
-

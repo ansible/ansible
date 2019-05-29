@@ -12,9 +12,20 @@
 #
 # Contains CLIConf Plugin methods for apconos Modules
 # APCON Networking
-#
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+---
+author: "David Lee (@davidlee-ap)"
+cliconf: apconos
+short_description: Use apconos cliconf to run command on APCON network devices
+description:
+  - This apconos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from APCON network devices.
+version_added: "2.9"
+"""
 
 import re
 import json
