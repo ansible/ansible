@@ -323,7 +323,6 @@ class TaskExecutor:
         items_len = len(items)
         for item_index, item in enumerate(items):
             task_vars['ansible_loop_var'] = loop_var
-            task_vars['notify_scope'] = notify_scope
 
             task_vars[loop_var] = item
             if index_var:
@@ -371,7 +370,7 @@ class TaskExecutor:
             # execute, and swap them back so we can do the next iteration cleanly
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
-            res = self._execute(variables=task_vars)
+            res = self._execute(variables=task_vars, notify_scope=notify_scope)
             task_fields = self._task.dump_attrs()
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
@@ -500,7 +499,7 @@ class TaskExecutor:
                 self._task.args['name'] = name
         return items
 
-    def _execute(self, variables=None):
+    def _execute(self, variables=None, notify_scope='task'):
         '''
         The primary workhorse of the executor system, this runs the task
         on the specified host (which may be the delegated_to host) and handles
@@ -761,9 +760,8 @@ class TaskExecutor:
         # notification targets only from items which changed if loop_control.notify_scope='per_loop_item'
         if (
                 self._task.notify is not None and (
-                    'notify_scope' not in variables or
-                    variables['notify_scope'] != 'per_loop_item' or (
-                        variables['notify_scope'] == 'per_loop_item' and
+                    notify_scope != 'per_loop_item' or (
+                        notify_scope == 'per_loop_item' and
                         result['changed']))):
             result['_ansible_notify'] = self._task.notify
 
