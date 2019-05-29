@@ -287,7 +287,6 @@ def main():
     net_exists = False
     if net_id is not None:
         if is_net_valid(nets, net_id=net_id) is False:
-            # meraki.fail_json(msg="nets", net_id=net_id, nets=nets)
             meraki.fail_json(msg="Network specified by net_id does not exist.")
         net_exists = True
     elif meraki.params['net_name']:
@@ -305,6 +304,8 @@ def main():
                                                    )
     elif meraki.params['state'] == 'present':
         if net_exists is False:  # Network needs to be created
+            if 'type' not in meraki.params or meraki.params['type'] is None:
+                meraki.fail_json(msg="type parameter is required when creating a network.")
             path = meraki.construct_path('create',
                                          org_id=org_id
                                          )

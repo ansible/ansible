@@ -4,26 +4,34 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - block:
-  # - name: Create network without type
-  #   meraki_network:
-  #     auth_key: '{{ auth_key }}'
-  #     state: present
-  #     org_name: '{{test_org_name}}'
-  #     net_name: IntTestNetwork
-  #     timezone: America/Chicago
-  #   delegate_to: localhost
-  #   register: create_net_no_type
-  #   ignore_errors: yes
+  - name: Create network without type
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      timezone: America/Chicago
+    delegate_to: localhost
+    register: create_net_no_type
+    ignore_errors: yes
 
-  # - name: Create network without organization
-  #   meraki_network:
-  #     auth_key: '{{ auth_key }}'
-  #     state: present
-  #     net_name: IntTestNetwork
-  #     timezone: America/Chicago
-  #   delegate_to: localhost
-  #   register: create_net_no_org
-  #   ignore_errors: yes
+  - assert:
+      that:
+      - create_net_no_type.msg == 'type parameter is required when creating a network.'
+
+  - name: Create network without organization
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      net_name: IntTestNetwork
+      timezone: America/Chicago
+    delegate_to: localhost
+    register: create_net_no_org
+    ignore_errors: yes
+
+  - assert:
+     that:
+     - create_net_no_org.msg == 'org_name or org_id parameters are required'
 
   - name: Create network with type switch
     meraki_network:
