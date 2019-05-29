@@ -39,7 +39,7 @@ options:
             - App service plan.
             - It can be name of existing app service plan in same resource group as function app.
             - It can be resource id of existing app service plan.
-            - Reource id, eg. /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>)
+            - Resource id. For example /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>.
             - It can be a dict which contains C(name), C(resource_group).
             - C(name). Name of app service plan.
             - C(resource_group). Resource group name of app service plan.
