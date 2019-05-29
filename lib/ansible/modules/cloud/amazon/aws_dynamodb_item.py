@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: aws_dynamodb_item
-short_description: Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
+short_description: Creates, updates or deletes single items in AWS Dynamo DB tables.
 description:
-    - Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
+    - Creates, updates or deletes single items in AWS DynamoDB tables.
     - More infomation can be found here U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client).
 version_added: "2.9"
 author: "David C. Martin (@blastik)"
@@ -26,63 +26,31 @@ options:
         required: true
         default: null
         type: str
-    action:
+    state:
         description:
-            - Action to perform with the DynamoDB item.
-            - If get, returns a set of attributes for the item with the given
-              filter expression. If the total number of scanned items exceeds
-              the maximum data set size limit of 1 MB, the scan stops and
-              results are returned to the user as a LastEvaluatedKey value to
-              continue the scan in a subsequent operation. The results also
-              include the number of items exceeding the limit.
-              A scan can result in no table data meeting the filter criteria.
-            - If put, creates a new item, or replaces an old item with a new item.
-              If an item that has the same primary key as the new item
-              already exists in the specified table, the new item completely
-              replaces the existing item.
-            - If update, edits an existing item's attributes, or adds a new item to the
-              table if it does not already exist. You can also perform a
-              conditional update on an existing item (insert a new attribute
-              name-value pair if it doesn't exist, or replace an existing
-              name-value pair if it has certain expected attribute values).
-            - If delete, deletes a single item in a table by primary key. You can
-              perform a conditional delete operation that deletes the item
-              if it exists, or if it has an expected attribute value.
+          - If present, adds a new item or edits an existing item's attributes
+            if it already exist. You can also perform a
+            conditional update on an existing item (insert a new attribute
+            name-value pair if it doesn't exist, or replace an existing
+            name-value pair if it has certain expected attribute values).
+          - If absent, deletes a single item in a table by primary key.
+            You can perform a conditional delete operation that deletes the item
+            if it exists, or if it has an expected attribute value.
         required: true
-        default: null
-        type: str
-        choices: [get, put, update, delete]
-    filter_expression:
-        description:
-            - A string that contains conditions.
-              Required when I(action=get)
-        required: false
-        default: null
-        type: str
+        choices: ["present", "absent"]
     primary_key:
         description:
             - The primary key of the DynamoDB table. Each element consists of
               an attribute name and a value for that attribute. For a composite
               primary key, you must provide values for both the partition key
               and the sort key.
-              Required when I(action=update) I(action=delete)
-        required: false
-        default: null
-        type: dict
-    item:
-        description:
-            - A map of attribute name/value pairs, one for each attribute.
-              Only the primary key attributes are required; you can optionally
-              provide other attribute name-value pairs for the item.
-              Required when I(action=put).
-        required: false
+        required: true
         default: null
         type: dict
     update_expression:
         description:
             - An expression that defines one or more attributes to be updated,
               the action to be performed on them, and new value(s) for them.
-            - C(update_expression) and C(condition_expression) are required together.
         required: false
         default: null
         type: str
@@ -90,7 +58,6 @@ options:
         description:
             - A condition that must be satisfied in order for a conditional
               update to succeed.
-            - C(update_expression) and C(condition_expression) are required together.
         required: false
         default: null
         type: str
@@ -120,46 +87,30 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Returns a set of attributes for the item with the given primary key.
-- name: Gets a single item
-  dynamodb:
-    profile: pre
-    table: narcos
-    action: get
-    filter_expression: 'bank = :bank_name AND quantity = :number'
-    expression_attribute_values: {":bank_name": {"S": "hsbc"}, ":number": {"N": "2000"}}
-
-- name: Gets a single item (where 'project' is a dynamodb protected keyword)
-  dynamodb:
-    profile: pre
-    table: narcos
-    action: get
-    filter_expression: '#p = :project'
-    expression_attribute_values: {":project": {"S": "narcos"}}
-    expression_attribute_names: {"#p" : "project"}
-
 # Creates a single item in 'narcos' DynamoDB table where column 'bank' equals 'hsbc' string,
 # column 'quantity' equals '1000' numeric and column 'person' equals 'ochoa' string
 - name: Creates a new record
-  dynamodb:
+  aws_dynamodb_item:
     table: narcos
-    action: put
-    item: {"bank": {"S": "hsbc"},"quantity": {"N": "1000"},"person": {"S": "ochoa"}}
+    state: present
+    primary_key: {"bank": {"S": "hsbc"}}
+    update_expression: 'SET quantity =:number, person=:person'
+    expression_attribute_values: {":number": {"N": "1000"}, ":person": {"S": "ochoa"}}
 
 # Updates the 'quantity' attibute value from a single item.
 - name: Updates arribute 'number'
-  dynamodb:
+  aws_dynamodb_item:
     table: narcos
-    action: update
+    state: present
     primary_key: {"bank": {"S": "hsbc"}}
-    update_expression: 'SET quantity = :number'
+    update_expression: 'SET quantity =:number'
     expression_attribute_values: {":number": {"N": "2000"}}
 
 # Updates the 'status' (dynamodb protected keyword) attibute value from a single item.
 - name: Updates arribute 'status'
-  dynamodb:
+  aws_dynamodb_item:
     table: narcos
-    action: update
+    state: present
     primary_key: {"bank": {"S": "hsbc"}}
     update_expression: 'SET #s = :number'
     expression_attribute_values: {":number": {"N": "2000"}}
@@ -168,9 +119,9 @@ EXAMPLES = '''
 # Deletes the 'person' attibute value from a single item. The table has a composite
 # primary key. 'bank' is the primary key and 'quantity' is the sort key.
 - name: Deletes arribute 'person'
-  dynamodb:
+  aws_dynamodb_item:
     table: narcos
-    action: update
+    state: present
     primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
     update_expression: 'REMOVE person'
 
@@ -179,10 +130,10 @@ EXAMPLES = '''
 # where the column 'project' equals string 'potatoes' (also primary key)
 # and column 'version' equals numeric '123456'
 - name: Delete a single item
-  dynamodb:
+  aws_dynamodb_item:
     profile: development
     table: releases
-    action: delete
+    state: absent
     primary_key: {"project": {"S": "potatoes"}}
     condition_expression: version = :number
     expression_attribute_values: {":number": {"N": "123456"}}
@@ -237,7 +188,7 @@ response_metadata:
     retry_attempts: 0
 '''
 
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
 
 try:
@@ -246,113 +197,42 @@ except ImportError:
     pass    # Handled by AnsibleAWSModule
 
 
-@AWSRetry.exponential_backoff(retries=3, delay=2)
-def get_with_backoff(connection, **kwargs):
-    paginator = connection.get_paginator('scan')
-    return paginator.paginate(**kwargs).build_full_result()
-
-
-def get(connection, module, response, **params):
-
-    response = get_with_backoff(connection, **params)
-
-    changed = False
-
-    response['returned_items'] = response.pop('Items')
-
-    return response, changed
-
-
-def put(connection, module, response, **params):
-    if not module.check_mode:
-        response = connection.put_item(**params)
-
-    changed = True
-    return response, changed
-
-
 def update(connection, module, response, **params):
 
-    if not module.check_mode:
-        response = connection.update_item(**params)
-
-    changed = True
-    return response, changed
+    try:
+        if not module.check_mode:
+            response = connection.update_item(**params)
+        changed = True
+        return response, changed
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            module.fail_json_aws(e, msg="Table {0} doesnt exist".format(
+                module.params.get('table')))
+        if e.response['Error']['Message'] == 'The provided key element does not match the schema':
+            module.fail_json_aws(
+                e, msg="Check the primary key, it doesnt match your table config")
+        if 'Attribute name is a reserved keyword' in e.response['Error']['Message']:
+            module.fail_json_aws(
+                e, msg='''You are trying to use a DynamoDB reserved word,
+                see https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html
+                Use expression_attribute_names to deal with this case.''')
+        if 'contains invalid key' in e.response['Error']['Message']:
+            module.fail_json_aws(
+                e, msg='''You are trying to use a DynamoDB reserved word,
+                see https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html
+                Use expression_attribute_names to deal with this case.''')
+        else:
+            module.fail_json_aws(e, msg="Error")
 
 
 def delete(connection, module, response, **params):
 
-    if not module.check_mode:
-        response = connection.delete_item(**params)
-
-    changed = True
-    return response, changed
-
-
-def main():
-    argument_spec = dict(
-        table=dict(required=True),
-        action=dict(required=True, choices=["get", "put", "update", "delete"]),
-        primary_key=dict(type='dict'),
-        filter_expression=dict(type='str'),
-        item=dict(type='dict'),
-        condition_expression=dict(type='str'),
-        expression_attribute_names=dict(type='dict'),
-        expression_attribute_values=dict(type='dict'),
-        update_expression=dict(type='str')
-    )
-
-    required_if = [
-        ["action", "get", ['filter_expression', 'expression_attribute_values']],
-        ["action", "put", ['item']],
-        ["action", "update", ['primary_key', 'update_expression']],
-        ["action", "delete", ['condition_expression', 'expression_attribute_values']]
-    ]
-
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=True,
-                              required_if=required_if)
-
-    connection = module.client('dynamodb')
-
-    params = {}
-
-    action = module.params.get('action')
-
-    if module.params.get('table') is not None:
-        params['TableName'] = module.params.get('table')
-    if module.params.get('primary_key') is not None:
-        params['Key'] = module.params.get('primary_key')
-    if module.params.get('filter_expression') is not None:
-        params['FilterExpression'] = module.params.get('filter_expression')
-    if module.params.get('condition_expression') is not None:
-        params['ConditionExpression'] = module.params.get('condition_expression')
-    if module.params.get('item') is not None:
-        params['Item'] = module.params.get('item')
-    if module.params.get('update_expression') is not None:
-        params['UpdateExpression'] = module.params.get('update_expression')
-    if module.params.get('expression_attribute_names') is not None:
-        params['ExpressionAttributeNames'] = module.params.get('expression_attribute_names')
-    if module.params.get('expression_attribute_values') is not None:
-        params['ExpressionAttributeValues'] = module.params.get('expression_attribute_values')
-
-    changed = False
-    response = {}
-
     try:
-        if action == 'get':
-            response, changed = get(connection, module, response, **params)
-
-        elif action == 'put':
-            response, changed = put(connection, module, response, **params)
-
-        elif action == 'update':
-            response, changed = update(connection, module, response, **params)
-
-        elif action == 'delete':
-            response, changed = delete(connection, module, response, **params)
-
-    except botocore.exceptions.ClientError as e:
+        if not module.check_mode:
+            response = connection.delete_item(**params)
+        changed = True
+        return response, changed
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
             module.fail_json_aws(e, msg="Table {0} doesnt exist".format(
                 module.params.get('table')))
@@ -365,8 +245,46 @@ def main():
         else:
             module.fail_json_aws(e, msg="Error")
 
-    except botocore.exceptions.BotoCoreError as e:
-        module.fail_json_aws(e, msg="Error")
+
+def main():
+    argument_spec = dict(
+        table=dict(required=True),
+        state=dict(required=True, choices=['present', 'absent']),
+        primary_key=dict(required=True, type='dict'),
+        condition_expression=dict(type='str'),
+        expression_attribute_names=dict(type='dict'),
+        expression_attribute_values=dict(type='dict'),
+        update_expression=dict(type='str')
+    )
+
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True)
+
+    connection = module.client('dynamodb')
+    state = module.params.get('state')
+
+    params = {}
+
+    params['TableName'] = module.params.get('table')
+    params['Key'] = module.params.get('primary_key')
+
+    if module.params.get('condition_expression') is not None:
+        params['ConditionExpression'] = module.params.get('condition_expression')
+    if module.params.get('update_expression') is not None:
+        params['UpdateExpression'] = module.params.get('update_expression')
+    if module.params.get('expression_attribute_names') is not None:
+        params['ExpressionAttributeNames'] = module.params.get('expression_attribute_names')
+    if module.params.get('expression_attribute_values') is not None:
+        params['ExpressionAttributeValues'] = module.params.get('expression_attribute_values')
+
+    changed = False
+    response = {}
+
+    if state == 'present':
+        response, changed = update(connection, module, response, **params)
+
+    elif state == 'absent':
+        response, changed = delete(connection, module, response, **params)
 
     result = dict(changed=changed, **camel_dict_to_snake_dict(response))
 
