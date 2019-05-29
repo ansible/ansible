@@ -552,5 +552,6 @@ def avi_common_argument_spec():
         tenant_uuid=dict(default=''),
         api_version=dict(default='16.4.4', type='str'),
         avi_credentials=dict(default=None, no_log=True, type='dict'),
+        avi_login_info=dict(default=None, type='dict'),
         api_context=dict(type='dict'),
         avi_disable_session_cache_as_fact=dict(default=False, type='bool'))

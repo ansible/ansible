@@ -42,7 +42,10 @@ options:
         default: 16.4.4
     avi_credentials:
         description:
-            - Avi Credentials dictionary which can be used in lieu of enumerating Avi Controller login details.
+            - Avi Credentials dictionary which can be used in lieu of enumerating Avi Controller login secrets.
+            - info of this dict will not be logged.
+            - THis dict will contain only the login secrets like password.
+            - Ansible dose complete search and replace of no log params so all controller information should go in avi_login_info
         type: dict
         version_added: "2.5"
     api_context:
@@ -56,6 +59,13 @@ options:
             - It disables avi session information to be cached as a fact.
         type: bool
         version_added: "2.6"
+    avi_login_info:
+         description:       
+            - Avi login info dictionary which can be used in lieu of enumerating Avi Controller login details.
+            - This dictionary should not contain login secrets avi_credentials should be used for login secrets.
+            - This should contain information like controller, username, tenant, api_version
+        type: dict
+        version_added: "2.9"
 notes:
   - For more information on using Ansible to manage Avi Network devices see U(https://www.ansible.com/ansible-avi-networks).
 '''

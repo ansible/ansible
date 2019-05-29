@@ -192,6 +192,10 @@ class AviCredentials(object):
             self.session_id = m.params['session_id']
         if m.params.get('csrftoken'):
             self.csrftoken = m.params['csrftoken']
+        if m.params.get('avi_login_info'):
+            for k, v in m.params['avi_login_info'].items():
+                if v:
+                    setattr(self, k, v)
 
     def __str__(self):
         return 'controller %s user %s api %s tenant %s' % (
