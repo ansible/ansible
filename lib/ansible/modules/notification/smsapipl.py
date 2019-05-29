@@ -87,10 +87,15 @@ RETURN = ''' # '''
 
 
 import unicodedata
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
-from smsapi.client import SmsApiPlClient
-from smsapi.exception import SendException
+
+try:
+    from smsapi.client import SmsApiPlClient
+    from smsapi.exception import SendException
+except ImportError:
+    sys.exit(1)
 
 
 def check_points(data):
