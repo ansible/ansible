@@ -1,6 +1,6 @@
 cloud/azure
 destructive
 unsupported
-azure_rm_policydefinition_facts
-azure_rm_policysetdefinition_facts
+azure_rm_policydefinition_info
+azure_rm_policysetdefinition_info
 azure_rm_policysetdefinition
