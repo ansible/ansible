@@ -87,7 +87,6 @@ RETURN = ''' # '''
 
 
 import unicodedata
-import sys
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -95,7 +94,7 @@ try:
     from smsapi.client import SmsApiPlClient
     from smsapi.exception import SendException
 except ImportError:
-    sys.exit(1)
+    pass
 
 
 def check_points(data):
