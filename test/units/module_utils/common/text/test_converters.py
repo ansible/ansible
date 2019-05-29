@@ -110,12 +110,12 @@ class TestContainerToBytes:
             (1.1, 1.1),
             (True, True),
             (None, None),
-            (u'str', 'str'.encode(DEFAULT_ENCODING)),
-            (b'str', 'str'.encode(DEFAULT_ENCODING)),
-            (u'str', 'str'.encode(DEFAULT_ENCODING)),
-            ([u'str'], ['str'.encode(DEFAULT_ENCODING)]),
-            ((u'str'), ('str'.encode(DEFAULT_ENCODING))),
-            ({u'str': u'str'}, {'str'.encode(DEFAULT_ENCODING): 'str'.encode(DEFAULT_ENCODING)}),
+            (u'str', u'str'.encode(DEFAULT_ENCODING)),
+            (b'str', u'str'.encode(DEFAULT_ENCODING)),
+            (u'str', u'str'.encode(DEFAULT_ENCODING)),
+            ([u'str'], [u'str'.encode(DEFAULT_ENCODING)]),
+            ((u'str'), (u'str'.encode(DEFAULT_ENCODING))),
+            ({u'str': u'str'}, {u'str'.encode(DEFAULT_ENCODING): u'str'.encode(DEFAULT_ENCODING)}),
         ]
     )
     def test_to_bytes_default_encoding_err(self, test_input, expected):
@@ -163,9 +163,9 @@ class TestContainerToText:
             (True, True),
             (None, None),
             (u'str', u'str'),
-            ('str'.encode(DEFAULT_ENCODING), u'str'),
-            (['str'.encode(DEFAULT_ENCODING)], [u'str']),
-            (('str'.encode(DEFAULT_ENCODING)), (u'str')),
+            (u'str'.encode(DEFAULT_ENCODING), u'str'),
+            ([u'str'.encode(DEFAULT_ENCODING)], [u'str']),
+            ((u'str'.encode(DEFAULT_ENCODING)), (u'str')),
             ({b'str': b'str'}, {u'str': u'str'}),
         ]
     )
@@ -188,7 +188,7 @@ class TestJsonify:
             (u'string', u'"string"'),
             (b'string', u'"string"'),
             (False, u'false'),
-            ('b_string'.encode('utf-8'), u'"b_string"'),
+            (u'string'.encode('utf-8'), u'"string"'),
         ]
     )
     def test_common_test(self, test_input, expected):
