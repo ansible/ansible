@@ -835,6 +835,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         tmp_path = None
         if not HAS_SSLCONTEXT:
             tmp_fd, tmp_path = tempfile.mkstemp()
+            atexit.register(atexit_remove_file, tmp_path)
 
         # Write the dummy ca cert if we are running on macOS
         if system == u'Darwin':
@@ -880,9 +881,6 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         if HAS_SSLCONTEXT:
             default_verify_paths = ssl.get_default_verify_paths()
             paths_checked[:0] = [default_verify_paths.capath]
-
-        if tmp_path:
-            atexit.register(atexit_remove_file, tmp_path)
 
         return (tmp_path, cadata, paths_checked)
 
