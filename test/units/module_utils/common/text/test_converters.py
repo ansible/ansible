@@ -95,7 +95,7 @@ class TestContainerToBytes:
         ]
     )
     @pytest.mark.parametrize('encoding', ['utf-8', 'latin1', 'shift_jis', 'big5', 'koi8_r'])
-    @pytest.mark.parametrize('errors', ['strict', 'ignore'])
+    @pytest.mark.parametrize('errors', ['strict', 'surrogate_or_strict', 'surrogate_then_replace'])
     def test_to_bytes_different_types(self, test_input, expected, encoding, errors):
         """Test for passing objects to container_to_bytes()."""
 
@@ -164,7 +164,7 @@ class TestContainerToText:
         ]
     )
     @pytest.mark.parametrize('encoding', ['utf-8', 'latin1', 'shift-jis', 'big5', 'koi8_r'])
-    @pytest.mark.parametrize('errors', ['strict', 'ignore'])
+    @pytest.mark.parametrize('errors', ['strict', 'surrogate_or_strict', 'surrogate_then_replace'])
     def test_to_text_different_types(self, test_input, expected, encoding, errors):
         """Test for passing objects to container_to_text()."""
 
