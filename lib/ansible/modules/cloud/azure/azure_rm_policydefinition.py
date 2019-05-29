@@ -175,13 +175,13 @@ class AzureRMPolicyDefinition(AzureRMModuleBase):
                 type='str'
             ),
             policy_rule=dict(
-                type='str'
+                type='raw'
             ),
             metadata=dict(
                 type='dict'
             ),
             parameters=dict(
-                type='str'
+                type='raw'
             ),
             management_group=dict(
                 type='str'
@@ -225,8 +225,8 @@ class AzureRMPolicyDefinition(AzureRMModuleBase):
 
         response = self.get_policy_definition()
 
-        self.policy_rule = self.load_file_string_or_url(self.policy_rule) if self.policy_rule else None
-        self.parameters = self.load_file_string_or_url(self.parameters) if self.parameters else None
+        self.policy_rule = self.load_file_string_or_dict(self.policy_rule) if self.policy_rule else None
+        self.parameters = self.load_file_string_or_dict(self.parameters) if self.parameters else None
         self.policy_type = self.rm_policy_models.PolicyType[self.policy_type] if self.policy_type else None
         self.mode = self.rm_policy_models.PolicyMode[self.mode] if self.mode else None
 
@@ -354,44 +354,10 @@ class AzureRMPolicyDefinition(AzureRMModuleBase):
     def policy_definition_to_dict(self, policy_definition):
         return policy_definition.as_dict()
 
-    def get_file_json(self, file_path):
-        try:
-            content = self.read_file_content(file_path)
-            return json.loads(content)
-        except Exception as exc:
-            self.fail("Failed to parse {0} with exception:\n    {1}".format(file_path, str(exc)))
-
-    def read_file_content(self, file_path, allow_binary=False):
-        from codecs import open as codecs_open
-        # Note, always put 'utf-8-sig' first, so that BOM in WinOS won't cause trouble.
-        for encoding in ['utf-8-sig', 'utf-8', 'utf-16', 'utf-16le', 'utf-16be']:
-            try:
-                with codecs_open(file_path, encoding=encoding) as f:
-                    self.log("Attempting to read file {0} as {1}".format(file_path, encoding))
-                    return f.read()
-            except (UnicodeError, UnicodeDecodeError):
-                pass
-
-        if allow_binary:
-            try:
-                with open(file_path, 'rb') as input_file:
-                    self.log("Attempting to read file {0} as binary".format(file_path))
-                    return base64.b64encode(input_file.read()).decode("utf-8")
-            except Exception:
-                pass
-        self.fail("Failed to decode file {0} - unknown decoding".format(file_path))
-
-    def load_file_string_or_url(self, file_or_string_or_url):
-        url = urlparse(file_or_string_or_url)
-        if url.scheme == 'http' or url.scheme == 'https' or url.scheme == 'file':
-            response = open_url(file_or_string_or_url)
-            reader = codecs.getreader('utf-8')
-            result = json.load(reader(response))
-            response.close()
-            return result
-        if os.path.exists(file_or_string_or_url):
-            return self.get_file_json(file_or_string_or_url)
-        return json.loads(file_or_string_or_url)
+    def load_file_string_or_dict(self, file_or_string_or_dict):
+        if isinstance(file_or_string_or_dict, dict):
+            file_or_string_or_dict = json.dumps(file_or_string_or_dict)
+        return json.loads(file_or_string_or_dict)
 
 
 def main():
