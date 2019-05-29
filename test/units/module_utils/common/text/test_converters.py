@@ -123,7 +123,7 @@ class TestContainerToBytes:
         Test for passing objects to container_to_bytes(). Default encoding and errors
         """
 
-        assert container_to_bytes(test_input) == expected
+        assert container_to_bytes(test_input, errors='surrogate_or_strict') == expected
 
 
 class TestContainerToText:
@@ -174,7 +174,7 @@ class TestContainerToText:
         Test for passing objects to container_to_text(). Default encoding and errors
         """
 
-        assert container_to_text(test_input) == expected
+        assert container_to_text(test_input, errors='surrogate_or_strict') == expected
 
 
 class TestJsonify:
