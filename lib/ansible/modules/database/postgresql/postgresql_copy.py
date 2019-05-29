@@ -77,6 +77,10 @@ options:
 
 notes:
 - Supports PostgreSQL version 9.4+.
+- Transaction mode is not suitable for checking because of there may be
+  a lot of data and their actual upload can affect database performance.
+  So, in check mode, we just check the src/dst table availability
+  and return the query that aclually has not been executed.
 
 author:
 - Andrew Klychkov (@Andersson007)
@@ -261,8 +265,15 @@ class PgCopyData(object):
         if self.module.params.get('options'):
             query_fragments.append(self.__transform_options())
 
-        if exec_sql(self, ' '.join(query_fragments), ddl=True):
-            self.changed = True
+        # Note: check mode is implemented here:
+        if self.module.check_mode:
+            self.changed = self.__check_table(self.dst)
+
+            if self.changed:
+                self.executed_queries.append(' '.join(query_fragments))
+        else:
+            if exec_sql(self, ' '.join(query_fragments), ddl=True):
+                self.changed = True
 
     def copy_to(self):
         """Implements COPY TO command behavior."""
@@ -290,8 +301,15 @@ class PgCopyData(object):
         if self.module.params.get('options'):
             query_fragments.append(self.__transform_options())
 
-        if exec_sql(self, ' '.join(query_fragments), ddl=True):
-            self.changed = True
+        # Note: check mode is implemented here:
+        if self.module.check_mode:
+            self.changed = self.__check_table(self.src)
+
+            if self.changed:
+                self.executed_queries.append(' '.join(query_fragments))
+        else:
+            if exec_sql(self, ' '.join(query_fragments), ddl=True):
+                self.changed = True
 
     def __transform_options(self):
         """Transform options dict into a suitable string."""
@@ -303,7 +321,7 @@ class PgCopyData(object):
         opt = ['%s %s' % (key, val) for (key, val) in iteritems(self.module.params['options'])]
         return '(%s)' % ', '.join(opt)
 
-    def check_table(self, table):
+    def __check_table(self, table):
         """Check table for check mode.
 
         Return True if it is OK.
@@ -329,7 +347,8 @@ class PgCopyData(object):
             # If exec_sql was passed, it means all is OK:
             return True
 
-        exec_sql(self, 'SELECT 1 FROM %s' % pg_quote_identifier(table, 'table'))
+        exec_sql(self, 'SELECT 1 FROM %s' % pg_quote_identifier(table, 'table'),
+                 add_to_executed=False)
         # If SQL was executed successfully:
         return True
 
@@ -380,33 +399,11 @@ def main():
     # Create the object and do main job:
     data = PgCopyData(module, cursor)
 
-    ################
-    # If Check mode:
-    # Note: Transaction mode is not suitable for checking
-    #   because of there may be a lot of data and their actual upload
-    #   can affect database performance. So we just check the src/dst
-    #   table availability int check_src/dst.
-    #
-    # If the checks below are passed, changed will be always True:
-    if module.check_mode:
-        if module.params.get('dst'):
-            changed = data.check_table(module.params['dst'])
-
-        elif module.params.get('src'):
-            changed = data.check_table(module.params['src'])
-
-        module.exit_json(
-            changed=changed,
-            queries=data.executed_queries,
-            src=data.src,
-            dst=data.dst,
-        )
-    # End of check_mode
-    ###################
-
     # Note: parameters like dst, src, etc. are got
     # from module object into data object of PgCopyData class.
     # Therefore not need to pass args to the methods below.
+    # Note: check mode is implemented inside the methods below
+    # by checking passed module.check_mode arg.
     if module.params.get('copy_to'):
         data.copy_to()
 

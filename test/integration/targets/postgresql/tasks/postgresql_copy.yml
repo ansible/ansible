@@ -82,7 +82,7 @@
       - result.changed == true
 
   # check that nothing changed after the previous step:
-  - name: postgresql_copy - check that test_table continue to have one row
+  - name: postgresql_copy - check that test table continue to have one row
     <<: *task_parameters
     postgresql_query:
       <<: *pg_parameters
@@ -105,8 +105,9 @@
   - assert:
       that:
       - result.failed == true
+      - result.queries is not defined
 
-  - name: postgresql_copy - copy test_table data to data_file_txt
+  - name: postgresql_copy - copy test table data to data_file_txt
     <<: *task_parameters
     postgresql_copy:
       <<: *pg_parameters
@@ -130,7 +131,7 @@
       - result.stdout == '1\tfirst'
 
   # test different options and columns
-  - name: postgresql_copy - copy test_table data to data_file_csv with options and columns
+  - name: postgresql_copy - copy test table data to data_file_csv with options and columns
     <<: *task_parameters
     postgresql_copy:
       <<: *pg_parameters
@@ -158,7 +159,7 @@
       that:
       - result.stdout == '1,first'
 
-  - name: postgresql_copy - copy from data_file_csv to test_table
+  - name: postgresql_copy - copy from data_file_csv to test table
     <<: *task_parameters
     postgresql_copy:
       <<: *pg_parameters
@@ -177,11 +178,11 @@
       - result.dst == '{{ test_table }}'
       - result.src == '{{ data_file_csv }}'
 
-  - name: postgresql_copy - check that there are two rows in test_table after the prev step
+  - name: postgresql_copy - check that there are two rows in test table after the prev step
     <<: *task_parameters
     postgresql_query:
       <<: *pg_parameters
-      query: "SELECT * FROM {{ test_table }} WHERE id = '1' AND name = 'first'"
+      query: "SELECT * FROM {{ test_table }}  WHERE id = '1' AND name = 'first'"
 
   - assert:
       that:
@@ -202,7 +203,7 @@
   - assert:
       that:
       - result.changed == true
-      - result.queries == ["COPY \"acme\" (id, name) TO PROGRAM '/bin/true' (delimiter '|')"]
+      - result.queries == ["COPY \"{{ test_table }}\" (id, name) TO PROGRAM '/bin/true' (delimiter '|')"]
       - result.src == '{{ test_table }}'
       - result.dst == '/bin/true'
     when: ansible_distribution != 'FreeBSD'
@@ -221,12 +222,12 @@
   - assert:
       that:
       - result.changed == true
-      - result.queries == ["COPY \"acme\" (id, name) FROM PROGRAM 'echo 1,first' (delimiter ',')"]
+      - result.queries == ["COPY \"{{ test_table }}\" (id, name) FROM PROGRAM 'echo 1,first' (delimiter ',')"]
       - result.dst == '{{ test_table }}'
       - result.src == 'echo 1,first'
     when: ansible_distribution != 'FreeBSD'
 
-  - name: postgresql_copy - check that there are three rows in test_table after the prev step
+  - name: postgresql_copy - check that there are three rows in test table after the prev step
     <<: *task_parameters
     postgresql_query:
       <<: *pg_parameters
@@ -237,7 +238,7 @@
       - result.rowcount == 3
 
   # clean up
-  - name: postgresql_copy - remove test_table
+  - name: postgresql_copy - remove test table
     <<: *task_parameters
     postgresql_table:
       <<: *pg_parameters
