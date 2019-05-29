@@ -1,6 +1,6 @@
 ---
 - name: Fetch all images
-  one_image_facts:
+  one_image_info:
   register: all_images
 
 - name: Print all images
@@ -8,7 +8,7 @@
     var: all_images
 
 - name: Gather facts about an image using a name
-  one_image_facts:
+  one_image_info:
     name: '{{ one_image_name }}'
   register: image_with_name
 
@@ -22,7 +22,7 @@
       - image_with_name.images[0].running_vms == 0
 
 - name: Gather facts about the image using ID
-  one_image_facts:
+  one_image_info:
     id: '{{ image_with_name.images[0].id }}'
   register: image_with_ids
 
@@ -36,20 +36,20 @@
       - image_with_ids.images[0].running_vms == 0
 
 - name: Try to gather facts about an image using a name and ids
-  one_image_facts:
+  one_image_info:
     name: '{{ one_image_name }}'
     id: '{{ image_with_name.images[0].id }}'
   register: image_name_ids
   failed_when: not image_name_ids is failed
 
 - name: Try to fetch non-existent image by name
-  one_image_facts:
+  one_image_info:
     name: non-existent-vm-{{ ansible_date_time.iso8601_basic_short }}
   register: image_missing
   failed_when: not image_missing is failed
 
 - name: Try to gather facts about non-existent images by regex
-  one_image_facts:
+  one_image_info:
     name: ~non-existent-vm-{{ ansible_date_time.iso8601_basic_short }}-*
   register: images_with_regex
 
@@ -60,7 +60,7 @@
       - images_with_regex.images|length == 0
 
 - name: Try to fetch non-existent image by id
-  one_image_facts:
+  one_image_info:
     id: -999
   register: image_missing
   failed_when: not image_missing is failed
@@ -79,7 +79,7 @@
         new_name: '{{ one_image_name }}-clone-2'
 
     - name: Fetch all images whose name matches regex
-      one_image_facts:
+      one_image_info:
         name: '~{{ one_image_name }}-clone-[12]$'
       register: cloned_instances
 
@@ -93,7 +93,7 @@
         msg: "There should be 2 cloned instances"
 
     - name: Gather facts about all images using IDs
-      one_image_facts:
+      one_image_info:
         ids:
           - '{{ cloned_instances.images[0].id }}'
           - '{{ cloned_instances.images[1].id }}'
@@ -115,7 +115,7 @@
         new_name: '{{ one_image_name }}-CLONE-2'
 
     - name: Fetch all images whose name matches regex
-      one_image_facts:
+      one_image_info:
         name: '~{{ one_image_name }}-clone-[12]$'
       register: cloned_instances
 
@@ -128,7 +128,7 @@
         msg: "There should be 1 cloned instance"
 
     - name: Fetch all images whose name matches regex ignoring cases
-      one_image_facts:
+      one_image_info:
         name: '~*{{ one_image_name }}-clone-[12]$'
       register: cloned_instances_case_insensitive
 
