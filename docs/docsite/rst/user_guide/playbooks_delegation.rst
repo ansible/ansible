@@ -273,7 +273,7 @@ As always with delegation, the action will be executed on the delegated host, bu
 .. note::
      When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
      If it's crucial that the task is run only once regardless of "serial" mode, use
-     :code:`when: inventory_hostname == ansible_play_hosts[0]` construct.
+     :code:`when: inventory_hostname == ansible_play_hosts_all[0]` construct.
 
 .. note::
     Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
