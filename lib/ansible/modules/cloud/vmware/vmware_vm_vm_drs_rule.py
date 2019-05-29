@@ -169,7 +169,7 @@ class VmwareDrs(PyVmomi):
     # Getter
     def get_all_vms_info(self, vms_list=None):
         """
-        Function to get all VM objects using name from given cluster
+        Get all VM objects using name from given cluster
         Args:
             vms_list: List of VM names
 
@@ -192,7 +192,7 @@ class VmwareDrs(PyVmomi):
 
     def get_rule_key_by_name(self, cluster_obj=None, rule_name=None):
         """
-        Function to get a specific DRS rule key by name
+        Get a specific DRS rule key by name
         Args:
             rule_name: Name of rule
             cluster_obj: Cluster managed object
@@ -213,7 +213,7 @@ class VmwareDrs(PyVmomi):
     @staticmethod
     def normalize_rule_spec(rule_obj=None):
         """
-        Function to return human readable rule spec
+        Return human readable rule spec
         Args:
             rule_obj: Rule managed object
 
@@ -234,7 +234,7 @@ class VmwareDrs(PyVmomi):
     # Create
     def create(self):
         """
-        Function to create a DRS rule if rule does not exist
+        Create a DRS rule if rule does not exist
         """
         rule_obj = self.get_rule_key_by_name(rule_name=self.rule_name)
         if rule_obj is not None:
@@ -253,7 +253,7 @@ class VmwareDrs(PyVmomi):
 
     def create_rule_spec(self):
         """
-        Function to create DRS rule
+        Create DRS rule
         """
         changed = False
         if self.affinity_rule:
@@ -285,7 +285,7 @@ class VmwareDrs(PyVmomi):
 
     def update_rule_spec(self, rule_obj=None):
         """
-        Function to update DRS rule
+        Update DRS rule
         """
         changed = False
 
@@ -317,7 +317,7 @@ class VmwareDrs(PyVmomi):
     # Delete
     def delete(self, rule_name=None):
         """
-        Function to delete DRS rule using name
+        Delete DRS rule using name
         """
         changed = False
         if rule_name is None:
