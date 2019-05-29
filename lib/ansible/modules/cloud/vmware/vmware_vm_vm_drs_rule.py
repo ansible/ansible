@@ -99,7 +99,6 @@ EXAMPLES = r'''
         - vm1
         - vm2
     drs_rule_name: vm1-vm2-affinity-rule-001
-    enabled: True
     mandatory: True
     affinity_rule: False
   delegate_to: localhost
@@ -241,9 +240,9 @@ class VmwareDrs(PyVmomi):
         if rule_obj is not None:
             existing_rule = self.normalize_rule_spec(rule_obj=rule_obj)
             if ((sorted(existing_rule['rule_vms']) == sorted(self.vm_list)) and
-                (existing_rule['rule_enabled'] == self.enabled) and
-                (existing_rule['rule_mandatory'] == self.mandatory) and
-                (existing_rule['rule_affinity'] == self.affinity_rule)):
+                    (existing_rule['rule_enabled'] == self.enabled) and
+                    (existing_rule['rule_mandatory'] == self.mandatory) and
+                    (existing_rule['rule_affinity'] == self.affinity_rule)):
                 self.module.exit_json(changed=False, result=existing_rule, msg="Rule already exists with the same configuration")
             else:
                 changed, result = self.update_rule_spec(rule_obj)
@@ -284,17 +283,17 @@ class VmwareDrs(PyVmomi):
 
         return changed, result
 
-    def update_rule_spec(self,rule_obj=None):
+    def update_rule_spec(self, rule_obj=None):
         """
         Function to update DRS rule
         """
         changed = False
 
         rule_obj.vm = self.vm_obj_list
-        
+
         if (rule_obj.mandatory != self.mandatory):
             rule_obj.mandatory = self.mandatory
-        
+
         if (rule_obj.enabled != self.enabled):
             rule_obj.enabled = self.enabled
 
