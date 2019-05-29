@@ -706,7 +706,7 @@ class Templar:
                         display.display(msg, log_only=True)
                     else:
                         raise AnsibleError(to_native(msg))
-                ran = None
+                ran = [] if wantlist else None
 
             if ran and not allow_unsafe:
                 if wantlist:
