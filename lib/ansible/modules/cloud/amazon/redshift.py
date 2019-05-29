@@ -294,6 +294,9 @@ def _ensure_tags(redshift, identifier, existing_tags, module):
     tags = module.params.get('tags')
     purge_tags = module.params.get('purge_tags')
 
+    if tags is None:
+        return False
+
     tags_to_add, tags_to_remove = compare_aws_tags(boto3_tag_list_to_ansible_dict(existing_tags), tags, purge_tags)
 
     if tags_to_add:
@@ -567,11 +570,10 @@ def modify_cluster(module, redshift):
             waiter.wait(
                 ClusterIdentifier=identifier,
                 WaiterConfig=dict(MaxAttempts=attempts)
-                )
+            )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e,
-                                 msg="Timeout waiting for cluster enhanced vpc routing modification"
-                                )
+            module.fail_json_aws(e, msg="""Timeout waiting for cluster enhanced vpc
+                                routing modification""")
 
     # change the rest
     try:
