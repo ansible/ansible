@@ -149,7 +149,6 @@ def main():
     }
 
     choice_map = {
-        None: check_points,
         'check': check_points,
         'send': send_sms
     }
