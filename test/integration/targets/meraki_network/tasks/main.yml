@@ -29,10 +29,6 @@
     register: create_net_no_org
     ignore_errors: yes
 
-  - assert:
-     that:
-     - create_net_no_org.msg == 'org_name or org_id parameters are required'
-
   - name: Create network with type switch
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -242,11 +238,10 @@
   - name: Present assertions
     assert:
       that:
-        # - create_net_no_type.status == 500
         - create_net_combined.data.type == 'combined'
         - create_net_combined.data.disableMyMerakiCom == True
         - enable_meraki_com.data.disableMyMerakiCom == False
-        # - '"org_name or org_id parameters are required" in create_net_no_org.msg'
+        - '"org_name or org_id parameters are required" in create_net_no_org.msg'
         - '"IntTestNetworkAppliance" in create_net_appliance_no_tz.data.name'
         - create_net_appliance_no_tz.changed == True
         - '"IntTestNetworkSwitch" in create_net_switch.data.name'
