@@ -62,7 +62,7 @@ options:
   state:
     description:
     - If set to C(present), then the DRS rule is created if not present.
-    - If set to C(present), then the DRS rule is deleted and created if present already.
+    - If set to C(present), then the DRS rule is already present, it updates to the given configurations.
     - If set to C(absent), then the DRS rule is deleted if present.
     required: False
     default: present
@@ -94,6 +94,7 @@ EXAMPLES = r'''
     password: "{{ esxi_password }}"
     cluster_name: "{{ cluster_name }}"
     validate_certs: no
+    enabled: True
     vms:
         - vm1
         - vm2
@@ -238,21 +239,18 @@ class VmwareDrs(PyVmomi):
         """
         rule_obj = self.get_rule_key_by_name(rule_name=self.rule_name)
         if rule_obj is not None:
-            # Rule already exists, remove and create again
-            # Cluster does not allow editing existing rule
             existing_rule = self.normalize_rule_spec(rule_obj=rule_obj)
             if ((sorted(existing_rule['rule_vms']) == sorted(self.vm_list)) and
-                    (existing_rule['rule_enabled'] == self.enabled) and
-                    (existing_rule['rule_mandatory'] == self.mandatory) and
-                    (existing_rule['rule_affinity'] == self.affinity_rule)):
-                # Rule is same as existing rule, evacuate
-                self.module.exit_json(changed=False, result=existing_rule)
-            # Delete existing rule as we cannot edit it
-            changed, result = self.delete(rule_name=self.rule_name)
-            if not changed:
-                self.module.fail_json(msg="Failed to delete while updating rule %s due to %s" % (self.rule_name, result))
-        changed, result = self.create_rule_spec()
-        return changed, result
+                (existing_rule['rule_enabled'] == self.enabled) and
+                (existing_rule['rule_mandatory'] == self.mandatory) and
+                (existing_rule['rule_affinity'] == self.affinity_rule)):
+                self.module.exit_json(changed=False, result=existing_rule, msg="Rule already exists with the same configuration")
+            else:
+                changed, result = self.update_rule_spec(rule_obj)
+                return changed, result
+        else:
+            changed, result = self.create_rule_spec()
+            return changed, result
 
     def create_rule_spec(self):
         """
@@ -274,6 +272,37 @@ class VmwareDrs(PyVmomi):
 
         try:
             task = self.cluster_obj.ReconfigureEx(config_spec, modify=True)
+            changed, result = wait_for_task(task)
+        except vmodl.fault.InvalidRequest as e:
+            result = to_native(e.msg)
+        except Exception as e:
+            result = to_native(e)
+
+        if changed:
+            rule_obj = self.get_rule_key_by_name(rule_name=self.rule_name)
+            result = self.normalize_rule_spec(rule_obj)
+
+        return changed, result
+
+    def update_rule_spec(self,rule_obj=None):
+        """
+        Function to update DRS rule
+        """
+        changed = False
+
+        rule_obj.vm = self.vm_obj_list
+        
+        if (rule_obj.mandatory != self.mandatory):
+            rule_obj.mandatory = self.mandatory
+        
+        if (rule_obj.enabled != self.enabled):
+            rule_obj.enabled = self.enabled
+
+        rule_spec = vim.cluster.RuleSpec(info=rule_obj, operation='edit')
+        config_spec = vim.cluster.ConfigSpec(rulesSpec=[rule_spec])
+
+        try:
+            task = self.cluster_obj.ReconfigureCluster_Task(config_spec, modify=True)
             changed, result = wait_for_task(task)
         except vmodl.fault.InvalidRequest as e:
             result = to_native(e.msg)
@@ -326,7 +355,7 @@ def main():
     )
 
     required_if = [
-        ['state', 'present', ['vms']],
+        ['state', 'present', ['vms']]
     ]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
@@ -347,7 +376,6 @@ def main():
         else:
             results['failed'] = True
             results['msg'] = "Failed to create DRS rule %s" % vm_drs.rule_name
-
         results['result'] = result
     elif state == 'absent':
         # Delete Rule
