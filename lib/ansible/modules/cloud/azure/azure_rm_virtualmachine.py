@@ -1694,7 +1694,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.results['actions'].append("Generalize virtual machine {0}".format(self.name))
         self.log("Generalize virtual machine {0}".format(self.name))
         try:
-            response = self.compute_client.virtual_machtines.generalize(self.resource_group, self.name)
+            response = self.compute_client.virtual_machines.generalize(self.resource_group, self.name)
             if isinstance(response, LROPoller):
                 self.get_poller_result(response)
         except Exception as exc:
