@@ -30,10 +30,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: one_image_facts
-short_description: Gather facts about OpenNebula images
+module: one_image_info
+short_description: Gather information on OpenNebula images
 description:
-  - Gather facts about OpenNebula images
+  - Gather information on OpenNebula images.
+  - This module was called C(one_image_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.6"
 requirements:
   - python-oca
@@ -69,7 +70,7 @@ author:
 
 EXAMPLES = '''
 # Gather facts about all images
-- one_image_facts:
+- one_image_info:
   register: result
 
 # Print all images facts
@@ -77,22 +78,22 @@ EXAMPLES = '''
     msg: result
 
 # Gather facts about an image using ID
-- one_image_facts:
+- one_image_info:
     ids:
       - 123
 
 # Gather facts about an image using the name
-- one_image_facts:
+- one_image_info:
     name: 'foo-image'
   register: foo_image
 
 # Gather facts about all IMAGEs whose name matches regex 'app-image-.*'
-- one_image_facts:
+- one_image_info:
     name: '~app-image-.*'
   register: app_images
 
 # Gather facts about all IMAGEs whose name matches regex 'foo-image-.*' ignoring cases
-- one_image_facts:
+- one_image_info:
     name: '~*foo-image-.*'
   register: foo_images
 '''
@@ -262,6 +263,8 @@ def main():
     module = AnsibleModule(argument_spec=fields,
                            mutually_exclusive=[['ids', 'name']],
                            supports_check_mode=True)
+    if module._name == 'one_image_facts':
+        module.deprecate("The 'one_image_facts' module has been renamed to 'one_image_info'", version='2.13')
 
     if not HAS_OCA:
         module.fail_json(msg='This module requires python-oca to work!')
