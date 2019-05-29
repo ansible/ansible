@@ -30,13 +30,10 @@ from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
-from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
-from ansible.utils.collection_loader import AnsibleCollectionRef
-from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
@@ -193,8 +190,7 @@ class TaskQueueManager:
         )
 
         play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
-        if (self._stdout_callback and
-                hasattr(self._stdout_callback, 'set_play_context')):
+        if (self._stdout_callback and hasattr(self._stdout_callback, 'set_play_context')):
             self._stdout_callback.set_play_context(play_context)
 
         for callback_plugin in self._callback_plugins:
@@ -227,7 +223,10 @@ class TaskQueueManager:
         # hosts so we know what failed this round.
         for host_name in self._failed_hosts.keys():
             host = self._inventory.get_host(host_name)
-            iterator.mark_host_failed(host)
+            if host is None:
+                iterator.host_not_in_invenotry(host_name)
+            else:
+                iterator.mark_host_failed(host)
 
         self.clear_failed_hosts()
 
