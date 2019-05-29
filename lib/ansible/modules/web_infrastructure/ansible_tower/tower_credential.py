@@ -168,7 +168,7 @@ EXAMPLES = '''
 - name: Add Credential Into Tower
   tower_credential:
     name: Workshop Credential
-    ssh_key_data: "/home/{{ansible_user}}/.ssh/aws-private.pem"
+    ssh_key_data: "{{ lookup('file', '/home/' ~ {{ansible_user}} ~ '/.ssh/aws-private.pem') }}"
     kind: ssh
     organization: Default
     tower_username: admin
