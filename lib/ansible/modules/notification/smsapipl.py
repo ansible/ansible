@@ -35,7 +35,7 @@ options:
     type: str
   state:
     description:
-      - Aaction to do; check point on account or send SMS
+      - Action to do; check point on account or send SMS
     choices:
       - check
       - send
@@ -142,13 +142,14 @@ def main():
         'message': {'required': False, 'type': 'str'},
         'latin': {'required': False, 'type': 'bool', 'default': True},
         'state': {
-            'default': 'check',
+            'default': None,
             'choices': ['check', 'send'],
             'type': 'str'
         },
     }
 
     choice_map = {
+        None: check_points,
         'check': check_points,
         'send': send_sms
     }
