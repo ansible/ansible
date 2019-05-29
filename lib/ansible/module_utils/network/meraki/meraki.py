@@ -61,6 +61,7 @@ class MerakiModule(object):
         self.nets = None
         self.org_id = None
         self.net_id = None
+        self.check_mode = module.check_mode
 
         # normal output
         self.existing = None
