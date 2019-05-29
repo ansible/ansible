@@ -291,7 +291,6 @@ files:
     keywords: [ aci, cisco msc, cisco mso, multisite, multi-site ]
     labels: [ aci, cisco, networking ]
     maintainers: $team_aci
-    notified: koladiya
   $modules/network/aireos/: &aireos
     maintainers: $team_aireos
     labels: [ aireos, cisco, networking ]
@@ -1461,7 +1460,7 @@ macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
-  team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 mtorelli rsmeyers schunduri smnmtzgr
+  team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
   team_aireos: jmighion
   team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_asa: gdpak ogenstad
