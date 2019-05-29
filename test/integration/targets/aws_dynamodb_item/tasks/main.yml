@@ -30,7 +30,7 @@
           - result.changed
 
     - name: inserting db record
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: put
         item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
@@ -42,7 +42,7 @@
           - result.changed
 
     - name: Check mode - inserting db record
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: put
         item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
@@ -55,7 +55,7 @@
           - result.changed
 
     - name: inserting db record with a primary record that already exists
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: put
         item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
@@ -67,7 +67,7 @@
           - result.changed
 
     - name: inserting db record with a primary key that already exists updating status field
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: put
         item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "blue"}, "person": {"S": "ochoa"}}
@@ -79,7 +79,7 @@
           - result.changed
 
     - name: gets previously updated item
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: get
         filter_expression: 'bank = :bank_name AND quantity = :number'
@@ -92,7 +92,7 @@
           - '''[{"bank": {"s": "hsbc"}, "quantity": {"n": "1000"}, "person": {"s": "ochoa"}, "status": {"s": "blue"}}] in result.returned_items'''
 
     - name: inserting db record on a table that doesnt exist
-      dynamodb:
+      aws_dynamodb_item:
         table: "willfail"
         action: put
         item: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}, "status": {"S": "green"}, "person": {"S": "ochoa"}}
@@ -106,7 +106,7 @@
           - '"Table willfail doesnt exist" in result.msg'
 
     - name: test missing update_expression parameter when updating
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: update
         primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
@@ -121,7 +121,7 @@
           - '"action is update but all of the following are missing: update_expression" in result.msg'
 
     - name: test invalid primary key when updating
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: update
         primary_key: {"willfail": {"S": "hsbc"}, "quantity": {"N": "1000"}}
@@ -138,7 +138,7 @@
           - '"Check the primary key, it doesnt match your table config" in result.msg'
 
     - name: updating db record with the status protected word
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: update
         primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
@@ -153,7 +153,7 @@
           - result.changed
 
     - name: Check mode - updating db record with the status protected word
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: update
         primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
@@ -169,7 +169,7 @@
           - result.changed
 
     - name: Gets a single item
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: get
         filter_expression: 'bank = :bank_name AND quantity = :number'
@@ -182,7 +182,7 @@
           - '''[{"bank": {"s": "hsbc"}, "quantity": {"n": "1000"}, "person": {"s": "ochoa"}, "status": {"s": "red"}}] in result.returned_items'''
 
     - name: Gets an item that doesnt exist
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: get
         filter_expression: 'bank = :bank_name AND quantity = :number'
@@ -195,7 +195,7 @@
           - '''[] in result.returned_items'''
 
     - name: updating to delete attribute 'person' in previously added db record
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: update
         primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
@@ -208,7 +208,7 @@
           - result.changed
 
     - name: Check mode - updating to delete attribute 'person' in previously added db record
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: update
         primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
@@ -222,7 +222,7 @@
           - result.changed
 
     - name: Gets a single item
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: get
         filter_expression: 'bank = :bank_name AND quantity = :number'
@@ -235,7 +235,7 @@
           - '''[{"bank": {"s": "hsbc"}, "quantity": {"n": "1000"}, "status": {"s": "red"}}] in result.returned_items'''
 
     - name: deletes a single db record that doesnt match conditional expression (doesnt exist)
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: delete
         primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "2000"}}
@@ -251,7 +251,7 @@
           - '"No item matching your conditional expression" in result.msg'
 
     - name: deletes a single db record
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: delete
         primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
@@ -265,7 +265,7 @@
           - result.changed
 
     - name: Check mode - deletes a single db record
-      dynamodb:
+      aws_dynamodb_item:
         table: "{{ dynamo_db_table }}"
         action: delete
         primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}

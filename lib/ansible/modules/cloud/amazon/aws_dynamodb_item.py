@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright: (c) 2018, David C Martin @blastikman
+# Copyright: (c) 2018, David C Martin @blastik
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: dynamodb
+module: aws_dynamodb_item
 short_description: Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
 description:
     - Reads, creates, updates or deletes single items in AWS Dynamo DB tables.
@@ -105,7 +105,7 @@ options:
         type: dict
     expression_attribute_values:
         description:
-            - One or more values that can be substituted in an expressionself.
+            - One or more values that can be substituted in an expression self.
               Use the ':' (colon) character in an expression to dereference
               an attribute value.
         required: false
@@ -315,31 +315,31 @@ def main():
 
     connection = module.client('dynamodb')
 
+    params = {}
+
+    action = module.params.get('action')
+
+    if module.params.get('table') is not None:
+        params['TableName'] = module.params.get('table')
+    if module.params.get('primary_key') is not None:
+        params['Key'] = module.params.get('primary_key')
+    if module.params.get('filter_expression') is not None:
+        params['FilterExpression'] = module.params.get('filter_expression')
+    if module.params.get('condition_expression') is not None:
+        params['ConditionExpression'] = module.params.get('condition_expression')
+    if module.params.get('item') is not None:
+        params['Item'] = module.params.get('item')
+    if module.params.get('update_expression') is not None:
+        params['UpdateExpression'] = module.params.get('update_expression')
+    if module.params.get('expression_attribute_names') is not None:
+        params['ExpressionAttributeNames'] = module.params.get('expression_attribute_names')
+    if module.params.get('expression_attribute_values') is not None:
+        params['ExpressionAttributeValues'] = module.params.get('expression_attribute_values')
+
+    changed = False
+    response = {}
+
     try:
-        params = {}
-
-        action = module.params.get('action')
-
-        if module.params.get('table') is not None:
-            params['TableName'] = module.params.get('table')
-        if module.params.get('primary_key') is not None:
-            params['Key'] = module.params.get('primary_key')
-        if module.params.get('filter_expression') is not None:
-            params['FilterExpression'] = module.params.get('filter_expression')
-        if module.params.get('condition_expression') is not None:
-            params['ConditionExpression'] = module.params.get('condition_expression')
-        if module.params.get('item') is not None:
-            params['Item'] = module.params.get('item')
-        if module.params.get('update_expression') is not None:
-            params['UpdateExpression'] = module.params.get('update_expression')
-        if module.params.get('expression_attribute_names') is not None:
-            params['ExpressionAttributeNames'] = module.params.get('expression_attribute_names')
-        if module.params.get('expression_attribute_values') is not None:
-            params['ExpressionAttributeValues'] = module.params.get('expression_attribute_values')
-
-        changed = False
-        response = {}
-
         if action == 'get':
             response, changed = get(connection, module, response, **params)
 
@@ -363,10 +363,10 @@ def main():
             module.fail_json_aws(
                 e, msg="Check the primary key, it doesnt match your table config")
         else:
-            raise
+            module.fail_json_aws(e, msg="Error")
 
     except botocore.exceptions.BotoCoreError as e:
-        raise
+        module.fail_json_aws(e, msg="Error")
 
     result = dict(changed=changed, **camel_dict_to_snake_dict(response))
 
