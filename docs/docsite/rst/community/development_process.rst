@@ -272,7 +272,8 @@ We do **not** backport features.
 
 .. note::
 
-    If you prefer, you can use CPython's cherry-picker tool to backport commits
+    If you prefer, you can use CPython's cherry-picker tool
+    (``pip install --user 'cherry-picker >= 1.3.2'``) to backport commits
     from devel to stable branches in Ansible. Take a look at the `cherry-picker
     documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for
     details on installing, configuring, and using it.
