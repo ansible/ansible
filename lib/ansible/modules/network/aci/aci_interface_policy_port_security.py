@@ -66,7 +66,7 @@ EXAMPLES = r'''
     port_security: '{{ port_security }}'
     description: '{{ descr }}'
     max_end_points: '{{ max_end_points }}'
-    port_security_timeout: '{{ port_security_timeout }}
+    port_security_timeout: '{{ port_security_timeout }}'
   delegate_to: localhost
 '''
 
