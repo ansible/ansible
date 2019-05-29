@@ -224,6 +224,7 @@ class TaskQueueManager:
         for host_name in self._failed_hosts.keys():
             host = self._inventory.get_host(host_name)
             if host is None:
+                display.warning("Lost host '%s' from inventory, removing from rest of play execution." % host_name)
                 iterator.host_not_in_invenotry(host_name)
             else:
                 iterator.mark_host_failed(host)
