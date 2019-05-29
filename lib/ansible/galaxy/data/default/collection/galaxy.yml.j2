@@ -1,0 +1,61 @@
+### REQUIRED
+
+# this can be a company/brand/organisation or product namespace
+# under which all content lives
+namespace: {{ namespace }}
+
+
+# the designation of this specific collection
+name: {{ collection_name }}
+
+
+# semantic versioning compliant version designation
+version: 1.0.0
+
+
+# a list of the collection's content authors
+# Ex: 'Full Name <email> (http://site) @nicks:irc/im/site#channel'
+authors:
+- {{ author }} <example@domain.com>
+
+
+### OPTIONAL but strongly advised
+
+# short summary of the collection
+description: {{ description }}
+
+
+# Either a single valid SPDX license identifier
+# or a list of valid SPDX license identifiers
+# See https://spdx.org/licenses/
+license: {{ license }}
+
+
+# list of keywords you want to associate the collection
+# with for indexing/search systems
+tags: []
+
+
+# A dict of dependencies. A dependency is another collection
+# this collection requires to be installed for it to be usable.
+# The key of the dict is the collection label (namespace.name)
+# and the value is a spec for the semver version required.
+dependencies: {}
+
+
+### URLs
+
+# url of originating SCM repository
+repository: {{ repository_url }}
+
+
+# url to online docs
+documentation: {{ documentation_url }}
+
+
+# homepage of the collection/project
+homepage: {{ homepage_url }}
+
+
+# issue tracker url
+issues: {{ issue_tracker_url }}

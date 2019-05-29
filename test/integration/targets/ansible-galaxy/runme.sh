@@ -105,5 +105,40 @@ EOF
 popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
 
+#################################
+# ansible-galaxy collection tests
+#################################
+
+f_ansible_galaxy_status \
+    "collection init tests to make sure the relative dir logic works"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+
+    ansible-galaxy collection init ansible_test.my_collection
+
+    # Test that the collection skeleton was created in the expected directory
+    for galaxy_collection_dir in "docs" "playbooks" "plugins" "plugins/action" "plugins/filter" "plugins/inventory" "plugins/lookup" "plugins/module_utils" "plugins/modules" "roles"
+    do
+        [[ -d "${galaxy_testdir}/ansible_test/my_collection/${galaxy_collection_dir}" ]]
+    done
+
+popd # ${galaxy_testdir}
+rm -fr "${galaxy_testdir}"
+
+f_ansible_galaxy_status \
+    "collection init tests to make sure the --init-path logic works"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+
+    ansible-galaxy collection init ansible_test.my_collection --init-path "${galaxy_testdir}/test"
+
+    # Test that the collection skeleton was created in the expected directory
+    for galaxy_collection_dir in "docs" "playbooks" "plugins" "plugins/action" "plugins/filter" "plugins/inventory" "plugins/lookup" "plugins/module_utils" "plugins/modules" "roles"
+    do
+        [[ -d "${galaxy_testdir}/test/ansible_test/my_collection/${galaxy_collection_dir}" ]]
+    done
+
+popd # ${galaxy_testdir}
+rm -fr "${galaxy_testdir}"
 
 rm -fr "${galaxy_local_test_role_dir}"
