@@ -21,6 +21,7 @@ from ansible.module_utils.common.text.converters import (
 
 
 DEFAULT_ENCODING = 'utf-8'
+DEFAULT_ERR_HANDLER = 'surrogate_or_strict'
 
 
 class TestJsonEncodeFallback:
@@ -126,7 +127,8 @@ class TestContainerToBytes:
         Test for passing objects to container_to_bytes(). Default encoding and errors
         """
 
-        assert container_to_bytes(test_input, errors='surrogate_or_strict') == expected
+        assert container_to_bytes(test_input, encoding=DEFAULT_ENCODING,
+                                  errors=DEFAULT_ERR_HANDLER) == expected
 
     @pytest.mark.parametrize(
         'test_input,encoding,expected',
@@ -140,10 +142,12 @@ class TestContainerToBytes:
         Test for passing incompatible characters and encodings container_to_bytes().
         """
 
+        # tests for surrogate_or_strict and strict:
         for err in ('surrogate_or_strict', 'strict'):
             with pytest.raises(UnicodeEncodeError, match="codec can't encode"):
                 container_to_bytes(test_input, encoding=encoding, errors=err)
 
+        # tests for surrogate_then_replace:
         assert container_to_bytes(test_input, encoding=encoding,
                                   errors='surrogate_then_replace') == expected
 
@@ -198,7 +202,8 @@ class TestContainerToText:
         Test for passing objects to container_to_text(). Default encoding and errors
         """
 
-        assert container_to_text(test_input, errors='surrogate_or_strict') == expected
+        assert container_to_text(test_input, encoding=DEFAULT_ENCODING,
+                                 errors=DEFAULT_ERR_HANDLER) == expected
 
     @pytest.mark.parametrize(
         'test_input,encoding,expected',
