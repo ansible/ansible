@@ -71,9 +71,24 @@ options:
     disable_my_meraki:
         description: >
             - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
-            U[wired.meraki.com](wired.meraki.com))
+            U[wired.meraki.com](wired.meraki.com)).
+            - Mutually exclusive of C(enable_my_meraki).
+            - Will be deprecated in Ansible 2.13 in favor of C(enable_my_meraki).
         type: bool
         version_added: '2.7'
+    enable_my_meraki:
+        description: >
+            - Enables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
+            U[wired.meraki.com](wired.meraki.com)).
+            - Ansible 2.7 had this parameter as C(disable_my_meraki).
+        type: bool
+        version_added: '2.9'
+    enable_remote_status_page:
+        description:
+            - Enables access to the device status page (U(http://device LAN IP)).
+            - Can only be set if C(enable_my_meraki:) is set to C(yes).
+        type: bool
+        version_added: '2.9'
 
 author:
     - Kevin Breit (@kbreit)
@@ -81,48 +96,46 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
-- name: List all networks associated to the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: query
-    org_name: YourOrg
-  delegate_to: localhost
-- name: Query network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: query
-    org_name: YourOrg
-    net_name: MyNet
-  delegate_to: localhost
-- name: Create network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: present
-    org_name: YourOrg
-    net_name: MyNet
-    type: switch
-    timezone: America/Chicago
-    tags: production, chicago
-  delegate_to: localhost
-- name: Create combined network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: present
-    org_name: YourOrg
-    net_name: MyNet
-    type:
-      - switch
-      - appliance
-    timezone: America/Chicago
-    tags: production, chicago
-- name: Enable VLANs on a network
-  meraki_network:
-    auth_key: abc12345
-    state: query
-    org_name: YourOrg
-    net_name: MyNet
-    enable_vlans: yes
-  delegate_to: localhost
+- delegate_to: localhost
+  block:
+    - name: List all networks associated to the YourOrg organization
+      meraki_network:
+        auth_key: abc12345
+        state: query
+        org_name: YourOrg
+    - name: Query network named MyNet in the YourOrg organization
+      meraki_network:
+        auth_key: abc12345
+        state: query
+        org_name: YourOrg
+        net_name: MyNet
+    - name: Create network named MyNet in the YourOrg organization
+      meraki_network:
+        auth_key: abc12345
+        state: present
+        org_name: YourOrg
+        net_name: MyNet
+        type: switch
+        timezone: America/Chicago
+        tags: production, chicago
+    - name: Create combined network named MyNet in the YourOrg organization
+      meraki_network:
+        auth_key: abc12345
+        state: present
+        org_name: YourOrg
+        net_name: MyNet
+        type:
+          - switch
+          - appliance
+        timezone: America/Chicago
+        tags: production, chicago
+    - name: Enable VLANs on a network
+      meraki_network:
+        auth_key: abc12345
+        state: query
+        org_name: YourOrg
+        net_name: MyNet
+        enable_vlans: yes
 '''
 
 RETURN = r'''
@@ -163,6 +176,11 @@ data:
         sample: switch
       disableMyMerakiCom:
         description: States whether U(my.meraki.com) and other device portals should be disabled.
+        returned: success
+        type: bool
+        sample: true
+      disableRemoteStatusPage:
+        description: Disables access to the device status page.
         returned: success
         type: bool
         sample: true
@@ -210,8 +228,10 @@ def main():
         timezone=dict(type='str'),
         net_name=dict(type='str', aliases=['name', 'network']),
         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
-        disable_my_meraki=dict(type='bool'),
         enable_vlans=dict(type='bool'),
+        disable_my_meraki=dict(type='bool', removed_in_version=2.13),
+        enable_my_meraki=dict(type='bool'),
+        enable_remote_status_page=dict(type='bool'),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -220,6 +240,8 @@ def main():
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
+                           mutually_exclusive=[('disable_my_meraki', 'enable_my_meraki'),
+                                               ]
                            )
 
     meraki = MerakiModule(module, function='network')
@@ -247,6 +269,8 @@ def main():
     if not meraki.params['net_name'] and not meraki.params['net_id']:
         if meraki.params['enable_vlans']:
             meraki.fail_json(msg="The parameter 'enable_vlans' requires 'net_name' or 'net_id' to be specified")
+    if meraki.params['enable_my_meraki'] is True and meraki.params['enable_remote_status_page'] is False:
+        meraki.fail_json(msg='enable_my_meraki must be true when setting enable_remote_status_page')
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -265,8 +289,19 @@ def main():
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
             payload['timeZone'] = meraki.params['timezone']
-        if meraki.params['disable_my_meraki'] is not None:
+        if meraki.params['enable_my_meraki'] is not None:
+            if meraki.params['enable_my_meraki'] is True:
+                payload['disableMyMerakiCom'] = False
+            else:
+                payload['disableMyMerakiCom'] = True
+        elif meraki.params['disable_my_meraki'] is not None:
             payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
+        if meraki.params['enable_remote_status_page'] is not None:
+            if meraki.params['enable_remote_status_page'] is True:
+                payload['disableRemoteStatusPage'] = False
+                # meraki.fail_json(msg="Debug", payload=payload)
+            else:
+                payload['disableRemoteStatusPage'] = True
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
