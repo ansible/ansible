@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019, Andrew Klychkov @Andersson007 <aaklychkov@mail.ru>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
@@ -111,6 +112,8 @@ class TestContainerToBytes:
             (True, True),
             (None, None),
             (u'str', u'str'.encode(DEFAULT_ENCODING)),
+            (u'くらとみ', u'くらとみ'.encode(DEFAULT_ENCODING)),
+            (u'café', u'café'.encode(DEFAULT_ENCODING)),
             (b'str', u'str'.encode(DEFAULT_ENCODING)),
             (u'str', u'str'.encode(DEFAULT_ENCODING)),
             ([u'str'], [u'str'.encode(DEFAULT_ENCODING)]),
@@ -124,6 +127,22 @@ class TestContainerToBytes:
         """
 
         assert container_to_bytes(test_input, errors='surrogate_or_strict') == expected
+
+
+    @pytest.mark.parametrize(
+        'test_input,encoding',
+        [
+            (u'くらとみ', 'latin1'),
+            (u'café', 'shift_jis'),
+        ]
+    )
+    def test_incompatible_chars_and_encodings(self, test_input, encoding):
+        """
+        Test for passing incompatible characters and encodings container_to_bytes().
+        """
+
+        with pytest.raises(UnicodeEncodeError, match="codec can't encode"):
+            container_to_bytes(test_input, encoding=encoding, errors='surrogate_or_strict')
 
 
 class TestContainerToText:
@@ -163,6 +182,8 @@ class TestContainerToText:
             (True, True),
             (None, None),
             (u'str', u'str'),
+            (u'くらとみ'.encode(DEFAULT_ENCODING), u'くらとみ'),
+            (u'café'.encode(DEFAULT_ENCODING), u'café'),
             (u'str'.encode(DEFAULT_ENCODING), u'str'),
             ([u'str'.encode(DEFAULT_ENCODING)], [u'str']),
             ((u'str'.encode(DEFAULT_ENCODING)), (u'str')),
