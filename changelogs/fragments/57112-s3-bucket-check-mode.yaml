@@ -1,0 +1,2 @@
+minor_changes:
+  - s3_bucket - add support for check mode.
