@@ -1774,9 +1774,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting virtual machine {0} - {1}".format(self.name, str(exc)))
 
-        if 'all' in self.remove_on_absent or 'all_autocreated' in self.remove_on_absent:
-            self.remove_autocreated_resources(vm.tags)
-
         # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
         if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
@@ -1784,6 +1781,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.delete_vm_storage(vhd_uris)
             self.log('Deleting managed disks')
             self.delete_managed_disks(managed_disk_ids)
+
+        if 'all' in self.remove_on_absent or 'all_autocreated' in self.remove_on_absent:
+            self.remove_autocreated_resources(vm.tags)
 
         if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
             self.log('Deleting network interfaces')
