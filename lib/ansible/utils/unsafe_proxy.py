@@ -118,14 +118,13 @@ def is_unsafe(val):
     a key or value which contains jinja2 syntax and would otherwise
     lose the AnsibleUnsafe value.
     '''
-    if isinstance(val, string_types):
-        if hasattr(val, '__UNSAFE__'):
-            return True
+    if hasattr(val, '__UNSAFE__'):
+        return True
     elif isinstance(val, Mapping):
         for key in val.keys():
             if is_unsafe(val[key]):
                 return True
-    elif isinstance(val, Sequence):
+    elif isinstance(val, Sequence) and not isinstance(val, string_types):
         for item in val:
             if is_unsafe(item):
                 return True
