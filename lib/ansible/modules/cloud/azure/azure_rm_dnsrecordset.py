@@ -206,7 +206,7 @@ state:
             description:
                 - The target resource of the record set.
             return: always
-            type: dict 
+            type: dict
             sample: {}
         ttl:
             description:
