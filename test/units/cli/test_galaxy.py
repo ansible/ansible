@@ -609,8 +609,7 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
     def test_readme(self):
         self.assertTrue(True, True)
         readme_path = os.path.join(self.collection_dir, 'README.md')
-        actual = os.path.exists(readme_path)
-        #self.assertTrue(os.path.exists(readme_path), msg='Readme doesn\'t exist')
+        self.assertTrue(os.path.exists(readme_path), msg='Readme doesn\'t exist')
 
 
 def test_invalid_skeleton_path():
