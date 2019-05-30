@@ -142,21 +142,22 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         elif isinstance(new, dict):
             comparison_result = True
             if not isinstance(old, dict):
-                result['compare'] = 'changed [' + path + '] old dict is null'
+                result['compare'].append('changed [' + path + '] old dict is null')
                 comparison_result = False
             else:
-                for k in new.keys():
-                    new_item = new.get(k)
+                for k in list(set(new.keys() + old.keys())):
+                    new_item = new.get(k, None)
                     old_item = old.get(k, None)
                     if new_item is None:
                         new[k] = old_item
+                        result['compare'].append('new item was empty, using old [' + path + '][ ' + k + ' ]')
                     elif not self.default_compare(modifiers, new_item, old_item, path + '/' + k, result):
                         comparison_result = False
             return comparison_result
         elif isinstance(new, list):
             comparison_result = True
             if not isinstance(old, list) or len(new) != len(old):
-                result['compare'] = 'changed [' + path + '] length is different or null'
+                result['compare'].append('changed [' + path + '] length is different or old value is null')
                 comparison_result = False
             else:
                 if isinstance(old[0], dict):
@@ -190,7 +191,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                     new = new.replace(' ', '').lower()
                     old = old.replace(' ', '').lower()
             if str(new) != str(old):
-                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old) + ' - ' + str(comparison)
+                result['compare'].append('changed [' + path + '] ' + str(new) + ' != ' + str(old) + ' - ' + str(comparison))
                 if updatable:
                     return False
                 else:
