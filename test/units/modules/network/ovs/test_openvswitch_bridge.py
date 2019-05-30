@@ -51,6 +51,11 @@ test_name_side_effect_matrix = {
         (0, '', ''),
         (0, '', ''),
         (0, '', '')],
+    'test_openvswitch_bridge_updates_vlan': [
+        (0, '', ''),
+        (0, '', ''),
+        (0, '', ''),
+        (0, '', '')],
     'test_openvswitch_bridge_present_adds_external_id': [
         (0, 'list_br_test_br.cfg', ''),
         (0, 'br_to_parent_test_br.cfg', ''),
@@ -154,6 +159,21 @@ class TestOpenVSwitchBridgeModule(TestOpenVSwitchModule):
         ]
         self.execute_module(changed=True, commands=commands,
                             test_name='test_openvswitch_bridge_present_creates_fake_bridge')
+
+    @patch.object(openvswitch_bridge, 'map_config_to_obj')
+    def test_openvswitch_bridge_updates_vlan(self, m_have):
+        m_have.return_value = {'bridge': 'test-br2', 'parent': 'test-br',
+                               'vlan': 200, 'fail_mode': None,
+                               'external_ids': None, 'set': None}
+        set_module_args(dict(state='present',
+                             bridge='test-br2',
+                             parent='test-br',
+                             vlan=300))
+        commands = [
+            '/usr/bin/ovs-vsctl -t 5 set port test-br2 tag=300',
+        ]
+        self.execute_module(changed=True, commands=commands,
+                            test_name='test_openvswitch_bridge_updates_vlan')
 
     def test_openvswitch_bridge_present_adds_external_id(self):
         set_module_args(dict(state='present',

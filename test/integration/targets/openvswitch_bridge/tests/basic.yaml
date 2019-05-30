@@ -22,5 +22,27 @@
     that:
       - "result.changed == false"
 
-- name: Tear down test bridge
+- name: Add fake bridge
+  openvswitch_bridge:
+    bridge: fake-br-test
+    parent: br-test
+    vlan: 100
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Change fake bridge vlan
+  openvswitch_bridge:
+    bridge: fake-br-test
+    parent: br-test
+    vlan: 300
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Tear down test bridges
   command: ovs-vsctl del-br br-test
