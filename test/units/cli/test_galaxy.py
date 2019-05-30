@@ -603,8 +603,8 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
 
     def test_skeleton_option(self):
         self.assertTrue(True, True)
-        #self.assertEquals(self.collection_skeleton_path, context.CLIARGS['collection_skeleton'],
-        #                  msg='Skeleton path was not parsed properly from the command line')
+        self.assertEquals(self.collection_skeleton_path, context.CLIARGS['collection_skeleton'],
+                          msg='Skeleton path was not parsed properly from the command line')
 
     def test_readme(self):
         self.assertTrue(True, True)
