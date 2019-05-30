@@ -17,7 +17,7 @@ module: azure_rm_dnsrecordset_facts
 
 version_added: "2.4"
 
-short_description: Get DNS Record Set facts.
+short_description: Get DNS Record Set facts
 
 description:
     - Get facts for a specific DNS Record Set in a Zone, or a specific type in all Zones or in one Zone etc.
@@ -37,7 +37,7 @@ options:
             - Limit record sets by record type.
     top:
         description:
-            - Limit the maximum number of record sets to return
+            - Limit the maximum number of record sets to return.
         type: int
 
 extends_documentation_fragment:
@@ -45,7 +45,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Ozi Boms (@ozboms)"
+    - Ozi Boms (@ozboms)
 
 '''
 
@@ -69,7 +69,8 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_dnsrecordset:
-    description: List of record set dicts.
+    description:
+        - List of record set dicts.
     returned: always
     type: list
     example: [
@@ -91,16 +92,19 @@ azure_dnsrecordset:
         "type": "Microsoft.Network/dnszones/A"
     }]
 dnsrecordsets:
-    description: List of record set dicts, which shares the same hierarchy as azure_rm_dnsrecordset module's parameter.
+    description:
+        - List of record set dicts, which shares the same hierarchy as M(azure_rm_dnsrecordset) module's parameter.
     returned: always
     type: list
     contains:
         id:
-            description: ID of the dns recordset.
+            description:
+                - ID of the dns recordset.
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/dnszones/newzone.
                      com/A/servera"
         relative_name:
-            description: Name of the dns recordset.
+            description:
+                - Name of the dns recordset.
             sample: servera
         record_type:
             description:
@@ -108,10 +112,12 @@ dnsrecordsets:
                 - Can be C(A), C(AAAA), C(CNAME), C(MX), C(NS), C(SRV), C(TXT), C(PTR).
             sample: A
         time_to_live:
-            description: Time to live of the record set in seconds.
+            description:
+                - Time to live of the record set in seconds.
             sample: 12900
         records:
-            description: List of records depending on the type of recordset.
+            description:
+                - List of records depending on the type of recordset.
             sample: [
                         {
                             "ipv4Address": "10.4.5.7"
@@ -121,10 +127,12 @@ dnsrecordsets:
                         }
                     ]
         provisioning_state:
-            description: Provision state of the resource.
+            description:
+                - Provision state of the resource.
             sample: Successed
         fqdn:
-            description: Fully qualified domain name of the record set.
+            description:
+                - Fully qualified domain name of the record set.
             sample: www.newzone.com
 '''
 
