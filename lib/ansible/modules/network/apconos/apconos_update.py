@@ -45,9 +45,16 @@ options:
         a TFTP server for a special blade.
     default: all
     choices: ['all', 'blade']
+  version:
+    description:
+      - specify a version that will be installed.
+  provider:
+    description:
+      - Please use connection network_cli.
   blade_letter:
     description:
       - specify a blade letter.
+    default: ['A']
   ipaddress:
     description:
       - specify an ip address of tftp server.
@@ -89,22 +96,25 @@ options:
 
 EXAMPLES = """
 - name: Update APCON Devices
-    apconos_update:
-      device: all
-      ipaddress: 10.0.0.100
-      filename:  firmware_6.01_1550.pem
+  apconos_update:
+    device: all
+    ipaddress: 10.0.0.100
+    filename:  firmware_6.01_1550.pem
 """
 
 RETURN = """
 stdout:
   description: The set of response from the commands
   returned: On success
+  type: list
 current version:
   description: Current version
   returned: On success
+  type: list
 stdout_lines:
   description: The value of stdout split into a list
   returned: On success
+  type: list
 """
 
 import re
@@ -169,7 +179,7 @@ def main():
         retries=dict(default=10, type='int'),
         interval=dict(default=1, type='int'),
 
-        device=dict(type='list'),
+        device=dict(default='all', choices=['all', 'blade'], type='list'),
         blade_letter=dict(default='A', type='list'),
         ipaddress=dict(type='list'),
         filename=dict(type='list'),

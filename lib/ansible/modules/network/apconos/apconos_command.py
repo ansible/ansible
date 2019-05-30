@@ -44,6 +44,9 @@ options:
         module is not returned until the condition is satisfied or
         the number of retires as expired.
     required: true
+  provider:
+    description:
+      - Please use connetcion network_cli.
   wait_for:
     description:
       - List of conditions to evaluate against the output of the
@@ -78,24 +81,15 @@ options:
 """
 
 EXAMPLES = """
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    port: 22
-    username: admin
-    password: admin
-    timeout: 30
-
-- name: test contains operator
+- name: basic configuration
   apconos_command:
     commands:
-      - show version
+    - show version
   register: result
 
-- name: get output for single command
+- name: get output from single command
   apconos_command:
     commands: ['show version']
-    provider: "{{ cli }}"
   register: result
 """
 
