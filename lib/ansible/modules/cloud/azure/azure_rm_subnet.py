@@ -84,7 +84,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author:
     - "Chris Houseknecht (@chouseknecht)"
@@ -219,7 +218,8 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.service_endpoints = None
 
         super(AzureRMSubnet, self).__init__(self.module_arg_spec,
-                                            supports_check_mode=True)
+                                            supports_check_mode=True,
+                                            supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -313,6 +313,8 @@ class AzureRMSubnet(AzureRMModuleBase):
                         subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
                     if self.route_table:
                         subnet.route_table = self.network_models.RouteTable(id=self.route_table)
+                    if self.service_endpoints:
+                        subnet.service_endpoints = self.service_endpoints
                 else:
                     # update subnet
                     self.log('Updating subnet {0}'.format(self.name))

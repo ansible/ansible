@@ -272,13 +272,6 @@ def fixed_ip_factory(meraki, data):
     return fixed_ips
 
 
-def temp_get_nets(meraki, org_name):
-    org_id = meraki.get_org_id(org_name)
-    path = meraki.construct_path('get_all', function='network', org_id=org_id)
-    r = meraki.request(path, method='GET')
-    return r
-
-
 def get_vlans(meraki, net_id):
     path = meraki.construct_path('get_all', net_id=net_id)
     return meraki.request(path, method='GET')
@@ -361,12 +354,10 @@ def main():
     org_id = meraki.params['org_id']
     if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    nets = meraki.get_nets(org_id=org_id)
-    net_id = None
-    if meraki.params['net_name']:
+    net_id = meraki.params['net_id']
+    if net_id is None:
+        nets = meraki.get_nets(org_id=org_id)
         net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
-    elif meraki.params['net_id']:
-        net_id = meraki.params['net_id']
 
     if meraki.params['state'] == 'query':
         if not meraki.params['vlan_id']:
@@ -406,6 +397,8 @@ def main():
                 response = meraki.request(path, method='PUT', payload=json.dumps(payload))
                 meraki.result['changed'] = True
                 meraki.result['data'] = response
+            else:
+                meraki.result['data'] = original
     elif meraki.params['state'] == 'absent':
         if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']):
             path = meraki.construct_path('delete', net_id=net_id) + str(meraki.params['vlan_id'])

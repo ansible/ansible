@@ -18,8 +18,9 @@ DOCUMENTATION = r'''
 module: postgresql_idx
 short_description: Create or drop indexes from a PostgreSQL database
 description:
-- Create or drop indexes from a PostgreSQL database
-  U(https://www.postgresql.org/docs/current/sql-createindex.html).
+- Create or drop indexes from a PostgreSQL database.
+- For more information see U(https://www.postgresql.org/docs/current/sql-createindex.html),
+  U(https://www.postgresql.org/docs/current/sql-dropindex.html).
 version_added: '2.8'
 
 options:
@@ -32,22 +33,10 @@ options:
     - name
   db:
     description:
-    - Name of database where the index will be created/dropped.
+    - Name of database to connect to and where the index will be created/dropped.
     type: str
     aliases:
     - login_db
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
   session_role:
     description:
     - Switch to session_role after connecting.
@@ -57,39 +46,13 @@ options:
     type: str
   schema:
     description:
-    - Name of a database schema.
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
+    - Name of a database schema where the index will be created.
     type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    type: str
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s). If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    aliases: [ ssl_rootcert ]
   state:
     description:
     - Index state.
+    - I(state=present) implies the index will be created if it does not exist.
+    - I(state=absent) implies the index will be dropped if it exists.
     type: str
     default: present
     choices: [ absent, present ]
@@ -101,7 +64,7 @@ options:
     required: true
   columns:
     description:
-    - List of index columns.
+    - List of index columns that need to be covered by index.
     - Mutually exclusive with I(state=absent).
     type: list
     aliases:
@@ -121,6 +84,10 @@ options:
   concurrent:
     description:
     - Enable or disable concurrent mode (CREATE / DROP INDEX CONCURRENTLY).
+    - Pay attention, if I(concurrent=no), the table will be locked (ACCESS EXCLUSIVE) during the building process.
+      For more information about the lock levels see U(https://www.postgresql.org/docs/current/explicit-locking.html).
+    - If the building process was interrupted for any reason when I(cuncurrent=yes), the index becomes invalid.
+      In this case it should be dropped and created again.
     - Mutually exclusive with I(cascade=yes).
     type: bool
     default: yes
@@ -145,6 +112,8 @@ options:
     default: no
 
 notes:
+- The index building process can affect database performance.
+- To avoid table locks on production databases, use I(concurrent=yes) (default behavior).
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
 - This module uses psycopg2, a Python PostgreSQL database adapter. You must
@@ -159,6 +128,7 @@ requirements:
 
 author:
 - Andrew Klychkov (@Andersson007)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -259,21 +229,17 @@ valid:
   sample: true
 '''
 
-import traceback
-
-PSYCOPG2_IMP_ERR = None
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
 
 
 VALID_IDX_TYPES = ('BTREE', 'HASH', 'GIST', 'SPGIST', 'GIN', 'BRIN')
@@ -458,9 +424,6 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
-
     idxname = module.params["idxname"]
     state = module.params["state"]
     concurrent = module.params["concurrent"]
@@ -468,8 +431,6 @@ def main():
     idxtype = module.params["idxtype"]
     columns = module.params["columns"]
     cond = module.params["cond"]
-    sslrootcert = module.params["ca_cert"]
-    session_role = module.params["session_role"]
     tablespace = module.params["tablespace"]
     storage_params = module.params["storage_params"]
     cascade = module.params["cascade"]
@@ -492,51 +453,8 @@ def main():
     if cascade and state != 'absent':
         module.fail_json(msg="cascade parameter used only with state=absent")
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
-
-    try:
-        db_connection = psycopg2.connect(**kw)
-        if concurrent:
-            if psycopg2.__version__ >= '2.4.2':
-                db_connection.set_session(autocommit=True)
-            else:
-                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-
-        module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
-    except Exception as e:
-        module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
+    db_connection = connect_to_db(module, autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Set defaults:
     changed = False
@@ -595,12 +513,10 @@ def main():
         module.warn("Index %s is invalid! ROLLBACK" % idxname)
 
     if not concurrent:
-        if module.check_mode:
-            db_connection.rollback()
-        else:
-            db_connection.commit()
+        db_connection.commit()
 
     kw['changed'] = changed
+    db_connection.close()
     module.exit_json(**kw)
 
 

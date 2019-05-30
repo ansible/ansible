@@ -43,6 +43,11 @@ Or against a specific Python version by doing:
 
    ansible-test units --tox --python 2.7 apt
 
+If you are running unit tests against things other than modules, such as module utilities, specify the whole file path:
+
+.. code:: shell
+
+   ansible-test units --tox test/units/module_utils/basic/test_imports.py
 
 For advanced usage see the online help::
 

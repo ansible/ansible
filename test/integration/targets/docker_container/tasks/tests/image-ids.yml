@@ -76,3 +76,45 @@
       - create_2 is not changed
       - create_3 is changed
       - create_4 is not changed
+
+- name: set Digests
+  set_fact:
+    digest_hello_world_2016: 0256e8a36e2070f7bf2d0b0763dbabdd67798512411de4cdcf9431a1feb60fd9
+    digest_hello_world_2019: 2557e3c07ed1e38f26e389462d03ed943586f744621577a99efb77324b0fe535
+
+- name: Create container with hello-world image via old digest
+  docker_container:
+    image: "hello-world@sha256:{{ digest_hello_world_2016 }}"
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: digest_1
+
+- name: Create container with hello-world image via old digest (idempotent)
+  docker_container:
+    image: "hello-world@sha256:{{ digest_hello_world_2016 }}"
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: digest_2
+
+- name: Update container with hello-world image via new digest
+  docker_container:
+    image: "hello-world@sha256:{{ digest_hello_world_2019 }}"
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: digest_3
+
+- name: Cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+      - digest_1 is changed
+      - digest_2 is not changed
+      - digest_3 is changed

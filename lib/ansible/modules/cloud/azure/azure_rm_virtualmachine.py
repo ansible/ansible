@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
+# Copyright (c) 2018 James E. King, III (@jeking3) <jking@apache.org>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -277,8 +278,8 @@ options:
     remove_on_absent:
         description:
             - "When removing a VM using state 'absent', also remove associated resources."
-            - "It can be 'all' or 'all_autocreated' or  a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']."
-            - "To remove all resources referred by VM use 'all'."
+            - "It can be a list with any of the following: ['all', 'all_autocreated', 'network_interfaces', 'virtual_storage', 'public_ips']."
+            - "To remove all resources referred by VM use 'all' (this includes autocreated)."
             - "To remove all resources that were automatically created while provisioning VM use 'all_autocreated'."
             - Any other input will be ignored.
         default: ['all']
@@ -306,6 +307,7 @@ options:
         description:
             - Accept terms for marketplace images that require it
             - Only Azure service admin/account admin users can purchase images from the marketplace
+            - C(plan) must be set when C(accept_terms) is true
         type: bool
         default: false
         version_added: "2.7"
@@ -351,6 +353,26 @@ options:
                 description:
                     - Specifies the certificate store on the Virtual Machine to which the certificate
                       should be added. The specified certificate store is implicitly in the LocalMachine account.
+    boot_diagnostics:
+        description:
+            - Manage boot diagnostics settings for a virtual machine.  Boot diagnostics
+              includes a serial console and remote console screenshots.
+        version_added: '2.9'
+        suboptions:
+            enabled:
+                description:
+                    - Flag indicating if boot diagnostics is enabled.
+                required: true
+                type: bool
+            storage_account:
+                description:
+                    - The name of an existing storage account to use for boot diagnostics.
+                    - If omitted and C(storage_account_name) is defined one level up, that
+                      will be used instead.
+                    - If omitted and C(storage_account_name) is not defined one level up, and
+                      C(enabled) is I(true), then a default storage account will be created
+                      or used for the virtual machine to hold the boot diagnostics data.
+                required: false
 
 extends_documentation_fragment:
     - azure
@@ -360,7 +382,7 @@ author:
     - "Chris Houseknecht (@chouseknecht)"
     - "Matt Davis (@nitzmahone)"
     - "Christopher Perrin (@cperrin88)"
-
+    - "James E. King III (@jeking3)"
 '''
 EXAMPLES = '''
 
@@ -451,6 +473,8 @@ EXAMPLES = '''
     network_interfaces: testvm001
     storage_container: osdisk
     storage_blob: osdisk.vhd
+    boot_diagnostics:
+      enabled: yes
     image:
       offer: CoreOS
       publisher: CoreOS
@@ -797,7 +821,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             accept_terms=dict(type='bool', default=False),
             license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client']),
             vm_identity=dict(type='str', choices=['SystemAssigned']),
-            winrm=dict(type='list')
+            winrm=dict(type='list'),
+            boot_diagnostics=dict(type='dict'),
         )
 
         self.resource_group = None
@@ -841,6 +866,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.zones = None
         self.license_type = None
         self.vm_identity = None
+        self.boot_diagnostics = None
 
         self.results = dict(
             changed=False,
@@ -851,6 +877,45 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         super(AzureRMVirtualMachine, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                     supports_check_mode=True)
+
+    @property
+    def boot_diagnostics_present(self):
+        return self.boot_diagnostics is not None and 'enabled' in self.boot_diagnostics
+
+    def get_boot_diagnostics_storage_account(self, limited=False, vm_dict=None):
+        """
+        Get the boot diagnostics storage account.
+
+        Arguments:
+          - limited - if true, limit the logic to the boot_diagnostics storage account
+                      this is used if initial creation of the VM has a stanza with
+                      boot_diagnostics disabled, so we only create a storage account
+                      if the user specifies a storage account name inside the boot_diagnostics
+                      schema
+          - vm_dict - if invoked on an update, this is the current state of the vm including
+                      tags, like the default storage group tag '_own_sa_'.
+
+        Normal behavior:
+          - try the self.boot_diagnostics.storage_account field
+          - if not there, try the self.storage_account_name field
+          - if not there, use the default storage account
+
+        If limited is True:
+          - try the self.boot_diagnostics.storage_account field
+          - if not there, None
+        """
+        bsa = None
+        if 'storage_account' in self.boot_diagnostics:
+            bsa = self.get_storage_account(self.boot_diagnostics['storage_account'])
+        elif limited:
+            return None
+        elif self.storage_account_name:
+            bsa = self.get_storage_account(self.storage_account_name)
+        else:
+            bsa = self.create_default_storage_account(vm_dict=vm_dict)
+        self.log("boot diagnostics storage account:")
+        self.log(self.serialize_obj(bsa, 'StorageAccount'), pretty_print=True)
+        return bsa
 
     def exec_module(self, **kwargs):
 
@@ -868,6 +933,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         results = dict()
         vm = None
         network_interfaces = []
+        requested_storage_uri = None
         requested_vhd_uri = None
         data_disk_requested_vhd_uri = None
         disable_ssh_password = None
@@ -942,7 +1008,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if self.storage_account_name and not self.managed_disk_type:
                 properties = self.get_storage_account(self.storage_account_name)
 
-                requested_vhd_uri = '{0}{1}/{2}'.format(properties.primary_endpoints.blob,
+                requested_storage_uri = properties.primary_endpoints.blob
+                requested_vhd_uri = '{0}{1}/{2}'.format(requested_storage_uri,
                                                         self.storage_container_name,
                                                         self.storage_blob_name)
 
@@ -1043,6 +1110,46 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 if self.license_type is not None and vm_dict['properties'].get('licenseType') != self.license_type:
                     differences.append('License Type')
                     changed = True
+
+                # Defaults for boot diagnostics
+                if 'diagnosticsProfile' not in vm_dict['properties']:
+                    vm_dict['properties']['diagnosticsProfile'] = {}
+                if 'bootDiagnostics' not in vm_dict['properties']['diagnosticsProfile']:
+                    vm_dict['properties']['diagnosticsProfile']['bootDiagnostics'] = {
+                        'enabled': False,
+                        'storageUri': None
+                    }
+                if self.boot_diagnostics_present:
+                    current_boot_diagnostics = vm_dict['properties']['diagnosticsProfile']['bootDiagnostics']
+                    boot_diagnostics_changed = False
+
+                    if self.boot_diagnostics['enabled'] != current_boot_diagnostics['enabled']:
+                        current_boot_diagnostics['enabled'] = self.boot_diagnostics['enabled']
+                        boot_diagnostics_changed = True
+
+                    boot_diagnostics_storage_account = self.get_boot_diagnostics_storage_account(
+                        limited=not self.boot_diagnostics['enabled'], vm_dict=vm_dict)
+                    boot_diagnostics_blob = boot_diagnostics_storage_account.primary_endpoints.blob if boot_diagnostics_storage_account else None
+                    if current_boot_diagnostics['storageUri'] != boot_diagnostics_blob:
+                        current_boot_diagnostics['storageUri'] = boot_diagnostics_blob
+                        boot_diagnostics_changed = True
+
+                    if boot_diagnostics_changed:
+                        differences.append('Boot Diagnostics')
+                        changed = True
+
+                    # Adding boot diagnostics can create a default storage account after initial creation
+                    # this means we might also need to update the _own_sa_ tag
+                    own_sa = (self.tags or {}).get('_own_sa_', None)
+                    cur_sa = vm_dict.get('tags', {}).get('_own_sa_', None)
+                    if own_sa and own_sa != cur_sa:
+                        if 'Tags' not in differences:
+                            differences.append('Tags')
+                        if 'tags' not in vm_dict:
+                            vm_dict['tags'] = {}
+                        vm_dict['tags']['_own_sa_'] = own_sa
+                        changed = True
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -1065,7 +1172,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         if changed:
             if self.state == 'present':
-                default_storage_account = None
                 if not vm:
                     # Create the VM
                     self.log("Create virtual machine {0}".format(self.name))
@@ -1102,14 +1208,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     # os disk
                     if not self.storage_account_name and not self.managed_disk_type:
                         storage_account = self.create_default_storage_account()
-                        self.log("storage account:")
+                        self.log("os disk storage account:")
                         self.log(self.serialize_obj(storage_account, 'StorageAccount'), pretty_print=True)
-                        requested_vhd_uri = 'https://{0}.blob.{1}/{2}/{3}'.format(
+                        requested_storage_uri = 'https://{0}.blob.{1}/'.format(
                             storage_account.name,
-                            self._cloud_environment.suffixes.storage_endpoint,
+                            self._cloud_environment.suffixes.storage_endpoint)
+                        requested_vhd_uri = '{0}{1}/{2}'.format(
+                            requested_storage_uri,
                             self.storage_container_name,
                             self.storage_blob_name)
-                        default_storage_account = storage_account  # store for use by data disks if necessary
 
                     if not self.short_hostname:
                         self.short_hostname = self.name
@@ -1134,7 +1241,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                         publisher=self.plan.get('publisher'),
                                                         promotion_code=self.plan.get('promotion_code'))
 
-                    license_type = self.license_type
+                    # do this before creating vm_resource as it can modify tags
+                    if self.boot_diagnostics_present and self.boot_diagnostics['enabled']:
+                        boot_diag_storage_account = self.get_boot_diagnostics_storage_account()
 
                     vm_resource = self.compute_models.VirtualMachine(
                         location=self.location,
@@ -1205,6 +1314,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         elif not vm_resource.os_profile.windows_configuration.win_rm:
                             vm_resource.os_profile.windows_configuration.win_rm = winrm
 
+                    if self.boot_diagnostics_present:
+                        vm_resource.diagnostics_profile = self.compute_models.DiagnosticsProfile(
+                            boot_diagnostics=self.compute_models.BootDiagnostics(
+                                enabled=self.boot_diagnostics['enabled'],
+                                storage_uri=boot_diag_storage_account.primary_endpoints.blob))
+
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
 
@@ -1236,13 +1351,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 if data_disk.get('storage_account_name'):
                                     data_disk_storage_account = self.get_storage_account(data_disk['storage_account_name'])
                                 else:
-                                    if(not default_storage_account):
-                                        data_disk_storage_account = self.create_default_storage_account()
-                                        self.log("data disk storage account:")
-                                        self.log(self.serialize_obj(data_disk_storage_account, 'StorageAccount'), pretty_print=True)
-                                        default_storage_account = data_disk_storage_account  # store for use by future data disks if necessary
-                                    else:
-                                        data_disk_storage_account = default_storage_account
+                                    data_disk_storage_account = self.create_default_storage_account()
+                                    self.log("data disk storage account:")
+                                    self.log(self.serialize_obj(data_disk_storage_account, 'StorageAccount'), pretty_print=True)
 
                                 if not data_disk.get('storage_container_name'):
                                     data_disk['storage_container_name'] = 'vhds'
@@ -1282,7 +1393,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     # Before creating VM accept terms of plan if `accept_terms` is True
                     if self.accept_terms is True:
-                        if not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
+                        if not self.plan or not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
                             self.fail("parameter error: plan must be specified and include name, product, and publisher")
                         try:
                             plan_name = self.plan.get('name')
@@ -1291,7 +1402,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             term = self.marketplace_client.marketplace_agreements.get(
                                 publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name)
                             term.accepted = True
-                            agreement = self.marketplace_client.marketplace_agreements.create(
+                            self.marketplace_client.marketplace_agreements.create(
                                 publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name, parameters=term)
                         except Exception as exc:
                             self.fail(("Error accepting terms for virtual machine {0} with plan {1}. " +
@@ -1352,9 +1463,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         )
                     else:
                         os_profile = None
-                    license_type = None
-                    if self.license_type is None:
-                        license_type = "None"
 
                     vm_resource = self.compute_models.VirtualMachine(
                         location=vm_dict['location'],
@@ -1382,6 +1490,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     if self.license_type is not None:
                         vm_resource.license_type = self.license_type
+
+                    if self.boot_diagnostics is not None:
+                        vm_resource.diagnostics_profile = self.compute_models.DiagnosticsProfile(
+                            boot_diagnostics=self.compute_models.BootDiagnostics(
+                                enabled=vm_dict['properties']['diagnosticsProfile']['bootDiagnostics']['enabled'],
+                                storage_uri=vm_dict['properties']['diagnosticsProfile']['bootDiagnostics']['storageUri']))
 
                     if vm_dict.get('tags'):
                         vm_resource.tags = vm_dict['tags']
@@ -1660,26 +1774,26 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting virtual machine {0} - {1}".format(self.name, str(exc)))
 
-        if 'all_autocreated' in self.remove_on_absent:
+        # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
+        # TODO: best-effort to keep deleting other linked resources if we encounter an error
+        if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
+            self.log('Deleting VHDs')
+            self.delete_vm_storage(vhd_uris)
+            self.log('Deleting managed disks')
+            self.delete_managed_disks(managed_disk_ids)
+
+        if 'all' in self.remove_on_absent or 'all_autocreated' in self.remove_on_absent:
             self.remove_autocreated_resources(vm.tags)
-        else:
-            # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
-            # TODO: best-effort to keep deleting other linked resources if we encounter an error
-            if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
-                self.log('Deleting VHDs')
-                self.delete_vm_storage(vhd_uris)
-                self.log('Deleting managed disks')
-                self.delete_managed_disks(managed_disk_ids)
 
-            if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
-                self.log('Deleting network interfaces')
-                for nic_dict in nic_names:
-                    self.delete_nic(nic_dict['resource_group'], nic_dict['name'])
+        if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
+            self.log('Deleting network interfaces')
+            for nic_dict in nic_names:
+                self.delete_nic(nic_dict['resource_group'], nic_dict['name'])
 
-            if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
-                self.log('Deleting public IPs')
-                for pip_dict in pip_names:
-                    self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
+        if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
+            self.log('Deleting public IPs')
+            for pip_dict in pip_names:
+                self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
 
         return True
 
@@ -1840,10 +1954,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 return True
         return False
 
-    def create_default_storage_account(self):
+    def create_default_storage_account(self, vm_dict=None):
         '''
-        Create a default storage account <vm name>XXXX, where XXXX is a random number. If <vm name>XXXX exists, use it.
-        Otherwise, create one.
+        Create (once) a default storage account <vm name>XXXX, where XXXX is a random number.
+        NOTE: If <vm name>XXXX exists, use it instead of failing.  Highly unlikely.
+        If this method is called multiple times across executions it will return the same
+        storage account created with the random name which is stored in a tag on the VM.
+
+        vm_dict is passed in during an update, so we can obtain the _own_sa_ tag and return
+        the default storage account we created in a previous invocation
 
         :return: storage account object
         '''
@@ -1851,6 +1970,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         valid_name = False
         if self.tags is None:
             self.tags = {}
+
+        if self.tags.get('_own_sa_', None):
+            # We previously created one in the same invocation
+            return self.get_storage_account(self.tags['_own_sa_'])
+
+        if vm_dict and vm_dict.get('tags', {}).get('_own_sa_', None):
+            # We previously created one in a previous invocation
+            # We must be updating, like adding boot diagnostics
+            return self.get_storage_account(vm_dict['tags']['_own_sa_'])
 
         # Attempt to find a valid storage account name
         storage_account_name_base = re.sub('[^a-zA-Z0-9]', '', self.name[:20].lower())

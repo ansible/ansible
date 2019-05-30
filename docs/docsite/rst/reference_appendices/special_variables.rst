@@ -31,6 +31,16 @@ ansible_loop
 ansible_loop_var
     The name of the value provided to ``loop_control.loop_var``. Added in ``2.8``
 
+ansible_parent_role_names
+    When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (i.e. the role that included/imported this role) being the first item in the list.
+    When multiple inclusions occur, this list lists the *last* role (i.e. the role that included this role) as the *first* item in the list. It is also possible that a specific role exists more than once in this list.
+
+    For example: When role **A** includes role **B**, inside role B, ``ansible_parent_role_names`` will equal to ``['A']``. If role **B** then includes role **C**, the list becomes ``['B', 'A']``.
+
+ansible_parent_role_paths
+    When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (i.e. the role that included/imported this role) being the first item in the list.
+    Please refer to ``ansible_parent_role_names`` for the order of items in this list.
+
 ansible_play_batch
     List of active hosts in the current play run limited by the serial, aka 'batch'. Failed/Unreachable hosts are not considered 'active'.
 
@@ -100,7 +110,7 @@ playbook_dir
     The path to the directory of the playbook that was passed to the ``ansible-playbook`` command line.
 
 role_name
-    The name of the currently executed role
+    The name of the role currently being executed.
 
 role_names
     Deprecated, the same as ansible_play_role_names

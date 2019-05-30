@@ -195,19 +195,19 @@ options:
   state:
     version_added: "1.3"
     description:
-      - create, terminate, start, stop or restart instances.
-        The state 'restarted' was added in 2.2
-    required: false
+      - Create, terminate, start, stop or restart instances. The state 'restarted' was added in Ansible 2.2.
+      - When 'absent', I(instance_ids) is required.
+      - When 'running', 'stopped' and 'restarted', I(instance_ids) or I(instance_tags) is required.
     default: 'present'
-    choices: ['present', 'absent', 'running', 'restarted', 'stopped']
+    choices: ['absent', 'present', 'restarted', 'running', 'stopped']
     type: str
   volumes:
     version_added: "1.5"
     description:
       - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed
-        are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str),
-        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GiB), iops (int) - device_type
-        is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
+        are - device_name (str; required), delete_on_termination (bool; False), ephemeral (str),
+        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GiB), iops (int) - iops must be set when
+        volume_type='io1', ephemeral and snapshot are mutually exclusive.
     type: list
   ebs_optimized:
     version_added: "1.6"
@@ -431,7 +431,6 @@ EXAMPLES = '''
 
 - name: Terminate instances
   hosts: localhost
-  connection: local
   tasks:
     - name: Terminate instances that were previously launched
       ec2:
@@ -444,7 +443,6 @@ EXAMPLES = '''
 - name: Start sandbox instances
   hosts: localhost
   gather_facts: false
-  connection: local
   vars:
     instance_ids:
       - 'i-xxxxxx'
@@ -467,7 +465,6 @@ EXAMPLES = '''
 - name: Stop sandbox instances
   hosts: localhost
   gather_facts: false
-  connection: local
   vars:
     instance_ids:
       - 'i-xxxxxx'
@@ -790,17 +787,7 @@ def create_block_device(module, ec2, volume):
     # http://aws.amazon.com/about-aws/whats-new/2013/10/09/ebs-provisioned-iops-maximum-iops-gb-ratio-increased-to-30-1/
     MAX_IOPS_TO_SIZE_RATIO = 30
 
-    # device_type has been used historically to represent volume_type,
-    # however ec2_vol uses volume_type, as does the BlockDeviceType, so
-    # we add handling for either/or but not both
-    if all(key in volume for key in ['device_type', 'volume_type']):
-        module.fail_json(msg='device_type is a deprecated name for volume_type. Do not use both device_type and volume_type')
-    if 'device_type' in volume:
-        module.deprecate('device_type is deprecated for block devices - use volume_type instead',
-                         version=2.9)
-
-    # get whichever one is set, or NoneType if neither are set
-    volume_type = volume.get('device_type') or volume.get('volume_type')
+    volume_type = volume.get('volume_type')
 
     if 'snapshot' not in volume and 'ephemeral' not in volume:
         if 'volume_size' not in volume:

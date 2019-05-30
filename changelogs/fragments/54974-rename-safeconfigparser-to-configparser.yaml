@@ -1,2 +1,0 @@
-minor_changes:
-    - rename safeConfigParser to ConfigParser to suppress DeprecationWarning (The SafeConfigParser class has been renamed to ConfigParser in Python 3.2.)

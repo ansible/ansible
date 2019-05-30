@@ -151,8 +151,16 @@ def member_normalize(member_spec):
     It will remove any arguments that are set to None since WAPI will error on
     that condition.
     The remainder of the value validation is performed by WAPI
+    Some parameters in ib_spec are passed as a list in order to pass the validation for elements.
+    In this function, they are converted to dictionary.
     '''
+    member_elements = ['vip_setting', 'ipv6_setting', 'lan2_port_setting', 'mgmt_port_setting',
+                       'pre_provisioning', 'network_setting', 'v6_network_setting',
+                       'ha_port_setting', 'lan_port_setting', 'lan2_physical_setting',
+                       'lan_ha_port_setting', 'mgmt_network_setting', 'v6_mgmt_network_setting']
     for key in member_spec.keys():
+        if key in member_elements and member_spec[key] is not None:
+            member_spec[key] = member_spec[key][0]
         if isinstance(member_spec[key], dict):
             member_spec[key] = member_normalize(member_spec[key])
         elif isinstance(member_spec[key], list):
@@ -447,8 +455,8 @@ class WapiModule(WapiBase):
             temp = ib_spec['restart_if_needed']
             del ib_spec['restart_if_needed']
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
-            # reinstate restart_if_needed key if it's set to true in play
-            if module.params['restart_if_needed']:
+            # reinstate restart_if_needed if ib_obj is none, meaning there's no existing nios_zone ref
+            if not ib_obj:
                 ib_spec['restart_if_needed'] = temp
         elif (ib_obj_type == NIOS_MEMBER):
             # del key 'create_token' as nios_member get_object fails with the key present

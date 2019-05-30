@@ -34,7 +34,7 @@ sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 # the repository version needs to be the one that is loaded:
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..', 'lib')))
 
-VERSION = '2.7'
+VERSION = '2.8'
 AUTHOR = 'Ansible, Inc'
 
 
@@ -135,6 +135,7 @@ html_short_title = 'Ansible Documentation'
 
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
+    'collapse_navigation': "True"
 }
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name

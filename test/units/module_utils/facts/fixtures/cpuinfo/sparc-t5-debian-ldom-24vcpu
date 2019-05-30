@@ -1,0 +1,61 @@
+cpu             : UltraSparc T5 (Niagara5)
+fpu             : UltraSparc T5 integrated FPU
+pmu             : niagara5
+prom            : OBP 4.38.12 2018/03/28 14:54
+type            : sun4v
+ncpus probed    : 24
+ncpus active    : 24
+D$ parity tl1   : 0
+I$ parity tl1   : 0
+cpucaps         : flush,stbar,swap,muldiv,v9,blkinit,n2,mul32,div32,v8plus,popc,vis,vis2,ASIBlkInit,fmaf,vis3,hpc,ima,pause,cbcond,aes,des,kasumi,camellia,md5,sha1,sha256,sha512,mpmul,montmul,montsqr,crc32c
+Cpu0ClkTck      : 00000000d6924470
+Cpu1ClkTck      : 00000000d6924470
+Cpu2ClkTck      : 00000000d6924470
+Cpu3ClkTck      : 00000000d6924470
+Cpu4ClkTck      : 00000000d6924470
+Cpu5ClkTck      : 00000000d6924470
+Cpu6ClkTck      : 00000000d6924470
+Cpu7ClkTck      : 00000000d6924470
+Cpu8ClkTck      : 00000000d6924470
+Cpu9ClkTck      : 00000000d6924470
+Cpu10ClkTck     : 00000000d6924470
+Cpu11ClkTck     : 00000000d6924470
+Cpu12ClkTck     : 00000000d6924470
+Cpu13ClkTck     : 00000000d6924470
+Cpu14ClkTck     : 00000000d6924470
+Cpu15ClkTck     : 00000000d6924470
+Cpu16ClkTck     : 00000000d6924470
+Cpu17ClkTck     : 00000000d6924470
+Cpu18ClkTck     : 00000000d6924470
+Cpu19ClkTck     : 00000000d6924470
+Cpu20ClkTck     : 00000000d6924470
+Cpu21ClkTck     : 00000000d6924470
+Cpu22ClkTck     : 00000000d6924470
+Cpu23ClkTck     : 00000000d6924470
+MMU Type        : Hypervisor (sun4v)
+MMU PGSZs       : 8K,64K,4MB,256MB
+State:
+CPU0:           online
+CPU1:           online
+CPU2:           online
+CPU3:           online
+CPU4:           online
+CPU5:           online
+CPU6:           online
+CPU7:           online
+CPU8:           online
+CPU9:           online
+CPU10:          online
+CPU11:          online
+CPU12:          online
+CPU13:          online
+CPU14:          online
+CPU15:          online
+CPU16:          online
+CPU17:          online
+CPU18:          online
+CPU19:          online
+CPU20:          online
+CPU21:          online
+CPU22:          online
+CPU23:          online

@@ -1,3 +1,0 @@
-bugfixes:
-  - meraki_config_template - Fix conditions which prevented code from executing when specifying net_id
- 

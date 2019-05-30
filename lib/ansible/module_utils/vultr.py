@@ -19,12 +19,12 @@ VULTR_USER_AGENT = 'Ansible Vultr'
 
 def vultr_argument_spec():
     return dict(
-        api_key=dict(default=os.environ.get('VULTR_API_KEY'), no_log=True),
+        api_key=dict(type='str', default=os.environ.get('VULTR_API_KEY'), no_log=True),
         api_timeout=dict(type='int', default=os.environ.get('VULTR_API_TIMEOUT')),
         api_retries=dict(type='int', default=os.environ.get('VULTR_API_RETRIES')),
-        api_account=dict(default=os.environ.get('VULTR_API_ACCOUNT') or 'default'),
-        api_endpoint=dict(default=os.environ.get('VULTR_API_ENDPOINT')),
-        validate_certs=dict(default=True, type='bool'),
+        api_account=dict(type='str', default=os.environ.get('VULTR_API_ACCOUNT') or 'default'),
+        api_endpoint=dict(type='str', default=os.environ.get('VULTR_API_ENDPOINT')),
+        validate_certs=dict(type='bool', default=True),
     )
 
 
@@ -128,15 +128,15 @@ class Vultr:
             return
 
         r_value = resource.get(resource_key)
-        if isinstance(param, bool):
-            if param is True and r_value not in ['yes', 'enable']:
+        if r_value in ['yes', 'no']:
+            if param and r_value != 'yes':
                 return "enable"
-            elif param is False and r_value not in ['no', 'disable']:
+            elif not param and r_value != 'no':
                 return "disable"
         else:
-            if r_value is None:
+            if param and not r_value:
                 return "enable"
-            else:
+            elif not param and r_value:
                 return "disable"
 
     def api_query(self, path="/", method="GET", data=None):

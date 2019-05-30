@@ -185,9 +185,9 @@ EXAMPLES = r'''
 - name: Creates a cron file under /etc/cron.d
   cron:
     name: yum autoupdate
-    weekday: 2
-    minute: 0
-    hour: 12
+    weekday: "2"
+    minute: "0"
+    hour: "12"
     user: root
     job: "YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
     cron_file: ansible_yum-autoupdate
@@ -207,13 +207,13 @@ EXAMPLES = r'''
 
 import os
 import platform
-import pipes
 import pwd
 import re
 import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.six.moves import shlex_quote
 
 
 CRONCMD = "/usr/bin/crontab"
@@ -514,13 +514,13 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(CRONCMD))
+                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(CRONCMD))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
+                return "%s -l %s" % (shlex_quote(CRONCMD), shlex_quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD, '-l', pipes.quote(self.user))
+                return "%s %s %s" % (CRONCMD, '-l', shlex_quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
+                user = '-u %s' % shlex_quote(self.user)
         return "%s %s %s" % (CRONCMD, user, '-l')
 
     def _write_execute(self, path):
@@ -530,10 +530,10 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), CRONCMD, shlex_quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, pipes.quote(path))
+                user = '-u %s' % shlex_quote(self.user)
+        return "%s %s %s" % (CRONCMD, user, shlex_quote(path))
 
 
 def main():

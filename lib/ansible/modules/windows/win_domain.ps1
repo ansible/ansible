@@ -16,6 +16,7 @@ Function Ensure-Prereqs {
 
         # NOTE: AD-Domain-Services includes: RSAT-AD-AdminCenter, RSAT-AD-Powershell and RSAT-ADDS-Tools
         $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
+        $result.reboot_required = $awf.RestartNeeded
         # FUTURE: Check if reboot necessary
         return $true
     }
@@ -74,7 +75,8 @@ try {
     # Cannot use Get-ADForest as that requires credential delegation, the below does not
     $forest_context = New-Object -TypeName System.DirectoryServices.ActiveDirectory.DirectoryContext -ArgumentList Forest, $dns_domain_name
     $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetForest($forest_context)
-} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] { }
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryOperationException] { }
 
 if (-not $forest) {
     $result.changed = $true

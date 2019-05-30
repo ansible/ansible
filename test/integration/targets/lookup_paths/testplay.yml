@@ -1,6 +1,5 @@
 - name: test initial state
-  hosts: testhost
-  connection: local
+  hosts: localhost
   gather_facts: false
   pre_tasks:
     - name: remove {{ remove }}

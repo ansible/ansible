@@ -19,7 +19,7 @@ module: postgresql_info
 short_description: Gather information about PostgreSQL servers
 description:
 - Gathers information about PostgreSQL servers.
-version_added: "2.8"
+version_added: '2.8'
 options:
   filter:
     description:
@@ -39,13 +39,6 @@ options:
     type: str
     aliases:
     - login_db
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
   session_role:
     description:
     - Switch to session_role after connecting. The specified session_role must
@@ -53,41 +46,6 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    type: str
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-    default: prefer
-  ca_cert:
-    description:
-    - Specifies the name of a file containing SSL certificate authority (CA)
-      certificate(s).
-    - If the file exists, the server's certificate will be
-      verified to be signed by one of these authorities.
-    type: str
-    aliases: [ ssl_rootcert ]
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -103,6 +61,7 @@ notes:
 requirements: [ psycopg2 ]
 author:
 - Andrew Klychkov (@Andersson007)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -509,14 +468,15 @@ settings:
 from fnmatch import fnmatch
 
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -526,44 +486,48 @@ from ansible.module_utils.six import iteritems
 #
 
 class PgDbConn(object):
-    def __init__(self, module, params_dict, session_role):
-        self.params_dict = params_dict
+
+    """Auxiliary class for working with PostgreSQL connection objects.
+
+    Arguments:
+        module (AnsibleModule): Object of AnsibleModule class that
+            contains connection parameters.
+    """
+
+    def __init__(self, module):
         self.module = module
         self.db_conn = None
-        self.session_role = session_role
         self.cursor = None
 
     def connect(self):
-        try:
-            self.db_conn = psycopg2.connect(**self.params_dict)
-            self.cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        """Connect to a PostgreSQL database and return a cursor object.
 
-            # Switch role, if specified:
-            if self.session_role:
-                try:
-                    self.cursor.execute('SET ROLE %s' % self.session_role)
-                except Exception as e:
-                    self.module.fail_json(msg="Could not switch role: %s" % to_native(e))
-
-            return self.cursor
-
-        except TypeError as e:
-            if 'sslrootcert' in e.args[0]:
-                self.module.fail_json(msg='PostgreSQL server must be at least version 8.4 '
-                                          'to support sslrootcert')
-            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
-
-        except Exception as e:
-            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
+        Note: connection parameters are passed by self.module object.
+        """
+        self.db_conn = connect_to_db(self.module, warn_db_default=False)
+        return self.db_conn.cursor(cursor_factory=DictCursor)
 
     def reconnect(self, dbname):
+        """Reconnect to another database and return a PostgreSQL cursor object.
+
+        Arguments:
+            dbname (string): Database name to connect to.
+        """
         self.db_conn.close()
 
-        self.params_dict['database'] = dbname
+        self.module.params['database'] = dbname
         return self.connect()
 
 
 class PgClusterInfo(object):
+
+    """Class for collection information about a PostgreSQL instance.
+
+    Arguments:
+        module (AnsibleModule): Object of AnsibleModule class.
+        db_conn_obj (psycopg2.connect): PostgreSQL connection object.
+    """
+
     def __init__(self, module, db_conn_obj):
         self.module = module
         self.db_obj = db_conn_obj
@@ -580,6 +544,9 @@ class PgClusterInfo(object):
         }
 
     def collect(self, val_list=False):
+        """
+        Collect information based on 'filter' option.
+        """
         subset_map = {
             "version": self.get_pg_version,
             "tablespaces": self.get_tablespaces,
@@ -891,6 +858,9 @@ class PgClusterInfo(object):
         return nsp_dict
 
     def get_pg_version(self):
+        """
+        Get major and minor PostgreSQL server version.
+        """
         query = "SELECT version()"
         raw = self.__exec_sql(query)[0][0]
         raw = raw.split()[1].split('.')
@@ -900,6 +870,10 @@ class PgClusterInfo(object):
         )
 
     def get_db_info(self):
+        """
+        Get information about the current database.
+        """
+
         # Following query returns:
         # Name, Owner, Encoding, Collate, Ctype, Access Priv, Size
         query = ("SELECT d.datname, "
@@ -938,18 +912,21 @@ class PgClusterInfo(object):
         self.pg_info["databases"] = db_dict
 
     def __get_pretty_val(self, setting):
+        """
+        Get setting's value represented by SHOW command.
+        """
         return self.__exec_sql("SHOW %s" % setting)[0][0]
 
     def __exec_sql(self, query):
+        """
+        Execute SQL and return the result.
+        """
         try:
             self.cursor.execute(query)
             res = self.cursor.fetchall()
             if res:
                 return res
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-            self.cursor.close()
-        except psycopg2.ProgrammingError as e:
+        except Exception as e:
             self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
             self.cursor.close()
         return False
@@ -963,10 +940,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         db=dict(type='str', aliases=['login_db']),
-        port=dict(type='int', default=5432, aliases=['login_port']),
         filter=dict(type='list'),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
         session_role=dict(type='str'),
     )
     module = AnsibleModule(
@@ -974,38 +948,9 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg="The python psycopg2 module is required")
-
     filter_ = module.params["filter"]
-    sslrootcert = module.params["ca_cert"]
-    session_role = module.params["session_role"]
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
-                             'to user the ca_cert parameter')
-
-    db_conn_obj = PgDbConn(module, kw, session_role)
+    db_conn_obj = PgDbConn(module)
 
     # Do job:
     pg_info = PgClusterInfo(module, db_conn_obj)

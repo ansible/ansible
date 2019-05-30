@@ -1,5 +1,0 @@
-minor_changes:
-- identity - Added support for GSSAPI authentication for the FreeIPA modules.
-  This is enabled by either using the KRB5CCNAME or the KRB5_CLIENT_KTNAME
-  environment variables when calling the ansible playbook. Note that to enable
-  this feature, one has to install the urllib_gssapi python library.

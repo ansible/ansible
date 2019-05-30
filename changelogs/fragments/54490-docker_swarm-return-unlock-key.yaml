@@ -1,2 +1,0 @@
-minor_changes:
-  - "docker_swarm - ``UnlockKey`` will now be returned when ``autolock_managers`` is ``true``."

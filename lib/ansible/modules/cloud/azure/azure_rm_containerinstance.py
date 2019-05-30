@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerinstance
 version_added: "2.5"
-short_description: Manage an Azure Container Instance.
+short_description: Manage an Azure Container Instance
 description:
     - Create, update and delete an Azure Container Instance.
 
@@ -46,7 +46,8 @@ options:
             - present
     ip_address:
         description:
-            - The IP address type of the container group (default is 'none')
+            - The IP address type of the container group.
+            - Default is C(none) and creating an instance without public IP.
         choices:
             - public
             - none
@@ -59,6 +60,8 @@ options:
     ports:
         description:
             - List of ports exposed within the container group.
+            - This option is deprecated, using I(ports) under I(containers)".
+        type: list
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
@@ -87,14 +90,17 @@ options:
             memory:
                 description:
                     - The required memory of the containers in GB.
+                type: float
                 default: 1.5
             cpu:
                 description:
                     - The required number of CPU cores of the containers.
+                type: float
                 default: 1
             ports:
                 description:
                     - List of ports exposed within the container group.
+                type: list
             environment_variables:
                 description:
                     - List of container environment variables.
@@ -140,7 +146,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -148,11 +154,11 @@ EXAMPLES = '''
   - name: Create sample container group
     azure_rm_containerinstance:
       resource_group: myResourceGroup
-      name: mynewcontainergroup
+      name: myContainerInstanceGroup
       os_type: linux
       ip_address: public
       containers:
-        - name: mycontainer1
+        - name: myContainer1
           image: httpd
           memory: 1.5
           ports:
@@ -162,7 +168,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance/containerGroups/aci1b6dd89

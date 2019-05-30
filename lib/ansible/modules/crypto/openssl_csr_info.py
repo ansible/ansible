@@ -165,6 +165,7 @@ from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.3'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
@@ -173,7 +174,6 @@ PYOPENSSL_IMP_ERR = None
 try:
     import OpenSSL
     from OpenSSL import crypto
-    import ipaddress
     PYOPENSSL_VERSION = LooseVersion(OpenSSL.__version__)
     if OpenSSL.SSL.OPENSSL_VERSION_NUMBER >= 0x10100000:
         # OpenSSL 1.1.0 or newer
@@ -439,10 +439,12 @@ class CertificateSigningRequestInfoPyOpenSSL(CertificateSigningRequestInfo):
             return None, False
 
     def _normalize_san(self, san):
+        # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+        # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
         if san.startswith('IP Address:'):
             san = 'IP:' + san[len('IP Address:'):]
         if san.startswith('IP:'):
-            ip = ipaddress.ip_address(san[3:])
+            ip = compat_ipaddress.ip_address(san[3:])
             san = 'IP:{0}'.format(ip.compressed)
         return san
 

@@ -24,30 +24,24 @@ import json
 import re
 import collections
 
-from ansible import constants as C
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.netconf import remove_namespaces
 from ansible.module_utils.network.iosxr.iosxr import build_xml, etree_find
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.netconf import NetconfBase
-from ansible.plugins.netconf import ensure_connected
+from ansible.plugins.netconf import ensure_connected, ensure_ncclient
 
 try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
-    from ncclient.xml_ import to_ele, to_xml, new_ele
-except ImportError:
-    raise AnsibleError("ncclient is not installed")
-
-try:
-    from lxml import etree
-except ImportError:
-    raise AnsibleError("lxml is not installed")
+    from ncclient.xml_ import to_xml
+    HAS_NCCLIENT = True
+except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    HAS_NCCLIENT = False
 
 
 class Netconf(NetconfBase):
-
     @ensure_connected
     def get_device_info(self):
         device_info = {}
@@ -93,6 +87,7 @@ class Netconf(NetconfBase):
         return json.dumps(result)
 
     @staticmethod
+    @ensure_ncclient
     def guess_network_os(obj):
         """
         Guess the remote network os name
@@ -124,6 +119,7 @@ class Netconf(NetconfBase):
         return guessed_os
 
     # TODO: change .xml to .data_xml, when ncclient supports data_xml on all platforms
+    @ensure_ncclient
     @ensure_connected
     def get(self, filter=None, remove_ns=False):
         if isinstance(filter, list):
@@ -138,6 +134,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def get_config(self, source=None, filter=None, remove_ns=False):
         if isinstance(filter, list):
@@ -152,6 +149,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None, remove_ns=False):
         if config is None:
@@ -167,6 +165,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def commit(self, confirmed=False, timeout=None, persist=None, remove_ns=False):
         try:
@@ -179,6 +178,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def validate(self, source="candidate", remove_ns=False):
         try:
@@ -191,6 +191,7 @@ class Netconf(NetconfBase):
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
+    @ensure_ncclient
     @ensure_connected
     def discard_changes(self, remove_ns=False):
         try:

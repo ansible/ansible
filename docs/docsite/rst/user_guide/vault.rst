@@ -16,7 +16,12 @@ For best practices advice, refer to :ref:`best_practices_for_variables_and_vault
 What Can Be Encrypted With Vault
 ````````````````````````````````
 
-Ansible Vault can encrypt any structured data file used by Ansible.  This can include "group_vars/" or "host_vars/" inventory variables, variables loaded by "include_vars" or "vars_files", or variable files passed on the ansible-playbook command line with ``-e @file.yml`` or ``-e @file.json``.  Role variables and defaults are also included.
+File-level encryption
+^^^^^^^^^^^^^^^^^^^^^
+
+Ansible Vault can encrypt any structured data file used by Ansible.
+
+This can include "group_vars/" or "host_vars/" inventory variables, variables loaded by "include_vars" or "vars_files", or variable files passed on the ansible-playbook command line with ``-e @file.yml`` or ``-e @file.json``.  Role variables and defaults are also included.
 
 Ansible tasks, handlers, and so on are also data so these can be encrypted with vault as well. To hide the names of variables that you're using, you can encrypt the task files in their entirety.
 
@@ -26,7 +31,19 @@ given as the ``src`` argument to the :ref:`copy <copy_module>`, :ref:`template <
 <assemble_module>` modules, the file will be placed at the destination on the target host decrypted
 (assuming a valid vault password is supplied when running the play).
 
-As of version 2.3, Ansible supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details below.
+.. note::
+    The advantages of file-level encryption are that it is easy to use and that password rotation is straightforward with :ref:`rekeying <rekeying_files>`.
+    The drawback is that the contents of files are no longer easy to access and read. This may be problematic if it is a list of tasks (when encrypting a variables file, :ref:`best practice <best_practices_for_variables_and_vaults>` is to keep references to these variables in a non-encrypted file).
+
+
+Variable-level encryption
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Ansible also supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more detail :ref:`below <encrypt_string_for_use_in_yaml>`.
+
+.. note::
+    The advantage of variable-level encryption is that files are still easily legible even if they mix plaintext and encrypted variables.
+    The drawback is that password rotation is not as simple as with file-level encryption: the :ref:`rekey <ansible_vault_rekey>` command does not work with this method.
 
 
 .. _vault_ids:
@@ -34,22 +51,27 @@ As of version 2.3, Ansible supports encrypting single values inside a YAML file,
 Vault IDs and Multiple Vault Passwords
 ``````````````````````````````````````
 
-*Available since Ansible 2.4*
 
-A vault ID is an identifier for one or more vault secrets. Since Ansible 2.4,
-Ansible supports multiple vault passwords. Vault IDs provide
-labels for individual vault passwords.
+A vault ID is an identifier for one or more vault secrets;
+Ansible supports multiple vault passwords.
+
+Vault IDs provide labels to distinguish between individual vault passwords.
+
+To use vault IDs, you must provide an ID *label* of your choosing and a *source* to obtain its password (either ``prompt`` or a file path):
+
+.. code-block:: bash
+
+   --vault-id label@source
+
+This switch is available for all Ansible commands that can interact with vaults: :ref:`ansible-vault`, :ref:`ansible-playbook`, etc.
 
 Vault-encrypted content can specify which vault ID it was encrypted with.
 
-Prior to Ansible 2.4, only one vault password could be used at a time, So any
-vault files or vars that needed to be decrypted all had to use the same password.
-
-Since Ansible 2.4, vault files or vars that are encrypted with different
-passwords can be used at the same time.
-
 For example, a playbook can now include a vars file encrypted with a 'dev' vault
 ID and a 'prod' vault ID.
+
+.. note:
+    Older versions of Ansible, before 2.4, only supported using one single vault password at a time.
 
 
 .. _creating_files:
@@ -67,6 +89,12 @@ First you will be prompted for a password. After providing a password, the tool 
 
 The default cipher is AES (which is shared-secret based).
 
+To create a new encrypted data file with the Vault ID 'password1' assigned to it and be prompted for the password, run:
+
+.. code-block:: bash
+
+   ansible-vault create --vault-id password1@prompt foo.yml
+
 
 .. _editing_encrypted_files:
 
@@ -80,6 +108,12 @@ the file, saving it back when done and removing the temporary file:
 .. code-block:: bash
 
    ansible-vault edit foo.yml
+
+To edit a file encrypted with the 'vault2' password file and assigned the 'pass2' vault ID:
+
+.. code-block:: bash
+
+   ansible-vault edit --vault-id pass2@vault2 foo.yml
 
 
 .. _rekeying_files:
@@ -96,6 +130,13 @@ Should you wish to change your password on a vault-encrypted file or files, you 
 This command can rekey multiple data files at once and will ask for the original
 password and also the new password.
 
+To rekey files encrypted with the 'preprod2' vault ID and the 'ppold' file and be prompted for the new password:
+
+.. code-block:: bash
+
+    ansible-vault rekey --vault-id preprod2@ppold --new-vault-id preprod2@prompt foo.yml bar.yml baz.yml
+
+A different ID could have been set for the rekeyed files by passing it to ``--new-vault-id``.
 
 .. _encrypting_files:
 
@@ -108,6 +149,18 @@ the :ref:`ansible-vault encrypt <ansible_vault_encrypt>` command.  This command 
 .. code-block:: bash
 
    ansible-vault encrypt foo.yml bar.yml baz.yml
+
+To encrypt existing files with the 'project' ID and be prompted for the password:
+
+.. code-block:: bash
+
+   ansible-vault encrypt --vault-id project@prompt foo.yml bar.yml baz.yml
+
+.. note::
+
+   It is technically possible to separately encrypt files or strings with the *same* vault ID but *different* passwords, if different password files or prompted passwords are provided each time.
+   This could be desirable if you use vault IDs as references to classes of passwords (rather than a single password) and you always know which specific password or file to use in context. However this may be an unnecessarily complex use-case.
+   If two files are encrypted with the same vault ID but different passwords by accident, you can use the :ref:`rekey <rekeying_files>` command to fix the issue.
 
 
 .. _decrypting_files:
@@ -225,6 +278,17 @@ Result::
               3161
 
 See also :ref:`single_encrypted_variable`
+
+After you added the encrypted value to a var file (vars.yml), you can see the original value using the debug module.
+
+.. code-block:: console
+
+   ansible localhost -m debug -a var="new_user_password" -e "@vars.yml" --ask-vault-pass
+   Vault password:
+
+   localhost | SUCCESS => {
+       "new_user_password": "hunter2"
+   }
 
 
 .. _providing_vault_passwords:
@@ -344,7 +408,7 @@ passwords will be tried in the order they are specified.
 In the above case, the 'dev' password will be tried first, then the 'prod' password for cases
 where Ansible doesn't know which vault ID is used to encrypt something.
 
-To add a vault ID label to the encrypted data use the :option:`--vault-id <ansible-vault --vault-id>` option
+To add a vault ID label to the encrypted data use the :option:`--vault-id <ansible-vault-create --vault-id>` option
 with a label when encrypting the data.
 
 The :ref:`DEFAULT_VAULT_ID_MATCH` config option can be set so that Ansible will only use the password with

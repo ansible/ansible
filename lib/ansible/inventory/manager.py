@@ -36,6 +36,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
+from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -156,9 +157,6 @@ class InventoryManager(object):
     @property
     def hosts(self):
         return self._inventory.hosts
-
-    def get_vars(self, *args, **kwargs):
-        return self._inventory.get_vars(args, kwargs)
 
     def add_host(self, host, group=None, port=None):
         return self._inventory.add_host(host, group, port)
@@ -369,8 +367,7 @@ class InventoryManager(object):
                     # exclude hosts mentioned in any restriction (ex: failed hosts)
                     hosts = [h for h in hosts if h.name in self._restriction]
 
-                seen = set()
-                self._hosts_patterns_cache[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
+                self._hosts_patterns_cache[pattern_hash] = deduplicate_list(hosts)
 
             # sort hosts list if needed (should only happen when called from strategy)
             if order in ['sorted', 'reverse_sorted']:

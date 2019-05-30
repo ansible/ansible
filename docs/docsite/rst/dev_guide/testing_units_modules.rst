@@ -190,8 +190,9 @@ above, either by throwing an exception or ensuring that they haven't been called
     class AnsibleExitJson(Exception):
         """Exception class to be raised by module.exit_json and caught by the test case"""
         pass
-    #you may also do the same to fail json
-    module=MagicMock()
+
+    # you may also do the same to fail json
+    module = MagicMock()
     module.exit_json.side_effect = AnsibleExitJson(Exception)
     with self.assertRaises(AnsibleExitJson) as result:
         return = my_module.test_this_function(module, argument)
@@ -287,27 +288,22 @@ Passing Arguments
 .. This section should be updated once https://github.com/ansible/ansible/pull/31456 is
    closed since the function below will be provided in a library file.
 
-To pass arguments to a module correctly, use a function that stores the
-parameters in a special string variable.  Module creation and argument processing is
+To pass arguments to a module correctly, use the ``set_module_args`` method which accepts a dictionary
+as its parameter. Module creation and argument processing is
 handled through the :class:`AnsibleModule` object in the basic section of the utilities. Normally
 this accepts input on ``STDIN``, which is not convenient for unit testing. When the special
-variable is set it will be treated as if the input came on ``STDIN`` to the module.::
+variable is set it will be treated as if the input came on ``STDIN`` to the module. Simply call that function before setting up your module::
 
-    import json
-    from ansible.module_utils._text import to_bytes
+    import json 
+    from units.modules.utils import set_module_args 
+    from ansible.module_utils._text import to_bytes 
 
-    def set_module_args(args):
-        args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-        basic._ANSIBLE_ARGS = to_bytes(args)
-
-    simply call that function before setting up your module
-
-        def test_already_registered(self):
-            set_module_args({
-                'activationkey': 'key',
-                'username': 'user',
-                'password': 'pass',
-            })
+    def test_already_registered(self):
+        set_module_args({
+            'activationkey': 'key',
+            'username': 'user',
+            'password': 'pass',
+        })
 
 Handling exit correctly
 -----------------------
@@ -334,8 +330,9 @@ testing for the correct exception::
             'username': 'user',
             'password': 'pass',
         })
-       with self.assertRaises(AnsibleExitJson) as result:
-           my_module.main()
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            my_module.main()
 
 The same technique can be used to replace :meth:`module.fail_json` (which is used for failure
 returns from modules) and for the ``aws_module.fail_json_aws()`` (used in modules for Amazon
@@ -349,7 +346,7 @@ the arguments as above, set up the appropriate exit exception and then run the m
 
     # This test is based around pytest's features for individual test functions
     import pytest
-    import ansible.modules.module.group.my_modulle as my_module
+    import ansible.modules.module.group.my_module as my_module
 
     def test_main_function(monkeypatch):
         monkeypatch.setattr(my_module.AnsibleModule, "exit_json", fake_exit_json)
@@ -511,7 +508,7 @@ This now makes it possible to run tests against the module initiation function::
          })
 
         with self.assertRaises(AnsibleFailJson) as result:
-             self.module.setup_json
+            self.module.setup_json
 
 See also ``test/units/module_utils/aws/test_rds.py``
 
@@ -559,8 +556,8 @@ the code in Ansible to trigger that failure.
        General advice on testing Python code
    `Uncle Bob's many videos on YouTube <https://www.youtube.com/watch?v=QedpQjxBPMA&list=PLlu0CT-JnSasQzGrGzddSczJQQU7295D2>`_
        Unit testing is a part of the of various philosophies of software development, including
-       Extreme Programming (XP), Clean Coding.  Uncle Bob talks through how to benfit from this
-   `"Why Most Unit Testing is Waste" https://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf`
+       Extreme Programming (XP), Clean Coding.  Uncle Bob talks through how to benefit from this
+   `"Why Most Unit Testing is Waste" <https://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf>`_
        An article warning against the costs of unit testing
-   `'A Response to "Why Most Unit Testing is Waste"' https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/`
+   `'A Response to "Why Most Unit Testing is Waste"' <https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/>`_
        An response pointing to how to maintain the value of unit tests

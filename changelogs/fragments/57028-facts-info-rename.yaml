@@ -1,0 +1,3 @@
+minor_changes:
+- The ``bigip_device_facts`` module has been renamed to ``bigip_device_info``.
+- The ``bigiq_device_facts`` module has been renamed to ``bigiq_device_info``.

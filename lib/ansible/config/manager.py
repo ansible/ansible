@@ -83,11 +83,11 @@ def ensure_type(value, value_type, origin=None):
     if value_type:
         value_type = value_type.lower()
 
-    if value_type in ('boolean', 'bool'):
-        value = boolean(value, strict=False)
+    if value is not None:
+        if value_type in ('boolean', 'bool'):
+            value = boolean(value, strict=False)
 
-    elif value is not None:
-        if value_type in ('integer', 'int'):
+        elif value_type in ('integer', 'int'):
             value = int(value)
 
         elif value_type == 'float':

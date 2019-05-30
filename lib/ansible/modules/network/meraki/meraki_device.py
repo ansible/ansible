@@ -331,9 +331,12 @@ def main():
                 path = meraki.construct_path('get_all', net_id=net_id)
                 devices = meraki.request(path, method='GET')
                 for unit in devices:
-                    if unit['name'] == meraki.params['hostname']:
-                        device.append(unit)
-                        meraki.result['data'] = device
+                    try:
+                        if unit['name'] == meraki.params['hostname']:
+                            device.append(unit)
+                            meraki.result['data'] = device
+                    except KeyError:
+                        pass
             elif meraki.params['model']:
                 path = meraki.construct_path('get_all', net_id=net_id)
                 devices = meraki.request(path, method='GET')
@@ -372,12 +375,15 @@ def main():
                 query_path = meraki.construct_path('get_device', net_id=net_id) + meraki.params['serial']
                 device_data = meraki.request(query_path, method='GET')
                 ignore_keys = ['lanIp', 'serial', 'mac', 'model', 'networkId', 'moveMapMarker', 'wan1Ip', 'wan2Ip']
+                # meraki.fail_json(msg="Compare", original=device_data, payload=payload, ignore=ignore_keys)
                 if meraki.is_update_required(device_data, payload, optional_ignore=ignore_keys):
                     path = meraki.construct_path('update', net_id=net_id) + meraki.params['serial']
                     updated_device = []
                     updated_device.append(meraki.request(path, method='PUT', payload=json.dumps(payload)))
                     meraki.result['data'] = updated_device
                     meraki.result['changed'] = True
+                else:
+                    meraki.result['data'] = device_data
         else:
             if net_id is None:
                 device_list = get_org_devices(meraki, org_id)

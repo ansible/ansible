@@ -18,13 +18,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: postgresql_pg_hba
-short_description: Add, remove or modifie a rule in a pg_hba file
+short_description: Add, remove or modify a rule in a pg_hba file
 description:
    - The fundamental function of the module is to create, or delete lines in pg_hba files.
    - The lines in the file should be in a typical pg_hba form and lines should be unique per key (type, databases, users, source).
      If they are not unique and the SID is 'the one to change', only one for C(state=present) or none for C(state=absent) of the SID's will remain.
 extends_documentation_fragment: files
-version_added: "2.8"
+version_added: '2.8'
 options:
   address:
     description:
@@ -100,12 +100,12 @@ notes:
    - The default authentication assumes that on the host, you are either logging in as or
      sudo'ing to an account with appropriate permissions to read and modify the file.
    - This module also returns the pg_hba info. You can use this module to only retrieve it by only specifying I(dest).
-     The info kan be found in the returned data under key pg_hba, being a list, containing a dict per rule.
+     The info can be found in the returned data under key pg_hba, being a list, containing a dict per rule.
    - This module will sort resulting C(pg_hba) files if a rule change is required.
      This could give unexpected results with manual created hba files, if it was improperly sorted.
      For example a rule was created for a net first and for a ip in that net range next.
      In that situation, the 'ip specific rule' will never hit, it is in the C(pg_hba) file obsolete.
-     After the C(pg_hba) file is rewritten by the M(pg_hba) module, the ip specific rule will be sorted above the range rule.
+     After the C(pg_hba) file is rewritten by the M(postgresql_pg_hba) module, the ip specific rule will be sorted above the range rule.
      And then it will hit, which will give unexpected results.
    - With the 'order' parameter you can control which field is used to sort first, next and last.
    - The module supports a check mode and a diff mode.
@@ -119,30 +119,30 @@ author: Sebastiaan Mannem (@sebasmannem)
 EXAMPLES = '''
 - name: Grant users joe and simon access to databases sales and logistics from ipv6 localhost ::1/128 using peer authentication.
   postgresql_pg_hba:
-    dest=/var/lib/postgres/data/pg_hba.conf
-    contype=host
-    users=joe,simon
-    source=::1
-    databases=sales,logistics
-    method=peer
-    create=true
+    dest: /var/lib/postgres/data/pg_hba.conf
+    contype: host
+    users: joe,simon
+    source: ::1
+    databases: sales,logistics
+    method: peer
+    create: true
 
 - name: Grant user replication from network 192.168.0.100/24 access for replication with client cert authentication.
   postgresql_pg_hba:
-    dest=/var/lib/postgres/data/pg_hba.conf
-    contype=host
-    users=replication
-    source=192.168.0.100/24
-    databases=replication
-    method=cert
+    dest: /var/lib/postgres/data/pg_hba.conf
+    contype: host
+    users: replication
+    source: 192.168.0.100/24
+    databases: replication
+    method: cert
 
 - name: Revoke access from local user mary on database mydb.
   postgresql_pg_hba:
-    dest=/var/lib/postgres/data/pg_hba.conf
-    contype=local
-    users=mary
-    databases=mydb
-    state=absent
+    dest: /var/lib/postgres/data/pg_hba.conf
+    contype: local
+    users: mary
+    databases: mydb
+    state: absent
 '''
 
 RETURN = r'''

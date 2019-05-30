@@ -138,7 +138,8 @@ def managed_disk_to_dict(managed_disk):
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=managed_disk.os_type.lower() if managed_disk.os_type else None,
         storage_account_type=managed_disk.sku.name if managed_disk.sku else None,
-        managed_by=managed_disk.managed_by
+        managed_by=managed_disk.managed_by,
+        zone=managed_disk.zones[0] if managed_disk.zones and len(managed_disk.zones) > 0 else ''
     )
 
 

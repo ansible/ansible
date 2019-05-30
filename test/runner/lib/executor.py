@@ -10,7 +10,6 @@ import re
 import time
 import textwrap
 import functools
-import pipes
 import sys
 import hashlib
 import difflib
@@ -61,6 +60,7 @@ from lib.util import (
     get_remote_completion,
     named_temporary_file,
     COVERAGE_OUTPUT_PATH,
+    cmd_quote,
 )
 
 from lib.docker_util import (
@@ -219,7 +219,7 @@ def install_command_requirements(args, python_version=None):
 
         if changes:
             raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
-                                   '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+                                   '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
     # ask pip to check for conflicts between installed packages
     try:
@@ -1152,6 +1152,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
@@ -1241,7 +1242,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             hosts=hosts,
             gather_facts=gather_facts,
             vars_files=[
-                test_env.vars_file,
+                os.path.relpath(test_env.vars_file, test_env.integration_dir),
             ],
             roles=[
                 target.name,
@@ -1262,7 +1263,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
             display.info('>>> Playbook: %s\n%s' % (filename, playbook.strip()), verbosity=3)
 
-            cmd = ['ansible-playbook', filename, '-i', test_env.inventory_path]
+            cmd = ['ansible-playbook', filename, '-i', os.path.relpath(test_env.inventory_path, test_env.integration_dir)]
 
             if start_at_task:
                 cmd += ['--start-at-task', start_at_task]

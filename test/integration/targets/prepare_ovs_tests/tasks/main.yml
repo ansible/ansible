@@ -23,7 +23,7 @@
 - name: Install openvswitch-switch package if we are on Ubuntu
   apt:
     name: openvswitch-switch
-    state: installed
+    state: present
     update_cache: yes
   become: yes
   when: ansible_distribution == 'Ubuntu'

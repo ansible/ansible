@@ -277,13 +277,12 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _common_args
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash
-from ansible.utils.path import makedirs_safe
 
 HAS_PYPSRP = True
 PYPSRP_IMP_ERR = None
 try:
     import pypsrp
-    from pypsrp.complex_objects import GenericComplexObject, RunspacePoolState
+    from pypsrp.complex_objects import GenericComplexObject, PSInvocationState, RunspacePoolState
     from pypsrp.exceptions import AuthenticationError, WinRMError
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
@@ -402,9 +401,10 @@ class Connection(ConnectionBase):
             else:
                 display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
         else:
-            # in other cases we want to execute the cmd as the script
-            script = cmd
-            display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
+            # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
+            # rc is propagated back to the connection plugin.
+            script = to_text(u"%s\nexit $LASTEXITCODE" % cmd)
+            display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
         rc, stdout, stderr = self._exec_psrp_script(script, in_data)
         return rc, stdout, stderr
@@ -502,7 +502,7 @@ class Connection(ConnectionBase):
 
         # setup the file stream with read only mode
         setup_script = '''$ErrorActionPreference = "Stop"
-$path = "%s"
+$path = '%s'
 
 if (Test-Path -Path $path -PathType Leaf) {
     $fs = New-Object -TypeName System.IO.FileStream -ArgumentList @(
@@ -533,24 +533,23 @@ if ($bytes_read -gt 0) {
         # need to run the setup script outside of the local scope so the
         # file stream stays active between fetch operations
         rc, stdout, stderr = self._exec_psrp_script(setup_script,
-                                                    use_local_scope=False)
+                                                    use_local_scope=False,
+                                                    force_stop=True)
         if rc != 0:
             raise AnsibleError("failed to setup file stream for fetch '%s': %s"
                                % (out_path, to_native(stderr)))
         elif stdout.strip() == '[DIR]':
-            # in_path was a dir so we need to create the dir locally
-            makedirs_safe(out_path)
+            # to be consistent with other connection plugins, we assume the caller has created the target dir
             return
 
         b_out_path = to_bytes(out_path, errors='surrogate_or_strict')
-        makedirs_safe(os.path.dirname(b_out_path))
+        # to be consistent with other connection plugins, we assume the caller has created the target dir
         offset = 0
         with open(b_out_path, 'wb') as out_file:
             while True:
                 display.vvvvv("PSRP FETCH %s to %s (offset=%d" %
                               (in_path, out_path, offset), host=self._psrp_host)
-                rc, stdout, stderr = \
-                    self._exec_psrp_script(read_script % offset)
+                rc, stdout, stderr = self._exec_psrp_script(read_script % offset, force_stop=True)
                 if rc != 0:
                     raise AnsibleError("failed to transfer file to '%s': %s"
                                        % (out_path, to_native(stderr)))
@@ -559,8 +558,9 @@ if ($bytes_read -gt 0) {
                 out_file.write(data)
                 if len(data) < buffer_size:
                     break
+                offset += len(data)
 
-            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()")
+            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()", force_stop=True)
             if rc != 0:
                 display.warning("failed to close remote file stream of file "
                                 "'%s': %s" % (in_path, to_native(stderr)))
@@ -682,12 +682,22 @@ if ($bytes_read -gt 0) {
             option = self.get_option('_extras')['ansible_psrp_%s' % arg]
             self._psrp_conn_kwargs[arg] = option
 
-    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True):
+    def _exec_psrp_script(self, script, input_data=None, use_local_scope=True, force_stop=False):
         ps = PowerShell(self.runspace)
         ps.add_script(script, use_local_scope=use_local_scope)
         ps.invoke(input=input_data)
 
         rc, stdout, stderr = self._parse_pipeline_result(ps)
+
+        if force_stop:
+            # This is usually not needed because we close the Runspace after our exec and we skip the call to close the
+            # pipeline manually to save on some time. Set to True when running multiple exec calls in the same runspace.
+
+            # Current pypsrp versions raise an exception if the current state was not RUNNING. We manually set it so we
+            # can call stop without any issues.
+            ps.state = PSInvocationState.RUNNING
+            ps.stop()
+
         return rc, stdout, stderr
 
     def _parse_pipeline_result(self, pipeline):
@@ -723,29 +733,29 @@ if ($bytes_read -gt 0) {
 
             stdout_list.append(output_msg)
 
-        stdout = u"\r\n".join(stdout_list)
         if len(self.host.ui.stdout) > 0:
-            stdout += u"\r\n" + u"".join(self.host.ui.stdout)
+            stdout_list += self.host.ui.stdout
+        stdout = u"\r\n".join(stdout_list)
 
         stderr_list = []
         for error in pipeline.streams.error:
             # the error record is not as fully fleshed out like we usually get
             # in PS, we will manually create it here
-            error_msg = "%s : %s\r\n" \
-                        "%s\r\n" \
+            command_name = "%s : " % error.command_name if error.command_name else ''
+            position = "%s\r\n" % error.invocation_position_message if error.invocation_position_message else ''
+            error_msg = "%s%s\r\n%s" \
                         "    + CategoryInfo          : %s\r\n" \
                         "    + FullyQualifiedErrorId : %s" \
-                        % (error.command_name, str(error),
-                           error.invocation_position_message, error.message,
-                           error.fq_error)
+                        % (command_name, str(error), position,
+                           error.message, error.fq_error)
             stacktrace = error.script_stacktrace
             if self._play_context.verbosity >= 3 and stacktrace is not None:
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
             stderr_list.append(error_msg)
 
-        stderr = "\r\n".join(stderr_list)
         if len(self.host.ui.stderr) > 0:
-            stderr += "\r\n" + "".join(self.host.ui.stderr)
+            stderr_list += self.host.ui.stderr
+        stderr = u"\r\n".join([to_text(o) for o in stderr_list])
 
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
         display.vvvvv("PSRP STDOUT: %s" % stdout, host=self._psrp_host)

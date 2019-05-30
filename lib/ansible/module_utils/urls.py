@@ -140,7 +140,7 @@ if not HAS_SSLCONTEXT and HAS_SSL:
 
 # The following makes it easier for us to script updates of the bundled backports.ssl_match_hostname
 # The bundled backports.ssl_match_hostname should really be moved into its own file for processing
-_BUNDLED_METADATA = {"pypi_name": "backports.ssl_match_hostname", "version": "3.5.0.1"}
+_BUNDLED_METADATA = {"pypi_name": "backports.ssl_match_hostname", "version": "3.7.0.1"}
 
 LOADED_VERIFY_LOCATIONS = set()
 
@@ -166,76 +166,157 @@ if not HAS_MATCH_HOSTNAME:
 
     """The match_hostname() function from Python 3.4, essential when using SSL."""
 
-    class CertificateError(ValueError):
-        pass
+    try:
+        # Divergence: Python-3.7+'s _ssl has this exception type but older Pythons do not
+        from _ssl import SSLCertVerificationError
+        CertificateError = SSLCertVerificationError
+    except ImportError:
+        class CertificateError(ValueError):
+            pass
 
-    def _dnsname_match(dn, hostname, max_wildcards=1):
+    def _dnsname_match(dn, hostname):
         """Matching according to RFC 6125, section 6.4.3
 
-        http://tools.ietf.org/html/rfc6125#section-6.4.3
+        - Hostnames are compared lower case.
+        - For IDNA, both dn and hostname must be encoded as IDN A-label (ACE).
+        - Partial wildcards like 'www*.example.org', multiple wildcards, sole
+          wildcard or wildcards in labels other then the left-most label are not
+          supported and a CertificateError is raised.
+        - A wildcard must match at least one character.
         """
-        pats = []
         if not dn:
             return False
 
-        # Ported from python3-syntax:
-        # leftmost, *remainder = dn.split(r'.')
-        parts = dn.split(r'.')
-        leftmost = parts[0]
-        remainder = parts[1:]
-
-        wildcards = leftmost.count('*')
-        if wildcards > max_wildcards:
-            # Issue #17980: avoid denials of service by refusing more
-            # than one wildcard per fragment.  A survey of established
-            # policy among SSL implementations showed it to be a
-            # reasonable choice.
-            raise CertificateError(
-                "too many wildcards in certificate DNS name: " + repr(dn))
-
+        wildcards = dn.count('*')
         # speed up common case w/o wildcards
         if not wildcards:
             return dn.lower() == hostname.lower()
 
-        # RFC 6125, section 6.4.3, subitem 1.
-        # The client SHOULD NOT attempt to match a presented identifier in which
-        # the wildcard character comprises a label other than the left-most label.
-        if leftmost == '*':
-            # When '*' is a fragment by itself, it matches a non-empty dotless
-            # fragment.
-            pats.append('[^.]+')
-        elif leftmost.startswith('xn--') or hostname.startswith('xn--'):
-            # RFC 6125, section 6.4.3, subitem 3.
-            # The client SHOULD NOT attempt to match a presented identifier
-            # where the wildcard character is embedded within an A-label or
-            # U-label of an internationalized domain name.
-            pats.append(re.escape(leftmost))
+        if wildcards > 1:
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise CertificateError(
+                "too many wildcards in certificate DNS name: %s" % repr(dn))
+
+        dn_leftmost, sep, dn_remainder = dn.partition('.')
+
+        if '*' in dn_remainder:
+            # Only match wildcard in leftmost segment.
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise CertificateError(
+                "wildcard can only be present in the leftmost label: "
+                "%s." % repr(dn))
+
+        if not sep:
+            # no right side
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise CertificateError(
+                "sole wildcard without additional labels are not support: "
+                "%s." % repr(dn))
+
+        if dn_leftmost != '*':
+            # no partial wildcard matching
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise CertificateError(
+                "partial wildcards in leftmost label are not supported: "
+                "%s." % repr(dn))
+
+        hostname_leftmost, sep, hostname_remainder = hostname.partition('.')
+        if not hostname_leftmost or not sep:
+            # wildcard must match at least one char
+            return False
+        return dn_remainder.lower() == hostname_remainder.lower()
+
+    def _inet_paton(ipname):
+        """Try to convert an IP address to packed binary form
+
+        Supports IPv4 addresses on all platforms and IPv6 on platforms with IPv6
+        support.
+        """
+        # inet_aton() also accepts strings like '1'
+        # Divergence: We make sure we have native string type for all python versions
+        try:
+            b_ipname = to_bytes(ipname, errors='strict')
+        except UnicodeError:
+            raise ValueError("%s must be an all-ascii string." % repr(ipname))
+
+        # Set ipname in native string format
+        if sys.version_info < (3,):
+            n_ipname = b_ipname
         else:
-            # Otherwise, '*' matches any dotless string, e.g. www*
-            pats.append(re.escape(leftmost).replace(r'\*', '[^.]*'))
+            n_ipname = ipname
 
-        # add the remaining fragments, ignore any wildcards
-        for frag in remainder:
-            pats.append(re.escape(frag))
+        if n_ipname.count('.') == 3:
+            try:
+                return socket.inet_aton(n_ipname)
+            # Divergence: OSError on late python3.  socket.error earlier.
+            # Null bytes generate ValueError on python3(we want to raise
+            # ValueError anyway), TypeError # earlier
+            except (OSError, socket.error, TypeError):
+                pass
 
-        pat = re.compile(r'\A' + r'\.'.join(pats) + r'\Z', re.IGNORECASE)
-        return pat.match(hostname)
+        try:
+            return socket.inet_pton(socket.AF_INET6, n_ipname)
+        # Divergence: OSError on late python3.  socket.error earlier.
+        # Null bytes generate ValueError on python3(we want to raise
+        # ValueError anyway), TypeError # earlier
+        except (OSError, socket.error, TypeError):
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise ValueError("%s is neither an IPv4 nor an IP6 "
+                             "address." % repr(ipname))
+        except AttributeError:
+            # AF_INET6 not available
+            pass
+
+        # Divergence .format() to percent formatting for Python < 2.6
+        raise ValueError("%s is not an IPv4 address." % repr(ipname))
+
+    def _ipaddress_match(ipname, host_ip):
+        """Exact matching of IP addresses.
+
+        RFC 6125 explicitly doesn't define an algorithm for this
+        (section 1.7.2 - "Out of Scope").
+        """
+        # OpenSSL may add a trailing newline to a subjectAltName's IP address
+        ip = _inet_paton(ipname.rstrip())
+        return ip == host_ip
 
     def match_hostname(cert, hostname):
         """Verify that *cert* (in decoded format as returned by
         SSLSocket.getpeercert()) matches the *hostname*.  RFC 2818 and RFC 6125
-        rules are followed, but IP addresses are not accepted for *hostname*.
+        rules are followed.
+
+        The function matches IP addresses rather than dNSNames if hostname is a
+        valid ipaddress string. IPv4 addresses are supported on all platforms.
+        IPv6 addresses are supported on platforms with IPv6 support (AF_INET6
+        and inet_pton).
 
         CertificateError is raised on failure. On success, the function
         returns nothing.
         """
         if not cert:
-            raise ValueError("empty or no certificate")
+            raise ValueError("empty or no certificate, match_hostname needs a "
+                             "SSL socket or SSL context with either "
+                             "CERT_OPTIONAL or CERT_REQUIRED")
+        try:
+            # Divergence: Deal with hostname as bytes
+            host_ip = _inet_paton(to_text(hostname, errors='strict'))
+        except UnicodeError:
+            # Divergence: Deal with hostname as byte strings.
+            # IP addresses should be all ascii, so we consider it not
+            # an IP address if this fails
+            host_ip = None
+        except ValueError:
+            # Not an IP address (common case)
+            host_ip = None
         dnsnames = []
         san = cert.get('subjectAltName', ())
         for key, value in san:
             if key == 'DNS':
-                if _dnsname_match(value, hostname):
+                if host_ip is None and _dnsname_match(value, hostname):
+                    return
+                dnsnames.append(value)
+            elif key == 'IP Address':
+                if host_ip is not None and _ipaddress_match(value, host_ip):
                     return
                 dnsnames.append(value)
         if not dnsnames:
@@ -250,7 +331,7 @@ if not HAS_MATCH_HOSTNAME:
                             return
                         dnsnames.append(value)
         if len(dnsnames) > 1:
-            raise CertificateError("hostname %r " "doesn't match either of %s" % (hostname, ', '.join(map(repr, dnsnames))))
+            raise CertificateError("hostname %r doesn't match either of %s" % (hostname, ', '.join(map(repr, dnsnames))))
         elif len(dnsnames) == 1:
             raise CertificateError("hostname %r doesn't match %r" % (hostname, dnsnames[0]))
         else:
@@ -478,8 +559,24 @@ def generic_urlparse(parts):
         generic_parts['fragment'] = parts.fragment
         generic_parts['username'] = parts.username
         generic_parts['password'] = parts.password
-        generic_parts['hostname'] = parts.hostname
-        generic_parts['port'] = parts.port
+        hostname = parts.hostname
+        if hostname and hostname[0] == '[' and '[' in parts.netloc and ']' in parts.netloc:
+            # Py2.6 doesn't parse IPv6 addresses correctly
+            hostname = parts.netloc.split(']')[0][1:].lower()
+        generic_parts['hostname'] = hostname
+
+        try:
+            port = parts.port
+        except ValueError:
+            # Py2.6 doesn't parse IPv6 addresses correctly
+            netloc = parts.netloc.split('@')[-1].split(']')[-1]
+            if ':' in netloc:
+                port = netloc.split(':')[1]
+                if port:
+                    port = int(port)
+            else:
+                port = None
+        generic_parts['port'] = port
     else:
         # we have to use indexes, and then parse out
         # the other parts not supported by indexing
@@ -882,19 +979,9 @@ def maybe_add_ssl_handler(url, validate_certs):
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
-        # do the cert validation
-        netloc = parsed.netloc
-        if '@' in netloc:
-            netloc = netloc.split('@', 1)[1]
-        if ':' in netloc:
-            hostname, port = netloc.split(':', 1)
-            port = int(port)
-        else:
-            hostname = netloc
-            port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(parsed.hostname, parsed.port or 443)
 
 
 def rfc2822_date_string(timetuple, zone='-0000'):
@@ -1342,7 +1429,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     cookies = cookiejar.LWPCookieJar()
 
     r = None
-    info = dict(url=url)
+    info = dict(url=url, status=-1)
     try:
         r = open_url(url, data=data, headers=headers, method=method,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
@@ -1384,11 +1471,11 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except NoSSLError as e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
-            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e))
+            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e), **info)
         else:
-            module.fail_json(msg='%s' % to_native(e))
+            module.fail_json(msg='%s' % to_native(e), **info)
     except (ConnectionError, ValueError) as e:
-        module.fail_json(msg=to_native(e))
+        module.fail_json(msg=to_native(e), **info)
     except urllib_error.HTTPError as e:
         try:
             body = e.read()

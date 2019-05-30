@@ -41,3 +41,11 @@ def object_to_dict(obj, exclude=None):
     if exclude is None or not isinstance(exclude, list):
         exclude = []
     return dict((key, getattr(obj, key)) for key in dir(obj) if not (key.startswith('_') or key in exclude))
+
+
+def deduplicate_list(original_list):
+    """
+    Creates a deduplicated list with the order in which each item is first found.
+    """
+    seen = set()
+    return [x for x in original_list if x not in seen and not seen.add(x)]

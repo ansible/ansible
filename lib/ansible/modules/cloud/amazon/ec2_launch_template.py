@@ -73,7 +73,7 @@ options:
       ebs:
         description: Parameters used to automatically set up EBS volumes when the instance is launched.
         suboptions:
-          delete_on_termintation:
+          delete_on_termination:
             description: Indicates whether the EBS volume is deleted on instance termination.
             type: bool
           encrypted:

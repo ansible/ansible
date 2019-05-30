@@ -133,6 +133,13 @@ def get_template_id(meraki, name, data):
     meraki.fail_json(msg='No configuration template named {0} found'.format(name))
 
 
+def is_template_valid(meraki, nets, template_id):
+    for net in nets:
+        if net['id'] == template_id:
+            return True
+    return False
+
+
 def is_network_bound(meraki, nets, net_id, template_id):
     for net in nets:
         if net['id'] == net_id:
@@ -149,7 +156,7 @@ def delete_template(meraki, org_id, name, data):
     path = meraki.construct_path('delete', org_id=org_id)
     path = path + '/' + template_id
     response = meraki.request(path, 'DELETE')
-    if meraki.status != 200:
+    if meraki.status != 204:
         meraki.fail_json(msg='Unable to remove configuration template')
     return response
 
@@ -217,9 +224,6 @@ def main():
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
 
     # execute checks for argument completeness
 
@@ -229,9 +233,13 @@ def main():
     if meraki.params['org_name']:
         org_id = meraki.get_org_id(meraki.params['org_name'])
     net_id = meraki.params['net_id']
-    nets = meraki.get_nets(org_id=org_id)
-    if meraki.params['net_name']:
-        net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+    nets = None
+    if net_id is None:
+        if meraki.params['net_name'] is not None:
+            nets = meraki.get_nets(org_id=org_id)
+            net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+        else:
+            nets = meraki.get_nets(org_id=org_id)
 
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_config_templates(meraki, org_id)
@@ -239,7 +247,13 @@ def main():
         template_id = get_template_id(meraki,
                                       meraki.params['config_template'],
                                       get_config_templates(meraki, org_id))
-        if is_network_bound(meraki, nets, net_id, template_id) is False:
+        if nets is None:
+            nets = meraki.get_nets(org_id=org_id)
+        if is_network_bound(meraki, nets, net_id, template_id) is False:  # Bind template
+            if meraki.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.result['changed'] = True
+                meraki.exit_json(**meraki.result)
             template_bind = bind(meraki,
                                  net_id,
                                  template_id)
@@ -247,25 +261,64 @@ def main():
                 meraki.fail_json(msg='Unable to bind configuration template to network')
             meraki.result['changed'] = True
             meraki.result['data'] = template_bind
+        else:  # Network is already bound, being explicit
+            if meraki.check_mode is True:  # Include to be explicit
+                meraki.result['data'] = {}
+                meraki.result['changed'] = False
+                meraki.exit_json(**meraki.result)
+            meraki.result['data'] = {}
+            meraki.result['changed'] = False
+            meraki.exit_json(**meraki.result)
     elif meraki.params['state'] == 'absent':
-        if not meraki.params['net_name'] and not meraki.params['net_id']:
-            meraki.result['data'] = delete_template(meraki,
-                                                    org_id,
-                                                    meraki.params['config_template'],
-                                                    get_config_templates(meraki, org_id))
-            if meraki.status == 200:
-                meraki.result['changed'] = True
-        else:
+        template_id = get_template_id(meraki,
+                                      meraki.params['config_template'],
+                                      get_config_templates(meraki, org_id))
+        if not meraki.params['net_name'] and not meraki.params['net_id']:  # Delete template
+            if is_template_valid(meraki, nets, template_id) is True:
+                if meraki.check_mode is True:
+                    meraki.result['data'] = {}
+                    meraki.result['changed'] = True
+                    meraki.exit_json(**meraki.result)
+                meraki.result['data'] = delete_template(meraki,
+                                                        org_id,
+                                                        meraki.params['config_template'],
+                                                        get_config_templates(meraki, org_id))
+                if meraki.status == 204:
+                    meraki.result['data'] = {}
+                    meraki.result['changed'] = True
+            else:
+                meraki.fail_json(msg="No template named {0} found.".format(meraki.params['config_template']))
+        else:  # Unbind template
+            if meraki.check_mode is True:
+                meraki.result['data'] = {}
+                if is_template_valid(meraki, nets, template_id) is True:
+                    meraki.result['changed'] = True
+                else:
+                    meraki.result['changed'] = False
+                meraki.exit_json(**meraki.result)
             template_id = get_template_id(meraki,
                                           meraki.params['config_template'],
                                           get_config_templates(meraki, org_id))
+            if nets is None:
+                nets = meraki.get_nets(org_id=org_id)
             if is_network_bound(meraki, nets, net_id, template_id) is True:
+                if meraki.check_mode is True:
+                    meraki.result['data'] = {}
+                    meraki.result['changed'] = True
+                    meraki.exit_json(**meraki.result)
                 config_unbind = unbind(meraki,
                                        net_id)
                 if meraki.status != 200:
                     meraki.fail_json(msg='Unable to unbind configuration template from network')
                 meraki.result['changed'] = True
                 meraki.result['data'] = config_unbind
+            else:  # No network is bound, nothing to do
+                if meraki.check_mode is True:  # Include to be explicit
+                    meraki.result['data'] = {}
+                    meraki.result['changed'] = False
+                    meraki.exit_json(**meraki.result)
+                meraki.result['data'] = {}
+                meraki.result['changed'] = False
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

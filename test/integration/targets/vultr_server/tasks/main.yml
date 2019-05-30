@@ -13,7 +13,7 @@
 
 # Servers can only be destroyed 5 min after creation
 - name: wait for 5 min
-  local_action: wait_for
+  wait_for:
   when: result is changed
 
 - name: test fail if missing name
@@ -313,6 +313,7 @@
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_2 }}"
     auto_backup_enabled: yes
+    private_network_enabled: yes
     region: Amsterdam
     force: yes
   register: result
@@ -327,6 +328,7 @@
     - result.vultr_server.plan == vultr_server_plan_1
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.auto_backup_enabled == false
+    - result.vultr_server.internal_ip == ''
 
 - name: test update server with force
   vultr_server:
@@ -334,6 +336,7 @@
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_2 }}"
     auto_backup_enabled: yes
+    private_network_enabled: yes
     region: Amsterdam
     force: yes
   register: result
@@ -347,15 +350,17 @@
     - result.vultr_server.plan == vultr_server_plan_2
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.auto_backup_enabled == true
+    - result.vultr_server.internal_ip != ''
 
 - name: test update server idempotence with force
   vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_2 }}"
-    auto_backup_enabled: true
+    auto_backup_enabled: yes
+    private_network_enabled: yes
     region: Amsterdam
-    force: true
+    force: yes
   register: result
 - name: verify test update server idempotence with force
   assert:
@@ -367,13 +372,14 @@
     - result.vultr_server.plan == vultr_server_plan_2
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.auto_backup_enabled == true
+    - result.vultr_server.internal_ip != ''
 
 - name: test update server to stopped in check mode
   vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_2 }}"
-    ipv6_enabled: true
+    ipv6_enabled: yes
     region: Amsterdam
     state: stopped
   register: result
@@ -394,7 +400,7 @@
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_2 }}"
-    ipv6_enabled: true
+    ipv6_enabled: yes
     region: Amsterdam
     state: stopped
   register: result
@@ -414,6 +420,7 @@
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_2 }}"
+    ipv6_enabled: yes
     region: Amsterdam
     state: stopped
   register: result
@@ -474,7 +481,7 @@
 
 # Servers can only be destroyed 5 min after creation
 - name: wait for 5 min
-  local_action: wait_for
+  wait_for:
 
 - name: test absent server
   vultr_server:

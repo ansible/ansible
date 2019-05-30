@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerregistry
 version_added: "2.5"
-short_description: Manage an Azure Container Registry.
+short_description: Manage an Azure Container Registry
 description:
     - Create, update and delete an Azure Container Registry.
 
@@ -45,7 +45,7 @@ options:
         default: no
     sku:
         description:
-            - Specifies the SKU to use. Currently can be either Basic, Standard or Premium.
+            - Specifies the SKU to use. Currently can be either C(Basic), C(Standard) or C(Premium).
         default: Standard
         choices:
             - Basic
@@ -57,14 +57,14 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yawei Wang (@yaweiw)"
+    - Yawei Wang (@yaweiw)
 
 '''
 
 EXAMPLES = '''
     - name: Create an azure container registry
       azure_rm_containerregistry:
-        name: testacr1
+        name: myRegistry
         location: eastus
         resource_group: myResourceGroup
         admin_user_enabled: true
@@ -75,74 +75,74 @@ EXAMPLES = '''
 
     - name: Remove an azure container registry
       azure_rm_containerregistry:
-        name: testacr2
+        name: myRegistry
         resource_group: myResourceGroup
         state: absent
 '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry
 name:
     description:
-        - Registry name
+        - Registry name.
     returned: always
     type: str
     sample: myregistry
 location:
     description:
-        - Resource location
+        - Resource location.
     returned: always
     type: str
     sample: westus
 admin_user_enabled:
     description:
-        - Is admin user enabled
+        - Is admin user enabled.
     returned: always
     type: bool
     sample: true
 sku:
     description:
-        - SKU
+        - The SKU name of the container registry.
     returned: always
     type: str
     sample: Standard
 provisioning_state:
     description:
-        - Provisioning state
+        - Provisioning state.
     returned: always
     type: str
     sample: Succeeded
 login_server:
     description:
-        - Registry login server
+        - Registry login server.
     returned: always
     type: str
     sample: myregistry.azurecr.io
 credentials:
     description:
-        - Passwords defined for the registry
+        - Passwords defined for the registry.
     returned: always
     type: complex
     contains:
         password:
             description:
-                - password value
+                - password value.
             returned: when registry exists and C(admin_user_enabled) is set
             type: str
             sample: pass1value
         password2:
             description:
-                - password2 value
+                - password2 value.
             returned: when registry exists and C(admin_user_enabled) is set
             type: str
             sample: pass2value
 tags:
     description:
-        - Tags
+        - Tags assigned to the resource. Dictionary of string:string parirs.
     returned: always
     type: dict
 '''

@@ -445,12 +445,14 @@ def main():
                 execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
-            extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', pre_state)
+            extract = re.search(r'Logging: (on|off)(?: \(([a-z]+)\))?', pre_state)
             if extract:
                 current_level = extract.group(2)
                 current_on_off_value = extract.group(1)
                 if value != "off":
-                    if value != "on" and (value != current_level or current_on_off_value == "off"):
+                    if current_on_off_value == "off":
+                        changed = True
+                    elif value != "on" and value != current_level:
                         changed = True
                 elif current_on_off_value != "off":
                     changed = True

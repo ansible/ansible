@@ -1,0 +1,3 @@
+bugfixes:
+- psrp - Fix blank newlines appearing before ``stdout`` when using ``script`` or ``raw`` with the ``psrp`` connection plugin
+- psrp - Fix issues with propagating errors back to Ansible with ``raw`` tasks

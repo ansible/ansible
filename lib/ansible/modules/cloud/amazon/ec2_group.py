@@ -229,6 +229,7 @@ EXAMPLES = '''
 
 - name: "Delete group by its id"
   ec2_group:
+    region: eu-west-1
     group_id: sg-33b4ee5b
     state: absent
 '''
@@ -937,7 +938,7 @@ def get_diff_final_resource(client, module, security_group):
                     'vpc_id': rule_sg.get('vpc_id', module.params['vpc_id']),
                     'vpc_peering_connection_id': rule_sg.get('vpc_peering_connection_id')
                 }]
-                for k, v in format_rule['user_id_group_pairs'][0].items():
+                for k, v in list(format_rule['user_id_group_pairs'][0].items()):
                     if v is None:
                         format_rule['user_id_group_pairs'][0].pop(k)
             final_rules.append(format_rule)

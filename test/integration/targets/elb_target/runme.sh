@@ -16,11 +16,11 @@ PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-1.7.1"
 source "${MYTMPDIR}/botocore-1.7.1/bin/activate"
 $PYTHON -m pip install 'botocore<=1.7.1' boto3
-ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/version_fail.yml "$@"
+ansible-playbook -i ../../inventory -e @../../integration_config.yml -v playbooks/version_fail.yml "$@"
 
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-recent"
 source "${MYTMPDIR}/botocore-recent/bin/activate"
 $PYTHON -m pip install 'botocore>=1.8.0' boto3
-ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/full_test.yml "$@"
+ansible-playbook -i ../../inventory -e @../../integration_config.yml -v playbooks/full_test.yml "$@"
 

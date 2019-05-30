@@ -30,7 +30,6 @@ from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
@@ -45,7 +44,7 @@ __all__ = ['Task']
 display = Display()
 
 
-class Task(Base, Conditional, Taggable, Become, CollectionSearch):
+class Task(Base, Conditional, Taggable, CollectionSearch):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.
@@ -80,7 +79,7 @@ class Task(Base, Conditional, Taggable, Become, CollectionSearch):
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _notify = FieldAttribute(isa='list')
-    _poll = FieldAttribute(isa='int', default=10)
+    _poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     _register = FieldAttribute(isa='string', static=True)
     _retries = FieldAttribute(isa='int', default=3)
     _until = FieldAttribute(isa='list', default=list)

@@ -1,2 +1,0 @@
-minor_changes:
-  - use ansible.module_utils.six for all scripts in contrib/inventory

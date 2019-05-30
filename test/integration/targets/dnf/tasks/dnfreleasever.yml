@@ -1,7 +1,6 @@
 # make an installroot
 - name: Create installroot
-  local_action:
-    module: command mktemp -d "{{lookup('env', 'TMPDIR') | default('/tmp', true)}}/ansible.test.XXXXXX"
+  command: mktemp -d "{{ remote_tmp_dir }}/ansible.test.XXXXXX"
   register: dnfroot
 
 - name: Make a necessary directory

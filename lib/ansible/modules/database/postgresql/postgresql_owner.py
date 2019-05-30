@@ -67,18 +67,6 @@ options:
     type: str
     aliases:
     - login_db
-  port:
-    description:
-    - Database port to connect.
-    type: int
-    default: 5432
-    aliases:
-    - login_port
-  login_user:
-    description:
-    - User (role) used to authenticate with PostgreSQL.
-    type: str
-    default: postgres
   session_role:
     description:
     - Switch to session_role after connecting.
@@ -86,35 +74,6 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-  login_password:
-    description:
-    - Password used to authenticate with PostgreSQL.
-    type: str
-  login_host:
-    description:
-    - Host running PostgreSQL.
-    type: str
-  login_unix_socket:
-    description:
-    - Path to a Unix domain socket for local connections.
-    type: str
-  ssl_mode:
-    description:
-    - Determines whether or with what priority a secure SSL TCP/IP connection
-      will be negotiated with the server.
-    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-      more information on the modes.
-    - Default of C(prefer) matches libpq default.
-    type: str
-    default: prefer
-    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ca_cert:
-    description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
-      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
-    type: str
-    aliases: [ ssl_rootcert ]
-
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -132,6 +91,7 @@ requirements:
 
 author:
 - Andrew Klychkov (@Andersson007)
+extends_documentation_fragment: postgres
 '''
 
 EXAMPLES = r'''
@@ -190,41 +150,36 @@ queries:
 '''
 
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
-
-
-def connect_to_db(module, kw, autocommit=False):
-    try:
-        db_connection = psycopg2.connect(**kw)
-        if autocommit:
-            if psycopg2.__version__ >= '2.4.2':
-                db_connection.set_session(autocommit=True)
-            else:
-                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least '
-                                 'version 8.4 to support sslrootcert')
-
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-
-    return db_connection
 
 
 class PgOwnership(object):
+
+    """Class for changing ownership of PostgreSQL objects.
+
+    Arguments:
+        module (AnsibleModule): Object of Ansible module class.
+        cursor (psycopg2.connect.cursor): Cursor object for interraction with the database.
+        role (str): Role name to set as a new owner of objects.
+
+    Important:
+        If you want to add handling of a new type of database objects:
+        1. Add a specific method for this like self.__set_db_owner(), etc.
+        2. Add a condition with a check of ownership for new type objects to self.__is_owner()
+        3. Add a condition with invocation of the specific method to self.set_owner()
+        4. Add the information to the module documentation
+        That's all.
+    """
+
     def __init__(self, module, cursor, role):
         self.module = module
         self.cursor = cursor
@@ -236,6 +191,13 @@ class PgOwnership(object):
         self.obj_type = ''
 
     def check_role_exists(self, role, fail_on_role=True):
+        """Check the role exists or not.
+
+        Arguments:
+            role (str): Role name.
+            fail_on_role (bool): If True, fail when the role does not exist.
+                Otherwise just warn and continue.
+        """
         if not self.__role_exists(role):
             if fail_on_role:
                 self.module.fail_json(msg="Role '%s' does not exist" % role)
@@ -248,6 +210,18 @@ class PgOwnership(object):
             return True
 
     def reassign(self, old_owners, fail_on_role):
+        """Implements REASSIGN OWNED BY command.
+
+        If success, set self.changed as True.
+
+        Arguments:
+            old_owners (list): The ownership of all the objects within
+                the current database, and of all shared objects (databases, tablespaces),
+                owned by these roles will be reassigned to self.role.
+            fail_on_role (bool): If True, fail when a role from old_owners does not exist.
+                Otherwise just warn and continue.
+        """
+
         roles = []
         for r in old_owners:
             if self.check_role_exists(r, fail_on_role):
@@ -267,6 +241,13 @@ class PgOwnership(object):
         self.changed = self.__exec_sql(query, ddl=True)
 
     def set_owner(self, obj_type, obj_name):
+        """Change owner of a database object.
+
+        Arguments:
+            obj_type (str): Type of object (like database, table, view, etc.).
+            obj_name (str): Object name.
+        """
+
         self.obj_name = obj_name
         self.obj_type = obj_type
 
@@ -300,6 +281,8 @@ class PgOwnership(object):
             self.__set_mat_view_owner()
 
     def __is_owner(self):
+        """Return True if self.role is the current object owner."""
+
         if self.obj_type == 'table':
             query = ("SELECT 1 FROM pg_tables WHERE tablename = '%s' "
                      "AND tableowner = '%s'" % (self.obj_name, self.role))
@@ -346,49 +329,69 @@ class PgOwnership(object):
         return self.__exec_sql(query, add_to_executed=False)
 
     def __set_db_owner(self):
+        """Set the database owner."""
         query = "ALTER DATABASE %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'database'),
                                                    pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_func_owner(self):
+        """Set the function owner."""
         query = "ALTER FUNCTION %s OWNER TO %s" % (self.obj_name,
                                                    pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_seq_owner(self):
+        """Set the sequence owner."""
         query = "ALTER SEQUENCE %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'table'),
                                                    pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_schema_owner(self):
+        """Set the schema owner."""
         query = "ALTER SCHEMA %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'schema'),
                                                  pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_table_owner(self):
+        """Set the table owner."""
         query = "ALTER TABLE %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'table'),
                                                 pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_tablespace_owner(self):
+        """Set the tablespace owner."""
         query = "ALTER TABLESPACE %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'database'),
                                                      pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_view_owner(self):
+        """Set the view owner."""
         query = "ALTER VIEW %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'table'),
                                                pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __set_mat_view_owner(self):
+        """Set the materialized view owner."""
         query = "ALTER MATERIALIZED VIEW %s OWNER TO %s" % (pg_quote_identifier(self.obj_name, 'table'),
                                                             pg_quote_identifier(self.role, 'role'))
         self.changed = self.__exec_sql(query, ddl=True)
 
     def __role_exists(self, role):
+        """Return True if role exists, otherwise return Fasle."""
         return self.__exec_sql("SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
 
     def __exec_sql(self, query, ddl=False, add_to_executed=True):
+        """Execute SQL.
+
+        Return a query result if possible or True/False if ddl=True arg was passed.
+        It's necessary for statements that don't return any result (like DDL queries).
+
+        Arguments:
+            query (str): SQL query to execute.
+            ddl (bool): Must return True or False instead of rows
+                (typical for DDL queries) (default False).
+            add_to_executed (bool): Append the query to self.executed_queries attr.
+        """
         try:
             self.cursor.execute(query)
 
@@ -399,9 +402,7 @@ class PgOwnership(object):
                 res = self.cursor.fetchall()
                 return res
             return True
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-        except psycopg2.ProgrammingError as e:
+        except Exception as e:
             self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
         return False
 
@@ -434,50 +435,14 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
     new_owner = module.params['new_owner']
     obj_name = module.params['obj_name']
     obj_type = module.params['obj_type']
     reassign_owned_by = module.params['reassign_owned_by']
     fail_on_role = module.params['fail_on_role']
-    sslrootcert = module.params['ca_cert']
-    session_role = module.params['session_role']
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != '' and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 '
-                             'in order to user the ssl_rootcert parameter')
-
-    db_connection = connect_to_db(module, kw, autocommit=False)
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    # Switch role, if specified:
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % session_role)
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e))
+    db_connection = connect_to_db(module, autocommit=False)
+    cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############
     # Create the object and do main job:

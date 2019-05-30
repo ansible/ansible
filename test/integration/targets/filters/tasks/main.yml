@@ -242,6 +242,12 @@
             - "'00:00:00:00:00' | random_mac is match('^00:00:00:00:00:[a-f0-9][a-f0-9]$')"  
             - "'00:00:00' | random_mac != '00:00:00' | random_mac"
 
+- name: Verify random_mac filter with seed
+  assert:
+    that:
+      - "'00:00:00' | random_mac(seed='test') == '00:00:00' | random_mac(seed='test')"
+      - "'00:00:00' | random_mac(seed='test') != '00:00:00' | random_mac(seed='another_test')"
+
 - name: Verify that union can be chained
   vars:
     unions: '{{ [1,2,3]|union([4,5])|union([6,7]) }}'
@@ -277,3 +283,37 @@
   loop: "{{ hostvars|dict2items }}"
   loop_control:
     label: "{{ item.key }}"
+
+- name: Ensure combining two dictionaries containing undefined variables provides a helpful error
+  block:
+    - set_fact:
+        foo:
+          key1: value1
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': undef_variable}) }}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': {'nested': [undef_variable]}})}}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.msg.startswith('The task includes an option with an undefined variable')"
+
+    - set_fact:
+        key2: is_defined
+
+    - set_fact:
+        combined: "{{ foo | combine({'key2': key2}) }}"
+
+    - assert:
+        that:
+          - "combined.key2 == 'is_defined'"
