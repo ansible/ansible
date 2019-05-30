@@ -373,7 +373,7 @@ class MerakiModule(object):
 
         if info['status'] >= 500:
             self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info))
-        elif info['status']>= 300:
+        elif info['status'] >= 300:
             self.fail_json(msg='Request failed for {url}: {status} - {msg}'.format(**info),
                            body=json.loads(to_native(info['body'])))
         try:
@@ -386,7 +386,7 @@ class MerakiModule(object):
         self.result['response'] = self.response
         self.result['status'] = self.status
         if self.retry > 0:
-            self.module.warn("Rate limiter triggered - retry count {0}".format(self.retry))            
+            self.module.warn("Rate limiter triggered - retry count {0}".format(self.retry))
         # Return the gory details when we need it
         if self.params['output_level'] == 'debug':
             self.result['method'] = self.method
