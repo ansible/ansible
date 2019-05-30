@@ -1,0 +1,2 @@
+minor_changes:
+  - rabbitmq_queue - corrected name field description
