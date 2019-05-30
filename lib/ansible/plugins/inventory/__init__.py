@@ -402,7 +402,10 @@ class Constructable(object):
 
                     if key:
                         prefix = keyed.get('prefix', '')
-                        sep = keyed.get('separator', '_')
+                        if prefix = '':
+                            sep = ''
+                        else:
+                            sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
                         if raw_parent_name:
                             try:
