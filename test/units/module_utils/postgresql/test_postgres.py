@@ -102,8 +102,8 @@ class TestEnsureReqLibs():
     1. value of err_msg attribute of m_ansible_module mock object.
     """
 
-    @pytest.fixture
-    def m_ansible_module(self, scope='class'):
+    @pytest.fixture(scope='class')
+    def m_ansible_module(self):
         """Return an object of dummy AnsibleModule class."""
         class Dummym_ansible_module():
             def __init__(self):
@@ -168,8 +168,8 @@ class TestConnectToDb():
     2. Types of return objects (db_connection and cursor).
     """
 
-    @pytest.fixture
-    def m_ansible_module(self, scope='class'):
+    @pytest.fixture(scope='class')
+    def m_ansible_module(self):
         """Return an object of dummy AnsibleModule class."""
         class DummyAnsibleModule():
             def __init__(self):
