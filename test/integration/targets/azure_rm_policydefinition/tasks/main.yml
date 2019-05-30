@@ -6,17 +6,12 @@
 - name: Create a policy definition (Check Mode)
   azure_rm_policydefinition:
     name: "{{ policy_name }}"
-    policy_rule: '{
-                    "if":
-                    {
-                        "field": "type",
-                        "equals": "Microsoft.Storage/storageAccounts/write"
-                    },
-                    "then":
-                    {
-                        "effect": "deny"
-                    }
-                  }'
+    policy_rule:
+      if:
+        field: type
+        equals: Microsoft.Storage/storageAccounts/read
+      then:
+        effect: deny
     metadata:
         fortesting: yes
     mode: all
@@ -34,17 +29,12 @@
 - name: Create a policy definition
   azure_rm_policydefinition:
     name: "{{ policy_name }}"
-    policy_rule: '{
-                    "if":
-                    {
-                        "field": "type",
-                        "equals": "Microsoft.Storage/storageAccounts/write"
-                    },
-                    "then":
-                    {
-                        "effect": "deny"
-                    }
-                  }'
+    policy_rule:
+      if:
+        field: type
+        equals: Microsoft.Storage/storageAccounts/read
+      then:
+        effect: deny
     metadata:
         fortesting: yes
     mode: all
@@ -84,17 +74,12 @@
 - name: Update a policy definition (idempontent)
   azure_rm_policydefinition:
     name: "{{ policy_name }}"
-    policy_rule: '{
-                    "if":
-                    {
-                        "field": "type",
-                        "equals": "Microsoft.Storage/storageAccounts/write"
-                    },
-                    "then":
-                    {
-                        "effect": "deny"
-                    }
-                  }'
+    policy_rule:
+      if:
+        field: type
+        equals: Microsoft.Storage/storageAccounts/read
+      then:
+        effect: deny
     metadata:
         fortesting: yes
     mode: all
