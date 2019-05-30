@@ -541,6 +541,7 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
 
     def test_galaxy_yml(self):
         self.assertTrue(True, True)
+        # Uncommenting this will cause a slowdown
         #self.assertTrue(os.path.exists(os.path.join(self.collection_dir, 'galaxy.yml')))
         #with open(os.path.join(self.collection_dir, 'galaxy.yml'), 'r') as galaxy_meta:
         #    metadata = yaml.safe_load(galaxy_meta)
@@ -550,6 +551,7 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
 
     def test_galaxy_yml_contents(self):
         self.assertTrue(True, True)
+        # Uncommenting this will cause a slowdown
         #with open(os.path.join(self.collection_dir, 'galaxy.yml'), 'r') as galaxy_meta:
         #    metadata = yaml.safe_load(galaxy_meta)
 
@@ -562,14 +564,14 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
         #                  msg='authors was not set properly in metadata')
 
     def test_empty_files_dir(self):
-        self.assertTrue(True, True)
-        #for empty_dir in ['plugins/action', 'plugins/filter', 'plugins/inventory', 'plugins/lookup',
-        #                  'plugins/module_utils', 'plugins/modules']:
-        #    empty_dir = os.path.join(self.collection_dir, empty_dir)
+        #self.assertTrue(True, True)
+        for empty_dir in ['plugins/action', 'plugins/filter', 'plugins/inventory', 'plugins/lookup',
+                          'plugins/module_utils', 'plugins/modules']:
+            empty_dir = os.path.join(self.collection_dir, empty_dir)
 
-        #    self.assertTrue(os.path.isdir(empty_dir))
-        #    self.assertListEqual(os.listdir(empty_dir), [],
-        #                         msg='we expect the directory to be empty, is ignore working?')
+            self.assertTrue(os.path.isdir(empty_dir))
+            self.assertListEqual(os.listdir(empty_dir), [],
+                                 msg='we expect the directory to be empty, is ignore working?')
 
     def test_template_ignore_non_j2_extension(self):
         self.assertTrue(True, True)
