@@ -186,7 +186,7 @@ state:
             sample: 'www'
         fqdn:
             description:
-                - Fully qualified domain anme of the record set.
+                - Fully qualified domain name of the record set.
             return: always
             type: str
             sample: www.b57dc95985712e4523282.com
@@ -204,10 +204,10 @@ state:
             sample: Succeeded
         target_resource:
             description:
-                - The target resource of the error message.
+                - The target resource of the record set.
             return: always
-            type: str
-            sample: contoso.com
+            type: dict 
+            sample: {}
         ttl:
             description:
                 - The TTL(time-to-live) of the records in the records set.
@@ -219,7 +219,7 @@ state:
                 - The type of DNS record in this record set.
             return: always
             type: str
-            sample: Microsoft.Network/dnsZones/A
+            sample: A
         arecords:
             description:
                 - A list of records in the record set.
@@ -227,13 +227,13 @@ state:
             type: list
             sample: [
             {
-                "ipv4_address": "192.168.100.102"
+                "ipv4_address": "192.0.2.2"
             },
             {
-                "ipv4_address": "192.168.100.103"
+                "ipv4_address": "192.0.2.4"
             },
             {
-                "ipv4_address": "192.168.100.101"
+                "ipv4_address": "192.0.2.8"
             }
         ]
 '''
