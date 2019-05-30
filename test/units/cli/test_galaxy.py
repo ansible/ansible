@@ -602,8 +602,8 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
         #self.assertEquals(self.collection_skeleton_path, context.CLIARGS['collection_skeleton'],
         #                  msg='Skeleton path was not parsed properly from the command line')
 
-    def test_readme(self):
-        self.assertTrue(True, True)
+    #def test_readme(self):
+        #self.assertTrue(True, True)
         #readme_path = os.path.join(self.collection_dir, 'README.md')
         #self.assertTrue(os.path.exists(readme_path), msg='Readme doesn\'t exist')
 
