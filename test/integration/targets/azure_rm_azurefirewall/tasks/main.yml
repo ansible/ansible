@@ -215,6 +215,58 @@
             translated_address: 1.2.3.6
             translated_port: '8443'
         name: natrulecoll
+    ip_configurations:
+      - subnet:
+          virtual_network_name: "{{ virtual_network_name }}"
+          name: "{{ subnet_name }}"
+        public_ip_address:
+          name: "{{ public_ipaddress_name }}"
+        name: azureFirewallIpConfiguration
+  check_mode: yes
+  register: output
+
+- name: Assert that output has changed
+  assert:
+    that:
+      - output.changed
+
+
+- name: Create Azure Firewall -- check if still idempotent after last change
+  azure_rm_azurefirewall:
+    resource_group: '{{resource_group}}'
+    name: '{{azure_firewall_name}}'
+    application_rule_collections:
+      - priority: 110
+        action: deny
+        rules:
+          - name: rule1
+            description: Deny inbound rule
+            source_addresses:
+              - 216.58.216.165
+              - 10.0.0.0/25
+            protocols:
+              - type: https
+                port: '443'
+            target_fqdns:
+              - www.test.com
+        name: apprulecoll
+    nat_rule_collections:
+      - priority: 112
+        action: dnat
+        rules:
+          - name: DNAT-HTTPS-traffic
+            description: D-NAT all outbound web traffic for inspection
+            source_addresses:
+              - '*'
+            destination_addresses:
+              - "{{ pip_output.state.ip_address }}"
+            destination_ports:
+              - '443'
+            protocols:
+              - tcp
+            translated_address: 1.2.3.6
+            translated_port: '8443'
+        name: natrulecoll
     network_rule_collections:
       - priority: 112
         action: deny
@@ -245,4 +297,4 @@
 - name: Assert that output has changed
   assert:
     that:
-      - output.changed
+      - not output.changed

@@ -140,38 +140,42 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         if new is None:
             return True
         elif isinstance(new, dict):
+            result = True
             if not isinstance(old, dict):
                 result['compare'] = 'changed [' + path + '] old dict is null'
-                return False
-            for k in new.keys():
-                new_item = new.get(k)
-                old_item = old.get(k, None)
-                if new_item is None:
-                    new[k] = old_item
-                elif not self.default_compare(modifiers, new_item, old_item, path + '/' + k, result):
-                    return False
-            return True
+                result = False
+            else:
+                for k in new.keys():
+                    new_item = new.get(k)
+                    old_item = old.get(k, None)
+                    if new_item is None:
+                        new[k] = old_item
+                    elif not self.default_compare(modifiers, new_item, old_item, path + '/' + k, result):
+                        result = False
+            return result
         elif isinstance(new, list):
+            result = True
             if not isinstance(old, list) or len(new) != len(old):
                 result['compare'] = 'changed [' + path + '] length is different or null'
-                return False
-            if isinstance(old[0], dict):
-                key = None
-                if 'id' in old[0] and 'id' in new[0]:
-                    key = 'id'
-                elif 'name' in old[0] and 'name' in new[0]:
-                    key = 'name'
-                else:
-                    key = next(iter(old[0]))
-                    new = sorted(new, key=lambda x: x.get(key, None))
-                    old = sorted(old, key=lambda x: x.get(key, None))
+                result = False
             else:
-                new = sorted(new)
-                old = sorted(old)
-            for i in range(len(new)):
-                if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
-                    return False
-            return True
+                if isinstance(old[0], dict):
+                    key = None
+                    if 'id' in old[0] and 'id' in new[0]:
+                        key = 'id'
+                    elif 'name' in old[0] and 'name' in new[0]:
+                        key = 'name'
+                    else:
+                        key = next(iter(old[0]))
+                        new = sorted(new, key=lambda x: x.get(key, None))
+                        old = sorted(old, key=lambda x: x.get(key, None))
+                else:
+                    new = sorted(new)
+                    old = sorted(old)
+                for i in range(len(new)):
+                    if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
+                        result = False
+            return result
         else:
             updatable = modifiers.get(path, {}).get('updatable', True)
             comparison = modifiers.get(path, {}).get('comparison', 'default')
