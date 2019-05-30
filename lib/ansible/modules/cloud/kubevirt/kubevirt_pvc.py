@@ -391,6 +391,8 @@ class KubevirtPVC(KubernetesRawModule):
                     if import_status == desired_cdi_status:
                         return_obj = entity
                         break
+                    elif import_status == 'Failed':
+                        raise CreatePVCFailed("PVC creation incomplete; importing data failed")
                 else:
                     return_obj = entity
                     break
