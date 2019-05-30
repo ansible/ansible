@@ -140,10 +140,10 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         if new is None:
             return True
         elif isinstance(new, dict):
-            result = True
+            comparison_result = True
             if not isinstance(old, dict):
                 result['compare'] = 'changed [' + path + '] old dict is null'
-                result = False
+                comparison_result = False
             else:
                 for k in new.keys():
                     new_item = new.get(k)
@@ -151,13 +151,13 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                     if new_item is None:
                         new[k] = old_item
                     elif not self.default_compare(modifiers, new_item, old_item, path + '/' + k, result):
-                        result = False
-            return result
+                        comparison_result = False
+            return comparison_result
         elif isinstance(new, list):
-            result = True
+            comparison_result = True
             if not isinstance(old, list) or len(new) != len(old):
                 result['compare'] = 'changed [' + path + '] length is different or null'
-                result = False
+                comparison_result = False
             else:
                 if isinstance(old[0], dict):
                     key = None
@@ -174,8 +174,8 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                     old = sorted(old)
                 for i in range(len(new)):
                     if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
-                        result = False
-            return result
+                        comparison_result = False
+            return comparison_result
         else:
             updatable = modifiers.get(path, {}).get('updatable', True)
             comparison = modifiers.get(path, {}).get('comparison', 'default')
