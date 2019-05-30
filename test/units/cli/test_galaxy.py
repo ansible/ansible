@@ -587,19 +587,19 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
 
     def test_template_ignore_jinja(self):
         self.assertTrue(True, True)
-        #for template_dir in ['playbooks/templates', 'playbooks/templates/subfolder',
-        #                     'roles/common/templates', 'roles/common/templates/subfolder']:
-        #    test_conf_j2 = os.path.join(self.collection_dir, template_dir, 'test.conf.j2')
-        #    self.assertTrue(
-        #        os.path.exists(test_conf_j2),
-        #        msg="The {0} template doesn't seem to exist, is it being rendered as test.conf?".format(test_conf_j2)
-        #    )
+        for template_dir in ['playbooks/templates', 'playbooks/templates/subfolder',
+                             'roles/common/templates', 'roles/common/templates/subfolder']:
+            test_conf_j2 = os.path.join(self.collection_dir, template_dir, 'test.conf.j2')
+            self.assertTrue(
+                os.path.exists(test_conf_j2),
+                msg="The {0} template doesn't seem to exist, is it being rendered as test.conf?".format(test_conf_j2)
+            )
 
-        #    with open(test_conf_j2, 'r') as f:
-        #        contents = f.read()
-        #    expected_contents = '[defaults]\ntest_key = {{ test_variable }}'
-        #    self.assertEqual(expected_contents, contents.strip(),
-        #                     msg="test.conf.j2 doesn't contain what it should, is it being rendered?")
+            with open(test_conf_j2, 'r') as f:
+                contents = f.read()
+            expected_contents = '[defaults]\ntest_key = {{ test_variable }}'
+            self.assertEqual(expected_contents, contents.strip(),
+                             msg="test.conf.j2 doesn't contain what it should, is it being rendered?")
 
     def test_skeleton_option(self):
         self.assertTrue(True, True)
