@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_loganalyticsworkspace_facts
 version_added: "2.8"
-short_description: Get facts of Azure Log Analytics workspaces.
+short_description: Get facts of Azure Log Analytics workspaces
 description:
     - Get, query Azure Log Analytics workspaces.
 options:
@@ -51,7 +51,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -68,7 +68,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Workspace resource path.
+    description:
+        - Workspace resource path.
     type: str
     returned: success
     example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.OperationalInsights/workspaces/m
@@ -81,15 +82,15 @@ location:
     example: "eastus"
 sku:
     description:
-        - The SKU of the workspace
+        - The SKU of the workspace.
     type: str
     returned: success
     example: "per_gb2018"
 retention_in_days:
     description:
         - The workspace data retention in days.
-        - -1 means Unlimited retention for the C(unlimited) C(sku).
-        - 730 days is the maximum allowed for all other C(sku)s.
+        - -1 means Unlimited retention for I(sku=unlimited).
+        - 730 days is the maximum allowed for all other skus.
     type: int
     returned: success
     example: 40
@@ -98,28 +99,28 @@ intelligence_packs:
         - Lists all the intelligence packs possible and whether they are enabled or disabled for a given workspace.
     type: list
     returned: success
-    example: ['name': 'CapacityPerformance', 'enabled': true]
+    example: [ {'name': 'CapacityPerformance', 'enabled': true} ]
 management_groups:
     description:
         - List of management groups connected to the workspace.
-    type: list
+    type: dict
     returned: success
-    example: "{'value': []}"
+    example: {'value': []}
 shared_keys:
     description:
         - Shared keys for the workspace.
-    type: list
+    type: dict
     returned: success
-    example: "{
+    example: {
                 'primarySharedKey': 'BozLY1JnZbxu0jWUQSY8iRPEM8ObmpP8rW+8bUl3+HpDJI+n689SxXgTgU7k1qdxo/WugRLxechxbolAfHM5uA==',
                 'secondarySharedKey': '7tDt5W0JBrCQKtQA3igfFltLSzJeyr9LmuT+B/ibzd8cdC1neZ1ePOQLBx5NUzc0q2VUIK0cLhWNyFvo/hT8Ww=='
-              }"
+              }
 usages:
     description:
         - List of usage metrics for the workspace.
-    type: list
+    type: dict
     returned: success
-    example: "{
+    example: {
                 'value': [
                     {
                     'name': {
@@ -133,7 +134,7 @@ usages:
                     'quotaPeriod': 'P1D'
                     }
                 ]
-              }"
+              }
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
