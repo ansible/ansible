@@ -27,6 +27,8 @@ module: apconos_config
 version_added: "2.9.0"
 author: "David Lee (@davidlee-ap)"
 short_description: "Configure Apcon modules"
+description:
+  - configure apcon modules for future
 """
 
 EXAMPLES = """
