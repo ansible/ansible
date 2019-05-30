@@ -5,7 +5,7 @@
 
   block:
 
-    # ==================== preparaions ========================================
+    # ==================== preparations ========================================
 
     - name: set connection information for all tasks
       set_fact:
@@ -31,7 +31,7 @@
 
     - name: Set variable with aws account id
       set_fact:
-        aws_account_id: "{{ iam_return.iam_role.arn.split(':')[4] }}"
+        aws_account_id: "{{ codebuild_iam_role.iam_role.arn.split(':')[4] }}"
 
     # ================== integration test ==========================================
 
