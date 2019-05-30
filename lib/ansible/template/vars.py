@@ -25,6 +25,7 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.utils.unsafe_proxy import is_unsafe
 
 
 __all__ = ['AnsibleJ2Vars']
@@ -98,7 +99,7 @@ class AnsibleJ2Vars(Mapping):
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure
         from ansible.vars.hostvars import HostVars
-        if isinstance(variable, dict) and varname == "vars" or isinstance(variable, HostVars) or hasattr(variable, '__UNSAFE__'):
+        if varname == "vars" and isinstance(variable, dict) or isinstance(variable, HostVars) or is_unsafe(variable):
             return variable
         else:
             value = None

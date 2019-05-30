@@ -48,7 +48,7 @@ from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var, is_unsafe
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -257,26 +257,10 @@ class AnsibleContext(Context):
         self.unsafe = False
 
     def _is_unsafe(self, val):
-        '''
-        Our helper function, which will also recursively check dict and
-        list entries due to the fact that they may be repr'd and contain
-        a key or value which contains jinja2 syntax and would otherwise
-        lose the AnsibleUnsafe value.
-        '''
-        if isinstance(val, dict):
-            for key in val.keys():
-                if self._is_unsafe(val[key]):
-                    return True
-        elif isinstance(val, list):
-            for item in val:
-                if self._is_unsafe(item):
-                    return True
-        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
-            return True
-        return False
+        return is_unsafe(val)
 
     def _update_unsafe(self, val):
-        if val is not None and not self.unsafe and self._is_unsafe(val):
+        if val is not None and not self.unsafe and is_unsafe(val):
             self.unsafe = True
 
     def resolve(self, key):
@@ -522,7 +506,7 @@ class Templar:
         static_vars = [''] if static_vars is None else static_vars
 
         # Don't template unsafe variables, just return them.
-        if hasattr(variable, '__UNSAFE__'):
+        if is_unsafe(variable):
             return variable
 
         if fail_on_undefined is None:
@@ -544,7 +528,7 @@ class Templar:
                         var_name = only_one.group(1)
                         if var_name in self._available_variables:
                             resolved_val = self._available_variables[var_name]
-                            if isinstance(resolved_val, NON_TEMPLATED_TYPES):
+                            if isinstance(resolved_val, NON_TEMPLATED_TYPES) or is_unsafe(resolved_val):
                                 return resolved_val
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
@@ -575,7 +559,7 @@ class Templar:
                         )
 
                         if not USE_JINJA2_NATIVE:
-                            unsafe = hasattr(result, '__UNSAFE__')
+                            unsafe = is_unsafe(result)
                             if convert_data and not self._no_type_regex.match(variable):
                                 # if this looks like a dictionary or list, convert it to such using the safe_eval method
                                 if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
