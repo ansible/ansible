@@ -577,13 +577,13 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
     def test_template_ignore_non_j2_extension(self):
         self.assertTrue(True, True)
         # Uncommenting this will cause a slowdown
-        #test_file = os.path.join(self.collection_dir, 'docs', 'My Collection.md')
-        #self.assertTrue(os.path.exists(test_file), msg="The 'docs/My Collection.md' file doesn't seem to exist")
-        #with open(test_file, 'r') as f:
-        #    contents = f.read()
-        #expected_contents = 'Welcome to my test collection doc for {{ namespace }}.'
-        #self.assertEqual(expected_contents, contents.strip(),
-        #                 msg="'docs/My Collection.md' does not contain what it should, is it being rendered?")
+        test_file = os.path.join(self.collection_dir, 'docs', 'My Collection.md')
+        self.assertTrue(os.path.exists(test_file), msg="The 'docs/My Collection.md' file doesn't seem to exist")
+        with open(test_file, 'r') as f:
+            contents = f.read()
+        expected_contents = 'Welcome to my test collection doc for {{ namespace }}.'
+        self.assertEqual(expected_contents, contents.strip(),
+                         msg="'docs/My Collection.md' does not contain what it should, is it being rendered?")
 
     def test_template_ignore_jinja(self):
         self.assertTrue(True, True)
