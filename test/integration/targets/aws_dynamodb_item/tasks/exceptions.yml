@@ -1,0 +1,69 @@
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ ec2_region }}"
+  no_log: yes
+
+- name: inserting db record on a table that doesnt exist
+  aws_dynamodb_item:
+    table: "willfail"
+    state: present
+    primary_key: {"bank": {"S": "hsbc"}}
+    <<: *aws_connection_info
+  ignore_errors: yes
+  register: result
+- name: assert failure
+  assert:
+    that:
+      - result.failed
+      - '"Table willfail doesnt exist" in result.msg'
+
+- name: missing primary_key parameter
+  aws_dynamodb_item:
+    table: "{{ dynamo_db_table }}"
+    state: present
+    expression_attribute_values: {":status": {"S": "red"}}
+    <<: *aws_connection_info
+  ignore_errors: yes
+  register: result
+- name: assert failure
+  assert:
+    that:
+      - result.failed
+      - '"missing required arguments: primary_key" in result.msg'
+
+- name: invalid primary_key when updating
+  aws_dynamodb_item:
+    table: "{{ dynamo_db_table }}"
+    state: present
+    primary_key: {"willfail": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+    update_expression: 'SET #s =:status'
+    expression_attribute_values: {":status": {"S": "red"}}
+    expression_attribute_names: {"#s": "status"}
+    <<: *aws_connection_info
+  ignore_errors: yes
+  register: result
+- name: assert failure
+  assert:
+    that:
+      - result.failed
+      - '"Check the primary key, it doesnt match your table config" in result.msg'
+
+- name: updating a protected word without expression_attribute_names
+  aws_dynamodb_item:
+    table: "{{ dynamo_db_table }}"
+    state: present
+    primary_key: {"bank": {"S": "hsbc"}, "quantity": {"N": "1000"}}
+    update_expression: 'SET status =:status'
+    expression_attribute_values: {":status": {"S": "blue"}}
+    <<: *aws_connection_info
+  ignore_errors: yes
+  register: result
+- name: assert failure
+  assert:
+    that:
+      - result.failed
+      - '"You are trying to use a DynamoDB reserved word" in result.msg'
