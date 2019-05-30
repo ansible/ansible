@@ -22,9 +22,25 @@ import ast
 import sys
 
 from ansible import constants as C
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import builtins
 from ansible.plugins.loader import filter_loader, test_loader
+from ansible.utils.unsafe_proxy import is_unsafe
+
+
+def SafeDict(MutableMapping):
+
+    def __init__(self, orig_dict):
+        self._orig = orig_dict
+        self.update(orig_dict)
+
+    def __getitem__(self, name):
+
+        if is_unsafe(self._orig[name]):
+            return name
+        else:
+            return self._orig[name]
 
 
 def safe_eval(expr, locals=None, include_exceptions=False):
@@ -38,7 +54,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
-    locals = {} if locals is None else locals
+    locals = SafeDict({}) if locals is None else SafeDict(locals)
 
     # define certain JSON types
     # eg. JSON booleans are unknown to python eval()
@@ -149,7 +165,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
             return (result, None)
         else:
             return result
-    except SyntaxError as e:
+    except SyntaxError:
         # special handling for syntax errors, we just return
         # the expression string back as-is to support late evaluation
         if include_exceptions:
