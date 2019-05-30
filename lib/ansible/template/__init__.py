@@ -528,8 +528,10 @@ class Templar:
                         var_name = only_one.group(1)
                         if var_name in self._available_variables:
                             resolved_val = self._available_variables[var_name]
-                            if isinstance(resolved_val, NON_TEMPLATED_TYPES) or is_unsafe(resolved_val):
+                            if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
+                            elif is_unsafe(resolved_val):
+                                return wrap_var(resolved_val)
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
