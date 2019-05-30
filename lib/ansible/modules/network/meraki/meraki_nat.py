@@ -451,10 +451,7 @@ def construct_payload(params):
 
 
 def list_int_to_str(data):
-    new_list = []
-    for item in data:
-        new_list.append(str(item))
-    return new_list
+    return [str(item) for item in data]
 
 
 def main():
@@ -532,7 +529,7 @@ def main():
                         'allowedInbound': construct_payload(i['allowed_inbound'])
                         }
                 for inbound in data['allowedInbound']:
-                    inbound['allowedIps'] = list_int_to_str(inbound['allowedIps'])
+                    inbound['destinationPorts'] = list_int_to_str(inbound['destinationPorts'])
                 rules.append(data)
             one_to_one_payload = {'rules': rules}
         if meraki.params['one_to_many'] is not None:

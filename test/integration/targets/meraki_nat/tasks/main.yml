@@ -83,9 +83,9 @@
   - debug:
       var: create_one_one_idempotent
 
-  # - assert:
-  #     that:
-  #       - create_one_one_idempotent is not changed
+  - assert:
+      that:
+        - create_one_one_idempotent is not changed
 
   - name: Create 1:many rule with check mode
     meraki_nat:
