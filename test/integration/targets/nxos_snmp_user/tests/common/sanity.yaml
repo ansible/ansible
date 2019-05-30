@@ -5,7 +5,7 @@
 
 - set_fact: delete_last_user_allowed='true'
 - set_fact: delete_last_user_allowed='false'
-  when: imagetag and (imagetag is version_compare('9.3', 'ge'))
+  when: imagetag and (imagetag is version_compare('9.1', 'ge'))
 - set_fact: delete_last_user_allowed='false'
   when: platform is search('N5K|N6K|N9K-F')
 
