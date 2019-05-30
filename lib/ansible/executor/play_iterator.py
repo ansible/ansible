@@ -475,7 +475,7 @@ class PlayIterator:
 
     def host_not_in_inventory(self, hostname):
         display.debug("marking host %s failed, host not found in inventory: %s" % (hostname))
-        s = self._set_failed_state(self.FAILED_NONE)
+        s = self._set_failed_state(HostState(blocks=[]))
         display.debug("^ failed state is now: %s" % s)
         self._host_states[hostname] = s
         self._play._removed_hosts.append(hostname)
