@@ -351,9 +351,10 @@ def update_pgroup(module, array):
             except Exception:
                 module.fail_json(msg='Adding volumes to pgroup {0} failed.'.format(module.params['pgroup']))
         else:
-            if not all(x in get_pgroup(module, array)['volumes'] for x in module.params['volume']):
+            addvollist = [x for x in module.params['volume'] if x not in get_pgroup(module, array)['volumes']]
+            if addvollist:
                 try:
-                    array.set_pgroup(module.params['pgroup'], vollist=module.params['volume'])
+                    array.set_pgroup(module.params['pgroup'], addvollist=addvollist)
                     changed = True
                 except Exception:
                     module.fail_json(msg='Changing volumes in pgroup {0} failed.'.format(module.params['pgroup']))
