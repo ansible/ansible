@@ -256,9 +256,6 @@ class AnsibleContext(Context):
         super(AnsibleContext, self).__init__(*args, **kwargs)
         self.unsafe = False
 
-    def _is_unsafe(self, val):
-        return is_unsafe(val)
-
     def _update_unsafe(self, val):
         if val is not None and not self.unsafe and is_unsafe(val):
             self.unsafe = True
