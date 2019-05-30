@@ -36,10 +36,8 @@ options:
   pn_forward_ip:
     description:
       - forwarding IP address.
-    required: false
-    choices: ['dhcp']
+    required: true
     type: str
-    default: 'dhcp'
   pn_nic:
     description:
       - NIC.
@@ -48,8 +46,10 @@ options:
   pn_forward_proto:
     description:
       - protocol type to forward packets.
-    required: true
+    required: false
     type: str
+    choices: ['dhcp']
+    default: 'dhcp'
   pn_vrouter_name:
     description:
       - name of service config.
